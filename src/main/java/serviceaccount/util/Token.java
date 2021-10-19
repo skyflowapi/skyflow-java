@@ -64,7 +64,7 @@ public class Token {
      * getSATokenFromCredsFile gets bearer token from service account endpoint
      *
      * @param creds
-     * @return
+     *
      */
     public static ResponseToken getSATokenFromCredsFile(JSONObject creds) throws SkyflowException {
         ResponseToken responseToken = null;

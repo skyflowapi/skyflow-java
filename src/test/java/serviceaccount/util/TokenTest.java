@@ -1,6 +1,5 @@
 package serviceaccount.util;
 
-import entities.ResponseToken;
 import errors.SkyflowException;
 import org.junit.Assert;
 import org.junit.Test;
@@ -25,12 +24,5 @@ public class TokenTest {
         });
         String expectedMessage = "Unable to read clientID";
         Assert.assertTrue(exception.getMessage().contains(expectedMessage));
-    }
-
-    @Test
-    public void testGetToken() throws SkyflowException {
-        ResponseToken res = Token.GenerateToken("src/test/resources/validCredentials.json");
-        Assert.assertEquals(res.getTokenType(), "Bearer");
-        Assert.assertNotNull(res.getAccessToken());
     }
 }
