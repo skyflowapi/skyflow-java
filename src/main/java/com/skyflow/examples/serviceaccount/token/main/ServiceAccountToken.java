@@ -1,8 +1,8 @@
-package examples.serviceaccount.token.main;
+package com.skyflow.examples.serviceaccount.token.main;
 
-import entities.ResponseToken;
-import errors.SkyflowException;
-import serviceaccount.util.Token;
+import com.skyflow.entities.ResponseToken;
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.serviceaccount.util.Token;
 
 public class ServiceAccountToken {
 

@@ -1,7 +1,7 @@
-package common.utils;
+package com.skyflow.common.utils;
 
-import errors.ErrorCodesEnum;
-import errors.SkyflowException;
+import com.skyflow.errors.ErrorCodesEnum;
+import com.skyflow.errors.SkyflowException;
 import org.json.simple.JSONObject;
 
 import java.io.*;

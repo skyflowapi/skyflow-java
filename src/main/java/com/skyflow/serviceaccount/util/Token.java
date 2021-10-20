@@ -1,11 +1,11 @@
-package serviceaccount.util;
+package com.skyflow.serviceaccount.util;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import common.utils.HttpUtility;
-import entities.ResponseToken;
-import errors.SkyflowException;
+import com.skyflow.common.utils.HttpUtility;
+import com.skyflow.entities.ResponseToken;
+import com.skyflow.errors.SkyflowException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.json.simple.JSONObject;
@@ -27,8 +27,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 import java.util.Date;
 
-import static errors.ErrorCodesEnum.InvalidInput;
-import static errors.ErrorCodesEnum.Server;
+import static com.skyflow.errors.ErrorCodesEnum.InvalidInput;
+import static com.skyflow.errors.ErrorCodesEnum.Server;
 
 public class Token {
 
