@@ -1,4 +1,4 @@
-package errors;
+package com.skyflow.errors;
 
 public enum ErrorCodesEnum {
     // Server - Represents server side error

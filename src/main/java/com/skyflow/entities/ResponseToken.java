@@ -1,4 +1,4 @@
-package entities;
+package com.skyflow.entities;
 
 public class ResponseToken {
     private String accessToken;
