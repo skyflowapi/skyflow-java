@@ -8,7 +8,7 @@ skyflow-java is the Skyflow SDK for the Java programming language.
 
 Add this dependency to your project's POM:
 
-```java
+```xml
     <dependency>
         <groupId>com.skyflow</groupId>
         <artifactId>skyflow-java</artifactId>
@@ -16,12 +16,12 @@ Add this dependency to your project's POM:
     </dependency>
 ```
 
-[Example](https://github.com/skyflowapi/skyflow-java/blob/master/src/main/java/examples/serviceaccount/token/main/serviceAccountToken.java):
+[Example](https://github.com/skyflowapi/skyflow-java/blob/master/src/main/java/examples/serviceaccount/token/main/ServiceAccountToken.java):
 
 ```java
-import com.skyflow.entities.ResponseToken;
-import com.skyflow.errors.SkyflowException;
-import com.skyflow.serviceaccount.util.Token;
+import entities.ResponseToken;
+import errors.SkyflowException;
+import serviceaccount.util.Token;
 
 public class ServiceAccountToken {
 
