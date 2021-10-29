@@ -1,21 +1,19 @@
 package com.skyflow.errors;
 
-import com.skyflow.errors.ErrorCodesEnum;
-
 public class SkyflowException extends Exception {
-    private com.skyflow.errors.ErrorCodesEnum code;
+    private ErrorCodesEnum code;
 
-    public SkyflowException(com.skyflow.errors.ErrorCodesEnum code, String message) {
+    public SkyflowException(ErrorCodesEnum code, String message) {
         super(message);
         this.setCode(code);
     }
 
-    public SkyflowException(com.skyflow.errors.ErrorCodesEnum code, String message, Throwable cause) {
+    public SkyflowException(ErrorCodesEnum code, String message, Throwable cause) {
         super(message, cause);
         this.setCode(code);
     }
 
-    public com.skyflow.errors.ErrorCodesEnum getCode() {
+    public ErrorCodesEnum getCode() {
         return code;
     }
 

@@ -1,7 +1,6 @@
-package serviceaccount.util;
+package com.skyflow.serviceaccount.util;
 
 import com.skyflow.errors.SkyflowException;
-import com.skyflow.serviceaccount.util.Token;
 import org.junit.Assert;
 import org.junit.Test;
 
