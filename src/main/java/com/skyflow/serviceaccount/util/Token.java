@@ -90,7 +90,7 @@ public class Token {
             parameters.put("grant_type", "urn:ietf:params:oauth:grant-type:jwt-bearer");
             parameters.put("assertion", signedUserJWT);
 
-            String response = HttpUtility.sendRequest("POST", tokenURI, parameters);
+            String response = HttpUtility.sendRequest("POST", tokenURI, parameters, null);
 
             responseToken = new ObjectMapper().readValue(response, ResponseToken.class);
 

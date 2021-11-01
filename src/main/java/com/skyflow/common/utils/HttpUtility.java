@@ -8,10 +8,11 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 
 public class HttpUtility {
 
-    public static String sendRequest(String method, String requestUrl, JSONObject params) throws IOException, SkyflowException {
+    public static String sendRequest(String method, String requestUrl, JSONObject params, Map<String, String> headers) throws IOException, SkyflowException {
         HttpURLConnection connection = null;
         BufferedReader in = null;
         StringBuffer response = null;
@@ -21,6 +22,12 @@ public class HttpUtility {
             connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod(method);
             connection.setRequestProperty("Content-Type", "application/json");
+
+            if(headers != null && headers.size() > 0) {
+                for (Map.Entry<String,String> entry : headers.entrySet()) {
+                    connection.setRequestProperty(entry.getKey(), entry.getValue());
+                }
+            }
 
             if (params != null && params.size() > 0) {
                 connection.setDoOutput(true);
