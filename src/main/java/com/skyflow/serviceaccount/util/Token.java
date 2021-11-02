@@ -3,8 +3,10 @@ package com.skyflow.serviceaccount.util;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.skyflow.common.utils.Helpers;
 import com.skyflow.common.utils.HttpUtility;
 import com.skyflow.entities.ResponseToken;
+import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.SkyflowException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -27,9 +29,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 import java.util.Date;
 
-import static com.skyflow.errors.ErrorCodesEnum.InvalidInput;
-import static com.skyflow.errors.ErrorCodesEnum.Server;
-
 public class Token {
 
     /**
@@ -50,11 +49,11 @@ public class Token {
             responseToken = getSATokenFromCredsFile(saCreds);
 
         } catch (FileNotFoundException e) {
-            throw new SkyflowException(InvalidInput, String.format("Unable to open credentials - file %s", path), e);
+            throw new SkyflowException(ErrorCode.InvalidCredentialsPath.getCode(), Helpers.parameterizedString(ErrorCode.InvalidCredentialsPath.getDescription(), String.valueOf(path)),e);
         } catch (IOException e) {
-            throw new SkyflowException(InvalidInput, String.format("Unable to open credentials - file %s", path), e);
+            throw new SkyflowException(ErrorCode.InvalidCredentialsPath.getCode(), Helpers.parameterizedString(ErrorCode.InvalidCredentialsPath.getDescription(), String.valueOf(path)),e);
         } catch (ParseException e) {
-            throw new SkyflowException(InvalidInput, String.format("Provided json file is in wrong format - file %s", path), e);
+            throw new SkyflowException(ErrorCode.InvalidJsonFormat.getCode(),Helpers.parameterizedString(ErrorCode.InvalidJsonFormat.getDescription(),String.valueOf(path)),e);
         }
 
         return responseToken;
@@ -71,15 +70,15 @@ public class Token {
         try {
             String clientID = (String) creds.get("clientID");
             if (clientID == null) {
-                throw new SkyflowException(InvalidInput, "Unable to read clientID");
+                throw new SkyflowException(ErrorCode.InvalidClientID);
             }
             String keyID = (String) creds.get("keyID");
             if (keyID == null) {
-                throw new SkyflowException(InvalidInput, "Unable to read keyID");
+                throw new SkyflowException(ErrorCode.InvalidKeyID);
             }
             String tokenURI = (String) creds.get("tokenURI");
             if (tokenURI == null) {
-                throw new SkyflowException(InvalidInput, "Unable to read tokenURI");
+                throw new SkyflowException(ErrorCode.InvalidTokenURI);
             }
 
             PrivateKey pvtKey = getPrivateKeyFromPem((String) creds.get("privateKey"));
@@ -95,11 +94,11 @@ public class Token {
             responseToken = new ObjectMapper().readValue(response, ResponseToken.class);
 
         } catch (JsonMappingException e) {
-            throw new SkyflowException(Server, "Unable to read response payload", e);
+            throw new SkyflowException(ErrorCode.UnableToReadResponse, e);
         } catch (JsonParseException e) {
-            throw new SkyflowException(Server, "Unable to read response payload", e);
+            throw new SkyflowException(ErrorCode.UnableToReadResponse, e);
         } catch (IOException e) {
-            throw new SkyflowException(Server, "Unable to read response payload", e);
+            throw new SkyflowException(ErrorCode.UnableToReadResponse, e);
         }
 
         return responseToken;
@@ -128,7 +127,7 @@ public class Token {
             privateKeyContent = privateKeyContent.replace("\r\n", "");
             privateKey = parsePkcs8PrivateKey(Base64.getDecoder().decode(privateKeyContent));
         } else {
-            throw new SkyflowException(InvalidInput, "Unable to retrieve RSA private key");
+            throw new SkyflowException(ErrorCode.UnableToRetrieveRSA);
         }
         return privateKey;
     }
@@ -144,9 +143,9 @@ public class Token {
             keyFactory = KeyFactory.getInstance("RSA");
             privateKey = keyFactory.generatePrivate(keySpec);
         } catch (NoSuchAlgorithmException e) {
-            throw new SkyflowException(InvalidInput, "Invalid algorithm", e);
+            throw new SkyflowException(ErrorCode.NoSuchAlgorithm, e);
         } catch (InvalidKeySpecException e) {
-            throw new SkyflowException(InvalidInput, "Unable to parse RSA private key", e);
+            throw new SkyflowException(ErrorCode.InvalidKeySpec, e);
         }
         return privateKey;
     }

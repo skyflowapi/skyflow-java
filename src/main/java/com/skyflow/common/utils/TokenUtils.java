@@ -1,6 +1,7 @@
 package com.skyflow.common.utils;
 
 import com.skyflow.entities.TokenProvider;
+import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.SkyflowException;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -10,8 +11,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Date;
 
-import static com.skyflow.errors.ErrorCodesEnum.InvalidInput;
-
 public class TokenUtils {
 
     private static String token = null;
@@ -20,7 +19,11 @@ public class TokenUtils {
         if (token != null && isTokenValid(token))
             return token;
 
-        token = tokenProvider.getBearerToken();
+        try {
+            token = tokenProvider.getBearerToken();
+        } catch (Exception e) {
+            throw new SkyflowException(ErrorCode.BearerThrownException.getCode(),e.getMessage(),e);
+        }
         return token;
     }
 
@@ -30,7 +33,7 @@ public class TokenUtils {
                 return !isExpired(token);
             }
         } catch (ParseException e) {
-            throw new SkyflowException(InvalidInput, String.format("Invalid token"), e);
+            throw new SkyflowException(ErrorCode.InvalidBearerToken,e);
         }
 
         return false;
