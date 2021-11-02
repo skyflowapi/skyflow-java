@@ -1,6 +1,5 @@
 package com.skyflow.common.utils;
 
-import com.skyflow.errors.ErrorCodesEnum;
 import com.skyflow.errors.SkyflowException;
 import org.json.simple.JSONObject;
 
@@ -23,8 +22,8 @@ public class HttpUtility {
             connection.setRequestMethod(method);
             connection.setRequestProperty("Content-Type", "application/json");
 
-            if(headers != null && headers.size() > 0) {
-                for (Map.Entry<String,String> entry : headers.entrySet()) {
+            if (headers != null && headers.size() > 0) {
+                for (Map.Entry<String, String> entry : headers.entrySet()) {
                     connection.setRequestProperty(entry.getKey(), entry.getValue());
                 }
             }
@@ -55,7 +54,7 @@ public class HttpUtility {
             }
 
             if (status > 299) {
-                throw new SkyflowException(ErrorCodesEnum.Server, response.toString());
+                throw new SkyflowException(status, response.toString());
             }
         } finally {
             if (in != null) {

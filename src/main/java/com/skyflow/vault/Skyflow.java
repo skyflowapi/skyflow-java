@@ -6,21 +6,22 @@ import com.skyflow.common.utils.Helpers;
 import com.skyflow.common.utils.HttpUtility;
 import com.skyflow.common.utils.TokenUtils;
 import com.skyflow.common.utils.Validators;
-import com.skyflow.entities.InsertInput;
-import com.skyflow.entities.InsertOptions;
-import com.skyflow.entities.SkyflowConfiguration;
+import com.skyflow.entities.*;
+import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.SkyflowException;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static com.skyflow.errors.ErrorCodesEnum.InvalidInput;
-import static com.skyflow.errors.ErrorCodesEnum.Server;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.FutureTask;
 
 public class Skyflow {
     private final SkyflowConfiguration configuration;
@@ -49,13 +50,67 @@ public class Skyflow {
             insertResponse = (JSONObject) new JSONParser().parse(response);
             insertResponse = Helpers.constructInsertResponse(insertResponse, (List) requestBody.get("records"), insertOptions.isTokens());
         } catch (IOException e) {
-            throw new SkyflowException(InvalidInput, "Invalid insert input", e);
+            throw new SkyflowException(ErrorCode.InvalidInsertInput, e);
         } catch (SkyflowException e) {
             throw e;
         } catch (ParseException e) {
-            throw new SkyflowException(Server, "Unable to parse insert response", e);
+            throw new SkyflowException(ErrorCode.UnableToParseInsertResponse, e);
         }
 
         return insertResponse;
+    }
+
+    public JSONObject detokenize(JSONObject records) throws SkyflowException {
+        JSONArray successRecordsArray = new JSONArray();
+        JSONArray errorRecordsArray = new JSONArray();
+        try {
+            DetokenizeInput detokenizeInput = new ObjectMapper().readValue(records.toJSONString(), DetokenizeInput.class);
+            DetokenizeRecord[] inputRecords = detokenizeInput.getRecords();
+            System.out.println(Arrays.toString(inputRecords));
+            String apiEndpointURL = this.configuration.getVaultURL() + "/v1/vaults/" + this.configuration.getVaultID() + "/detokenize";
+            Map<String, String> headers = new HashMap<>();
+            headers.put("Authorization", "Bearer " + TokenUtils.getBearerToken(configuration.getTokenProvider()));
+
+            FutureTask[] futureTasks = new FutureTask[inputRecords.length];
+            for (int index = 0; index < inputRecords.length; index++) {
+                Callable<String> callable = new Detokenize(inputRecords[index], apiEndpointURL, headers);
+                futureTasks[index] = new FutureTask(callable);
+                Thread thread = new Thread(futureTasks[index]);
+                thread.start();
+            }
+            for (FutureTask task : futureTasks) {
+                try {
+                    String taskData = (String) task.get();
+                    System.out.println(taskData);
+                    JSONParser parser = new JSONParser();
+                    JSONObject responseJson = (JSONObject) parser.parse(taskData);
+                    if (responseJson.containsKey("error")) {
+                        errorRecordsArray.add(responseJson);
+                    } else if (responseJson.containsKey("value")) {
+                        successRecordsArray.add(responseJson);
+                    }
+
+                } catch (ExecutionException | ParseException e) {
+                    e.printStackTrace();
+                }
+            }
+        } catch (IOException exception) {
+            throw new SkyflowException(ErrorCode.InvalidDetokenizeInput, exception);
+        } catch (InterruptedException exception) {
+            exception.printStackTrace();
+        }
+        JSONObject finalResponse = new JSONObject();
+        if (errorRecordsArray.isEmpty()) {
+            finalResponse.put("records", successRecordsArray);
+            return finalResponse;
+        } else if (successRecordsArray.isEmpty()) {
+            finalResponse.put("errors", errorRecordsArray);
+            throw new SkyflowException(400, "partial error", finalResponse);
+        } else {
+            finalResponse.put("records", successRecordsArray);
+            finalResponse.put("errors", errorRecordsArray);
+            throw new SkyflowException(400, "partial error", finalResponse);
+        }
+
     }
 }

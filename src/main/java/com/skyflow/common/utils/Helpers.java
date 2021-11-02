@@ -77,4 +77,11 @@ public class Helpers {
         insertResponse.put("records", updatedResponses);
         return insertResponse;
     }
+
+    public static String parameterizedString(String base,String... args){
+        for (int index = 0; index < args.length; index++) {
+            base = base.replace("%s"+(index+1),args[index]);
+        }
+        return base;
+    }
 }
