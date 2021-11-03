@@ -40,7 +40,6 @@ public class GetBySkyflowId implements Callable<String> {
             String url = vaultURL + "/v1/vaults/" + vaultID + "/" +
                     record.getTable() + "?" + paramsList + "redaction=" + record.getRedaction();
 
-            System.out.println(url);
             response = HttpUtility.sendRequest("GET", url, null, headers);
 
             JSONObject formattedResponse = new JSONObject();

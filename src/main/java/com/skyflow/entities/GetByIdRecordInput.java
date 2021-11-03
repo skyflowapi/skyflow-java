@@ -3,7 +3,7 @@ package com.skyflow.entities;
 public class GetByIdRecordInput {
     private String[] ids;
     private String table;
-    private String redaction;
+    private RedactionType redaction;
 
     public String[] getIds() {
         return ids;
@@ -21,11 +21,11 @@ public class GetByIdRecordInput {
         this.table = table;
     }
 
-    public String getRedaction() {
+    public RedactionType getRedaction() {
         return redaction;
     }
 
-    public void setRedaction(String redaction) {
+    public void setRedaction(RedactionType redaction) {
         this.redaction = redaction;
     }
 }
