@@ -15,10 +15,7 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
@@ -54,7 +51,7 @@ public class Skyflow {
         } catch (SkyflowException e) {
             throw e;
         } catch (ParseException e) {
-            throw new SkyflowException(ErrorCode.UnableToParseInsertResponse, e);
+            throw new SkyflowException(ErrorCode.ResponseParsingError, e);
         }
 
         return insertResponse;
@@ -112,5 +109,59 @@ public class Skyflow {
             throw new SkyflowException(400, "partial error", finalResponse);
         }
 
+    }
+
+    public JSONObject getById(JSONObject getByIdInput) throws SkyflowException {
+        JSONObject finalResponse = new JSONObject();
+        JSONArray successRecordsArray = new JSONArray();
+        JSONArray errorRecordsArray = new JSONArray();
+        try {
+            GetByIdInput input = new ObjectMapper().readValue(getByIdInput.toString(), GetByIdInput.class);
+            GetByIdRecordInput[] recordInputs = input.getRecords();
+
+            Map<String, String> headers = new HashMap<>();
+            headers.put("Authorization", "Bearer " + TokenUtils.getBearerToken(configuration.getTokenProvider()));
+
+            FutureTask[] futureTasks = new FutureTask[recordInputs.length];
+            for (int i = 0; i < recordInputs.length; i++) {
+                Callable<String> callable = new GetBySkyflowId(recordInputs[i], configuration.getVaultID(), configuration.getVaultURL(), headers);
+                futureTasks[i] = new FutureTask(callable);
+
+                Thread t = new Thread(futureTasks[i]);
+                t.start();
+            }
+
+            for (FutureTask task : futureTasks) {
+                String taskData = (String) task.get();
+                JSONObject responseJson = (JSONObject) new JSONParser().parse(taskData);
+                if (responseJson.containsKey("error")) {
+                    errorRecordsArray.add(responseJson);
+                } else if (responseJson.containsKey("records")) {
+                    successRecordsArray.addAll((Collection) responseJson.get("records"));
+                }
+            }
+
+            if (errorRecordsArray.isEmpty()) {
+                finalResponse.put("records", successRecordsArray);
+            } else if (successRecordsArray.isEmpty()) {
+                finalResponse.put("errors", errorRecordsArray);
+                throw new SkyflowException(400, "error", finalResponse);
+            } else {
+                finalResponse.put("records", successRecordsArray);
+                finalResponse.put("errors", errorRecordsArray);
+                throw new SkyflowException(400, "partial error", finalResponse);
+            }
+
+        } catch (IOException e) {
+            throw new SkyflowException(ErrorCode.InvalidGetByIdInput, e);
+        } catch (InterruptedException e) {
+            throw new SkyflowException(ErrorCode.ThreadInterruptedException, e);
+        } catch (ExecutionException e) {
+            throw new SkyflowException(ErrorCode.ThreadExecutionException, e);
+        } catch (ParseException e) {
+            throw new SkyflowException(ErrorCode.ResponseParsingError, e);
+        }
+
+        return finalResponse;
     }
 }

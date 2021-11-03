@@ -16,7 +16,11 @@ public enum ErrorCode {
     BearerThrownException(400,"getBearer() thrown exception"),
     InvalidDetokenizeInput(400,"Invalid Detokenize Input"),
     InvalidInsertInput(400,"Invalid insert input"),
-    UnableToParseInsertResponse(400,"Unable to parse insert response"),
+    InvalidGetByIdInput(400,"Invalid getById input"),
+    ResponseParsingError(500,"Unable to parse response"),
+    ThreadInterruptedException(500, "Thread was interrupted"),
+    ThreadExecutionException(500, "ThreadExecution exception"),
+    Server(500, "Internal server error")
     ;
     private final int code;
     private final String description;
