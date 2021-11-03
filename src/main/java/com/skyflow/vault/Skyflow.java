@@ -15,7 +15,10 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
@@ -58,6 +61,7 @@ public class Skyflow {
     }
 
     public JSONObject detokenize(JSONObject records) throws SkyflowException {
+        JSONObject finalResponse = new JSONObject();
         JSONArray successRecordsArray = new JSONArray();
         JSONArray errorRecordsArray = new JSONArray();
         try {
@@ -80,38 +84,35 @@ public class Skyflow {
                 thread.start();
             }
             for (FutureTask task : futureTasks) {
-                try {
-                    String taskData = (String) task.get();
-                    JSONParser parser = new JSONParser();
-                    JSONObject responseJson = (JSONObject) parser.parse(taskData);
-                    if (responseJson.containsKey("error")) {
-                        errorRecordsArray.add(responseJson);
-                    } else if (responseJson.containsKey("value")) {
-                        successRecordsArray.add(responseJson);
-                    }
-
-                } catch (ExecutionException | ParseException e) {
-                    e.printStackTrace();
+                String taskData = (String) task.get();
+                JSONParser parser = new JSONParser();
+                JSONObject responseJson = (JSONObject) parser.parse(taskData);
+                if (responseJson.containsKey("error")) {
+                    errorRecordsArray.add(responseJson);
+                } else if (responseJson.containsKey("value")) {
+                    successRecordsArray.add(responseJson);
                 }
+            }
+            if (errorRecordsArray.isEmpty()) {
+                finalResponse.put("records", successRecordsArray);
+            } else if (successRecordsArray.isEmpty()) {
+                finalResponse.put("errors", errorRecordsArray);
+                throw new SkyflowException(400, "partial error", finalResponse);
+            } else {
+                finalResponse.put("records", successRecordsArray);
+                finalResponse.put("errors", errorRecordsArray);
+                throw new SkyflowException(400, "partial error", finalResponse);
             }
         } catch (IOException exception) {
             throw new SkyflowException(ErrorCode.InvalidDetokenizeInput, exception);
-        } catch (InterruptedException exception) {
-            exception.printStackTrace();
+        } catch (InterruptedException e) {
+            throw new SkyflowException(ErrorCode.ThreadInterruptedException, e);
+        } catch (ExecutionException e) {
+            throw new SkyflowException(ErrorCode.ThreadExecutionException, e);
+        } catch (ParseException e) {
+            throw new SkyflowException(ErrorCode.ResponseParsingError, e);
         }
-        JSONObject finalResponse = new JSONObject();
-        if (errorRecordsArray.isEmpty()) {
-            finalResponse.put("records", successRecordsArray);
-            return finalResponse;
-        } else if (successRecordsArray.isEmpty()) {
-            finalResponse.put("errors", errorRecordsArray);
-            throw new SkyflowException(400, "partial error", finalResponse);
-        } else {
-            finalResponse.put("records", successRecordsArray);
-            finalResponse.put("errors", errorRecordsArray);
-            throw new SkyflowException(400, "partial error", finalResponse);
-        }
-
+        return finalResponse;
     }
 
     public JSONObject getById(JSONObject getByIdInput) throws SkyflowException {
