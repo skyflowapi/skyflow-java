@@ -3,6 +3,8 @@ package com.skyflow.common.utils;
 import com.skyflow.entities.InsertInput;
 import com.skyflow.entities.InsertOptions;
 import com.skyflow.entities.InsertRecordInput;
+import com.skyflow.errors.ErrorCode;
+import com.skyflow.errors.SkyflowException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -12,14 +14,25 @@ import java.util.List;
 
 public class Helpers {
 
-    public static JSONObject constructInsertRequest(InsertInput recordsInput, InsertOptions options) {
+    public static JSONObject constructInsertRequest(InsertInput recordsInput, InsertOptions options) throws SkyflowException {
         JSONObject finalRequest = new JSONObject();
         List<JSONObject> requestBodyContent = new ArrayList<JSONObject>();
         boolean isTokens = options.isTokens();
         InsertRecordInput[] records = recordsInput.getRecords();
 
+        if (records == null || records.length == 0) {
+            throw new SkyflowException(ErrorCode.EmptyRecords);
+        }
+
         for (int i = 0; i < records.length; i++) {
             InsertRecordInput record = records[i];
+
+            if(record.getTable() == null || record.getTable().isEmpty()) {
+                throw new SkyflowException(ErrorCode.InvalidTable);
+            }
+            if(record.getFields() == null) {
+                throw new SkyflowException(ErrorCode.InvalidFields);
+            }
 
             JSONObject postRequestInput = new JSONObject();
             postRequestInput.put("method", "POST");
@@ -45,7 +58,7 @@ public class Helpers {
     public static JSONObject constructInsertResponse(JSONObject response, List requestRecords, boolean tokens) {
 
         JSONArray responses = (JSONArray) response.get("responses");
-        List<JSONObject> updatedResponses = new ArrayList<>();
+        JSONArray updatedResponses = new JSONArray();
         JSONObject insertResponse = new JSONObject();
         if (tokens) {
             for (int index = 0; index < responses.size(); index++) {
@@ -58,7 +71,6 @@ public class Helpers {
                     JSONObject newFields = (JSONObject) ((JSONObject) responses.get(index)).get("fields");
                     newFields.remove("*");
                     newFields.put("skyflow_id", skyflowId);
-
                     newObj.put("fields", newFields);
 
                     updatedResponses.add(newObj);
@@ -78,9 +90,9 @@ public class Helpers {
         return insertResponse;
     }
 
-    public static String parameterizedString(String base,String... args){
+    public static String parameterizedString(String base, String... args) {
         for (int index = 0; index < args.length; index++) {
-            base = base.replace("%s"+(index+1),args[index]);
+            base = base.replace("%s" + (index + 1), args[index]);
         }
         return base;
     }

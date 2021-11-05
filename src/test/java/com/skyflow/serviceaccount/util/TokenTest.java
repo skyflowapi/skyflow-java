@@ -1,7 +1,9 @@
 package com.skyflow.serviceaccount.util;
 
+import com.skyflow.entities.ResponseToken;
 import com.skyflow.errors.SkyflowException;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.nio.file.Paths;
@@ -24,5 +26,16 @@ public class TokenTest {
         });
         String expectedMessage = "Unable to read clientID";
         Assert.assertTrue(exception.getMessage().contains(expectedMessage));
+    }
+
+    @Test
+    public void testValidFileContent() {
+        try{
+            ResponseToken token = Token.GenerateToken(Paths.get(System.getProperty("TEST_CREDENTIALS_PATH")).toString());
+            Assert.assertNotNull(token.getAccessToken());
+            Assert.assertEquals("Bearer", token.getTokenType());
+        } catch (SkyflowException skyflowException) {
+            skyflowException.printStackTrace();
+        }
     }
 }
