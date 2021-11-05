@@ -37,6 +37,10 @@ public class GetBySkyflowId implements Callable<String> {
                 paramsList.append("skyflow_ids=" + id + "&");
             }
 
+            if(record.getTable() == null || record.getTable().isEmpty()) {
+                throw new SkyflowException(ErrorCode.InvalidTable);
+            }
+
             String url = vaultURL + "/v1/vaults/" + vaultID + "/" +
                     record.getTable() + "?" + paramsList + "redaction=" + record.getRedaction();
 

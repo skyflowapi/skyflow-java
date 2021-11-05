@@ -63,7 +63,11 @@ public class Skyflow {
         try {
             DetokenizeInput detokenizeInput = new ObjectMapper().readValue(records.toJSONString(), DetokenizeInput.class);
             DetokenizeRecord[] inputRecords = detokenizeInput.getRecords();
-            System.out.println(Arrays.toString(inputRecords));
+
+            if (inputRecords == null || inputRecords.length == 0) {
+                throw new SkyflowException(ErrorCode.EmptyRecords);
+            }
+
             String apiEndpointURL = this.configuration.getVaultURL() + "/v1/vaults/" + this.configuration.getVaultID() + "/detokenize";
             Map<String, String> headers = new HashMap<>();
             headers.put("Authorization", "Bearer " + TokenUtils.getBearerToken(configuration.getTokenProvider()));
@@ -78,7 +82,6 @@ public class Skyflow {
             for (FutureTask task : futureTasks) {
                 try {
                     String taskData = (String) task.get();
-                    System.out.println(taskData);
                     JSONParser parser = new JSONParser();
                     JSONObject responseJson = (JSONObject) parser.parse(taskData);
                     if (responseJson.containsKey("error")) {
@@ -118,6 +121,10 @@ public class Skyflow {
         try {
             GetByIdInput input = new ObjectMapper().readValue(getByIdInput.toString(), GetByIdInput.class);
             GetByIdRecordInput[] recordInputs = input.getRecords();
+
+            if (recordInputs == null || recordInputs.length == 0) {
+                throw new SkyflowException(ErrorCode.EmptyRecords);
+            }
 
             Map<String, String> headers = new HashMap<>();
             headers.put("Authorization", "Bearer " + TokenUtils.getBearerToken(configuration.getTokenProvider()));

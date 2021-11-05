@@ -2,6 +2,7 @@ package com.skyflow.vault;
 
 import com.skyflow.common.utils.HttpUtility;
 import com.skyflow.entities.DetokenizeRecord;
+import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.SkyflowException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -24,17 +25,22 @@ public class Detokenize implements Callable<String> {
     }
 
     @Override
-    public String call() {
+    public String call() throws SkyflowException {
         String response = null;
 
-        JSONObject bodyJson = new JSONObject();
-        JSONArray tokensArray = new JSONArray();
-        JSONObject token = new JSONObject();
-        token.put("token", record.getToken());
-        tokensArray.add(token);
-        bodyJson.put("detokenizationParameters", tokensArray);
-
         try {
+            if (record.getToken() == null || record.getToken().isEmpty()) {
+                throw new SkyflowException(ErrorCode.InvalidToken);
+            }
+
+            JSONObject bodyJson = new JSONObject();
+            JSONArray tokensArray = new JSONArray();
+            JSONObject token = new JSONObject();
+            token.put("token", record.getToken());
+            tokensArray.add(token);
+            bodyJson.put("detokenizationParameters", tokensArray);
+
+
             String apiResponse = HttpUtility.sendRequest("POST", endPointURL, bodyJson, headers);
             JSONParser parser = new JSONParser();
             JSONObject responseJson = (JSONObject) parser.parse(apiResponse);
