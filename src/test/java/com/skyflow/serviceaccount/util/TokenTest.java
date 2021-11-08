@@ -31,7 +31,7 @@ public class TokenTest {
     @Test
     public void testValidFileContent() {
         try{
-            ResponseToken token = Token.GenerateToken(Paths.get(System.getProperty("TEST_CREDENTIALS_PATH")).toString());
+            ResponseToken token = Token.GenerateToken(Paths.get(System.getProperty("TEST_CREDENTIALS_FILE_PATH")).toString());
             Assert.assertNotNull(token.getAccessToken());
             Assert.assertEquals("Bearer", token.getTokenType());
         } catch (SkyflowException skyflowException) {
