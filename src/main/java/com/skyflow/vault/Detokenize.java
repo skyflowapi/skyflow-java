@@ -28,11 +28,10 @@ public class Detokenize implements Callable<String> {
     public String call() throws SkyflowException {
         String response = null;
 
+        try {
             if (record.getToken() == null || record.getToken().isEmpty()) {
                 throw new SkyflowException(ErrorCode.InvalidToken);
             }
-
-        try {
             JSONObject bodyJson = new JSONObject();
             JSONArray tokensArray = new JSONArray();
             JSONObject token = new JSONObject();

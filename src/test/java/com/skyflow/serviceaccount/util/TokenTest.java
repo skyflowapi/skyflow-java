@@ -3,7 +3,6 @@ package com.skyflow.serviceaccount.util;
 import com.skyflow.entities.ResponseToken;
 import com.skyflow.errors.SkyflowException;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 import java.nio.file.Paths;

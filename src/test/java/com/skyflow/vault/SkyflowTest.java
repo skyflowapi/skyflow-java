@@ -279,7 +279,7 @@ public class SkyflowTest {
             assertEquals(token, ((JSONObject) responseRecords.get(0)).get("token"));
             assertTrue(((JSONObject) responseRecords.get(0)).containsKey("value"));
         } catch (SkyflowException skyflowException) {
-            JSONArray errors =  (JSONArray) skyflowException.getData().get("errors");
+            JSONArray errors = (JSONArray) skyflowException.getData().get("errors");
             assertEquals(1, errors.size());
         }
     }
@@ -391,7 +391,7 @@ public class SkyflowTest {
             JSONObject response = skyflowClient.getById(records);
 
         } catch (SkyflowException e) {
-            JSONArray errors =  (JSONArray) e.getData().get("errors");
+            JSONArray errors = (JSONArray) e.getData().get("errors");
             assertEquals(1, errors.size());
         }
     }
@@ -427,9 +427,9 @@ public class SkyflowTest {
             JSONObject response = skyflowClient.getById(records);
 
         } catch (SkyflowException e) {
-           JSONObject partialError = e.getData();
-           assertTrue(partialError.containsKey("records"));
-           assertTrue(partialError.containsKey("errors"));
+            JSONObject partialError = e.getData();
+            assertTrue(partialError.containsKey("records"));
+            assertTrue(partialError.containsKey("errors"));
         }
     }
 

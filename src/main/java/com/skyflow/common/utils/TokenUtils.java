@@ -21,8 +21,11 @@ public class TokenUtils {
 
         try {
             token = tokenProvider.getBearerToken();
+            isTokenValid(token);
+        } catch (SkyflowException exception) {
+            throw exception;
         } catch (Exception e) {
-            throw new SkyflowException(ErrorCode.BearerThrownException.getCode(),e.getMessage(),e);
+            throw new SkyflowException(ErrorCode.BearerThrownException.getCode(), e.getMessage(), e);
         }
         return token;
     }
@@ -33,7 +36,7 @@ public class TokenUtils {
                 return !isExpired(token);
             }
         } catch (ParseException e) {
-            throw new SkyflowException(ErrorCode.InvalidBearerToken,e);
+            throw new SkyflowException(ErrorCode.InvalidBearerToken, e);
         }
 
         return false;

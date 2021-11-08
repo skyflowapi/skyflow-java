@@ -172,4 +172,33 @@ public class Skyflow {
 
         return finalResponse;
     }
+
+    public JSONObject invokeConnection(JSONObject connectionConfig) throws SkyflowException {
+        JSONObject connectionResponse;
+        try {
+            Validators.validateConnectionConfiguration(connectionConfig);
+            String filledURL = Helpers.constructConnectionURL(connectionConfig);
+
+            Map<String, String> headers = new HashMap<>();
+            if (connectionConfig.containsKey("requestHeader")) {
+                headers = Helpers.constructConnectionHeadersMap((JSONObject) connectionConfig.get("requestHeader"));
+            }
+            headers.put("X-Skyflow-Authorization", TokenUtils.getBearerToken(configuration.getTokenProvider()));
+
+            String requestMethod = connectionConfig.get("methodName").toString();
+            JSONObject requestBody = null;
+            if (connectionConfig.containsKey("requestBody")) {
+                requestBody = (JSONObject) connectionConfig.get("requestBody");
+            }
+
+            String response = HttpUtility.sendRequest(requestMethod, filledURL, requestBody, headers);
+            connectionResponse = (JSONObject) new JSONParser().parse(response);
+
+        } catch (IOException exception) {
+            throw new SkyflowException(ErrorCode.InvalidConnectionInput, exception);
+        } catch (ParseException exception) {
+            throw new SkyflowException(ErrorCode.ResponseParsingError, exception);
+        }
+        return connectionResponse;
+    }
 }

@@ -37,7 +37,6 @@ public class Token {
      * @param filepath
      */
     public static ResponseToken GenerateToken(String filepath) throws SkyflowException {
-
         JSONParser parser = new JSONParser();
         ResponseToken responseToken = null;
         Path path = null;
@@ -49,11 +48,11 @@ public class Token {
             responseToken = getSATokenFromCredsFile(saCreds);
 
         } catch (FileNotFoundException e) {
-            throw new SkyflowException(ErrorCode.InvalidCredentialsPath.getCode(), Helpers.parameterizedString(ErrorCode.InvalidCredentialsPath.getDescription(), String.valueOf(path)),e);
+            throw new SkyflowException(ErrorCode.InvalidCredentialsPath.getCode(), Helpers.parameterizedString(ErrorCode.InvalidCredentialsPath.getDescription(), String.valueOf(path)), e);
         } catch (IOException e) {
-            throw new SkyflowException(ErrorCode.InvalidCredentialsPath.getCode(), Helpers.parameterizedString(ErrorCode.InvalidCredentialsPath.getDescription(), String.valueOf(path)),e);
+            throw new SkyflowException(ErrorCode.InvalidCredentialsPath.getCode(), Helpers.parameterizedString(ErrorCode.InvalidCredentialsPath.getDescription(), String.valueOf(path)), e);
         } catch (ParseException e) {
-            throw new SkyflowException(ErrorCode.InvalidJsonFormat.getCode(),Helpers.parameterizedString(ErrorCode.InvalidJsonFormat.getDescription(),String.valueOf(path)),e);
+            throw new SkyflowException(ErrorCode.InvalidJsonFormat.getCode(), Helpers.parameterizedString(ErrorCode.InvalidJsonFormat.getDescription(), String.valueOf(path)), e);
         }
 
         return responseToken;
@@ -63,7 +62,6 @@ public class Token {
      * getSATokenFromCredsFile gets bearer token from service account endpoint
      *
      * @param creds
-     *
      */
     public static ResponseToken getSATokenFromCredsFile(JSONObject creds) throws SkyflowException {
         ResponseToken responseToken = null;

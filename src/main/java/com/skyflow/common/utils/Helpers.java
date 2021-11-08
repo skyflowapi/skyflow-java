@@ -9,7 +9,9 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 public class Helpers {
@@ -27,10 +29,10 @@ public class Helpers {
         for (int i = 0; i < records.length; i++) {
             InsertRecordInput record = records[i];
 
-            if(record.getTable() == null || record.getTable().isEmpty()) {
+            if (record.getTable() == null || record.getTable().isEmpty()) {
                 throw new SkyflowException(ErrorCode.InvalidTable);
             }
-            if(record.getFields() == null) {
+            if (record.getFields() == null) {
                 throw new SkyflowException(ErrorCode.InvalidFields);
             }
 
@@ -96,4 +98,38 @@ public class Helpers {
         }
         return base;
     }
+
+    public static String constructConnectionURL(JSONObject config) {
+        StringBuilder filledURL = new StringBuilder((String) config.get("connectionURL"));
+
+        if (config.containsKey("pathParams")) {
+            JSONObject pathParams = (JSONObject) config.get("pathParams");
+            for (Object key : pathParams.keySet()) {
+                Object value = pathParams.get(key);
+                filledURL = new StringBuilder(filledURL.toString().replace(String.format("{%s}", key), (String) value));
+            }
+        }
+
+        if (config.containsKey("queryParams")) {
+            JSONObject queryParams = (JSONObject) config.get("queryParams");
+            filledURL.append("?");
+            for (Object key : queryParams.keySet()) {
+                Object value = queryParams.get(key);
+                filledURL.append(key).append("=").append(value).append("&");
+            }
+            filledURL = new StringBuilder(filledURL.substring(0, filledURL.length() - 1));
+
+        }
+        return filledURL.toString();
+    }
+
+    public static Map<String, String> constructConnectionHeadersMap(JSONObject configHeaders) {
+        Map<String, String> headersMap = new HashMap<>();
+        for (Object key : configHeaders.keySet()) {
+            Object value = configHeaders.get(key);
+            headersMap.put((String) key, (String) value);
+        }
+        return headersMap;
+    }
+
 }
