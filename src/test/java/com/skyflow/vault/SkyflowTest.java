@@ -47,16 +47,16 @@ public class SkyflowTest {
         }
     }
 
-    @Test
-    public void testValidConfigWithOptions() {
-        SkyflowConfiguration testConfig = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider(), new Options(LogLevel.DEBUG));
-        try {
-            Skyflow skyflow = Skyflow.init(testConfig);
-            assert (skyflow instanceof Skyflow);
-        } catch (SkyflowException e) {
-            assertNotNull(e);
-        }
-    }
+//    @Test
+//    public void testValidConfigWithOptions() {
+//        SkyflowConfiguration testConfig = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider(), new Options(LogLevel.DEBUG));
+//        try {
+//            Skyflow skyflow = Skyflow.init(testConfig);
+//            assert (skyflow instanceof Skyflow);
+//        } catch (SkyflowException e) {
+//            assertNotNull(e);
+//        }
+//    }
 
     @Test
     public void testInvalidConfigWithEmptyVaultID() {

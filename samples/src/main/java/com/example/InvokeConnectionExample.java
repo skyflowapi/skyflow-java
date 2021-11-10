@@ -1,3 +1,12 @@
+import com.skyflow.entities.RedactionType;
+import com.skyflow.vault.Skyflow;
+import com.skyflow.entities.TokenProvider;
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.entities.ResponseToken;
+import com.skyflow.entities.SkyflowConfiguration;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+
 public class InvokeConnectionExample {
     class DemoTokenProvider implements TokenProvider {
 
@@ -13,8 +22,9 @@ public class InvokeConnectionExample {
             return res.getAccessToken();
         }
     }
+
     public static void main(String[] args) {
-        try{
+        try {
             SkyflowConfiguration config = new SkyflowConfiguration("<your_vaultID>",
                     "<your_vaultURL>", new DemoTokenProvider());
             Skyflow skyflowClient = Skyflow.init(config);
@@ -41,7 +51,7 @@ public class InvokeConnectionExample {
             JSONObject gatewayResponse = skyflowClient.invokeConnection(testConfig);
             System.out.println(gatewayResponse);
 
-        }catch (SkyflowException exception){
+        } catch (SkyflowException exception) {
             exception.printStackTrace();
         }
     }

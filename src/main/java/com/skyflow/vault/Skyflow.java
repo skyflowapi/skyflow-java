@@ -97,11 +97,11 @@ public class Skyflow {
                 finalResponse.put("records", successRecordsArray);
             } else if (successRecordsArray.isEmpty()) {
                 finalResponse.put("errors", errorRecordsArray);
-                throw new SkyflowException(400, "partial error", finalResponse);
+                throw new SkyflowException(500, "Server returned errors, check SkyflowException.getData() for more", finalResponse);
             } else {
                 finalResponse.put("records", successRecordsArray);
                 finalResponse.put("errors", errorRecordsArray);
-                throw new SkyflowException(400, "partial error", finalResponse);
+                throw new SkyflowException(500, "Server returned errors, check SkyflowException.getData() for more", finalResponse);
             }
         } catch (IOException exception) {
             throw new SkyflowException(ErrorCode.InvalidDetokenizeInput, exception);
@@ -153,11 +153,11 @@ public class Skyflow {
                 finalResponse.put("records", successRecordsArray);
             } else if (successRecordsArray.isEmpty()) {
                 finalResponse.put("errors", errorRecordsArray);
-                throw new SkyflowException(400, "error", finalResponse);
+                throw new SkyflowException(500, "Server returned errors, check SkyflowException.getData() for more", finalResponse);
             } else {
                 finalResponse.put("records", successRecordsArray);
                 finalResponse.put("errors", errorRecordsArray);
-                throw new SkyflowException(400, "partial error", finalResponse);
+                throw new SkyflowException(500, "Server returned errors, check SkyflowException.getData() for more", finalResponse);
             }
 
         } catch (IOException e) {
