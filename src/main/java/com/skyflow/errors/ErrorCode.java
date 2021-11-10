@@ -24,7 +24,12 @@ public enum ErrorCode {
     ResponseParsingError(500,"Unable to parse response"),
     ThreadInterruptedException(500, "Thread was interrupted"),
     ThreadExecutionException(500, "ThreadExecution exception"),
-    Server(500, "Internal server error")
+    Server(500, "Internal server error"),
+    ConnectionURLMissing(400,"connectionURL is required"),
+    InvalidConnectionURL(400,"Invalid connectionURL"),
+    MethodNameMissing(400,"methodName is required"),
+    InvalidMethodName(400,"methodName is invalid"),
+    InvalidConnectionInput(400,"Invalid connection Input")
     ;
     private final int code;
     private final String description;

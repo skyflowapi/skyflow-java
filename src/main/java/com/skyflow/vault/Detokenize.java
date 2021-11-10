@@ -32,7 +32,6 @@ public class Detokenize implements Callable<String> {
             if (record.getToken() == null || record.getToken().isEmpty()) {
                 throw new SkyflowException(ErrorCode.InvalidToken);
             }
-
             JSONObject bodyJson = new JSONObject();
             JSONArray tokensArray = new JSONArray();
             JSONObject token = new JSONObject();
@@ -48,29 +47,39 @@ public class Detokenize implements Callable<String> {
             JSONObject responseObject = (JSONObject) responseRecords.get(0);
             responseObject.remove("valueType");
             response = responseObject.toJSONString();
+        } catch (IOException e) {
+            throw new SkyflowException(ErrorCode.Server, e);
+        } catch (ParseException e) {
+            throw new SkyflowException(ErrorCode.ResponseParsingError, e);
         } catch (SkyflowException exception) {
-            String exceptionMessage = exception.getMessage();
-            int exceptionCode = exception.getCode();
-            JSONObject errorData = new JSONObject();
-            try {
-                JSONParser parser = new JSONParser();
-                JSONObject errorObject = (JSONObject) parser.parse(exceptionMessage);
-                JSONObject error = (JSONObject) errorObject.get("error");
-                errorData.put("code", error.get("http_code"));
-                errorData.put("description", error.get("message"));
-            } catch (Exception e) {
-                errorData.put("code", exceptionCode);
-                errorData.put("description", exceptionMessage);
-            }
-            JSONObject errorObject = new JSONObject();
-            errorObject.put("error", errorData);
-            errorObject.put("token", record.getToken());
-
-            response = errorObject.toJSONString();
-
-        } catch (IOException | ParseException exception) {
-            System.out.println(exception.getMessage());
+            response = parseDetokenizeError(exception);
         }
         return response;
+    }
+
+    private String parseDetokenizeError(SkyflowException exception) {
+        String errorResponse;
+        String exceptionMessage = exception.getMessage();
+        int exceptionCode = exception.getCode();
+        JSONObject errorObject = new JSONObject();
+        errorObject.put("token", record.getToken());
+        JSONObject errorData = new JSONObject();
+
+        try {
+            JSONParser parser = new JSONParser();
+            JSONObject errorJson = (JSONObject) parser.parse(exceptionMessage);
+            JSONObject error = (JSONObject) errorJson.get("error");
+            errorData.put("code", error.get("http_code"));
+            errorData.put("description", error.get("message"));
+            errorObject.put("error", errorData);
+            errorResponse = errorObject.toJSONString();
+        } catch (ParseException e) {
+            errorData.put("code", exceptionCode);
+            errorData.put("description", exceptionMessage);
+            errorObject.put("error", errorData);
+            errorResponse = errorObject.toJSONString();
+        }
+
+        return errorResponse;
     }
 }
