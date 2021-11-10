@@ -3,13 +3,21 @@ skyflow-java is the Skyflow SDK for the Java programming language.
 
 ---
 ## Usage
+### Gradle users
+
+Add this dependency to your project's build file:
+```
+implementation 'com.skyflow:skyflow-java:1.1.0'
+```
+
+### Maven users
 Add this dependency to your project's POM:
 
 ```xml
     <dependency>
         <groupId>com.skyflow</groupId>
         <artifactId>skyflow-java</artifactId>
-        <version>1.0.1</version>
+        <version>1.1.0</version>
     </dependency>
 ```
 ---
