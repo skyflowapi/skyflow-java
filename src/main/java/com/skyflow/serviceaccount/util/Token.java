@@ -44,7 +44,7 @@ public class Token {
 
     /**
      *
-     * GenerateBearerToken - Generates a Bearer Token from the given Service Account Credential file with a default timeout of 60minutes.
+     * Generates a Bearer Token from the given Service Account Credential file with a default timeout of 60minutes.
      *
      * @param filepath
      * */
@@ -69,7 +69,33 @@ public class Token {
 
         return responseToken;
     }
-    
+
+    /**
+     * Generates a Bearer Token from the given Service Account Credential json string with a default timeout of 60minutes.
+     *
+     * @param credentials JSON string of credentials file
+     *
+     * */
+
+    public static ResponseToken GenerateBearerTokenFromCreds(String credentials) throws SkyflowException{
+        JSONParser parser = new JSONParser();
+        ResponseToken responseToken = null;
+        try {
+            if(credentials.isEmpty())
+                throw new SkyflowException(ErrorCode.EmptyJSONString);
+
+            Object obj = parser.parse(credentials);
+            JSONObject saCreds = (JSONObject) obj;
+
+            responseToken = getSATokenFromCredsFile(saCreds);
+
+        } catch (ParseException e) {
+            throw new SkyflowException(ErrorCode.InvalidJSONStringFormat.getCode(), Helpers.parameterizedString(ErrorCode.InvalidJsonFormat.getDescription(),credentials), e);
+        }
+
+        return responseToken;
+    }
+
     /**
      * getSATokenFromCredsFile gets bearer token from service account endpoint
      *

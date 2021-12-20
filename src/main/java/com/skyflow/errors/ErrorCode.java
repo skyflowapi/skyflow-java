@@ -29,7 +29,9 @@ public enum ErrorCode {
     InvalidConnectionURL(400,"Invalid connectionURL"),
     MethodNameMissing(400,"methodName is required"),
     InvalidMethodName(400,"methodName is invalid"),
-    InvalidConnectionInput(400,"Invalid connection Input")
+    InvalidConnectionInput(400,"Invalid connection Input"),
+    EmptyJSONString(400, "credentials string cannot be empty"),
+    InvalidJSONStringFormat(400,"credentials string is not a valid json string format - %s1")
     ;
     private final int code;
     private final String description;
