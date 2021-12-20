@@ -18,6 +18,12 @@ public class SkyflowConfiguration {
         this.tokenProvider = tokenProvider;
 //        this.options = new Options(LogLevel.ERROR);
     }
+    public SkyflowConfiguration(TokenProvider tokenProvider){
+        logger.setLevel(Level.INFO);
+        this.vaultID = "";
+        this.vaultURL = "";
+        this.tokenProvider = tokenProvider;
+    }
 
 //    public SkyflowConfiguration(String vaultID, String vaultURL, TokenProvider tokenProvider, Options options) {
 //        this.vaultID = vaultID;

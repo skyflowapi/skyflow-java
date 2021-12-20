@@ -31,11 +31,11 @@ public class Skyflow {
     }
 
     public static Skyflow init(SkyflowConfiguration clientConfig) throws SkyflowException {
-        Validators.validateConfiguration(clientConfig);
         return new Skyflow(clientConfig);
     }
 
     public JSONObject insert(JSONObject records, InsertOptions insertOptions) throws SkyflowException {
+        Validators.validateConfiguration(configuration);
         JSONObject insertResponse = null;
         try {
             InsertInput insertInput = new ObjectMapper().readValue(records.toString(), InsertInput.class);
@@ -51,8 +51,6 @@ public class Skyflow {
             insertResponse = Helpers.constructInsertResponse(insertResponse, (List) requestBody.get("records"), insertOptions.isTokens());
         } catch (IOException e) {
             throw new SkyflowException(ErrorCode.InvalidInsertInput, e);
-        } catch (SkyflowException e) {
-            throw e;
         } catch (ParseException e) {
             throw new SkyflowException(ErrorCode.ResponseParsingError, e);
         }
@@ -61,6 +59,7 @@ public class Skyflow {
     }
 
     public JSONObject detokenize(JSONObject records) throws SkyflowException {
+        Validators.validateConfiguration(configuration);
         JSONObject finalResponse = new JSONObject();
         JSONArray successRecordsArray = new JSONArray();
         JSONArray errorRecordsArray = new JSONArray();
@@ -116,6 +115,7 @@ public class Skyflow {
     }
 
     public JSONObject getById(JSONObject getByIdInput) throws SkyflowException {
+        Validators.validateConfiguration(configuration);
         JSONObject finalResponse = new JSONObject();
         JSONArray successRecordsArray = new JSONArray();
         JSONArray errorRecordsArray = new JSONArray();
