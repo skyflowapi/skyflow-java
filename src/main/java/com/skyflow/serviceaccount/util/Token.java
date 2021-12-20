@@ -32,11 +32,23 @@ import java.util.Date;
 public class Token {
 
     /**
-     * GenerateToken - Generates a Service Account Token from the given Service Account Credential file with a default timeout of 60minutes.
+     * @deprecated
+     * use GenerateBearerToken(string filepath), GenerateToken will be removed in future
      *
      * @param filepath
      */
-    public static ResponseToken GenerateToken(String filepath) throws SkyflowException {
+    @Deprecated
+    public static ResponseToken GenerateToken(String filepath) throws SkyflowException{
+        return GenerateBearerToken(filepath);
+    }
+
+    /**
+     *
+     * GenerateBearerToken - Generates a Bearer Token from the given Service Account Credential file with a default timeout of 60minutes.
+     *
+     * @param filepath
+     * */
+    public static ResponseToken GenerateBearerToken(String filepath) throws SkyflowException {
         JSONParser parser = new JSONParser();
         ResponseToken responseToken = null;
         Path path = null;
@@ -57,13 +69,13 @@ public class Token {
 
         return responseToken;
     }
-
+    
     /**
      * getSATokenFromCredsFile gets bearer token from service account endpoint
      *
      * @param creds
      */
-    public static ResponseToken getSATokenFromCredsFile(JSONObject creds) throws SkyflowException {
+    private static ResponseToken getSATokenFromCredsFile(JSONObject creds) throws SkyflowException {
         ResponseToken responseToken = null;
         try {
             String clientID = (String) creds.get("clientID");
@@ -102,7 +114,7 @@ public class Token {
         return responseToken;
     }
 
-    public static PrivateKey getPrivateKeyFromPem(String pemKey) throws SkyflowException {
+    private static PrivateKey getPrivateKeyFromPem(String pemKey) throws SkyflowException {
 
         String PKCS1PrivateHeader = "-----BEGIN RSA PRIVATE KEY-----";
         String PKCS1PrivateFooter = "-----END RSA PRIVATE KEY-----";
@@ -171,7 +183,7 @@ public class Token {
         return bytes;
     }
 
-    public static String getSignedUserToken(String clientID, String keyID, String tokenURI, PrivateKey pvtKey) {
+    private static String getSignedUserToken(String clientID, String keyID, String tokenURI, PrivateKey pvtKey) {
         Instant now = Instant.now();
 
         String signedToken = Jwts.builder()
