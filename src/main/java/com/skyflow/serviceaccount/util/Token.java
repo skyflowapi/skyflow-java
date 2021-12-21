@@ -5,9 +5,13 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.skyflow.common.utils.Helpers;
 import com.skyflow.common.utils.HttpUtility;
+import com.skyflow.common.utils.LogUtil;
 import com.skyflow.entities.ResponseToken;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.logs.ErrorLogs;
+import com.skyflow.logs.InfoLogs;
+import com.skyflow.logs.WarnLogs;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.json.simple.JSONObject;
@@ -32,23 +36,22 @@ import java.util.Date;
 public class Token {
 
     /**
-     * @deprecated
-     * use GenerateBearerToken(string filepath), GenerateToken will be removed in future
-     *
      * @param filepath
+     * @deprecated use GenerateBearerToken(string filepath), GenerateToken will be removed in future
      */
     @Deprecated
-    public static ResponseToken GenerateToken(String filepath) throws SkyflowException{
+    public static ResponseToken GenerateToken(String filepath) throws SkyflowException {
+        LogUtil.printWarningLog(WarnLogs.GetTokenDeprecated.getLog());
         return GenerateBearerToken(filepath);
     }
 
     /**
-     *
      * Generates a Bearer Token from the given Service Account Credential file with a default timeout of 60minutes.
      *
      * @param filepath
-     * */
+     */
     public static ResponseToken GenerateBearerToken(String filepath) throws SkyflowException {
+        LogUtil.printInfoLog(InfoLogs.GenerateBearerTokenCalled.getLog());
         JSONParser parser = new JSONParser();
         ResponseToken responseToken = null;
         Path path = null;
@@ -60,10 +63,13 @@ public class Token {
             responseToken = getSATokenFromCredsFile(saCreds);
 
         } catch (FileNotFoundException e) {
+            LogUtil.printErrorLog(Helpers.parameterizedString(ErrorLogs.InvalidCredentialsPath.getLog(), String.valueOf(path)));
             throw new SkyflowException(ErrorCode.InvalidCredentialsPath.getCode(), Helpers.parameterizedString(ErrorCode.InvalidCredentialsPath.getDescription(), String.valueOf(path)), e);
         } catch (IOException e) {
+            LogUtil.printErrorLog(Helpers.parameterizedString(ErrorLogs.InvalidCredentialsPath.getLog(), String.valueOf(path)));
             throw new SkyflowException(ErrorCode.InvalidCredentialsPath.getCode(), Helpers.parameterizedString(ErrorCode.InvalidCredentialsPath.getDescription(), String.valueOf(path)), e);
         } catch (ParseException e) {
+            LogUtil.printErrorLog(Helpers.parameterizedString(ErrorLogs.InvalidJsonFormat.getLog(), String.valueOf(path)));
             throw new SkyflowException(ErrorCode.InvalidJsonFormat.getCode(), Helpers.parameterizedString(ErrorCode.InvalidJsonFormat.getDescription(), String.valueOf(path)), e);
         }
 
@@ -74,15 +80,17 @@ public class Token {
      * Generates a Bearer Token from the given Service Account Credential json string with a default timeout of 60minutes.
      *
      * @param credentials JSON string of credentials file
-     *
-     * */
+     */
 
-    public static ResponseToken GenerateBearerTokenFromCreds(String credentials) throws SkyflowException{
+    public static ResponseToken GenerateBearerTokenFromCreds(String credentials) throws SkyflowException {
+        LogUtil.printInfoLog(InfoLogs.GenerateBearerTokenFromCredsCalled.getLog());
         JSONParser parser = new JSONParser();
         ResponseToken responseToken = null;
         try {
-            if(credentials.isEmpty())
+            if (credentials.isEmpty()) {
+                LogUtil.printErrorLog(ErrorLogs.EmptyJSONString.getLog());
                 throw new SkyflowException(ErrorCode.EmptyJSONString);
+            }
 
             Object obj = parser.parse(credentials);
             JSONObject saCreds = (JSONObject) obj;
@@ -90,7 +98,8 @@ public class Token {
             responseToken = getSATokenFromCredsFile(saCreds);
 
         } catch (ParseException e) {
-            throw new SkyflowException(ErrorCode.InvalidJSONStringFormat.getCode(), Helpers.parameterizedString(ErrorCode.InvalidJsonFormat.getDescription(),credentials), e);
+            LogUtil.printErrorLog(Helpers.parameterizedString(ErrorLogs.InvalidJSONStringFormat.getLog(), credentials));
+            throw new SkyflowException(ErrorCode.InvalidJSONStringFormat.getCode(), Helpers.parameterizedString(ErrorCode.InvalidJSONStringFormat.getDescription(), credentials), e);
         }
 
         return responseToken;
@@ -106,14 +115,17 @@ public class Token {
         try {
             String clientID = (String) creds.get("clientID");
             if (clientID == null) {
+                LogUtil.printErrorLog(ErrorLogs.InvalidClientID.getLog());
                 throw new SkyflowException(ErrorCode.InvalidClientID);
             }
             String keyID = (String) creds.get("keyID");
             if (keyID == null) {
+                LogUtil.printErrorLog(ErrorLogs.InvalidKeyID.getLog());
                 throw new SkyflowException(ErrorCode.InvalidKeyID);
             }
             String tokenURI = (String) creds.get("tokenURI");
             if (tokenURI == null) {
+                LogUtil.printErrorLog(ErrorLogs.InvalidTokenURI.getLog());
                 throw new SkyflowException(ErrorCode.InvalidTokenURI);
             }
 
@@ -130,10 +142,13 @@ public class Token {
             responseToken = new ObjectMapper().readValue(response, ResponseToken.class);
 
         } catch (JsonMappingException e) {
+            LogUtil.printErrorLog(ErrorLogs.UnableToReadResponse.getLog());
             throw new SkyflowException(ErrorCode.UnableToReadResponse, e);
         } catch (JsonParseException e) {
+            LogUtil.printErrorLog(ErrorLogs.UnableToReadResponse.getLog());
             throw new SkyflowException(ErrorCode.UnableToReadResponse, e);
         } catch (IOException e) {
+            LogUtil.printErrorLog(ErrorLogs.UnableToReadResponse.getLog());
             throw new SkyflowException(ErrorCode.UnableToReadResponse, e);
         }
 
@@ -163,6 +178,7 @@ public class Token {
             privateKeyContent = privateKeyContent.replace("\r\n", "");
             privateKey = parsePkcs8PrivateKey(Base64.getDecoder().decode(privateKeyContent));
         } else {
+            LogUtil.printErrorLog(ErrorLogs.UnableToRetrieveRSA.getLog());
             throw new SkyflowException(ErrorCode.UnableToRetrieveRSA);
         }
         return privateKey;
@@ -179,8 +195,10 @@ public class Token {
             keyFactory = KeyFactory.getInstance("RSA");
             privateKey = keyFactory.generatePrivate(keySpec);
         } catch (NoSuchAlgorithmException e) {
+            LogUtil.printErrorLog(ErrorLogs.NoSuchAlgorithm.getLog());
             throw new SkyflowException(ErrorCode.NoSuchAlgorithm, e);
         } catch (InvalidKeySpecException e) {
+            LogUtil.printErrorLog(ErrorLogs.InvalidKeySpec.getLog());
             throw new SkyflowException(ErrorCode.InvalidKeySpec, e);
         }
         return privateKey;

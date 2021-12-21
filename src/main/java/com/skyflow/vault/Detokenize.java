@@ -1,9 +1,11 @@
 package com.skyflow.vault;
 
 import com.skyflow.common.utils.HttpUtility;
+import com.skyflow.common.utils.LogUtil;
 import com.skyflow.entities.DetokenizeRecord;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.logs.ErrorLogs;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -30,6 +32,7 @@ public class Detokenize implements Callable<String> {
 
         try {
             if (record.getToken() == null || record.getToken().isEmpty()) {
+                LogUtil.printErrorLog(ErrorLogs.InvalidBearerToken.getLog());
                 throw new SkyflowException(ErrorCode.InvalidToken);
             }
             JSONObject bodyJson = new JSONObject();
@@ -48,8 +51,10 @@ public class Detokenize implements Callable<String> {
             responseObject.remove("valueType");
             response = responseObject.toJSONString();
         } catch (IOException e) {
+            LogUtil.printErrorLog(ErrorLogs.Server.getLog());
             throw new SkyflowException(ErrorCode.Server, e);
         } catch (ParseException e) {
+            LogUtil.printErrorLog(ErrorLogs.ResponseParsingError.getLog());
             throw new SkyflowException(ErrorCode.ResponseParsingError, e);
         } catch (SkyflowException exception) {
             response = parseDetokenizeError(exception);

@@ -4,7 +4,7 @@ public class SkyflowConfiguration {
     private final String vaultID;
     private final String vaultURL;
     private final TokenProvider tokenProvider;
-//    private final Options options;
+    private final Options options;
 
     /**
      *
@@ -16,20 +16,27 @@ public class SkyflowConfiguration {
         this.vaultID = vaultID;
         this.vaultURL = vaultURL;
         this.tokenProvider = tokenProvider;
-//        this.options = new Options(LogLevel.ERROR);
+        this.options = new Options(LogLevel.ERROR);
     }
     public SkyflowConfiguration(TokenProvider tokenProvider){
         this.vaultID = "";
         this.vaultURL = "";
         this.tokenProvider = tokenProvider;
+        this.options = new Options(LogLevel.ERROR);
+    }
+    public SkyflowConfiguration(TokenProvider tokenProvider,Options options){
+        this.vaultID = "";
+        this.vaultURL = "";
+        this.tokenProvider = tokenProvider;
+        this.options = options;
     }
 
-//    public SkyflowConfiguration(String vaultID, String vaultURL, TokenProvider tokenProvider, Options options) {
-//        this.vaultID = vaultID;
-//        this.vaultURL = vaultURL;
-//        this.tokenProvider = tokenProvider;
-//        this.options = options;
-//    }
+    public SkyflowConfiguration(String vaultID, String vaultURL, TokenProvider tokenProvider, Options options) {
+        this.vaultID = vaultID;
+        this.vaultURL = vaultURL;
+        this.tokenProvider = tokenProvider;
+        this.options = options;
+    }
 
     public String getVaultID() {
         return vaultID;
@@ -43,8 +50,8 @@ public class SkyflowConfiguration {
         return tokenProvider;
     }
 
-//    public Options getOptions() {
-//        return options;
-//    }
+    public Options getOptions() {
+        return options;
+    }
 
 }

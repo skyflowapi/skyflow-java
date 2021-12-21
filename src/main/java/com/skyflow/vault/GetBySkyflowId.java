@@ -1,9 +1,11 @@
 package com.skyflow.vault;
 
 import com.skyflow.common.utils.HttpUtility;
+import com.skyflow.common.utils.LogUtil;
 import com.skyflow.entities.GetByIdRecordInput;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.logs.ErrorLogs;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -38,6 +40,7 @@ public class GetBySkyflowId implements Callable<String> {
             }
 
             if(record.getTable() == null || record.getTable().isEmpty()) {
+                LogUtil.printErrorLog(ErrorLogs.InvalidTable.getLog());
                 throw new SkyflowException(ErrorCode.InvalidTable);
             }
 
@@ -67,8 +70,10 @@ public class GetBySkyflowId implements Callable<String> {
                 response = formattedResponse.toJSONString();
             }
         } catch (IOException e) {
+            LogUtil.printErrorLog(ErrorLogs.Server.getLog());
             throw new SkyflowException(ErrorCode.Server, e);
         } catch (ParseException e) {
+            LogUtil.printErrorLog(ErrorLogs.ResponseParsingError.getLog());
             throw new SkyflowException(ErrorCode.ResponseParsingError, e);
         } catch (SkyflowException e) {
             response = constructGetByIdErrorObject(e, record.getIds());
