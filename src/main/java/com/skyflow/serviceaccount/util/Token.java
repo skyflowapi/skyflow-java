@@ -56,6 +56,10 @@ public class Token {
         ResponseToken responseToken = null;
         Path path = null;
         try {
+            if (filepath == null || filepath.isEmpty()) {
+                LogUtil.printErrorLog(ErrorLogs.EmptyFilePath.getLog());
+                throw new SkyflowException(ErrorCode.EmptyFilePath);
+            }
             path = Paths.get((filepath));
             Object obj = parser.parse(new FileReader(String.valueOf(path)));
             JSONObject saCreds = (JSONObject) obj;
@@ -87,7 +91,7 @@ public class Token {
         JSONParser parser = new JSONParser();
         ResponseToken responseToken = null;
         try {
-            if (credentials.isEmpty()) {
+            if (credentials == null || credentials.isEmpty()) {
                 LogUtil.printErrorLog(ErrorLogs.EmptyJSONString.getLog());
                 throw new SkyflowException(ErrorCode.EmptyJSONString);
             }

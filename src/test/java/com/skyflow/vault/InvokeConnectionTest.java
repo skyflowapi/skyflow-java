@@ -2,9 +2,7 @@ package com.skyflow.vault;
 
 import com.skyflow.common.utils.HttpUtility;
 import com.skyflow.common.utils.TokenUtils;
-import com.skyflow.entities.RequestMethod;
-import com.skyflow.entities.SkyflowConfiguration;
-import com.skyflow.entities.TokenProvider;
+import com.skyflow.entities.*;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.SkyflowException;
 import org.json.simple.JSONObject;
@@ -38,7 +36,7 @@ public class InvokeConnectionTest {
 
     @BeforeClass
     public static void init() throws Exception {
-        SkyflowConfiguration config = new SkyflowConfiguration("testVaultID", "https://testVaulturl.com", new TestTokenProvider());
+        SkyflowConfiguration config = new SkyflowConfiguration(new TestTokenProvider());
         skyflowClient = Skyflow.init(config);
 
         PowerMockito.mockStatic(TokenUtils.class);
@@ -150,7 +148,7 @@ public class InvokeConnectionTest {
         testConnectionConfig.put("connectionURL", "https://testgatewayurl.com/{card_number}/pay");
         testConnectionConfig.put("methodName", "INVALID_METHOD_NAME");
         try {
-            skyflowClient.invokeConnection(testConnectionConfig);
+            Skyflow.init(new SkyflowConfiguration(new TestTokenProvider(), new Options(LogLevel.WARN))).invokeConnection(testConnectionConfig);
         } catch (SkyflowException exception) {
             Assert.assertEquals(exception.getCode(), ErrorCode.InvalidMethodName.getCode());
             Assert.assertEquals(exception.getMessage(), ErrorCode.InvalidMethodName.getDescription());

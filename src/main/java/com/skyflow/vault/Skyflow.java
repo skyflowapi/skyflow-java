@@ -41,7 +41,7 @@ public class Skyflow {
     public JSONObject insert(JSONObject records, InsertOptions insertOptions) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.InsertMethodCalled.getLog());
         Validators.validateConfiguration(configuration);
-        LogUtil.printInfoLog(Helpers.parameterizedString(InfoLogs.ValidatedSkyflowConfiguration.getLog(),"insert"));
+        LogUtil.printInfoLog(Helpers.parameterizedString(InfoLogs.ValidatedSkyflowConfiguration.getLog(), "insert"));
 
         JSONObject insertResponse = null;
         try {
@@ -60,7 +60,7 @@ public class Skyflow {
             LogUtil.printErrorLog(ErrorLogs.InvalidInsertInput.getLog());
             throw new SkyflowException(ErrorCode.InvalidInsertInput, e);
         } catch (ParseException e) {
-            LogUtil.printErrorLog(Helpers.parameterizedString(ErrorLogs.ResponseParsingError.getLog(),"insert"));
+            LogUtil.printErrorLog(Helpers.parameterizedString(ErrorLogs.ResponseParsingError.getLog(), "insert"));
             throw new SkyflowException(ErrorCode.ResponseParsingError, e);
         }
 
@@ -70,7 +70,7 @@ public class Skyflow {
     public JSONObject detokenize(JSONObject records) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.DetokenizeMethodCalled.getLog());
         Validators.validateConfiguration(configuration);
-        LogUtil.printInfoLog(Helpers.parameterizedString(InfoLogs.ValidatedSkyflowConfiguration.getLog(),"detokenize"));
+        LogUtil.printInfoLog(Helpers.parameterizedString(InfoLogs.ValidatedSkyflowConfiguration.getLog(), "detokenize"));
 
         JSONObject finalResponse = new JSONObject();
         JSONArray successRecordsArray = new JSONArray();
@@ -118,13 +118,13 @@ public class Skyflow {
             LogUtil.printErrorLog(ErrorLogs.InvalidDetokenizeInput.getLog());
             throw new SkyflowException(ErrorCode.InvalidDetokenizeInput, exception);
         } catch (InterruptedException e) {
-            LogUtil.printErrorLog(Helpers.parameterizedString(ErrorLogs.ThreadInterruptedException.getLog(),"detokenize"));
+            LogUtil.printErrorLog(Helpers.parameterizedString(ErrorLogs.ThreadInterruptedException.getLog(), "detokenize"));
             throw new SkyflowException(ErrorCode.ThreadInterruptedException, e);
         } catch (ExecutionException e) {
-            LogUtil.printErrorLog(Helpers.parameterizedString(ErrorLogs.ThreadExecutionException.getLog(),"detokenize"));
+            LogUtil.printErrorLog(Helpers.parameterizedString(ErrorLogs.ThreadExecutionException.getLog(), "detokenize"));
             throw new SkyflowException(ErrorCode.ThreadExecutionException, e);
         } catch (ParseException e) {
-            LogUtil.printErrorLog(Helpers.parameterizedString(ErrorLogs.ResponseParsingError.getLog(),"detokenize"));
+            LogUtil.printErrorLog(Helpers.parameterizedString(ErrorLogs.ResponseParsingError.getLog(), "detokenize"));
             throw new SkyflowException(ErrorCode.ResponseParsingError, e);
         }
         return finalResponse;
@@ -133,7 +133,7 @@ public class Skyflow {
     public JSONObject getById(JSONObject getByIdInput) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.GetByIdMethodCalled.getLog());
         Validators.validateConfiguration(configuration);
-        LogUtil.printInfoLog(Helpers.parameterizedString(InfoLogs.ValidatedSkyflowConfiguration.getLog(),"getById"));
+        LogUtil.printInfoLog(Helpers.parameterizedString(InfoLogs.ValidatedSkyflowConfiguration.getLog(), "getById"));
 
         JSONObject finalResponse = new JSONObject();
         JSONArray successRecordsArray = new JSONArray();
@@ -183,13 +183,13 @@ public class Skyflow {
             LogUtil.printErrorLog(ErrorLogs.InvalidGetByIdInput.getLog());
             throw new SkyflowException(ErrorCode.InvalidGetByIdInput, e);
         } catch (InterruptedException e) {
-            LogUtil.printErrorLog(Helpers.parameterizedString(ErrorLogs.ThreadInterruptedException.getLog(),"getById"));
+            LogUtil.printErrorLog(Helpers.parameterizedString(ErrorLogs.ThreadInterruptedException.getLog(), "getById"));
             throw new SkyflowException(ErrorCode.ThreadInterruptedException, e);
         } catch (ExecutionException e) {
-            LogUtil.printErrorLog(Helpers.parameterizedString(ErrorLogs.ThreadExecutionException.getLog(),"getById"));
+            LogUtil.printErrorLog(Helpers.parameterizedString(ErrorLogs.ThreadExecutionException.getLog(), "getById"));
             throw new SkyflowException(ErrorCode.ThreadExecutionException, e);
         } catch (ParseException e) {
-            LogUtil.printErrorLog(Helpers.parameterizedString(ErrorLogs.ResponseParsingError.getLog(),"getById"));
+            LogUtil.printErrorLog(Helpers.parameterizedString(ErrorLogs.ResponseParsingError.getLog(), "getById"));
             throw new SkyflowException(ErrorCode.ResponseParsingError, e);
         }
 
@@ -222,7 +222,7 @@ public class Skyflow {
             LogUtil.printErrorLog(ErrorLogs.InvalidInvokeConnectionInput.getLog());
             throw new SkyflowException(ErrorCode.InvalidConnectionInput, exception);
         } catch (ParseException exception) {
-            LogUtil.printErrorLog(Helpers.parameterizedString(ErrorLogs.ResponseParsingError.getLog(),"invokeConnection"));
+            LogUtil.printErrorLog(Helpers.parameterizedString(ErrorLogs.ResponseParsingError.getLog(), "invokeConnection"));
             throw new SkyflowException(ErrorCode.ResponseParsingError, exception);
         }
         return connectionResponse;

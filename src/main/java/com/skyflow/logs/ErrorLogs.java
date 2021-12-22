@@ -23,13 +23,13 @@ public enum ErrorLogs {
     InvalidClientID("Unable to read clientID"),
     InvalidCredentialsPath("Unable to open credentials - file %s1"),
     InvalidJsonFormat("Provided json file is in wrong format - file %s1"),
-    EmptyJSONString("credentials string cannot be empty"),
+    EmptyJSONString("credentials string cannot be empty or null"),
+    EmptyFilePath("file path cannot be empty or null"),
     InvalidJSONStringFormat("credentials string is not a valid json string format - %s1"),
     BearerThrownException("getBearer() thrown exception "),
     InvalidBearerToken("Invalid Bearer token"),
     InvalidTable("Table name is missing"),
-    Server("Internal server error")
-    ;
+    Server("Internal server error");
     private final String log;
 
     ErrorLogs(String log) {

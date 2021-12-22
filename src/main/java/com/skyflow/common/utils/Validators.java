@@ -13,12 +13,12 @@ import java.net.URL;
 public class Validators {
     public static void validateConfiguration(SkyflowConfiguration config) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.ValidatingSkyflowConfiguration.getLog());
-        if (config.getVaultID().length() <= 0) {
+        if (config.getVaultID() == null || config.getVaultID().length() <= 0) {
             LogUtil.printErrorLog(ErrorLogs.InvalidVaultId.getLog());
             throw new SkyflowException(ErrorCode.EmptyVaultID);
         }
 
-        if (isInvalidURL(config.getVaultURL())) {
+        if (config.getVaultURL() == null || isInvalidURL(config.getVaultURL())) {
             LogUtil.printErrorLog(ErrorLogs.InvalidVaultURL.getLog());
             throw new SkyflowException(ErrorCode.InvalidVaultURL);
         }
@@ -29,7 +29,7 @@ public class Validators {
         LogUtil.printInfoLog(InfoLogs.ValidatingInvokeConnectionConfig.getLog());
         if (connectionConfig.containsKey("connectionURL")) {
             String connectionURL = (String) connectionConfig.get("connectionURL");
-            if (isInvalidURL(connectionURL)){
+            if (isInvalidURL(connectionURL)) {
                 LogUtil.printErrorLog(ErrorLogs.InvalidConnectionURL.getLog());
                 throw new SkyflowException(ErrorCode.InvalidConnectionURL);
             }
