@@ -62,18 +62,18 @@ public class TokenTest {
         }
     }
 
-    @Test
-    public void testValidString() {
-        try {
-            String creds = System.getProperty("TEST_CREDENTIALS");
-            ResponseToken token = Token.GenerateBearerTokenFromCreds(creds);
-            Assert.assertNotNull(token.getAccessToken());
-            Assert.assertEquals("Bearer", token.getTokenType());
-        } catch (SkyflowException skyflowException) {
-            Assert.assertNull(skyflowException);
-            skyflowException.printStackTrace();
-        }
-    }
+//    @Test
+//    public void testValidString() {
+//        try {
+//            String creds = System.getProperty("TEST_CREDENTIALS");
+//            ResponseToken token = Token.GenerateBearerTokenFromCreds(creds);
+//            Assert.assertNotNull(token.getAccessToken());
+//            Assert.assertEquals("Bearer", token.getTokenType());
+//        } catch (SkyflowException skyflowException) {
+//            Assert.assertNull(skyflowException);
+//            skyflowException.printStackTrace();
+//        }
+//    }
 
     @Test
     public void testEmptyString() {
