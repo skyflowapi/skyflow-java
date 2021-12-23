@@ -27,15 +27,15 @@ public class Skyflow {
 
     private Skyflow(SkyflowConfiguration config) {
         this.configuration = config;
-        LogUtil.setupLogger(configuration.getOptions().getLogLevel());
-
-        LogUtil.printInfoLog(Helpers.parameterizedString(InfoLogs.CurrentLogLevel.getLog(),
-                configuration.getOptions().getLogLevel().toString()));
         LogUtil.printInfoLog(InfoLogs.InitializedClient.getLog());
     }
 
     public static Skyflow init(SkyflowConfiguration clientConfig) throws SkyflowException {
         return new Skyflow(clientConfig);
+    }
+
+    public JSONObject insert(JSONObject records) throws SkyflowException {
+        return insert(records, new InsertOptions(true));
     }
 
     public JSONObject insert(JSONObject records, InsertOptions insertOptions) throws SkyflowException {

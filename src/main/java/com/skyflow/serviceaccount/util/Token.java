@@ -14,6 +14,7 @@ import com.skyflow.logs.InfoLogs;
 import com.skyflow.logs.WarnLogs;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import org.apache.commons.codec.binary.Base64;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -28,9 +29,6 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Base64;
 import java.util.Date;
 
 public class Token {
@@ -174,13 +172,13 @@ public class Token {
             privateKeyContent = privateKeyContent.replace(PKCS1PrivateFooter, "");
             privateKeyContent = privateKeyContent.replace("\n", "");
             privateKeyContent = privateKeyContent.replace("\r\n", "");
-            privateKey = parsePkcs1PrivateKey(Base64.getDecoder().decode(privateKeyContent));
+            privateKey = parsePkcs1PrivateKey(Base64.decodeBase64(privateKeyContent));
         } else if (pemKey.contains(PKCS8PrivateHeader)) {
             privateKeyContent = privateKeyContent.replace(PKCS8PrivateHeader, "");
             privateKeyContent = privateKeyContent.replace(PKCS8PrivateFooter, "");
             privateKeyContent = privateKeyContent.replace("\n", "");
             privateKeyContent = privateKeyContent.replace("\r\n", "");
-            privateKey = parsePkcs8PrivateKey(Base64.getDecoder().decode(privateKeyContent));
+            privateKey = parsePkcs8PrivateKey(Base64.decodeBase64(privateKeyContent));
         } else {
             LogUtil.printErrorLog(ErrorLogs.UnableToRetrieveRSA.getLog());
             throw new SkyflowException(ErrorCode.UnableToRetrieveRSA);
@@ -232,14 +230,14 @@ public class Token {
     }
 
     private static String getSignedUserToken(String clientID, String keyID, String tokenURI, PrivateKey pvtKey) {
-        Instant now = Instant.now();
-
+        final Date createdDate = new Date();
+        final Date expirationDate = new Date(createdDate.getTime() + (3600 * 1000));
         String signedToken = Jwts.builder()
                 .claim("iss", clientID)
                 .claim("key", keyID)
                 .claim("aud", tokenURI)
                 .claim("sub", clientID)
-                .setExpiration(Date.from(now.plus(60l, ChronoUnit.MINUTES)))
+                .setExpiration(expirationDate)
                 .signWith(SignatureAlgorithm.RS256, pvtKey)
                 .compact();
 

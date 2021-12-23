@@ -15,27 +15,31 @@ public class TokenTest {
 
     @Test
     public void testInvalidFilePath() {
-        Exception exception = Assert.assertThrows(SkyflowException.class, () -> {
+        try {
             Token.GenerateBearerToken("");
-        });
-        Assert.assertTrue(exception.getMessage().contains(ErrorCode.EmptyFilePath.getDescription()));
+        } catch (SkyflowException exception) {
+            assertEquals(exception.getMessage(), ErrorCode.EmptyFilePath.getDescription());
+        }
 
     }
 
     @Test
     public void testNullFilePath() {
-        Exception exception = Assert.assertThrows(SkyflowException.class, () -> {
-            Token.GenerateBearerToken(null);
-        });
-        Assert.assertTrue(exception.getMessage().contains(ErrorCode.EmptyFilePath.getDescription()));
+        try {
+            Token.GenerateBearerToken("");
+        } catch (SkyflowException exception) {
+            assertEquals(exception.getMessage(), ErrorCode.EmptyFilePath.getDescription());
+        }
     }
 
     @Test
     public void testInvalidFileContent() {
-        Exception exception = Assert.assertThrows(SkyflowException.class, () -> {
+        try {
             Token.GenerateBearerToken(Paths.get("./src/test/resources/invalidCredentials.json").toString());
-        });
-        Assert.assertTrue(exception.getMessage().contains(ErrorCode.InvalidClientID.getDescription()));
+        } catch (SkyflowException exception) {
+            assertEquals(exception.getMessage(), ErrorCode.InvalidClientID.getDescription());
+        }
+
     }
 
     @Test

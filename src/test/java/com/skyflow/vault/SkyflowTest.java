@@ -1,25 +1,25 @@
 package com.skyflow.vault;
 
-import com.skyflow.entities.*;
+import com.skyflow.common.utils.HttpUtility;
+import com.skyflow.entities.InsertOptions;
+import com.skyflow.entities.RedactionType;
+import com.skyflow.entities.SkyflowConfiguration;
+import com.skyflow.entities.TokenProvider;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.SkyflowException;
-import com.skyflow.serviceaccount.util.Token;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import java.nio.file.Paths;
 
 import static org.junit.Assert.*;
 
 class DemoTokenProvider implements TokenProvider {
     @Override
     public String getBearerToken() throws Exception {
-        ResponseToken token = Token.GenerateBearerToken(Paths.get(System.getProperty("TEST_CREDENTIALS_PATH")).toString());
-        if (token.getTokenType() != null)
-            return token.getAccessToken();
-        return "";
+        String response = HttpUtility.sendRequest("GET", System.getProperty("TEST_TOKEN_URL"), null, null);
+        return (String) ((JSONObject) (new JSONParser().parse(response))).get("accessToken");
     }
 }
 
@@ -54,20 +54,10 @@ public class SkyflowTest {
         }
     }
 
-    @Test
-    public void testValidConfigWithOptions() {
-        SkyflowConfiguration testConfig = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider(), new Options(LogLevel.DEBUG));
-        try {
-            Skyflow skyflow = Skyflow.init(testConfig);
-            assert (skyflow instanceof Skyflow);
-        } catch (SkyflowException e) {
-            assertNotNull(e);
-        }
-    }
 
     @Test
     public void testInValidConfigWithNullValues() {
-        SkyflowConfiguration testConfig = new SkyflowConfiguration(null, null, new DemoTokenProvider(), new Options(LogLevel.DEBUG));
+        SkyflowConfiguration testConfig = new SkyflowConfiguration(null, null, new DemoTokenProvider());
         try {
             Skyflow skyflow = Skyflow.init(testConfig);
             skyflow.detokenize(new JSONObject());
@@ -80,7 +70,7 @@ public class SkyflowTest {
 
     @Test
     public void testInValidConfigWithNullValues2() {
-        SkyflowConfiguration testConfig = new SkyflowConfiguration(vaultID, null, new DemoTokenProvider(), new Options(LogLevel.DEBUG));
+        SkyflowConfiguration testConfig = new SkyflowConfiguration(vaultID, null, new DemoTokenProvider());
         try {
             Skyflow skyflow = Skyflow.init(testConfig);
             skyflow.detokenize(new JSONObject());

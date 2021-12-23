@@ -4,12 +4,12 @@ import com.skyflow.entities.TokenProvider;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.logs.ErrorLogs;
+import org.apache.commons.codec.binary.Base64;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 import java.util.Date;
 
 public class TokenUtils {
@@ -53,7 +53,7 @@ public class TokenUtils {
 
     public static JSONObject decoded(String encodedToken) throws ParseException {
         String[] split = encodedToken.split("\\.");
-        byte[] decodedBytes = Base64.getDecoder().decode(split[1]);
+        byte[] decodedBytes = Base64.decodeBase64(split[1]);
         return (JSONObject) new JSONParser().parse(new String(decodedBytes, StandardCharsets.UTF_8));
     }
 
