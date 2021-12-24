@@ -45,7 +45,7 @@ public class TokenTest {
     @Test
     public void testCallingDeprecatedMethod() {
         try {
-            ResponseToken token = Token.GenerateToken(Paths.get(System.getProperty("TEST_CREDENTIALS_PATH")).toString());
+            ResponseToken token = Token.GenerateToken("./credentials.json");
             Assert.assertNotNull(token.getAccessToken());
             Assert.assertEquals("Bearer", token.getTokenType());
         } catch (SkyflowException skyflowException) {
@@ -57,7 +57,7 @@ public class TokenTest {
     @Test
     public void testValidFileContent() {
         try {
-            ResponseToken token = Token.GenerateBearerToken(Paths.get(System.getProperty("TEST_CREDENTIALS_PATH")).toString());
+            ResponseToken token = Token.GenerateBearerToken("./credentials.json");
             Assert.assertNotNull(token.getAccessToken());
             Assert.assertEquals("Bearer", token.getTokenType());
         } catch (SkyflowException skyflowException) {
