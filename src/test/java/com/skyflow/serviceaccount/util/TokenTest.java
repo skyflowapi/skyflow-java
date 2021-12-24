@@ -112,7 +112,7 @@ public class TokenTest {
         try {
             ResponseToken token = Token.GenerateBearerTokenFromCreds(creds);
         } catch (SkyflowException exception) {
-            assertEquals(Helpers.parameterizedString(ErrorCode.InvalidJSONStringFormat.getDescription(), creds), exception.getMessage());
+            assertEquals(ErrorCode.InvalidJSONStringFormat.getDescription(), exception.getMessage());
         }
     }
 
