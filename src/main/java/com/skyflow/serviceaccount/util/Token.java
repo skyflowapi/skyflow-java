@@ -100,8 +100,8 @@ public class Token {
             responseToken = getSATokenFromCredsFile(saCreds);
 
         } catch (ParseException e) {
-            LogUtil.printErrorLog(Helpers.parameterizedString(ErrorLogs.InvalidJSONStringFormat.getLog(), credentials));
-            throw new SkyflowException(ErrorCode.InvalidJSONStringFormat.getCode(), Helpers.parameterizedString(ErrorCode.InvalidJSONStringFormat.getDescription(), credentials), e);
+            LogUtil.printErrorLog(ErrorLogs.InvalidJSONStringFormat.getLog());
+            throw new SkyflowException(ErrorCode.InvalidJSONStringFormat, e);
         }
 
         return responseToken;

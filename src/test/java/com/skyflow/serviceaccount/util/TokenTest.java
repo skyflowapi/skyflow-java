@@ -4,9 +4,15 @@ import com.skyflow.common.utils.Helpers;
 import com.skyflow.entities.ResponseToken;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.SkyflowException;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.nio.file.Paths;
 
 import static org.junit.Assert.assertEquals;
@@ -69,11 +75,14 @@ public class TokenTest {
     @Test
     public void testValidString() {
         try {
-            String creds = System.getProperty("TEST_CREDENTIALS");
-            ResponseToken token = Token.GenerateBearerTokenFromCreds(creds);
+            JSONParser parser = new JSONParser();
+            Object obj = parser.parse(new FileReader("./credentials.json"));
+            JSONObject saCreds = (JSONObject) obj;
+
+            ResponseToken token = Token.GenerateBearerTokenFromCreds(saCreds.toJSONString());
             Assert.assertNotNull(token.getAccessToken());
             Assert.assertEquals("Bearer", token.getTokenType());
-        } catch (SkyflowException skyflowException) {
+        } catch (SkyflowException | IOException | ParseException skyflowException) {
             Assert.assertNull(skyflowException);
             skyflowException.printStackTrace();
         }
