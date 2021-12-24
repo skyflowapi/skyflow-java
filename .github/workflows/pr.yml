@@ -17,6 +17,11 @@ jobs:
         with:
           name: "credentials.json"
           json: ${{ secrets.TEST_CREDENTIALS_FILE_STRING }}
+          
+      - name: insatll maven
+        uses: stCarolas/setup-maven@v4.2
+        with:
+          maven-version: 3.2.5
 
       - name: Run Test and Build with Maven
         run: mvn -B package -DTEST_TOKEN_URL=${{ secrets.TEST_TOKEN_URL }} -DTEST_VAULT_ID=${{ secrets.TEST_VAULT_ID }} -DTEST_VAULT_URL=${{ secrets.TEST_VAULT_URL }} -DTEST_SKYFLOW_ID=${{ secrets.TEST_SKYFLOW_ID }} -DTEST_TOKEN=${{ secrets.TEST_TOKEN }} -f pom.xml
