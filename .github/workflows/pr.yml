@@ -1,4 +1,4 @@
-name: PR CI Checks
+name: PR CI Check
 
 on: [ pull_request ]
 
@@ -9,17 +9,14 @@ jobs:
       - uses: actions/checkout@v1
       - uses: actions/setup-java@v1
         with:
-          java-version: '1.8'
+          java-version: '1.7'
 
-      - name: create-json
+      - name: setup test file
         id: create-json
         uses: jsdaniell/create-json@1.1.2
         with:
           name: "credentials.json"
           json: ${{ secrets.TEST_CREDENTIALS_FILE_STRING }}
 
-      - name: verify file
-        run:  ls -a
-
-      - name: Build with Maven
-        run: mvn -B package -DTEST_TOKEN_URL=${{ secrets.TEST_TOKEN_URL }} -DTEST_VAULT_ID=${{ secrets.TEST_VAULT_ID }} -DTEST_VAULT_URL=${{ secrets.TEST_VAULT_URL }} -DTEST_SKYFLOW_ID=${{ secrets.TEST_SKYFLOW_ID }} -DTEST_TOKEN=${{ secrets.TEST_TOKEN }} -DTEST_CREDENTIALS_FILE_PATH=${{ secrets.TEST_CREDENTIALS_FILE_PATH }} -DTEST_CREDENTIALS=${{ secrets.TEST_CREDENTIALS_FILE_STRING }} -f pom.xml
+      - name: Run Test and Build with Maven
+        run: mvn -B package -DTEST_TOKEN_URL=${{ secrets.TEST_TOKEN_URL }} -DTEST_VAULT_ID=${{ secrets.TEST_VAULT_ID }} -DTEST_VAULT_URL=${{ secrets.TEST_VAULT_URL }} -DTEST_SKYFLOW_ID=${{ secrets.TEST_SKYFLOW_ID }} -DTEST_TOKEN=${{ secrets.TEST_TOKEN }} -f pom.xml

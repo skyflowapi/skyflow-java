@@ -1,6 +1,5 @@
 package com.skyflow.serviceaccount.util;
 
-import com.skyflow.common.utils.Helpers;
 import com.skyflow.entities.ResponseToken;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.SkyflowException;
@@ -10,7 +9,6 @@ import org.json.simple.parser.ParseException;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -18,6 +16,8 @@ import java.nio.file.Paths;
 import static org.junit.Assert.assertEquals;
 
 public class TokenTest {
+    // replace the path, when running local, do not commit
+    private final String VALID_CREDENTIALS_FILE_PATH = "./credentials.json";
 
     @Test
     public void testInvalidFilePath() {
@@ -51,7 +51,7 @@ public class TokenTest {
     @Test
     public void testCallingDeprecatedMethod() {
         try {
-            ResponseToken token = Token.GenerateToken("./credentials.json");
+            ResponseToken token = Token.GenerateToken(VALID_CREDENTIALS_FILE_PATH);
             Assert.assertNotNull(token.getAccessToken());
             Assert.assertEquals("Bearer", token.getTokenType());
         } catch (SkyflowException skyflowException) {
@@ -63,7 +63,7 @@ public class TokenTest {
     @Test
     public void testValidFileContent() {
         try {
-            ResponseToken token = Token.GenerateBearerToken("./credentials.json");
+            ResponseToken token = Token.GenerateBearerToken(VALID_CREDENTIALS_FILE_PATH);
             Assert.assertNotNull(token.getAccessToken());
             Assert.assertEquals("Bearer", token.getTokenType());
         } catch (SkyflowException skyflowException) {
@@ -76,7 +76,7 @@ public class TokenTest {
     public void testValidString() {
         try {
             JSONParser parser = new JSONParser();
-            Object obj = parser.parse(new FileReader("./credentials.json"));
+            Object obj = parser.parse(new FileReader(VALID_CREDENTIALS_FILE_PATH));
             JSONObject saCreds = (JSONObject) obj;
 
             ResponseToken token = Token.GenerateBearerTokenFromCreds(saCreds.toJSONString());
