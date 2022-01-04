@@ -10,7 +10,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
-public class HttpUtility {
+public final class HttpUtility {
 
     public static String sendRequest(String method, String requestUrl, JSONObject params, Map<String, String> headers) throws IOException, SkyflowException {
         HttpURLConnection connection = null;

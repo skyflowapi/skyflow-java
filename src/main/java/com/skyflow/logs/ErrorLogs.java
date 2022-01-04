@@ -1,7 +1,7 @@
 package com.skyflow.logs;
 
 public enum ErrorLogs {
-    InvalidVaultId("invalid vault ID"),
+    InvalidVaultId("empty or invalid vaultID"),
     InvalidVaultURL("invalid vault url"),
     InvalidInsertInput("invalid insert input"),
     InvalidDetokenizeInput("invalid detokenize input"),
@@ -25,7 +25,7 @@ public enum ErrorLogs {
     InvalidJsonFormat("Provided json file is in wrong format - file %s1"),
     EmptyJSONString("credentials string cannot be empty or null"),
     EmptyFilePath("file path cannot be empty or null"),
-    InvalidJSONStringFormat("credentials string is not a valid json string format - %s1"),
+    InvalidJSONStringFormat("credentials string is not a valid json string format"),
     BearerThrownException("getBearer() thrown exception "),
     InvalidBearerToken("Invalid Bearer token"),
     InvalidTable("Table name is missing"),

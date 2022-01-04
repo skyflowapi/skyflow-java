@@ -2,7 +2,7 @@ package com.skyflow.errors;
 
 import org.json.simple.JSONObject;
 
-public class SkyflowException extends Exception {
+public final class SkyflowException extends Exception {
     private int code;
     private JSONObject data;
 

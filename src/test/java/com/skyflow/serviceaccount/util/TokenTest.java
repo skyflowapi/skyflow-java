@@ -1,17 +1,23 @@
 package com.skyflow.serviceaccount.util;
 
-import com.skyflow.common.utils.Helpers;
 import com.skyflow.entities.ResponseToken;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.SkyflowException;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.FileReader;
+import java.io.IOException;
 import java.nio.file.Paths;
 
 import static org.junit.Assert.assertEquals;
 
 public class TokenTest {
+    // replace the path, when running local, do not commit
+    private final String VALID_CREDENTIALS_FILE_PATH = "./credentials.json";
 
     @Test
     public void testInvalidFilePath() {
@@ -45,7 +51,7 @@ public class TokenTest {
     @Test
     public void testCallingDeprecatedMethod() {
         try {
-            ResponseToken token = Token.GenerateToken(Paths.get(System.getProperty("TEST_CREDENTIALS_PATH")).toString());
+            ResponseToken token = Token.GenerateToken(VALID_CREDENTIALS_FILE_PATH);
             Assert.assertNotNull(token.getAccessToken());
             Assert.assertEquals("Bearer", token.getTokenType());
         } catch (SkyflowException skyflowException) {
@@ -57,7 +63,7 @@ public class TokenTest {
     @Test
     public void testValidFileContent() {
         try {
-            ResponseToken token = Token.GenerateBearerToken(Paths.get(System.getProperty("TEST_CREDENTIALS_PATH")).toString());
+            ResponseToken token = Token.GenerateBearerToken(VALID_CREDENTIALS_FILE_PATH);
             Assert.assertNotNull(token.getAccessToken());
             Assert.assertEquals("Bearer", token.getTokenType());
         } catch (SkyflowException skyflowException) {
@@ -69,11 +75,14 @@ public class TokenTest {
     @Test
     public void testValidString() {
         try {
-            String creds = System.getProperty("TEST_CREDENTIALS");
-            ResponseToken token = Token.GenerateBearerTokenFromCreds(creds);
+            JSONParser parser = new JSONParser();
+            Object obj = parser.parse(new FileReader(VALID_CREDENTIALS_FILE_PATH));
+            JSONObject saCreds = (JSONObject) obj;
+
+            ResponseToken token = Token.GenerateBearerTokenFromCreds(saCreds.toJSONString());
             Assert.assertNotNull(token.getAccessToken());
             Assert.assertEquals("Bearer", token.getTokenType());
-        } catch (SkyflowException skyflowException) {
+        } catch (SkyflowException | IOException | ParseException skyflowException) {
             Assert.assertNull(skyflowException);
             skyflowException.printStackTrace();
         }
@@ -103,7 +112,7 @@ public class TokenTest {
         try {
             ResponseToken token = Token.GenerateBearerTokenFromCreds(creds);
         } catch (SkyflowException exception) {
-            assertEquals(Helpers.parameterizedString(ErrorCode.InvalidJSONStringFormat.getDescription(), creds), exception.getMessage());
+            assertEquals(ErrorCode.InvalidJSONStringFormat.getDescription(), exception.getMessage());
         }
     }
 

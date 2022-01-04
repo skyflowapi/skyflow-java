@@ -5,11 +5,15 @@ import com.skyflow.logs.InfoLogs;
 
 import java.util.logging.*;
 
-public class LogUtil {
+public final class LogUtil {
     private static final Logger LOGGER = Logger.getLogger(LogUtil.class.getName());
     private static final String SDK_OWNER = "[Skyflow] ";
+    private static boolean IS_LOGGER_SETUP_DONE = false;
+
 
     public static void setupLogger(LogLevel logLevel) {
+        IS_LOGGER_SETUP_DONE = true;
+        LogManager.getLogManager().reset();
         LOGGER.setUseParentHandlers(false);
         Formatter formatter = new SimpleFormatter() {
             private static final String format = "%s: %s %n";
@@ -31,19 +35,27 @@ public class LogUtil {
     }
 
     public static void printErrorLog(String message) {
-        LOGGER.severe(SDK_OWNER + message);
+        if (IS_LOGGER_SETUP_DONE)
+            LOGGER.severe(SDK_OWNER + message);
+        else {
+            setupLogger(LogLevel.ERROR);
+            LOGGER.severe(SDK_OWNER + message);
+        }
     }
 
     public static void printDebugLog(String message) {
-        LOGGER.config(SDK_OWNER + message);
+        if (IS_LOGGER_SETUP_DONE)
+            LOGGER.config(SDK_OWNER + message);
     }
 
     public static void printWarningLog(String message) {
-        LOGGER.warning(SDK_OWNER + message);
+        if (IS_LOGGER_SETUP_DONE)
+            LOGGER.warning(SDK_OWNER + message);
     }
 
     public static void printInfoLog(String message) {
-        LOGGER.info(SDK_OWNER + message);
+        if (IS_LOGGER_SETUP_DONE)
+            LOGGER.info(SDK_OWNER + message);
     }
 
 
@@ -76,9 +88,10 @@ public class LogUtil {
             logLevel = LogLevel.WARN;
         } else if (Level.INFO.equals(loggerLevel)) {
             logLevel = LogLevel.INFO;
-        } else {
+        } else if (Level.CONFIG.equals(loggerLevel)){
             logLevel = LogLevel.DEBUG;
-        }
+        }else
+            logLevel = LogLevel.OFF;
         return logLevel;
     }
 

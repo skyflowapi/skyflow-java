@@ -16,7 +16,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-public class GetBySkyflowId implements Callable<String> {
+final class GetBySkyflowId implements Callable<String> {
 
     private final GetByIdRecordInput record;
     private final Map<String, String> headers;

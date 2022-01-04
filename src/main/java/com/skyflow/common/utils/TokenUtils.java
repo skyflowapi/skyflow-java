@@ -12,7 +12,7 @@ import org.json.simple.parser.ParseException;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
-public class TokenUtils {
+public final class TokenUtils {
 
     private static String token = null;
 
@@ -45,13 +45,13 @@ public class TokenUtils {
         return false;
     }
 
-    public static boolean isExpired(String encodedToken) throws ParseException {
+    private static boolean isExpired(String encodedToken) throws ParseException {
         long currentTime = new Date().getTime() / 1000;
         long expiryTime = (long) decoded(encodedToken).get("exp");
         return currentTime > expiryTime;
     }
 
-    public static JSONObject decoded(String encodedToken) throws ParseException {
+    private static JSONObject decoded(String encodedToken) throws ParseException {
         String[] split = encodedToken.split("\\.");
         byte[] decodedBytes = Base64.decodeBase64(split[1]);
         return (JSONObject) new JSONParser().parse(new String(decodedBytes, StandardCharsets.UTF_8));

@@ -15,7 +15,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-public class Detokenize implements Callable<String> {
+final class Detokenize implements Callable<String> {
     private final DetokenizeRecord record;
     private final String endPointURL;
     private final Map<String, String> headers;

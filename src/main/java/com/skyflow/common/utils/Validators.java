@@ -10,7 +10,7 @@ import org.json.simple.JSONObject;
 
 import java.net.URL;
 
-public class Validators {
+public final class Validators {
     public static void validateConfiguration(SkyflowConfiguration config) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.ValidatingSkyflowConfiguration.getLog());
         if (config.getVaultID() == null || config.getVaultID().length() <= 0) {

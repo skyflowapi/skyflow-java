@@ -1,8 +1,7 @@
 package com.skyflow.logs;
 
 public enum WarnLogs {
-    GetTokenDeprecated("GetToken method is Deprecated, will be removed in future, use GenerateBearerToken")
-    ;
+    GetTokenDeprecated("GenerateToken method is Deprecated, will be removed in future, use GenerateBearerToken");
     private final String log;
 
     WarnLogs(String log) {
