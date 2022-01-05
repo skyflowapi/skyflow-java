@@ -255,8 +255,8 @@ JSONArray idsJson = new JSONArray();
 idsJson.add("f8d8a622-b557-4c6b-a12c-c5ebe0b0bfd9");
 idsJson.add("da26de53-95d5-4bdb-99db-8d8c66a35ff9");
 validRecord.put("ids",idsJson);
-validRecord.put("table":"cards");
-validRecord.put("redaction",Redaction.PLAIN_TEXT);
+validRecord.put("table","cards");
+validRecord.put("redaction",Redaction.PLAIN_TEXT.toString());
 
 JSONObject invalidRecord = new JSONObject();
 JSONArray invalidIdsJson = new JSONArray();
@@ -264,7 +264,7 @@ invalidIdsJson.add("invalid skyflow ID");
 
 invalidRecord.put("ids",invalidIdsJson);
 invalidRecord.put("table","cards");
-invalidRecord.put("redaction",Redaction.PLAIN_TEXT);
+invalidRecord.put("redaction",Redaction.PLAIN_TEXT.toString());
 recordsArrayJson.add(validRecord);
 recordsArrayJson.add(invalidRecord);
 recordsJson.put("records", recordsArray);
