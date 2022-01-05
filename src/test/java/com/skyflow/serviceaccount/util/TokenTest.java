@@ -22,7 +22,7 @@ public class TokenTest {
     @Test
     public void testInvalidFilePath() {
         try {
-            Token.GenerateBearerToken("");
+            Token.generateBearerToken("");
         } catch (SkyflowException exception) {
             assertEquals(exception.getMessage(), ErrorCode.EmptyFilePath.getDescription());
         }
@@ -32,7 +32,7 @@ public class TokenTest {
     @Test
     public void testNullFilePath() {
         try {
-            Token.GenerateBearerToken("");
+            Token.generateBearerToken("");
         } catch (SkyflowException exception) {
             assertEquals(exception.getMessage(), ErrorCode.EmptyFilePath.getDescription());
         }
@@ -41,7 +41,7 @@ public class TokenTest {
     @Test
     public void testInvalidFileContent() {
         try {
-            Token.GenerateBearerToken(Paths.get("./src/test/resources/invalidCredentials.json").toString());
+            Token.generateBearerToken(Paths.get("./src/test/resources/invalidCredentials.json").toString());
         } catch (SkyflowException exception) {
             assertEquals(exception.getMessage(), ErrorCode.InvalidClientID.getDescription());
         }
@@ -63,7 +63,7 @@ public class TokenTest {
     @Test
     public void testValidFileContent() {
         try {
-            ResponseToken token = Token.GenerateBearerToken(VALID_CREDENTIALS_FILE_PATH);
+            ResponseToken token = Token.generateBearerToken(VALID_CREDENTIALS_FILE_PATH);
             Assert.assertNotNull(token.getAccessToken());
             Assert.assertEquals("Bearer", token.getTokenType());
         } catch (SkyflowException skyflowException) {
@@ -79,7 +79,7 @@ public class TokenTest {
             Object obj = parser.parse(new FileReader(VALID_CREDENTIALS_FILE_PATH));
             JSONObject saCreds = (JSONObject) obj;
 
-            ResponseToken token = Token.GenerateBearerTokenFromCreds(saCreds.toJSONString());
+            ResponseToken token = Token.generateBearerTokenFromCreds(saCreds.toJSONString());
             Assert.assertNotNull(token.getAccessToken());
             Assert.assertEquals("Bearer", token.getTokenType());
         } catch (SkyflowException | IOException | ParseException skyflowException) {
@@ -91,7 +91,7 @@ public class TokenTest {
     @Test
     public void testEmptyString() {
         try {
-            ResponseToken token = Token.GenerateBearerTokenFromCreds("");
+            ResponseToken token = Token.generateBearerTokenFromCreds("");
         } catch (SkyflowException exception) {
             assertEquals(ErrorCode.EmptyJSONString.getDescription(), exception.getMessage());
         }
@@ -100,7 +100,7 @@ public class TokenTest {
     @Test
     public void testNullString() {
         try {
-            ResponseToken token = Token.GenerateBearerTokenFromCreds(null);
+            ResponseToken token = Token.generateBearerTokenFromCreds(null);
         } catch (SkyflowException exception) {
             assertEquals(ErrorCode.EmptyJSONString.getDescription(), exception.getMessage());
         }
@@ -110,7 +110,7 @@ public class TokenTest {
     public void testInvalidString() {
         String creds = "key:'not_a_json'";
         try {
-            ResponseToken token = Token.GenerateBearerTokenFromCreds(creds);
+            ResponseToken token = Token.generateBearerTokenFromCreds(creds);
         } catch (SkyflowException exception) {
             assertEquals(ErrorCode.InvalidJSONStringFormat.getDescription(), exception.getMessage());
         }
@@ -120,7 +120,7 @@ public class TokenTest {
     public void testInvalidKeyId() {
         String creds = "{\"clientID\":\"test_client_ID\"}";
         try {
-            ResponseToken token = Token.GenerateBearerTokenFromCreds(creds);
+            ResponseToken token = Token.generateBearerTokenFromCreds(creds);
         } catch (SkyflowException exception) {
             assertEquals(ErrorCode.InvalidKeyID.getDescription(), exception.getMessage());
         }
@@ -130,7 +130,7 @@ public class TokenTest {
     public void testInvalidTokenURI() {
         String creds = "{\"clientID\":\"test_client_ID\",\"keyID\":\"test_key_id\"}";
         try {
-            ResponseToken token = Token.GenerateBearerTokenFromCreds(creds);
+            ResponseToken token = Token.generateBearerTokenFromCreds(creds);
         } catch (SkyflowException exception) {
             assertEquals(ErrorCode.InvalidTokenURI.getDescription(), exception.getMessage());
         }

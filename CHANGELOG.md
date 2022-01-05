@@ -6,10 +6,10 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Logging functionality
 - `Configuration.setLogLevel` function for setting the package-level LogLevel
-- `GenerateBearerTokenFromCreds` function which takes credentials as string
+- `generateBearerTokenFromCreds` function which takes credentials as string
 
 ### Changed
-- Renamed and deprecated `GenerateToken` in favor of `GenerateBearerToken`
+- Renamed and deprecated `GenerateToken` in favor of `generateBearerToken`
 - `vaultID` and `vaultURL` are optional in `SkyflowConfiguration` constructor
 
 ## [1.1.0] - 2021-11-10

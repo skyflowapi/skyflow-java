@@ -35,12 +35,12 @@ public final class Token {
 
     /**
      * @param filepath
-     * @deprecated use GenerateBearerToken(string filepath), GenerateToken will be removed in future
+     * @deprecated use generateBearerToken(string filepath), GenerateToken will be removed in future
      */
     @Deprecated
     public static ResponseToken GenerateToken(String filepath) throws SkyflowException {
         LogUtil.printWarningLog(WarnLogs.GetTokenDeprecated.getLog());
-        return GenerateBearerToken(filepath);
+        return generateBearerToken(filepath);
     }
 
     /**
@@ -48,7 +48,7 @@ public final class Token {
      *
      * @param filepath
      */
-    public static ResponseToken GenerateBearerToken(String filepath) throws SkyflowException {
+    public static ResponseToken generateBearerToken(String filepath) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.GenerateBearerTokenCalled.getLog());
         JSONParser parser = new JSONParser();
         ResponseToken responseToken = null;
@@ -84,7 +84,7 @@ public final class Token {
      * @param credentials JSON string of credentials file
      */
 
-    public static ResponseToken GenerateBearerTokenFromCreds(String credentials) throws SkyflowException {
+    public static ResponseToken generateBearerTokenFromCreds(String credentials) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.GenerateBearerTokenFromCredsCalled.getLog());
         JSONParser parser = new JSONParser();
         ResponseToken responseToken = null;

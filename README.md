@@ -34,7 +34,7 @@ Add this dependency to your project's POM:
 ### Service Account Bearer Token Generation
 The [Service Account](https://github.com/skyflowapi/skyflow-java/tree/master/src/main/java/com/skyflow/serviceaccount) java module is used to generate service account tokens from service account credentials file which is downloaded upon creation of service account. The token generated from this module is valid for 60 minutes and can be used to make API calls to vault services as well as management API(s) based on the permissions of the service account.
 
-The `GenerateBearerToken(filepath)` function takes the credentials file path for token generation, alternatively, you can also send the entire credentials as string, by using `GenerateBearerTokenFromCreds(credentials)` 
+The `generateBearerToken(filepath)` function takes the credentials file path for token generation, alternatively, you can also send the entire credentials as string, by using `generateBearerTokenFromCreds(credentials)` 
 
 [Example](https://github.com/skyflowapi/skyflow-java/blob/master/src/main/java/com/skyflow/examples/serviceaccount/token/main/ServiceAccountToken.java):
 
@@ -49,8 +49,8 @@ public class ServiceAccountToken {
         ResponseToken res;
         try {
             String filePath = "<YOUR_CREDENTIALS_FILE_PATH>";
-            res = Token.GenerateBearerToken(filePath);
-            // or Token.GenerateBearerTokenFromCreds(credentialsString) 
+            res = Token.generateBearerToken(filePath);
+            // or Token.generateBearerTokenFromCreds(credentialsString) 
             System.out.println(res.getAccessToken() + ":" + res.getTokenType());
         } catch (SkyflowException e) {
             e.printStackTrace();
