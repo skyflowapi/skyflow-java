@@ -1,5 +1,6 @@
 package com.skyflow.serviceaccount.util;
 
+import com.skyflow.common.utils.Helpers;
 import com.skyflow.entities.ResponseToken;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.SkyflowException;
@@ -46,6 +47,26 @@ public class TokenTest {
             assertEquals(exception.getMessage(), ErrorCode.InvalidClientID.getDescription());
         }
 
+    }
+
+    @Test
+    public void testFileNotFoundPath() {
+        String fileNotFoundPath = "./src/test/resources/nofile.json";
+        try {
+            Token.generateBearerToken(Paths.get(fileNotFoundPath).toString());
+        } catch (SkyflowException exception) {
+            assertEquals(exception.getMessage(), Helpers.parameterizedString(ErrorCode.InvalidCredentialsPath.getDescription(), fileNotFoundPath));
+        }
+    }
+
+    @Test
+    public void testFiledNotJsonFile() {
+        String notJsonFilePath = "./src/test/resources/notJson.txt";
+        try {
+            Token.generateBearerToken(Paths.get(notJsonFilePath).toString());
+        } catch (SkyflowException exception) {
+            assertEquals(exception.getMessage(), Helpers.parameterizedString(ErrorCode.InvalidJsonFormat.getDescription(), notJsonFilePath));
+        }
     }
 
     @Test

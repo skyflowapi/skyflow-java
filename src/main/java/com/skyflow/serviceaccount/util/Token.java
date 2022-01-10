@@ -159,21 +159,22 @@ public final class Token {
 
     private static PrivateKey getPrivateKeyFromPem(String pemKey) throws SkyflowException {
 
-        String PKCS1PrivateHeader = "-----BEGIN RSA PRIVATE KEY-----";
-        String PKCS1PrivateFooter = "-----END RSA PRIVATE KEY-----";
+//        String PKCS1PrivateHeader = "-----BEGIN RSA PRIVATE KEY-----";
+//        String PKCS1PrivateFooter = "-----END RSA PRIVATE KEY-----";
 
         String PKCS8PrivateHeader = "-----BEGIN PRIVATE KEY-----";
         String PKCS8PrivateFooter = "-----END PRIVATE KEY-----";
 
         String privateKeyContent = pemKey;
         PrivateKey privateKey = null;
-        if (pemKey.contains(PKCS1PrivateHeader)) {
-            privateKeyContent = privateKeyContent.replace(PKCS1PrivateHeader, "");
-            privateKeyContent = privateKeyContent.replace(PKCS1PrivateFooter, "");
-            privateKeyContent = privateKeyContent.replace("\n", "");
-            privateKeyContent = privateKeyContent.replace("\r\n", "");
-            privateKey = parsePkcs1PrivateKey(Base64.decodeBase64(privateKeyContent));
-        } else if (pemKey.contains(PKCS8PrivateHeader)) {
+//        if (pemKey.contains(PKCS1PrivateHeader)) {
+//            privateKeyContent = privateKeyContent.replace(PKCS1PrivateHeader, "");
+//            privateKeyContent = privateKeyContent.replace(PKCS1PrivateFooter, "");
+//            privateKeyContent = privateKeyContent.replace("\n", "");
+//            privateKeyContent = privateKeyContent.replace("\r\n", "");
+//            privateKey = parsePkcs1PrivateKey(Base64.decodeBase64(privateKeyContent));
+//        }
+        if (pemKey.contains(PKCS8PrivateHeader)) {
             privateKeyContent = privateKeyContent.replace(PKCS8PrivateHeader, "");
             privateKeyContent = privateKeyContent.replace(PKCS8PrivateFooter, "");
             privateKeyContent = privateKeyContent.replace("\n", "");
@@ -206,28 +207,28 @@ public final class Token {
         return privateKey;
     }
 
-    /**
-     * Create a PrivateKey instance from raw PKCS#1 bytes.
-     */
-    private static PrivateKey parsePkcs1PrivateKey(byte[] pkcs1Bytes) throws SkyflowException {
-        int pkcs1Length = pkcs1Bytes.length;
-        int totalLength = pkcs1Length + 22;
-        byte[] pkcs8Header = new byte[]{
-                0x30, (byte) 0x82, (byte) ((totalLength >> 8) & 0xff), (byte) (totalLength & 0xff), // Sequence + total length
-                0x2, 0x1, 0x0, // Integer (0)
-                0x30, 0xD, 0x6, 0x9, 0x2A, (byte) 0x86, 0x48, (byte) 0x86, (byte) 0xF7, 0xD, 0x1, 0x1, 0x1, 0x5, 0x0, // Sequence: 1.2.840.113549.1.1.1, NULL
-                0x4, (byte) 0x82, (byte) ((pkcs1Length >> 8) & 0xff), (byte) (pkcs1Length & 0xff) // Octet string + length
-        };
-        byte[] pkcs8bytes = joinBytes(pkcs8Header, pkcs1Bytes);
-        return parsePkcs8PrivateKey(pkcs8bytes);
-    }
-
-    private static byte[] joinBytes(byte[] a, byte[] b) {
-        byte[] bytes = new byte[a.length + b.length];
-        System.arraycopy(a, 0, bytes, 0, a.length);
-        System.arraycopy(b, 0, bytes, a.length, b.length);
-        return bytes;
-    }
+//    /**
+//     * Create a PrivateKey instance from raw PKCS#1 bytes.
+//     */
+//    private static PrivateKey parsePkcs1PrivateKey(byte[] pkcs1Bytes) throws SkyflowException {
+//        int pkcs1Length = pkcs1Bytes.length;
+//        int totalLength = pkcs1Length + 22;
+//        byte[] pkcs8Header = new byte[]{
+//                0x30, (byte) 0x82, (byte) ((totalLength >> 8) & 0xff), (byte) (totalLength & 0xff), // Sequence + total length
+//                0x2, 0x1, 0x0, // Integer (0)
+//                0x30, 0xD, 0x6, 0x9, 0x2A, (byte) 0x86, 0x48, (byte) 0x86, (byte) 0xF7, 0xD, 0x1, 0x1, 0x1, 0x5, 0x0, // Sequence: 1.2.840.113549.1.1.1, NULL
+//                0x4, (byte) 0x82, (byte) ((pkcs1Length >> 8) & 0xff), (byte) (pkcs1Length & 0xff) // Octet string + length
+//        };
+//        byte[] pkcs8bytes = joinBytes(pkcs8Header, pkcs1Bytes);
+//        return parsePkcs8PrivateKey(pkcs8bytes);
+//    }
+//
+//    private static byte[] joinBytes(byte[] a, byte[] b) {
+//        byte[] bytes = new byte[a.length + b.length];
+//        System.arraycopy(a, 0, bytes, 0, a.length);
+//        System.arraycopy(b, 0, bytes, a.length, b.length);
+//        return bytes;
+//    }
 
     private static String getSignedUserToken(String clientID, String keyID, String tokenURI, PrivateKey pvtKey) {
         final Date createdDate = new Date();
