@@ -18,8 +18,8 @@ public class TokenGenerationExample {
 
         // Generate BearerToken by specifying credentials.json as string
         try {
-            String filePath = "<your_credentials.json_file_as string>";
-            ResponseToken res = Token.generateBearerTokenFromCreds(filePath);
+            String fileContents = "<your_credentials.json_file_as string>";
+            ResponseToken res = Token.generateBearerTokenFromCreds(fileContents);
             System.out.println(res.getTokenType() + ":" + res.getAccessToken());
         } catch (SkyflowException e) {
             e.printStackTrace();

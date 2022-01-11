@@ -47,7 +47,7 @@ public class InsertExample {
             ResponseToken res = null;
             try {
                 String filePath = "<your_credentials_file_path>";
-                res = Token.GenerateToken(filePath);
+                res = Token.generateBearerToken(filePath);
             } catch (SkyflowException e) {
                 e.printStackTrace();
             }

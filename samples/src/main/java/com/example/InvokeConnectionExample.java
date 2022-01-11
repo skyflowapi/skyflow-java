@@ -2,6 +2,7 @@ import com.skyflow.entities.RedactionType;
 import com.skyflow.vault.Skyflow;
 import com.skyflow.entities.TokenProvider;
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.serviceaccount.util.Token;
 import com.skyflow.entities.ResponseToken;
 import com.skyflow.entities.SkyflowConfiguration;
 import org.json.simple.JSONArray;
@@ -15,7 +16,7 @@ public class InvokeConnectionExample {
             ResponseToken res = null;
             try {
                 String filePath = "<your_credentials_file_path>";
-                res = Token.GenerateToken(filePath);
+                res = Token.generateBearerToken(filePath);
             } catch (SkyflowException e) {
                 e.printStackTrace();
             }
