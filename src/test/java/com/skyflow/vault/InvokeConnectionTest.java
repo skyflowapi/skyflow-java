@@ -13,13 +13,14 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentMatchers;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.io.IOException;
 
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.anyString;
 
 
 class TestTokenProvider implements TokenProvider {
@@ -38,7 +39,7 @@ public class InvokeConnectionTest {
 
     @BeforeClass
     public static void init() throws Exception {
-        SkyflowConfiguration config = new SkyflowConfiguration("testVaultID", "https://testVaulturl.com", new TestTokenProvider());
+        SkyflowConfiguration config = new SkyflowConfiguration(new TestTokenProvider());
         skyflowClient = Skyflow.init(config);
 
         PowerMockito.mockStatic(TokenUtils.class);
@@ -76,7 +77,7 @@ public class InvokeConnectionTest {
         try {
             PowerMockito.mockStatic(HttpUtility.class);
             String mockResponse = "{\"processingTimeinMs\":\"116\"}";
-            PowerMockito.when(HttpUtility.sendRequest(anyString(), anyString(), any(), anyMap())).thenReturn(mockResponse);
+            PowerMockito.when(HttpUtility.sendRequest(anyString(), anyString(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockResponse);
             JSONObject gatewayResponse = skyflowClient.invokeConnection(testConfig);
 
             Assert.assertNotNull(gatewayResponse);
@@ -96,7 +97,7 @@ public class InvokeConnectionTest {
         String mockErrorResponse = "{\"error\":{\"code\":\"400\",\"message\":\"missing required field\"}}";
         try {
             PowerMockito.mockStatic(HttpUtility.class);
-            PowerMockito.when(HttpUtility.sendRequest(anyString(), anyString(), any(), anyMap())).thenThrow(new SkyflowException(400, mockErrorResponse));
+            PowerMockito.when(HttpUtility.sendRequest(anyString(), anyString(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenThrow(new SkyflowException(400, mockErrorResponse));
             JSONObject gatewayResponse = skyflowClient.invokeConnection(testConfig);
             Assert.assertNull(gatewayResponse);
         } catch (SkyflowException exception) {
@@ -150,7 +151,7 @@ public class InvokeConnectionTest {
         testConnectionConfig.put("connectionURL", "https://testgatewayurl.com/{card_number}/pay");
         testConnectionConfig.put("methodName", "INVALID_METHOD_NAME");
         try {
-            skyflowClient.invokeConnection(testConnectionConfig);
+            Skyflow.init(new SkyflowConfiguration(new TestTokenProvider())).invokeConnection(testConnectionConfig);
         } catch (SkyflowException exception) {
             Assert.assertEquals(exception.getCode(), ErrorCode.InvalidMethodName.getCode());
             Assert.assertEquals(exception.getMessage(), ErrorCode.InvalidMethodName.getDescription());

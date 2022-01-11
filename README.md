@@ -7,7 +7,7 @@ skyflow-java is the Skyflow SDK for the Java programming language.
 
 Add this dependency to your project's build file:
 ```
-implementation 'com.skyflow:skyflow-java:1.1.0'
+implementation 'com.skyflow:skyflow-java:1.2.0'
 ```
 
 ### Maven users
@@ -17,22 +17,24 @@ Add this dependency to your project's POM:
     <dependency>
         <groupId>com.skyflow</groupId>
         <artifactId>skyflow-java</artifactId>
-        <version>1.1.0</version>
+        <version>1.2.0</version>
     </dependency>
 ```
 ---
 
 ## Table of Contents
 
-* [Service Account Token Generation](#service-account-token-generation)
+* [Service Account Bearer Token Generation](#service-account-token-generation)
 * [Vault APIs](#vault-apis)
     * [Insert](#insert)
     * [Detokenize](#detokenize)
     * [GetById](#get-by-id)
     * [InvokeConnection](#invoke-connection)
-
-### Service Account Token Generation
+*   [Logging](#logging)
+### Service Account Bearer Token Generation
 The [Service Account](https://github.com/skyflowapi/skyflow-java/tree/master/src/main/java/com/skyflow/serviceaccount) java module is used to generate service account tokens from service account credentials file which is downloaded upon creation of service account. The token generated from this module is valid for 60 minutes and can be used to make API calls to vault services as well as management API(s) based on the permissions of the service account.
+
+The `generateBearerToken(filepath)` function takes the credentials file path for token generation, alternatively, you can also send the entire credentials as string, by using `generateBearerTokenFromCreds(credentials)` 
 
 [Example](https://github.com/skyflowapi/skyflow-java/blob/master/src/main/java/com/skyflow/examples/serviceaccount/token/main/ServiceAccountToken.java):
 
@@ -46,8 +48,9 @@ public class ServiceAccountToken {
     public static void main(String args[]) {
         ResponseToken res;
         try {
-            String filePath = "";
-            res = Token.GenerateToken(filePath);
+            String filePath = "<YOUR_CREDENTIALS_FILE_PATH>";
+            res = Token.generateBearerToken(filePath);
+            // or Token.generateBearerTokenFromCreds(credentialsString) 
             System.out.println(res.getAccessToken() + ":" + res.getTokenType());
         } catch (SkyflowException e) {
             e.printStackTrace();
@@ -252,8 +255,8 @@ JSONArray idsJson = new JSONArray();
 idsJson.add("f8d8a622-b557-4c6b-a12c-c5ebe0b0bfd9");
 idsJson.add("da26de53-95d5-4bdb-99db-8d8c66a35ff9");
 validRecord.put("ids",idsJson);
-validRecord.put("table":"cards");
-validRecord.put("redaction",Redaction.PLAIN_TEXT);
+validRecord.put("table","cards");
+validRecord.put("redaction",Redaction.PLAIN_TEXT.toString());
 
 JSONObject invalidRecord = new JSONObject();
 JSONArray invalidIdsJson = new JSONArray();
@@ -261,7 +264,7 @@ invalidIdsJson.add("invalid skyflow ID");
 
 invalidRecord.put("ids",invalidIdsJson);
 invalidRecord.put("table","cards");
-invalidRecord.put("redaction",Redaction.PLAIN_TEXT);
+invalidRecord.put("redaction",Redaction.PLAIN_TEXT.toString());
 recordsArrayJson.add(validRecord);
 recordsArrayJson.add(invalidRecord);
 recordsJson.put("records", recordsArray);
@@ -387,3 +390,41 @@ Sample invokeConnection Response
     }
 }
 ```
+
+### Logging
+
+The skyflow-java SDK provides useful logging using java inbuilt `java.util.logging`. By default the logging level of the SDK is set to `LogLevel.ERROR`. This can be changed by using `setLogLevel(LogLevel)` as shown below:
+
+```java
+import com.skyflow.entities.LogLevel;
+import com.skyflow.Configuration; 
+
+// sets the skyflow-java SDK log level to INFO
+Configuration.setLogLevel(LogLevel.INFO);
+```
+
+Current the following 5 log levels are supported:
+
+- `DEBUG`:
+
+   When `LogLevel.DEBUG` is passed, all level of logs will be printed(DEBUG, INFO, WARN, ERROR)
+   
+- `INFO`: 
+
+   When `LogLevel.INFO` is passed, INFO logs for every event that has occurred during the SDK flow execution will be printed along with WARN and ERROR logs
+   
+- `WARN`: 
+
+   When `LogLevel.WARN` is passed, WARN and ERROR logs will be printed
+   
+- `ERROR`:
+
+   When `LogLevel.ERROR` is passed, only ERROR logs will be printed.
+   
+- `OFF`: 
+
+   `LogLevel.OFF` can be used to turn off all logging from the skyflow-java SDK.
+   
+
+`Note`:
+  - The ranking of logging levels is as follows :  `DEBUG` < `INFO` < `WARN` < `ERROR`.

@@ -1,10 +1,9 @@
 package com.skyflow.entities;
 
-public class SkyflowConfiguration {
+public final class SkyflowConfiguration {
     private final String vaultID;
     private final String vaultURL;
     private final TokenProvider tokenProvider;
-//    private final Options options;
 
     /**
      *
@@ -14,17 +13,15 @@ public class SkyflowConfiguration {
      */
     public SkyflowConfiguration(String vaultID, String vaultURL, TokenProvider tokenProvider) {
         this.vaultID = vaultID;
-        this.vaultURL = vaultURL;
+        this.vaultURL = formatVaultURL(vaultURL);
         this.tokenProvider = tokenProvider;
-//        this.options = new Options(LogLevel.ERROR);
+    }
+    public SkyflowConfiguration(TokenProvider tokenProvider){
+        this.vaultID = "";
+        this.vaultURL = "";
+        this.tokenProvider = tokenProvider;
     }
 
-//    public SkyflowConfiguration(String vaultID, String vaultURL, TokenProvider tokenProvider, Options options) {
-//        this.vaultID = vaultID;
-//        this.vaultURL = vaultURL;
-//        this.tokenProvider = tokenProvider;
-//        this.options = options;
-//    }
 
     public String getVaultID() {
         return vaultID;
@@ -38,8 +35,9 @@ public class SkyflowConfiguration {
         return tokenProvider;
     }
 
-//    public Options getOptions() {
-//        return options;
-//    }
-
+    private String formatVaultURL(String vaultURL){
+        if(vaultURL != null && vaultURL.trim().length() > 0 && vaultURL.trim().charAt(vaultURL.trim().length() - 1) == '/')
+                return vaultURL.trim().substring(0,vaultURL.trim().length()-1);
+        return vaultURL;
+    }
 }

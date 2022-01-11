@@ -1,5 +1,6 @@
 package com.skyflow.common.utils;
 
+import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.SkyflowException;
 import org.json.simple.JSONObject;
 
@@ -9,13 +10,12 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
-public class HttpUtility {
+public final class HttpUtility {
 
     public static String sendRequest(String method, String requestUrl, JSONObject params, Map<String, String> headers) throws IOException, SkyflowException {
         HttpURLConnection connection = null;
         BufferedReader in = null;
         StringBuffer response = null;
-
         try {
             URL url = new URL(requestUrl);
             connection = (HttpURLConnection) url.openConnection();
@@ -41,7 +41,10 @@ public class HttpUtility {
 
             Reader streamReader;
             if (status > 299) {
-                streamReader = new InputStreamReader(connection.getErrorStream());
+                if (connection.getErrorStream() != null)
+                    streamReader = new InputStreamReader(connection.getErrorStream());
+                else
+                    throw new SkyflowException(status, ErrorCode.Server.getDescription());
             } else {
                 streamReader = new InputStreamReader(connection.getInputStream());
             }

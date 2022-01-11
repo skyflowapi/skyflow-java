@@ -1,5 +1,6 @@
 package com.skyflow.vault;
 
+import com.skyflow.Configuration;
 import com.skyflow.common.utils.HttpUtility;
 import com.skyflow.entities.*;
 import com.skyflow.errors.ErrorCode;
@@ -20,12 +21,21 @@ class DemoTokenProvider implements TokenProvider {
     }
 }
 
+class InvalidTokenProvider implements TokenProvider{
+    @Override
+    public String getBearerToken() throws Exception {
+        return "not_a_valid_token";
+    }
+}
+
 public class SkyflowTest {
 
     private static String vaultID = null;
     private static String vaultURL = null;
     private static String skyflowId = null;
     private static String token = null;
+    private static String tableName = null;
+    private static String columnName = null;
 
 
     @BeforeClass
@@ -34,10 +44,13 @@ public class SkyflowTest {
         vaultURL = System.getProperty("TEST_VAULT_URL");
         skyflowId = System.getProperty("TEST_SKYFLOW_ID");
         token = System.getProperty("TEST_TOKEN");
+        tableName = "pii_fields";
+        columnName = "first_name";
     }
 
     @Test
     public void testValidConfig() {
+        Configuration.setLogLevel(LogLevel.INFO);
         SkyflowConfiguration testConfig = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider());
         try {
             Skyflow skyflow = Skyflow.init(testConfig);
@@ -47,22 +60,42 @@ public class SkyflowTest {
         }
     }
 
-//    @Test
-//    public void testValidConfigWithOptions() {
-//        SkyflowConfiguration testConfig = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider(), new Options(LogLevel.DEBUG));
-//        try {
-//            Skyflow skyflow = Skyflow.init(testConfig);
-//            assert (skyflow instanceof Skyflow);
-//        } catch (SkyflowException e) {
-//            assertNotNull(e);
-//        }
-//    }
+
+    @Test
+    public void testInValidConfigWithNullValues() {
+        Configuration.setLogLevel(LogLevel.ERROR);
+        SkyflowConfiguration testConfig = new SkyflowConfiguration(null, null, new DemoTokenProvider());
+        try {
+            Skyflow skyflow = Skyflow.init(testConfig);
+            skyflow.detokenize(new JSONObject());
+
+        } catch (SkyflowException e) {
+            assertEquals(e.getCode(), ErrorCode.EmptyVaultID.getCode());
+            assertEquals(e.getMessage(), ErrorCode.EmptyVaultID.getDescription());
+        }
+    }
+
+    @Test
+    public void testInValidConfigWithNullValues2() {
+        Configuration.setLogLevel(LogLevel.DEBUG);
+        SkyflowConfiguration testConfig = new SkyflowConfiguration(vaultID, null, new DemoTokenProvider());
+        try {
+            Skyflow skyflow = Skyflow.init(testConfig);
+            skyflow.detokenize(new JSONObject());
+
+        } catch (SkyflowException e) {
+            assertEquals(e.getCode(), ErrorCode.InvalidVaultURL.getCode());
+            assertEquals(e.getMessage(), ErrorCode.InvalidVaultURL.getDescription());
+        }
+    }
 
     @Test
     public void testInvalidConfigWithEmptyVaultID() {
+        Configuration.setLogLevel(LogLevel.WARN);
         SkyflowConfiguration testConfig = new SkyflowConfiguration("", vaultURL, new DemoTokenProvider());
         try {
             Skyflow skyflow = Skyflow.init(testConfig);
+            skyflow.insert(new JSONObject(), new InsertOptions());
         } catch (SkyflowException e) {
             assertEquals(e.getCode(), ErrorCode.EmptyVaultID.getCode());
             assertEquals(e.getMessage(), ErrorCode.EmptyVaultID.getDescription());
@@ -71,9 +104,11 @@ public class SkyflowTest {
 
     @Test
     public void testInvalidConfigWithInvalidVaultURL() {
+        Configuration.setLogLevel(LogLevel.OFF);
         SkyflowConfiguration testConfig = new SkyflowConfiguration(vaultID, "//valid.url.com", new DemoTokenProvider());
         try {
             Skyflow skyflow = Skyflow.init(testConfig);
+            skyflow.insert(new JSONObject(), new InsertOptions());
         } catch (SkyflowException e) {
             assertEquals(e.getCode(), ErrorCode.InvalidVaultURL.getCode());
             assertEquals(e.getMessage(), ErrorCode.InvalidVaultURL.getDescription());
@@ -100,9 +135,9 @@ public class SkyflowTest {
             JSONObject records = new JSONObject();
             JSONArray recordsArray = new JSONArray();
             JSONObject record = new JSONObject();
-            record.put("table", "pii_fields");
+            record.put("table", tableName);
             JSONObject fields = new JSONObject();
-            fields.put("first_name", "first");
+            fields.put(columnName, "first");
             record.put("fields", fields);
 
             recordsArray.add(record);
@@ -114,7 +149,35 @@ public class SkyflowTest {
             JSONArray responseRecords = (JSONArray) res.get("records");
 
             assertEquals(1, responseRecords.size());
-            assertEquals("pii_fields", ((JSONObject) responseRecords.get(0)).get("table"));
+            assertEquals(tableName, ((JSONObject) responseRecords.get(0)).get("table"));
+            assertNotNull(((JSONObject) responseRecords.get(0)).get("fields"));
+        } catch (SkyflowException skyflowException) {
+            skyflowException.printStackTrace();
+        }
+    }
+    @Test
+    public void testInsertSuccessWithoutInsertOptions() {
+        try {
+            SkyflowConfiguration config = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider());
+
+            Skyflow skyflowClient = Skyflow.init(config);
+            JSONObject records = new JSONObject();
+            JSONArray recordsArray = new JSONArray();
+            JSONObject record = new JSONObject();
+            record.put("table", tableName);
+            JSONObject fields = new JSONObject();
+            fields.put(columnName, "first");
+            record.put("fields", fields);
+
+            recordsArray.add(record);
+
+            records.put("records", recordsArray);
+
+            JSONObject res = skyflowClient.insert(records);
+            JSONArray responseRecords = (JSONArray) res.get("records");
+
+            assertEquals(1, responseRecords.size());
+            assertEquals(tableName, ((JSONObject) responseRecords.get(0)).get("table"));
             assertNotNull(((JSONObject) responseRecords.get(0)).get("fields"));
         } catch (SkyflowException skyflowException) {
             skyflowException.printStackTrace();
@@ -130,9 +193,9 @@ public class SkyflowTest {
             JSONObject records = new JSONObject();
             JSONArray recordsArray = new JSONArray();
             JSONObject record = new JSONObject();
-            record.put("table", "pii_fields");
+            record.put("table", tableName);
             JSONObject fields = new JSONObject();
-            fields.put("first_name", "first");
+            fields.put(columnName, "first");
             record.put("fields", fields);
 
             recordsArray.add(record);
@@ -144,7 +207,7 @@ public class SkyflowTest {
             JSONArray responseRecords = (JSONArray) res.get("records");
 
             assertEquals(1, responseRecords.size());
-            assertEquals("pii_fields", ((JSONObject) responseRecords.get(0)).get("table"));
+            assertEquals(tableName, ((JSONObject) responseRecords.get(0)).get("table"));
             assertNotNull(((JSONObject) responseRecords.get(0)).get("skyflow_id"));
         } catch (SkyflowException skyflowException) {
             skyflowException.printStackTrace();
@@ -179,7 +242,7 @@ public class SkyflowTest {
             JSONArray recordsArray = new JSONArray();
             JSONObject record = new JSONObject();
             JSONObject fields = new JSONObject();
-            fields.put("first_name", "first");
+            fields.put(columnName, "first");
             record.put("fields", fields);
 
             recordsArray.add(record);
@@ -202,7 +265,7 @@ public class SkyflowTest {
             JSONObject records = new JSONObject();
             JSONArray recordsArray = new JSONArray();
             JSONObject record = new JSONObject();
-            record.put("table", "pii_fields");
+            record.put("table", tableName);
             recordsArray.add(record);
 
             records.put("records", recordsArray);
@@ -223,7 +286,7 @@ public class SkyflowTest {
             JSONObject records = new JSONObject();
             JSONArray recordsArray = new JSONArray();
             JSONObject record = new JSONObject();
-            record.put("invalidTableKey", "pii_fields");
+            record.put("invalidTableKey", tableName);
             recordsArray.add(record);
 
             records.put("records", recordsArray);
@@ -234,6 +297,28 @@ public class SkyflowTest {
             assertEquals(ErrorCode.InvalidInsertInput.getDescription(), skyflowException.getMessage());
         }
     }
+
+    @Test
+    public void testInsertInvalidBearerToken(){
+        try {
+            SkyflowConfiguration config = new SkyflowConfiguration(vaultID, vaultURL, new InvalidTokenProvider());
+
+            Skyflow skyflowClient = Skyflow.init(config);
+            JSONObject records = new JSONObject();
+            JSONArray recordsArray = new JSONArray();
+            JSONObject record = new JSONObject();
+            record.put("invalidTableKey", tableName);
+            recordsArray.add(record);
+
+            records.put("records", recordsArray);
+
+            InsertOptions insertOptions = new InsertOptions(true);
+            JSONObject res = skyflowClient.insert(records, insertOptions);
+        } catch (SkyflowException skyflowException) {
+            assertEquals(ErrorCode.InvalidInsertInput.getDescription(), skyflowException.getMessage());
+        }
+    }
+
 
     @Test
     public void testDetokenizeSuccess() {
@@ -285,6 +370,36 @@ public class SkyflowTest {
     }
 
     @Test
+    public void testDetokenizePartialError() {
+        try {
+            SkyflowConfiguration config = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider());
+
+            Skyflow skyflowClient = Skyflow.init(config);
+            JSONObject records = new JSONObject();
+            JSONArray recordsArray = new JSONArray();
+            JSONObject record = new JSONObject();
+            record.put("token", "invalidToken");
+            JSONObject validRecord = new JSONObject();
+            validRecord.put("token", token);
+            recordsArray.add(record);
+            recordsArray.add(validRecord);
+            records.put("records", recordsArray);
+
+            JSONObject res = skyflowClient.detokenize(records);
+            JSONArray responseRecords = (JSONArray) res.get("records");
+
+            assertEquals(1, responseRecords.size());
+            assertEquals(token, ((JSONObject) responseRecords.get(0)).get("token"));
+            assertTrue(((JSONObject) responseRecords.get(0)).containsKey("value"));
+        } catch (SkyflowException skyflowException) {
+            JSONArray responseRecords = (JSONArray) skyflowException.getData().get("records");
+            JSONArray errors = (JSONArray) skyflowException.getData().get("errors");
+            assertEquals(1, errors.size());
+            assertEquals(1, responseRecords.size());
+        }
+    }
+
+    @Test
     public void testDetokenizeInvalidInput() {
         try {
             SkyflowConfiguration config = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider());
@@ -309,6 +424,21 @@ public class SkyflowTest {
             JSONObject records = new JSONObject();
             JSONArray recordsArray = new JSONArray();
             records.put("records", recordsArray);
+
+            JSONObject res = skyflowClient.detokenize(records);
+        } catch (SkyflowException skyflowException) {
+            assertEquals(ErrorCode.EmptyRecords.getDescription(), skyflowException.getMessage());
+        }
+    }
+
+    @Test
+    public void testDetokenizeEmptyRecords2() {
+        try {
+            SkyflowConfiguration config = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider());
+
+            Skyflow skyflowClient = Skyflow.init(config);
+            JSONObject records = new JSONObject();
+            records.put("records", null);
 
             JSONObject res = skyflowClient.detokenize(records);
         } catch (SkyflowException skyflowException) {
@@ -350,7 +480,7 @@ public class SkyflowTest {
             JSONArray ids = new JSONArray();
             ids.add(skyflowId);
             record.put("ids", ids);
-            record.put("table", "pii_fields");
+            record.put("table", tableName);
             record.put("redaction", RedactionType.PLAIN_TEXT.toString());
             recordsArray.add(record);
 
@@ -360,7 +490,7 @@ public class SkyflowTest {
             JSONArray responseRecords = (JSONArray) response.get("records");
 
             assertEquals(1, responseRecords.size());
-            assertEquals("pii_fields", ((JSONObject) responseRecords.get(0)).get("table"));
+            assertEquals(tableName, ((JSONObject) responseRecords.get(0)).get("table"));
             assertNotNull(((JSONObject) responseRecords.get(0)).get("fields"));
 
         } catch (SkyflowException skyflowException) {
@@ -410,7 +540,7 @@ public class SkyflowTest {
             JSONArray ids = new JSONArray();
             ids.add(skyflowId);
             record.put("ids", ids);
-            record.put("table", "pii_fields");
+            record.put("table", tableName);
             record.put("redaction", RedactionType.PLAIN_TEXT.toString());
             recordsArray.add(record);
 
@@ -467,7 +597,23 @@ public class SkyflowTest {
         }
     }
 
+
     @Test
+    public void testGetByIdEmptyRecords2() {
+        try {
+            SkyflowConfiguration config = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider());
+
+            Skyflow skyflowClient = Skyflow.init(config);
+
+            JSONObject records = new JSONObject();
+            records.put("records", null);
+
+            JSONObject response = skyflowClient.getById(records);
+        } catch (SkyflowException skyflowException) {
+            assertEquals(ErrorCode.EmptyRecords.getDescription(), skyflowException.getMessage());
+        }
+    }
+
     public void testGetByIdEmptyTable() {
         try {
             SkyflowConfiguration config = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider());

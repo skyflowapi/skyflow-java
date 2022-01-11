@@ -15,8 +15,4 @@ public class InsertOptions {
     public boolean isTokens() {
         return tokens;
     }
-
-    public void setTokens(boolean tokens) {
-        this.tokens = tokens;
-    }
 }

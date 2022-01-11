@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 
-public class Helpers {
+public final class Helpers {
 
     public static JSONObject constructInsertRequest(InsertInput recordsInput, InsertOptions options) throws SkyflowException {
         JSONObject finalRequest = new JSONObject();
