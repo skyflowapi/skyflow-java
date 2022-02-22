@@ -63,7 +63,7 @@ final class Detokenize implements Callable<String> {
     }
 
     private String parseDetokenizeError(SkyflowException exception) {
-        String errorResponse;
+        String errorResponse = null;
         String exceptionMessage = exception.getMessage();
         int exceptionCode = exception.getCode();
         JSONObject errorObject = new JSONObject();
@@ -74,10 +74,12 @@ final class Detokenize implements Callable<String> {
             JSONParser parser = new JSONParser();
             JSONObject errorJson = (JSONObject) parser.parse(exceptionMessage);
             JSONObject error = (JSONObject) errorJson.get("error");
-            errorData.put("code", error.get("http_code"));
-            errorData.put("description", error.get("message"));
-            errorObject.put("error", errorData);
-            errorResponse = errorObject.toJSONString();
+            if(error != null) {
+                errorData.put("code", error.get("http_code"));
+                errorData.put("description", error.get("message"));
+                errorObject.put("error", errorData);
+                errorResponse = errorObject.toJSONString();
+            }
         } catch (ParseException e) {
             errorData.put("code", exceptionCode);
             errorData.put("description", exceptionMessage);

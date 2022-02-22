@@ -36,12 +36,14 @@ The [Service Account](https://github.com/skyflowapi/skyflow-java/tree/master/src
 
 The `generateBearerToken(filepath)` function takes the credentials file path for token generation, alternatively, you can also send the entire credentials as string, by using `generateBearerTokenFromCreds(credentials)` 
 
-[Example](https://github.com/skyflowapi/skyflow-java/blob/master/src/main/java/com/skyflow/examples/serviceaccount/token/main/ServiceAccountToken.java):
+[Example](https://github.com/skyflowapi/skyflow-java/blob/master/samples/src/main/java/com/example/TokenGenerationExample.java
+):
 
 ```java
 
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.serviceaccount.util.Token;
+import com.skyflow.entities.ResponseToken;
 
 public class ServiceAccountToken {
 
@@ -97,6 +99,7 @@ class DemoTokenProvider implements TokenProvider {
 All Vault APIs must be invoked using a client instance.
 
 ### Insert
+
 To insert data into the vault from the integrated application, use the insert(JSONObject insertInput, InsertOptions options) method of the Skyflow client. The first parameter insertInput is a JSONObject that must have a `records` key and takes an array of records to be inserted into the vault as value. The second parameter options is a InsertOptions object. See below:
 ```java
 import com.skyflow.entities.InsertOptions;
@@ -161,6 +164,7 @@ Sample insert Response
 ```
 
 ### Detokenize
+
 For retrieving using tokens, use the detokenize(JSONObject records) method. The first parameter JSONObject must have a `records` key takes an array of tokens to be fetched as shown below.
 ```java
 JSONObject recordsJson = new JSONObject();
@@ -218,7 +222,8 @@ Sample detokenize Response
    ]
 }
 ```
-#### Get By Id
+
+### GetById
 
 For retrieving using SkyflowID's, use the getById(JSONObject records) method. The records parameter takes a JSONObject that contains records to be fetched as shown below:
 ```java
@@ -317,7 +322,9 @@ Sample getById response
 ```
 `Note:` While using detokenize and getByID methods, there is a possibility that some or all of the tokens might be invalid. In such cases, the data from response consists of both errors and detokenized records. In the SDK, this will raise a SkyflowException and you can retrieve the data from this Exception object as shown above.
 
-#### Invoke Connection
+
+### Invoke Connection
+
 Using  InvokeConnection, end-user applications can integrate checkout/card issuance flow with their apps/systems. To invoke connection, use the invokeConnection(JSONObject config) method of the Skyflow client. The parameter config object must have `connectionURL` and `methodName` are required and remaining are optional. 
 ```java
 JSONObject invokeConfig = new JSONObject();

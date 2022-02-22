@@ -204,10 +204,10 @@ public final class Skyflow {
             String filledURL = Helpers.constructConnectionURL(connectionConfig);
 
             Map<String, String> headers = new HashMap<>();
+            headers.put("X-Skyflow-Authorization", TokenUtils.getBearerToken(configuration.getTokenProvider()));
             if (connectionConfig.containsKey("requestHeader")) {
                 headers = Helpers.constructConnectionHeadersMap((JSONObject) connectionConfig.get("requestHeader"));
             }
-            headers.put("X-Skyflow-Authorization", TokenUtils.getBearerToken(configuration.getTokenProvider()));
 
             String requestMethod = connectionConfig.get("methodName").toString();
             JSONObject requestBody = null;

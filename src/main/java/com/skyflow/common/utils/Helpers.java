@@ -7,6 +7,8 @@ import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.SkyflowException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -130,6 +132,33 @@ public final class Helpers {
             headersMap.put((String) key, (String) value);
         }
         return headersMap;
+    }
+
+    public static String appendRequestId(String message, String requestId) {
+        if(requestId != null && !requestId.isEmpty()) {
+            message = message + " - requestId: " + requestId;
+        }
+        return message;
+    }
+
+    public static String appendRequestIdToErrorObj(int status, String error, String requestId) throws SkyflowException {
+        try {
+            if(requestId != null && !requestId.isEmpty()) {
+                JSONObject errorObject = (JSONObject) new JSONParser().parse(error);
+                JSONObject tempError = (JSONObject)errorObject.get("error");
+                if(tempError != null) {
+                    String message = (String) tempError.get("message");
+                    message = message + " - requestId: " + requestId;
+
+                    tempError.put("message", message);
+                    errorObject.put("error", tempError);
+                }
+                error = errorObject.toString();
+            }
+        } catch (ParseException e) {
+            throw new SkyflowException(status, error);
+        }
+        return error;
     }
 
 }
