@@ -11,7 +11,7 @@ public final class LogUtil {
     private static boolean IS_LOGGER_SETUP_DONE = false;
 
 
-    public static void setupLogger(LogLevel logLevel) {
+    synchronized public static void setupLogger(LogLevel logLevel) {
         IS_LOGGER_SETUP_DONE = true;
         LogManager.getLogManager().reset();
         LOGGER.setUseParentHandlers(false);

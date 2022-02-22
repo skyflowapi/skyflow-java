@@ -38,13 +38,17 @@ public final class HttpUtility {
             }
 
             int status = connection.getResponseCode();
+            String requestID = connection.getHeaderField("x-request-id");
 
             Reader streamReader;
             if (status > 299) {
                 if (connection.getErrorStream() != null)
                     streamReader = new InputStreamReader(connection.getErrorStream());
-                else
-                    throw new SkyflowException(status, ErrorCode.Server.getDescription());
+                else {
+                    String description = Helpers.appendRequestId(ErrorCode.Server.getDescription(), requestID);
+                    LogUtil.printErrorLog(description);
+                    throw new SkyflowException(status, description);
+                }
             } else {
                 streamReader = new InputStreamReader(connection.getInputStream());
             }
@@ -57,7 +61,9 @@ public final class HttpUtility {
             }
 
             if (status > 299) {
-                throw new SkyflowException(status, response.toString());
+                LogUtil.printErrorLog(Helpers.appendRequestId(response.toString(), requestID));
+                String errorMsg = Helpers.appendRequestIdToErrorObj(status, response.toString(), requestID);
+                throw new SkyflowException(status, errorMsg);
             }
         } finally {
             if (in != null) {
