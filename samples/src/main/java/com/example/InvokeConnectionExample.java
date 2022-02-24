@@ -8,7 +8,7 @@ import org.json.simple.JSONObject;
 public class InvokeConnectionExample {
     static class DemoTokenProvider implements TokenProvider {
 
-        String bearerToken = null;
+        private String bearerToken = null;
 
         @Override
         public String getBearerToken() throws Exception {

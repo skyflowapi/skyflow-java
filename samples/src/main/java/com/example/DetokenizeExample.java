@@ -37,7 +37,7 @@ public class DetokenizeExample {
 
     static class DemoTokenProvider implements TokenProvider {
 
-        String bearerToken = null;
+        private String bearerToken = null;
 
         @Override
         public String getBearerToken() throws Exception {
