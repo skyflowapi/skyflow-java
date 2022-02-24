@@ -37,16 +37,22 @@ public class DetokenizeExample {
 
     static class DemoTokenProvider implements TokenProvider {
 
+        String bearerToken = null;
+
         @Override
         public String getBearerToken() throws Exception {
-            ResponseToken res = null;
+            ResponseToken response = null;
             try {
-                String filePath = "<your_credentials_file_path>";
-                res = Token.generateBearerToken(filePath);
+                String filePath = "<credentials_file_path>";
+                if(!Token.isValid(bearerToken)) {
+                    response = Token.generateBearerToken(filePath);
+                    bearerToken = response.getAccessToken();
+                }
             } catch (SkyflowException e) {
                 e.printStackTrace();
             }
-            return res.getAccessToken();
+
+            return bearerToken;
         }
     }
 }
