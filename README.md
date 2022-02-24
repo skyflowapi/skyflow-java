@@ -45,13 +45,13 @@ import com.skyflow.errors.SkyflowException;
 import com.skyflow.serviceaccount.util.Token;
 import com.skyflow.entities.ResponseToken;
 
-public class TokenGenerationSample {
+public class TokenGenerationUtil {
 
     String bearerToken = null;
 
-    public String getToken() {
+    public String getSkyflowBearerToken() {
         try {
-            String filePath = "<credentials_file_path>";
+            String filePath = "<YOUR_CREDENTIALS_FILE_PATH>";
             if(!Token.isValid(bearerToken)) {
                 ResponseToken response = Token.generateBearerToken(filePath);
                 // or Token.generateBearerTokenFromCreds(credentialsString) 
