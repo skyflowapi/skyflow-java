@@ -47,9 +47,9 @@ import com.skyflow.entities.ResponseToken;
 
 public class TokenGenerationUtil {
 
-    String bearerToken = null;
+    private static String bearerToken = null;
 
-    public String getSkyflowBearerToken() {
+    public static String getSkyflowBearerToken() {
         try {
             String filePath = "<YOUR_CREDENTIALS_FILE_PATH>";
             if(!Token.isValid(bearerToken)) {
@@ -84,7 +84,7 @@ Example implementation of DemoTokenProvider is as follows
 ```java
 import com.skyflow.entities.TokenProvider;
 
-class DemoTokenProvider implements TokenProvider {
+static class DemoTokenProvider implements TokenProvider {
     
         @Override
         public String getBearerToken() throws Exception {
