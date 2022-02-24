@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.skyflow.common.utils.Helpers;
 import com.skyflow.common.utils.HttpUtility;
 import com.skyflow.common.utils.LogUtil;
+import com.skyflow.common.utils.TokenUtils;
 import com.skyflow.entities.ResponseToken;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.SkyflowException;
@@ -243,6 +244,26 @@ public final class Token {
                 .compact();
 
         return signedToken;
+    }
+
+    public static boolean isValid(String token) {
+
+        long expiryTime;
+        long currentTime;
+        try {
+            if (token == null || token.isEmpty()) {
+                LogUtil.printInfoLog(InfoLogs.EmptyBearerToken.getLog());
+                return false;
+            }
+
+            currentTime = new Date().getTime() / 1000;
+            expiryTime = (long) TokenUtils.decoded(token).get("exp");
+
+        } catch (ParseException e) {
+            LogUtil.printInfoLog(ErrorLogs.InvalidBearerToken.getLog());
+            return false;
+        }
+        return expiryTime > currentTime;
     }
 }
 

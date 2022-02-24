@@ -47,11 +47,12 @@ public final class TokenUtils {
 
     private static boolean isExpired(String encodedToken) throws ParseException {
         long currentTime = new Date().getTime() / 1000;
+        currentTime = currentTime - 300;
         long expiryTime = (long) decoded(encodedToken).get("exp");
         return currentTime > expiryTime;
     }
 
-    private static JSONObject decoded(String encodedToken) throws ParseException {
+    public static JSONObject decoded(String encodedToken) throws ParseException {
         String[] split = encodedToken.split("\\.");
         byte[] decodedBytes = Base64.decodeBase64(split[1]);
         return (JSONObject) new JSONParser().parse(new String(decodedBytes, StandardCharsets.UTF_8));

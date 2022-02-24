@@ -1,26 +1,29 @@
-import com.skyflow.entities.RedactionType;
+import com.skyflow.entities.*;
 import com.skyflow.vault.Skyflow;
-import com.skyflow.entities.TokenProvider;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.serviceaccount.util.Token;
-import com.skyflow.entities.ResponseToken;
-import com.skyflow.entities.SkyflowConfiguration;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 public class InvokeConnectionExample {
-    class DemoTokenProvider implements TokenProvider {
+    static class DemoTokenProvider implements TokenProvider {
+
+        private String bearerToken = null;
 
         @Override
         public String getBearerToken() throws Exception {
-            ResponseToken res = null;
+            ResponseToken response = null;
             try {
-                String filePath = "<your_credentials_file_path>";
-                res = Token.generateBearerToken(filePath);
+                String filePath = "<YOUR_CREDENTIALS_FILE_PATH>";
+                if(!Token.isValid(bearerToken)) {
+                    response = Token.generateBearerToken(filePath);
+                    bearerToken = response.getAccessToken();
+                }
             } catch (SkyflowException e) {
                 e.printStackTrace();
             }
-            return res.getAccessToken();
+
+            return bearerToken;
         }
     }
 

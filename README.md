@@ -45,19 +45,23 @@ import com.skyflow.errors.SkyflowException;
 import com.skyflow.serviceaccount.util.Token;
 import com.skyflow.entities.ResponseToken;
 
-public class ServiceAccountToken {
+public class TokenGenerationUtil {
 
-    public static void main(String args[]) {
-        ResponseToken res;
+    private static String bearerToken = null;
+
+    public static String getSkyflowBearerToken() {
         try {
             String filePath = "<YOUR_CREDENTIALS_FILE_PATH>";
-            res = Token.generateBearerToken(filePath);
-            // or Token.generateBearerTokenFromCreds(credentialsString) 
-            System.out.println(res.getAccessToken() + ":" + res.getTokenType());
+            if(!Token.isValid(bearerToken)) {
+                ResponseToken response = Token.generateBearerToken(filePath);
+                // or Token.generateBearerTokenFromCreds(credentialsString) 
+                bearerToken = response.getAccessToken();
+            }
         } catch (SkyflowException e) {
             e.printStackTrace();
         }
 
+        return bearerToken;
     }
 }
 ```
@@ -80,7 +84,7 @@ Example implementation of DemoTokenProvider is as follows
 ```java
 import com.skyflow.entities.TokenProvider;
 
-class DemoTokenProvider implements TokenProvider {
+static class DemoTokenProvider implements TokenProvider {
     
         @Override
         public String getBearerToken() throws Exception {
