@@ -7,7 +7,7 @@ skyflow-java is the Skyflow SDK for the Java programming language.
 
 Add this dependency to your project's build file:
 ```
-implementation 'com.skyflow:skyflow-java:1.2.0'
+implementation 'com.skyflow:skyflow-java:1.3.0'
 ```
 
 ### Maven users
@@ -17,7 +17,7 @@ Add this dependency to your project's POM:
     <dependency>
         <groupId>com.skyflow</groupId>
         <artifactId>skyflow-java</artifactId>
-        <version>1.2.0</version>
+        <version>1.3.0</version>
     </dependency>
 ```
 ---
