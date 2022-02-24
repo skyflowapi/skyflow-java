@@ -45,19 +45,23 @@ import com.skyflow.errors.SkyflowException;
 import com.skyflow.serviceaccount.util.Token;
 import com.skyflow.entities.ResponseToken;
 
-public class ServiceAccountToken {
+public class TokenGenerationSample {
 
-    public static void main(String args[]) {
-        ResponseToken res;
+    String bearerToken = null;
+
+    public String getToken() {
         try {
-            String filePath = "<YOUR_CREDENTIALS_FILE_PATH>";
-            res = Token.generateBearerToken(filePath);
-            // or Token.generateBearerTokenFromCreds(credentialsString) 
-            System.out.println(res.getAccessToken() + ":" + res.getTokenType());
+            String filePath = "<credentials_file_path>";
+            if(!Token.isValid(bearerToken)) {
+                ResponseToken response = Token.generateBearerToken(filePath);
+                // or Token.generateBearerTokenFromCreds(credentialsString) 
+                bearerToken = response.getAccessToken();
+            }
         } catch (SkyflowException e) {
             e.printStackTrace();
         }
 
+        return bearerToken;
     }
 }
 ```

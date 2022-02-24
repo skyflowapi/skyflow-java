@@ -1,6 +1,7 @@
 package com.skyflow.logs;
 
 public enum InfoLogs {
+    EmptyBearerToken("BearerToken is empty"),
     InitializedClient("skyflow client initialized successfully"),
     CurrentLogLevel("client LogLevel is %s1"),
     LoggerSetup("logger has setup successfully"),
