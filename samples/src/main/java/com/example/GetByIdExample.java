@@ -48,7 +48,7 @@ public class GetByIdExample {
         public String getBearerToken() throws Exception {
             ResponseToken response = null;
             try {
-                String filePath = "<credentials_file_path>";
+                String filePath = "<YOUR_CREDENTIALS_FILE_PATH>";
                 if(!Token.isValid(bearerToken)) {
                     response = Token.generateBearerToken(filePath);
                     bearerToken = response.getAccessToken();
