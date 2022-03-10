@@ -52,7 +52,7 @@ public class TokenGenerationUtil {
     public static String getSkyflowBearerToken() {
         try {
             String filePath = "<YOUR_CREDENTIALS_FILE_PATH>";
-            if(!Token.isValid(bearerToken)) {
+            if(Token.isExpired(bearerToken)) {
                 ResponseToken response = Token.generateBearerToken(filePath);
                 // or Token.generateBearerTokenFromCreds(credentialsString) 
                 bearerToken = response.getAccessToken();
@@ -76,7 +76,7 @@ import com.skyflow.entities.SkyflowConfiguration;
 // DemoTokenProvider class is an implementation of the TokenProvider interface
 DemoTokenProvider demoTokenProvider = new DemoTokenProvider(); 
 
-SkyflowConfiguration skyflowConfig = new SkyflowConfiguration(<VAULT_ID>,<VAULT_URL>,demoTokenTokenProvider);
+SkyflowConfiguration skyflowConfig = new SkyflowConfiguration(<VAULT_ID>,<VAULT_URL>,demoTokenProvider);
 
 Skyflow skyflowClient = Skyflow.init(skyflowConfig);
 ```
@@ -91,7 +91,7 @@ static class DemoTokenProvider implements TokenProvider {
             ResponseToken res = null;
             try {
                 String filePath = "<your_credentials_file_path>";
-                res = Token.GenerateToken(filePath);
+                res = Token.GenerateBearerToken(filePath);
             } catch (SkyflowException e) {
                 e.printStackTrace();
             }
