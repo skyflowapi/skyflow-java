@@ -45,15 +45,18 @@ public final class TokenUtils {
         return false;
     }
 
-    private static boolean isExpired(String encodedToken) throws ParseException {
+    private static boolean isExpired(String encodedToken) throws ParseException, SkyflowException {
         long currentTime = new Date().getTime() / 1000;
         currentTime = currentTime - 300;
         long expiryTime = (long) decoded(encodedToken).get("exp");
         return currentTime > expiryTime;
     }
 
-    public static JSONObject decoded(String encodedToken) throws ParseException {
+    public static JSONObject decoded(String encodedToken) throws ParseException, SkyflowException {
         String[] split = encodedToken.split("\\.");
+        if(split.length < 3) {
+            throw new SkyflowException(ErrorCode.InvalidBearerToken);
+        }
         byte[] decodedBytes = Base64.decodeBase64(split[1]);
         return (JSONObject) new JSONParser().parse(new String(decodedBytes, StandardCharsets.UTF_8));
     }

@@ -157,4 +157,16 @@ public class TokenTest {
         }
     }
 
+    @Test
+    public void testIsValidForEmptyToken() {
+        String token = "";
+        assertEquals(false, Token.isValid(token));
+    }
+
+    @Test
+    public void testIsValidForInvalidToken() {
+        String token = "invalidToken";
+        assertEquals(false, Token.isValid(token));
+    }
+
 }
