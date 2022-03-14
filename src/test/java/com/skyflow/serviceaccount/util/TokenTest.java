@@ -169,4 +169,12 @@ public class TokenTest {
         assertEquals(false, Token.isValid(token));
     }
 
+    @Test
+    public void testIsExpiredForExpiredToken() {
+        String token = System.getProperty("TEST_EXPIRED_TOKEN");;
+        assertEquals(true, Token.isExpired(token));
+    }
+
+
+
 }
