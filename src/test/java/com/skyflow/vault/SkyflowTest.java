@@ -1,23 +1,25 @@
 package com.skyflow.vault;
 
 import com.skyflow.Configuration;
-import com.skyflow.common.utils.HttpUtility;
 import com.skyflow.entities.*;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.serviceaccount.util.Token;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
 
 class DemoTokenProvider implements TokenProvider {
+
+    private final String VALID_CREDENTIALS_FILE_PATH = "./credentials.json";
+
     @Override
     public String getBearerToken() throws Exception {
-        String response = HttpUtility.sendRequest("GET", System.getProperty("TEST_TOKEN_URL"), null, null);
-        return (String) ((JSONObject) (new JSONParser().parse(response))).get("accessToken");
+        String response = Token.generateBearerToken(VALID_CREDENTIALS_FILE_PATH).getAccessToken();
+        return response;
     }
 }
 
@@ -36,6 +38,7 @@ public class SkyflowTest {
     private static String token = null;
     private static String tableName = null;
     private static String columnName = null;
+    private static String INVALID_EXCEPTION_THROWN = "Should not have thrown any exception";
 
 
     @BeforeClass
@@ -51,10 +54,10 @@ public class SkyflowTest {
     @Test
     public void testValidConfig() {
         Configuration.setLogLevel(LogLevel.INFO);
-        SkyflowConfiguration testConfig = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider());
+        SkyflowConfiguration testConfig = new SkyflowConfiguration(vaultID, vaultURL,null);
         try {
             Skyflow skyflow = Skyflow.init(testConfig);
-            assert (skyflow instanceof Skyflow);
+            assert(skyflow instanceof Skyflow);
         } catch (SkyflowException e) {
             assertNotNull(e);
         }
@@ -153,6 +156,7 @@ public class SkyflowTest {
             assertNotNull(((JSONObject) responseRecords.get(0)).get("fields"));
         } catch (SkyflowException skyflowException) {
             skyflowException.printStackTrace();
+            fail(INVALID_EXCEPTION_THROWN);
         }
     }
     @Test
@@ -181,6 +185,7 @@ public class SkyflowTest {
             assertNotNull(((JSONObject) responseRecords.get(0)).get("fields"));
         } catch (SkyflowException skyflowException) {
             skyflowException.printStackTrace();
+            fail(INVALID_EXCEPTION_THROWN);
         }
     }
 
@@ -211,6 +216,7 @@ public class SkyflowTest {
             assertNotNull(((JSONObject) responseRecords.get(0)).get("skyflow_id"));
         } catch (SkyflowException skyflowException) {
             skyflowException.printStackTrace();
+            fail(INVALID_EXCEPTION_THROWN);
         }
     }
 
@@ -335,12 +341,12 @@ public class SkyflowTest {
 
             JSONObject res = skyflowClient.detokenize(records);
             JSONArray responseRecords = (JSONArray) res.get("records");
-
             assertEquals(1, responseRecords.size());
             assertEquals(token, ((JSONObject) responseRecords.get(0)).get("token"));
             assertTrue(((JSONObject) responseRecords.get(0)).containsKey("value"));
         } catch (SkyflowException skyflowException) {
             skyflowException.printStackTrace();
+            fail(INVALID_EXCEPTION_THROWN);
         }
     }
 
@@ -358,11 +364,6 @@ public class SkyflowTest {
             records.put("records", recordsArray);
 
             JSONObject res = skyflowClient.detokenize(records);
-            JSONArray responseRecords = (JSONArray) res.get("records");
-
-            assertEquals(1, responseRecords.size());
-            assertEquals(token, ((JSONObject) responseRecords.get(0)).get("token"));
-            assertTrue(((JSONObject) responseRecords.get(0)).containsKey("value"));
         } catch (SkyflowException skyflowException) {
             JSONArray errors = (JSONArray) skyflowException.getData().get("errors");
             assertEquals(1, errors.size());
@@ -386,11 +387,6 @@ public class SkyflowTest {
             records.put("records", recordsArray);
 
             JSONObject res = skyflowClient.detokenize(records);
-            JSONArray responseRecords = (JSONArray) res.get("records");
-
-            assertEquals(1, responseRecords.size());
-            assertEquals(token, ((JSONObject) responseRecords.get(0)).get("token"));
-            assertTrue(((JSONObject) responseRecords.get(0)).containsKey("value"));
         } catch (SkyflowException skyflowException) {
             JSONArray responseRecords = (JSONArray) skyflowException.getData().get("records");
             JSONArray errors = (JSONArray) skyflowException.getData().get("errors");
@@ -495,6 +491,7 @@ public class SkyflowTest {
 
         } catch (SkyflowException skyflowException) {
             skyflowException.printStackTrace();
+            fail(INVALID_EXCEPTION_THROWN);
         }
     }
 
