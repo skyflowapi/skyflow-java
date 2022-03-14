@@ -19,4 +19,4 @@ jobs:
           json: ${{ secrets.TEST_CREDENTIALS_FILE_STRING }}
 
       - name: Build with Maven
-        run: mvn -B package -DTEST_VAULT_ID=${{ secrets.TEST_VAULT_ID }} -DTEST_VAULT_URL=${{ secrets.TEST_VAULT_URL }} -DTEST_SKYFLOW_ID=${{ secrets.TEST_SKYFLOW_ID }} -DTEST_TOKEN=${{ secrets.TEST_TOKEN }} -DTEST_CREDENTIALS=${{ secrets.TEST_CREDENTIALS_FILE_STRING }} -f pom.xml
+        run: mvn -B package -DTEST_VAULT_ID=${{ secrets.TEST_VAULT_ID }} -DTEST_VAULT_URL=${{ secrets.TEST_VAULT_URL }} -DTEST_SKYFLOW_ID=${{ secrets.TEST_SKYFLOW_ID }} -DTEST_TOKEN=${{ secrets.TEST_TOKEN }} -DTEST_CREDENTIALS=${{ secrets.TEST_CREDENTIALS_FILE_STRING }} -DTEST_EXPIRED_TOKEN=${{ secrets.TEST_EXPIRED_TOKEN }}-f pom.xml

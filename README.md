@@ -1,5 +1,11 @@
 # Skyflow-java
-skyflow-java is the Skyflow SDK for the Java programming language.
+This Java SDK is designed to help developers easily implement Skyflow into their java backend. 
+
+#### Features
+
+- Authentication with a Skyflow Service Account and generation of a bearer token
+- Vault API operations to insert, retrieve and tokenize sensitive data
+- Invoking connections to call downstream third party APIs without directly handling sensitive data
 
 ---
 ## Usage
@@ -104,7 +110,7 @@ All Vault APIs must be invoked using a client instance.
 
 ### Insert
 
-To insert data into the vault from the integrated application, use the insert(JSONObject insertInput, InsertOptions options) method of the Skyflow client. The first parameter insertInput is a JSONObject that must have a `records` key and takes an array of records to be inserted into the vault as value. The second parameter options is a InsertOptions object. See below:
+To insert data into your vault, use the **insert(JSONObject insertInput, InsertOptions options)** method. The first parameter `insertInput` is a JSONObject that must have a `records` key and takes an array of records to be inserted into the vault as a value. The second parameter `options` is a InsertOptions object that provides further options for your insert call, as shown below.
 ```java
 import com.skyflow.entities.InsertOptions;
 
@@ -169,7 +175,7 @@ Sample insert Response
 
 ### Detokenize
 
-For retrieving using tokens, use the detokenize(JSONObject records) method. The first parameter JSONObject must have a `records` key takes an array of tokens to be fetched as shown below.
+In order to retrieve data from your vault using tokens that you have previously generated for that data, you can use the **detokenize(JSONObject records)** method. The first parameter JSONObject must have a `records` key that takes an array of tokens to be fetched from the vault, as shown below.
 ```java
 JSONObject recordsJson = new JSONObject();
 
@@ -229,7 +235,7 @@ Sample detokenize Response
 
 ### GetById
 
-For retrieving using SkyflowID's, use the getById(JSONObject records) method. The records parameter takes a JSONObject that contains records to be fetched as shown below:
+In order to retrieve data from your vault using SkyflowIDs, use the **getById(JSONObject records)** method. The `records` parameter takes a JSONObject that should contain an array of SkyflowIDs to be fetched, as shown below:
 ```java
 import com.skyflow.entities.RedactionType;
 
@@ -329,7 +335,7 @@ Sample getById response
 
 ### Invoke Connection
 
-Using  InvokeConnection, end-user applications can integrate checkout/card issuance flow with their apps/systems. To invoke connection, use the invokeConnection(JSONObject config) method of the Skyflow client. The parameter config object must have `connectionURL` and `methodName` are required and remaining are optional. 
+Using the InvokeConnection method, you can integrate their server-side application with third party APIs and services without directly handling sensitive data. Prior to invoking the `InvokeConnection` method, you must have created a connection and have a connectionURL already generated. Once you have the connectionURL, you can invoke a connection by using the **invokeConnection(JSONObject config)** method. The JSONObject config parameter must include a `connectionURL` and `methodName`. The other fields are optional. 
 ```java
 JSONObject invokeConfig = new JSONObject();
 // connection url received when creating a skyflow connection integration
