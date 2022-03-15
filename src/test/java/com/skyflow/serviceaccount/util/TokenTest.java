@@ -157,4 +157,24 @@ public class TokenTest {
         }
     }
 
+    @Test
+    public void testIsValidForEmptyToken() {
+        String token = "";
+        assertEquals(false, Token.isValid(token));
+    }
+
+    @Test
+    public void testIsValidForInvalidToken() {
+        String token = "invalidToken";
+        assertEquals(false, Token.isValid(token));
+    }
+
+    @Test
+    public void testIsExpiredForExpiredToken() {
+        String token = System.getProperty("TEST_EXPIRED_TOKEN");;
+        assertEquals(true, Token.isExpired(token));
+    }
+
+
+
 }

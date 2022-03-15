@@ -15,7 +15,7 @@ public class InvokeConnectionExample {
             ResponseToken response = null;
             try {
                 String filePath = "<YOUR_CREDENTIALS_FILE_PATH>";
-                if(!Token.isValid(bearerToken)) {
+                if(Token.isExpired(bearerToken)) {
                     response = Token.generateBearerToken(filePath);
                     bearerToken = response.getAccessToken();
                 }

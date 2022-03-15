@@ -246,14 +246,24 @@ public final class Token {
         return signedToken;
     }
 
+    /**
+     * @param token
+     * @deprecated use isExpired(String token), isValid will be removed in future
+     */
+    @Deprecated
     public static boolean isValid(String token) {
+        LogUtil.printWarningLog(WarnLogs.IsValidDeprecated.getLog());
+        return !isExpired(token);
+    }
+
+    public static boolean isExpired(String token) {
 
         long expiryTime;
         long currentTime;
         try {
             if (token == null || token.isEmpty()) {
                 LogUtil.printInfoLog(InfoLogs.EmptyBearerToken.getLog());
-                return false;
+                return true;
             }
 
             currentTime = new Date().getTime() / 1000;
@@ -261,9 +271,12 @@ public final class Token {
 
         } catch (ParseException e) {
             LogUtil.printInfoLog(ErrorLogs.InvalidBearerToken.getLog());
-            return false;
+            return true;
+        } catch (SkyflowException e) {
+            LogUtil.printInfoLog(ErrorLogs.InvalidBearerToken.getLog());
+            return true;
         }
-        return expiryTime > currentTime;
+        return currentTime >= expiryTime;
     }
 }
 
