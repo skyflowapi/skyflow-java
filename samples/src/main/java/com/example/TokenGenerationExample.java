@@ -12,7 +12,7 @@ public class TokenGenerationExample {
         // Generate BearerToken by specifying credentials.json file path
         try {
             String filePath = "<YOUR_CREDENTIALS_FILE_PATH>";
-            if(!Token.isValid(bearerToken)) {
+            if(Token.isExpired(bearerToken)) {
                 ResponseToken res = Token.generateBearerToken(filePath);
                 bearerToken = res.getAccessToken();
             }
@@ -24,7 +24,7 @@ public class TokenGenerationExample {
         // Generate BearerToken by specifying credentials.json as string
         try {
             String fileContents = "<YOUR_CREDENTIALS_FILE_CONTENTS_AS_STRING>";
-            if(!Token.isValid(bearerToken)) {
+            if(Token.isExpired(bearerToken)) {
                 ResponseToken res = Token.generateBearerTokenFromCreds(fileContents);
                 bearerToken = res.getAccessToken();
             }
