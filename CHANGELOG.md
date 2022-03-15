@@ -1,6 +1,12 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.4.0] - 2022-03-15
+
+### Changed
+
+- deprecated `isValid` in favour of `isExpired`
+
 ## [1.3.0] - 2022-02-24
 
 ### Added
