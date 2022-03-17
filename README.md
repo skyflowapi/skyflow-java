@@ -1,6 +1,10 @@
 # Skyflow-java
 This Java SDK is designed to help developers easily implement Skyflow into their java backend. 
 
+[![CI](https://img.shields.io/static/v1?label=CI&message=passing&color=green?style=plastic&logo=github)](https://github.com/skyflowapi/skyflow-java/actions)
+[![GitHub release](https://img.shields.io/github/v/release/skyflowapi/skyflow-java.svg)](https://mvnrepository.com/artifact/com.skyflow/skyflow-java)
+[![License](https://img.shields.io/github/license/skyflowapi/skyflow-java)](https://github.com/skyflowapi/skyflow-java/blob/master/LICENSE)
+
 #### Features
 
 - Authentication with a Skyflow Service Account and generation of a bearer token
