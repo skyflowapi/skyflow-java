@@ -1,22 +1,45 @@
 # Skyflow-java
 This Java SDK is designed to help developers easily implement Skyflow into their java backend. 
 
-#### Features
+[![CI](https://img.shields.io/static/v1?label=CI&message=passing&color=green?style=plastic&logo=github)](https://github.com/skyflowapi/skyflow-java/actions)
+[![GitHub release](https://img.shields.io/github/v/release/skyflowapi/skyflow-java.svg)](https://mvnrepository.com/artifact/com.skyflow/skyflow-java)
+[![License](https://img.shields.io/github/license/skyflowapi/skyflow-java)](https://github.com/skyflowapi/skyflow-java/blob/master/LICENSE)
+
+# Table of Contents
+
+* [Features](#features)
+* [Installation](#installation)
+    * [Requirements](#requirements)
+    * [Configuration](#configuration)
+* [Service Account Bearer Token Generation](#service-account-token-generation)
+* [Vault APIs](#vault-apis)
+    * [Insert](#insert)
+    * [Detokenize](#detokenize)
+    * [GetById](#get-by-id)
+    * [InvokeConnection](#invoke-connection)
+*   [Logging](#logging)
+
+## Features
 
 - Authentication with a Skyflow Service Account and generation of a bearer token
 - Vault API operations to insert, retrieve and tokenize sensitive data
 - Invoking connections to call downstream third party APIs without directly handling sensitive data
 
+## Installation
+
+### Requirements
+- Java 1.8 and above
+
+### Configuration
 ---
-## Usage
-### Gradle users
+#### Gradle users
 
 Add this dependency to your project's build file:
 ```
 implementation 'com.skyflow:skyflow-java:1.4.0'
 ```
 
-### Maven users
+#### Maven users
 Add this dependency to your project's POM:
 
 ```xml
@@ -28,16 +51,7 @@ Add this dependency to your project's POM:
 ```
 ---
 
-## Table of Contents
-
-* [Service Account Bearer Token Generation](#service-account-token-generation)
-* [Vault APIs](#vault-apis)
-    * [Insert](#insert)
-    * [Detokenize](#detokenize)
-    * [GetById](#get-by-id)
-    * [InvokeConnection](#invoke-connection)
-*   [Logging](#logging)
-### Service Account Bearer Token Generation
+## Service Account Bearer Token Generation
 The [Service Account](https://github.com/skyflowapi/skyflow-java/tree/master/src/main/java/com/skyflow/serviceaccount) java module is used to generate service account tokens from service account credentials file which is downloaded upon creation of service account. The token generated from this module is valid for 60 minutes and can be used to make API calls to vault services as well as management API(s) based on the permissions of the service account.
 
 The `generateBearerToken(filepath)` function takes the credentials file path for token generation, alternatively, you can also send the entire credentials as string, by using `generateBearerTokenFromCreds(credentials)` 
@@ -71,7 +85,7 @@ public class TokenGenerationUtil {
     }
 }
 ```
-### Vault APIs
+## Vault APIs
 The [Vault](https://github.com/skyflowapi/skyflow-java/tree/master/src/main/java/com/skyflow/vault) module is used to perform operations on the vault such as inserting records, detokenizing tokens, retrieving tokens for a skyflow_id and to invoke a connection.
 
 To use this module, the skyflow client must first be initialized as follows.
@@ -108,7 +122,7 @@ static class DemoTokenProvider implements TokenProvider {
 
 All Vault APIs must be invoked using a client instance.
 
-### Insert
+## Insert
 
 To insert data into your vault, use the **insert(JSONObject insertInput, InsertOptions options)** method. The first parameter `insertInput` is a JSONObject that must have a `records` key and takes an array of records to be inserted into the vault as a value. The second parameter `options` is a InsertOptions object that provides further options for your insert call, as shown below.
 ```java
@@ -173,7 +187,7 @@ Sample insert Response
 }
 ```
 
-### Detokenize
+## Detokenize
 
 In order to retrieve data from your vault using tokens that you have previously generated for that data, you can use the **detokenize(JSONObject records)** method. The first parameter JSONObject must have a `records` key that takes an array of tokens to be fetched from the vault, as shown below.
 ```java
@@ -233,7 +247,7 @@ Sample detokenize Response
 }
 ```
 
-### GetById
+## GetById
 
 In order to retrieve data from your vault using SkyflowIDs, use the **getById(JSONObject records)** method. The `records` parameter takes a JSONObject that should contain an array of SkyflowIDs to be fetched, as shown below:
 ```java
@@ -333,7 +347,7 @@ Sample getById response
 `Note:` While using detokenize and getByID methods, there is a possibility that some or all of the tokens might be invalid. In such cases, the data from response consists of both errors and detokenized records. In the SDK, this will raise a SkyflowException and you can retrieve the data from this Exception object as shown above.
 
 
-### Invoke Connection
+## Invoke Connection
 
 Using the InvokeConnection method, you can integrate their server-side application with third party APIs and services without directly handling sensitive data. Prior to invoking the `InvokeConnection` method, you must have created a connection and have a connectionURL already generated. Once you have the connectionURL, you can invoke a connection by using the **invokeConnection(JSONObject config)** method. The JSONObject config parameter must include a `connectionURL` and `methodName`. The other fields are optional. 
 ```java
@@ -408,7 +422,7 @@ Sample invokeConnection Response
 }
 ```
 
-### Logging
+## Logging
 
 The skyflow-java SDK provides useful logging using java inbuilt `java.util.logging`. By default the logging level of the SDK is set to `LogLevel.ERROR`. This can be changed by using `setLogLevel(LogLevel)` as shown below:
 
