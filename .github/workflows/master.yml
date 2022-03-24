@@ -1,6 +1,10 @@
-name: PR CI Checks
+name: master
 
-on: [ pull_request ]
+on:
+  push:
+    branches:
+      - master
+
 
 jobs:
   Test:
