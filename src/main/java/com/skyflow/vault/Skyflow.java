@@ -209,8 +209,8 @@ public final class Skyflow {
             if (connectionConfig.containsKey("requestHeader")) {
               headers = Helpers.constructConnectionHeadersMap((JSONObject) connectionConfig.get("requestHeader"));
             }
-            if(!headers.containsKey("X-Skyflow-Authorization")) {
-              headers.put("X-Skyflow-Authorization", TokenUtils.getBearerToken(configuration.getTokenProvider()));
+            if(!headers.containsKey("x-skyflow-authorization")) {
+              headers.put("x-skyflow-authorization", TokenUtils.getBearerToken(configuration.getTokenProvider()));
             }
 
             String requestMethod = connectionConfig.get("methodName").toString();

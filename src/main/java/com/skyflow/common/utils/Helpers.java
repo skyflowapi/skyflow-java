@@ -129,7 +129,7 @@ public final class Helpers {
         Map<String, String> headersMap = new HashMap<>();
         for (Object key : configHeaders.keySet()) {
             Object value = configHeaders.get(key);
-            headersMap.put((String) key, (String) value);
+            headersMap.put(((String) key).toLowerCase(), (String) value);
         }
         return headersMap;
     }
