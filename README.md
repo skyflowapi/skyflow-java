@@ -148,7 +148,7 @@ records.put("records", recordsArray);
 InsertOptions insertOptions = new InsertOptions(true);
    
 ```
-An [Example](https://github.com/skyflowapi/skyflow-java/blob/master/samples/src/main/java/com/example/InsertExample.java) of insert call
+An [example](https://github.com/skyflowapi/skyflow-java/blob/master/samples/src/main/java/com/example/InsertExample.java) of insert call
 ```java
 JSONObject recordsJson = new JSONObject();
 JSONArray recordsArrayJson = new JSONArray();
@@ -202,7 +202,7 @@ recordsArrayJson.put(tokenJSon);
 
 recordsJson.put("records",recordsArrayJson);
 ```
-An [Example](https://github.com/skyflowapi/skyflow-java/blob/master/samples/src/main/java/com/example/DetokenizeExample.java) of detokenize call
+An [example](https://github.com/skyflowapi/skyflow-java/blob/master/samples/src/main/java/com/example/DetokenizeExample.java) of detokenize call
 ```java
 JSONObject recordsJson = new JSONObject();
 
@@ -273,7 +273,7 @@ There are 4 accepted values in RedactionType:
 - `REDACTED`
 - `DEFAULT` 
 
-An [Example](https://github.com/skyflowapi/skyflow-java/blob/master/samples/src/main/java/com/example/GetByIdExample.java) getById call 
+An [example](https://github.com/skyflowapi/skyflow-java/blob/master/samples/src/main/java/com/example/GetByIdExample.java) getById call 
 ```java
 import com.skyflow.entities.RedactionType;
 
