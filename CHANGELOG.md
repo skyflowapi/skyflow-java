@@ -1,6 +1,12 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+
+## [1.4.1] - 2022-03-29
+
+### Fixed 
+- Request headers not getting overriden due to case sensitivity
+
 ## [1.4.0] - 2022-03-15
 
 ### Changed
