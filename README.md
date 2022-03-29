@@ -36,7 +36,7 @@ This Java SDK is designed to help developers easily implement Skyflow into their
 
 Add this dependency to your project's build file:
 ```
-implementation 'com.skyflow:skyflow-java:1.4.0'
+implementation 'com.skyflow:skyflow-java:1.4.1'
 ```
 
 #### Maven users
@@ -46,7 +46,7 @@ Add this dependency to your project's POM:
     <dependency>
         <groupId>com.skyflow</groupId>
         <artifactId>skyflow-java</artifactId>
-        <version>1.4.0</version>
+        <version>1.4.1</version>
     </dependency>
 ```
 ---
