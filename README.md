@@ -37,7 +37,7 @@ This Java SDK is designed to help developers easily implement Skyflow into their
 
 Add this dependency to your project's build file:
 ```
-implementation 'com.skyflow:skyflow-java:1.4.0'
+implementation 'com.skyflow:skyflow-java:1.4.1'
 ```
 
 #### Maven users
@@ -47,7 +47,7 @@ Add this dependency to your project's POM:
     <dependency>
         <groupId>com.skyflow</groupId>
         <artifactId>skyflow-java</artifactId>
-        <version>1.4.0</version>
+        <version>1.4.1</version>
     </dependency>
 ```
 ---
@@ -148,7 +148,7 @@ records.put("records", recordsArray);
 InsertOptions insertOptions = new InsertOptions(true);
    
 ```
-An Example of insert call
+An [example](https://github.com/skyflowapi/skyflow-java/blob/master/samples/src/main/java/com/example/InsertExample.java) of insert call
 ```java
 JSONObject recordsJson = new JSONObject();
 JSONArray recordsArrayJson = new JSONArray();
@@ -202,7 +202,7 @@ recordsArrayJson.put(tokenJSon);
 
 recordsJson.put("records",recordsArrayJson);
 ```
-An Example of detokenize call
+An [example](https://github.com/skyflowapi/skyflow-java/blob/master/samples/src/main/java/com/example/DetokenizeExample.java) of detokenize call
 ```java
 JSONObject recordsJson = new JSONObject();
 
@@ -273,7 +273,7 @@ There are 4 accepted values in RedactionType:
 - `REDACTED`
 - `DEFAULT` 
 
-An Example getById call 
+An [example](https://github.com/skyflowapi/skyflow-java/blob/master/samples/src/main/java/com/example/GetByIdExample.java) getById call 
 ```java
 import com.skyflow.entities.RedactionType;
 
@@ -384,7 +384,7 @@ invokeConfig.put("requestBody", requestBodyJson);
 
 **pathParams, queryParams, requestHeader, requestBody** are the JSON objects that will be sent through the connection integration url.
 
-An example of invokeConnection:
+An [example](https://github.com/skyflowapi/skyflow-java/blob/master/samples/src/main/java/com/example/InvokeConnectionExample.java) of invokeConnection:
 ```java
 JSONObject invokeConfig = new JSONObject();
 invokeConfig.put("connectionURL", "<your_connection_url>");

@@ -20,7 +20,7 @@ public final class HttpUtility {
             URL url = new URL(requestUrl);
             connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod(method);
-            connection.setRequestProperty("Content-Type", "application/json");
+            connection.setRequestProperty("content-type", "application/json");
 
             if (headers != null && headers.size() > 0) {
                 for (Map.Entry<String, String> entry : headers.entrySet()) {
