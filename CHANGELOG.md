@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.5.0] - 2022-04-12
+
+### Added
+- support for application/x-www-form-urlencoded and multipart/form-data content-type's in connections.
 
 ## [1.4.1] - 2022-03-29
 
