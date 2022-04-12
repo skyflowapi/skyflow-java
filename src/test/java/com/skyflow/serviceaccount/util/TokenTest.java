@@ -23,7 +23,7 @@ public class TokenTest {
     @Test
     public void testInvalidFilePath() {
         try {
-            Token.generateBearerToken("");
+            Token.GenerateToken("");
         } catch (SkyflowException exception) {
             assertEquals(exception.getMessage(), ErrorCode.EmptyFilePath.getDescription());
         }

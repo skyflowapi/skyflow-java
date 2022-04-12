@@ -20,6 +20,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.io.IOException;
 
+import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.anyString;
 
 
@@ -34,6 +35,7 @@ class TestTokenProvider implements TokenProvider {
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(fullyQualifiedNames = "com.skyflow.common.utils.TokenUtils")
 public class InvokeConnectionTest {
+    private static final String INVALID_EXCEPTION_THROWN = "Should not have thrown any exception";
     private JSONObject testConfig;
     private static Skyflow skyflowClient;
 
@@ -84,8 +86,10 @@ public class InvokeConnectionTest {
             Assert.assertEquals(gatewayResponse.toJSONString(), mockResponse);
         } catch (SkyflowException exception) {
             Assert.assertNull(exception);
+            fail(INVALID_EXCEPTION_THROWN);
         } catch (IOException exception) {
             exception.printStackTrace();
+            fail(INVALID_EXCEPTION_THROWN);
         }
 
 
@@ -156,6 +160,80 @@ public class InvokeConnectionTest {
             Assert.assertEquals(exception.getCode(), ErrorCode.InvalidMethodName.getCode());
             Assert.assertEquals(exception.getMessage(), ErrorCode.InvalidMethodName.getDescription());
         }
+    }
+
+    @Test
+    @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility", "com.skyflow.common.utils.TokenUtils"})
+    public void testInvokeConnectionWithFormEncoded() {
+        JSONObject testConfig = new JSONObject();
+        testConfig.put("connectionURL", "https://testgatewayurl.com/");
+        testConfig.put("methodName", RequestMethod.POST);
+
+        JSONObject requestHeadersJson = new JSONObject();
+        requestHeadersJson.put("content-type", "application/x-www-form-urlencoded");
+        testConfig.put("requestHeader", requestHeadersJson);
+
+        JSONObject testJson = new JSONObject();
+        testJson.put("key1","value1");
+        JSONObject nestedObj = new JSONObject();
+        nestedObj.put("key2","value2");
+        testJson.put("nest",nestedObj);
+
+        testConfig.put("requestBody", testJson);
+
+        try {
+            PowerMockito.mockStatic(HttpUtility.class);
+            String mockResponse = "{\"id\":\"12345\"}";
+            PowerMockito.when(HttpUtility.sendRequest(anyString(), anyString(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockResponse);
+            JSONObject gatewayResponse = skyflowClient.invokeConnection(testConfig);
+
+            Assert.assertNotNull(gatewayResponse);
+            Assert.assertEquals(gatewayResponse.toJSONString(), mockResponse);
+        } catch (SkyflowException exception) {
+            Assert.assertNull(exception);
+            fail(INVALID_EXCEPTION_THROWN);
+        } catch (IOException exception) {
+            exception.printStackTrace();
+            fail(INVALID_EXCEPTION_THROWN);
+        }
+
+    }
+
+    @Test
+    @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility", "com.skyflow.common.utils.TokenUtils"})
+    public void testInvokeConnectionWithMultipartFormData() {
+        JSONObject testConfig = new JSONObject();
+        testConfig.put("connectionURL", "https://testgatewayurl.com/");
+        testConfig.put("methodName", RequestMethod.POST);
+
+        JSONObject requestHeadersJson = new JSONObject();
+        requestHeadersJson.put("content-type", "multipart/form-data");
+        testConfig.put("requestHeader", requestHeadersJson);
+
+        JSONObject testJson = new JSONObject();
+        testJson.put("key1","value1");
+        JSONObject nestedObj = new JSONObject();
+        nestedObj.put("key2","value2");
+        testJson.put("nest",nestedObj);
+
+        testConfig.put("requestBody", testJson);
+
+        try {
+            PowerMockito.mockStatic(HttpUtility.class);
+            String mockResponse = "{\"id\":\"12345\"}";
+            PowerMockito.when(HttpUtility.sendRequest(anyString(), anyString(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockResponse);
+            JSONObject gatewayResponse = skyflowClient.invokeConnection(testConfig);
+
+            Assert.assertNotNull(gatewayResponse);
+            Assert.assertEquals(gatewayResponse.toJSONString(), mockResponse);
+        } catch (SkyflowException exception) {
+            Assert.assertNull(exception);
+            fail(INVALID_EXCEPTION_THROWN);
+        } catch (IOException exception) {
+            exception.printStackTrace();
+            fail(INVALID_EXCEPTION_THROWN);
+        }
+
     }
 
 }
