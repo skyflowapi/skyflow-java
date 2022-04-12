@@ -10,14 +10,13 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 
 
 public final class Helpers {
 
+    private static final String LINE_FEED = "\r\n";
     public static JSONObject constructInsertRequest(InsertInput recordsInput, InsertOptions options) throws SkyflowException {
         JSONObject finalRequest = new JSONObject();
         List<JSONObject> requestBodyContent = new ArrayList<JSONObject>();
@@ -161,4 +160,54 @@ public final class Helpers {
         return error;
     }
 
+    public static String formatJsonToFormEncodedString(JSONObject requestBody){
+        StringBuilder formEncodeString = new StringBuilder();
+        HashMap<String,String> jsonMap = convertJsonToMap(requestBody,"");
+
+        for (Map.Entry<String,String> currentEntry : jsonMap.entrySet())
+            formEncodeString.append(makeFormEncodeKeyValuePair(currentEntry.getKey(),currentEntry.getValue()));
+
+        return formEncodeString.substring(0,formEncodeString.length()-1);
+    }
+
+    public static String formatJsonToMultiPartFormDataString(JSONObject requestBody,String boundary){
+        StringBuilder formEncodeString = new StringBuilder();
+        HashMap<String,String> jsonMap = convertJsonToMap(requestBody,"");
+
+        for (Map.Entry<String,String> currentEntry : jsonMap.entrySet())
+            formEncodeString.append(makeFormDataKeyValuePair(currentEntry.getKey(),currentEntry.getValue(),boundary));
+
+        formEncodeString.append(LINE_FEED);
+        formEncodeString.append("--").append(boundary).append("--").append(LINE_FEED);
+
+        return formEncodeString.toString();
+    }
+
+    private static HashMap<String,String> convertJsonToMap(JSONObject json,String rootKey){
+        HashMap<String,String> currentMap = new HashMap<>();
+        for (Object key : json.keySet()) {
+            Object currentValue = json.get(key);
+            String currentKey = rootKey.length() != 0 ? rootKey + '[' + key.toString() + ']' : rootKey + key.toString();
+            if(currentValue instanceof JSONObject){
+                currentMap.putAll(convertJsonToMap((JSONObject) currentValue, currentKey));
+            }else {
+                currentMap.put(currentKey,currentValue.toString());
+            }
+        }
+        return currentMap;
+    }
+
+    private static String makeFormEncodeKeyValuePair(String key, String value){
+        return key+"="+value+"&";
+    }
+
+    private static String makeFormDataKeyValuePair(String key,String value,String boundary){
+        StringBuilder formDataTextField = new StringBuilder();
+        formDataTextField.append("--").append(boundary).append(LINE_FEED);
+        formDataTextField.append("Content-Disposition: form-data; name=\"").append(key).append("\"").append(LINE_FEED);
+        formDataTextField.append(LINE_FEED);
+        formDataTextField.append(value).append(LINE_FEED);
+
+        return formDataTextField.toString();
+    }
 }
