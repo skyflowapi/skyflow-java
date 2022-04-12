@@ -5,12 +5,13 @@ import com.skyflow.entities.InsertOptions;
 import com.skyflow.entities.InsertRecordInput;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.logs.DebugLogs;
+
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 
@@ -161,6 +162,7 @@ public final class Helpers {
     }
 
     public static String formatJsonToFormEncodedString(JSONObject requestBody){
+        LogUtil.printDebugLog(DebugLogs.FormatRequestBodyFormUrlFormEncoded.getLog());
         StringBuilder formEncodeString = new StringBuilder();
         HashMap<String,String> jsonMap = convertJsonToMap(requestBody,"");
 
@@ -171,6 +173,7 @@ public final class Helpers {
     }
 
     public static String formatJsonToMultiPartFormDataString(JSONObject requestBody,String boundary){
+        LogUtil.printDebugLog(DebugLogs.FormatRequestBodyFormData.getLog());
         StringBuilder formEncodeString = new StringBuilder();
         HashMap<String,String> jsonMap = convertJsonToMap(requestBody,"");
 
