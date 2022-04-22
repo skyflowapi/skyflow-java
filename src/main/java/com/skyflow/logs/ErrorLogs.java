@@ -3,6 +3,7 @@ package com.skyflow.logs;
 public enum ErrorLogs {
     InvalidVaultId("empty or invalid vaultID"),
     InvalidVaultURL("invalid vault url"),
+    InvalidTokenProvider("invalid TokenProvider. TokenProvider cannot be null"),
     InvalidInsertInput("invalid insert input"),
     InvalidDetokenizeInput("invalid detokenize input"),
     ResponseParsingError("Unable to parse response in %s1 method"),

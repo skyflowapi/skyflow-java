@@ -201,7 +201,7 @@ public final class Skyflow {
         LogUtil.printInfoLog(InfoLogs.InvokeConnectionCalled.getLog());
         JSONObject connectionResponse;
         try {
-            Validators.validateConnectionConfiguration(connectionConfig);
+            Validators.validateConnectionConfiguration(connectionConfig, configuration);
             String filledURL = Helpers.constructConnectionURL(connectionConfig);
 
             Map<String, String> headers = new HashMap<>();

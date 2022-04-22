@@ -1,12 +1,18 @@
 package com.skyflow.common.utils;
 
+import com.skyflow.Configuration;
+import com.skyflow.entities.LogLevel;
 import org.json.simple.JSONObject;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 public class HelpersTest {
 
     @Test
     public void testFormatJsonToFormEncodedString(){
+        Configuration.setLogLevel(LogLevel.DEBUG);
         JSONObject testJson = new JSONObject();
         testJson.put("key1","value1");
         JSONObject nestedObj = new JSONObject();

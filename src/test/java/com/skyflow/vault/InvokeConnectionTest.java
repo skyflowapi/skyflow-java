@@ -20,6 +20,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.io.IOException;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.anyString;
 
@@ -73,6 +74,20 @@ public class InvokeConnectionTest {
 
     }
 
+    @Test
+    public void testInvokeConnectionWithInvalidSkyflowConfig() {
+        try{
+            SkyflowConfiguration config = new SkyflowConfiguration(null);
+
+            Skyflow skyflowClient = Skyflow.init(config);
+            JSONObject request = new JSONObject();
+
+            JSONObject res = skyflowClient.invokeConnection(request);
+        } catch (SkyflowException e) {
+            assertEquals(ErrorCode.InvalidTokenProvider.getDescription(), e.getMessage());
+        }
+    }
+    
     @Test
     @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility", "com.skyflow.common.utils.TokenUtils"})
     public void testInvokeConnectionValidInput() {

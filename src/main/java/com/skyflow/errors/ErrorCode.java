@@ -3,6 +3,7 @@ package com.skyflow.errors;
 public enum ErrorCode {
     InvalidVaultURL(400, "Invalid Vault URL"),
     EmptyVaultID(400, "Empty Vault ID"),
+    InvalidTokenProvider(400, "Invalid TokenProvider"),
     InvalidKeySpec(400, "Unable to parse RSA private key"),
     NoSuchAlgorithm(400, "Invalid algorithm"),
     UnableToRetrieveRSA(400, "Unable to retrieve RSA private key"),

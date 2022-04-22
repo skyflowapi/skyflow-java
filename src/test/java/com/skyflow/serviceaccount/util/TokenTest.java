@@ -1,6 +1,10 @@
 package com.skyflow.serviceaccount.util;
 
+import com.skyflow.Configuration;
 import com.skyflow.common.utils.Helpers;
+import com.skyflow.common.utils.HttpUtility;
+import com.skyflow.common.utils.TokenUtils;
+import com.skyflow.entities.LogLevel;
 import com.skyflow.entities.ResponseToken;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.SkyflowException;
@@ -9,20 +13,32 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.ArgumentMatchers;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.anyString;
 
+@RunWith(PowerMockRunner.class)
+@PrepareForTest
 public class TokenTest {
     // replace the path, when running local, do not commit
     private final String VALID_CREDENTIALS_FILE_PATH = "./credentials.json";
 
+    private static String INVALID_EXCEPTION_THROWN = "Should not have thrown any exception";
     @Test
     public void testInvalidFilePath() {
         try {
+            Configuration.setLogLevel(LogLevel.DEBUG);
             Token.GenerateToken("");
         } catch (SkyflowException exception) {
             assertEquals(exception.getMessage(), ErrorCode.EmptyFilePath.getDescription());
@@ -70,42 +86,70 @@ public class TokenTest {
     }
 
     @Test
+    @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility", "com.skyflow.common.utils.TokenUtils"})
     public void testCallingDeprecatedMethod() {
         try {
+            PowerMockito.mockStatic(TokenUtils.class);
+            PowerMockito.when(TokenUtils.isTokenValid("a.b.c")).thenReturn(true);
+
+            PowerMockito.mockStatic(HttpUtility.class);
+            String mockResponse = "{\"accessToken\":\"a.b.c\",\"tokenType\":\"Bearer\"}";
+            PowerMockito.when(HttpUtility.sendRequest(anyString(), anyString(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<Map<String, String>>isNull())).thenReturn(mockResponse);
             ResponseToken token = Token.GenerateToken(VALID_CREDENTIALS_FILE_PATH);
             Assert.assertNotNull(token.getAccessToken());
             Assert.assertEquals("Bearer", token.getTokenType());
         } catch (SkyflowException skyflowException) {
-            Assert.assertNull(skyflowException);
             skyflowException.printStackTrace();
+            Assert.assertNull(skyflowException);
+        } catch (IOException e) {
+            e.printStackTrace();
+            fail(INVALID_EXCEPTION_THROWN);
         }
     }
 
     @Test
+    @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility", "com.skyflow.common.utils.TokenUtils"})
     public void testValidFileContent() {
         try {
+            PowerMockito.mockStatic(TokenUtils.class);
+            PowerMockito.when(TokenUtils.isTokenValid("a.b.c")).thenReturn(true);
+
+            PowerMockito.mockStatic(HttpUtility.class);
+            String mockResponse = "{\"accessToken\":\"a.b.c\",\"tokenType\":\"Bearer\"}";
+            PowerMockito.when(HttpUtility.sendRequest(anyString(), anyString(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<Map<String, String>>isNull())).thenReturn(mockResponse);
             ResponseToken token = Token.generateBearerToken(VALID_CREDENTIALS_FILE_PATH);
             Assert.assertNotNull(token.getAccessToken());
             Assert.assertEquals("Bearer", token.getTokenType());
         } catch (SkyflowException skyflowException) {
-            Assert.assertNull(skyflowException);
             skyflowException.printStackTrace();
+            Assert.assertNull(skyflowException);
+        } catch (IOException e) {
+            e.printStackTrace();
+            fail(INVALID_EXCEPTION_THROWN);
         }
     }
 
     @Test
+    @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility", "com.skyflow.common.utils.TokenUtils"})
     public void testValidString() {
         try {
             JSONParser parser = new JSONParser();
             Object obj = parser.parse(new FileReader(VALID_CREDENTIALS_FILE_PATH));
             JSONObject saCreds = (JSONObject) obj;
 
+            PowerMockito.mockStatic(TokenUtils.class);
+            PowerMockito.when(TokenUtils.isTokenValid("a.b.c")).thenReturn(true);
+
+            PowerMockito.mockStatic(HttpUtility.class);
+            String mockResponse = "{\"accessToken\":\"a.b.c\",\"tokenType\":\"Bearer\"}";
+            PowerMockito.when(HttpUtility.sendRequest(anyString(), anyString(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<Map<String, String>>isNull())).thenReturn(mockResponse);
+
             ResponseToken token = Token.generateBearerTokenFromCreds(saCreds.toJSONString());
             Assert.assertNotNull(token.getAccessToken());
             Assert.assertEquals("Bearer", token.getTokenType());
         } catch (SkyflowException | IOException | ParseException skyflowException) {
-            Assert.assertNull(skyflowException);
             skyflowException.printStackTrace();
+            Assert.assertNull(skyflowException);
         }
     }
 
@@ -171,10 +215,8 @@ public class TokenTest {
 
     @Test
     public void testIsExpiredForExpiredToken() {
-        String token = System.getProperty("TEST_EXPIRED_TOKEN");;
+        String token = System.getProperty("TEST_EXPIRED_TOKEN");
         assertEquals(true, Token.isExpired(token));
     }
-
-
 
 }

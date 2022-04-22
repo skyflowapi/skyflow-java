@@ -23,10 +23,20 @@ public final class Validators {
             throw new SkyflowException(ErrorCode.InvalidVaultURL);
         }
 
+        if(config.getTokenProvider() == null) {
+            LogUtil.printErrorLog(ErrorLogs.InvalidTokenProvider.getLog());
+            throw new SkyflowException(ErrorCode.InvalidTokenProvider);
+        }
+
     }
 
-    public static void validateConnectionConfiguration(JSONObject connectionConfig) throws SkyflowException {
+    public static void validateConnectionConfiguration(JSONObject connectionConfig, SkyflowConfiguration skyflowConfiguration) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.ValidatingInvokeConnectionConfig.getLog());
+        if(skyflowConfiguration.getTokenProvider() == null) {
+            LogUtil.printErrorLog(ErrorLogs.InvalidTokenProvider.getLog());
+            throw new SkyflowException(ErrorCode.InvalidTokenProvider);
+        }
+
         if (connectionConfig.containsKey("connectionURL")) {
             String connectionURL = (String) connectionConfig.get("connectionURL");
             if (isInvalidURL(connectionURL)) {
