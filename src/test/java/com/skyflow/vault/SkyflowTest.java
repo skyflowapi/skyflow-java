@@ -19,6 +19,7 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.io.IOException;
+import java.net.URL;
 
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -181,7 +182,7 @@ public class SkyflowTest {
             PowerMockito.mockStatic(HttpUtility.class);
             String mockResponse =
               "{\"vaultID\":\"vault123\",\"responses\":[{\"records\":[{\"skyflow_id\":\"id1\"}]},{\"fields\":{\"first_name\":\"token1\"}}]}";
-            PowerMockito.when(HttpUtility.sendRequest(anyString(), anyString(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockResponse);
+            PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockResponse);
 
             JSONObject res = skyflowClient.insert(records, insertOptions);
             JSONArray responseRecords = (JSONArray) res.get("records");
@@ -220,7 +221,7 @@ public class SkyflowTest {
             PowerMockito.mockStatic(HttpUtility.class);
             String mockResponse =
                     "{\"vaultID\":\"vault123\",\"responses\":[{\"records\":[{\"skyflow_id\":\"id1\"}]},{\"fields\":{\"first_name\":\"token1\"}}]}";
-            PowerMockito.when(HttpUtility.sendRequest(anyString(), anyString(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockResponse);
+            PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockResponse);
             JSONObject res = skyflowClient.insert(records);
             JSONArray responseRecords = (JSONArray) res.get("records");
 
@@ -259,7 +260,7 @@ public class SkyflowTest {
 
             PowerMockito.mockStatic(HttpUtility.class);
             String mockResponse = "{\"vaultID\":\"vault123\",\"responses\":[{\"records\":[{\"skyflow_id\":\"id1\"}]}]}";
-            PowerMockito.when(HttpUtility.sendRequest(anyString(), anyString(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockResponse);
+            PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockResponse);
             JSONObject res = skyflowClient.insert(records, insertOptions);
             JSONArray responseRecords = (JSONArray) res.get("records");
 
@@ -375,7 +376,7 @@ public class SkyflowTest {
 
             PowerMockito.mockStatic(HttpUtility.class);
             String mockResponse =  "{\"records\":[{\"token\":\"token123\",\"valueType\":\"INTEGER\",\"value\":\"10\"}]}";
-            PowerMockito.when(HttpUtility.sendRequest(anyString(), anyString(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockResponse);
+            PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockResponse);
 
             JSONObject res = skyflowClient.detokenize(records);
             JSONArray responseRecords = (JSONArray) res.get("records");
@@ -408,7 +409,7 @@ public class SkyflowTest {
             PowerMockito.mockStatic(HttpUtility.class);
             String mockResponse =
                 "{\"error\":{\"grpc_code\":5,\"http_code\":404,\"message\":\"Token not found for invalidToken\",\"http_status\":\"Not Found\",\"details\":[]}}";
-            PowerMockito.when(HttpUtility.sendRequest(anyString(), anyString(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenThrow(new SkyflowException(404, mockResponse));
+            PowerMockito.when(HttpUtility.sendRequest(anyString(),ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenThrow(new SkyflowException(404, mockResponse));
 
             JSONObject res = skyflowClient.detokenize(records);
         } catch (SkyflowException skyflowException) {
@@ -442,13 +443,13 @@ public class SkyflowTest {
               jsonParser.parse("{\"detokenizationParameters\":[{\"token\":\"token123\"}]}");
             PowerMockito.mockStatic(HttpUtility.class);
             String mockValidResponse = "{\"records\":[{\"token\":\"token123\",\"valueType\":\"INTEGER\",\"value\":\"10\"}]}";
-            PowerMockito.when(HttpUtility.sendRequest(anyString(), anyString(), eq(validRequest), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockValidResponse);
+            PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), eq(validRequest), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockValidResponse);
 
             JSONObject invalidRequest = (JSONObject)
                     jsonParser.parse("{\"detokenizationParameters\":[{\"token\":\"invalidToken1\"}]}");
             String mockInvalidResponse =
                     "{\"error\":{\"grpc_code\":5,\"http_code\":404,\"message\":\"Token not found for invalidToken1\",\"http_status\":\"Not Found\",\"details\":[]}}";
-            PowerMockito.when(HttpUtility.sendRequest(anyString(), anyString(), eq(invalidRequest), ArgumentMatchers.<String, String>anyMap())).thenThrow(new SkyflowException(404, mockInvalidResponse));
+            PowerMockito.when(HttpUtility.sendRequest(anyString(),ArgumentMatchers.<URL>any(), eq(invalidRequest), ArgumentMatchers.<String, String>anyMap())).thenThrow(new SkyflowException(404, mockInvalidResponse));
 
 
             JSONObject res = skyflowClient.detokenize(records);
@@ -557,7 +558,7 @@ public class SkyflowTest {
 
             PowerMockito.mockStatic(HttpUtility.class);
             String mockResponse =  "{\"records\":[{\"fields\":{\"age\":10,\"skyflow_id\":\"skyflowId123\"}}]}";
-            PowerMockito.when(HttpUtility.sendRequest(anyString(), anyString(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockResponse);
+            PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockResponse);
             JSONObject response = skyflowClient.getById(records);
             JSONArray responseRecords = (JSONArray) response.get("records");
 
@@ -597,7 +598,7 @@ public class SkyflowTest {
 
             PowerMockito.mockStatic(HttpUtility.class);
             String mockResponse = "{\"error\":{\"grpc_code\":13,\"http_code\":500,\"message\":\"Couldn't load data\",\"http_status\":\"Internal Server Error\"}}";
-            PowerMockito.when(HttpUtility.sendRequest(anyString(), anyString(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenThrow(new SkyflowException(500, mockResponse));
+            PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenThrow(new SkyflowException(500, mockResponse));
             JSONObject response = skyflowClient.getById(records);
 
         } catch (SkyflowException e) {
@@ -644,10 +645,10 @@ public class SkyflowTest {
 
             PowerMockito.mockStatic(HttpUtility.class);
             String mockValidResponse =  "{\"records\":[{\"fields\":{\"age\":10,\"skyflow_id\":\"skyflowId123\"}}]}";
-            PowerMockito.when(HttpUtility.sendRequest(anyString(), eq(validRequestUrl), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockValidResponse);
+            PowerMockito.when(HttpUtility.sendRequest(anyString(), eq(new URL(validRequestUrl)), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockValidResponse);
 
             String mockInvalidResponse = "{\"error\":{\"grpc_code\":13,\"http_code\":500,\"message\":\"Couldn't load data\",\"http_status\":\"Internal Server Error\"}}";
-            PowerMockito.when(HttpUtility.sendRequest(anyString(), eq(invalidRequestUrl), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenThrow(new SkyflowException(500, mockInvalidResponse));
+            PowerMockito.when(HttpUtility.sendRequest(anyString(), eq(new URL(invalidRequestUrl)), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenThrow(new SkyflowException(500, mockInvalidResponse));
 
             JSONObject response = skyflowClient.getById(records);
 

@@ -15,13 +15,12 @@ import static com.skyflow.common.utils.Helpers.formatJsonToMultiPartFormDataStri
 
 public final class HttpUtility {
 
-    public static String sendRequest(String method, String requestUrl, JSONObject params, Map<String, String> headers) throws IOException, SkyflowException {
+    public static String sendRequest(String method, URL url, JSONObject params, Map<String, String> headers) throws IOException, SkyflowException {
         HttpURLConnection connection = null;
         BufferedReader in = null;
         StringBuffer response = null;
         String boundary = String.valueOf(System.currentTimeMillis());
         try {
-            URL url = new URL(requestUrl);
             connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod(method);
             connection.setRequestProperty("content-type", "application/json");

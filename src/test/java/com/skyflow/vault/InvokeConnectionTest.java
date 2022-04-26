@@ -19,6 +19,7 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.io.IOException;
+import java.net.URL;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -94,7 +95,7 @@ public class InvokeConnectionTest {
         try {
             PowerMockito.mockStatic(HttpUtility.class);
             String mockResponse = "{\"processingTimeinMs\":\"116\"}";
-            PowerMockito.when(HttpUtility.sendRequest(anyString(), anyString(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockResponse);
+            PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockResponse);
             JSONObject gatewayResponse = skyflowClient.invokeConnection(testConfig);
 
             Assert.assertNotNull(gatewayResponse);
@@ -116,7 +117,7 @@ public class InvokeConnectionTest {
         String mockErrorResponse = "{\"error\":{\"code\":\"400\",\"message\":\"missing required field\"}}";
         try {
             PowerMockito.mockStatic(HttpUtility.class);
-            PowerMockito.when(HttpUtility.sendRequest(anyString(), anyString(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenThrow(new SkyflowException(400, mockErrorResponse));
+            PowerMockito.when(HttpUtility.sendRequest(anyString(),ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenThrow(new SkyflowException(400, mockErrorResponse));
             JSONObject gatewayResponse = skyflowClient.invokeConnection(testConfig);
             Assert.assertNull(gatewayResponse);
         } catch (SkyflowException exception) {
@@ -199,7 +200,7 @@ public class InvokeConnectionTest {
         try {
             PowerMockito.mockStatic(HttpUtility.class);
             String mockResponse = "{\"id\":\"12345\"}";
-            PowerMockito.when(HttpUtility.sendRequest(anyString(), anyString(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockResponse);
+            PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockResponse);
             JSONObject gatewayResponse = skyflowClient.invokeConnection(testConfig);
 
             Assert.assertNotNull(gatewayResponse);
@@ -236,7 +237,7 @@ public class InvokeConnectionTest {
         try {
             PowerMockito.mockStatic(HttpUtility.class);
             String mockResponse = "{\"id\":\"12345\"}";
-            PowerMockito.when(HttpUtility.sendRequest(anyString(), anyString(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockResponse);
+            PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockResponse);
             JSONObject gatewayResponse = skyflowClient.invokeConnection(testConfig);
 
             Assert.assertNotNull(gatewayResponse);

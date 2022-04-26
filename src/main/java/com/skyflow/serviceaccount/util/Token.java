@@ -23,6 +23,7 @@ import org.json.simple.parser.ParseException;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.KeyFactory;
@@ -140,7 +141,7 @@ public final class Token {
             parameters.put("grant_type", "urn:ietf:params:oauth:grant-type:jwt-bearer");
             parameters.put("assertion", signedUserJWT);
 
-            String response = HttpUtility.sendRequest("POST", tokenURI, parameters, null);
+            String response = HttpUtility.sendRequest("POST", new URL(tokenURI), parameters, null);
 
             responseToken = new ObjectMapper().readValue(response, ResponseToken.class);
 
