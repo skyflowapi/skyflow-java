@@ -12,6 +12,7 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import java.io.IOException;
+import java.net.URL;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -47,7 +48,7 @@ final class GetBySkyflowId implements Callable<String> {
             String url = vaultURL + "/v1/vaults/" + vaultID + "/" +
                     record.getTable() + "?" + paramsList + "redaction=" + record.getRedaction();
 
-            response = HttpUtility.sendRequest("GET", url, null, headers);
+            response = HttpUtility.sendRequest("GET", new URL(url), null, headers);
 
             JSONObject formattedResponse = new JSONObject();
             JSONArray formattedRecords = new JSONArray();

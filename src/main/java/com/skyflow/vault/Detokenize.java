@@ -12,6 +12,7 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import java.io.IOException;
+import java.net.URL;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
@@ -43,7 +44,7 @@ final class Detokenize implements Callable<String> {
             bodyJson.put("detokenizationParameters", tokensArray);
 
 
-            String apiResponse = HttpUtility.sendRequest("POST", endPointURL, bodyJson, headers);
+            String apiResponse = HttpUtility.sendRequest("POST", new URL(endPointURL), bodyJson, headers);
             JSONParser parser = new JSONParser();
             JSONObject responseJson = (JSONObject) parser.parse(apiResponse);
             JSONArray responseRecords = (JSONArray) responseJson.get("records");

@@ -14,6 +14,7 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import java.io.IOException;
+import java.net.URL;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -53,7 +54,7 @@ public final class Skyflow {
             Map<String, String> headers = new HashMap<>();
             headers.put("Authorization", "Bearer " + TokenUtils.getBearerToken(configuration.getTokenProvider()));
 
-            String response = HttpUtility.sendRequest("POST", url, requestBody, headers);
+            String response = HttpUtility.sendRequest("POST", new URL(url), requestBody, headers);
             insertResponse = (JSONObject) new JSONParser().parse(response);
             LogUtil.printInfoLog(InfoLogs.ConstructInsertResponse.getLog());
             insertResponse = Helpers.constructInsertResponse(insertResponse, (List) requestBody.get("records"), insertOptions.isTokens());
@@ -201,7 +202,7 @@ public final class Skyflow {
         LogUtil.printInfoLog(InfoLogs.InvokeConnectionCalled.getLog());
         JSONObject connectionResponse;
         try {
-            Validators.validateConnectionConfiguration(connectionConfig);
+            Validators.validateConnectionConfiguration(connectionConfig, configuration);
             String filledURL = Helpers.constructConnectionURL(connectionConfig);
 
             Map<String, String> headers = new HashMap<>();
@@ -219,7 +220,7 @@ public final class Skyflow {
                 requestBody = (JSONObject) connectionConfig.get("requestBody");
             }
 
-            String response = HttpUtility.sendRequest(requestMethod, filledURL, requestBody, headers);
+            String response = HttpUtility.sendRequest(requestMethod, new URL(filledURL), requestBody, headers);
             connectionResponse = (JSONObject) new JSONParser().parse(response);
 
         } catch (IOException exception) {
