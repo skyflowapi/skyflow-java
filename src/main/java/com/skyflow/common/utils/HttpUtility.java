@@ -1,3 +1,6 @@
+/*
+	Copyright (c) 2022 Skyflow, Inc. 
+*/
 package com.skyflow.common.utils;
 
 import com.skyflow.errors.ErrorCode;
