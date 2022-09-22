@@ -100,7 +100,7 @@ SkyflowConfiguration skyflowConfig = new SkyflowConfiguration(<VAULT_ID>,<VAULT_
 
 Skyflow skyflowClient = Skyflow.init(skyflowConfig);
 ```
-Example implementation of DemoTokenProvider is as follows
+Example implementation of DemoTokenProvider using credentials file path is as follows
 ```java
 import com.skyflow.entities.TokenProvider;
 
@@ -111,7 +111,27 @@ static class DemoTokenProvider implements TokenProvider {
             ResponseToken res = null;
             try {
                 String filePath = "<your_credentials_file_path>";
-                res = Token.GenerateBearerToken(filePath);
+                res = Token.generateBearerToken(filePath);
+            } catch (SkyflowException e) {
+                e.printStackTrace();
+            }
+            return res.getAccessToken();
+        }
+    }
+```
+
+Example implementation of DemoTokenProvider using credentials file content is as follows
+```java
+import com.skyflow.entities.TokenProvider;
+
+static class DemoTokenProvider implements TokenProvider {
+    
+        @Override
+        public String getBearerToken() throws Exception {
+            ResponseToken res = null;
+            try {
+                String filePath = "<your_credentials_file_content>";
+                res = Token.generateBearerTokenFromCreds(filePath);
             } catch (SkyflowException e) {
                 e.printStackTrace();
             }

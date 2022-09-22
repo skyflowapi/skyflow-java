@@ -28,7 +28,7 @@ public class InsertExample {
             record.put("table", "<your_table_name>");
 
             JSONObject fields = new JSONObject();
-            fields.put("first_name", "<your_field_name>");
+            fields.put("<your_field_name>", "<your_field_value>");
             record.put("fields", fields);
             recordsArray.add(record);
             records.put("records", recordsArray);
