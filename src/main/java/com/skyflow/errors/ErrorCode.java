@@ -36,7 +36,11 @@ public enum ErrorCode {
     InvalidConnectionInput(400, "Invalid connection Input"),
     EmptyJSONString(400, "credentials string cannot be empty"),
     InvalidJSONStringFormat(400, "credentials string is not a valid json string format"),
-    EmptyFilePath(400, "file path cannot be empty or null");
+    EmptyFilePath(400, "file path cannot be empty or null"),
+    EmptyContext(400, "ctx claim field is missing from the jwt assertion"),
+
+    IncorrectRole(400,"Requested scope  cannot be granted");
+
     private final int code;
     private final String description;
 
