@@ -38,8 +38,9 @@ public enum ErrorCode {
     InvalidJSONStringFormat(400, "credentials string is not a valid json string format"),
     EmptyFilePath(400, "file path cannot be empty or null"),
     EmptyContext(400, "ctx claim field is missing from the jwt assertion"),
+    IncorrectRole(400,"Requested scope  cannot be granted"),
 
-    IncorrectRole(400,"Requested scope  cannot be granted");
+    IncorrectCredentials(400,"Incorrect credentials provided");
 
     private final int code;
     private final String description;

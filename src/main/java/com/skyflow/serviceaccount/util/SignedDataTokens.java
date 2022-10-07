@@ -155,7 +155,7 @@ public class SignedDataTokens {
 
         return responseToken;
     }
-    private static List<SignedDataTokenResponse>  getSignedTokenFromCredsFile(JSONObject creds,String[] dataTokens, Double timeToLive, String context) {
+    private static List<SignedDataTokenResponse>  getSignedTokenFromCredsFile(JSONObject creds,String[] dataTokens, Double timeToLive, String context) throws SkyflowException {
         List<SignedDataTokenResponse> responseToken;
 
         try {
@@ -174,8 +174,8 @@ public class SignedDataTokens {
 
             responseToken = getSignedToken(clientID, keyID, pvtKey,dataTokens,timeToLive,context);
 
-        } catch (SkyflowException e) {
-            throw new RuntimeException(e);
+        } catch (RuntimeException e) {
+            throw new SkyflowException(ErrorCode.IncorrectCredentials, e);
         }
 
         return responseToken;

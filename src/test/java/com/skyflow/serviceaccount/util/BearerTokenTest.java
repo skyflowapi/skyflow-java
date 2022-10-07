@@ -8,6 +8,9 @@ import com.skyflow.common.utils.Helpers;
 import com.skyflow.entities.LogLevel;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.SkyflowException;
+
+import org.junit.Assert;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -180,20 +183,5 @@ public class BearerTokenTest {
         }
     }
 
-    @Test
-    public void testIncorrectRoleProvided(){
-        Configuration.setLogLevel(LogLevel.DEBUG);
-        String creds = System.getProperty("TEST_CREDENTIALS_FILE_STRING_WITH_CONTEXT");
-        BearerToken token = new BearerToken.BearerTokenBuilder()
-                .setCredentials(creds)
-                .setContext("abcd")
-                .setRoles(new String[]{"abcdsdf"})
-                .build();
-        try {
-            token.getBearerToken();
-        } catch (SkyflowException exception) {
-            assertEquals(ErrorCode.IncorrectRole.getDescription(), exception.getMessage());
-        }
-    }
 
 }

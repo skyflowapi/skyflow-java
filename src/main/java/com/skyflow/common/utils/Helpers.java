@@ -254,10 +254,10 @@ public final class Helpers {
                 return privateKey;
             }
         
-            /**
-             * Create a PrivateKey instance from raw PKCS#8 bytes.
-             */
-            public static PrivateKey parsePkcs8PrivateKey(byte[] pkcs8Bytes) throws SkyflowException {
+    /**
+    * Create a PrivateKey instance from raw PKCS#8 bytes.
+    */
+    public static PrivateKey parsePkcs8PrivateKey(byte[] pkcs8Bytes) throws SkyflowException {
                 KeyFactory keyFactory;
                 PrivateKey privateKey = null;
                 try {
