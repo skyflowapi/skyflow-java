@@ -152,12 +152,12 @@ public class SignedDataTokensTest {
 
     @Test
     public void testValidSignedToken(){
+        String creds = System.getProperty("TEST_DATA_CREDENTIALS_FILE");
         SignedDataTokens token = new SignedDataTokens.SignedDataTokensBuilder()
-                .setCredentials(VALID_CREDENTIALS_FILE_PATH)
+                .setCredentials(creds)
                 .setDataTokens(new String[]{"5230-0316-0674-5728"}).build();
         try {
             List<SignedDataTokenResponse> signedToken = token.getSignedDataTokens();
-            System.out.println(signedToken);
             Assert.assertNotNull(signedToken);
             
         } catch (SkyflowException exception) {
