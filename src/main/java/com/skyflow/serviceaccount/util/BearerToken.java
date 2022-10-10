@@ -25,7 +25,6 @@ import java.security.PrivateKey;
 import java.util.Date;
 import java.util.Objects;
 
-
 public class BearerToken {
     private final File credentialsFile;
     private final String credentialsString;
@@ -35,21 +34,19 @@ public class BearerToken {
 
     private final String credentialsType;
 
-
-
     private BearerToken(BearerTokenBuilder builder) {
-		this.credentialsFile=builder.credentialsFile;
+        this.credentialsFile = builder.credentialsFile;
         this.credentialsString = builder.credentialsString;
         this.context = builder.context;
-        this.roles=builder.roles;
+        this.roles = builder.roles;
         this.credentialsType = builder.credentialsType;
-	}
+    }
 
-    //Builder class
-    public static class BearerTokenBuilder{
+    // Builder class
+    public static class BearerTokenBuilder {
         private File credentialsFile;
         private String credentialsString;
-        private  String context;
+        private String context;
         private String[] roles;
 
         private String credentialsType;
@@ -60,9 +57,9 @@ public class BearerToken {
 
         public BearerTokenBuilder setCredentials(File credentialsFile) {
             setCredentialsType("FILE");
-			this.credentialsFile = credentialsFile;
-			return this;
-		}
+            this.credentialsFile = credentialsFile;
+            return this;
+        }
 
         public BearerTokenBuilder setCredentials(String credentialsString) {
             setCredentialsType("STRING");
@@ -70,33 +67,32 @@ public class BearerToken {
             return this;
         }
 
-        public BearerTokenBuilder setContext(String context){
+        public BearerTokenBuilder setContext(String context) {
             this.context = context;
             return this;
         }
 
-        public BearerTokenBuilder setRoles(String[] roles){
+        public BearerTokenBuilder setRoles(String[] roles) {
             this.roles = roles;
             return this;
         }
 
-        public BearerToken build(){
-			return new BearerToken(this);
-		}
+        public BearerToken build() {
+            return new BearerToken(this);
+        }
     }
 
-    public String getBearerToken() throws SkyflowException
-    {
-          // Make API call in generateBearerToken function to get the token
-          ResponseToken response;
-          String accessToken = null;
+    public String getBearerToken() throws SkyflowException {
+        // Make API call in generateBearerToken function to get the token
+        ResponseToken response;
+        String accessToken = null;
 
         try {
-            if(this.credentialsFile!=null && Objects.equals(this.credentialsType, "FILE")){
-                response = generateBearerTokenFromCredentials(this.credentialsFile,this.context,this.roles);
+            if (this.credentialsFile != null && Objects.equals(this.credentialsType, "FILE")) {
+                response = generateBearerTokenFromCredentials(this.credentialsFile, this.context, this.roles);
                 accessToken = response.getAccessToken();
 
-            } else if (this.credentialsString!=null && Objects.equals(this.credentialsType, "STRING")) {
+            } else if (this.credentialsString != null && Objects.equals(this.credentialsType, "STRING")) {
 
                 response = generateBearerTokenFromCredentialString(this.credentialsString, this.context, this.roles);
                 accessToken = response.getAccessToken();
@@ -104,10 +100,11 @@ public class BearerToken {
         } catch (SkyflowException e) {
             e.printStackTrace();
         }
-            return accessToken;
+        return accessToken;
     }
 
-    private static ResponseToken generateBearerTokenFromCredentials(File credentialsPath, String context,String[] roles) throws SkyflowException {
+    private static ResponseToken generateBearerTokenFromCredentials(File credentialsPath, String context,
+            String[] roles) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.GenerateBearerTokenFromCredsCalled.getLog());
         JSONParser parser = new JSONParser();
         ResponseToken responseToken;
@@ -120,7 +117,7 @@ public class BearerToken {
             Object obj = parser.parse(new FileReader(String.valueOf(credentialsPath)));
             JSONObject saCreds = (JSONObject) obj;
 
-            responseToken = getBearerTokenFromCreds(saCreds,context,roles);
+            responseToken = getBearerTokenFromCreds(saCreds, context, roles);
 
         } catch (ParseException e) {
             LogUtil.printErrorLog(ErrorLogs.InvalidJSONStringFormat.getLog());
@@ -132,7 +129,8 @@ public class BearerToken {
         return responseToken;
     }
 
-    private static ResponseToken generateBearerTokenFromCredentialString(String credentials, String context, String[] roles) throws SkyflowException {
+    private static ResponseToken generateBearerTokenFromCredentialString(String credentials, String context,
+            String[] roles) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.GenerateBearerTokenFromCredsCalled.getLog());
         JSONParser parser = new JSONParser();
         ResponseToken responseToken;
@@ -145,7 +143,7 @@ public class BearerToken {
             Object obj = parser.parse(credentials);
             JSONObject saCreds = (JSONObject) obj;
 
-            responseToken = getBearerTokenFromCreds(saCreds,context,roles);
+            responseToken = getBearerTokenFromCreds(saCreds, context, roles);
 
         } catch (ParseException e) {
             LogUtil.printErrorLog(ErrorLogs.InvalidJSONStringFormat.getLog());
@@ -154,7 +152,8 @@ public class BearerToken {
         return responseToken;
     }
 
-    private static ResponseToken getBearerTokenFromCreds(JSONObject creds,String context,String[] roles) throws SkyflowException {
+    private static ResponseToken getBearerTokenFromCreds(JSONObject creds, String context, String[] roles)
+            throws SkyflowException {
         ResponseToken responseToken;
         try {
             String clientID = (String) creds.get("clientID");
@@ -173,16 +172,16 @@ public class BearerToken {
                 throw new SkyflowException(ErrorCode.InvalidTokenURI);
             }
 
-            PrivateKey pvtKey =  Helpers.getPrivateKeyFromPem((String) creds.get("privateKey"));
+            PrivateKey pvtKey = Helpers.getPrivateKeyFromPem((String) creds.get("privateKey"));
 
-            String signedUserJWT = getSignedToken(clientID, keyID, tokenURI, pvtKey,context);
+            String signedUserJWT = getSignedToken(clientID, keyID, tokenURI, pvtKey, context);
 
             JSONObject parameters = new JSONObject();
             parameters.put("grant_type", "urn:ietf:params:oauth:grant-type:jwt-bearer");
             parameters.put("assertion", signedUserJWT);
-            if(roles!=null){
-                String scopedRoles =  getScopeUsingRoles(roles);
-                parameters.put("scope",scopedRoles);
+            if (roles != null) {
+                String scopedRoles = getScopeUsingRoles(roles);
+                parameters.put("scope", scopedRoles);
             }
 
             String response = HttpUtility.sendRequest("POST", new URL(tokenURI), parameters, null);
@@ -197,7 +196,8 @@ public class BearerToken {
         return responseToken;
     }
 
-    private static String getSignedToken(String clientID, String keyID, String tokenURI, PrivateKey pvtKey,String context) {
+    private static String getSignedToken(String clientID, String keyID, String tokenURI, PrivateKey pvtKey,
+            String context) {
         final Date createdDate = new Date();
         final Date expirationDate = new Date(createdDate.getTime() + (3600 * 1000));
 
@@ -206,7 +206,7 @@ public class BearerToken {
                 .claim("key", keyID)
                 .claim("aud", tokenURI)
                 .claim("sub", clientID)
-                .claim("ctx",context)
+                .claim("ctx", context)
                 .setExpiration(expirationDate)
                 .signWith(SignatureAlgorithm.RS256, pvtKey)
                 .compact();
@@ -214,7 +214,7 @@ public class BearerToken {
 
     private static String getScopeUsingRoles(String[] roles) {
         StringBuilder scope = new StringBuilder();
-        if (roles!= null) {
+        if (roles != null) {
             for (String role : roles) {
                 scope.append(" role:").append(role);
             }

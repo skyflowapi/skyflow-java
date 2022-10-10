@@ -8,11 +8,11 @@ import static org.junit.Assert.assertEquals;
 
 public class SignedDataTokenResponseTest {
     @Test
-    public void testSignedDataTokenResponse(){
-        SignedDataTokenResponse res = new SignedDataTokenResponse("token","signed_token");
+    public void testSignedDataTokenResponse() {
+        SignedDataTokenResponse res = new SignedDataTokenResponse("token", "signed_token");
         Assert.assertNotNull(res);
-        assertEquals(res.dataToken,"token");
-        assertEquals(res.signedDataToken,"signed_token");
+        assertEquals(res.dataToken, "token");
+        assertEquals(res.signedDataToken, "signed_token");
 
     }
 }

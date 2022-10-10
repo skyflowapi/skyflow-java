@@ -27,7 +27,9 @@ import org.apache.commons.codec.binary.Base64;
 public final class Helpers {
 
     private static final String LINE_FEED = "\r\n";
-    public static JSONObject constructInsertRequest(InsertInput recordsInput, InsertOptions options) throws SkyflowException {
+
+    public static JSONObject constructInsertRequest(InsertInput recordsInput, InsertOptions options)
+            throws SkyflowException {
         JSONObject finalRequest = new JSONObject();
         List<JSONObject> requestBodyContent = new ArrayList<JSONObject>();
         boolean isTokens = options.isTokens();
@@ -76,7 +78,8 @@ public final class Helpers {
         if (tokens) {
             for (int index = 0; index < responses.size(); index++) {
                 if (index % 2 != 0) {
-                    String skyflowId = (String) ((JSONObject) ((JSONArray) ((JSONObject) responses.get(index - 1)).get("records")).get(0)).get("skyflow_id");
+                    String skyflowId = (String) ((JSONObject) ((JSONArray) ((JSONObject) responses.get(index - 1))
+                            .get("records")).get(0)).get("skyflow_id");
 
                     JSONObject newObj = new JSONObject();
                     newObj.put("table", ((JSONObject) requestRecords.get(index)).get("tableName"));
@@ -94,7 +97,9 @@ public final class Helpers {
                 JSONObject newObj = new JSONObject();
 
                 newObj.put("table", ((JSONObject) requestRecords.get(index)).get("tableName"));
-                newObj.put("skyflow_id", ((JSONObject) ((JSONArray) ((JSONObject) responses.get(index)).get("records")).get(0)).get("skyflow_id"));
+                newObj.put("skyflow_id",
+                        ((JSONObject) ((JSONArray) ((JSONObject) responses.get(index)).get("records")).get(0))
+                                .get("skyflow_id"));
 
                 updatedResponses.add(newObj);
             }
@@ -144,7 +149,7 @@ public final class Helpers {
     }
 
     public static String appendRequestId(String message, String requestId) {
-        if(requestId != null && !requestId.isEmpty()) {
+        if (requestId != null && !requestId.isEmpty()) {
             message = message + " - requestId: " + requestId;
         }
         return message;
@@ -152,10 +157,10 @@ public final class Helpers {
 
     public static String appendRequestIdToErrorObj(int status, String error, String requestId) throws SkyflowException {
         try {
-            if(requestId != null && !requestId.isEmpty()) {
+            if (requestId != null && !requestId.isEmpty()) {
                 JSONObject errorObject = (JSONObject) new JSONParser().parse(error);
-                JSONObject tempError = (JSONObject)errorObject.get("error");
-                if(tempError != null) {
+                JSONObject tempError = (JSONObject) errorObject.get("error");
+                if (tempError != null) {
                     String message = (String) tempError.get("message");
                     message = message + " - requestId: " + requestId;
 
@@ -170,24 +175,24 @@ public final class Helpers {
         return error;
     }
 
-    public static String formatJsonToFormEncodedString(JSONObject requestBody){
+    public static String formatJsonToFormEncodedString(JSONObject requestBody) {
         LogUtil.printDebugLog(DebugLogs.FormatRequestBodyFormUrlFormEncoded.getLog());
         StringBuilder formEncodeString = new StringBuilder();
-        HashMap<String,String> jsonMap = convertJsonToMap(requestBody,"");
+        HashMap<String, String> jsonMap = convertJsonToMap(requestBody, "");
 
-        for (Map.Entry<String,String> currentEntry : jsonMap.entrySet())
-            formEncodeString.append(makeFormEncodeKeyValuePair(currentEntry.getKey(),currentEntry.getValue()));
+        for (Map.Entry<String, String> currentEntry : jsonMap.entrySet())
+            formEncodeString.append(makeFormEncodeKeyValuePair(currentEntry.getKey(), currentEntry.getValue()));
 
-        return formEncodeString.substring(0,formEncodeString.length()-1);
+        return formEncodeString.substring(0, formEncodeString.length() - 1);
     }
 
-    public static String formatJsonToMultiPartFormDataString(JSONObject requestBody,String boundary){
+    public static String formatJsonToMultiPartFormDataString(JSONObject requestBody, String boundary) {
         LogUtil.printDebugLog(DebugLogs.FormatRequestBodyFormData.getLog());
         StringBuilder formEncodeString = new StringBuilder();
-        HashMap<String,String> jsonMap = convertJsonToMap(requestBody,"");
+        HashMap<String, String> jsonMap = convertJsonToMap(requestBody, "");
 
-        for (Map.Entry<String,String> currentEntry : jsonMap.entrySet())
-            formEncodeString.append(makeFormDataKeyValuePair(currentEntry.getKey(),currentEntry.getValue(),boundary));
+        for (Map.Entry<String, String> currentEntry : jsonMap.entrySet())
+            formEncodeString.append(makeFormDataKeyValuePair(currentEntry.getKey(), currentEntry.getValue(), boundary));
 
         formEncodeString.append(LINE_FEED);
         formEncodeString.append("--").append(boundary).append("--").append(LINE_FEED);
@@ -195,25 +200,25 @@ public final class Helpers {
         return formEncodeString.toString();
     }
 
-    private static HashMap<String,String> convertJsonToMap(JSONObject json,String rootKey){
-        HashMap<String,String> currentMap = new HashMap<>();
+    private static HashMap<String, String> convertJsonToMap(JSONObject json, String rootKey) {
+        HashMap<String, String> currentMap = new HashMap<>();
         for (Object key : json.keySet()) {
             Object currentValue = json.get(key);
             String currentKey = rootKey.length() != 0 ? rootKey + '[' + key.toString() + ']' : rootKey + key.toString();
-            if(currentValue instanceof JSONObject){
+            if (currentValue instanceof JSONObject) {
                 currentMap.putAll(convertJsonToMap((JSONObject) currentValue, currentKey));
-            }else {
-                currentMap.put(currentKey,currentValue.toString());
+            } else {
+                currentMap.put(currentKey, currentValue.toString());
             }
         }
         return currentMap;
     }
 
-    private static String makeFormEncodeKeyValuePair(String key, String value){
-        return key+"="+value+"&";
+    private static String makeFormEncodeKeyValuePair(String key, String value) {
+        return key + "=" + value + "&";
     }
 
-    private static String makeFormDataKeyValuePair(String key,String value,String boundary){
+    private static String makeFormDataKeyValuePair(String key, String value, String boundary) {
         StringBuilder formDataTextField = new StringBuilder();
         formDataTextField.append("--").append(boundary).append(LINE_FEED);
         formDataTextField.append("Content-Disposition: form-data; name=\"").append(key).append("\"").append(LINE_FEED);
@@ -223,56 +228,45 @@ public final class Helpers {
         return formDataTextField.toString();
     }
 
-
     public static PrivateKey getPrivateKeyFromPem(String pemKey) throws SkyflowException {
 
-        //        String PKCS1PrivateHeader = "-----BEGIN RSA PRIVATE KEY-----";
-        //        String PKCS1PrivateFooter = "-----END RSA PRIVATE KEY-----";
-        
-                String PKCS8PrivateHeader = "-----BEGIN PRIVATE KEY-----";
-                String PKCS8PrivateFooter = "-----END PRIVATE KEY-----";
-        
-                String privateKeyContent = pemKey;
-                PrivateKey privateKey = null;
-        //        if (pemKey.contains(PKCS1PrivateHeader)) {
-        //            privateKeyContent = privateKeyContent.replace(PKCS1PrivateHeader, "");
-        //            privateKeyContent = privateKeyContent.replace(PKCS1PrivateFooter, "");
-        //            privateKeyContent = privateKeyContent.replace("\n", "");
-        //            privateKeyContent = privateKeyContent.replace("\r\n", "");
-        //            privateKey = parsePkcs1PrivateKey(Base64.decodeBase64(privateKeyContent));
-        //        }
-                if (pemKey.contains(PKCS8PrivateHeader)) {
-                    privateKeyContent = privateKeyContent.replace(PKCS8PrivateHeader, "");
-                    privateKeyContent = privateKeyContent.replace(PKCS8PrivateFooter, "");
-                    privateKeyContent = privateKeyContent.replace("\n", "");
-                    privateKeyContent = privateKeyContent.replace("\r\n", "");
-                    privateKey = parsePkcs8PrivateKey(Base64.decodeBase64(privateKeyContent));
-                } else {
-                    LogUtil.printErrorLog(ErrorLogs.UnableToRetrieveRSA.getLog());
-                    throw new SkyflowException(ErrorCode.UnableToRetrieveRSA);
-                }
-                return privateKey;
-            }
-        
+        String PKCS8PrivateHeader = "-----BEGIN PRIVATE KEY-----";
+        String PKCS8PrivateFooter = "-----END PRIVATE KEY-----";
+
+        String privateKeyContent = pemKey;
+        PrivateKey privateKey = null;
+
+        if (pemKey.contains(PKCS8PrivateHeader)) {
+            privateKeyContent = privateKeyContent.replace(PKCS8PrivateHeader, "");
+            privateKeyContent = privateKeyContent.replace(PKCS8PrivateFooter, "");
+            privateKeyContent = privateKeyContent.replace("\n", "");
+            privateKeyContent = privateKeyContent.replace("\r\n", "");
+            privateKey = parsePkcs8PrivateKey(Base64.decodeBase64(privateKeyContent));
+        } else {
+            LogUtil.printErrorLog(ErrorLogs.UnableToRetrieveRSA.getLog());
+            throw new SkyflowException(ErrorCode.UnableToRetrieveRSA);
+        }
+        return privateKey;
+    }
+
     /**
-    * Create a PrivateKey instance from raw PKCS#8 bytes.
-    */
+     * Create a PrivateKey instance from raw PKCS#8 bytes.
+     */
     public static PrivateKey parsePkcs8PrivateKey(byte[] pkcs8Bytes) throws SkyflowException {
-                KeyFactory keyFactory;
-                PrivateKey privateKey = null;
-                try {
-                    PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(pkcs8Bytes);
-                    keyFactory = KeyFactory.getInstance("RSA");
-                    privateKey = keyFactory.generatePrivate(keySpec);
-                } catch (NoSuchAlgorithmException e) {
-                    LogUtil.printErrorLog(ErrorLogs.NoSuchAlgorithm.getLog());
-                    throw new SkyflowException(ErrorCode.NoSuchAlgorithm, e);
-                } catch (InvalidKeySpecException e) {
-                    LogUtil.printErrorLog(ErrorLogs.InvalidKeySpec.getLog());
-                    throw new SkyflowException(ErrorCode.InvalidKeySpec, e);
-                }
-                return privateKey;
-            }
-        
+        KeyFactory keyFactory;
+        PrivateKey privateKey = null;
+        try {
+            PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(pkcs8Bytes);
+            keyFactory = KeyFactory.getInstance("RSA");
+            privateKey = keyFactory.generatePrivate(keySpec);
+        } catch (NoSuchAlgorithmException e) {
+            LogUtil.printErrorLog(ErrorLogs.NoSuchAlgorithm.getLog());
+            throw new SkyflowException(ErrorCode.NoSuchAlgorithm, e);
+        } catch (InvalidKeySpecException e) {
+            LogUtil.printErrorLog(ErrorLogs.InvalidKeySpec.getLog());
+            throw new SkyflowException(ErrorCode.InvalidKeySpec, e);
+        }
+        return privateKey;
+    }
 
 }

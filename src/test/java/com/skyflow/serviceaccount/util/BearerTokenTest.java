@@ -18,23 +18,23 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import java.io.File;
 import static org.junit.Assert.assertEquals;
 
-
 @RunWith(PowerMockRunner.class)
 @PrepareForTest
 public class BearerTokenTest {
 
     @Test
     public void testEmptyFilePath() {
-            Configuration.setLogLevel(LogLevel.DEBUG);
-            BearerToken token = new BearerToken.BearerTokenBuilder()
-                    .setCredentials(new File(""))
-                    .build();
+        Configuration.setLogLevel(LogLevel.DEBUG);
+        BearerToken token = new BearerToken.BearerTokenBuilder()
+                .setCredentials(new File(""))
+                .build();
         try {
             token.getBearerToken();
         } catch (SkyflowException exception) {
             assertEquals(exception.getMessage(), ErrorCode.EmptyFilePath.getDescription());
         }
     }
+
     @Test
     public void testNullFile() {
         Configuration.setLogLevel(LogLevel.DEBUG);
@@ -48,6 +48,7 @@ public class BearerTokenTest {
             assertEquals(ErrorCode.EmptyJSONString.getDescription(), exception.getMessage());
         }
     }
+
     @Test
     public void testInvalidFileContent() {
         BearerToken token = new BearerToken.BearerTokenBuilder()
@@ -60,6 +61,7 @@ public class BearerTokenTest {
         }
 
     }
+
     @Test
     public void testFileNotFound() {
         String fileNotFoundPath = "./src/test/resources/nofile.json";
@@ -69,9 +71,11 @@ public class BearerTokenTest {
         try {
             token.getBearerToken();
         } catch (SkyflowException exception) {
-            assertEquals(exception.getMessage(), Helpers.parameterizedString(ErrorCode.InvalidCredentialsPath.getDescription(), fileNotFoundPath));
+            assertEquals(exception.getMessage(),
+                    Helpers.parameterizedString(ErrorCode.InvalidCredentialsPath.getDescription(), fileNotFoundPath));
         }
     }
+
     @Test
     public void testFiledIsNotJsonFile() {
         String notJsonFilePath = "./src/test/resources/notJson.txt";
@@ -81,7 +85,8 @@ public class BearerTokenTest {
         try {
             token.getBearerToken();
         } catch (SkyflowException exception) {
-            assertEquals(exception.getMessage(), Helpers.parameterizedString(ErrorCode.InvalidJsonFormat.getDescription(), notJsonFilePath));
+            assertEquals(exception.getMessage(),
+                    Helpers.parameterizedString(ErrorCode.InvalidJsonFormat.getDescription(), notJsonFilePath));
         }
     }
 
@@ -97,6 +102,7 @@ public class BearerTokenTest {
             assertEquals(exception.getMessage(), ErrorCode.EmptyFilePath.getDescription());
         }
     }
+
     @Test
     public void testNullString() {
         Configuration.setLogLevel(LogLevel.DEBUG);
@@ -124,6 +130,7 @@ public class BearerTokenTest {
             assertEquals(ErrorCode.InvalidJSONStringFormat.getDescription(), exception.getMessage());
         }
     }
+
     @Test
     public void testInvalidKeyId() {
         String creds = "{\"clientID\":\"test_client_ID\"}";
@@ -153,7 +160,7 @@ public class BearerTokenTest {
     }
 
     @Test
-    public void testEmptyContext(){
+    public void testEmptyContext() {
         Configuration.setLogLevel(LogLevel.DEBUG);
         String creds = System.getProperty("TEST_CREDENTIALS_FILE_STRING_WITH_CONTEXT");
         BearerToken token = new BearerToken.BearerTokenBuilder()
@@ -168,13 +175,13 @@ public class BearerTokenTest {
     }
 
     @Test
-    public void testEmptyRoleProvided(){
+    public void testEmptyRoleProvided() {
         Configuration.setLogLevel(LogLevel.DEBUG);
         String creds = System.getProperty("TEST_CREDENTIALS_FILE_STRING_WITH_CONTEXT");
         BearerToken token = new BearerToken.BearerTokenBuilder()
                 .setCredentials(creds)
                 .setContext("abcd")
-                .setRoles(new String[]{""})
+                .setRoles(new String[] { "" })
                 .build();
         try {
             token.getBearerToken();
@@ -182,6 +189,5 @@ public class BearerTokenTest {
             assertEquals(ErrorCode.IncorrectRole.getDescription(), exception.getMessage());
         }
     }
-
 
 }

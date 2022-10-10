@@ -16,11 +16,10 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-
-
 public class SignedDataTokensTest {
 
     private final String VALID_CREDENTIALS_FILE_PATH = "./credentials.json";
+
     @Test
     public void testEmptyFilePath() {
         Configuration.setLogLevel(LogLevel.DEBUG);
@@ -33,6 +32,7 @@ public class SignedDataTokensTest {
             assertEquals(exception.getMessage(), ErrorCode.EmptyFilePath.getDescription());
         }
     }
+
     @Test
     public void testNullFile() {
         Configuration.setLogLevel(LogLevel.DEBUG);
@@ -46,6 +46,7 @@ public class SignedDataTokensTest {
             assertEquals(ErrorCode.EmptyJSONString.getDescription(), exception.getMessage());
         }
     }
+
     @Test
     public void testInvalidFileContent() {
         SignedDataTokens token = new SignedDataTokens.SignedDataTokensBuilder()
@@ -57,6 +58,7 @@ public class SignedDataTokensTest {
             assertEquals(exception.getMessage(), ErrorCode.InvalidClientID.getDescription());
         }
     }
+
     @Test
     public void testFileNotFound() {
         String fileNotFoundPath = "./src/test/resources/nofile.json";
@@ -66,9 +68,11 @@ public class SignedDataTokensTest {
         try {
             token.getSignedDataTokens();
         } catch (SkyflowException exception) {
-            assertEquals(exception.getMessage(), Helpers.parameterizedString(ErrorCode.InvalidCredentialsPath.getDescription(), fileNotFoundPath));
+            assertEquals(exception.getMessage(),
+                    Helpers.parameterizedString(ErrorCode.InvalidCredentialsPath.getDescription(), fileNotFoundPath));
         }
     }
+
     @Test
     public void testFiledIsNotJsonFile() {
         String notJsonFilePath = "./src/test/resources/notJson.txt";
@@ -78,7 +82,8 @@ public class SignedDataTokensTest {
         try {
             token.getSignedDataTokens();
         } catch (SkyflowException exception) {
-            assertEquals(exception.getMessage(), Helpers.parameterizedString(ErrorCode.InvalidJsonFormat.getDescription(), notJsonFilePath));
+            assertEquals(exception.getMessage(),
+                    Helpers.parameterizedString(ErrorCode.InvalidJsonFormat.getDescription(), notJsonFilePath));
         }
     }
 
@@ -94,6 +99,7 @@ public class SignedDataTokensTest {
             assertEquals(exception.getMessage(), ErrorCode.EmptyFilePath.getDescription());
         }
     }
+
     @Test
     public void testNullString() {
         Configuration.setLogLevel(LogLevel.DEBUG);
@@ -137,11 +143,11 @@ public class SignedDataTokensTest {
     }
 
     @Test
-    public void testNoDataTokenProvided(){
+    public void testNoDataTokenProvided() {
         String creds = System.getProperty("TEST_CREDENTIALS_FILE_STRING");
         SignedDataTokens token = new SignedDataTokens.SignedDataTokensBuilder()
                 .setCredentials(creds)
-                .setDataTokens(new String[]{}).build();
+                .setDataTokens(new String[] {}).build();
         try {
             assertTrue(token.getSignedDataTokens().isEmpty());
 
@@ -151,20 +157,18 @@ public class SignedDataTokensTest {
     }
 
     @Test
-    public void testValidSignedToken(){
+    public void testValidSignedToken() {
         String creds = System.getProperty("TEST_DATA_CREDENTIALS_FILE");
         SignedDataTokens token = new SignedDataTokens.SignedDataTokensBuilder()
                 .setCredentials(creds)
-                .setDataTokens(new String[]{"5230-0316-0674-5728"}).build();
+                .setDataTokens(new String[] { "5230-0316-0674-5728" }).build();
         try {
             List<SignedDataTokenResponse> signedToken = token.getSignedDataTokens();
             Assert.assertNotNull(signedToken);
-            
+
         } catch (SkyflowException exception) {
             Assert.assertNull(exception);
         }
     }
-
-
 
 }

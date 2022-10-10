@@ -14,7 +14,7 @@ public class SignedDataTokenResponse {
 
     @Override
     public String toString() {
-        return "{" + "dataToken: "+ dataToken + "," + "signedDataToken: "+ signedDataToken + "}";
-    
+        return "{" + "dataToken: " + dataToken + "," + "signedDataToken: " + signedDataToken + "}";
+
     }
 }

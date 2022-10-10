@@ -24,7 +24,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
-
 public class SignedDataTokens {
     private final File credentialsFile;
     private final String credentialsString;
@@ -34,8 +33,9 @@ public class SignedDataTokens {
     private final Double timeToLive;
 
     private final String credentialsType;
+
     private SignedDataTokens(SignedDataTokensBuilder builder) {
-        this.credentialsFile=builder.credentialsFile;
+        this.credentialsFile = builder.credentialsFile;
         this.credentialsString = builder.credentialsString;
         this.context = builder.context;
         this.timeToLive = builder.timeToLive;
@@ -43,11 +43,11 @@ public class SignedDataTokens {
         this.credentialsType = builder.credentialsType;
     }
 
-    //Builder class
-    public static class SignedDataTokensBuilder{
+    // Builder class
+    public static class SignedDataTokensBuilder {
         private File credentialsFile;
         private String credentialsString;
-        private  String context;
+        private String context;
 
         private String[] dataTokens;
         private Double timeToLive;
@@ -70,34 +70,36 @@ public class SignedDataTokens {
             return this;
         }
 
-        public SignedDataTokensBuilder setContext(String context){
+        public SignedDataTokensBuilder setContext(String context) {
             this.context = context;
             return this;
         }
 
-        public SignedDataTokensBuilder setDataTokens(String[] dataTokens){
+        public SignedDataTokensBuilder setDataTokens(String[] dataTokens) {
             this.dataTokens = dataTokens;
             return this;
         }
 
-         public SignedDataTokensBuilder setTimeToLive(Double timeToLive){
-             this.timeToLive = timeToLive;
-             return this;
-         }
-        public SignedDataTokens build(){
+        public SignedDataTokensBuilder setTimeToLive(Double timeToLive) {
+            this.timeToLive = timeToLive;
+            return this;
+        }
+
+        public SignedDataTokens build() {
             return new SignedDataTokens(this);
         }
     }
 
-    public List<SignedDataTokenResponse> getSignedDataTokens() throws SkyflowException
-    {
+    public List<SignedDataTokenResponse> getSignedDataTokens() throws SkyflowException {
         List<SignedDataTokenResponse> signedToken = new ArrayList<>();
 
         try {
-            if(this.credentialsFile!=null && Objects.equals(this.credentialsType, "FILE")) {
-                signedToken = generateSignedTokens(this.credentialsFile, this.dataTokens, this.timeToLive, this.context);
-            }else if (this.credentialsString!=null && Objects.equals(this.credentialsType, "STRING")) {
-                signedToken = generateSignedTokensFromCredentialsString(this.credentialsString, this.dataTokens, this.timeToLive, this.context);
+            if (this.credentialsFile != null && Objects.equals(this.credentialsType, "FILE")) {
+                signedToken = generateSignedTokens(this.credentialsFile, this.dataTokens, this.timeToLive,
+                        this.context);
+            } else if (this.credentialsString != null && Objects.equals(this.credentialsType, "STRING")) {
+                signedToken = generateSignedTokensFromCredentialsString(this.credentialsString, this.dataTokens,
+                        this.timeToLive, this.context);
 
             }
         } catch (SkyflowException e) {
@@ -106,7 +108,8 @@ public class SignedDataTokens {
         return signedToken;
     }
 
-    private static List<SignedDataTokenResponse> generateSignedTokens(File credentialsPath,String[] dataTokens, Double timeToLive, String context) throws SkyflowException {
+    private static List<SignedDataTokenResponse> generateSignedTokens(File credentialsPath, String[] dataTokens,
+            Double timeToLive, String context) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.GenerateBearerTokenFromCredsCalled.getLog());
         JSONParser parser = new JSONParser();
         List<SignedDataTokenResponse> responseToken;
@@ -120,7 +123,7 @@ public class SignedDataTokens {
             Object obj = parser.parse(new FileReader(String.valueOf(credentialsPath)));
             JSONObject saCreds = (JSONObject) obj;
 
-            responseToken = getSignedTokenFromCredsFile(saCreds,dataTokens,timeToLive,context);
+            responseToken = getSignedTokenFromCredsFile(saCreds, dataTokens, timeToLive, context);
 
         } catch (ParseException e) {
             LogUtil.printErrorLog(ErrorLogs.InvalidJSONStringFormat.getLog());
@@ -131,7 +134,9 @@ public class SignedDataTokens {
 
         return responseToken;
     }
-    private static List<SignedDataTokenResponse> generateSignedTokensFromCredentialsString(String credentials,String[] dataTokens, Double timeToLive, String context) throws SkyflowException {
+
+    private static List<SignedDataTokenResponse> generateSignedTokensFromCredentialsString(String credentials,
+            String[] dataTokens, Double timeToLive, String context) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.GenerateBearerTokenFromCredsCalled.getLog());
         JSONParser parser = new JSONParser();
         List<SignedDataTokenResponse> responseToken;
@@ -146,7 +151,7 @@ public class SignedDataTokens {
             Object obj = parser.parse(credentials);
             JSONObject saCreds = (JSONObject) obj;
 
-            responseToken = getSignedTokenFromCredsFile(saCreds,dataTokens,timeToLive,context);
+            responseToken = getSignedTokenFromCredsFile(saCreds, dataTokens, timeToLive, context);
 
         } catch (ParseException e) {
             LogUtil.printErrorLog(ErrorLogs.InvalidJSONStringFormat.getLog());
@@ -155,7 +160,9 @@ public class SignedDataTokens {
 
         return responseToken;
     }
-    private static List<SignedDataTokenResponse>  getSignedTokenFromCredsFile(JSONObject creds,String[] dataTokens, Double timeToLive, String context) throws SkyflowException {
+
+    private static List<SignedDataTokenResponse> getSignedTokenFromCredsFile(JSONObject creds, String[] dataTokens,
+            Double timeToLive, String context) throws SkyflowException {
         List<SignedDataTokenResponse> responseToken;
 
         try {
@@ -170,9 +177,9 @@ public class SignedDataTokens {
                 throw new SkyflowException(ErrorCode.InvalidKeyID);
             }
 
-            PrivateKey pvtKey =  Helpers.getPrivateKeyFromPem((String) creds.get("privateKey"));
+            PrivateKey pvtKey = Helpers.getPrivateKeyFromPem((String) creds.get("privateKey"));
 
-            responseToken = getSignedToken(clientID, keyID, pvtKey,dataTokens,timeToLive,context);
+            responseToken = getSignedToken(clientID, keyID, pvtKey, dataTokens, timeToLive, context);
 
         } catch (RuntimeException e) {
             throw new SkyflowException(ErrorCode.IncorrectCredentials, e);
@@ -181,15 +188,15 @@ public class SignedDataTokens {
         return responseToken;
     }
 
-
-    private static List<SignedDataTokenResponse> getSignedToken(String clientID, String keyID, PrivateKey pvtKey,String[] dataTokens, Double timeToLive,String context) {
+    private static List<SignedDataTokenResponse> getSignedToken(String clientID, String keyID, PrivateKey pvtKey,
+            String[] dataTokens, Double timeToLive, String context) {
         final Date createdDate = new Date();
         final Date expirationDate;
 
-        if(timeToLive!=null){
-            expirationDate = new Date((long) (createdDate.getTime() + (timeToLive * 1000 )));
-        }else{
-            expirationDate = new Date(createdDate.getTime() +  60000); // Valid for 60 seconds
+        if (timeToLive != null) {
+            expirationDate = new Date((long) (createdDate.getTime() + (timeToLive * 1000)));
+        } else {
+            expirationDate = new Date(createdDate.getTime() + 60000); // Valid for 60 seconds
         }
 
         List<SignedDataTokenResponse> list = new ArrayList<>();
@@ -198,6 +205,7 @@ public class SignedDataTokens {
 
             String eachSignedDataToken = Jwts.builder()
                     .claim("iss", "sdk")
+                    .claim("iat", createdDate.getTime())
                     .claim("key", keyID)
                     .claim("sub", clientID)
                     .claim("ctx", context)
@@ -206,7 +214,8 @@ public class SignedDataTokens {
                     .signWith(SignatureAlgorithm.RS256, pvtKey)
                     .compact();
 
-            SignedDataTokenResponse responseObject = new SignedDataTokenResponse(dataToken, prefix + eachSignedDataToken);
+            SignedDataTokenResponse responseObject = new SignedDataTokenResponse(dataToken,
+                    prefix + eachSignedDataToken);
 
             list.add(responseObject);
         }
