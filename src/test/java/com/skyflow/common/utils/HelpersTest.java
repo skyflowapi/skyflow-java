@@ -5,13 +5,22 @@ package com.skyflow.common.utils;
 
 import com.skyflow.Configuration;
 import com.skyflow.entities.LogLevel;
+import com.skyflow.errors.ErrorCode;
+import com.skyflow.errors.SkyflowException;
+import static org.junit.Assert.assertEquals;
+import java.security.PrivateKey;
 import org.json.simple.JSONObject;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+
 
 public class HelpersTest {
+
+    @Test
+    public void testMessageWithRequestID(){
+        String message = Helpers.appendRequestId("message", "abc");
+        String expectedMessage = "message" + " - requestId: " + "abc";
+        assertEquals(message,expectedMessage);
+    }
 
     @Test
     public void testFormatJsonToFormEncodedString(){
@@ -43,5 +52,25 @@ public class HelpersTest {
         assert testResponse.contains("value1");
         assert testResponse.contains("Content-Disposition: form-data; name=\"nest[key2]\"");
         assert testResponse.contains("value2");
+    }
+
+    @Test
+    public void testInvalidPrivateKey(){
+        String pemKey = "abc";
+
+        try{
+            PrivateKey key = Helpers.getPrivateKeyFromPem(pemKey);
+        }catch (SkyflowException exception) {
+            assertEquals(exception.getMessage(), ErrorCode.UnableToRetrieveRSA.getDescription());
+        }
+    }
+    @Test
+    public void testInvalidKeySpec(){
+        byte[] pkcs8Bytes = {};
+        try{
+             Helpers.parsePkcs8PrivateKey(pkcs8Bytes);
+        }catch (SkyflowException exception) {
+            assertEquals(exception.getMessage(), ErrorCode.InvalidKeySpec.getDescription());
+        }
     }
 }
