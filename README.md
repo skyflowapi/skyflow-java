@@ -92,7 +92,7 @@ public class TokenGenerationUtil {
 
 The service account generated with `context_id` identifier enabled can be used to generate bearer tokens with `context`.  The token generated from this service account is valid for 60 minutes and can be used to make API calls to vault services as well as management API(s) based on the permissions of the service account.
 
-[Example](https://github.com/skyflowapi/skyflow-java/blob/master/samples/src/main/java/com/example/BearerTokenWithContextGeneration.java):
+[Example](https://github.com/skyflowapi/skyflow-java/blob/master/samples/src/main/java/com/example/BearerTokenWithContextGenerationExample.java):
 
 ``` java
 import com.skyflow.entities.ResponseToken;
@@ -142,12 +142,13 @@ public class BearerTokenWithContextGeneration {
 Note: 
 - Either credentials file path or credentials as string can be passed to `setCredentials` method of BearerTokenBuilder class.
 - If both credentials file path and credentials string are passed to `setCredentials` method, then setter which is at the last will be taken precedence over the other.
+- To generate multiple bearer tokens using a thread, please refer to this [Example](https://github.com/skyflowapi/skyflow-java/blob/master/samples/src/main/java/com/example/BearerTokenGenerationUsingThreadsExample.java)
 
 ## Service Account Scoped Bearer Token Generation
 
 A service account having multiple roles can be used to generate bearer tokens with restricted access by providing the appropriate `roleID`. The token generated is valid for 60 minutes and perform opertaions with permissions associated with the role.
 
-[Example](https://github.com/skyflowapi/skyflow-java/blob/master/samples/src/main/java/com/example/ScopedTokenGeneration.java):
+[Example](https://github.com/skyflowapi/skyflow-java/blob/master/samples/src/main/java/com/example/ScopedTokenGenerationExample.java):
 
 ```java
 import java.io.File;
@@ -182,7 +183,7 @@ Note:
 Skyflow data tokens are generated when sensitive data is inserted into the vault. These data tokens can be digitally signed with the private key of the service account credentials provided, which adds an additional layer of protection. These signed tokens can then be detokenized by passing a signed data token and a bearer token generated from service account credentials having appropriate permissions and context to detokenize API calls.
 
 
-[Example](https://github.com/skyflowapi/skyflow-java/blob/master/samples/src/main/java/com/example/SignedTokenGeneration.java):
+[Example](https://github.com/skyflowapi/skyflow-java/blob/master/samples/src/main/java/com/example/SignedTokenGenerationExample.java):
 
 ``` java
 
