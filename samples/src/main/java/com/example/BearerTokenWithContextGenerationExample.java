@@ -8,7 +8,7 @@ import com.skyflow.errors.SkyflowException;
 import com.skyflow.serviceaccount.util.Token;
 import java.io.File;
 
-public class BearerTokenWithContextGeneration {
+public class BearerTokenWithContextGenerationExample {
     public static void main(String args[]) {
 
         String bearerToken = null;
