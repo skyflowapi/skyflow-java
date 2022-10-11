@@ -1,5 +1,5 @@
-# Skyflow-java
-This Java SDK is designed to help developers easily implement Skyflow into their java backend. 
+# Skyflow Java
+The Skyflow Java SDK is designed to help with integrating Skyflow into a Java backend.
 
 [![CI](https://img.shields.io/static/v1?label=CI&message=passing&color=green?style=plastic&logo=github)](https://github.com/skyflowapi/skyflow-java/actions)
 [![GitHub release](https://img.shields.io/github/v/release/skyflowapi/skyflow-java.svg)](https://mvnrepository.com/artifact/com.skyflow/skyflow-java)
@@ -24,9 +24,9 @@ This Java SDK is designed to help developers easily implement Skyflow into their
 
 ## Features
 
-- Authentication with a Skyflow Service Account and generation of a bearer token
-- Vault API operations to insert, retrieve and tokenize sensitive data
-- Invoking connections to call downstream third party APIs without directly handling sensitive data
+- Authenticate with a Skyflow service account and generate a bearer token.
+- Insert, retrieve and tokenize sensitive data.
+- Invoke connections to call downstream third party APIs without directly handling sensitive data.
 
 ## Installation
 
@@ -90,7 +90,7 @@ public class TokenGenerationUtil {
 ```
 ## Service Account Bearer Token with Context Generation 
 
-The service account generated with `context_id` identifier enabled can be used to generate bearer tokens with `context`.  The token generated from this service account is valid for 60 minutes and can be used to make API calls to vault services as well as management API(s) based on the permissions of the service account.
+The service account generated with `context_id` identifier enabled can be used to generate bearer tokens with `context`, which is a `jwt` claim for a skyflow generated bearer token. The token generated from this service account will have a `context_identifier` claim and is valid for 60 minutes and can be used to make API calls to vault services as well as management API(s) based on the permissions of the service account.
 
 [Example](https://github.com/skyflowapi/skyflow-java/blob/master/samples/src/main/java/com/example/BearerTokenWithContextGenerationExample.java):
 
@@ -102,30 +102,27 @@ import java.io.File;
 
 public class BearerTokenWithContextGeneration {
     public static void main(String args[]) {
-
         String bearerToken = null;
-
-        // Generate BearerToken with context by specifying credentials.json file path
+        // Generate a bearer token using a service account key file with a context value of "abc".
         try {
             String filePath = "<YOUR_CREDENTIALS_FILE_PATH>";
             BearerToken token = new BearerToken.BearerTokenBuilder()
-                    .setCredentials(new File(filePath))
-                    .setContext("abc")
-                    .build();
+                .setCredentials(new File(filePath))
+                .setContext("abc")
+                .build();
 
             bearerToken = token.getBearerToken();
             System.out.println(bearerToken);
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-        // Generate BearerToken with context by specifying credentials.json as string
+        // Generate a bearer token using a service account key string with a context value of "abc".
         try {
             String fileContents = "<YOUR_CREDENTIALS_FILE_CONTENTS_AS_STRING>";
             BearerToken token = new BearerToken.BearerTokenBuilder()
-                    .setCredentials(fileContents)
-                    .setContext("abc")
-                    .build();
+                .setCredentials(fileContents)
+                .setContext("abc")
+                .build();
 
             bearerToken = token.getBearerToken();
             System.out.println(bearerToken);
@@ -133,20 +130,18 @@ public class BearerTokenWithContextGeneration {
         } catch (SkyflowException e) {
             e.printStackTrace();
         }
-
     }
 }
-
 ```
 
 Note: 
-- Either credentials file path or credentials as string can be passed to `setCredentials` method of BearerTokenBuilder class.
-- If both credentials file path and credentials string are passed to `setCredentials` method, then setter which is at the last will be taken precedence over the other.
-- To generate multiple bearer tokens using a thread, please refer to this [Example](https://github.com/skyflowapi/skyflow-java/blob/master/samples/src/main/java/com/example/BearerTokenGenerationUsingThreadsExample.java)
+- You can pass either a service account key credentials file path or a service account key credentials as string to the `setCredentials` method of the BearerTokenBuilder class.
+- If you pass both a file path and string to the `setCredentials` method, the last method used takes precedence.
+- To generate multiple bearer tokens using a thread, see this [example](https://github.com/skyflowapi/skyflow-java/blob/master/samples/src/main/java/com/example/BearerTokenGenerationUsingThreadsExample.java)
 
 ## Service Account Scoped Bearer Token Generation
 
-A service account having multiple roles can be used to generate bearer tokens with restricted access by providing the appropriate `roleID`. The token generated is valid for 60 minutes and perform opertaions with permissions associated with the role.
+A service account that has multiple roles can generate bearer tokens with access restricted to a specific role by providing the appropriate `roleID`. Generated bearer tokens are valid for 60 minutes and can only perform operations with the permissions associated with the specified role.
 
 [Example](https://github.com/skyflowapi/skyflow-java/blob/master/samples/src/main/java/com/example/ScopedTokenGenerationExample.java):
 
@@ -155,16 +150,16 @@ import java.io.File;
 
 public class ScopedTokenGeneration {
     public static void main(String args[]) {
-
         String scopedToken = null;
-
-        // Generate Scoped Token  by specifying credentials.json file path
+        // Generate a bearer token using a service account file path scoped to a specific role.
         try {
             String filePath = "<YOUR_CREDENTIALS_FILE_PATH>";
             BearerToken token = new BearerToken.BearerTokenBuilder()
-                    .setCredentials(new File(filePath))
-                    .setRoles(new String[]{"roleID"})
-                    .build();
+                .setCredentials(new File(filePath))
+                .setRoles(new String[] {
+                    "roleID"
+                })
+                .build();
 
             scopedToken = token.getBearerToken();
             System.out.println(scopedToken);
@@ -175,61 +170,58 @@ public class ScopedTokenGeneration {
 }
 ```
 Note: 
-- Either credentials file path or credentials as string can be passed to `setCredentials` method of BearerTokenBuilder class.
-- If both credentials file path and credentials string are passed to `setCredentials` method, then setter which is at the last will be taken precedence over the other.
-
+- You can pass either a service account key credentials file path or a service account key credentials as string to the `setCredentials` method of the BearerTokenBuilder class.
+- If you pass both a file path and string to the `setCredentials` method, the last method used takes precedence.
 ## Signed Data Tokens Generation
 
-Skyflow data tokens are generated when sensitive data is inserted into the vault. These data tokens can be digitally signed with the private key of the service account credentials provided, which adds an additional layer of protection. These signed tokens can then be detokenized by passing a signed data token and a bearer token generated from service account credentials having appropriate permissions and context to detokenize API calls.
+Skyflow generates data tokens when sensitive data is inserted into the vault. These data tokens can be digitally signed with the private key of the service account credentials, which adds an additional layer of protection. Signed tokens can be detokenized by passing the signed data token and a bearer token generated from service account credentials. The service account must have appropriate permissions and context to detokenize the signed data tokens.
 
 
 [Example](https://github.com/skyflowapi/skyflow-java/blob/master/samples/src/main/java/com/example/SignedTokenGenerationExample.java):
 
 ``` java
-
 import com.skyflow.errors.SkyflowException;
 import java.io.File;
 import java.util.List;
 
 public class SignedTokenGeneration {
     public static void main(String args[]) {
-
-        List<SignedDataTokenResponse> signedTokenValue;
-
-        // Generate BearerToken with context by specifying credentials.json file path
+        List < SignedDataTokenResponse > signedTokenValue;
+        // Generate signed data tokens using a service account file path, context information, and a time to live.
         try {
             String filePath = "<YOUR_CREDENTIALS_FILE_PATH>";
             String context = "abc";
             SignedDataTokens signedToken = new SignedDataTokens.SignedDataTokensBuilder()
-                    .setCredentials(new File(filePath))
-                    .setContext(context)
-                    .setTimeToLive(30.0) // in seconds
-                    .setDataTokens(new String[]{"dataToken1"}).build();
+                .setCredentials(new File(filePath))
+                .setContext(context)
+                .setTimeToLive(30.0) // Time to live set in seconds.
+                .setDataTokens(new String[] {
+                    "dataToken1"
+                }).build();
 
-            signedTokenValue =  signedToken.getSignedDataTokens();
+            signedTokenValue = signedToken.getSignedDataTokens();
             System.out.println(signedTokenValue);
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-        // Generate BearerToken with context by specifying credentials.json as string
+        // Generate signed data tokens using a service account key string, context information, and a time to live.
         try {
             String fileContents = "<YOUR_CREDENTIALS_FILE_CONTENTS_AS_STRING>";
             String context = "abc";
             SignedDataTokens signedToken = new SignedDataTokens.SignedDataTokensBuilder()
-                    .setCredentials(fileContents)
-                    .setContext(context)
-                    .setTimeToLive(30.0) // in seconds
-                    .setDataTokens(new String[]{"dataToken1"}).build();
+                .setCredentials(fileContents)
+                .setContext(context)
+                .setTimeToLive(30.0) // Time to live set in seconds.
+                .setDataTokens(new String[] {
+                    "dataToken1"
+                }).build();
 
-            signedTokenValue =  signedToken.getSignedDataTokens();
+            signedTokenValue = signedToken.getSignedDataTokens();
             System.out.println(signedTokenValue);
 
         } catch (SkyflowException e) {
             e.printStackTrace();
         }
-
-
     }
 }
 ```
@@ -237,16 +229,16 @@ Response:
 
 ``` java
 [
-   {
-      "token":“5530-4316-0674-5748“,
-      "signedToken":“signed_token_eyJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJzLCpZjA“
-   }
+    {
+        "token":"5530-4316-0674-5748",
+        "signedToken":"signed_token_eyJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJzLCpZjA"
+    }
 ]
 ```
 Note: 
-- Either credentials file path or credentials as string can be passed to `setCredentials` method of SignedDataTokensBuilder class.
-- If both credentials file path and credentials string are passed to `setCredentials` method, then setter which is at the last will be taken precedence over the other.
-- `time-to-live` value is set in seconds.
+- You can pass either a service account key credentials file path or a service account key credentials as string to the `setCredentials` method of the SignedDataTokensBuilder class.
+- If you pass both a file path and string to the `setCredentials` method, the last method used takes precedence.
+- Time to live value expects time as seconds.
 
 ## Vault APIs
 The [Vault](https://github.com/skyflowapi/skyflow-java/tree/master/src/main/java/com/skyflow/vault) module is used to perform operations on the vault such as inserting records, detokenizing tokens, retrieving tokens for a skyflow_id and to invoke a connection.
