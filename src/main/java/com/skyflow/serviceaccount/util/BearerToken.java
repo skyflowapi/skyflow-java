@@ -82,7 +82,7 @@ public class BearerToken {
         }
     }
 
-    public String getBearerToken() throws SkyflowException {
+    public synchronized String getBearerToken() throws SkyflowException {
         // Make API call in generateBearerToken function to get the token
         ResponseToken response;
         String accessToken = null;

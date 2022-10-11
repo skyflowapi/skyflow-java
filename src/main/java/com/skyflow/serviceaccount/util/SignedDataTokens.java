@@ -90,7 +90,7 @@ public class SignedDataTokens {
         }
     }
 
-    public List<SignedDataTokenResponse> getSignedDataTokens() throws SkyflowException {
+    public synchronized List<SignedDataTokenResponse> getSignedDataTokens() throws SkyflowException {
         List<SignedDataTokenResponse> signedToken = new ArrayList<>();
 
         try {

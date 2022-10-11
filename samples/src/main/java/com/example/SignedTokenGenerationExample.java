@@ -7,12 +7,12 @@ import com.skyflow.errors.SkyflowException;
 import java.io.File;
 import java.util.List;
 
-public class SignedTokenGeneration {
+public class SignedTokenGenerationExample {
     public static void main(String args[]) {
 
         List<SignedDataTokenResponse> signedTokenValue;
 
-        // Generate BearerToken with context by specifying credentials.json file path
+        // Generate Signed data token with context by specifying credentials.json file path
         try {
             String filePath = "<YOUR_CREDENTIALS_FILE_PATH>";
             String context = "abc";
@@ -28,7 +28,7 @@ public class SignedTokenGeneration {
             e.printStackTrace();
         }
 
-        // Generate BearerToken with context by specifying credentials.json as string
+        // Generate Signed data token with context by specifying credentials.json as string
         try {
             String fileContents = "<YOUR_CREDENTIALS_FILE_CONTENTS_AS_STRING>";
             String context = "abc";
