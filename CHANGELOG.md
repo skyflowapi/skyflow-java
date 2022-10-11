@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.6.0] - 2022-10-11
+
+### Added
+- Added Support for Context Aware Authorization.
+- Added Support to generate scoped skyflow bearer tokens.
 ## [1.5.0] - 2022-04-12
 
 ### Added

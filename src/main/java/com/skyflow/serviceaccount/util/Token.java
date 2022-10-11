@@ -18,7 +18,6 @@ import com.skyflow.logs.InfoLogs;
 import com.skyflow.logs.WarnLogs;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import org.apache.commons.codec.binary.Base64;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -29,14 +28,10 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.KeyFactory;
-import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Date;
 
-public final class Token {
+public final class  Token {
 
     /**
      * @param filepath
@@ -136,7 +131,7 @@ public final class Token {
                 throw new SkyflowException(ErrorCode.InvalidTokenURI);
             }
 
-            PrivateKey pvtKey = getPrivateKeyFromPem((String) creds.get("privateKey"));
+            PrivateKey pvtKey = Helpers.getPrivateKeyFromPem((String) creds.get("privateKey"));
 
             String signedUserJWT = getSignedUserToken(clientID, keyID, tokenURI, pvtKey);
 
@@ -161,57 +156,6 @@ public final class Token {
 
         return responseToken;
     }
-
-    private static PrivateKey getPrivateKeyFromPem(String pemKey) throws SkyflowException {
-
-//        String PKCS1PrivateHeader = "-----BEGIN RSA PRIVATE KEY-----";
-//        String PKCS1PrivateFooter = "-----END RSA PRIVATE KEY-----";
-
-        String PKCS8PrivateHeader = "-----BEGIN PRIVATE KEY-----";
-        String PKCS8PrivateFooter = "-----END PRIVATE KEY-----";
-
-        String privateKeyContent = pemKey;
-        PrivateKey privateKey = null;
-//        if (pemKey.contains(PKCS1PrivateHeader)) {
-//            privateKeyContent = privateKeyContent.replace(PKCS1PrivateHeader, "");
-//            privateKeyContent = privateKeyContent.replace(PKCS1PrivateFooter, "");
-//            privateKeyContent = privateKeyContent.replace("\n", "");
-//            privateKeyContent = privateKeyContent.replace("\r\n", "");
-//            privateKey = parsePkcs1PrivateKey(Base64.decodeBase64(privateKeyContent));
-//        }
-        if (pemKey.contains(PKCS8PrivateHeader)) {
-            privateKeyContent = privateKeyContent.replace(PKCS8PrivateHeader, "");
-            privateKeyContent = privateKeyContent.replace(PKCS8PrivateFooter, "");
-            privateKeyContent = privateKeyContent.replace("\n", "");
-            privateKeyContent = privateKeyContent.replace("\r\n", "");
-            privateKey = parsePkcs8PrivateKey(Base64.decodeBase64(privateKeyContent));
-        } else {
-            LogUtil.printErrorLog(ErrorLogs.UnableToRetrieveRSA.getLog());
-            throw new SkyflowException(ErrorCode.UnableToRetrieveRSA);
-        }
-        return privateKey;
-    }
-
-    /**
-     * Create a PrivateKey instance from raw PKCS#8 bytes.
-     */
-    private static PrivateKey parsePkcs8PrivateKey(byte[] pkcs8Bytes) throws SkyflowException {
-        KeyFactory keyFactory;
-        PrivateKey privateKey = null;
-        try {
-            PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(pkcs8Bytes);
-            keyFactory = KeyFactory.getInstance("RSA");
-            privateKey = keyFactory.generatePrivate(keySpec);
-        } catch (NoSuchAlgorithmException e) {
-            LogUtil.printErrorLog(ErrorLogs.NoSuchAlgorithm.getLog());
-            throw new SkyflowException(ErrorCode.NoSuchAlgorithm, e);
-        } catch (InvalidKeySpecException e) {
-            LogUtil.printErrorLog(ErrorLogs.InvalidKeySpec.getLog());
-            throw new SkyflowException(ErrorCode.InvalidKeySpec, e);
-        }
-        return privateKey;
-    }
-
 //    /**
 //     * Create a PrivateKey instance from raw PKCS#1 bytes.
 //     */
