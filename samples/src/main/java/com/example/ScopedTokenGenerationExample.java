@@ -5,7 +5,7 @@ package com.example;
 
 import java.io.File;
 
-public class ScopedTokenGeneration {
+public class ScopedTokenGenerationExample {
     public static void main(String args[]) {
 
         String scopedToken = null;
