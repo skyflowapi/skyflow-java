@@ -239,6 +239,7 @@ Note:
 - You can pass either a service account key credentials file path or a service account key credentials as string to the `setCredentials` method of the SignedDataTokensBuilder class.
 - If you pass both a file path and string to the `setCredentials` method, the last method used takes precedence.
 - Time to live value expects time as seconds.
+- The default time to live value is 60 seconds.
 
 ## Vault APIs
 The [Vault](https://github.com/skyflowapi/skyflow-java/tree/master/src/main/java/com/skyflow/vault) module is used to perform operations on the vault such as inserting records, detokenizing tokens, retrieving tokens for a skyflow_id and to invoke a connection.
