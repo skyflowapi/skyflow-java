@@ -45,7 +45,6 @@ public class TokenUtilsTest {
     @Test
     @PrepareForTest
     public void testInvalidGetBearerToken2(){
-    System.out.println("testInvalidGetBearerToken2...");
         try {
             String token = TokenUtils.getBearerToken(new InvalidTokenProvider2());
         } catch (SkyflowException e) {

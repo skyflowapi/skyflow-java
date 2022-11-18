@@ -33,7 +33,10 @@ public enum ErrorLogs {
     BearerThrownException("getBearer() thrown exception "),
     InvalidBearerToken("Invalid Bearer token"),
     InvalidTable("Table name is missing"),
-    Server("Internal server error");
+    Server("Internal server error"),
+    InvalidUpsertOptionType("upsert options cannot be null, should be an non empty UpsertOption array."),
+    InvalidTableInUpsertOption("Invalid table in upsert object, non empty string is required."),
+    InvalidColumnInUpsertOption("Invalid column in upsert object, non empty string is required.");
     private final String log;
 
     ErrorLogs(String log) {

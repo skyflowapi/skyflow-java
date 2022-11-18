@@ -40,7 +40,10 @@ public enum ErrorCode {
     EmptyContext(400, "ctx claim field is missing from the jwt assertion"),
     IncorrectRole(400,"Requested scope  cannot be granted"),
 
-    IncorrectCredentials(400,"Incorrect credentials provided");
+    IncorrectCredentials(400,"Incorrect credentials provided"),
+    InvalidUpsertOptionType(400,"upsert options should be an non empty UpsertOption array."),
+    InvalidTableInUpsertOption(400,"Invalid table in upsert object, non empty string is required."),
+    InvalidColumnInUpsertOption(400,"Invalid column in upsert object, non empty string is required.");
 
     private final int code;
     private final String description;
