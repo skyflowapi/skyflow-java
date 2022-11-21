@@ -418,6 +418,18 @@ public class SkyflowTest {
         } catch (SkyflowException skyflowException) {
             assertEquals(ErrorCode.InvalidUpsertOptionType.getDescription(), skyflowException.getMessage());
         }
+
+        try {
+            SkyflowConfiguration config = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider());
+
+            Skyflow skyflowClient = Skyflow.init(config);
+            UpsertOption[] upsertOptions = new UpsertOption[3];
+            InsertOptions insertOptions = new InsertOptions(true,upsertOptions);
+            JSONObject records = new JSONObject();
+            JSONObject res = skyflowClient.insert(records, insertOptions);
+        } catch (SkyflowException skyflowException) {
+            assertEquals(ErrorCode.InvalidUpsertObjectType.getDescription(), skyflowException.getMessage());
+        }
     }
 
     @Test

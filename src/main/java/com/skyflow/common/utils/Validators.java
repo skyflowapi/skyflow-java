@@ -28,7 +28,7 @@ public final class Validators {
             throw new SkyflowException(ErrorCode.InvalidVaultURL);
         }
 
-        if(config.getTokenProvider() == null) {
+        if (config.getTokenProvider() == null) {
             LogUtil.printErrorLog(ErrorLogs.InvalidTokenProvider.getLog());
             throw new SkyflowException(ErrorCode.InvalidTokenProvider);
         }
@@ -37,7 +37,7 @@ public final class Validators {
 
     public static void validateConnectionConfiguration(JSONObject connectionConfig, SkyflowConfiguration skyflowConfiguration) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.ValidatingInvokeConnectionConfig.getLog());
-        if(skyflowConfiguration.getTokenProvider() == null) {
+        if (skyflowConfiguration.getTokenProvider() == null) {
             LogUtil.printErrorLog(ErrorLogs.InvalidTokenProvider.getLog());
             throw new SkyflowException(ErrorCode.InvalidTokenProvider);
         }
@@ -68,17 +68,22 @@ public final class Validators {
 
     public static void validateUpsertOptions(UpsertOption[] upsertOptions) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.ValidatingUpsertOptions.getLog());
-        if(upsertOptions.length == 0){
+        if (upsertOptions.length == 0) {
             LogUtil.printErrorLog(ErrorLogs.InvalidUpsertOptionType.getLog());
             throw new SkyflowException(ErrorCode.InvalidUpsertOptionType);
         }
 
         for (UpsertOption upsertOption : upsertOptions) {
-            if(upsertOption.getTable() == null || Objects.equals(upsertOption.getTable(), "")) {
+            if (upsertOption == null) {
+                LogUtil.printErrorLog(ErrorLogs.InvalidUpsertObjectType.getLog());
+                throw new SkyflowException(ErrorCode.InvalidUpsertObjectType);
+            }
+
+            if (upsertOption.getTable() == null || Objects.equals(upsertOption.getTable(), "")) {
                 LogUtil.printErrorLog(ErrorLogs.InvalidTableInUpsertOption.getLog());
                 throw new SkyflowException(ErrorCode.InvalidTableInUpsertOption);
             }
-            if(upsertOption.getColumn() == null || Objects.equals(upsertOption.getColumn(), "")) {
+            if (upsertOption.getColumn() == null || Objects.equals(upsertOption.getColumn(), "")) {
                 LogUtil.printErrorLog(ErrorLogs.InvalidColumnInUpsertOption.getLog());
                 throw new SkyflowException(ErrorCode.InvalidColumnInUpsertOption);
             }

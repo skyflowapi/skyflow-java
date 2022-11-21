@@ -36,7 +36,8 @@ public enum ErrorLogs {
     Server("Internal server error"),
     InvalidUpsertOptionType("upsert options cannot be null, should be an non empty UpsertOption array."),
     InvalidTableInUpsertOption("Invalid table in upsert object, non empty string is required."),
-    InvalidColumnInUpsertOption("Invalid column in upsert object, non empty string is required.");
+    InvalidColumnInUpsertOption("Invalid column in upsert object, non empty string is required."),
+    InvalidUpsertObjectType("upsert option cannot be null, should be an UpsertOption object.");
     private final String log;
 
     ErrorLogs(String log) {
