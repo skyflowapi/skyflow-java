@@ -6,6 +6,7 @@ package com.skyflow.common.utils;
 import com.skyflow.entities.InsertInput;
 import com.skyflow.entities.InsertOptions;
 import com.skyflow.entities.InsertRecordInput;
+import com.skyflow.entities.UpsertOption;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.logs.DebugLogs;
@@ -27,6 +28,16 @@ import org.apache.commons.codec.binary.Base64;
 public final class Helpers {
 
     private static final String LINE_FEED = "\r\n";
+
+    private static String getUpsertColumn(String tableName, UpsertOption[] upsertOptions){
+        String upsertColumn = "";
+
+        for (UpsertOption upsertOption : upsertOptions) {
+            if(Objects.equals(tableName, upsertOption.getTable()))
+                    upsertColumn = upsertOption.getColumn();
+        }
+        return upsertColumn;
+    };
 
     public static JSONObject constructInsertRequest(InsertInput recordsInput, InsertOptions options)
             throws SkyflowException {
@@ -54,6 +65,8 @@ public final class Helpers {
             postRequestInput.put("quorum", true);
             postRequestInput.put("tableName", record.getTable());
             postRequestInput.put("fields", record.getFields());
+            if(options.getUpsertOptions() != null)
+                postRequestInput.put("upsert",getUpsertColumn(record.getTable(),options.getUpsertOptions()));
             requestBodyContent.add(postRequestInput);
 
             if (isTokens) {

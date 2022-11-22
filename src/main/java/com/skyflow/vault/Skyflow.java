@@ -47,6 +47,8 @@ public final class Skyflow {
         Validators.validateConfiguration(configuration);
         LogUtil.printInfoLog(Helpers.parameterizedString(InfoLogs.ValidatedSkyflowConfiguration.getLog(), "insert"));
 
+        if(insertOptions.getUpsertOptions() != null)
+            Validators.validateUpsertOptions(insertOptions.getUpsertOptions());
         JSONObject insertResponse = null;
         try {
             InsertInput insertInput = new ObjectMapper().readValue(records.toString(), InsertInput.class);

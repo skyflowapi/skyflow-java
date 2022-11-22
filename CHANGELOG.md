@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.7.0] - 2022-11-22
+### Added
+- `upsert` support for insert method.
+
 ## [1.6.0] - 2022-10-11
 
 ### Added
