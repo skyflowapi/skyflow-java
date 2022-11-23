@@ -12,9 +12,6 @@ The Skyflow Java SDK is designed to help with integrating Skyflow into a Java ba
     * [Requirements](#requirements)
     * [Configuration](#configuration)
 * [Service Account Bearer Token Generation](#service-account-token-generation)
-* [Service Account Bearer Token with Context Generation](#service-account-bearer-token-with-context-generation)
-* [Service Account Scoped Bearer Token Generation](#service-account-scoped-bearer-token-generation)
-* [Signed Data Tokens Generation](#signed-data-tokens-generation)
 * [Vault APIs](#vault-apis)
     * [Insert](#insert)
     * [Detokenize](#detokenize)
@@ -55,9 +52,9 @@ Add this dependency to your project's POM:
 ---
 
 ## Service Account Bearer Token Generation
-The [Service Account](https://github.com/skyflowapi/skyflow-java/tree/master/src/main/java/com/skyflow/serviceaccount) java module is used to generate service account tokens from service account credentials file which is downloaded upon creation of service account. The token generated from this module is valid for 60 minutes and can be used to make API calls to vault services as well as management API(s) based on the permissions of the service account.
+The [Service Account](https://github.com/skyflowapi/skyflow-java/tree/master/src/main/java/com/skyflow/serviceaccount) java module uses a credentials file to generate service account tokens. The token generated from this module is valid for 60 minutes and lets you make API calls to the Data API as well as the Management API based on the permissions of the service account.
 
-The `generateBearerToken(filepath)` function takes the credentials file path for token generation, alternatively, you can also send the entire credentials as string, by using `generateBearerTokenFromCreds(credentials)` 
+The `generateBearerToken(filepath)` function takes the credentials file path for token generation. Alternatively, you can send the entire service account credentials as a string, by using `generateBearerTokenFromCreds(credentials)` function.
 
 [Example](https://github.com/skyflowapi/skyflow-java/blob/master/samples/src/main/java/com/example/TokenGenerationExample.java
 ):
@@ -88,159 +85,6 @@ public class TokenGenerationUtil {
     }
 }
 ```
-## Service Account Bearer Token with Context Generation 
-
-The service account generated with `context_id` identifier enabled can be used to generate bearer tokens with `context`, which is a `jwt` claim for a skyflow generated bearer token. The token generated from this service account will have a `context_identifier` claim and is valid for 60 minutes and can be used to make API calls to vault services as well as management API(s) based on the permissions of the service account.
-
-[Example](https://github.com/skyflowapi/skyflow-java/blob/master/samples/src/main/java/com/example/BearerTokenWithContextGenerationExample.java):
-
-``` java
-import com.skyflow.entities.ResponseToken;
-import com.skyflow.errors.SkyflowException;
-import com.skyflow.serviceaccount.util.Token;
-import java.io.File;
-
-public class BearerTokenWithContextGeneration {
-    public static void main(String args[]) {
-        String bearerToken = null;
-        // Generate a bearer token using a service account key file with a context value of "abc".
-        try {
-            String filePath = "<YOUR_CREDENTIALS_FILE_PATH>";
-            BearerToken token = new BearerToken.BearerTokenBuilder()
-                .setCredentials(new File(filePath))
-                .setContext("abc")
-                .build();
-
-            bearerToken = token.getBearerToken();
-            System.out.println(bearerToken);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        // Generate a bearer token using a service account key string with a context value of "abc".
-        try {
-            String fileContents = "<YOUR_CREDENTIALS_FILE_CONTENTS_AS_STRING>";
-            BearerToken token = new BearerToken.BearerTokenBuilder()
-                .setCredentials(fileContents)
-                .setContext("abc")
-                .build();
-
-            bearerToken = token.getBearerToken();
-            System.out.println(bearerToken);
-
-        } catch (SkyflowException e) {
-            e.printStackTrace();
-        }
-    }
-}
-```
-
-Note: 
-- You can pass either a service account key credentials file path or a service account key credentials as string to the `setCredentials` method of the BearerTokenBuilder class.
-- If you pass both a file path and string to the `setCredentials` method, the last method used takes precedence.
-- To generate multiple bearer tokens using a thread, see this [example](https://github.com/skyflowapi/skyflow-java/blob/master/samples/src/main/java/com/example/BearerTokenGenerationUsingThreadsExample.java)
-
-## Service Account Scoped Bearer Token Generation
-
-A service account that has multiple roles can generate bearer tokens with access restricted to a specific role by providing the appropriate `roleID`. Generated bearer tokens are valid for 60 minutes and can only perform operations with the permissions associated with the specified role.
-
-[Example](https://github.com/skyflowapi/skyflow-java/blob/master/samples/src/main/java/com/example/ScopedTokenGenerationExample.java):
-
-```java
-import java.io.File;
-
-public class ScopedTokenGeneration {
-    public static void main(String args[]) {
-        String scopedToken = null;
-        // Generate a bearer token using a service account file path scoped to a specific role.
-        try {
-            String filePath = "<YOUR_CREDENTIALS_FILE_PATH>";
-            BearerToken token = new BearerToken.BearerTokenBuilder()
-                .setCredentials(new File(filePath))
-                .setRoles(new String[] {
-                    "roleID"
-                })
-                .build();
-
-            scopedToken = token.getBearerToken();
-            System.out.println(scopedToken);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-}
-```
-Note: 
-- You can pass either a service account key credentials file path or a service account key credentials as string to the `setCredentials` method of the BearerTokenBuilder class.
-- If you pass both a file path and string to the `setCredentials` method, the last method used takes precedence.
-## Signed Data Tokens Generation
-
-Skyflow generates data tokens when sensitive data is inserted into the vault. These data tokens can be digitally signed with the private key of the service account credentials, which adds an additional layer of protection. Signed tokens can be detokenized by passing the signed data token and a bearer token generated from service account credentials. The service account must have appropriate permissions and context to detokenize the signed data tokens.
-
-
-[Example](https://github.com/skyflowapi/skyflow-java/blob/master/samples/src/main/java/com/example/SignedTokenGenerationExample.java):
-
-``` java
-import com.skyflow.errors.SkyflowException;
-import java.io.File;
-import java.util.List;
-
-public class SignedTokenGeneration {
-    public static void main(String args[]) {
-        List < SignedDataTokenResponse > signedTokenValue;
-        // Generate signed data tokens using a service account file path, context information, and a time to live.
-        try {
-            String filePath = "<YOUR_CREDENTIALS_FILE_PATH>";
-            String context = "abc";
-            SignedDataTokens signedToken = new SignedDataTokens.SignedDataTokensBuilder()
-                .setCredentials(new File(filePath))
-                .setContext(context)
-                .setTimeToLive(30.0) // Time to live set in seconds.
-                .setDataTokens(new String[] {
-                    "dataToken1"
-                }).build();
-
-            signedTokenValue = signedToken.getSignedDataTokens();
-            System.out.println(signedTokenValue);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        // Generate signed data tokens using a service account key string, context information, and a time to live.
-        try {
-            String fileContents = "<YOUR_CREDENTIALS_FILE_CONTENTS_AS_STRING>";
-            String context = "abc";
-            SignedDataTokens signedToken = new SignedDataTokens.SignedDataTokensBuilder()
-                .setCredentials(fileContents)
-                .setContext(context)
-                .setTimeToLive(30.0) // Time to live set in seconds.
-                .setDataTokens(new String[] {
-                    "dataToken1"
-                }).build();
-
-            signedTokenValue = signedToken.getSignedDataTokens();
-            System.out.println(signedTokenValue);
-
-        } catch (SkyflowException e) {
-            e.printStackTrace();
-        }
-    }
-}
-```
-Response:
-
-``` java
-[
-    {
-        "token":"5530-4316-0674-5748",
-        "signedToken":"signed_token_eyJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJzLCpZjA"
-    }
-]
-```
-Note: 
-- You can pass either a service account key credentials file path or a service account key credentials as string to the `setCredentials` method of the SignedDataTokensBuilder class.
-- If you pass both a file path and string to the `setCredentials` method, the last method used takes precedence.
-- Time to live value expects time as seconds.
-- The default time to live value is 60 seconds.
-
 ## Vault APIs
 The [Vault](https://github.com/skyflowapi/skyflow-java/tree/master/src/main/java/com/skyflow/vault) module is used to perform operations on the vault such as inserting records, detokenizing tokens, retrieving tokens for a skyflow_id and to invoke a connection.
 
@@ -280,10 +124,9 @@ All Vault APIs must be invoked using a client instance.
 
 ## Insert
 
-To insert data into your vault, use the **insert(JSONObject insertInput, InsertOptions options)** method. The first parameter `insertInput` is a JSONObject that must have a `records` key and takes an array of records to be inserted into the vault as a value. The second parameter `options` is a InsertOptions object that provides further options for your insert call, includes upsert operations, as shown below:
+To insert data into your vault, use the **insert(JSONObject insertInput, InsertOptions options)** method. The first parameter `insertInput` is a JSONObject that must have a `records` key and takes an array of records to be inserted into the vault as a value. The second parameter `options` is a InsertOptions object that provides further options for your insert call, as shown below:
 ```java
 import com.skyflow.entities.InsertOptions;
-import com.skyflow.entities.UpsertOption;
 
 // construct insert input
 JSONObject records = new JSONObject();
@@ -298,18 +141,8 @@ record.put("fields", fields);
 recordsArray.add(record);
 records.put("records", recordsArray);
 
-// create an upsert option and insert in UpsertOption array.
-UpsertOption[] upsertOptions = new UpsertOption[1];
-upsertOptions[0] = new UpsertOption(
-          '<table_name>',    // Table name.
-          '<unique_column_name>', // Unique column in the table.
-        );
-
-InsertOptions insertOptions = new InsertOptions(
-            true,          // Optional, Indicates whether or not tokens should be returned for the inserted data. Defaults to true.
-            upsertOptions, // Optional, upsert support.
-        );
-   
+// Indicates whether or not tokens should be returned for the inserted data. Defaults to 'true'.
+InsertOptions insertOptions = new InsertOptions(true);
 ```
 An [example](https://github.com/skyflowapi/skyflow-java/blob/master/samples/src/main/java/com/example/InsertExample.java) of insert call
 ```java
@@ -350,52 +183,6 @@ Sample insert Response
     ]
 }
 ```
-An [example](https://github.com/skyflowapi/skyflow-java/blob/master/samples/src/main/java/com/example/InsertWithUpsertExample.java) of insert call with `upsert` support
-```java
-JSONObject recordsJson = new JSONObject();
-JSONArray recordsArrayJson = new JSONArray();
-
-JSONObject recordJson = new JSONObject();
-recordJson.put("table", "cards");
-
-JSONObject fieldsJson = new JSONObject();
-fields.put("cardNumber", "41111111111");
-fields.put("cvv","123");
-
-recordJson.put("fields", fieldsJson);
-recordsArrayJson.add(record);
-recordsJson.put("records", recordsArrayJson);
-
-
-// create an upsert option and insert in UpsertOptions array.
-UpsertOption[] upsertOptions = new UpsertOption[1];
-upsertOptions[0] = new UpsertOption("cards", "cardNumber");
-
-// pass upsert options in insert method options.
-InsertOptions insertOptions = new InsertOptions(true, upsertOptions);
-
-try{
-        JSONObject insertResponse = skyflowClient.insert(records,insertOptions);
-        System.out.println(insertResponse);
-    } catch(SkyflowException exception){
-        System.out.println(exception);
-    }
-```
-Sample insert Response
-```JS
-{
-    "records": [
-        {
-            "table": "cards",
-            "fields": {
-                "cardNumber": "f3907186-e7e2-466f-91e5-48e12c2bcbc1",
-                "cvv": "1989cb56-63da-4482-a2df-1f74cd0dd1a5",
-            },
-        }
-    ]
-}
-```
-
 ## Detokenize
 
 In order to retrieve data from your vault using tokens that you have previously generated for that data, you can use the **detokenize(JSONObject records)** method. The first parameter JSONObject must have a `records` key that takes an array of tokens to be fetched from the vault, as shown below.
