@@ -161,6 +161,8 @@ public class SignedDataTokensTest {
         String creds = System.getProperty("TEST_DATA_CREDENTIALS_FILE");
         SignedDataTokens token = new SignedDataTokens.SignedDataTokensBuilder()
                 .setCredentials(creds)
+                .setCtx("abc")
+                .setTimeToLive(30)
                 .setDataTokens(new String[] { "5230-0316-0674-5728" }).build();
         try {
             List<SignedDataTokenResponse> signedToken = token.getSignedDataTokens();
