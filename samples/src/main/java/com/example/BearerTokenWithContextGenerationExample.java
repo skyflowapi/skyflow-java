@@ -3,9 +3,9 @@
 */
 package com.example;
 
-import com.skyflow.entities.ResponseToken;
 import com.skyflow.errors.SkyflowException;
-import com.skyflow.serviceaccount.util.Token;
+import com.skyflow.serviceaccount.util.BearerToken;
+
 import java.io.File;
 
 public class BearerTokenWithContextGenerationExample {
@@ -18,7 +18,7 @@ public class BearerTokenWithContextGenerationExample {
             String filePath = "<YOUR_CREDENTIALS_FILE_PATH>";
             BearerToken token = new BearerToken.BearerTokenBuilder()
                     .setCredentials(new File(filePath))
-                    .setContext("abc")
+                    .setCtx("abc")
                     .build();
 
             bearerToken = token.getBearerToken();
@@ -32,7 +32,7 @@ public class BearerTokenWithContextGenerationExample {
             String fileContents = "<YOUR_CREDENTIALS_FILE_CONTENTS_AS_STRING>";
             BearerToken token = new BearerToken.BearerTokenBuilder()
                     .setCredentials(fileContents)
-                    .setContext("abc")
+                    .setCtx("abc")
                     .build();
 
             bearerToken = token.getBearerToken();
