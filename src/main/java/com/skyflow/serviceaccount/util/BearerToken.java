@@ -28,7 +28,7 @@ import java.util.Objects;
 public class BearerToken {
     private final File credentialsFile;
     private final String credentialsString;
-    private final String context;
+    private final String ctx;
 
     private final String[] roles;
 
@@ -37,7 +37,7 @@ public class BearerToken {
     private BearerToken(BearerTokenBuilder builder) {
         this.credentialsFile = builder.credentialsFile;
         this.credentialsString = builder.credentialsString;
-        this.context = builder.context;
+        this.ctx = builder.ctx;
         this.roles = builder.roles;
         this.credentialsType = builder.credentialsType;
     }
@@ -46,7 +46,7 @@ public class BearerToken {
     public static class BearerTokenBuilder {
         private File credentialsFile;
         private String credentialsString;
-        private String context;
+        private String ctx;
         private String[] roles;
 
         private String credentialsType;
@@ -67,8 +67,8 @@ public class BearerToken {
             return this;
         }
 
-        public BearerTokenBuilder setContext(String context) {
-            this.context = context;
+        public BearerTokenBuilder setCtx(String ctx) {
+            this.ctx = ctx;
             return this;
         }
 
@@ -89,12 +89,11 @@ public class BearerToken {
 
         try {
             if (this.credentialsFile != null && Objects.equals(this.credentialsType, "FILE")) {
-                response = generateBearerTokenFromCredentials(this.credentialsFile, this.context, this.roles);
+                response = generateBearerTokenFromCredentials(this.credentialsFile, this.ctx, this.roles);
                 accessToken = response.getAccessToken();
 
             } else if (this.credentialsString != null && Objects.equals(this.credentialsType, "STRING")) {
-
-                response = generateBearerTokenFromCredentialString(this.credentialsString, this.context, this.roles);
+                response = generateBearerTokenFromCredentialString(this.credentialsString, this.ctx, this.roles);
                 accessToken = response.getAccessToken();
             }
         } catch (SkyflowException e) {

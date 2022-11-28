@@ -165,7 +165,7 @@ public class BearerTokenTest {
         String creds = System.getProperty("TEST_CREDENTIALS_FILE_STRING_WITH_CONTEXT");
         BearerToken token = new BearerToken.BearerTokenBuilder()
                 .setCredentials(creds)
-                .setContext("")
+                .setCtx("")
                 .build();
         try {
             token.getBearerToken();
@@ -180,7 +180,7 @@ public class BearerTokenTest {
         String creds = System.getProperty("TEST_CREDENTIALS_FILE_STRING_WITH_CONTEXT");
         BearerToken token = new BearerToken.BearerTokenBuilder()
                 .setCredentials(creds)
-                .setContext("abcd")
+                .setCtx("abcd")
                 .setRoles(new String[] { "" })
                 .build();
         try {
