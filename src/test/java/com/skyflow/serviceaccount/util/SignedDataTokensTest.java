@@ -8,13 +8,17 @@ import com.skyflow.common.utils.Helpers;
 import com.skyflow.entities.LogLevel;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.SkyflowException;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.junit.Assert;
 import org.junit.Test;
 import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class SignedDataTokensTest {
 
@@ -157,19 +161,36 @@ public class SignedDataTokensTest {
     }
 
     @Test
-    public void testValidSignedToken() {
-        String creds = System.getProperty("TEST_DATA_CREDENTIALS_FILE");
-        SignedDataTokens token = new SignedDataTokens.SignedDataTokensBuilder()
-                .setCredentials(creds)
-                .setCtx("abc")
-                .setTimeToLive(30)
-                .setDataTokens(new String[] { "5230-0316-0674-5728" }).build();
+    public void testValidSignedTokenWithTTL() {
         try {
+            JSONParser parser = new JSONParser();
+            Object obj = parser.parse(new FileReader(VALID_CREDENTIALS_FILE_PATH));
+            JSONObject saCreds = (JSONObject) obj;
+            SignedDataTokens token = new SignedDataTokens.SignedDataTokensBuilder()
+                    .setCredentials(saCreds.toJSONString())
+                    .setCtx("abc")
+                    .setTimeToLive(30)
+                    .setDataTokens(new String[] { "5230-0316-0674-5728" }).build();
+            List<SignedDataTokenResponse> signedToken = token.getSignedDataTokens();
+            Assert.assertNotNull(signedToken);
+
+        } catch (SkyflowException | IOException | ParseException exception) {
+            assertNull(exception);
+        }
+    }
+
+    @Test
+    public void testValidSignedToken() {
+        try {
+            SignedDataTokens token = new SignedDataTokens.SignedDataTokensBuilder()
+                    .setCredentials(new File(VALID_CREDENTIALS_FILE_PATH))
+                    .setCtx("abc")
+                    .setDataTokens(new String[] { "5230-0316-0674-5728" }).build();
             List<SignedDataTokenResponse> signedToken = token.getSignedDataTokens();
             Assert.assertNotNull(signedToken);
 
         } catch (SkyflowException exception) {
-            Assert.assertNull(exception);
+            assertNull(exception);
         }
     }
 
