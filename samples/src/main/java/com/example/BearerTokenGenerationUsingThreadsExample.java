@@ -1,15 +1,14 @@
 /*
 	Copyright (c) 2022 Skyflow, Inc.
 */
-package com.skyflow.serviceaccount.util;
+package com.example;
 
-import com.skyflow.entities.ResponseToken;
 import com.skyflow.errors.SkyflowException;
-import com.skyflow.serviceaccount.util.Token;
-import java.io.File;
-import java.util.List;
+import com.skyflow.serviceaccount.util.BearerToken;
 
-public class BearerTokenWithContextGeneration {
+import java.io.File;
+
+public class BearerTokenGenerationUsingThreadsExample {
     public static void main(String args[]) {
 
         String bearerToken = null;
@@ -19,7 +18,7 @@ public class BearerTokenWithContextGeneration {
             String filePath = "<YOUR_CREDENTIALS_FILE_PATH>";
             final BearerToken token = new BearerToken.BearerTokenBuilder()
                     .setCredentials(new File(filePath))
-                    .setContext("abc")
+                    .setCtx("abc")
                     .build();
 
             Thread t = new Thread(new Runnable() {

@@ -3,6 +3,7 @@
 */
 package com.example;
 
+import com.skyflow.serviceaccount.util.BearerToken;
 import java.io.File;
 
 public class ScopedTokenGenerationExample {
