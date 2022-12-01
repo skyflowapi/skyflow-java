@@ -13,7 +13,7 @@ The Skyflow Java SDK is designed to help with integrating Skyflow into a Java ba
     * [Configuration](#configuration)
 * [Service Account Bearer Token Generation](#service-account-token-generation)
 * [Vault APIs](#vault-apis)
-    * [Insert](#insert)
+    * [Insert](#insert-data-into-the-vault)
     * [Detokenize](#detokenize)
     * [GetById](#get-by-id)
     * [InvokeConnection](#invoke-connection)
@@ -122,13 +122,16 @@ static class DemoTokenProvider implements TokenProvider {
 
 All Vault APIs must be invoked using a client instance.
 
-## Insert
+## Insert data into the vault
 
-To insert data into your vault, use the **insert(JSONObject insertInput, InsertOptions options)** method. The first parameter `insertInput` is a JSONObject that must have a `records` key and takes an array of records to be inserted into the vault as a value. The second parameter `options` is a InsertOptions object that provides further options for your insert call, as shown below:
+To insert data into your vault, use the **insert(JSONObject insertInput, InsertOptions options)** method. The `insertInput` parameter is a JSONObject that requires a `records` key and takes an array of records to insert as a value into the vault. The `options` parameter is a InsertOptions object that provides further options, including Upsert operations, for your insert call.
+
+Insert call schema
 ```java
 import com.skyflow.entities.InsertOptions;
+import com.skyflow.entities.UpsertOption;
 
-// construct insert input
+// Construct the insert input.
 JSONObject records = new JSONObject();
 JSONArray recordsArray = new JSONArray();
 
@@ -141,10 +144,19 @@ record.put("fields", fields);
 recordsArray.add(record);
 records.put("records", recordsArray);
 
-// Indicates whether or not tokens should be returned for the inserted data. Defaults to 'true'.
-InsertOptions insertOptions = new InsertOptions(true);
+// Create an upsert option and insert it into the UpsertOption array.
+UpsertOption[] upsertOptions = new UpsertOption[1];
+upsertOptions[0] = new UpsertOption(
+         '<table_name>',    // A table name.
+         '<unique_column_name>', // A unique column in the table.
+        );  
+
+InsertOptions insertOptions = new InsertOptions(
+        true,          // Optional. Indicates whether tokens should be returned for the inserted data. Defaults to true.
+        upsertOptions, // Optional. Upsert operations support.
+     );
 ```
-An [example](https://github.com/skyflowapi/skyflow-java/blob/master/samples/src/main/java/com/example/InsertExample.java) of insert call
+Insert call [example](https://github.com/skyflowapi/skyflow-java/blob/master/samples/src/main/java/com/example/InsertExample.java)
 ```java
 JSONObject recordsJson = new JSONObject();
 JSONArray recordsArrayJson = new JSONArray();
@@ -169,7 +181,50 @@ try{
         System.out.println(exception);
     }
 ```
-Sample insert Response
+Skyflow returns tokens for the record you just inserted.
+```JS
+{
+    "records": [
+        {
+            "table": "cards",
+            "fields": {
+                "cardNumber": "f3907186-e7e2-466f-91e5-48e12c2bcbc1",
+                "cvv": "1989cb56-63da-4482-a2df-1f74cd0dd1a5",
+            },
+        }
+    ]
+}
+```
+Insert call [example](https://github.com/skyflowapi/skyflow-java/blob/master/samples/src/main/java/com/example/InsertWithUpsertExample.java)
+```java
+JSONObject recordsJson = new JSONObject();
+JSONArray recordsArrayJson = new JSONArray();
+
+JSONObject recordJson = new JSONObject();
+recordJson.put("table", "cards");
+
+JSONObject fieldsJson = new JSONObject();
+fields.put("cardNumber", "41111111111");
+fields.put("cvv","123");
+
+recordJson.put("fields", fieldsJson);
+recordsArrayJson.add(record);
+recordsJson.put("records", recordsArrayJson);
+
+// Create an upsert option and insert it into the UpsertOptions array.
+UpsertOption[] upsertOptions = new UpsertOption[1];
+upsertOptions[0] = new UpsertOption("cards", "cardNumber");
+
+// Pass upsert options in the insert method options.
+InsertOptions insertOptions = new InsertOptions(true, upsertOptions);
+try{
+        JSONObject insertResponse = skyflowClient.insert(records,insertOptions);
+        System.out.println(insertResponse);
+    } catch(SkyflowException exception){
+        System.out.println(exception);
+    }
+```
+Skyflow returns tokens, with upsert support, for the record you just inserted.
 ```JS
 {
     "records": [
