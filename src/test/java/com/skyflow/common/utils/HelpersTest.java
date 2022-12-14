@@ -32,7 +32,6 @@ public class HelpersTest {
         testJson.put("nest",nestedObj);
 
         String testResponse = Helpers.formatJsonToFormEncodedString(testJson);
-        System.out.println(testResponse);
         assert testResponse.contains("key1=value1");
         assert testResponse.contains("nest[key2]=value2");
     }

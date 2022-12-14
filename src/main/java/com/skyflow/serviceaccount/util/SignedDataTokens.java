@@ -27,17 +27,17 @@ import java.util.Objects;
 public class SignedDataTokens {
     private final File credentialsFile;
     private final String credentialsString;
-    private final String context;
+    private final String ctx;
 
     private final String[] dataTokens;
-    private final Double timeToLive;
+    private final Integer timeToLive;
 
     private final String credentialsType;
 
     private SignedDataTokens(SignedDataTokensBuilder builder) {
         this.credentialsFile = builder.credentialsFile;
         this.credentialsString = builder.credentialsString;
-        this.context = builder.context;
+        this.ctx = builder.ctx;
         this.timeToLive = builder.timeToLive;
         this.dataTokens = builder.dataTokens;
         this.credentialsType = builder.credentialsType;
@@ -47,10 +47,10 @@ public class SignedDataTokens {
     public static class SignedDataTokensBuilder {
         private File credentialsFile;
         private String credentialsString;
-        private String context;
+        private String ctx;
 
         private String[] dataTokens;
-        private Double timeToLive;
+        private Integer timeToLive;
 
         private String credentialsType;
 
@@ -70,8 +70,8 @@ public class SignedDataTokens {
             return this;
         }
 
-        public SignedDataTokensBuilder setContext(String context) {
-            this.context = context;
+        public SignedDataTokensBuilder setCtx(String ctx) {
+            this.ctx = ctx;
             return this;
         }
 
@@ -80,7 +80,7 @@ public class SignedDataTokens {
             return this;
         }
 
-        public SignedDataTokensBuilder setTimeToLive(Double timeToLive) {
+        public SignedDataTokensBuilder setTimeToLive(Integer timeToLive) {
             this.timeToLive = timeToLive;
             return this;
         }
@@ -96,10 +96,10 @@ public class SignedDataTokens {
         try {
             if (this.credentialsFile != null && Objects.equals(this.credentialsType, "FILE")) {
                 signedToken = generateSignedTokens(this.credentialsFile, this.dataTokens, this.timeToLive,
-                        this.context);
+                        this.ctx);
             } else if (this.credentialsString != null && Objects.equals(this.credentialsType, "STRING")) {
                 signedToken = generateSignedTokensFromCredentialsString(this.credentialsString, this.dataTokens,
-                        this.timeToLive, this.context);
+                        this.timeToLive, this.ctx);
 
             }
         } catch (SkyflowException e) {
@@ -109,7 +109,7 @@ public class SignedDataTokens {
     }
 
     private static List<SignedDataTokenResponse> generateSignedTokens(File credentialsPath, String[] dataTokens,
-            Double timeToLive, String context) throws SkyflowException {
+            Integer timeToLive, String context) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.GenerateBearerTokenFromCredsCalled.getLog());
         JSONParser parser = new JSONParser();
         List<SignedDataTokenResponse> responseToken;
@@ -136,7 +136,7 @@ public class SignedDataTokens {
     }
 
     private static List<SignedDataTokenResponse> generateSignedTokensFromCredentialsString(String credentials,
-            String[] dataTokens, Double timeToLive, String context) throws SkyflowException {
+            String[] dataTokens, Integer timeToLive, String context) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.GenerateBearerTokenFromCredsCalled.getLog());
         JSONParser parser = new JSONParser();
         List<SignedDataTokenResponse> responseToken;
@@ -162,7 +162,7 @@ public class SignedDataTokens {
     }
 
     private static List<SignedDataTokenResponse> getSignedTokenFromCredsFile(JSONObject creds, String[] dataTokens,
-            Double timeToLive, String context) throws SkyflowException {
+            Integer timeToLive, String context) throws SkyflowException {
         List<SignedDataTokenResponse> responseToken;
 
         try {
@@ -189,12 +189,12 @@ public class SignedDataTokens {
     }
 
     private static List<SignedDataTokenResponse> getSignedToken(String clientID, String keyID, PrivateKey pvtKey,
-            String[] dataTokens, Double timeToLive, String context) {
+            String[] dataTokens, Integer timeToLive, String context) {
         final Date createdDate = new Date();
         final Date expirationDate;
 
         if (timeToLive != null) {
-            expirationDate = new Date((long) (createdDate.getTime() + (timeToLive * 1000)));
+            expirationDate = new Date(createdDate.getTime() + (timeToLive * 1000));
         } else {
             expirationDate = new Date(createdDate.getTime() + 60000); // Valid for 60 seconds
         }
@@ -205,7 +205,7 @@ public class SignedDataTokens {
 
             String eachSignedDataToken = Jwts.builder()
                     .claim("iss", "sdk")
-                    .claim("iat", createdDate.getTime())
+                    .claim("iat", (createdDate.getTime()/1000))
                     .claim("key", keyID)
                     .claim("sub", clientID)
                     .claim("ctx", context)

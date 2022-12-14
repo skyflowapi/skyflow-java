@@ -5,22 +5,40 @@ package com.skyflow.serviceaccount.util;
 
 import com.skyflow.Configuration;
 import com.skyflow.common.utils.Helpers;
+import com.skyflow.common.utils.HttpUtility;
 import com.skyflow.entities.LogLevel;
+import com.skyflow.entities.ResponseToken;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.SkyflowException;
 
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.junit.Assert;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentMatchers;
+import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.net.URL;
+import java.util.Map;
+
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest
+@PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility"})
 public class BearerTokenTest {
+
+    private final String VALID_CREDENTIALS_FILE_PATH = "./credentials.json";
 
     @Test
     public void testEmptyFilePath() {
@@ -165,7 +183,7 @@ public class BearerTokenTest {
         String creds = System.getProperty("TEST_CREDENTIALS_FILE_STRING_WITH_CONTEXT");
         BearerToken token = new BearerToken.BearerTokenBuilder()
                 .setCredentials(creds)
-                .setContext("")
+                .setCtx("")
                 .build();
         try {
             token.getBearerToken();
@@ -180,7 +198,7 @@ public class BearerTokenTest {
         String creds = System.getProperty("TEST_CREDENTIALS_FILE_STRING_WITH_CONTEXT");
         BearerToken token = new BearerToken.BearerTokenBuilder()
                 .setCredentials(creds)
-                .setContext("abcd")
+                .setCtx("abcd")
                 .setRoles(new String[] { "" })
                 .build();
         try {
@@ -189,5 +207,69 @@ public class BearerTokenTest {
             assertEquals(ErrorCode.IncorrectRole.getDescription(), exception.getMessage());
         }
     }
+
+    @Test
+    @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility"})
+    public void testValidWithContextString() {
+        PowerMockito.mockStatic(HttpUtility.class);
+        String mockResponse  = "{\"accessToken\":\"valid.bearer.token\",\"tokenType\":\"Bearer\"}";
+        try {
+            PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), (Map<String, String>) eq(null))).thenReturn(mockResponse);
+            BearerToken token = new BearerToken.BearerTokenBuilder()
+                    .setCredentials(new File(VALID_CREDENTIALS_FILE_PATH))
+                    .setCtx("abc")
+                    .build();
+
+            String bearerToken  = token.getBearerToken();
+            assertEquals(bearerToken,"valid.bearer.token");
+        } catch (SkyflowException | IOException exception) {
+            assertNull(exception);
+        }
+    }
+
+    @Test
+    @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility"})
+    public void testValidWithRoles() {
+        PowerMockito.mockStatic(HttpUtility.class);
+        String mockResponse  = "{\"accessToken\":\"valid.bearer.token\",\"tokenType\":\"Bearer\"}";
+        try {
+            PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), (Map<String, String>) eq(null))).thenReturn(mockResponse);
+            BearerToken token = new BearerToken.BearerTokenBuilder()
+                    .setCredentials(new File(VALID_CREDENTIALS_FILE_PATH))
+                    .setCtx("abc")
+                    .setRoles(new String[]{"role_id"})
+                    .build();
+
+            String bearerToken  = token.getBearerToken();
+            assertEquals(bearerToken,"valid.bearer.token");
+        } catch (SkyflowException | IOException exception) {
+            assertNull(exception);
+        }
+    }
+
+    @Test
+    @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility"})
+    public void testValidWithContextFromCreds() {
+        PowerMockito.mockStatic(HttpUtility.class);
+        String mockResponse  = "{\"accessToken\":\"valid.bearer.token\",\"tokenType\":\"Bearer\"}";
+        try {
+            JSONParser parser = new JSONParser();
+            Object obj = parser.parse(new FileReader(VALID_CREDENTIALS_FILE_PATH));
+            JSONObject saCreds = (JSONObject) obj;
+
+            PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), (Map<String, String>) eq(null))).thenReturn(mockResponse);
+            BearerToken token = new BearerToken.BearerTokenBuilder()
+                    .setCredentials(saCreds.toJSONString())
+                    .setCtx("abc")
+                    .setRoles(new String[]{"role_id"})
+                    .build();
+
+            String bearerToken  = token.getBearerToken();
+            assertEquals(bearerToken,"valid.bearer.token");
+        } catch (SkyflowException | IOException | ParseException exception) {
+            assertNull(exception);
+        }
+    }
+
 
 }

@@ -18,6 +18,7 @@ public enum InfoLogs {
     InvokeConnectionCalled("invokeConnection method has triggered"),
     GenerateBearerTokenCalled("generateBearerToken method has triggered"),
     GenerateBearerTokenFromCredsCalled("generateBearerTokenFromCreds method has triggered"),
+    ValidatingUpsertOptions("validating upsert options.")
     ;
     private final String log;
 

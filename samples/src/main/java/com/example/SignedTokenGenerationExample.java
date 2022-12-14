@@ -4,6 +4,9 @@
 package com.example;
 
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.serviceaccount.util.SignedDataTokenResponse;
+import com.skyflow.serviceaccount.util.SignedDataTokens;
+
 import java.io.File;
 import java.util.List;
 
@@ -18,8 +21,8 @@ public class SignedTokenGenerationExample {
             String context = "abc";
             SignedDataTokens signedToken = new SignedDataTokens.SignedDataTokensBuilder()
                     .setCredentials(new File(filePath))
-                    .setContext(context)
-                    .setTimeToLive(30.0) // in seconds
+                    .setCtx(context)
+                    .setTimeToLive(30) // in seconds
                     .setDataTokens(new String[]{"dataToken1"}).build();
 
             signedTokenValue =  signedToken.getSignedDataTokens();
@@ -34,8 +37,8 @@ public class SignedTokenGenerationExample {
             String context = "abc";
             SignedDataTokens signedToken = new SignedDataTokens.SignedDataTokensBuilder()
                     .setCredentials(fileContents)
-                    .setContext(context)
-                    .setTimeToLive(30.0) // in seconds
+                    .setCtx(context)
+                    .setTimeToLive(30) // in seconds
                     .setDataTokens(new String[]{"dataToken1"}).build();
 
             signedTokenValue =  signedToken.getSignedDataTokens();

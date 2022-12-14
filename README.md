@@ -12,9 +12,6 @@ The Skyflow Java SDK is designed to help with integrating Skyflow into a Java ba
     * [Requirements](#requirements)
     * [Configuration](#configuration)
 * [Service Account Bearer Token Generation](#service-account-token-generation)
-* [Service Account Bearer Token with Context Generation](#service-account-bearer-token-with-context-generation)
-* [Service Account Scoped Bearer Token Generation](#service-account-scoped-bearer-token-generation)
-* [Signed Data Tokens Generation](#signed-data-tokens-generation)
 * [Vault APIs](#vault-apis)
     * [Insert](#insert)
     * [Detokenize](#detokenize)
@@ -39,7 +36,7 @@ The Skyflow Java SDK is designed to help with integrating Skyflow into a Java ba
 
 Add this dependency to your project's build file:
 ```
-implementation 'com.skyflow:skyflow-java:1.6.0'
+implementation 'com.skyflow:skyflow-java:1.7.1'
 ```
 
 #### Maven users
@@ -49,15 +46,15 @@ Add this dependency to your project's POM:
     <dependency>
         <groupId>com.skyflow</groupId>
         <artifactId>skyflow-java</artifactId>
-        <version>1.6.0</version>
+        <version>1.7.1</version>
     </dependency>
 ```
 ---
 
 ## Service Account Bearer Token Generation
-The [Service Account](https://github.com/skyflowapi/skyflow-java/tree/master/src/main/java/com/skyflow/serviceaccount) java module is used to generate service account tokens from service account credentials file which is downloaded upon creation of service account. The token generated from this module is valid for 60 minutes and can be used to make API calls to vault services as well as management API(s) based on the permissions of the service account.
+The [Service Account](https://github.com/skyflowapi/skyflow-java/tree/master/src/main/java/com/skyflow/serviceaccount) java module uses a credentials file to generate service account tokens. The token generated from this module is valid for 60 minutes and lets you make API calls to the Data API as well as the Management API based on the permissions of the service account.
 
-The `generateBearerToken(filepath)` function takes the credentials file path for token generation, alternatively, you can also send the entire credentials as string, by using `generateBearerTokenFromCreds(credentials)` 
+The `generateBearerToken(filepath)` function takes the credentials file path for token generation. Alternatively, you can send the entire service account credentials as a string, by using `generateBearerTokenFromCreds(credentials)` function.
 
 [Example](https://github.com/skyflowapi/skyflow-java/blob/master/samples/src/main/java/com/example/TokenGenerationExample.java
 ):
@@ -88,7 +85,6 @@ public class TokenGenerationUtil {
     }
 }
 ```
-
 ## Service Account Bearer Token with Context Generation 
 
 The service account generated with `context_id` identifier enabled can be used to generate bearer tokens with `context`, which is a `jwt` claim for a skyflow generated bearer token. The token generated from this service account will have a `context_identifier` claim and is valid for 60 minutes and can be used to make API calls to vault services as well as management API(s) based on the permissions of the service account.
@@ -285,7 +281,6 @@ To insert data into your vault, use the **insert(JSONObject insertInput, InsertO
 ```java
 import com.skyflow.entities.InsertOptions;
 import com.skyflow.entities.UpsertOption;
-// initialize Skyflow
 
 // construct insert input
 JSONObject records = new JSONObject();
@@ -311,7 +306,6 @@ InsertOptions insertOptions = new InsertOptions(
             true,
             upsertOptions
         );
-   
 ```
 An [example](https://github.com/skyflowapi/skyflow-java/blob/master/samples/src/main/java/com/example/InsertExample.java) of insert call with upsert support
 ```java
@@ -358,7 +352,6 @@ Sample insert Response
     ]
 }
 ```
-
 ## Detokenize
 
 In order to retrieve data from your vault using tokens that you have previously generated for that data, you can use the **detokenize(JSONObject records)** method. The first parameter JSONObject must have a `records` key that takes an array of tokens to be fetched from the vault, as shown below.
