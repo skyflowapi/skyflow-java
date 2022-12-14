@@ -88,6 +88,7 @@ public class TokenGenerationUtil {
     }
 }
 ```
+
 ## Service Account Bearer Token with Context Generation 
 
 The service account generated with `context_id` identifier enabled can be used to generate bearer tokens with `context`, which is a `jwt` claim for a skyflow generated bearer token. The token generated from this service account will have a `context_identifier` claim and is valid for 60 minutes and can be used to make API calls to vault services as well as management API(s) based on the permissions of the service account.
@@ -280,10 +281,10 @@ All Vault APIs must be invoked using a client instance.
 
 ## Insert
 
-To insert data into your vault, use the **insert(JSONObject insertInput, InsertOptions options)** method. The first parameter `insertInput` is a JSONObject that must have a `records` key and takes an array of records to be inserted into the vault as a value. The second parameter `options` is a InsertOptions object that provides further options for your insert call, as shown below.
+To insert data into your vault, use the **insert(JSONObject insertInput, InsertOptions options)** method. The first parameter `insertInput` is a JSON object that must have a `records` key and takes an array of records to insert into the vault as a value. The second parameter, `options` is an InsertOptions object that provides further options for your insert call, including **upsert** operations as shown below:
 ```java
 import com.skyflow.entities.InsertOptions;
-
+import com.skyflow.entities.UpsertOption;
 // initialize Skyflow
 
 // construct insert input
@@ -299,11 +300,20 @@ record.put("fields", fields);
 recordsArray.add(record);
 records.put("records", recordsArray);
 
+// Create an upsert option and insert it into the UpsertOption array.
+UpsertOption[] upsertOptions = new UpsertOption[1];
+upsertOptions[0] = new UpsertOption(
+          '<table_name>',    // Table name.
+          '<unique_column_name>' // Unique column in the table.
+        );
 // Indicates whether or not tokens should be returned for the inserted data. Defaults to 'True'
-InsertOptions insertOptions = new InsertOptions(true);
+InsertOptions insertOptions = new InsertOptions(
+            true,
+            upsertOptions
+        );
    
 ```
-An [example](https://github.com/skyflowapi/skyflow-java/blob/master/samples/src/main/java/com/example/InsertExample.java) of insert call
+An [example](https://github.com/skyflowapi/skyflow-java/blob/master/samples/src/main/java/com/example/InsertExample.java) of insert call with upsert support
 ```java
 JSONObject recordsJson = new JSONObject();
 JSONArray recordsArrayJson = new JSONArray();
@@ -319,7 +329,13 @@ recordJson.put("fields", fieldsJson);
 recordsArrayJson.add(record);
 recordsJson.put("records", recordsArrayJson);
 
-InsertOptions insertOptions = new InsertOptions(true);
+// Create an Uupsert option and insert it into the UpsertOptions array.
+UpsertOption[] upsertOptions = new UpsertOption[1];
+upsertOptions[0] = new UpsertOption("cards", "cardNumber");
+
+// Pass Upsert options in the insert method options.
+
+InsertOptions insertOptions = new InsertOptions(true, upsertOptions);
 
 try{
         JSONObject insertResponse = skyflowClient.insert(records,insertOptions);
