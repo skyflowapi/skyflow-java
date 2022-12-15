@@ -42,6 +42,40 @@ public final class Skyflow {
         return insert(records, new InsertOptions(true));
     }
 
+    public JSONObject update(UpdateRecordInput records) throws SkyflowException {
+        return update(records, new UpdateOptions(true));
+    }
+    public JSONObject update(UpdateRecordInput records, UpdateOptions updateOptions) throws SkyflowException {
+        LogUtil.printInfoLog(InfoLogs.UpdateMethodCalled.getLog());
+        Validators.validateConfiguration(configuration);
+        LogUtil.printInfoLog(Helpers.parameterizedString(InfoLogs.ValidatedSkyflowConfiguration.getLog(), "update"));
+
+        JSONObject updateResponse = null;
+
+        try {
+            UpdateInput updateInput = new ObjectMapper().readValue(records.toString(), UpdateInput.class);
+            JSONObject requestBody = Helpers.constructUpdateRequest(updateInput, updateOptions);
+            String url = configuration.getVaultURL() + "/v1/vaults/" + configuration.getVaultID()+"/"+ records.getTable()+"/"+records.getId() ;
+
+            Map<String, String> headers = new HashMap<>();
+            headers.put("Authorization", "Bearer " + TokenUtils.getBearerToken(configuration.getTokenProvider()));
+
+            String response = HttpUtility.sendRequest("PUT", new URL(url), requestBody, headers);
+            updateResponse = (JSONObject) new JSONParser().parse(response);
+            LogUtil.printInfoLog(InfoLogs.ConstructUpdateResponse.getLog());
+            updateResponse = Helpers.constructUpdateResponse(updateResponse, (List) requestBody.get("records"), updateOptions.isTokens());
+        }
+        catch (IOException e) {
+            LogUtil.printErrorLog(ErrorLogs.InvalidUpdateInput.getLog());
+            throw new SkyflowException(ErrorCode.InvalidUpdateInput, e);
+        } catch (ParseException e) {
+            LogUtil.printErrorLog(Helpers.parameterizedString(ErrorLogs.ResponseParsingError.getLog(), "update"));
+            throw new SkyflowException(ErrorCode.ResponseParsingError, e);
+    }
+        return updateResponse;
+
+    }
+
     public JSONObject insert(JSONObject records, InsertOptions insertOptions) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.InsertMethodCalled.getLog());
         Validators.validateConfiguration(configuration);

@@ -8,6 +8,8 @@ public enum ErrorLogs {
     InvalidVaultURL("invalid vault url"),
     InvalidTokenProvider("invalid TokenProvider. TokenProvider cannot be null"),
     InvalidInsertInput("invalid insert input"),
+
+    InvalidUpdateInput("invalid update input"),
     InvalidDetokenizeInput("invalid detokenize input"),
     ResponseParsingError("Unable to parse response in %s1 method"),
     ThreadInterruptedException("Thread was interrupted in %s1 method"),

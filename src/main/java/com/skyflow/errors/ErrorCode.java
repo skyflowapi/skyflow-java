@@ -24,6 +24,7 @@ public enum ErrorCode {
     InvalidToken(400, "Token is empty"),
     InvalidDetokenizeInput(400, "Invalid Detokenize Input"),
     InvalidInsertInput(400, "Invalid insert input"),
+    InvalidUpdateInput(400, "Invalid update input"),
     InvalidGetByIdInput(400, "Invalid getById input"),
     ResponseParsingError(500, "Unable to parse response"),
     ThreadInterruptedException(500, "Thread was interrupted"),

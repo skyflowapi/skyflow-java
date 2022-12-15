@@ -3,10 +3,7 @@
 */
 package com.skyflow.common.utils;
 
-import com.skyflow.entities.InsertInput;
-import com.skyflow.entities.InsertOptions;
-import com.skyflow.entities.InsertRecordInput;
-import com.skyflow.entities.UpsertOption;
+import com.skyflow.entities.*;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.logs.DebugLogs;
@@ -82,6 +79,87 @@ public final class Helpers {
 
         return finalRequest;
     }
+
+    public static JSONObject constructUpdateRequest(UpdateInput recordsInput, UpdateOptions options) throws SkyflowException{
+
+    JSONObject finalRequest = new JSONObject();
+        List<JSONObject> requestBodyContent = new ArrayList<JSONObject>();
+        boolean isTokens = options.isTokens();
+        UpdateRecordInput[] records = recordsInput.getRecords();
+
+        if (records == null || records.length == 0) {
+            throw new SkyflowException(ErrorCode.EmptyRecords);
+        }
+
+        for (int i = 0; i < records.length; i++) {
+            UpdateRecordInput record = records[i];
+
+            if (record.getTable() == null || record.getTable().isEmpty()) {
+                throw new SkyflowException(ErrorCode.InvalidTable);
+            }
+            if (record.getFields() == null) {
+                throw new SkyflowException(ErrorCode.InvalidFields);
+            }
+
+            JSONObject postRequestInput = new JSONObject();
+            postRequestInput.put("method", "PUT");
+            postRequestInput.put("quorum", true);
+            postRequestInput.put("id", record.getId());
+            postRequestInput.put("tableName", record.getTable());
+            postRequestInput.put("fields", record.getFields());
+            requestBodyContent.add(postRequestInput);
+
+            if (isTokens) {
+                JSONObject getRequestInput = new JSONObject();
+                getRequestInput.put("method", "GET");
+                getRequestInput.put("tableName", record.getTable());
+                getRequestInput.put("ID", String.format("$responses.%d.records.0.skyflow_id", 2 * i));
+                getRequestInput.put("tokenization", true);
+                requestBodyContent.add(getRequestInput);
+            }
+        }
+        return finalRequest;
+
+    }
+
+    public static JSONObject constructUpdateResponse(JSONObject response, List requestRecords, boolean tokens){
+
+        JSONArray responses = (JSONArray) response.get("responses");
+        JSONArray updatedResponses = new JSONArray();
+        JSONObject updateResponse = new JSONObject();
+        if(tokens) {
+            for( int index = 0; index < responses.size();index ++){
+                if(index % 2 != 0){
+                    String skyflowId = (String) ((JSONObject) ((JSONArray) ((JSONObject) responses.get(index - 1))
+                            .get("records")).get(0)).get("skyflow_id");
+                    JSONObject newObj = new JSONObject();
+                    newObj.put("table",((JSONObject) requestRecords.get(index)).get("tableName"));
+
+                    JSONObject newFields = (JSONObject) ((JSONObject) responses.get(index)).get("fields");
+                    newFields.remove("*");
+                    newFields.put("skyflow_id", skyflowId);
+                    newObj.put("fields", newFields);
+
+                    updatedResponses.add(newObj);
+                }
+            }
+        } else {
+            for (int index = 0; index < responses.size(); index++) {
+                JSONObject newObj = new JSONObject();
+
+                newObj.put("table", ((JSONObject) requestRecords.get(index)).get("tableName"));
+                newObj.put("skyflow_id",
+                        ((JSONObject) ((JSONArray) ((JSONObject) responses.get(index)).get("records")).get(0))
+                                .get("skyflow_id"));
+
+                updatedResponses.add(newObj);
+            }
+        }
+        updateResponse.put("records", updatedResponses);
+        return updateResponse ;
+
+    }
+
 
     public static JSONObject constructInsertResponse(JSONObject response, List requestRecords, boolean tokens) {
 
