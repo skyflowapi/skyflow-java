@@ -9,10 +9,11 @@ import static org.junit.Assert.assertEquals;
 public class SignedDataTokenResponseTest {
     @Test
     public void testSignedDataTokenResponse() {
+        String response = "{dataToken: token,signedDataToken: signed_token}";
         SignedDataTokenResponse res = new SignedDataTokenResponse("token", "signed_token");
         Assert.assertNotNull(res);
+        assertEquals(response,res.toString());
         assertEquals(res.dataToken, "token");
         assertEquals(res.signedDataToken, "signed_token");
-
     }
 }

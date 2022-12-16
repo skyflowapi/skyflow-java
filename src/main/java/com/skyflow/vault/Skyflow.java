@@ -1,5 +1,5 @@
 /*
-	Copyright (c) 2022 Skyflow, Inc. 
+	Copyright (c) 2022 Skyflow, Inc.
 */
 package com.skyflow.vault;
 
@@ -42,38 +42,8 @@ public final class Skyflow {
         return insert(records, new InsertOptions(true));
     }
 
-    public JSONObject update(UpdateRecordInput records) throws SkyflowException {
+    public JSONObject update(JSONObject records) throws SkyflowException {
         return update(records, new UpdateOptions(true));
-    }
-    public JSONObject update(UpdateRecordInput records, UpdateOptions updateOptions) throws SkyflowException {
-        LogUtil.printInfoLog(InfoLogs.UpdateMethodCalled.getLog());
-        Validators.validateConfiguration(configuration);
-        LogUtil.printInfoLog(Helpers.parameterizedString(InfoLogs.ValidatedSkyflowConfiguration.getLog(), "update"));
-
-        JSONObject updateResponse = null;
-
-        try {
-            UpdateInput updateInput = new ObjectMapper().readValue(records.toString(), UpdateInput.class);
-            JSONObject requestBody = Helpers.constructUpdateRequest(updateInput, updateOptions);
-            String url = configuration.getVaultURL() + "/v1/vaults/" + configuration.getVaultID()+"/"+ records.getTable()+"/"+records.getId() ;
-
-            Map<String, String> headers = new HashMap<>();
-            headers.put("Authorization", "Bearer " + TokenUtils.getBearerToken(configuration.getTokenProvider()));
-
-            String response = HttpUtility.sendRequest("PUT", new URL(url), requestBody, headers);
-            updateResponse = (JSONObject) new JSONParser().parse(response);
-            LogUtil.printInfoLog(InfoLogs.ConstructUpdateResponse.getLog());
-            updateResponse = Helpers.constructUpdateResponse(updateResponse, (List) requestBody.get("records"), updateOptions.isTokens());
-        }
-        catch (IOException e) {
-            LogUtil.printErrorLog(ErrorLogs.InvalidUpdateInput.getLog());
-            throw new SkyflowException(ErrorCode.InvalidUpdateInput, e);
-        } catch (ParseException e) {
-            LogUtil.printErrorLog(Helpers.parameterizedString(ErrorLogs.ResponseParsingError.getLog(), "update"));
-            throw new SkyflowException(ErrorCode.ResponseParsingError, e);
-    }
-        return updateResponse;
-
     }
 
     public JSONObject insert(JSONObject records, InsertOptions insertOptions) throws SkyflowException {
@@ -235,6 +205,69 @@ public final class Skyflow {
         }
 
         return finalResponse;
+    }
+    public JSONObject update(JSONObject records, UpdateOptions updateOptions) throws SkyflowException {
+        LogUtil.printInfoLog(InfoLogs.UpdateMethodCalled.getLog());
+        Validators.validateConfiguration(configuration);
+        LogUtil.printInfoLog(Helpers.parameterizedString(InfoLogs.ValidatedSkyflowConfiguration.getLog(), "update"));
+
+        JSONArray successRecordsArray = new JSONArray();
+        JSONArray errorRecordsArray = new JSONArray();
+
+        JSONObject updateResponse = new JSONObject();
+
+        try {
+            UpdateInput updateInput = new ObjectMapper().readValue(records.toString(), UpdateInput.class);
+            UpdateRecordInput[] recordInputs = updateInput.getRecords();
+            if (recordInputs == null || recordInputs.length == 0) {
+                throw new SkyflowException(ErrorCode.EmptyRecords);
+            }
+
+            Map<String, String> headers = new HashMap<>();
+            headers.put("Authorization", "Bearer " + TokenUtils.getBearerToken(configuration.getTokenProvider()));
+
+            FutureTask[] futureTasks = new FutureTask[recordInputs.length];
+            for (int i = 0; i < recordInputs.length; i++) {
+                Callable<String> callable = new UpdateBySkyflowId(recordInputs[i], configuration.getVaultID(), configuration.getVaultURL(), headers, updateOptions);
+                futureTasks[i] = new FutureTask(callable);
+                Thread t = new Thread(futureTasks[i]);
+                t.start();
+            }
+
+            for (FutureTask task : futureTasks) {
+                String taskData = (String) task.get();
+                JSONObject responseJson = (JSONObject) new JSONParser().parse(taskData);
+                if (responseJson.containsKey("error")) {
+                    errorRecordsArray.add(responseJson);
+                } else if (responseJson.containsKey("records")) {
+                    successRecordsArray.add(responseJson.get("records"));
+                }
+            }
+            if (errorRecordsArray.isEmpty()) {
+                updateResponse.put("records", successRecordsArray);
+            } else if (successRecordsArray.isEmpty()) {
+                updateResponse.put("error", errorRecordsArray);
+                throw new SkyflowException(500, "Server returned errors, check SkyflowException.Update() for more", updateResponse);
+            } else {
+                updateResponse.put("records", successRecordsArray);
+                updateResponse.put("error", errorRecordsArray);
+                throw new SkyflowException(500, "Server returned errors, check SkyflowException.Update() for more", updateResponse);
+            }
+        } catch (IOException e) {
+            LogUtil.printErrorLog(ErrorLogs.InvalidUpdateInput.getLog());
+            throw new SkyflowException(ErrorCode.InvalidUpdateInput, e);
+        } catch (InterruptedException e) {
+            LogUtil.printErrorLog(Helpers.parameterizedString(ErrorLogs.ThreadInterruptedException.getLog(), "updateById"));
+            throw new SkyflowException(ErrorCode.ThreadInterruptedException, e);
+        } catch (ExecutionException e) {
+            LogUtil.printErrorLog(Helpers.parameterizedString(ErrorLogs.ThreadExecutionException.getLog(), "updateById"));
+            throw new SkyflowException(ErrorCode.ThreadExecutionException, e);
+        } catch (ParseException e) {
+            LogUtil.printErrorLog(Helpers.parameterizedString(ErrorLogs.ResponseParsingError.getLog(), "updateById"));
+            throw new SkyflowException(ErrorCode.ResponseParsingError, e);
+        }
+        return updateResponse;
+
     }
 
     public JSONObject invokeConnection(JSONObject connectionConfig) throws SkyflowException {

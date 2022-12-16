@@ -39,7 +39,10 @@ public enum ErrorLogs {
     InvalidUpsertOptionType("upsert options cannot be null, should be an non empty UpsertOption array."),
     InvalidTableInUpsertOption("Invalid table in upsert object, non empty string is required."),
     InvalidColumnInUpsertOption("Invalid column in upsert object, non empty string is required."),
-    InvalidUpsertObjectType("upsert option cannot be null, should be an UpsertOption object.");
+    InvalidUpsertObjectType("upsert option cannot be null, should be an UpsertOption object."),
+    InvalidSkyflowId("Skyflow Id is missing"),
+    InvalidField("Fields missing");
+
     private final String log;
 
     ErrorLogs(String log) {

@@ -21,6 +21,7 @@ public enum ErrorCode {
     EmptyRecords(400, "Records cannot be empty"),
     InvalidTable(400, "Table name is missing"),
     InvalidFields(400, "Fields are missing"),
+    InvalidSkyflowId(400, "Skyflow id are missing"),
     InvalidToken(400, "Token is empty"),
     InvalidDetokenizeInput(400, "Invalid Detokenize Input"),
     InvalidInsertInput(400, "Invalid insert input"),
