@@ -3,8 +3,10 @@
 */
 package com.skyflow.vault;
 
+import com.skyflow.common.utils.Helpers;
 import com.skyflow.common.utils.HttpUtility;
 import com.skyflow.common.utils.LogUtil;
+import com.skyflow.common.utils.Validators;
 import com.skyflow.entities.GetByIdRecordInput;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.SkyflowException;
@@ -38,18 +40,10 @@ final class GetBySkyflowId implements Callable<String> {
     public String call() throws SkyflowException {
         String response = null;
         try {
-            StringBuilder paramsList = new StringBuilder();
-            for (String id : record.getIds()) {
-                paramsList.append("skyflow_ids=" + id + "&");
-            }
+            Validators.validateGetByIdRequestRecord(record);
+            StringBuilder paramsList = Helpers.constructGetByIdRequestURLParams(record);
 
-            if(record.getTable() == null || record.getTable().isEmpty()) {
-                LogUtil.printErrorLog(ErrorLogs.InvalidTable.getLog());
-                throw new SkyflowException(ErrorCode.InvalidTable);
-            }
-
-            String url = vaultURL + "/v1/vaults/" + vaultID + "/" +
-                    record.getTable() + "?" + paramsList + "redaction=" + record.getRedaction();
+            String url = vaultURL + "/v1/vaults/" + vaultID + "/" + record.getTable() + "?" + paramsList;
 
             response = HttpUtility.sendRequest("GET", new URL(url), null, headers);
 
@@ -80,22 +74,19 @@ final class GetBySkyflowId implements Callable<String> {
             LogUtil.printErrorLog(ErrorLogs.ResponseParsingError.getLog());
             throw new SkyflowException(ErrorCode.ResponseParsingError, e);
         } catch (SkyflowException e) {
-            response = constructGetByIdErrorObject(e, record.getIds());
+            response = record.getIds() == null
+                    ? constructGetByIdErrorObject(e)
+                    : constructGetByIdErrorObject(e, record.getIds());
         }
 
         return response;
     }
 
-    private String constructGetByIdErrorObject(SkyflowException skyflowException, String[] ids) {
-
+    private String constructGetByIdErrorObject(SkyflowException skyflowException) {
         String getByIdResponse = null;
         JSONObject finalResponseError = new JSONObject();
 
         try {
-            JSONArray idsArray = new JSONArray();
-            Collections.addAll(idsArray, ids);
-            finalResponseError.put("ids", idsArray);
-
             JSONObject errorObject = (JSONObject) ((JSONObject) new JSONParser().parse(skyflowException.getMessage())).get("error");
             if (errorObject != null) {
                 JSONObject responseError = new JSONObject();
@@ -113,5 +104,14 @@ final class GetBySkyflowId implements Callable<String> {
             getByIdResponse = finalResponseError.toString();
         }
         return getByIdResponse;
+    }
+
+    private String constructGetByIdErrorObject(SkyflowException skyflowException, String[] ids) {
+
+        JSONObject finalResponseError = new JSONObject();
+        JSONArray idsArray = new JSONArray();
+        Collections.addAll(idsArray, ids);
+        finalResponseError.put("ids", idsArray);
+        return constructGetByIdErrorObject(skyflowException);
     }
 }

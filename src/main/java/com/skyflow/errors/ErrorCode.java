@@ -27,6 +27,9 @@ public enum ErrorCode {
     InvalidInsertInput(400, "Invalid insert input"),
     InvalidUpdateInput(400, "Invalid update input"),
     InvalidGetByIdInput(400, "Invalid getById input"),
+    MissingIdAndColumnName(400, "Provide either Ids or column name to get records."),
+    MissingRecordColumnValue(400, "Column Values can not be empty when Column Name is specified."),
+    MissingRecordColumnName(400, "Column Name can not be empty when Column Values are specified."),
     ResponseParsingError(500, "Unable to parse response"),
     ThreadInterruptedException(500, "Thread was interrupted"),
     ThreadExecutionException(500, "ThreadExecution exception"),
@@ -40,13 +43,12 @@ public enum ErrorCode {
     InvalidJSONStringFormat(400, "credentials string is not a valid json string format"),
     EmptyFilePath(400, "file path cannot be empty or null"),
     EmptyContext(400, "ctx claim field is missing from the jwt assertion"),
-    IncorrectRole(400,"Requested scope  cannot be granted"),
-
-    IncorrectCredentials(400,"Incorrect credentials provided"),
-    InvalidUpsertOptionType(400,"upsert options should be an non empty UpsertOption array."),
-    InvalidUpsertObjectType(400,"upsert option cannot be null, should be an UpsertOption object."),
-    InvalidTableInUpsertOption(400,"Invalid table in upsert object, non empty string is required."),
-    InvalidColumnInUpsertOption(400,"Invalid column in upsert object, non empty string is required.");
+    IncorrectRole(400, "Requested scope  cannot be granted"),
+    IncorrectCredentials(400, "Incorrect credentials provided"),
+    InvalidUpsertOptionType(400, "upsert options should be an non empty UpsertOption array."),
+    InvalidUpsertObjectType(400, "upsert option cannot be null, should be an UpsertOption object."),
+    InvalidTableInUpsertOption(400, "Invalid table in upsert object, non empty string is required."),
+    InvalidColumnInUpsertOption(400, "Invalid column in upsert object, non empty string is required.");
 
     private final int code;
     private final String description;

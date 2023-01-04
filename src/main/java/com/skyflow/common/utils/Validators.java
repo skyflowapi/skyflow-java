@@ -3,6 +3,7 @@
 */
 package com.skyflow.common.utils;
 
+import com.skyflow.entities.GetByIdRecordInput;
 import com.skyflow.entities.RequestMethod;
 import com.skyflow.entities.SkyflowConfiguration;
 import com.skyflow.entities.UpsertOption;
@@ -99,5 +100,32 @@ public final class Validators {
             return true;
         }
         return false;
+    }
+
+    public static void validateGetByIdRequestRecord(GetByIdRecordInput record) throws SkyflowException {
+        String[] ids = record.getIds();
+        String table = record.getTable();
+        String columnName = record.getColumn_name();
+        String[] columnValues = record.getColumn_values();
+
+        if (table == null || table.isEmpty()) {
+            LogUtil.printErrorLog(ErrorLogs.InvalidTable.getLog());
+            throw new SkyflowException(ErrorCode.InvalidTable);
+        }
+
+        if (ids == null && columnName == null && columnValues == null) {
+            LogUtil.printErrorLog(ErrorLogs.MissingIdAndColumnName.getLog());
+            throw new SkyflowException(ErrorCode.MissingIdAndColumnName);
+        }
+
+        if (columnName != null && columnValues == null) {
+            LogUtil.printErrorLog(ErrorLogs.MissingRecordColumnValue.getLog());
+            throw new SkyflowException(ErrorCode.MissingRecordColumnValue);
+        }
+
+        if (columnName == null && columnValues != null) {
+            LogUtil.printErrorLog(ErrorLogs.MissingRecordColumnName.getLog());
+            throw new SkyflowException(ErrorCode.MissingRecordColumnName);
+        }
     }
 }

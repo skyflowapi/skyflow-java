@@ -51,7 +51,7 @@ public final class Skyflow {
         Validators.validateConfiguration(configuration);
         LogUtil.printInfoLog(Helpers.parameterizedString(InfoLogs.ValidatedSkyflowConfiguration.getLog(), "insert"));
 
-        if(insertOptions.getUpsertOptions() != null)
+        if (insertOptions.getUpsertOptions() != null)
             Validators.validateUpsertOptions(insertOptions.getUpsertOptions());
         JSONObject insertResponse = null;
         try {
@@ -206,6 +206,7 @@ public final class Skyflow {
 
         return finalResponse;
     }
+
     public JSONObject update(JSONObject records, UpdateOptions updateOptions) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.UpdateMethodCalled.getLog());
         Validators.validateConfiguration(configuration);
@@ -280,10 +281,10 @@ public final class Skyflow {
             Map<String, String> headers = new HashMap<>();
 
             if (connectionConfig.containsKey("requestHeader")) {
-              headers = Helpers.constructConnectionHeadersMap((JSONObject) connectionConfig.get("requestHeader"));
+                headers = Helpers.constructConnectionHeadersMap((JSONObject) connectionConfig.get("requestHeader"));
             }
-            if(!headers.containsKey("x-skyflow-authorization")) {
-              headers.put("x-skyflow-authorization", TokenUtils.getBearerToken(configuration.getTokenProvider()));
+            if (!headers.containsKey("x-skyflow-authorization")) {
+                headers.put("x-skyflow-authorization", TokenUtils.getBearerToken(configuration.getTokenProvider()));
             }
 
             String requestMethod = connectionConfig.get("methodName").toString();
