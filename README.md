@@ -21,6 +21,7 @@ The Skyflow Java SDK is designed to help with integrating Skyflow into a Java ba
     * [GetById](#get-by-id)
     * [InvokeConnection](#invoke-connection)
 *   [Logging](#logging)
+
 ## Features
 
 - Authenticate with a Skyflow service account and generate a bearer token.
