@@ -35,7 +35,7 @@ class DemoTokenProvider implements TokenProvider {
     }
 }
 
-class InvalidTokenProvider implements TokenProvider{
+class InvalidTokenProvider implements TokenProvider {
     @Override
     public String getBearerToken() throws Exception {
         return "not_a_valid_token";
@@ -72,10 +72,10 @@ public class SkyflowTest {
     @Test
     public void testValidConfig() {
         Configuration.setLogLevel(LogLevel.INFO);
-        SkyflowConfiguration testConfig = new SkyflowConfiguration(vaultID, vaultURL,new DemoTokenProvider());
+        SkyflowConfiguration testConfig = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider());
         try {
             Skyflow skyflow = Skyflow.init(testConfig);
-            assert(skyflow instanceof Skyflow);
+            assert (skyflow instanceof Skyflow);
         } catch (SkyflowException e) {
             assertNotNull(e);
         }
@@ -149,7 +149,7 @@ public class SkyflowTest {
 
     @Test
     public void testInsertWithInvalidSkyflowConfig() {
-        try{
+        try {
             SkyflowConfiguration config = new SkyflowConfiguration(vaultID, vaultURL, null);
 
             Skyflow skyflowClient = Skyflow.init(config);
@@ -259,7 +259,7 @@ public class SkyflowTest {
 
             records.put("records", recordsArray);
 
-            UpsertOption upsertOption = new UpsertOption(tableName,columnName);
+            UpsertOption upsertOption = new UpsertOption(tableName, columnName);
             InsertOptions insertOptions = new InsertOptions(new UpsertOption[]{upsertOption});
 
             PowerMockito.mockStatic(HttpUtility.class);
@@ -412,7 +412,7 @@ public class SkyflowTest {
 
             Skyflow skyflowClient = Skyflow.init(config);
             UpsertOption[] upsertOptions = new UpsertOption[]{};
-            InsertOptions insertOptions = new InsertOptions(true,upsertOptions);
+            InsertOptions insertOptions = new InsertOptions(true, upsertOptions);
             JSONObject records = new JSONObject();
             JSONObject res = skyflowClient.insert(records, insertOptions);
         } catch (SkyflowException skyflowException) {
@@ -424,7 +424,7 @@ public class SkyflowTest {
 
             Skyflow skyflowClient = Skyflow.init(config);
             UpsertOption[] upsertOptions = new UpsertOption[3];
-            InsertOptions insertOptions = new InsertOptions(true,upsertOptions);
+            InsertOptions insertOptions = new InsertOptions(true, upsertOptions);
             JSONObject records = new JSONObject();
             JSONObject res = skyflowClient.insert(records, insertOptions);
         } catch (SkyflowException skyflowException) {
@@ -438,7 +438,7 @@ public class SkyflowTest {
             SkyflowConfiguration config = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider());
 
             Skyflow skyflowClient = Skyflow.init(config);
-            InsertOptions insertOptions = new InsertOptions(true,new UpsertOption[]{new UpsertOption(null,"column")});
+            InsertOptions insertOptions = new InsertOptions(true, new UpsertOption[]{new UpsertOption(null, "column")});
             JSONObject records = new JSONObject();
             JSONObject res = skyflowClient.insert(records, insertOptions);
         } catch (SkyflowException skyflowException) {
@@ -448,7 +448,7 @@ public class SkyflowTest {
             SkyflowConfiguration config = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider());
 
             Skyflow skyflowClient = Skyflow.init(config);
-            InsertOptions insertOptions = new InsertOptions(true,new UpsertOption[]{new UpsertOption("","column")});
+            InsertOptions insertOptions = new InsertOptions(true, new UpsertOption[]{new UpsertOption("", "column")});
             JSONObject records = new JSONObject();
             JSONObject res = skyflowClient.insert(records, insertOptions);
         } catch (SkyflowException skyflowException) {
@@ -462,7 +462,7 @@ public class SkyflowTest {
             SkyflowConfiguration config = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider());
 
             Skyflow skyflowClient = Skyflow.init(config);
-            InsertOptions insertOptions = new InsertOptions(true,new UpsertOption[]{new UpsertOption("table1",null)});
+            InsertOptions insertOptions = new InsertOptions(true, new UpsertOption[]{new UpsertOption("table1", null)});
             JSONObject records = new JSONObject();
             JSONObject res = skyflowClient.insert(records, insertOptions);
         } catch (SkyflowException skyflowException) {
@@ -472,13 +472,14 @@ public class SkyflowTest {
             SkyflowConfiguration config = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider());
 
             Skyflow skyflowClient = Skyflow.init(config);
-            InsertOptions insertOptions = new InsertOptions(true,new UpsertOption[]{new UpsertOption("table2","")});
+            InsertOptions insertOptions = new InsertOptions(true, new UpsertOption[]{new UpsertOption("table2", "")});
             JSONObject records = new JSONObject();
             JSONObject res = skyflowClient.insert(records, insertOptions);
         } catch (SkyflowException skyflowException) {
             assertEquals(ErrorCode.InvalidColumnInUpsertOption.getDescription(), skyflowException.getMessage());
         }
     }
+
     @Test
     @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility", "com.skyflow.common.utils.TokenUtils"})
     public void testDetokenizeSuccess() {
@@ -494,7 +495,7 @@ public class SkyflowTest {
             records.put("records", recordsArray);
 
             PowerMockito.mockStatic(HttpUtility.class);
-            String mockResponse =  "{\"records\":[{\"token\":\"token123\",\"valueType\":\"INTEGER\",\"value\":\"10\"}]}";
+            String mockResponse = "{\"records\":[{\"token\":\"token123\",\"valueType\":\"INTEGER\",\"value\":\"10\"}]}";
             PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockResponse);
 
             JSONObject res = skyflowClient.detokenize(records);
@@ -528,7 +529,7 @@ public class SkyflowTest {
             PowerMockito.mockStatic(HttpUtility.class);
             String mockResponse =
                     "{\"error\":{\"grpc_code\":5,\"http_code\":404,\"message\":\"Token not found for invalidToken\",\"http_status\":\"Not Found\",\"details\":[]}}";
-            PowerMockito.when(HttpUtility.sendRequest(anyString(),ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenThrow(new SkyflowException(404, mockResponse));
+            PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenThrow(new SkyflowException(404, mockResponse));
 
             JSONObject res = skyflowClient.detokenize(records);
         } catch (SkyflowException skyflowException) {
@@ -557,7 +558,7 @@ public class SkyflowTest {
             recordsArray.add(validRecord);
             records.put("records", recordsArray);
 
-            JSONParser jsonParser=new JSONParser();
+            JSONParser jsonParser = new JSONParser();
             JSONObject validRequest = (JSONObject)
                     jsonParser.parse("{\"detokenizationParameters\":[{\"token\":\"token123\"}]}");
             PowerMockito.mockStatic(HttpUtility.class);
@@ -568,7 +569,7 @@ public class SkyflowTest {
                     jsonParser.parse("{\"detokenizationParameters\":[{\"token\":\"invalidToken1\"}]}");
             String mockInvalidResponse =
                     "{\"error\":{\"grpc_code\":5,\"http_code\":404,\"message\":\"Token not found for invalidToken1\",\"http_status\":\"Not Found\",\"details\":[]}}";
-            PowerMockito.when(HttpUtility.sendRequest(anyString(),ArgumentMatchers.<URL>any(), eq(invalidRequest), ArgumentMatchers.<String, String>anyMap())).thenThrow(new SkyflowException(404, mockInvalidResponse));
+            PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), eq(invalidRequest), ArgumentMatchers.<String, String>anyMap())).thenThrow(new SkyflowException(404, mockInvalidResponse));
 
 
             JSONObject res = skyflowClient.detokenize(records);
@@ -676,7 +677,7 @@ public class SkyflowTest {
             records.put("records", recordsArray);
 
             PowerMockito.mockStatic(HttpUtility.class);
-            String mockResponse =  "{\"records\":[{\"fields\":{\"age\":10,\"skyflow_id\":\"skyflowId123\"}}]}";
+            String mockResponse = "{\"records\":[{\"fields\":{\"age\":10,\"skyflow_id\":\"skyflowId123\"}}]}";
             PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockResponse);
             JSONObject response = skyflowClient.getById(records);
             JSONArray responseRecords = (JSONArray) response.get("records");
@@ -763,7 +764,7 @@ public class SkyflowTest {
             String invalidRequestUrl = "https://test.com/v1/vaults/vault123/invalidTable2?skyflow_ids=invalidId&redaction=PLAIN_TEXT";
 
             PowerMockito.mockStatic(HttpUtility.class);
-            String mockValidResponse =  "{\"records\":[{\"fields\":{\"age\":10,\"skyflow_id\":\"skyflowId123\"}}]}";
+            String mockValidResponse = "{\"records\":[{\"fields\":{\"age\":10,\"skyflow_id\":\"skyflowId123\"}}]}";
             PowerMockito.when(HttpUtility.sendRequest(anyString(), eq(new URL(validRequestUrl)), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockValidResponse);
 
             String mockInvalidResponse = "{\"error\":{\"grpc_code\":13,\"http_code\":500,\"message\":\"Couldn't load data\",\"http_status\":\"Internal Server Error\"}}";
@@ -859,6 +860,7 @@ public class SkyflowTest {
             assertEquals(ErrorCode.InvalidTable.getDescription(), error.get("description"));
         }
     }
+
     @Test
     @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility", "com.skyflow.common.utils.TokenUtils"})
     public void testUpdateSuccessWithToken() {
@@ -881,10 +883,10 @@ public class SkyflowTest {
             UpdateOptions updateOptions = new UpdateOptions(true);
 
             PowerMockito.mockStatic(HttpUtility.class);
-            String mockResponse =  "{\"skyflow_id\":\"skyflowId123\",\"tokens\":{\"first_name\":\"token2\"}}";
+            String mockResponse = "{\"skyflow_id\":\"skyflowId123\",\"tokens\":{\"first_name\":\"token2\"}}";
             PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockResponse);
 
-            JSONObject res = skyflowClient.update(records,updateOptions);
+            JSONObject res = skyflowClient.update(records, updateOptions);
             JSONArray responseRecords = (JSONArray) res.get("records");
 
             assertEquals(1, responseRecords.size());
@@ -899,6 +901,7 @@ public class SkyflowTest {
         }
 
     }
+
     @Test
     @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility", "com.skyflow.common.utils.TokenUtils"})
     public void testUpdateSuccessWithOutToken() {
@@ -921,10 +924,10 @@ public class SkyflowTest {
             UpdateOptions updateOptions = new UpdateOptions(false);
 
             PowerMockito.mockStatic(HttpUtility.class);
-            String mockResponse =  "{\"skyflow_id\":\"skyflowId123\",\"tokens\":null}";
+            String mockResponse = "{\"skyflow_id\":\"skyflowId123\",\"tokens\":null}";
             PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockResponse);
 
-            JSONObject res = skyflowClient.update(records,updateOptions);
+            JSONObject res = skyflowClient.update(records, updateOptions);
             JSONArray responseRecords = (JSONArray) res.get("records");
 
             assertEquals(1, responseRecords.size());
@@ -939,6 +942,7 @@ public class SkyflowTest {
         }
 
     }
+
     @Test
     @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility", "com.skyflow.common.utils.TokenUtils"})
     public void testUpdateSuccessWithOutUpdateOptions() {
@@ -960,7 +964,7 @@ public class SkyflowTest {
 
 
             PowerMockito.mockStatic(HttpUtility.class);
-            String mockResponse =  "{\"skyflow_id\":\"skyflowId123\",\"tokens\":{\"first_name\":\"token2\"}}";
+            String mockResponse = "{\"skyflow_id\":\"skyflowId123\",\"tokens\":{\"first_name\":\"token2\"}}";
             PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockResponse);
 
             JSONObject res = skyflowClient.update(records);
@@ -978,6 +982,7 @@ public class SkyflowTest {
         }
 
     }
+
     @Test
     public void testUpdateEmptyRecords() {
         try {
@@ -989,11 +994,12 @@ public class SkyflowTest {
             JSONArray recordsArray = new JSONArray();
             records.put("records", recordsArray);
             UpdateOptions updateOptions = new UpdateOptions();
-            JSONObject response = skyflowClient.update(records,updateOptions);
+            JSONObject response = skyflowClient.update(records, updateOptions);
         } catch (SkyflowException skyflowException) {
             assertEquals(ErrorCode.EmptyRecords.getDescription(), skyflowException.getMessage());
         }
     }
+
     @Test
     @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.TokenUtils"})
     public void testUpdateEmptyFields() {
@@ -1012,11 +1018,13 @@ public class SkyflowTest {
 
             records.put("records", recordsArray);
             UpdateOptions updateOptions = new UpdateOptions();
-            JSONObject response = skyflowClient.update(records,updateOptions);
+            JSONObject response = skyflowClient.update(records, updateOptions);
         } catch (SkyflowException skyflowException) {
             JSONObject error = (JSONObject) ((JSONObject) (((JSONArray) skyflowException.getData().get("error")).get(0))).get("error");
-            assertEquals(ErrorCode.InvalidFields.getDescription(), error.get("description"));        }
+            assertEquals(ErrorCode.InvalidFields.getDescription(), error.get("description"));
+        }
     }
+
     @Test
     @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.TokenUtils"})
     public void testUpdateInvalidTable() {
@@ -1035,11 +1043,13 @@ public class SkyflowTest {
 
             records.put("records", recordsArray);
             UpdateOptions updateOptions = new UpdateOptions();
-            JSONObject response = skyflowClient.update(records,updateOptions);
+            JSONObject response = skyflowClient.update(records, updateOptions);
         } catch (SkyflowException skyflowException) {
             JSONObject error = (JSONObject) ((JSONObject) (((JSONArray) skyflowException.getData().get("error")).get(0))).get("error");
-            assertEquals(ErrorCode.InvalidTable.getDescription(), error.get("description"));        }
+            assertEquals(ErrorCode.InvalidTable.getDescription(), error.get("description"));
+        }
     }
+
     @Test
     @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.TokenUtils"})
     public void testUpdateEmptySkyflowId() {
@@ -1058,11 +1068,13 @@ public class SkyflowTest {
 
             records.put("records", recordsArray);
             UpdateOptions updateOptions = new UpdateOptions();
-            JSONObject response = skyflowClient.update(records,updateOptions);
+            JSONObject response = skyflowClient.update(records, updateOptions);
         } catch (SkyflowException skyflowException) {
             JSONObject error = (JSONObject) ((JSONObject) (((JSONArray) skyflowException.getData().get("error")).get(0))).get("error");
-            assertEquals(ErrorCode.InvalidSkyflowId.getDescription(), error.get("description"));        }
+            assertEquals(ErrorCode.InvalidSkyflowId.getDescription(), error.get("description"));
+        }
     }
+
     @Test
     public void testUpdateEmptyRecords2() {
         try {
@@ -1078,6 +1090,7 @@ public class SkyflowTest {
             assertEquals(ErrorCode.EmptyRecords.getDescription(), skyflowException.getMessage());
         }
     }
+
     @Test
     @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.TokenUtils"})
     public void testUpdateEmptyTable() {
@@ -1099,13 +1112,14 @@ public class SkyflowTest {
 
             UpdateOptions updateOptions = new UpdateOptions(true);
 
-            JSONObject res = skyflowClient.update(records,updateOptions);
+            JSONObject res = skyflowClient.update(records, updateOptions);
         } catch (SkyflowException e) {
             JSONObject error = (JSONObject) ((JSONObject) (((JSONArray) e.getData().get("error")).get(0))).get("error");
             assertEquals(ErrorCode.InvalidTable.getDescription(), error.get("description"));
         }
 
     }
+
     @Test
     @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility", "com.skyflow.common.utils.TokenUtils"})
     public void testUpdateError() {
@@ -1128,10 +1142,10 @@ public class SkyflowTest {
             UpdateOptions updateOptions = new UpdateOptions(true);
 
             PowerMockito.mockStatic(HttpUtility.class);
-            String mockResponse =  "{\"error\":{\"grpc_code\":3,\"http_code\":400,\"message\":\"Object Name table was not found for Vault vault123\",\"http_status\":\"Bad Request\",\"details\":[]}}";
+            String mockResponse = "{\"error\":{\"grpc_code\":3,\"http_code\":400,\"message\":\"Object Name table was not found for Vault vault123\",\"http_status\":\"Bad Request\",\"details\":[]}}";
             PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockResponse);
 
-            JSONObject res = skyflowClient.update(records,updateOptions);
+            JSONObject res = skyflowClient.update(records, updateOptions);
 
         } catch (SkyflowException e) {
             JSONArray errors = (JSONArray) e.getData().get("error");
@@ -1144,6 +1158,7 @@ public class SkyflowTest {
         }
 
     }
+
     @Test
     public void testUpdateInvalidInput() {
         try {
@@ -1156,11 +1171,12 @@ public class SkyflowTest {
             records.put("invalidRecordsKey", recordsArray);
 
             UpdateOptions updateOptions = new UpdateOptions(true);
-            JSONObject response = skyflowClient.update(records,updateOptions);
+            JSONObject response = skyflowClient.update(records, updateOptions);
         } catch (SkyflowException skyflowException) {
             assertEquals(ErrorCode.InvalidUpdateInput.getDescription(), skyflowException.getMessage());
         }
     }
+
     @Test
     @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility", "com.skyflow.common.utils.TokenUtils"})
     public void testUpdatePartialError() {
@@ -1243,15 +1259,11 @@ public class SkyflowTest {
 
         } catch (SkyflowException e) {
             String error = e.getMessage();
-            assertEquals(ErrorCode.ThreadExecutionException.getDescription(),error);
+            assertEquals(ErrorCode.ThreadExecutionException.getDescription(), error);
         } catch (IOException e) {
             e.printStackTrace();
             fail(INVALID_EXCEPTION_THROWN);
         }
     }
-
-
-
-
 }
 
