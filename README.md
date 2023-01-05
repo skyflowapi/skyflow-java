@@ -7,26 +7,20 @@ The Skyflow Java SDK is designed to help with integrating Skyflow into a Java ba
 
 # Table of Contents
 
-- [Skyflow Java](#skyflow-java)
-- [Table of Contents](#table-of-contents)
-  - [Features](#features)
-  - [Installation](#installation)
-    - [Requirements](#requirements)
-    - [Configuration](#configuration)
-      - [Gradle users](#gradle-users)
-      - [Maven users](#maven-users)
-  - [Service Account Bearer Token Generation](#service-account-bearer-token-generation)
-  - [Service Account Bearer Token with Context Generation](#service-account-bearer-token-with-context-generation)
-  - [Service Account Scoped Bearer Token Generation](#service-account-scoped-bearer-token-generation)
-  - [Signed Data Tokens Generation](#signed-data-tokens-generation)
-  - [Vault APIs](#vault-apis)
-  - [Insert](#insert)
-  - [Detokenize](#detokenize)
-  - [GetById](#getbyid)
-  - [Invoke Connection](#invoke-connection)
-  - [Logging](#logging)
-  - [Reporting a Vulnerability](#reporting-a-vulnerability)
-
+* [Features](#features)
+* [Installation](#installation)
+    * [Requirements](#requirements)
+    * [Configuration](#configuration)
+* [Service Account Bearer Token Generation](#service-account-token-generation)
+* [Service Account Bearer Token with Context Generation](#service-account-bearer-token-with-context-generation)
+* [Service Account Scoped Bearer Token Generation](#service-account-scoped-bearer-token-generation)
+* [Signed Data Tokens Generation](#signed-data-tokens-generation)
+* [Vault APIs](#vault-apis)
+    * [Insert](#insert)
+    * [Detokenize](#detokenize)
+    * [GetById](#get-by-id)
+    * [InvokeConnection](#invoke-connection)
+*   [Logging](#logging)
 ## Features
 
 - Authenticate with a Skyflow service account and generate a bearer token.
