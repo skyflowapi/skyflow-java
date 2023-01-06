@@ -21,11 +21,11 @@ import java.util.concurrent.Callable;
 
 final class UpdateBySkyflowId implements Callable<String> {
 
+    public final UpdateOptions options;
     private final UpdateRecordInput record;
     private final Map<String, String> headers;
     private final String vaultID;
     private final String vaultURL;
-    public final UpdateOptions options;
 
     UpdateBySkyflowId(UpdateRecordInput record, String vaultID, String vaultURL, Map<String, String> headers, UpdateOptions updateOptions) {
         this.record = record;
@@ -53,30 +53,28 @@ final class UpdateBySkyflowId implements Callable<String> {
 
 
             if (responseRecords != null && responseRecords.size() > 0) {
-                    JSONObject fields = (JSONObject) responseRecords.get("tokens");
-                    String id = (String) responseRecords.get("skyflow_id");
+                JSONObject fields = (JSONObject) responseRecords.get("tokens");
+                String id = (String) responseRecords.get("skyflow_id");
 
-                    JSONObject formattedRecord = new JSONObject();
-                    formattedRecord.put("id", id);
-                    formattedRecord.put("table", record.getTable());
-                    formattedRecord.put("fields", fields);
-                    formattedRecords.put("records",formattedRecord);
-                }
-                response = formattedRecords.toJSONString();
-        }
-        catch (IOException e) {
+                JSONObject formattedRecord = new JSONObject();
+                formattedRecord.put("id", id);
+                formattedRecord.put("table", record.getTable());
+                formattedRecord.put("fields", fields);
+                formattedRecords.put("records", formattedRecord);
+            }
+            response = formattedRecords.toJSONString();
+        } catch (IOException e) {
             LogUtil.printErrorLog(ErrorLogs.Server.getLog());
             throw new SkyflowException(ErrorCode.Server, e);
-        }
-         catch (ParseException e) {
-            LogUtil.printErrorLog(ErrorLogs.ResponseParsingError.getLog());
+        } catch (ParseException e) {
+            LogUtil.printErrorLog(Helpers.parameterizedString(ErrorLogs.ResponseParsingError.getLog(), "updateById"));
             throw new SkyflowException(ErrorCode.ResponseParsingError, e);
-        }
-        catch (SkyflowException e) {
+        } catch (SkyflowException e) {
             response = constructUpdateByIdErrorObject(e, record.getId());
         }
         return response;
     }
+
     private String constructUpdateByIdErrorObject(SkyflowException skyflowException, String ids) {
 
         String updateByIdResponse = null;
