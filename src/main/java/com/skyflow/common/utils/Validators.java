@@ -3,10 +3,7 @@
 */
 package com.skyflow.common.utils;
 
-import com.skyflow.entities.GetByIdRecordInput;
-import com.skyflow.entities.RequestMethod;
-import com.skyflow.entities.SkyflowConfiguration;
-import com.skyflow.entities.UpsertOption;
+import com.skyflow.entities.*;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.logs.ErrorLogs;
@@ -103,12 +100,21 @@ public final class Validators {
     }
 
     public static void validateGetByIdRequestRecord(GetByIdRecordInput record) throws SkyflowException {
+        String table = record.getTable();
+
+        if (table == null || table.trim().isEmpty()) {
+            LogUtil.printErrorLog(ErrorLogs.InvalidTable.getLog());
+            throw new SkyflowException(ErrorCode.InvalidTable);
+        }
+    }
+
+    public static void validateGetRequestRecord(GetRecordInput record) throws SkyflowException {
         String[] ids = record.getIds();
         String table = record.getTable();
-        String columnName = record.getColumn_name();
-        String[] columnValues = record.getColumn_values();
+        String columnName = record.getColumnName();
+        String[] columnValues = record.getColumnValues();
 
-        if (table == null || table.isEmpty()) {
+        if (table == null || table.trim().isEmpty()) {
             LogUtil.printErrorLog(ErrorLogs.InvalidTable.getLog());
             throw new SkyflowException(ErrorCode.InvalidTable);
         }

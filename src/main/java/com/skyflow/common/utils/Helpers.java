@@ -107,20 +107,31 @@ public final class Helpers {
     public static StringBuilder constructGetByIdRequestURLParams(GetByIdRecordInput record) {
         StringBuilder paramsList = new StringBuilder();
 
+        for (String id : record.getIds()) {
+            paramsList.append("skyflow_ids=").append(id).append("&");
+        }
+
+        paramsList.append("redaction=").append(record.getRedaction());
+        return paramsList;
+    }
+
+    public static StringBuilder constructGetRequestURLParams(GetRecordInput record) {
+        StringBuilder paramsList = new StringBuilder();
+
         if (record.getIds() != null) {
             for (String id : record.getIds()) {
-                paramsList.append("skyflow_ids=" + id + "&");
+                paramsList.append("skyflow_ids=").append(id).append("&");
             }
         }
 
-        if (record.getColumn_name() != null && record.getColumn_values() != null) {
-            paramsList.append("column_name=" + record.getColumn_name() + "&");
-            for (String value : record.getColumn_values()) {
-                paramsList.append("column_values=" + value + "&");
+        if (record.getColumnName() != null && record.getColumnValues() != null) {
+            paramsList.append("column_name=").append(record.getColumnName()).append("&");
+            for (String value : record.getColumnValues()) {
+                paramsList.append("column_values=").append(value).append("&");
             }
         }
 
-        paramsList.append("redaction=" + record.getRedaction());
+        paramsList.append("redaction=").append(record.getRedaction());
         return paramsList;
     }
 

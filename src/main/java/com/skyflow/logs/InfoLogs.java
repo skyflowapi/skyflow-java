@@ -17,11 +17,11 @@ public enum InfoLogs {
     ConstructUpdateResponse("constructing update response"),
     DetokenizeMethodCalled("detokenize method has triggered"),
     GetByIdMethodCalled("getById method has triggered"),
+    GetMethodCalled("get method has triggered"),
     InvokeConnectionCalled("invokeConnection method has triggered"),
     GenerateBearerTokenCalled("generateBearerToken method has triggered"),
     GenerateBearerTokenFromCredsCalled("generateBearerTokenFromCreds method has triggered"),
-    ValidatingUpsertOptions("validating upsert options.")
-    ;
+    ValidatingUpsertOptions("validating upsert options.");
     private final String log;
 
     InfoLogs(String log) {

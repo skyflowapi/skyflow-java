@@ -3,9 +3,11 @@
 */
 package com.skyflow.entities;
 
-public class GetByIdRecordInput {
+public class GetRecordInput {
     private String[] ids;
     private String table;
+    private String columnName;
+    private String[] columnValues;
     private RedactionType redaction;
 
     public String[] getIds() {
@@ -22,6 +24,22 @@ public class GetByIdRecordInput {
 
     public void setTable(String table) {
         this.table = table;
+    }
+
+    public String getColumnName() {
+        return columnName;
+    }
+
+    public void setColumnName(String columnName) {
+        this.columnName = columnName;
+    }
+
+    public String[] getColumnValues() {
+        return columnValues;
+    }
+
+    public void setColumnValues(String[] columnValues) {
+        this.columnValues = columnValues;
     }
 
     public RedactionType getRedaction() {
