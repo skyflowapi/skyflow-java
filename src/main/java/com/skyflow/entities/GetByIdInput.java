@@ -4,7 +4,7 @@
 package com.skyflow.entities;
 
 public class GetByIdInput {
-    private GetByIdRecordInput records[];
+    private GetByIdRecordInput[] records;
 
     public GetByIdRecordInput[] getRecords() {
         return records;

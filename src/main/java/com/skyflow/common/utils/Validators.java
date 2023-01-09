@@ -3,9 +3,7 @@
 */
 package com.skyflow.common.utils;
 
-import com.skyflow.entities.RequestMethod;
-import com.skyflow.entities.SkyflowConfiguration;
-import com.skyflow.entities.UpsertOption;
+import com.skyflow.entities.*;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.logs.ErrorLogs;
@@ -99,5 +97,41 @@ public final class Validators {
             return true;
         }
         return false;
+    }
+
+    public static void validateGetByIdRequestRecord(GetByIdRecordInput record) throws SkyflowException {
+        String table = record.getTable();
+
+        if (table == null || table.trim().isEmpty()) {
+            LogUtil.printErrorLog(ErrorLogs.InvalidTable.getLog());
+            throw new SkyflowException(ErrorCode.InvalidTable);
+        }
+    }
+
+    public static void validateGetRequestRecord(GetRecordInput record) throws SkyflowException {
+        String[] ids = record.getIds();
+        String table = record.getTable();
+        String columnName = record.getColumnName();
+        String[] columnValues = record.getColumnValues();
+
+        if (table == null || table.trim().isEmpty()) {
+            LogUtil.printErrorLog(ErrorLogs.InvalidTable.getLog());
+            throw new SkyflowException(ErrorCode.InvalidTable);
+        }
+
+        if (ids == null && columnName == null && columnValues == null) {
+            LogUtil.printErrorLog(ErrorLogs.MissingIdAndColumnName.getLog());
+            throw new SkyflowException(ErrorCode.MissingIdAndColumnName);
+        }
+
+        if (columnName != null && columnValues == null) {
+            LogUtil.printErrorLog(ErrorLogs.MissingRecordColumnValue.getLog());
+            throw new SkyflowException(ErrorCode.MissingRecordColumnValue);
+        }
+
+        if (columnName == null && columnValues != null) {
+            LogUtil.printErrorLog(ErrorLogs.MissingRecordColumnName.getLog());
+            throw new SkyflowException(ErrorCode.MissingRecordColumnName);
+        }
     }
 }

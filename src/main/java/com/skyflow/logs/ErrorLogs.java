@@ -8,11 +8,16 @@ public enum ErrorLogs {
     InvalidVaultURL("invalid vault url"),
     InvalidTokenProvider("invalid TokenProvider. TokenProvider cannot be null"),
     InvalidInsertInput("invalid insert input"),
+    InvalidUpdateInput("invalid update input"),
     InvalidDetokenizeInput("invalid detokenize input"),
     ResponseParsingError("Unable to parse response in %s1 method"),
     ThreadInterruptedException("Thread was interrupted in %s1 method"),
     ThreadExecutionException("ThreadExecution exception in %s1 method"),
     InvalidGetByIdInput("Invalid getById input"),
+    InvalidGetInput("Invalid get input"),
+    MissingIdAndColumnName("Provide either Ids or column name to get records."),
+    MissingRecordColumnValue("Column Values can not be empty when Column Name is specified."),
+    MissingRecordColumnName("Column Name can not be empty when Column Values are specified."),
     InvalidInvokeConnectionInput("Invalid invokeConnection Input"),
     ConnectionURLMissing("connectionURL is required"),
     InvalidConnectionURL("Invalid connectionURL"),
@@ -34,10 +39,14 @@ public enum ErrorLogs {
     InvalidBearerToken("Invalid Bearer token"),
     InvalidTable("Table name is missing"),
     Server("Internal server error"),
+    ServerReturnedErrors("Server returned errors, check SkyflowException.getData() for more"),
     InvalidUpsertOptionType("upsert options cannot be null, should be an non empty UpsertOption array."),
     InvalidTableInUpsertOption("Invalid table in upsert object, non empty string is required."),
     InvalidColumnInUpsertOption("Invalid column in upsert object, non empty string is required."),
-    InvalidUpsertObjectType("upsert option cannot be null, should be an UpsertOption object.");
+    InvalidUpsertObjectType("upsert option cannot be null, should be an UpsertOption object."),
+    InvalidSkyflowId("Skyflow Id is missing"),
+    InvalidField("Fields missing");
+
     private final String log;
 
     ErrorLogs(String log) {
