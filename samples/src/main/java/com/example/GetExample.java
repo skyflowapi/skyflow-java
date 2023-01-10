@@ -1,17 +1,16 @@
-/*
-	Copyright (c) 2022 Skyflow, Inc.
-*/
 package com.example;
 
-import com.skyflow.entities.*;
+import com.skyflow.entities.RedactionType;
+import com.skyflow.entities.ResponseToken;
+import com.skyflow.entities.SkyflowConfiguration;
+import com.skyflow.entities.TokenProvider;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.serviceaccount.util.Token;
 import com.skyflow.vault.Skyflow;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-public class InsertWithUpsertExample {
-
+public class GetExample {
     public static void main(String[] args) {
 
         try {
@@ -22,34 +21,38 @@ public class InsertWithUpsertExample {
             JSONObject records = new JSONObject();
             JSONArray recordsArray = new JSONArray();
 
-            JSONObject record = new JSONObject();
-            record.put("table", "<your_table_name>");
+            JSONObject firstRecord = new JSONObject();
 
-            JSONObject fields = new JSONObject();
-            fields.put("<field_name", "<your_field_value>");
+            JSONArray ids = new JSONArray();
+            ids.add("<your_skyflowId>");
 
-            record.put("fields", fields);
-            recordsArray.add(record);
+            firstRecord.put("ids", ids);
+            firstRecord.put("table", "<your_table_name>");
+            firstRecord.put("redaction", RedactionType.PLAIN_TEXT.toString());
 
+            JSONObject secondRecord = new JSONObject();
+
+            JSONArray valuesArray = new JSONArray();
+            valuesArray.add("<your_column_value>");
+
+            secondRecord.put("table", "<your_table_name>");
+            secondRecord.put("columnName", "<unique_column_name>");
+            secondRecord.put("columnValues", valuesArray);
+            secondRecord.put("redaction", RedactionType.PLAIN_TEXT.toString());
+
+            recordsArray.add(firstRecord);
+            recordsArray.add(secondRecord);
             records.put("records", recordsArray);
 
-            // create an upsert option and insert in UpsertOptions array.
-            UpsertOption[] upsertOptions = new UpsertOption[1];
-            upsertOptions[0] = new UpsertOption("<table_name>", "<unique_column_name>");
-
-            // pass upsert options in insert method options.
-            InsertOptions insertOptions = new InsertOptions(true, upsertOptions);
-            JSONObject res = skyflowClient.insert(records, insertOptions);
-
-            System.out.println(res);
+            JSONObject response = skyflowClient.get(records);
         } catch (SkyflowException e) {
             e.printStackTrace();
+            System.out.println(e.getData());
         }
 
     }
 
     static class DemoTokenProvider implements TokenProvider {
-
         private String bearerToken = null;
 
         @Override
