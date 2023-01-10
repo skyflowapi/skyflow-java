@@ -1,8 +1,3 @@
-/*
-	Copyright (c) 2022 Skyflow, Inc.
-*/
-package com.example;
-
 import com.skyflow.entities.*;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.serviceaccount.util.Token;
@@ -10,8 +5,7 @@ import com.skyflow.vault.Skyflow;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-public class InsertWithUpsertExample {
-
+public class UpdateExample {
     public static void main(String[] args) {
 
         try {
@@ -21,33 +15,26 @@ public class InsertWithUpsertExample {
 
             JSONObject records = new JSONObject();
             JSONArray recordsArray = new JSONArray();
-
             JSONObject record = new JSONObject();
+
             record.put("table", "<your_table_name>");
+            record.put("id", "<your_skyflow_id>");
 
             JSONObject fields = new JSONObject();
-            fields.put("<field_name", "<your_field_value>");
-
+            fields.put("<your_field_name>", "<your_field_value>");
             record.put("fields", fields);
             recordsArray.add(record);
-
             records.put("records", recordsArray);
 
-            // create an upsert option and insert in UpsertOptions array.
-            UpsertOption[] upsertOptions = new UpsertOption[1];
-            upsertOptions[0] = new UpsertOption("<table_name>", "<unique_column_name>");
+            UpdateOptions updateOptions = new UpdateOptions(true);
+            JSONObject res = skyflowClient.update(records, updateOptions);
 
-            // pass upsert options in insert method options.
-            InsertOptions insertOptions = new InsertOptions(true, upsertOptions);
-            JSONObject res = skyflowClient.insert(records, insertOptions);
-
-            System.out.println(res);
-        } catch (SkyflowException e) {
+        }
+        catch (SkyflowException e) {
+            System.out.println(e.getData());
             e.printStackTrace();
         }
-
     }
-
     static class DemoTokenProvider implements TokenProvider {
 
         private String bearerToken = null;
@@ -57,7 +44,7 @@ public class InsertWithUpsertExample {
             ResponseToken response = null;
             try {
                 String filePath = "<YOUR_CREDENTIALS_FILE_PATH>";
-                if (Token.isExpired(bearerToken)) {
+                if(Token.isExpired(bearerToken)) {
                     response = Token.generateBearerToken(filePath);
                     bearerToken = response.getAccessToken();
                 }
@@ -69,3 +56,4 @@ public class InsertWithUpsertExample {
         }
     }
 }
+

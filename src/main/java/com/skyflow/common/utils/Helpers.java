@@ -3,15 +3,12 @@
 */
 package com.skyflow.common.utils;
 
-import com.skyflow.entities.InsertInput;
-import com.skyflow.entities.InsertOptions;
-import com.skyflow.entities.InsertRecordInput;
-import com.skyflow.entities.UpsertOption;
+import com.skyflow.entities.*;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.logs.DebugLogs;
 import com.skyflow.logs.ErrorLogs;
-
+import org.apache.commons.codec.binary.Base64;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -23,21 +20,21 @@ import java.security.PrivateKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.*;
-import org.apache.commons.codec.binary.Base64;
 
 public final class Helpers {
 
     private static final String LINE_FEED = "\r\n";
 
-    private static String getUpsertColumn(String tableName, UpsertOption[] upsertOptions){
+    private static String getUpsertColumn(String tableName, UpsertOption[] upsertOptions) {
         String upsertColumn = "";
 
         for (UpsertOption upsertOption : upsertOptions) {
-            if(Objects.equals(tableName, upsertOption.getTable()))
-                    upsertColumn = upsertOption.getColumn();
+            if (Objects.equals(tableName, upsertOption.getTable())) {
+                upsertColumn = upsertOption.getColumn();
+            }
         }
         return upsertColumn;
-    };
+    }
 
     public static JSONObject constructInsertRequest(InsertInput recordsInput, InsertOptions options)
             throws SkyflowException {
@@ -65,8 +62,8 @@ public final class Helpers {
             postRequestInput.put("quorum", true);
             postRequestInput.put("tableName", record.getTable());
             postRequestInput.put("fields", record.getFields());
-            if(options.getUpsertOptions() != null)
-                postRequestInput.put("upsert",getUpsertColumn(record.getTable(),options.getUpsertOptions()));
+            if (options.getUpsertOptions() != null)
+                postRequestInput.put("upsert", getUpsertColumn(record.getTable(), options.getUpsertOptions()));
             requestBodyContent.add(postRequestInput);
 
             if (isTokens) {
@@ -81,6 +78,61 @@ public final class Helpers {
         finalRequest.put("records", requestBodyContent);
 
         return finalRequest;
+    }
+
+    public static JSONObject constructUpdateRequest(UpdateRecordInput record, UpdateOptions options) throws SkyflowException {
+        if (record == null) {
+            LogUtil.printErrorLog(ErrorLogs.InvalidUpdateInput.getLog());
+            throw new SkyflowException(ErrorCode.EmptyRecords);
+        }
+        if (record.getId() == null || record.getId().isEmpty()) {
+            LogUtil.printErrorLog(ErrorLogs.InvalidSkyflowId.getLog());
+            throw new SkyflowException(ErrorCode.InvalidSkyflowId);
+        }
+        if (record.getTable() == null || record.getTable().isEmpty()) {
+            LogUtil.printErrorLog(ErrorLogs.InvalidTable.getLog());
+            throw new SkyflowException(ErrorCode.InvalidTable);
+        }
+        if (record.getFields() == null || record.getFields().isEmpty()) {
+            LogUtil.printErrorLog(ErrorLogs.InvalidField.getLog());
+            throw new SkyflowException(ErrorCode.InvalidFields);
+        }
+
+        JSONObject postRequestInput = new JSONObject();
+        postRequestInput.put("fields", record.getFields());
+        return postRequestInput;
+
+    }
+
+    public static StringBuilder constructGetByIdRequestURLParams(GetByIdRecordInput record) {
+        StringBuilder paramsList = new StringBuilder();
+
+        for (String id : record.getIds()) {
+            paramsList.append("skyflow_ids=").append(id).append("&");
+        }
+
+        paramsList.append("redaction=").append(record.getRedaction());
+        return paramsList;
+    }
+
+    public static StringBuilder constructGetRequestURLParams(GetRecordInput record) {
+        StringBuilder paramsList = new StringBuilder();
+
+        if (record.getIds() != null) {
+            for (String id : record.getIds()) {
+                paramsList.append("skyflow_ids=").append(id).append("&");
+            }
+        }
+
+        if (record.getColumnName() != null && record.getColumnValues() != null) {
+            paramsList.append("column_name=").append(record.getColumnName()).append("&");
+            for (String value : record.getColumnValues()) {
+                paramsList.append("column_values=").append(value).append("&");
+            }
+        }
+
+        paramsList.append("redaction=").append(record.getRedaction());
+        return paramsList;
     }
 
     public static JSONObject constructInsertResponse(JSONObject response, List requestRecords, boolean tokens) {

@@ -12,14 +12,16 @@ public enum InfoLogs {
     ValidatedSkyflowConfiguration("validated skyflow configuration in %s1 method"),
     ValidatingInvokeConnectionConfig("validating invoke connection configuration"),
     InsertMethodCalled("insert method has triggered"),
+    UpdateMethodCalled("update method has triggered"),
     ConstructInsertResponse("constructing insert response"),
+    ConstructUpdateResponse("constructing update response"),
     DetokenizeMethodCalled("detokenize method has triggered"),
     GetByIdMethodCalled("getById method has triggered"),
+    GetMethodCalled("get method has triggered"),
     InvokeConnectionCalled("invokeConnection method has triggered"),
     GenerateBearerTokenCalled("generateBearerToken method has triggered"),
     GenerateBearerTokenFromCredsCalled("generateBearerTokenFromCreds method has triggered"),
-    ValidatingUpsertOptions("validating upsert options.")
-    ;
+    ValidatingUpsertOptions("validating upsert options.");
     private final String log;
 
     InfoLogs(String log) {
