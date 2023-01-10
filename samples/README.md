@@ -19,30 +19,30 @@ Test the SDK by adding `VAULT-ID`, `VAULT-URL`, and `SERVICE-ACCOUNT` details in
 ## The samples
 ### Detokenize
 Detokenize a data token from the vault. Make sure the specified token is for data that exists in the vault. If you need a valid token, use [InsertEample.java](src/main/java/com/example/InsertExample.java) to insert the data, then use this data's token for detokenization.
-#### Configure
+#### [Configure](https://github.com/skyflowapi/skyflow-java/blob/master/samples/src/main/java/com/example/DetokenizeExample.java)
 1. Replace **<your_vaultID>** with **VAULT ID**
 2. Replace **<your_vaultURL>** with **VAULT URL**
 3. Replace **<your_token>** with **Data Token**.
-4. Replace **<YOUR_CREDENTIALS_FILE_PATH>** with relative  path of **SERVICE ACCOUNT CREDENTIAL FILE**.
+4. Replace **<YOUR_CREDENTIALS_FILE_PATH>** with relative  path of **SERVICE ACCOUNT CREDENTIAL FILE**.See #Create a service account.
 #### Run the sample
         
         javac DetokenizeExample.java
         java DetokenizeExample
-### GetById
+### Get a record by ID
 Get data using skyflow id. 
 #### Configure
 1. Replace **<your_vaultID>** with **VAULT ID**
 2. Replace **<your_vaultURL>** with **VAULT URL**.
 3. Replace **<your_skyflowId>** with **Skyflow id**.
-4. Replace **<YOUR_CREDENTIALS_FILE_PATH>** with relative  path of **SERVICE ACCOUNT CREDENTIAL FILE**.
+4. Replace **<YOUR_CREDENTIALS_FILE_PATH>** with relative  path of **SERVICE ACCOUNT CREDENTIAL FILE**. See #Create a Service Account.
 5. Replace **<your_table_name>** with **credit_cards**.
 #### Run the sample
         
         javac GetByIdExample.java
         java GetByIdExample
-### Insert
+### Insert data into a vault
 Insert data in the vault.
-#### Configure
+#### [Configure](https://github.com/skyflowapi/skyflow-java/blob/master/samples/src/main/java/com/example/InsertExample.java)
 1. Replace **<your_vaultID>** with **VAULT ID**.
 2. Replace **<your_vaultURL>** with **VAULT URL**.
 3. Replace **<YOUR_CREDENTIALS_FILE_PATH>** with relative  path of **SERVICE ACCOUNT CREDENTIAL FILE**.
@@ -53,7 +53,7 @@ Insert data in the vault.
     
         javac InsertExample.java
         java InsertExample
-### InvokeConnection
+### Invoke a connection
 Skyflow Connections is a gateway service that uses Skyflow's underlying tokenization capabilities to securely connect to first-party and third-party services. This way, your infrastructure is never directly exposed to sensitive data, and you offload security and compliance requirements to Skyflow.
 #### Configure
 1. Replace **<your_vaultID>** with **VAULT ID**.
@@ -73,10 +73,10 @@ Skyflow Connections is a gateway service that uses Skyflow's underlying tokeniza
         javac InvokeConnectionExample.java
         java InvokeConnectionExample
 
-### TokenGeneration
-Generates bearer tokens using file path and content of the SA credentials file
-#### Configure
-1. Replace **<YOUR_CREDENTIALS_FILE_PATH>** with relative  path of **SERVICE ACCOUNT CREDENTIAL FILE PATH**.
+### Generate a service account bearer token
+Generates a bearer token using a file path and content of a service account credentials file.
+#### [Configure](https://github.com/skyflowapi/skyflow-java/blob/master/samples/src/main/java/com/example/TokenGenerationExample.java)
+1. Replace **<YOUR_CREDENTIALS_FILE_PATH>** with relative  path of **SERVICE ACCOUNT CREDENTIAL FILE PATH**. See #Create a service account.
 2. Replace **<<YOUR_CREDENTIALS_FILE_CONTENTS_AS_STRING>>** with relative  path of **SERVICE ACCOUNT CREDENTIAL FILE CONTENT AS STRING**.
 #### Run the sample
         

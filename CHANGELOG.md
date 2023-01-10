@@ -1,6 +1,21 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.7.1] - 2022-11-29
+### Changed
+- `setContext` to `setCtx` method.
+- `setTimetoLive` accepts seconds in `Integer` instead of `Double`.  
+
+
+## [1.7.0] - 2022-11-22
+### Added
+- `upsert` support for insert method.
+
+## [1.6.0] - 2022-10-11
+
+### Added
+- Added Support for Context Aware Authorization.
+- Added Support to generate scoped skyflow bearer tokens.
 ## [1.5.0] - 2022-04-12
 
 ### Added
