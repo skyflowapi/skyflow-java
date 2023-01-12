@@ -18,7 +18,8 @@ The Skyflow Java SDK is designed to help with integrating Skyflow into a Java ba
 * [Vault APIs](#vault-apis)
     * [Insert](#insert)
     * [Detokenize](#detokenize)
-    * [GetById](#get-by-id)
+    * [Get](#get)
+    * [GetById](#getbyid)
     * [InvokeConnection](#invoke-connection)
 *   [Logging](#logging)
 
@@ -39,7 +40,7 @@ The Skyflow Java SDK is designed to help with integrating Skyflow into a Java ba
 
 Add this dependency to your project's build file:
 ```
-implementation 'com.skyflow:skyflow-java:1.6.0'
+implementation 'com.skyflow:skyflow-java:1.8.0'
 ```
 
 #### Maven users
@@ -49,7 +50,7 @@ Add this dependency to your project's POM:
     <dependency>
         <groupId>com.skyflow</groupId>
         <artifactId>skyflow-java</artifactId>
-        <version>1.6.0</version>
+        <version>1.8.0</version>
     </dependency>
 ```
 ---
@@ -442,6 +443,218 @@ Sample detokenize Response
    ]
 }
 ```
+
+## Get
+In order to retrieve data from your vault using Skyflow IDs or by Unique Column Values, use the **get(JSONObject records)** method. The `records` parameter takes a JSONObject that should contain
+
+1. Either an array of Skyflow IDs to fetch
+2. Or a column name and array of column values
+
+### Use Skyflow IDs
+
+```java
+import com.skyflow.entities.RedactionType;
+
+JSONObject records = new JSONObject();
+JSONArray recordsArray = new JSONArray();
+
+JSONObject record = new JSONObject();
+JSONArray ids = new JSONArray();
+ids.add("<your_skyflowId>");
+
+record.put("ids", ids);
+record.put("table", "<your_table_name>");
+record.put("redaction", RedactionType);
+recordsArray.add(record);
+records.put("records", recordsArray);
+```
+
+### Use column name and values
+
+```java
+import com.skyflow.entities.RedactionType;
+
+JSONObject records = new JSONObject();
+JSONArray recordsArray = new JSONArray();
+
+JSONObject record = new JSONObject();
+JSONArray values = new JSONArray();
+values.add("<your_column_value>");
+
+record.put("table", "<your_table_name>");
+record.put("column_name", "<your_column_name>");
+record.put("column_values", "<your_column_values>");
+record.put("redaction", RedactionType);
+recordsArray.add(record);
+records.put("records", recordsArray);
+```
+
+### Redaction types
+There are four accepted values for RedactionType:
+* `PLAIN_TEXT`
+* `MASKED`
+* `REDACTED`
+* `DEFAULT`
+
+### Examples
+An [example](https://github.com/skyflowapi/skyflow-java/blob/master/samples/src/main/java/com/example/GetExample.java) call using Skyflow IDs.
+
+```java
+import com.skyflow.entities.RedactionType;
+
+JSONObject recordsJson = new JSONObject();
+JSONArray recordsArrayJson = new JSONArray();
+
+JSONObject validRecord = new JSONObject();
+JSONArray idsJson = new JSONArray();
+idsJson.add("f8d8a622-b557-4c6b-a12c-c5ebe0b0bfd9");
+idsJson.add("da26de53-95d5-4bdb-99db-8d8c66a35ff9");
+validRecord.put("ids", idsJson);
+validRecord.put("table", "cards");
+validRecord.put("redaction", Redaction.PLAIN_TEXT.toString());
+
+JSONObject invalidRecord = new JSONObject();
+JSONArray invalidIdsJson = new JSONArray();
+invalidIdsJson.add("Invalid Skyflow ID");
+
+invalidRecord.put("ids", invalidIdsJson);
+invalidRecord.put("table", "cards");
+invalidRecord.put("redaction", Redaction.PLAIN_TEXT.toString());
+recordsArrayJson.add(validRecord);
+recordsArrayJson.add(invalidRecord);
+recordsJson.put("records", recordsArray);
+
+try { 
+    JSONObject getResponse = skyflowClient.get(recordsJson);
+    System.out.println(getResponse);
+} catch(SkyflowException exception) {
+    if (exception.getData() != null) {
+        System.out.println(exception.getData());
+    } else {
+        System.out.println(exception);
+    }    
+}
+```
+
+Sample response:
+
+```json
+{
+  "records": [
+    {
+      "fields": {
+        "card_number": "4111111111111111",
+        "cvv": "127",
+        "expiry_date": "11/35",
+        "fullname": "myname",
+        "id": "f8d8a622-b557-4c6b-a12c-c5ebe0b0bfd9"
+      },
+      "table": "cards"
+    },
+    {
+      "fields": {
+        "card_number": "4111111111111111",
+        "cvv": "317",
+        "expiry_date": "10/23",
+        "fullname": "sam",
+        "id": "da26de53-95d5-4bdb-99db-8d8c66a35ff9"
+      },
+      "table": "cards"
+    }
+  ],
+  "errors": [
+    {
+      "error": {
+        "code": "404",
+        "description": "No Records Found - requestId: fc531b8d-412e-9775-b945-4feacc9b8616"
+      },
+      "ids": ["Invalid Skyflow ID"]
+    }
+  ]
+}
+```
+
+An [example](https://github.com/skyflowapi/skyflow-java/blob/master/samples/src/main/java/com/example/GetExample.java) call using column names and values.
+
+```java
+import com.skyflow.entities.RedactionType;
+
+JSONObject recordsJson = new JSONObject();
+JSONArray recordsArrayJson = new JSONArray();
+
+JSONObject validRecord = new JSONObject();
+JSONArray valuesJson = new JSONArray();
+valuesJson.add("123455432112345");
+valuesJson.add("123455432112346");
+
+validRecord.put("table", "account_details");
+validRecord.put("column_name", "bank_account_number");
+validRecord.put("column_values", valuesJson);
+validRecord.put("redaction", Redaction.PLAIN_TEXT.toString());
+
+JSONObject invalidRecord = new JSONObject();
+JSONArray invalidValuesJson = new JSONArray();
+invalidValuesJson.add("Invalid Skyflow column value");
+
+invalidRecord.put("table", "account_details");
+invalidRecord.put("column_name", "bank_account_number");
+invalidRecord.put("column_values", valuesJson);
+invalidRecord.put("redaction", Redaction.PLAIN_TEXT.toString());
+
+recordsArrayJson.add(validRecord);
+recordsArrayJson.add(invalidRecord);
+recordsJson.put("records", recordsArray);
+
+try {
+    JSONObject getResponse = skyflowClient.get(recordsJson);
+    System.out.println(getResponse);
+} catch(SkyflowException exception) {
+    if (exception.getData() != null) {
+        System.out.println(exception.getData());
+    } else {
+        System.out.println(exception);
+    }
+}
+```
+
+Sample response:
+
+```json
+{
+  "records": [
+    {
+      "fields": {
+        "bank_account_number": "123455432112345",
+        "pin_code": "123123",
+        "name": "john doe",
+        "id": "492c21a1-107f-4d10-ba2c-3482a411827d"
+      },
+      "table": "account_details"
+    },
+    {
+      "fields": {
+        "bank_account_number": "123455432112346",
+        "pin_code": "103113",
+        "name": "jane doe",
+        "id": "ac6c6221-bcd1-4265-8fc7-ae7a8fb6dfd5"
+      },
+      "table": "account_details"
+    }
+  ],
+  "errors": [
+    {
+      "columnName": ["bank_account_number"],
+      "error": {
+        "code": 404,
+        "description": "No Records Found - requestId: fc531b8d-412e-9775-b945-4feacc9b8616"
+      }
+    }
+  ]
+}
+```
+
+`Note:`
+While using detokenize and get methods, there is a possibility that some or all of the tokens might be invalid. In such cases, the data from the response consists of both errors and detokenized records. In the SDK, this will raise a SkyflowException and you can retrieve the data from the Exception object, as shown above.
 
 ## GetById
 
