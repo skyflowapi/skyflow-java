@@ -705,7 +705,7 @@ invalidRecord.put("table","cards");
 invalidRecord.put("redaction",Redaction.PLAIN_TEXT.toString());
 recordsArrayJson.add(validRecord);
 recordsArrayJson.add(invalidRecord);
-recordsJson.put("records", recordsArray);
+recordsJson.put("records", recordsArrayJson);
 
 try{
     JSONObject getByIdResponse = skyflowClient.getById(recordsJson);
