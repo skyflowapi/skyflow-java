@@ -20,6 +20,7 @@ The Skyflow Java SDK is designed to help with integrating Skyflow into a Java ba
     * [Detokenize](#detokenize)
     * [Get](#get)
     * [GetById](#getbyid)
+    * [Update](#update)
     * [InvokeConnection](#invoke-connection)
 *   [Logging](#logging)
 
@@ -755,6 +756,66 @@ Sample getById response
 ```
 `Note:` While using detokenize and getByID methods, there is a possibility that some or all of the tokens might be invalid. In such cases, the data from response consists of both errors and detokenized records. In the SDK, this will raise a SkyflowException and you can retrieve the data from this Exception object as shown above.
 
+## Update
+
+In order to update the records in your vault by **skyflow_id**, use the **update(records, options)** method. The first parameter, `records`, is a JSONObject that must have a records key and takes an array of records to update as a value in the vault. The options parameter takes an object of update options and includes an option to return tokens for the updated fields as shown below:
+```java
+JSONObject records = new JSONObject();
+JSONArray recordsArray = new JSONArray();
+
+JSONObject record = new JSONObject();
+record.put("table", "<your_table_name>");
+record.put("id","<your_skyflow_id>");
+
+JSONObject fields = new JSONObject();
+fields.put("<field_name>", "<field_value>");
+record.put("fields", fields);
+recordsArray.add(record);
+records.put("records", recordsArray);
+UpdateOptions updateOptions = new UpdateOptions(true);
+```
+
+An [example](https://github.com/skyflowapi/skyflow-java/blob/master/samples/src/main/java/com/example/UpdateExample.java) of update call:
+```java
+JSONObject records = new JSONObject();
+JSONArray recordsArray = new JSONArray();
+
+JSONObject record = new JSONObject();
+record.put("table", "cards");
+record.put("id","29ebda8d-5272-4063-af58-15cc674e332b");
+
+JSONObject fields = new JSONObject();
+fields.put("card_number", "5105105105105100");
+fields.put("cardholder_name", "Thomas");
+fields.put("expiration_date", "07/2032");
+record.put("fields", fields);
+recordsArray.add(record);
+records.put("records", recordsArray);
+UpdateOptions updateOptions = new UpdateOptions(true);
+
+try {
+   JSONObject response = skyflowClient.update(records, updateOptions);
+}
+catch (SkyflowException e) {
+   e.printStackTrace();
+}
+```
+Response:
+```java
+{
+   "records": [
+       {
+           "id": "29ebda8d-5272-4063-af58-15cc674e332b",
+           "fields": {
+               "card_number": "93f28226-51b0-4f24-8151-78b5a61f028b",
+               "cardholder_name": "0838fd08-9b51-4db2-893c-48542f3b121e",
+               "expiration_date": "91d7ee77-262f-4d5d-8286-062b694c81fd",
+           },
+           "table": "cards"
+       }
+   ]
+}
+```
 
 ## Invoke Connection
 
