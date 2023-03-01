@@ -224,7 +224,7 @@ public final class  Token {
             LogUtil.printInfoLog(ErrorLogs.InvalidBearerToken.getLog());
             return true;
         }
-        return currentTime >= expiryTime;
+        return currentTime > expiryTime;
     }
 }
 
