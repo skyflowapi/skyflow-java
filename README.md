@@ -41,7 +41,7 @@ The Skyflow Java SDK is designed to help with integrating Skyflow into a Java ba
 
 Add this dependency to your project's build file:
 ```
-implementation 'com.skyflow:skyflow-java:1.8.0'
+implementation 'com.skyflow:skyflow-java:1.8.2'
 ```
 
 #### Maven users
@@ -51,7 +51,7 @@ Add this dependency to your project's POM:
     <dependency>
         <groupId>com.skyflow</groupId>
         <artifactId>skyflow-java</artifactId>
-        <version>1.8.0</version>
+        <version>1.8.2</version>
     </dependency>
 ```
 ---

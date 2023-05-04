@@ -1,6 +1,14 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.8.2] - 2023-03-20
+### Fixed
+- removed grace period logic for bearer token generation.
+
+## [1.8.1] - 2023-03-01
+### Fixed
+- java cached token bug
+
 ## [1.8.0] - 2023-01-10
 ### Added
 - `update` vault API
