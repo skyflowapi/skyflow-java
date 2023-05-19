@@ -23,6 +23,8 @@ import java.io.IOException;
 import java.net.URL;
 import java.security.PrivateKey;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 public class BearerToken {
@@ -175,8 +177,12 @@ public class BearerToken {
 
             String signedUserJWT = getSignedToken(clientID, keyID, tokenURI, pvtKey, context);
 
+//            Map<String, String> headers = new HashMap<>();
+//            headers.put("sky-metadata", Helpers.getMetrics().toString());
+
             JSONObject parameters = new JSONObject();
             parameters.put("grant_type", "urn:ietf:params:oauth:grant-type:jwt-bearer");
+            parameters.put("assertion", signedUserJWT);
             parameters.put("assertion", signedUserJWT);
             if (roles != null) {
                 String scopedRoles = getScopeUsingRoles(roles);

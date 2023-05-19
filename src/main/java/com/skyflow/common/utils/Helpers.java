@@ -24,6 +24,7 @@ import java.util.*;
 public final class Helpers {
 
     private static final String LINE_FEED = "\r\n";
+    private static final  String SDK_VERSION  = "1.8.3-beta.1";
 
     private static String getUpsertColumn(String tableName, UpsertOption[] upsertOptions) {
         String upsertColumn = "";
@@ -332,6 +333,43 @@ public final class Helpers {
             throw new SkyflowException(ErrorCode.InvalidKeySpec, e);
         }
         return privateKey;
+    }
+    public static JSONObject getMetrics(){
+         JSONObject details = new JSONObject();
+
+        // Fetching the system properties
+        String sdkVersion = SDK_VERSION;
+        String deviceModel = "";
+        String osDetails = "";
+        String javaVersion = "";
+
+            details.put("sdk_name_version", "skyflow-java@" + sdkVersion);
+
+            // Retrieve device model
+            try {
+                deviceModel = System.getProperty("os.name");
+            } catch (Exception e) {
+                deviceModel = "";
+            }
+            details.put("sdk_client_device_model", deviceModel);
+
+            // Retrieve OS details
+            try {
+                osDetails = System.getProperty("os.version");
+            } catch (Exception e) {
+                osDetails = "";
+            }
+            details.put("sdk_client_os_details", osDetails);
+
+            // Retrieve Java version details
+            try {
+                javaVersion = System.getProperty("java.version");
+            } catch (Exception e) {
+                javaVersion = "";
+            }
+            details.put("sdk_runtime_details", "Java@" + javaVersion);
+
+        return details;
     }
 
 }
