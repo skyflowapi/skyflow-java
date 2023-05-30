@@ -560,13 +560,13 @@ public class SkyflowTest {
 
             JSONParser jsonParser = new JSONParser();
             JSONObject validRequest = (JSONObject)
-                    jsonParser.parse("{\"detokenizationParameters\":[{\"token\":\"token123\"}]}");
+                    jsonParser.parse("{\"detokenizationParameters\":[{\"token\":\"token123\",\"redaction\":\"PLAIN_TEXT\"}]}");
             PowerMockito.mockStatic(HttpUtility.class);
             String mockValidResponse = "{\"records\":[{\"token\":\"token123\",\"valueType\":\"INTEGER\",\"value\":\"10\"}]}";
             PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), eq(validRequest), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockValidResponse);
 
             JSONObject invalidRequest = (JSONObject)
-                    jsonParser.parse("{\"detokenizationParameters\":[{\"token\":\"invalidToken1\"}]}");
+                    jsonParser.parse("{\"detokenizationParameters\":[{\"token\":\"invalidToken1\",\"redaction\":\"PLAIN_TEXT\"}]}");
             String mockInvalidResponse =
                     "{\"error\":{\"grpc_code\":5,\"http_code\":404,\"message\":\"Token not found for invalidToken1\",\"http_status\":\"Not Found\",\"details\":[]}}";
             PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), eq(invalidRequest), ArgumentMatchers.<String, String>anyMap())).thenThrow(new SkyflowException(404, mockInvalidResponse));
@@ -652,6 +652,48 @@ public class SkyflowTest {
         } catch (SkyflowException skyflowException) {
             JSONObject error = (JSONObject) ((JSONObject) (((JSONArray) skyflowException.getData().get("errors")).get(0))).get("error");
             assertEquals(ErrorCode.InvalidToken.getDescription(), error.get("description"));
+        }
+    }
+
+    @Test
+    public void testDetokenizeInvalidRedaction() {
+        try {
+            SkyflowConfiguration config = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider());
+
+            Skyflow skyflowClient = Skyflow.init(config);
+            JSONObject records = new JSONObject();
+            JSONArray recordsArray = new JSONArray();
+            JSONObject record = new JSONObject();
+            record.put("token", "3423-4671-5420-2425");
+            record.put("redaction", "invalid");
+            recordsArray.add(record);
+            records.put("records", recordsArray);
+
+            JSONObject res = skyflowClient.detokenize(records);
+        } catch (SkyflowException skyflowException) {
+            assertEquals(ErrorCode.InvalidDetokenizeInput.getDescription(), skyflowException.getMessage());
+        }
+    }
+
+    @Test
+    @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility", "com.skyflow.common.utils.TokenUtils"})
+    public void testDetokenizeWhenNullRedactionIsPassed() {
+        try {
+            SkyflowConfiguration config = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider());
+
+            Skyflow skyflowClient = Skyflow.init(config);
+            JSONObject records = new JSONObject();
+            JSONArray recordsArray = new JSONArray();
+            JSONObject record = new JSONObject();
+            record.put("token", "3423-4671-5420-2425");
+            record.put("redaction", null);
+            recordsArray.add(record);
+            records.put("records", recordsArray);
+
+            JSONObject res = skyflowClient.detokenize(records);
+        } catch (SkyflowException skyflowException) {
+            JSONObject error = (JSONObject) ((JSONObject) (((JSONArray) skyflowException.getData().get("errors")).get(0))).get("error");
+            assertEquals(ErrorCode.InvalidDetokenizeInput.getDescription(), error.get("description"));
         }
     }
 
