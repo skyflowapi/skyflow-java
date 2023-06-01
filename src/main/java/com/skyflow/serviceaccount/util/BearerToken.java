@@ -177,8 +177,8 @@ public class BearerToken {
 
             String signedUserJWT = getSignedToken(clientID, keyID, tokenURI, pvtKey, context);
 
-//            Map<String, String> headers = new HashMap<>();
-//            headers.put("sky-metadata", Helpers.getMetrics().toString());
+            Map<String, String> headers = new HashMap<>();
+            headers.put("sky-metadata", Helpers.getMetrics().toJSONString());
 
             JSONObject parameters = new JSONObject();
             parameters.put("grant_type", "urn:ietf:params:oauth:grant-type:jwt-bearer");
@@ -189,7 +189,7 @@ public class BearerToken {
                 parameters.put("scope", scopedRoles);
             }
 
-            String response = HttpUtility.sendRequest("POST", new URL(tokenURI), parameters, null);
+            String response = HttpUtility.sendRequest("POST", new URL(tokenURI), parameters, headers);
 
             responseToken = new ObjectMapper().readValue(response, ResponseToken.class);
 

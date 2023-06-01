@@ -30,6 +30,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.PrivateKey;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 public final class  Token {
 
@@ -130,6 +132,8 @@ public final class  Token {
                 LogUtil.printErrorLog(ErrorLogs.InvalidTokenURI.getLog());
                 throw new SkyflowException(ErrorCode.InvalidTokenURI);
             }
+            Map<String, String> headers = new HashMap<>();
+            headers.put("sky-metadata", Helpers.getMetrics().toJSONString());
 
             PrivateKey pvtKey = Helpers.getPrivateKeyFromPem((String) creds.get("privateKey"));
 
@@ -139,7 +143,7 @@ public final class  Token {
             parameters.put("grant_type", "urn:ietf:params:oauth:grant-type:jwt-bearer");
             parameters.put("assertion", signedUserJWT);
 
-            String response = HttpUtility.sendRequest("POST", new URL(tokenURI), parameters, null);
+            String response = HttpUtility.sendRequest("POST", new URL(tokenURI), parameters, headers);
 
             responseToken = new ObjectMapper().readValue(response, ResponseToken.class);
 

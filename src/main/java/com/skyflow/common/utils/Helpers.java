@@ -24,7 +24,7 @@ import java.util.*;
 public final class Helpers {
 
     private static final String LINE_FEED = "\r\n";
-    private static final  String SDK_VERSION  = "1.8.3-beta.1";
+    private static final  String SDK_VERSION  = "1.8.3";
 
     private static String getUpsertColumn(String tableName, UpsertOption[] upsertOptions) {
         String upsertColumn = "";
