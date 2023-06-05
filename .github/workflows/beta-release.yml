@@ -1,7 +1,7 @@
-name: Publish package to the Maven Central Repository
+name: Publish beta package to the Maven Central Repository
 on:
   push:
-    tags: '[0-9]+.[0-9]+.[0-9]+'
+    tags: '*.*.*-beta.*'
 jobs:
   publish:
     runs-on: ubuntu-latest
