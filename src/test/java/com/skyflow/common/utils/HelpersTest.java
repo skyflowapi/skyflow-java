@@ -9,6 +9,8 @@ import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.SkyflowException;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.powermock.api.mockito.PowerMockito.mock;
+import static org.powermock.api.mockito.PowerMockito.when;
 
 import java.security.PrivateKey;
 import org.json.simple.JSONObject;
@@ -84,7 +86,7 @@ public class HelpersTest {
         assertEquals(true, metrics.containsKey("sdk_client_os_details"));
         assertEquals(true, metrics.containsKey("sdk_runtime_details"));
 
-        assertEquals("skyflow-java@1.8.3", metrics.get("sdk_name_version"));
+        assertEquals("skyflow-java@"+ Constants.SDK_VERSION, metrics.get("sdk_name_version"));
         assertNotNull(metrics.get("sdk_client_device_model"));
 
         assertNotNull(metrics.get("sdk_client_os_details"));
@@ -98,7 +100,7 @@ public class HelpersTest {
     @Test
     public void testGetMetricsWithException() {
         // Arrange
-        String expectedSdkVersion = "1.8.3";
+        String expectedSdkVersion = Constants.SDK_VERSION;
         String expectedDeviceModel = "";
         String expectedOsDetails = "";
         String expectedJavaVersion = "";

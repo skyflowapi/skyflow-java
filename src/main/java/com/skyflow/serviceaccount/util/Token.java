@@ -6,10 +6,7 @@ package com.skyflow.serviceaccount.util;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.skyflow.common.utils.Helpers;
-import com.skyflow.common.utils.HttpUtility;
-import com.skyflow.common.utils.LogUtil;
-import com.skyflow.common.utils.TokenUtils;
+import com.skyflow.common.utils.*;
 import com.skyflow.entities.ResponseToken;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.SkyflowException;
@@ -133,7 +130,7 @@ public final class  Token {
                 throw new SkyflowException(ErrorCode.InvalidTokenURI);
             }
             Map<String, String> headers = new HashMap<>();
-            headers.put("sky-metadata", Helpers.getMetrics().toJSONString());
+            headers.put(Constants.SDK_METRICS_HEADER_KEY, Helpers.getMetrics().toJSONString());
 
             PrivateKey pvtKey = Helpers.getPrivateKeyFromPem((String) creds.get("privateKey"));
 

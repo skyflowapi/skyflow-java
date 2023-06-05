@@ -4,6 +4,7 @@
 package com.skyflow.serviceaccount.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.skyflow.common.utils.Constants;
 import com.skyflow.common.utils.Helpers;
 import com.skyflow.common.utils.HttpUtility;
 import com.skyflow.common.utils.LogUtil;
@@ -178,11 +179,10 @@ public class BearerToken {
             String signedUserJWT = getSignedToken(clientID, keyID, tokenURI, pvtKey, context);
 
             Map<String, String> headers = new HashMap<>();
-            headers.put("sky-metadata", Helpers.getMetrics().toJSONString());
+            headers.put(Constants.SDK_METRICS_HEADER_KEY, Helpers.getMetrics().toJSONString());
 
             JSONObject parameters = new JSONObject();
             parameters.put("grant_type", "urn:ietf:params:oauth:grant-type:jwt-bearer");
-            parameters.put("assertion", signedUserJWT);
             parameters.put("assertion", signedUserJWT);
             if (roles != null) {
                 String scopedRoles = getScopeUsingRoles(roles);
