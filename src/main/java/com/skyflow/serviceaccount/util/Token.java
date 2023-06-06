@@ -6,10 +6,7 @@ package com.skyflow.serviceaccount.util;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.skyflow.common.utils.Helpers;
-import com.skyflow.common.utils.HttpUtility;
-import com.skyflow.common.utils.LogUtil;
-import com.skyflow.common.utils.TokenUtils;
+import com.skyflow.common.utils.*;
 import com.skyflow.entities.ResponseToken;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.SkyflowException;
@@ -30,6 +27,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.PrivateKey;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 public final class  Token {
 
@@ -130,6 +129,8 @@ public final class  Token {
                 LogUtil.printErrorLog(ErrorLogs.InvalidTokenURI.getLog());
                 throw new SkyflowException(ErrorCode.InvalidTokenURI);
             }
+            Map<String, String> headers = new HashMap<>();
+            headers.put(Constants.SDK_METRICS_HEADER_KEY, Helpers.getMetrics().toJSONString());
 
             PrivateKey pvtKey = Helpers.getPrivateKeyFromPem((String) creds.get("privateKey"));
 
@@ -139,7 +140,7 @@ public final class  Token {
             parameters.put("grant_type", "urn:ietf:params:oauth:grant-type:jwt-bearer");
             parameters.put("assertion", signedUserJWT);
 
-            String response = HttpUtility.sendRequest("POST", new URL(tokenURI), parameters, null);
+            String response = HttpUtility.sendRequest("POST", new URL(tokenURI), parameters, headers);
 
             responseToken = new ObjectMapper().readValue(response, ResponseToken.class);
 

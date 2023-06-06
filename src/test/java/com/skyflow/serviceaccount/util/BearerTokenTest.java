@@ -214,7 +214,7 @@ public class BearerTokenTest {
         PowerMockito.mockStatic(HttpUtility.class);
         String mockResponse  = "{\"accessToken\":\"valid.bearer.token\",\"tokenType\":\"Bearer\"}";
         try {
-            PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), (Map<String, String>) eq(null))).thenReturn(mockResponse);
+            PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockResponse);
             BearerToken token = new BearerToken.BearerTokenBuilder()
                     .setCredentials(new File(VALID_CREDENTIALS_FILE_PATH))
                     .setCtx("abc")
@@ -233,7 +233,7 @@ public class BearerTokenTest {
         PowerMockito.mockStatic(HttpUtility.class);
         String mockResponse  = "{\"accessToken\":\"valid.bearer.token\",\"tokenType\":\"Bearer\"}";
         try {
-            PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), (Map<String, String>) eq(null))).thenReturn(mockResponse);
+            PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockResponse);
             BearerToken token = new BearerToken.BearerTokenBuilder()
                     .setCredentials(new File(VALID_CREDENTIALS_FILE_PATH))
                     .setCtx("abc")
@@ -257,7 +257,7 @@ public class BearerTokenTest {
             Object obj = parser.parse(new FileReader(VALID_CREDENTIALS_FILE_PATH));
             JSONObject saCreds = (JSONObject) obj;
 
-            PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), (Map<String, String>) eq(null))).thenReturn(mockResponse);
+            PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockResponse);
             BearerToken token = new BearerToken.BearerTokenBuilder()
                     .setCredentials(saCreds.toJSONString())
                     .setCtx("abc")
