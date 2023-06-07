@@ -387,50 +387,57 @@ Sample insert Response
 
 ## Detokenize
 
-In order to retrieve data from your vault using tokens that you have previously generated for that data, you can use the **detokenize(JSONObject records)** method. The first parameter JSONObject must have a `records` key that takes an array of tokens to be fetched from the vault, as shown below.
+To retrieve record data using tokens, use the **detokenize(JSONObject records)** method. TheJSONObject must have a `records` key that takes an JSON array of record objects to fetch:
+
 ```java
 JSONObject recordsJson = new JSONObject();
 
-JSONObject tokenJson = new JSONObject();
-tokenJson.put("token","<token>");
+JSONObject recordJson = new JSONObject();
+recordJson.put("token", "<token>");
+recordJson.put("redaction", <Skyflow.RedactionType>); // Optional. Redaction to apply for retrieved data. E.g. RedactionType.DEFAULT.toString()
 
 JSONArray recordsArrayJson = new JSONArray();
-recordsArrayJson.put(tokenJSon);
+recordsArrayJson.put(recordJson);
 
-recordsJson.put("records",recordsArrayJson);
+recordsJson.put("records", recordsArrayJson);
 ```
-An [example](https://github.com/skyflowapi/skyflow-java/blob/master/samples/src/main/java/com/example/DetokenizeExample.java) of detokenize call
+
+Note: `redaction` defaults to [`RedactionType.PLAIN_TEXT`](#redaction-types).
+
+The following [example](https://github.com/skyflowapi/skyflow-java/blob/master/samples/src/main/java/com/example/DetokenizeExample.java) code makes a detokenize call to reveal the masked value of a token:
+
 ```java
 JSONObject recordsJson = new JSONObject();
 
-JSONObject validTokenJson = new JSONObject();
-validTokenJson.put("token","45012507-f72b-4f5c-9bf9-86b133bae719");
+JSONObject validRecordJson = new JSONObject();
+validRecordJson.put("token", "45012507-f72b-4f5c-9bf9-86b133bae719");
+validRecordJson.put("redaction", RedactionType.MASKED.toString());
 
-JSONObject invalidTokenJson = new JSONObject();
-invalidTokenJson.put("token","invalid-token");
+JSONObject invalidRecordJson = new JSONObject();
+invalidRecordJson.put("token","invalid-token");
 
 JSONArray recordsArrayJson = new JSONArray();
-recordsArrayJson.put(tokenJson);
-recordsArrayJson.put(invalidTokenJson);
+recordsArrayJson.put(validRecordJson);
+recordsArrayJson.put(invalidRecordJson);
 
-recordsJson.put("records",recordsArrayJson);
-try{
+recordsJson.put("records", recordsArrayJson);
+try {
     JSONObject detokenizeResponse = skyflowClient.detokenize(recordsJson);
     System.out.println(detokenizeResponse);
-}catch(SkyflowExeception exception){
-    if(exception.getData() != null)
+} catch (SkyflowExeception exception) {
+    if (exception.getData() != null)
         System.out.println(exception.getData());
     else
         System.out.println(exception);
 }
 ```
-Sample detokenize Response
+The sample response:
 ```js
 {
    "records": [
       {
         "token": "45012507-f72b-4f5c-9bf9-86b133bae719",
-        "value": "1990-01-01"
+        "value": "j***oe"
       }
     ],
   "errors": [
