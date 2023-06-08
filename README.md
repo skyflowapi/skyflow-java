@@ -51,7 +51,7 @@ Add this dependency to your project's POM:
     <dependency>
         <groupId>com.skyflow</groupId>
         <artifactId>skyflow-java</artifactId>
-        <version>1.8.2</version>
+        <version>1.9.0</version>
     </dependency>
 ```
 ---
