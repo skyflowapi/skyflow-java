@@ -45,7 +45,8 @@ public enum ErrorLogs {
     InvalidColumnInUpsertOption("Invalid column in upsert object, non empty string is required."),
     InvalidUpsertObjectType("upsert option cannot be null, should be an UpsertOption object."),
     InvalidSkyflowId("Skyflow Id is missing"),
-    InvalidField("Fields missing");
+    InvalidField("Fields missing"),
+    InvalidToken("Invalid Token value");
 
     private final String log;
 
