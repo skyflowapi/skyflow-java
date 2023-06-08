@@ -3,6 +3,7 @@
 */
 package com.example;
 
+import com.skyflow.entities.RedactionType;
 import com.skyflow.entities.ResponseToken;
 import com.skyflow.entities.SkyflowConfiguration;
 import com.skyflow.entities.TokenProvider;
@@ -18,15 +19,24 @@ public class DetokenizeExample {
     public static void main(String[] args) {
 
         try {
-            SkyflowConfiguration config = new SkyflowConfiguration("<your_vaultID>",
-                    "<your_vaultURL>", new DemoTokenProvider());
+            SkyflowConfiguration config = new SkyflowConfiguration(
+                "<your_vaultID>",
+                "<your_vaultURL>", 
+                new DemoTokenProvider()
+            );
             Skyflow skyflowClient = Skyflow.init(config);
             JSONObject records = new JSONObject();
             JSONArray recordsArray = new JSONArray();
 
-            JSONObject record = new JSONObject();
-            record.put("token", "<your_token>");
-            recordsArray.add(record);
+            JSONObject record1 = new JSONObject();
+            record1.put("token", "<your_token>");
+            record1.put("redaction", RedactionType.MASKED.toString());
+
+            JSONObject record2 = new JSONObject();
+            record2.put("token", "<your_token>"); // default Redaction "PLAIN_TEXT" will be applied for record2
+
+            recordsArray.add(record1);
+            recordsArray.add(record2);
             records.put("records", recordsArray);
 
             JSONObject response = skyflowClient.detokenize(records);
