@@ -4,6 +4,7 @@
 package com.skyflow.serviceaccount.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.skyflow.common.utils.Constants;
 import com.skyflow.common.utils.Helpers;
 import com.skyflow.common.utils.HttpUtility;
 import com.skyflow.common.utils.LogUtil;
@@ -23,6 +24,8 @@ import java.io.IOException;
 import java.net.URL;
 import java.security.PrivateKey;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 public class BearerToken {
@@ -175,6 +178,9 @@ public class BearerToken {
 
             String signedUserJWT = getSignedToken(clientID, keyID, tokenURI, pvtKey, context);
 
+            Map<String, String> headers = new HashMap<>();
+            headers.put(Constants.SDK_METRICS_HEADER_KEY, Helpers.getMetrics().toJSONString());
+
             JSONObject parameters = new JSONObject();
             parameters.put("grant_type", "urn:ietf:params:oauth:grant-type:jwt-bearer");
             parameters.put("assertion", signedUserJWT);
@@ -183,7 +189,7 @@ public class BearerToken {
                 parameters.put("scope", scopedRoles);
             }
 
-            String response = HttpUtility.sendRequest("POST", new URL(tokenURI), parameters, null);
+            String response = HttpUtility.sendRequest("POST", new URL(tokenURI), parameters, headers);
 
             responseToken = new ObjectMapper().readValue(response, ResponseToken.class);
 

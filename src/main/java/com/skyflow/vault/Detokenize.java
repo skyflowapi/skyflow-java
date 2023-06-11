@@ -36,16 +36,20 @@ final class Detokenize implements Callable<String> {
 
         try {
             if (record.getToken() == null || record.getToken().isEmpty()) {
-                LogUtil.printErrorLog(ErrorLogs.InvalidBearerToken.getLog());
+                LogUtil.printErrorLog(ErrorLogs.InvalidToken.getLog());
                 throw new SkyflowException(ErrorCode.InvalidToken);
+            } else if (record.getRedaction() == null || record.getRedaction().toString().isEmpty()) {
+                LogUtil.printErrorLog(ErrorLogs.InvalidDetokenizeInput.getLog());
+                throw new SkyflowException(ErrorCode.InvalidDetokenizeInput);
             }
-            JSONObject bodyJson = new JSONObject();
-            JSONArray tokensArray = new JSONArray();
-            JSONObject token = new JSONObject();
-            token.put("token", record.getToken());
-            tokensArray.add(token);
-            bodyJson.put("detokenizationParameters", tokensArray);
 
+            JSONObject bodyJson = new JSONObject();
+            JSONArray detokenizationParameters = new JSONArray();
+            JSONObject parameterObject = new JSONObject();
+            parameterObject.put("token", record.getToken());
+            parameterObject.put("redaction", record.getRedaction().toString());
+            detokenizationParameters.add(parameterObject);
+            bodyJson.put("detokenizationParameters", detokenizationParameters);
 
             String apiResponse = HttpUtility.sendRequest("POST", new URL(endPointURL), bodyJson, headers);
             JSONParser parser = new JSONParser();
@@ -78,7 +82,7 @@ final class Detokenize implements Callable<String> {
             JSONParser parser = new JSONParser();
             JSONObject errorJson = (JSONObject) parser.parse(exceptionMessage);
             JSONObject error = (JSONObject) errorJson.get("error");
-            if(error != null) {
+            if (error != null) {
                 errorData.put("code", error.get("http_code"));
                 errorData.put("description", error.get("message"));
                 errorObject.put("error", errorData);

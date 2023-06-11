@@ -66,6 +66,22 @@ public class ValidatorsTest {
             exception.printStackTrace();
             Assert.fail(INVALID_EXCEPTION_THROWN);
         }
+        // missing redaction when token is false
+    }
+    @Test
+    @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility", "com.skyflow.common.utils.TokenUtils"})
+    public void validateGetRequestRecordMisiingRedaction() {
+        //Id values with redaction
+
+        GetRecordInput recordInput = new GetRecordInput();
+        recordInput.setTable(tableName);
+        recordInput.setIds(ids);
+        try {
+            Validators.validateGetRequestRecord(recordInput, new GetOptions(false));
+        } catch (SkyflowException exception) {
+            Assert.assertTrue(ErrorCode.MissingRedaction.getDescription().contains(exception.getMessage()));
+            exception.printStackTrace();
+        }
     }
     @Test
     @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility", "com.skyflow.common.utils.TokenUtils"})
@@ -112,6 +128,22 @@ public class ValidatorsTest {
             Validators.validateGetRequestRecord(recordInput, new GetOptions(true));
         } catch (SkyflowException e) {
             Assert.assertTrue(ErrorCode.TokensGetColumnNotSupported.getDescription().contains(e.getMessage()));
+        }
+    }
+    @Test
+    @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility", "com.skyflow.common.utils.TokenUtils"})
+    public void validateGetRecordColumnNameIDSBothSpecified() {
+        GetRecordInput recordInput = new GetRecordInput();
+        recordInput.setTable(tableName);
+        recordInput.setIds(ids);
+        recordInput.setColumnName(columnName);
+        recordInput.setColumnValues(columnValue);
+        recordInput.setRedaction(RedactionType.PLAIN_TEXT);
+
+        try {
+            Validators.validateGetRequestRecord(recordInput, new GetOptions(false));
+        } catch (SkyflowException e) {
+            Assert.assertTrue(ErrorCode.SkyflowIdAndColumnNameBothSpecified.getDescription().contains(e.getMessage()));
         }
     }
     @Test

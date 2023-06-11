@@ -128,6 +128,10 @@ public final class Validators {
             LogUtil.printErrorLog(ErrorLogs.MissingIdAndColumnName.getLog());
             throw new SkyflowException(ErrorCode.MissingIdAndColumnName);
         }
+        if( ids != null && columnName != null) {
+            LogUtil.printErrorLog(ErrorLogs.SkyflowIdAndColumnNameBothSpecified.getLog());
+            throw new SkyflowException(ErrorCode.SkyflowIdAndColumnNameBothSpecified);
+        }
 
         if (columnName != null && columnValues == null) {
             LogUtil.printErrorLog(ErrorLogs.MissingRecordColumnValue.getLog());
@@ -138,7 +142,7 @@ public final class Validators {
             throw new SkyflowException(ErrorCode.MissingRecordColumnName);
         }
         if (getOptions.getOptionToken() == true) {
-            if (columnName != null && columnValues != null) {
+            if (columnName != null || columnValues != null) {
                 LogUtil.printErrorLog(ErrorLogs.TokensGetColumnNotSupported.getLog());
                 throw new SkyflowException(ErrorCode.TokensGetColumnNotSupported);
             }

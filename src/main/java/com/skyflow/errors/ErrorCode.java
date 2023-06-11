@@ -29,6 +29,7 @@ public enum ErrorCode {
     InvalidGetByIdInput(400, "Invalid getById input"),
     InvalidGetInput(400, "Invalid get input"),
     MissingIdAndColumnName(400, "Provide either Ids or column name to get records."),
+    SkyflowIdAndColumnNameBothSpecified(400, "ids and columnName can not be specified together."),
     MissingRecordColumnValue(400, "Column Values can not be empty when Column Name is specified."),
     MissingRecordColumnName(400, "Column Name can not be empty when Column Values are specified."),
     ResponseParsingError(500, "Unable to parse response"),

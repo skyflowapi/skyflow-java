@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.9.0] - 2023-06-08
+### Added
+- `redaction` key for detokenize method for column group support.
+
 ## [1.8.2] - 2023-03-20
 ### Fixed
 - removed grace period logic for bearer token generation.

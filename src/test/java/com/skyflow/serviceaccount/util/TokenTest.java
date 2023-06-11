@@ -98,7 +98,7 @@ public class TokenTest {
 
             PowerMockito.mockStatic(HttpUtility.class);
             String mockResponse = "{\"accessToken\":\"a.b.c\",\"tokenType\":\"Bearer\"}";
-            PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<Map<String, String>>isNull())).thenReturn(mockResponse);
+            PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockResponse);
             ResponseToken token = Token.GenerateToken(VALID_CREDENTIALS_FILE_PATH);
             Assert.assertNotNull(token.getAccessToken());
             Assert.assertEquals("Bearer", token.getTokenType());
@@ -120,7 +120,7 @@ public class TokenTest {
 
             PowerMockito.mockStatic(HttpUtility.class);
             String mockResponse = "{\"accessToken\":\"a.b.c\",\"tokenType\":\"Bearer\"}";
-            PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<Map<String, String>>isNull())).thenReturn(mockResponse);
+            PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockResponse);
             ResponseToken token = Token.generateBearerToken(VALID_CREDENTIALS_FILE_PATH);
             Assert.assertNotNull(token.getAccessToken());
             Assert.assertEquals("Bearer", token.getTokenType());
@@ -146,7 +146,7 @@ public class TokenTest {
 
             PowerMockito.mockStatic(HttpUtility.class);
             String mockResponse = "{\"accessToken\":\"a.b.c\",\"tokenType\":\"Bearer\"}";
-            PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<Map<String, String>>isNull())).thenReturn(mockResponse);
+            PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockResponse);
 
             ResponseToken token = Token.generateBearerTokenFromCreds(saCreds.toJSONString());
             Assert.assertNotNull(token.getAccessToken());

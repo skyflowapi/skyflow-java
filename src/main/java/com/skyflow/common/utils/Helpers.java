@@ -336,5 +336,42 @@ public final class Helpers {
         }
         return privateKey;
     }
+    public static JSONObject getMetrics(){
+         JSONObject details = new JSONObject();
+
+        String sdkVersion = Constants.SDK_VERSION;
+        String deviceModel = "";
+        String osDetails = "";
+        String javaVersion = "";
+
+            details.put("sdk_name_version", "skyflow-java@" + sdkVersion);
+
+            // Retrieve device model
+            try {
+                deviceModel = System.getProperty("os.name");
+            } catch (Exception e) {
+                deviceModel = "";
+            }
+            details.put("sdk_client_device_model", deviceModel);
+
+            // Retrieve OS details
+            try {
+                osDetails = System.getProperty("os.version");
+            } catch (Exception e) {
+                osDetails = "";
+            }
+            details.put("sdk_client_os_details", osDetails);
+
+            // Retrieve Java version details
+            try {
+                javaVersion = System.getProperty("java.version");
+            } catch (Exception e) {
+                javaVersion = "";
+            }
+            details.put("sdk_runtime_details", "Java@" + javaVersion);
+
+        return details;
+    }
+
 
 }
