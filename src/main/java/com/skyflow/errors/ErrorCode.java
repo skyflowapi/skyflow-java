@@ -50,7 +50,10 @@ public enum ErrorCode {
     InvalidUpsertOptionType(400, "upsert options should be an non empty UpsertOption array."),
     InvalidUpsertObjectType(400, "upsert option cannot be null, should be an UpsertOption object."),
     InvalidTableInUpsertOption(400, "Invalid table in upsert object, non empty string is required."),
-    InvalidColumnInUpsertOption(400, "Invalid column in upsert object, non empty string is required.");
+    InvalidColumnInUpsertOption(400, "Invalid column in upsert object, non empty string is required."),
+    MissingRedaction(400, "Missing Redaction Property"),
+    TokensGetColumnNotSupported(400,"Interface: get method - column_name or column_values cannot be used with tokens in options."),
+    RedactionWithTokenNotSupported(400, "Interface: get method - redaction cannot be used when tokens are true in options.");
 
     private final int code;
     private final String description;

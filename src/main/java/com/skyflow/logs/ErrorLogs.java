@@ -45,7 +45,10 @@ public enum ErrorLogs {
     InvalidColumnInUpsertOption("Invalid column in upsert object, non empty string is required."),
     InvalidUpsertObjectType("upsert option cannot be null, should be an UpsertOption object."),
     InvalidSkyflowId("Skyflow Id is missing"),
-    InvalidField("Fields missing");
+    InvalidField("Fields missing"),
+    MissingRedaction("Missing Redaction property."),
+    TokensGetColumnNotSupported("Interface: get method - column_name or column_values cannot be used with tokens in options."),
+    RedactionWithTokenNotSupported("Interface: get method - redaction cannot be used when tokens are true in options.");
 
     private final String log;
 

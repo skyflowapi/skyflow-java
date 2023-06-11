@@ -108,15 +108,20 @@ public final class Validators {
         }
     }
 
-    public static void validateGetRequestRecord(GetRecordInput record) throws SkyflowException {
+    public static void validateGetRequestRecord(GetRecordInput record, GetOptions getOptions) throws SkyflowException {
         String[] ids = record.getIds();
         String table = record.getTable();
         String columnName = record.getColumnName();
         String[] columnValues = record.getColumnValues();
+        RedactionType redaction = record.getRedaction();
 
         if (table == null || table.trim().isEmpty()) {
             LogUtil.printErrorLog(ErrorLogs.InvalidTable.getLog());
             throw new SkyflowException(ErrorCode.InvalidTable);
+        }
+        if (getOptions.getOptionToken() == false && redaction == null) {
+            LogUtil.printErrorLog((ErrorLogs.MissingRedaction.getLog()));
+            throw new SkyflowException(ErrorCode.MissingRedaction);
         }
 
         if (ids == null && columnName == null && columnValues == null) {
@@ -128,10 +133,19 @@ public final class Validators {
             LogUtil.printErrorLog(ErrorLogs.MissingRecordColumnValue.getLog());
             throw new SkyflowException(ErrorCode.MissingRecordColumnValue);
         }
-
         if (columnName == null && columnValues != null) {
             LogUtil.printErrorLog(ErrorLogs.MissingRecordColumnName.getLog());
             throw new SkyflowException(ErrorCode.MissingRecordColumnName);
+        }
+        if (getOptions.getOptionToken() == true) {
+            if (columnName != null && columnValues != null) {
+                LogUtil.printErrorLog(ErrorLogs.TokensGetColumnNotSupported.getLog());
+                throw new SkyflowException(ErrorCode.TokensGetColumnNotSupported);
+            }
+            if (redaction != null) {
+                LogUtil.printErrorLog(ErrorLogs.RedactionWithTokenNotSupported.getLog());
+                throw new SkyflowException(ErrorCode.RedactionWithTokenNotSupported);
+            }
         }
     }
 }
