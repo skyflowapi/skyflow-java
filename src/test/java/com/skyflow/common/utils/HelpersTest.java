@@ -4,9 +4,14 @@
 package com.skyflow.common.utils;
 
 import com.skyflow.Configuration;
+import com.skyflow.entities.GetOptions;
+import com.skyflow.entities.GetRecordInput;
 import com.skyflow.entities.LogLevel;
+import com.skyflow.entities.RedactionType;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.SkyflowException;
+
+import static com.skyflow.common.utils.Helpers.constructGetRequestURLParams;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.powermock.api.mockito.PowerMockito.mock;
@@ -14,12 +19,38 @@ import static org.powermock.api.mockito.PowerMockito.when;
 
 import java.security.PrivateKey;
 import org.json.simple.JSONObject;
+import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
 
 
+@RunWith(PowerMockRunner.class)
+@PrepareForTest(fullyQualifiedNames = "com.skyflow.common.utils.TokenUtils")
 public class HelpersTest {
+
+    private static String tableName = null;
+    private static String columnName = null;
+    private static String[] columnValue = new String[1];
+    private static String[] ids =  new String[1];
+    private static String INVALID_EXCEPTION_THROWN = "Should not have thrown any exception";
+
+    @BeforeClass
+    public static void setup() throws SkyflowException {
+        PowerMockito.mockStatic(TokenUtils.class);
+        PowerMockito.when(TokenUtils.isTokenValid("valid_token")).thenReturn(true);
+        PowerMockito.when(TokenUtils.isTokenValid("not_a_valid_token")).thenReturn(false);
+
+        tableName = "account_details";
+        columnName = "card_number";
+        columnValue[0] = "123451234554321";
+        ids[0] = "123451234554321";
+    }
 
     @Test
     public void testMessageWithRequestID(){
@@ -77,6 +108,51 @@ public class HelpersTest {
         }catch (SkyflowException exception) {
             assertEquals(exception.getMessage(), ErrorCode.InvalidKeySpec.getDescription());
         }
+    }
+    @Test
+    public void constructGetRequestURLParamsColumnValueTest(){
+        GetRecordInput recordInput = new GetRecordInput();
+
+        recordInput.setTable(tableName);
+        recordInput.setColumnValues(columnValue);
+        recordInput.setColumnName(columnName);
+        recordInput.setRedaction(RedactionType.PLAIN_TEXT);
+        StringBuilder paramsList = constructGetRequestURLParams(recordInput, new GetOptions(false));
+
+        Assert.assertTrue(paramsList.toString().contains("&"));
+
+        Assert.assertTrue(paramsList.toString().contains("column_name="+ columnName));
+        Assert.assertTrue(paramsList.toString().contains("column_values="+ columnValue[0]));
+        Assert.assertTrue(paramsList.toString().contains("redaction="+ RedactionType.PLAIN_TEXT.toString()));
+    }
+    @Test
+    public void constructGetRequestURLParamsIdTest(){
+        GetRecordInput recordInput = new GetRecordInput();
+
+        recordInput.setTable(tableName);
+        recordInput.setIds(ids);
+        recordInput.setRedaction(RedactionType.PLAIN_TEXT);
+        StringBuilder paramsList =   constructGetRequestURLParams(recordInput, new GetOptions(false));
+        Assert.assertTrue(paramsList.toString().contains("&"));
+
+        Assert.assertTrue(paramsList.toString().contains("skyflow_ids="+ ids[0]));
+        Assert.assertTrue(paramsList.toString().contains("redaction="+"PLAIN_TEXT"));
+
+    }
+    @Test
+    public void constructGetRequestURLParamsIdTokenTrueTest(){
+        GetRecordInput recordInput = new GetRecordInput();
+
+        recordInput.setTable(tableName);
+        recordInput.setIds(ids);
+        StringBuilder paramsList =   constructGetRequestURLParams(recordInput, new GetOptions(true));
+
+        Assert.assertTrue(paramsList.toString().contains("&"));
+        Assert.assertFalse(paramsList.toString().contains("redaction=PLAIN_TEXT"));
+
+        Assert.assertTrue(paramsList.toString().contains("skyflow_ids="+ ids[0]));
+        Assert.assertTrue(paramsList.toString().contains("tokenization="+"true"));
+
     }
     @Test
     public void testGetMetrics() {

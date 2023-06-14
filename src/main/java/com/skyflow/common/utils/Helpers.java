@@ -115,7 +115,7 @@ public final class Helpers {
         return paramsList;
     }
 
-    public static StringBuilder constructGetRequestURLParams(GetRecordInput record) {
+    public static StringBuilder constructGetRequestURLParams(GetRecordInput record, GetOptions getOptions) {
         StringBuilder paramsList = new StringBuilder();
 
         if (record.getIds() != null) {
@@ -130,8 +130,11 @@ public final class Helpers {
                 paramsList.append("column_values=").append(value).append("&");
             }
         }
-
-        paramsList.append("redaction=").append(record.getRedaction());
+        if(record.getRedaction() == null && getOptions.getOptionToken() == true){
+            paramsList.append("tokenization=").append(getOptions.getOptionToken());
+        } else {
+            paramsList.append("redaction=").append(record.getRedaction());
+        }
         return paramsList;
     }
 
