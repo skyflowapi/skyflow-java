@@ -15,10 +15,15 @@ import static org.powermock.api.mockito.PowerMockito.when;
 import java.security.PrivateKey;
 import org.json.simple.JSONObject;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 
+@RunWith(PowerMockRunner.class)
+@PrepareForTest(fullyQualifiedNames = "com.skyflow.common.utils.TokenUtils")
 public class HelpersTest {
 
     @Test

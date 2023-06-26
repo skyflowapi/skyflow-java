@@ -33,7 +33,7 @@ import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.anyString;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest
+@PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility", "com.skyflow.common.utils.TokenUtils"})
 public class TokenTest {
     // replace the path, when running local, do not commit
     private final String VALID_CREDENTIALS_FILE_PATH = "./credentials.json";
@@ -60,6 +60,7 @@ public class TokenTest {
     }
 
     @Test
+    @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility", "com.skyflow.common.utils.TokenUtils"})
     public void testInvalidFileContent() {
         try {
             Token.generateBearerToken(Paths.get("./src/test/resources/invalidCredentials.json").toString());
@@ -70,6 +71,7 @@ public class TokenTest {
     }
 
     @Test
+    @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility", "com.skyflow.common.utils.TokenUtils"})
     public void testFileNotFoundPath() {
         String fileNotFoundPath = "./src/test/resources/nofile.json";
         try {
@@ -80,6 +82,7 @@ public class TokenTest {
     }
 
     @Test
+    @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility", "com.skyflow.common.utils.TokenUtils"})
     public void testFiledNotJsonFile() {
         String notJsonFilePath = "./src/test/resources/notJson.txt";
         try {

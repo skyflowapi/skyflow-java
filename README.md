@@ -453,15 +453,51 @@ The sample response:
 ```
 
 ## Get
-In order to retrieve data from your vault using Skyflow IDs or by Unique Column Values, use the **get(JSONObject records)** method. The `records` parameter takes a JSONObject that should contain
-
+In order to retrieve data from your vault using Skyflow IDs or by Unique Column Values, use the **get(JSONObject records, GetOptions options)** method. The `records` parameter takes a JSONObject that should contain
 1. Either an array of Skyflow IDs to fetch
 2. Or a column name and array of column values
 
+The second parameter, options, is a GetOptions object that retrieves tokens of Skyflow IDs.
+
+Note:
+- GetOptions parameter applicable only for retrieving tokens using Skyflow ID.
+- You can't pass GetOptions along with the redaction type.
+- `tokens` defaults to false.
+
+
 ### Use Skyflow IDs
+
+1. Retrieve data using Redaction type:
 
 ```java
 import com.skyflow.entities.RedactionType;
+
+JSONObject records = new JSONObject();
+JSONArray recordsArray = new JSONArray();
+JSONObject record = new JSONObject();
+JSONArray ids = new JSONArray();
+ids.add("<your_skyflowId>");
+
+record.put("ids", ids);
+record.put("table", "<your_table_name>");
+record.put("redaction", RedactionType);
+
+recordsArray.add(record);
+records.put("records", recordsArray);
+try {
+    JSONObject getResponse = skyflowClient.get(records);
+    System.out.println(getResponse);
+} catch(SkyflowException exception) {
+    if (exception.getData() != null) {
+        System.out.println(exception.getData());
+        } else {
+        System.out.println(exception);
+        }
+}
+```
+2. Retrieve tokens using GetOptions:
+```java
+import com.skyflow.entities.*;
 
 JSONObject records = new JSONObject();
 JSONArray recordsArray = new JSONArray();
@@ -475,6 +511,18 @@ record.put("table", "<your_table_name>");
 record.put("redaction", RedactionType);
 recordsArray.add(record);
 records.put("records", recordsArray);
+
+try { 
+    GetOptions options = new GetOptions(true);
+    JSONObject getResponse = skyflowClient.get(records, options);
+    System.out.println(getResponse);
+} catch(SkyflowException exception) {
+    if (exception.getData() != null) {
+        System.out.println(exception.getData());
+    } else {
+        System.out.println(exception);
+    }    
+}
 ```
 
 ### Use column name and values
@@ -505,7 +553,7 @@ There are four accepted values for RedactionType:
 * `DEFAULT`
 
 ### Examples
-An [example](https://github.com/skyflowapi/skyflow-java/blob/master/samples/src/main/java/com/example/GetExample.java) call using Skyflow IDs.
+An [example](https://github.com/skyflowapi/skyflow-java/blob/master/samples/src/main/java/com/example/GetExample.java) call using Skyflow IDs with RedactionType.
 
 ```java
 import com.skyflow.entities.RedactionType;
@@ -532,7 +580,7 @@ recordsArrayJson.add(validRecord);
 recordsArrayJson.add(invalidRecord);
 recordsJson.put("records", recordsArray);
 
-try { 
+try {
     JSONObject getResponse = skyflowClient.get(recordsJson);
     System.out.println(getResponse);
 } catch(SkyflowException exception) {
@@ -540,7 +588,7 @@ try {
         System.out.println(exception.getData());
     } else {
         System.out.println(exception);
-    }    
+    }
 }
 ```
 
@@ -582,6 +630,76 @@ Sample response:
 }
 ```
 
+An example call using Skyflow IDs with GetOptions:
+
+```java
+import com.skyflow.entities.*;
+
+JSONObject recordsJson = new JSONObject();
+JSONArray recordsArrayJson = new JSONArray();
+
+JSONObject validRecord = new JSONObject();
+JSONArray idsJson = new JSONArray();
+idsJson.add("f8d8a622-b557-4c6b-a12c-c5ebe0b0bfd9");
+idsJson.add("da26de53-95d5-4bdb-99db-8d8c66a35ff9");
+validRecord.put("ids", idsJson);
+validRecord.put("table", "cards");
+
+JSONObject invalidRecord = new JSONObject();
+JSONArray invalidIdsJson = new JSONArray();
+invalidIdsJson.add("Invalid Skyflow ID");
+
+invalidRecord.put("ids", invalidIdsJson);
+invalidRecord.put("table", "cards");
+recordsArrayJson.add(validRecord);
+recordsArrayJson.add(invalidRecord);
+recordsJson.put("records", recordsArray);
+GetOptions options = new GetOptions(true);
+try { 
+    JSONObject getResponse = skyflowClient.get(recordsJson, options);
+    System.out.println(getResponse);
+} catch(SkyflowException exception) {
+    if (exception.getData() != null) {
+        System.out.println(exception.getData());
+    } else {
+        System.out.println(exception);
+    }    
+}
+```
+Sample response:
+```json
+{
+  "records": [
+    {
+      "fields": {
+        "card_number": "4555-5176-5936-1930",
+        "expiry_date": "23396425-93c9-419b-834b-7750b76a34b0",
+        "fullname": "d6bb7fe5-6b77-4842-b898-221c51c3cc20",
+        "id": "f8d8a622-b557-4c6b-a12c-c5ebe0b0bfd9"
+      },
+      "table": "cards"
+    },
+    {
+      "fields": {
+        "card_number": "8882-7418-2776-6660",
+        "expiry_date": "284fb1f6-3c29-449f-8899-83a7839821bc",
+        "fullname": "45a69af3-e22a-4668-9016-08bb2ef2259d",
+        "id": "da26de53-95d5-4bdb-99db-8d8c66a35ff9"
+      },
+      "table": "cards"
+    }
+  ],
+  "errors": [
+    {
+      "error": {
+        "code": "404",
+        "description": "No Records Found - requestId: fc531b8d-412e-9775-b945-4feacc9b8616"
+      },
+      "ids": ["Invalid Skyflow ID"]
+    }
+  ]
+}
+```
 An [example](https://github.com/skyflowapi/skyflow-java/blob/master/samples/src/main/java/com/example/GetExample.java) call using column names and values.
 
 ```java
