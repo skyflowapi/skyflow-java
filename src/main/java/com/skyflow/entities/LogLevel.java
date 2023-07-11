@@ -3,6 +3,9 @@
 */
 package com.skyflow.entities;
 
+/**
+ * This is the description for LogLevel Enum.
+ */
 public enum LogLevel {
     DEBUG,
     INFO,

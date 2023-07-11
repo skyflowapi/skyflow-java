@@ -135,6 +135,22 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <version>3.2.0</version>
+
+                <configuration>
+                    <doclet>com.doclet.javadoclet.JsonDoclet</doclet>
+                    <docletArtifact>
+                        <groupId>com.doclet</groupId>
+                        <artifactId>json-doclet</artifactId>
+                        <version>1.0-SNAPSHOT</version>
+                    </docletArtifact>
+                    <useStandardDocletOptions>false</useStandardDocletOptions>
+                    <additionalOptions>
+                        <additionalOption>-outputPath ./generated-files</additionalOption>
+                        <additionalOption>-excludePackages com.skyflow.logs:com.skyflow.common.utils</additionalOption>
+                        <additionalOption>-excludeClasses com.skyflow.GenJson:com.skyflow.GenMarkdown:com.skyflow.entities.DetokenizeInput:com.skyflow.entities.DetokenizeRecord:com.skyflow.entities.GetByIdInput:com.skyflow.entities.GetByIdRecordInput:com.skyflow.entities.GetInput:com.skyflow.entities.GetRecordInput:com.skyflow.entities.InsertInput:com.skyflow.entities.InsertRecordInput:com.skyflow.entities.UpdateInput:com.skyflow.entities.UpdateRecordInput:com.skyflow.errors.ErrorCode:com.skyflow.serviceaccount.util.SignedDataTokenResponse:com.skyflow.vault.Detokenize:com.skyflow.vault.Get:com.skyflow.vault.GetBySkyflowId:com.skyflow.vault.UpdateBySkyflowId</additionalOption>
+                    </additionalOptions>
+
+                </configuration>
                 <executions>
                     <execution>
                         <id>attach-javadocs</id>

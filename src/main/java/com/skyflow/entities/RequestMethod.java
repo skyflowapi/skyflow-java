@@ -3,6 +3,9 @@
 */
 package com.skyflow.entities;
 
+/**
+ * This is the description for RequestMethod Enum.
+ */
 public enum RequestMethod {
     GET("GET"),
     POST("POST"),
@@ -18,6 +21,10 @@ public enum RequestMethod {
         this.requestMethod = requestMethod;
     }
 
+    /**
+     * This is the description for toString method.
+     * @return This is the description of what the method returns.
+     */
     @Override
     public String toString() {
         return requestMethod;

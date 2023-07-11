@@ -28,6 +28,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * This is the description for BearerToken Class.
+ */
 public class BearerToken {
     private final File credentialsFile;
     private final String credentialsString;
@@ -85,6 +88,11 @@ public class BearerToken {
         }
     }
 
+    /**
+     * This is the description for getBearerToken method.
+     * @return This is the description of what the method returns.
+     * @throws SkyflowException This is the description for SkyflowException. 
+     */
     public synchronized String getBearerToken() throws SkyflowException {
         // Make API call in generateBearerToken function to get the token
         ResponseToken response;

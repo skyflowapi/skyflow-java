@@ -30,6 +30,9 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * This is the description for Token Class.
+ */
 public final class  Token {
 
     /**
@@ -44,8 +47,9 @@ public final class  Token {
 
     /**
      * Generates a Bearer Token from the given Service Account Credential file with a default timeout of 60minutes.
-     *
-     * @param filepath
+     * @param filepath This is the description for filepath parameter.
+     * @return This is the description of what the method returns.
+     * @throws SkyflowException This is the description for SkyflowException. 
      */
     public static ResponseToken generateBearerToken(String filepath) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.GenerateBearerTokenCalled.getLog());
@@ -79,10 +83,10 @@ public final class  Token {
 
     /**
      * Generates a Bearer Token from the given Service Account Credential json string with a default timeout of 60minutes.
-     *
      * @param credentials JSON string of credentials file
+     * @return This is the description of what the method returns.
+     * @throws SkyflowException This is the description for SkyflowException.
      */
-
     public static ResponseToken generateBearerTokenFromCreds(String credentials) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.GenerateBearerTokenFromCredsCalled.getLog());
         JSONParser parser = new JSONParser();
@@ -198,6 +202,7 @@ public final class  Token {
     /**
      * @param token
      * @deprecated use isExpired(String token), isValid will be removed in future
+     * @ignore
      */
     @Deprecated
     public static boolean isValid(String token) {
@@ -205,6 +210,12 @@ public final class  Token {
         return !isExpired(token);
     }
 
+    /**
+     * This is the description for isExpired method.
+     * @param token This is the description of token paramter.
+     * @return This is the description of what the method returns.
+     * @throws SkyflowException This is the description for SkyflowException. 
+     */
     public static boolean isExpired(String token) {
 
         long expiryTime;
