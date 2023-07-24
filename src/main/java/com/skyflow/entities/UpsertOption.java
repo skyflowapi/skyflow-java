@@ -4,15 +4,15 @@
 package com.skyflow.entities;
 
 /**
- * This is the description for UpsertOption Class.
+ * Contains the parameters for the upsert operation.
  */
 public class UpsertOption {
     private String table;
     private String column;
 
     /**
-     * @param table This is the description of the table parameter.
-     * @param column This is the description of the column parameter.
+     * @param table Data belongs to the table.
+     * @param column Name of the unique column.
      */
     public UpsertOption(String table, String column) {
         this.table = table;
@@ -20,16 +20,16 @@ public class UpsertOption {
     }
 
     /**
-     * This is the description for getTable method.
-     * @return This is the description of what the method returns.
+     * Gets the table
+     * @return Returns the table.
      */
     public String getTable() {
         return table;
     }
 
     /**
-     * This is the description for getColumn method.
-     * @return This is the description of what the method returns.
+     * Gets the column
+     * @return Returns the column.
      */
     public String getColumn() {
         return column;

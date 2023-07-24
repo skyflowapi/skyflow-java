@@ -27,7 +27,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 
 /**
- * This is the description for Skyflow Class.
+ * The parent Skyflow class consists of all the methods exposed to the client.
  */
 public final class Skyflow {
     private final SkyflowConfiguration configuration;
@@ -38,10 +38,10 @@ public final class Skyflow {
     }
 
     /**
-     * This is the description for init method.
-     * @param clientConfig This is the description of clientConfig paramter.
-     * @return This is the description of what the method returns.
-     * @throws SkyflowException This is the description for SkyflowException. 
+     * Initialises skyflow client.
+     * @param clientConfig The configuration required for Skyflow client initialisation.
+     * @return Returns an instance of skyflow client.
+     * @throws SkyflowException Throws an exception when we encounter any error scenario.
      */
     public static Skyflow init(SkyflowConfiguration clientConfig) throws SkyflowException {
         return new Skyflow(clientConfig);
@@ -49,31 +49,31 @@ public final class Skyflow {
 
 
     /**
-     * This is the description for insert method.
-     * @param records This is the description of records paramter.
-     * @return This is the description of what the method returns.
-     * @throws SkyflowException This is the description for SkyflowException. 
+     * Inserts data into the vault.
+     * @param records A JSONObject that must have a records key and takes an array of records to insert as a value in the vault.
+     * @return Returns the response for the insert operation.
+     * @throws SkyflowException Throws an exception when we encounter any error scenario.
      */
     public JSONObject insert(JSONObject records) throws SkyflowException {
         return insert(records, new InsertOptions(true));
     }
 
     /**
-     * This is the description for update method.
-     * @param records This is the description of records paramter.
-     * @return This is the description of what the method returns.
-     * @throws SkyflowException This is the description for SkyflowException. 
+     * Updates the records in your vault by skyflow_id.
+     * @param records A JSONObject that must have a records key and takes an array of records to update as a value in the vault.
+     * @return Returns the response for the update operation.
+     * @throws SkyflowException Throws an exception when we encounter any error scenario.
      */
     public JSONObject update(JSONObject records) throws SkyflowException {
         return update(records, new UpdateOptions(true));
     }
 
     /**
-     * This is the description for insert method.
-     * @param records This is the description of records paramter.
-     * @param insertOptions This is the description of insertOptions paramter.
-     * @return This is the description of what the method returns.
-     * @throws SkyflowException This is the description for SkyflowException. 
+     * Inserts data into the vault.
+     * @param records A JSONObject that must have a records key and takes an array of records to insert as a value in the vault.
+     * @param insertOptions Additional options for insert method/request.
+     * @return Returns the response for the insert operation.
+     * @throws SkyflowException Throws an exception when we encounter any error scenario.
      */
     public JSONObject insert(JSONObject records, InsertOptions insertOptions) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.InsertMethodCalled.getLog());
@@ -108,10 +108,10 @@ public final class Skyflow {
     }
 
     /**
-     * This is the description for detokenize method.
-     * @param records This is the description of records paramter.
-     * @return This is the description of what the method returns.
-     * @throws SkyflowException This is the description for SkyflowException. 
+     * Retrieves record the data using tokens.
+     * @param records This parameter takes a JSON object that contains tokens for fetching record values.
+     * @return Returns the response for the detokenize operation.
+     * @throws SkyflowException Throws an exception when we encounter any error scenario.
      */
     public JSONObject detokenize(JSONObject records) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.DetokenizeMethodCalled.getLog());
@@ -177,10 +177,10 @@ public final class Skyflow {
     }
 
     /**
-     * This is the description for getById method.
-     * @param getByIdInput This is the description of getByIdInput paramter.
-     * @return This is the description of what the method returns.
-     * @throws SkyflowException This is the description for SkyflowException. 
+     * Retrieves using SkyflowID's.
+     * @param getByIdInput A JSONObject that must have a records key and takes an array of records to get from the vault.
+     * @return Returns response of the getById.
+     * @throws SkyflowException Throws an exception when we encounter any error scenario.
      */
     public JSONObject getById(JSONObject getByIdInput) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.GetByIdMethodCalled.getLog());
@@ -252,10 +252,10 @@ public final class Skyflow {
     }
 
     /**
-     * This is the description for get method.
-     * @param getInput This is the description of getInput paramter.
-     * @return This is the description of what the method returns.
-     * @throws SkyflowException This is the description for SkyflowException. 
+     * Retrieves using SkyflowID's and column values.
+     * @param getInput A JSONObject that must have a records key and takes an array of records to get from the vault.
+     * @return Returns response of the get.
+     * @throws SkyflowException Throws an exception when we encounter any error scenario.
      */
     public JSONObject get(JSONObject getInput) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.GetMethodCalled.getLog());
@@ -327,11 +327,11 @@ public final class Skyflow {
     }
 
     /**
-     * This is the description for update method.
-     * @param records This is the description of records paramter.
-     * @param updateOptions This is the description of updateOptions paramter.
-     * @return This is the description of what the method returns.
-     * @throws SkyflowException This is the description for SkyflowException. 
+     * Updates the records in your vault by skyflow_id.
+     * @param records A JSONObject that must have a records key and takes an array of records to update as a value in the vault.
+     * @param updateOptions Additional parameters for the update.
+     * @return Returns the response of the update.
+     * @throws SkyflowException Throws an exception when we encounter any error scenario.
      */
     public JSONObject update(JSONObject records, UpdateOptions updateOptions) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.UpdateMethodCalled.getLog());
@@ -399,10 +399,10 @@ public final class Skyflow {
     }
 
     /**
-     * This is the description for invokeConnection method.
-     * @param connectionConfig This is the description of connectionConfig  paramter.
-     * @return This is the description of what the method returns.
-     * @throws SkyflowException This is the description for SkyflowException. 
+     * Integrates their server-side application with third party APIs and services without directly handling sensitive data.
+     * @param connectionConfig Configuration required to establish a connection.##
+     * @return Returns the connection response.
+     * @throws SkyflowException Throws an exception when we encounter any error scenario.
      */
     public JSONObject invokeConnection(JSONObject connectionConfig) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.InvokeConnectionCalled.getLog());

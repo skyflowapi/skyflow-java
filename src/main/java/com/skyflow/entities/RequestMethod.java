@@ -4,7 +4,7 @@
 package com.skyflow.entities;
 
 /**
- * This is the description for RequestMethod Enum.
+ * Supported request methods.
  */
 public enum RequestMethod {
     GET("GET"),
@@ -22,8 +22,8 @@ public enum RequestMethod {
     }
 
     /**
-     * This is the description for toString method.
-     * @return This is the description of what the method returns.
+     * Fetches the set request method type.
+     * @return Returns the request method type.
      */
     @Override
     public String toString() {

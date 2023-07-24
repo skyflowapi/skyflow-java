@@ -4,7 +4,7 @@
 package com.skyflow.entities;
 
 /**
- * This is the description for InsertOptions Class.
+ * Contains the additional parameters for the insert method.
  */
 public class InsertOptions {
 
@@ -36,8 +36,8 @@ public class InsertOptions {
     }
 
     /**
-     * @param tokens This is the description for tokens parameter.
-     * @param upsertOptions This is the description for upsertOptions parameter.
+     * @param tokens Indicates whether to return tokens for the collected data.
+     * @param upsertOptions To support upsert operations while collecting data from Skyflow Elements, you should pass the table and column marked as unique in the table.
      */
     public InsertOptions(boolean tokens, UpsertOption[] upsertOptions) {
         this.tokens = tokens;
@@ -45,16 +45,16 @@ public class InsertOptions {
     }
 
     /**
-     * This is the description for isTokens method.
-     * @return This is the description of what the method returns.
+     * Checks whether tokens are to be returned or not.
+     * @return Returns the value of tokens option.
      */
     public boolean isTokens() {
         return tokens;
     }
 
     /**
-     * This is the description for getUpsertOptions method.
-     * @return This is the description of what the method returns.
+     * Supports upsert operations while collecting data from Skyflow elements, when we pass the table and column marked as unique in the table.
+     * @return Returns the value of upsert options.
      */
     public UpsertOption[] getUpsertOptions() {
         return upsertOptions;

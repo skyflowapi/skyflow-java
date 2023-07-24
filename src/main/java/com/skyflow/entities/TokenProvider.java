@@ -6,13 +6,13 @@ package com.skyflow.entities;
 import com.skyflow.errors.SkyflowException;
 
 /**
- * This is the description for TokenProvider Interface.
+ * Defines the behavior of a class that provides a bearer token.
  */
 public interface TokenProvider {
     /**
-     * This is the description for getBearerToken method.
-     * @return This is the description of what the method returns.
-     * @throws Exception This is the description for Exception.
+     * Gets a bearer token.
+     * @return Returns the stringified bearer token.
+     * @throws Exception Throws an exception when we encounter any error scenario.
      */
     String getBearerToken() throws Exception;
 }

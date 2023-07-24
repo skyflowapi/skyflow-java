@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * This is the description for SignedDataTokens Class.
+ * Represents the SignedDataTokens utility, which is responsible for generating signed data tokens based on the provided credentials and data.
  */
 public class SignedDataTokens {
     private final File credentialsFile;
@@ -94,9 +94,9 @@ public class SignedDataTokens {
     }
 
     /**
-     * This is the description for getSignedDataTokens method.
-     * @return This is the description of what the method returns.
-     * @throws SkyflowException This is the description for SkyflowException. 
+     * Generates a list of signed data tokens.
+     * @return A list of SignedDataTokenResponse objects representing the signed data tokens.
+     * @throws SkyflowException Throws an exception when we encounter any error scenario.
      */
     public synchronized List<SignedDataTokenResponse> getSignedDataTokens() throws SkyflowException {
         List<SignedDataTokenResponse> signedToken = new ArrayList<>();

@@ -31,12 +31,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * This is the description for Token Class.
+ * Generate bearer tokens.
  */
 public final class  Token {
 
     /**
-     * @param filepath
+     * @param filepath Path to the Service Account Credential file.
      * @deprecated use generateBearerToken(string filepath), GenerateToken will be removed in future
      */
     @Deprecated
@@ -47,9 +47,9 @@ public final class  Token {
 
     /**
      * Generates a Bearer Token from the given Service Account Credential file with a default timeout of 60minutes.
-     * @param filepath This is the description for filepath parameter.
-     * @return This is the description of what the method returns.
-     * @throws SkyflowException This is the description for SkyflowException. 
+     * @param filepath The path to the Service Account Credential file.
+     * @return Returns an instance of ResponseToken.
+     * @throws SkyflowException Throws an exception when we encounter any error scenario.
      */
     public static ResponseToken generateBearerToken(String filepath) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.GenerateBearerTokenCalled.getLog());
@@ -84,8 +84,8 @@ public final class  Token {
     /**
      * Generates a Bearer Token from the given Service Account Credential json string with a default timeout of 60minutes.
      * @param credentials JSON string of credentials file
-     * @return This is the description of what the method returns.
-     * @throws SkyflowException This is the description for SkyflowException.
+     * @return Returns an instance of ResponseToken.
+     * @throws SkyflowException Throws an exception when we encounter any error scenario.
      */
     public static ResponseToken generateBearerTokenFromCreds(String credentials) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.GenerateBearerTokenFromCredsCalled.getLog());
@@ -111,8 +111,7 @@ public final class  Token {
     }
 
     /**
-     * getSATokenFromCredsFile gets bearer token from service account endpoint
-     *
+     * Gets bearer token from service account endpoint.
      * @param creds
      */
     private static ResponseToken getSATokenFromCredsFile(JSONObject creds) throws SkyflowException {
@@ -211,10 +210,10 @@ public final class  Token {
     }
 
     /**
-     * This is the description for isExpired method.
-     * @param token This is the description of token paramter.
-     * @return This is the description of what the method returns.
-     * @throws SkyflowException This is the description for SkyflowException. 
+     * Checks whether the token is expired or not.
+     * @param token Value of the bearer token.
+     * @return Returns the boolean value indicating whether the token is expired or not.
+     * @throws SkyflowException Throws an exception when we encounter any error scenario.
      */
     public static boolean isExpired(String token) {
 

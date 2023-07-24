@@ -9,12 +9,12 @@ import com.skyflow.entities.LogLevel;
 import com.skyflow.logs.InfoLogs;
 
 /**
- * This is the description for Configuration Class.
+ * Configuration for the skyflow client.
  */
 public final class Configuration {
     /**
-     * This is the description for setLogLevel method.
-     * @param level This is the description of level paramter. 
+     * Sets the log level for the client.
+     * @param level Required log level.
      */
     public static void setLogLevel(LogLevel level) {
         LogUtil.setupLogger(level);

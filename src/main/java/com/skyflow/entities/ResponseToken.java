@@ -4,39 +4,39 @@
 package com.skyflow.entities;
 
 /**
- * This is the description for ResponseToken Class.
+ * Stores the bearer token generated.
  */
 public class ResponseToken {
     private String accessToken;
     private String tokenType;
 
     /**
-     * This is the description for getAccessToken method.
-     * @return This is the description of what the method returns.
+     * Fetches the access token.
+     * @return Returns the access token.
      */
     public String getAccessToken() {
         return accessToken;
     }
 
     /**
-     * This is the description for setAccessToken method.
-     * @param accessToken This is the description of the accessToken parameter.
+     * Sets the access token.
+     * @param accessToken Value of the access token.
      */
     public void setAccessToken(String accessToken) {
         this.accessToken = accessToken;
     }
 
     /**
-     * This is the description for getTokenType method.
-     * @return This is the description of what the method returns.
+     * Gets the token type.
+     * @return Returns the token type.
      */
     public String getTokenType() {
         return tokenType;
     }
 
     /**
-     * This is the description for setTokenType method.
-     * @param tokenType This is the description of the tokenType parameter.
+     * Sets the token type.
+     * @param tokenType Type of the token.
      */
     public void setTokenType(String tokenType) {
         this.tokenType = tokenType;

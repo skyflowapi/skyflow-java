@@ -6,7 +6,7 @@ package com.skyflow.errors;
 import org.json.simple.JSONObject;
 
 /**
- * This is the description for SkyflowException Class.
+ * The exceptions thrown by the Skyflow sdk.## 
  */
 public final class SkyflowException extends Exception {
     private int code;
@@ -29,8 +29,8 @@ public final class SkyflowException extends Exception {
     }
 
     /**
-     * @param code This is the description of the code parameter.
-     * @param description This is the description of the description parameter.
+     * @param code Error code for the exception.
+     * @param description The description of the exception.
      * @ignore
      */
     public SkyflowException(int code, String description) {
@@ -56,16 +56,16 @@ public final class SkyflowException extends Exception {
     }
 
     /**
-     * This is the description for getCode method.
-     * @return This is the description of what the method returns.
+     *  Gets the code
+     * @return Returns the code.
      */
     public int getCode() {
         return code;
     }
 
     /**
-     * This is the description for setCode method.
-     * @param code This is the description of the code parameter.
+     *  Sets the code
+     * @return Type of the code.
      */
     void setCode(int code) {
         this.code = code;
@@ -73,16 +73,16 @@ public final class SkyflowException extends Exception {
 
 
     /**
-     * This is the description for getData method.
-     * @return This is the description of what the method returns.
+     * Gets the data
+     * @return Returns the data.
      */
     public JSONObject getData() {
         return data;
     }
 
     /**
-     * This is the description for setData method.
-     * @param data This is the description of the data parameter.
+     * Sets the data.
+     * @param data Type of the data.
      */
     void setData(JSONObject data) {
         this.data = data;

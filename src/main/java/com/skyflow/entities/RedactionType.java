@@ -4,7 +4,7 @@
 package com.skyflow.entities;
 
 /**
- * This is the description for RedactionType Enum.
+ * Supported redaction types.
  */
 public enum RedactionType {
     DEFAULT("DEFAULT"),
@@ -20,8 +20,8 @@ public enum RedactionType {
     }
 
     /**
-     * This is the description for toString method.
-     * @return This is the description of what the method returns.
+     * Fetchs the set redaction type.
+     * @return Returns the redaction type.
      */
     @Override
     public String toString() {

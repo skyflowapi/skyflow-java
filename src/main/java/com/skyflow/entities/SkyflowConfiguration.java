@@ -4,7 +4,7 @@
 package com.skyflow.entities;
 
 /**
- * This is the description for SkyflowConfiguration Class.
+ * Contains the parameters required for Skyflow client initialisation.
  */
 public final class SkyflowConfiguration {
     private final String vaultID;
@@ -13,9 +13,9 @@ public final class SkyflowConfiguration {
 
     /**
      *
-     * @param vaultID vaultID is the Skyflow vaultID, which can be found in EditVault Details.
-     * @param vaultURL vaultURL is the vaultURL, which can be found in EditVault Details.
-     * @param tokenProvider tokenProvider class which implements the TokenProvider interface.
+     * @param vaultID Unique ID of a vault.
+     * @param vaultURL URL of the vault.
+     * @param tokenProvider An implementation of the token provider interface.
      */
     public SkyflowConfiguration(String vaultID, String vaultURL, TokenProvider tokenProvider) {
         this.vaultID = vaultID;
@@ -32,24 +32,24 @@ public final class SkyflowConfiguration {
     }
 
     /**
-     * This is the description for getVaultID method.
-     * @return This is the description of what the method returns.
+     * Fetches the vault ID.
+     * @return Returns the vault ID.
      */
     public String getVaultID() {
         return vaultID;
     }
 
     /**
-     * This is the description for getVaultURL method.
-     * @return This is the description of what the method returns.
+     * Fetches the vault URL.
+     * @return Returns the vault URL.
      */
     public String getVaultURL() {
         return vaultURL;
     }
 
     /**
-     * This is the description for getTokenProvider method.
-     * @return This is the description of what the method returns.
+     * Fetches the token provider.
+     * @return Returns the token provider.
      */
     public TokenProvider getTokenProvider() {
         return tokenProvider;
