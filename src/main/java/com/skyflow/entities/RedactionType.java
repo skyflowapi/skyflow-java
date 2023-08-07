@@ -3,6 +3,9 @@
 */
 package com.skyflow.entities;
 
+/**
+ * Supported redaction types.
+ */
 public enum RedactionType {
     DEFAULT("DEFAULT"),
     PLAIN_TEXT("PLAIN_TEXT"),
@@ -16,6 +19,10 @@ public enum RedactionType {
         this.text = text;
     }
 
+    /**
+     * Fetchs the set redaction type.
+     * @return Returns the redaction type.
+     */
     @Override
     public String toString() {
         return text;

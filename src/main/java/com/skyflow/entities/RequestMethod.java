@@ -3,6 +3,9 @@
 */
 package com.skyflow.entities;
 
+/**
+ * Supported request methods.
+ */
 public enum RequestMethod {
     GET("GET"),
     POST("POST"),
@@ -18,6 +21,10 @@ public enum RequestMethod {
         this.requestMethod = requestMethod;
     }
 
+    /**
+     * Retrieves the set request method type.
+     * @return Returns the request method type.
+     */
     @Override
     public String toString() {
         return requestMethod;

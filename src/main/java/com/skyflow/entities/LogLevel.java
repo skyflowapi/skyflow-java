@@ -3,6 +3,9 @@
 */
 package com.skyflow.entities;
 
+/**
+ * Supported log levels.
+ */
 public enum LogLevel {
     DEBUG,
     INFO,

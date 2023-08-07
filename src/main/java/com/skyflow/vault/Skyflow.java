@@ -26,6 +26,9 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 
+/**
+ * The parent Skyflow class consists of all the methods exposed to the client.
+ */
 public final class Skyflow {
     private final SkyflowConfiguration configuration;
 
@@ -34,18 +37,44 @@ public final class Skyflow {
         LogUtil.printInfoLog(InfoLogs.InitializedClient.getLog());
     }
 
+    /**
+     * Initialises Skyflow client.
+     * @param clientConfig The configuration required for Skyflow client initialisation.
+     * @return Returns an instance of Skyflow client.
+     * @throws SkyflowException Throws an exception when encountering any error scenario.
+     */
     public static Skyflow init(SkyflowConfiguration clientConfig) throws SkyflowException {
         return new Skyflow(clientConfig);
     }
 
+
+    /**
+     * Inserts data into the vault.
+     * @param records Records to insert.
+     * @return Returns the insert response.
+     * @throws SkyflowException Throws an exception when encountering any error scenario.
+     */
     public JSONObject insert(JSONObject records) throws SkyflowException {
         return insert(records, new InsertOptions(true));
     }
 
+    /**
+     * Updates the records in your vault by skyflow_id.
+     * @param records Records to update.
+     * @return Returns the response for the update operation.
+     * @throws SkyflowException Throws an exception when encountering any error scenario.
+     */
     public JSONObject update(JSONObject records) throws SkyflowException {
         return update(records, new UpdateOptions(true));
     }
 
+    /**
+     * Inserts data into the vault.
+     * @param records Records to insert.
+     * @param insertOptions Additional options for insert method/request.
+     * @return Returns the insert response.
+     * @throws SkyflowException Throws an exception when encountering any error scenario.
+     */
     public JSONObject insert(JSONObject records, InsertOptions insertOptions) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.InsertMethodCalled.getLog());
         Validators.validateConfiguration(configuration);
@@ -78,6 +107,12 @@ public final class Skyflow {
         return insertResponse;
     }
 
+    /**
+     * Returns values that correspond to the specified tokens.
+     * @param records Records to fetch.
+     * @return Tokens to return values for.
+     * @throws SkyflowException Throws an exception when encountering any error scenario.
+     */
     public JSONObject detokenize(JSONObject records) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.DetokenizeMethodCalled.getLog());
         Validators.validateConfiguration(configuration);
@@ -141,6 +176,12 @@ public final class Skyflow {
         return finalResponse;
     }
 
+    /**
+     * Reveals records by Skyflow ID.
+     * @param getByIdInput Skyflow IDs.
+     * @return Returns the specified records and any errors.
+     * @throws SkyflowException Throws an exception when encountering any error scenario.
+     */
     public JSONObject getById(JSONObject getByIdInput) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.GetByIdMethodCalled.getLog());
         Validators.validateConfiguration(configuration);
@@ -210,6 +251,12 @@ public final class Skyflow {
         return finalResponse;
     }
 
+    /**
+     * Returns records by Skyflow IDs or column values.
+     * @param getInput Identifiers for the records.
+     * @return Returns the specified records and any errors.
+     * @throws SkyflowException Throws an exception when encountering any error scenario.
+     */
     public JSONObject get(JSONObject getInput) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.GetMethodCalled.getLog());
         Validators.validateConfiguration(configuration);
@@ -279,6 +326,13 @@ public final class Skyflow {
         return finalResponse;
     }
 
+    /**
+     * Returns records by Skyflow IDs.
+     * @param records Records to update.
+     * @param updateOptions Additional parameters for the update method.
+     * @return Returns the response of the update method.
+     * @throws SkyflowException Throws an exception when encountering any error scenario.
+     */
     public JSONObject update(JSONObject records, UpdateOptions updateOptions) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.UpdateMethodCalled.getLog());
         Validators.validateConfiguration(configuration);
@@ -344,6 +398,12 @@ public final class Skyflow {
 
     }
 
+    /**
+     * Integrates their server-side application with third party APIs and services without directly handling sensitive data.
+     * @param connectionConfig Configuration required to establish a connection.##
+     * @return Returns the connection response.
+     * @throws SkyflowException Throws an exception when encountering any error scenario.
+     */
     public JSONObject invokeConnection(JSONObject connectionConfig) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.InvokeConnectionCalled.getLog());
         JSONObject connectionResponse;

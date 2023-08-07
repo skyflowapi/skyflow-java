@@ -5,6 +5,14 @@ package com.skyflow.entities;
 
 import com.skyflow.errors.SkyflowException;
 
+/**
+ * Defines the behavior of a class that provides a bearer token.
+ */
 public interface TokenProvider {
+    /**
+     * Gets a bearer token.
+     * @return Returns the stringified bearer token.
+     * @throws Exception Throws an exception when encountering any error scenario.
+     */
     String getBearerToken() throws Exception;
 }
