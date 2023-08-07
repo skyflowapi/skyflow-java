@@ -31,7 +31,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Generate bearer tokens.
+ * Generates and handles bearer tokens for service accounts.
  */
 public final class  Token {
 
@@ -49,7 +49,7 @@ public final class  Token {
      * Generates a Bearer Token from the given Service Account Credential file with a default timeout of 60minutes.
      * @param filepath The path to the Service Account Credential file.
      * @return Returns an instance of ResponseToken.
-     * @throws SkyflowException Throws an exception when we encounter any error scenario.
+     * @throws SkyflowException Throws an exception when encountering any error scenario.
      */
     public static ResponseToken generateBearerToken(String filepath) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.GenerateBearerTokenCalled.getLog());
@@ -85,7 +85,7 @@ public final class  Token {
      * Generates a Bearer Token from the given Service Account Credential json string with a default timeout of 60minutes.
      * @param credentials JSON string of credentials file
      * @return Returns an instance of ResponseToken.
-     * @throws SkyflowException Throws an exception when we encounter any error scenario.
+     * @throws SkyflowException Throws an exception when encountering any error scenario.
      */
     public static ResponseToken generateBearerTokenFromCreds(String credentials) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.GenerateBearerTokenFromCredsCalled.getLog());
@@ -112,7 +112,7 @@ public final class  Token {
 
     /**
      * Gets bearer token from service account endpoint.
-     * @param creds
+     * @param creds The Service Account Credential JSON object.
      */
     private static ResponseToken getSATokenFromCredsFile(JSONObject creds) throws SkyflowException {
         ResponseToken responseToken = null;
@@ -213,7 +213,7 @@ public final class  Token {
      * Checks whether the token is expired or not.
      * @param token Value of the bearer token.
      * @return Returns the boolean value indicating whether the token is expired or not.
-     * @throws SkyflowException Throws an exception when we encounter any error scenario.
+     * @throws SkyflowException Throws an exception when encountering any error scenario.
      */
     public static boolean isExpired(String token) {
 

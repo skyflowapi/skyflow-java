@@ -22,7 +22,7 @@ public enum RequestMethod {
     }
 
     /**
-     * Fetches the set request method type.
+     * Retrieves the set request method type.
      * @return Returns the request method type.
      */
     @Override

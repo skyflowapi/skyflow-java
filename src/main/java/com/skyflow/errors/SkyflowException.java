@@ -6,7 +6,7 @@ package com.skyflow.errors;
 import org.json.simple.JSONObject;
 
 /**
- * The exceptions thrown by the Skyflow sdk.## 
+ * Exceptions thrown by the Skyflow SDK.
  */
 public final class SkyflowException extends Exception {
     private int code;
@@ -56,7 +56,7 @@ public final class SkyflowException extends Exception {
     }
 
     /**
-     *  Gets the code
+     *  Gets the code.
      * @return Returns the code.
      */
     public int getCode() {
@@ -64,7 +64,7 @@ public final class SkyflowException extends Exception {
     }
 
     /**
-     *  Sets the code
+     *  Sets the code.
      * @return Type of the code.
      */
     void setCode(int code) {
@@ -73,7 +73,7 @@ public final class SkyflowException extends Exception {
 
 
     /**
-     * Gets the data
+     * Gets the data.
      * @return Returns the data.
      */
     public JSONObject getData() {

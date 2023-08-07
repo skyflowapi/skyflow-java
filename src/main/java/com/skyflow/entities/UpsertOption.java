@@ -11,8 +11,8 @@ public class UpsertOption {
     private String column;
 
     /**
-     * @param table Data belongs to the table.
-     * @param column Name of the unique column.
+     * @param table Table that the data belongs to.
+     * @param column Column that the data belongs to.
      */
     public UpsertOption(String table, String column) {
         this.table = table;
@@ -20,7 +20,7 @@ public class UpsertOption {
     }
 
     /**
-     * Gets the table
+     * Gets the table.
      * @return Returns the table.
      */
     public String getTable() {
@@ -28,7 +28,7 @@ public class UpsertOption {
     }
 
     /**
-     * Gets the column
+     * Gets the column.
      * @return Returns the column.
      */
     public String getColumn() {

@@ -13,8 +13,8 @@ public final class SkyflowConfiguration {
 
     /**
      *
-     * @param vaultID Unique ID of a vault.
-     * @param vaultURL URL of the vault.
+     * @param vaultID ID of the vault to connect to.
+     * @param vaultURL URL of the vault to connect to.
      * @param tokenProvider An implementation of the token provider interface.
      */
     public SkyflowConfiguration(String vaultID, String vaultURL, TokenProvider tokenProvider) {
@@ -32,7 +32,7 @@ public final class SkyflowConfiguration {
     }
 
     /**
-     * Fetches the vault ID.
+     * Retrieves the vault ID.
      * @return Returns the vault ID.
      */
     public String getVaultID() {
@@ -40,7 +40,7 @@ public final class SkyflowConfiguration {
     }
 
     /**
-     * Fetches the vault URL.
+     * Retrieves the vault URL.
      * @return Returns the vault URL.
      */
     public String getVaultURL() {
@@ -48,7 +48,7 @@ public final class SkyflowConfiguration {
     }
 
     /**
-     * Fetches the token provider.
+     * Retrieves the token provider.
      * @return Returns the token provider.
      */
     public TokenProvider getTokenProvider() {

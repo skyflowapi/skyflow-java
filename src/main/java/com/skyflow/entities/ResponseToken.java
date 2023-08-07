@@ -11,7 +11,7 @@ public class ResponseToken {
     private String tokenType;
 
     /**
-     * Fetches the access token.
+     * Retrieves the access token.
      * @return Returns the access token.
      */
     public String getAccessToken() {

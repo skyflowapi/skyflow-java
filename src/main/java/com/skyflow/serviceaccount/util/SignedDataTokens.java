@@ -96,7 +96,7 @@ public class SignedDataTokens {
     /**
      * Generates a list of signed data tokens.
      * @return A list of SignedDataTokenResponse objects representing the signed data tokens.
-     * @throws SkyflowException Throws an exception when we encounter any error scenario.
+     * @throws SkyflowException Throws an exception when encountering any error scenario.
      */
     public synchronized List<SignedDataTokenResponse> getSignedDataTokens() throws SkyflowException {
         List<SignedDataTokenResponse> signedToken = new ArrayList<>();

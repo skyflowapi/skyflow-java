@@ -37,7 +37,7 @@ public class InsertOptions {
 
     /**
      * @param tokens Indicates whether to return tokens for the collected data.
-     * @param upsertOptions To support upsert operations while collecting data from Skyflow Elements, you should pass the table and column marked as unique in the table.
+     * @param upsertOptions Upsert configuration for the element.
      */
     public InsertOptions(boolean tokens, UpsertOption[] upsertOptions) {
         this.tokens = tokens;

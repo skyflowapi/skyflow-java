@@ -13,7 +13,7 @@ import com.skyflow.logs.InfoLogs;
  */
 public final class Configuration {
     /**
-     * Sets the log level for the client.
+     * Sets log level for the client.
      * @param level Required log level.
      */
     public static void setLogLevel(LogLevel level) {

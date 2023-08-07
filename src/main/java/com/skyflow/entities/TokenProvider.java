@@ -12,7 +12,7 @@ public interface TokenProvider {
     /**
      * Gets a bearer token.
      * @return Returns the stringified bearer token.
-     * @throws Exception Throws an exception when we encounter any error scenario.
+     * @throws Exception Throws an exception when encountering any error scenario.
      */
     String getBearerToken() throws Exception;
 }
