@@ -13,6 +13,7 @@ public enum InfoLogs {
     ValidatingInvokeConnectionConfig("validating invoke connection configuration"),
     InsertMethodCalled("insert method has triggered"),
     UpdateMethodCalled("update method has triggered"),
+    deleteMethodCalled("delete method has triggered"),
     ConstructInsertResponse("constructing insert response"),
     ConstructUpdateResponse("constructing update response"),
     DetokenizeMethodCalled("detokenize method has triggered"),

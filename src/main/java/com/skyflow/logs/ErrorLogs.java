@@ -9,6 +9,7 @@ public enum ErrorLogs {
     InvalidTokenProvider("invalid TokenProvider. TokenProvider cannot be null"),
     InvalidInsertInput("invalid insert input"),
     InvalidUpdateInput("invalid update input"),
+    InvalidDeleteInput("invalid delete input"),
     InvalidDetokenizeInput("invalid detokenize input"),
     ResponseParsingError("Unable to parse response in %s1 method"),
     ThreadInterruptedException("Thread was interrupted in %s1 method"),
@@ -38,6 +39,8 @@ public enum ErrorLogs {
     BearerThrownException("getBearer() thrown exception "),
     InvalidBearerToken("Invalid Bearer token"),
     InvalidTable("Table name is missing"),
+    InvalidId("Skyflow id is missing"),
+
     Server("Internal server error"),
     ServerReturnedErrors("Server returned errors, check SkyflowException.getData() for more"),
     InvalidUpsertOptionType("upsert options cannot be null, should be an non empty UpsertOption array."),
