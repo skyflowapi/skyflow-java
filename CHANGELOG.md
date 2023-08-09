@@ -1,6 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.10.0] - 2023-08-09
+- Added `delete` vault API support. 
 ## [1.9.0] - 2023-06-08
 ### Added
 - `redaction` key for detokenize method for column group support.

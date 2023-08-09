@@ -1,7 +1,6 @@
-//	Copyright (c) 2022 Skyflow, Inc.
-//
-//package com.skyflow;
-//
+/*
+	Copyright (c) 2023 Skyflow, Inc. 
+*/
 import com.skyflow.entities.ResponseToken;
 import com.skyflow.entities.SkyflowConfiguration;
 import com.skyflow.entities.TokenProvider;
