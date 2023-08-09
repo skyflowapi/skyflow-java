@@ -20,16 +20,17 @@ The Skyflow Java SDK is designed to help with integrating Skyflow into a Java ba
   - [Service Account Scoped Bearer Token Generation](#service-account-scoped-bearer-token-generation)
   - [Signed Data Tokens Generation](#signed-data-tokens-generation)
   - [Vault APIs](#vault-apis)
-  - [Insert](#insert)
-  - [Detokenize](#detokenize)
-  - [Get](#get)
-    - [Use Skyflow IDs](#use-skyflow-ids)
-    - [Use column name and values](#use-column-name-and-values)
-    - [Redaction types](#redaction-types)
-    - [Examples](#examples)
-  - [GetById](#getbyid)
-  - [Update](#update)
-  - [Invoke Connection](#invoke-connection)
+    - [Insert](#insert)
+    - [Detokenize](#detokenize)
+    - [Get](#get)
+      - [Use Skyflow IDs](#use-skyflow-ids)
+      - [Use column name and values](#use-column-name-and-values)
+      - [Redaction types](#redaction-types)
+      - [Examples](#examples)
+    - [GetById](#getbyid)
+    - [Update](#update)
+    - [Delete](#delete)
+    - [Invoke Connection](#invoke-connection)
   - [Logging](#logging)
   - [Reporting a Vulnerability](#reporting-a-vulnerability)
 
@@ -50,7 +51,7 @@ The Skyflow Java SDK is designed to help with integrating Skyflow into a Java ba
 
 Add this dependency to your project's build file:
 ```
-implementation 'com.skyflow:skyflow-java:1.8.2'
+implementation 'com.skyflow:skyflow-java:1.10.0'
 ```
 
 #### Maven users
@@ -60,7 +61,7 @@ Add this dependency to your project's POM:
     <dependency>
         <groupId>com.skyflow</groupId>
         <artifactId>skyflow-java</artifactId>
-        <version>1.9.0</version>
+        <version>1.10.0</version>
     </dependency>
 ```
 ---
@@ -830,6 +831,65 @@ Response:
            "table": "cards"
        }
    ]
+}
+```
+
+## Delete
+To delete data from the vault, use the `delete(records, options?)` method of the Skyflow client. The `records` parameter takes an array of records to delete in the following format. The `options` parameter is optional and takes an object of deletion parameters. Currently, there are no supported deletion parameters.
+
+Call schema:
+
+```java
+JSONObject records = new JSONObject();
+JSONArray recordsArray = new JSONArray();
+
+JSONObject record = new JSONObject();
+
+record.put("id", "<SKYFLOW_ID_1>");
+record.put("table", "<TABLE_NAME>");
+recordsArray.add(record);
+records.put("records", recordsArray);
+
+skyflowClient.delete(records);
+```
+
+An example of delete call:
+```java
+JSONObject records = new JSONObject();
+JSONArray recordsArray = new JSONArray();
+
+JSONObject record = new JSONObject();
+record.put("id", "71be4592-b9af-4dec-8669-5b9c926afb4c");
+record.put("table", "cards");
+recordsArray.add(record);
+        
+JSONObject record2 = new JSONObject();
+record2.put("id", "2adf32e7-9a04-408e-b8bb-5b0a852422e0");
+record2.put("table", "cards");
+recordsArray.add(record2);
+
+records.put("records", recordsArray);
+
+try {
+     JSONObject response = skyflowClient.delete(records);
+} catch (SkyflowException e) {
+     e.printStackTrace();
+     System.out.println("error"+ e.getData());
+}
+```
+Response:
+```json
+{
+  "records": [
+    {
+     "skyflow_id": "71be4592-b9af-4dec-8669-5b9c926afb4c",
+     "deleted": true,
+    },
+    {
+     "skyflow_id": "2adf32e7-9a04-408e-b8bb-5b0a852422e0",
+     "deleted": true,
+    }
+  ]
 }
 ```
 
