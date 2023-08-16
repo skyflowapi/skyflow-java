@@ -1,7 +1,7 @@
 package com.skyflow.entities;
 
 /**
- * Contains additional parameters for the update method.
+ * Additional parameters for the update method.
  */
 public class UpdateOptions {
     private boolean tokens;
@@ -21,7 +21,7 @@ public class UpdateOptions {
     }
 
     /**
-     * Checks whether tokens are to be returned or not.
+     * Checks whether or not to return tokens.
      * @return Returns the value of tokens option.
      */
     public boolean isTokens() {

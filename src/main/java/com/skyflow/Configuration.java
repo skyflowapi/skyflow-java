@@ -9,7 +9,7 @@ import com.skyflow.entities.LogLevel;
 import com.skyflow.logs.InfoLogs;
 
 /**
- * Configuration for the skyflow client.
+ * Configuration for the Skyflow client.
  */
 public final class Configuration {
     /**

@@ -38,7 +38,7 @@ public final class Skyflow {
     }
 
     /**
-     * Initialises Skyflow client.
+     * Initializes a Skyflow client.
      * @param clientConfig The configuration required for Skyflow client initialisation.
      * @return Returns an instance of Skyflow client.
      * @throws SkyflowException Throws an exception when encountering any error scenario.
@@ -399,8 +399,8 @@ public final class Skyflow {
     }
 
     /**
-     * Integrates their server-side application with third party APIs and services without directly handling sensitive data.
-     * @param connectionConfig Configuration required to establish a connection.##
+     * Invokes a connection to a third-party service.
+     * @param connectionConfig Configuration required to establish a connection.
      * @return Returns the connection response.
      * @throws SkyflowException Throws an exception when encountering any error scenario.
      */

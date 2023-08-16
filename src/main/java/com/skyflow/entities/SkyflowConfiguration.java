@@ -4,7 +4,7 @@
 package com.skyflow.entities;
 
 /**
- * Contains the parameters required for Skyflow client initialisation.
+ * Configuration for the Skyflow client.
  */
 public final class SkyflowConfiguration {
     private final String vaultID;

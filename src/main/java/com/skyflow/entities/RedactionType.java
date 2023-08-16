@@ -20,7 +20,7 @@ public enum RedactionType {
     }
 
     /**
-     * Fetchs the set redaction type.
+     * Gets the redaction type.
      * @return Returns the redaction type.
      */
     @Override

@@ -4,7 +4,7 @@
 package com.skyflow.entities;
 
 /**
- * Contains the parameters for the upsert operation.
+ * Parameters for upsert.
  */
 public class UpsertOption {
     private String table;

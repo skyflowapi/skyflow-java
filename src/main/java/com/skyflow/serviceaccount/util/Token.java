@@ -36,7 +36,7 @@ import java.util.Map;
 public final class  Token {
 
     /**
-     * @param filepath Path to the Service Account Credential file.
+     * @param filepath Path to the service account credentials file.
      * @deprecated use generateBearerToken(string filepath), GenerateToken will be removed in future
      */
     @Deprecated
@@ -47,7 +47,7 @@ public final class  Token {
 
     /**
      * Generates a Bearer Token from the given Service Account Credential file with a default timeout of 60minutes.
-     * @param filepath The path to the Service Account Credential file.
+     * @param filepath Path to the service account credentials file.
      * @return Returns an instance of ResponseToken.
      * @throws SkyflowException Throws an exception when encountering any error scenario.
      */

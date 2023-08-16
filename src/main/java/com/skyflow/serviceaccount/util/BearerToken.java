@@ -29,7 +29,7 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * Contains methods and parameters to generate a bearer token.
+ * Methods and parameters to generate bearer tokens.
  */
 public class BearerToken {
     private final File credentialsFile;

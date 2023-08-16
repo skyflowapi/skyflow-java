@@ -4,7 +4,7 @@
 package com.skyflow.entities;
 
 /**
- * Stores the bearer token generated.
+ * Stores the generated bearer token.
  */
 public class ResponseToken {
     private String accessToken;
