@@ -16,6 +16,8 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.Mockito;
+import static org.mockito.Mockito.*;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentMatchers;
 import org.powermock.api.mockito.PowerMockito;
@@ -482,6 +484,35 @@ public class SkyflowTest {
         }
     }
     @Test
+    @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility", "com.skyflow.common.utils.TokenUtils"})
+    public void testQuerySuccess() {
+        try {
+            SkyflowConfiguration config = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider());
+            Skyflow skyflowClient = Skyflow.init(config);
+
+            JSONObject records = new JSONObject();
+            JSONArray recordsArray = new JSONArray();
+
+            JSONObject queryInput = new JSONObject();
+            queryInput.put("query", "SELECT * FROM users");
+            recordsArray.add(queryInput);
+
+            records.put("records", recordsArray);
+
+            PowerMockito.mockStatic(HttpUtility.class);
+            String mockResponse = "{\"response_key\":\"response_value\"}";
+            PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockResponse);
+            JSONObject response = skyflowClient.query(records, new QueryOptions());
+            assertNotNull(response);
+        } catch (SkyflowException skyflowException) {
+            skyflowException.printStackTrace();
+            fail(INVALID_EXCEPTION_THROWN);
+        } catch (IOException e) {
+            e.printStackTrace();
+            fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+    @Test
     public void testQueryEmptyRecords() {
         try {
             SkyflowConfiguration config = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider());
@@ -617,6 +648,21 @@ public class SkyflowTest {
                 jsonMessage
         );
         JSONObject result = Helpers.constructQueryErrorObject(skyflowException);
+    }
+    @Test
+    public void testConstructQueryRequest() throws SkyflowException {
+        QueryInput recordsInput = new QueryInput();
+        QueryRecordInput[] records = new QueryRecordInput[1];
+        QueryRecordInput record = new QueryRecordInput();
+        record.setQuery("SELECT * FROM users");
+        records[0] = record;
+        recordsInput.setRecords(records);
+
+        QueryOptions options = new QueryOptions();
+
+        JSONObject result = Helpers.constructQueryRequest(recordsInput, options);
+        assertTrue(result.containsKey("query"));
+        assertEquals("SELECT * FROM users", result.get("query"));
     }
     @Test
     @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility", "com.skyflow.common.utils.TokenUtils"})
