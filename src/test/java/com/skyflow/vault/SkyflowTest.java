@@ -666,6 +666,72 @@ public class SkyflowTest {
     }
     @Test
     @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility", "com.skyflow.common.utils.TokenUtils"})
+    public void testQueryIOException() {
+        try {
+            SkyflowConfiguration config = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider());
+            Skyflow skyflowClient = Skyflow.init(config);
+
+            JSONObject records = new JSONObject();
+            JSONArray recordsArray = new JSONArray();
+            JSONObject queryRecord = new JSONObject();
+            queryRecord.put("query", "SELECT * FROM table");
+            recordsArray.add(queryRecord);
+            records.put("records", recordsArray);
+
+            QueryOptions queryOptions = new QueryOptions();
+
+
+            PowerMockito.mockStatic(HttpUtility.class);
+            PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenThrow(new IOException());
+
+            try {
+                skyflowClient.query(records, queryOptions);
+                fail("Expected SkyflowException to be thrown");
+            } catch (SkyflowException e) {
+                assertEquals(ErrorCode.InvalidQueryInput.getCode(), e.getCode());
+            }
+        } catch (SkyflowException e) {
+            fail("Caught unexpected SkyflowException: " + e.getMessage());
+        } catch (IOException ioException) {
+            fail("Caught unexpected IOException: " + ioException.getMessage());
+        }
+    }
+
+    @Test
+    @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility", "com.skyflow.common.utils.TokenUtils"})
+    public void testQueryParseException() {
+        try {
+            SkyflowConfiguration config = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider());
+            Skyflow skyflowClient = Skyflow.init(config);
+
+            JSONObject records = new JSONObject();
+
+            JSONArray recordsArray = new JSONArray();
+            JSONObject queryRecord = new JSONObject();
+            queryRecord.put("query", "SELECT * FROM table");
+            recordsArray.add(queryRecord);
+            records.put("records", recordsArray);
+
+            QueryOptions queryOptions = new QueryOptions();
+
+            PowerMockito.mockStatic(HttpUtility.class);
+            String mockResponse = "Invalid JSON";
+            PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockResponse);
+
+            try {
+                skyflowClient.query(records, queryOptions);
+                fail("Expected SkyflowException to be thrown");
+            } catch (SkyflowException e) {
+                assertEquals(ErrorCode.ResponseParsingError.getCode(), e.getCode());
+            }
+        } catch (SkyflowException e) {
+            fail("Caught unexpected SkyflowException: " + e.getMessage());
+        } catch (IOException e) {
+            fail("Caught unexpected IOException: " + e.getMessage());
+        }
+    }
+    @Test
+    @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility", "com.skyflow.common.utils.TokenUtils"})
     public void testDetokenizeSuccess() {
         try {
             SkyflowConfiguration config = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider());
