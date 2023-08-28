@@ -103,6 +103,46 @@ public final class Helpers {
         return postRequestInput;
 
     }
+    public static JSONObject constructQueryRequest(QueryInput recordsInput, QueryOptions options)
+            throws SkyflowException {
+        QueryRecordInput[] records = recordsInput.getRecords();
+        if (records == null || records.length == 0) {
+            throw new SkyflowException(ErrorCode.EmptyRecords);
+        }
+        QueryRecordInput record = new QueryRecordInput();
+        JSONObject postRequestInput = new JSONObject();
+        for (int i = 0; i < records.length; i++) {
+            record = records[i];
+            if (record.getQuery() == null||record.getQuery().trim().isEmpty()) {
+                throw new SkyflowException(ErrorCode.InvalidQuery);
+            }
+            if (record.getQuery().contains("[")) {
+                throw new SkyflowException(ErrorCode.InvalidQueryType);
+            }
+            postRequestInput.put("query", record.getQuery());
+        }
+        return postRequestInput;
+    }
+
+    public static JSONObject constructQueryErrorObject(SkyflowException skyflowException) {
+        JSONObject finalResponseError = new JSONObject();
+        try {
+            JSONObject errorObject = (JSONObject) ((JSONObject) new JSONParser().parse(skyflowException.getMessage())).get("error");
+            if (errorObject != null) {
+                JSONObject responseError = new JSONObject();
+                responseError.put("code", errorObject.get("http_code"));
+                responseError.put("description", errorObject.get("message"));
+                finalResponseError.put("error", responseError);
+            }
+        } catch (ParseException e) {
+            JSONObject responseError = new JSONObject();
+            responseError.put("code", skyflowException.getCode());
+            responseError.put("description", skyflowException.getMessage());
+            finalResponseError.put("error", responseError);
+
+        }
+        return finalResponseError;
+    }
 
     public static StringBuilder constructGetByIdRequestURLParams(GetByIdRecordInput record) {
         StringBuilder paramsList = new StringBuilder();

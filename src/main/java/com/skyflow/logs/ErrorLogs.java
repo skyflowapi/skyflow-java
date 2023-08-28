@@ -11,6 +11,7 @@ public enum ErrorLogs {
     InvalidUpdateInput("invalid update input"),
     InvalidDeleteInput("invalid delete input"),
     InvalidDetokenizeInput("invalid detokenize input"),
+    InvalidQueryInput("Invalid query input"),
     ResponseParsingError("Unable to parse response in %s1 method"),
     ThreadInterruptedException("Thread was interrupted in %s1 method"),
     ThreadExecutionException("ThreadExecution exception in %s1 method"),
@@ -40,6 +41,7 @@ public enum ErrorLogs {
     InvalidBearerToken("Invalid Bearer token"),
     InvalidTable("Table name is missing"),
     InvalidId("Skyflow id is missing"),
+    InvalidQuery("Query is missing"),
 
     Server("Internal server error"),
     ServerReturnedErrors("Server returned errors, check SkyflowException.getData() for more"),
