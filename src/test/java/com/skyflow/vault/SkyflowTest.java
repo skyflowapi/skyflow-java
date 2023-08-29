@@ -670,6 +670,26 @@ public class SkyflowTest {
         }
     }
     @Test
+    public void testGetAndSetRecords() {
+        QueryRecordInput inputRecord = new QueryRecordInput();
+        QueryInput queryInput = new QueryInput();
+
+        assertNull(queryInput.getRecords());
+
+        queryInput.setRecords(inputRecord);
+        assertEquals(inputRecord, queryInput.getRecords());
+    }
+    @Test
+    public void testGetAndSetQuery() {
+        QueryRecordInput queryRecordInput = new QueryRecordInput();
+        assertNull(queryRecordInput.getQuery());
+
+        String testQuery = "SELECT * FROM table";
+        queryRecordInput.setQuery(testQuery);
+        assertEquals(testQuery, queryRecordInput.getQuery());
+    }
+
+    @Test
     @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility", "com.skyflow.common.utils.TokenUtils"})
     public void testDetokenizeSuccess() {
         try {
