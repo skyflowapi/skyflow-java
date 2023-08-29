@@ -24,8 +24,6 @@ public enum ErrorCode {
     InvalidFields(400, "Fields are missing"),
     InvalidQueryInput(400, "Invalid query input"),
     InvalidQuery(400, "Query is missing"),
-    InvalidQueryType(400, "Invalid query type"),
-    InvalidQueryKey(400, "Missing 'query' key"),
     InvalidSkyflowId(400, "Skyflow id are missing"),
     InvalidToken(400, "Token is empty"),
     InvalidDetokenizeInput(400, "Invalid Detokenize Input"),

@@ -103,24 +103,16 @@ public final class Helpers {
         return postRequestInput;
 
     }
-    public static JSONObject constructQueryRequest(QueryInput recordsInput, QueryOptions options)
+    public static JSONObject constructQueryRequest(QueryRecordInput queryInput, QueryOptions options)
             throws SkyflowException {
-        QueryRecordInput[] records = recordsInput.getRecords();
-        if (records == null || records.length == 0) {
+        if (queryInput == null) {
             throw new SkyflowException(ErrorCode.EmptyRecords);
         }
-        QueryRecordInput record = new QueryRecordInput();
         JSONObject postRequestInput = new JSONObject();
-        for (int i = 0; i < records.length; i++) {
-            record = records[i];
-            if (record.getQuery() == null||record.getQuery().trim().isEmpty()) {
+            if (queryInput.getQuery() == null||queryInput.getQuery().trim().isEmpty()) {
                 throw new SkyflowException(ErrorCode.InvalidQuery);
             }
-            if (record.getQuery().contains("[")) {
-                throw new SkyflowException(ErrorCode.InvalidQueryType);
-            }
-            postRequestInput.put("query", record.getQuery());
-        }
+        postRequestInput.put("query", queryInput.getQuery());
         return postRequestInput;
     }
 

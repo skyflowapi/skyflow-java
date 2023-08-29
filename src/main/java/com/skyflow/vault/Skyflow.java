@@ -447,27 +447,16 @@ public final class Skyflow {
         return connectionResponse;
     }
 
-    public JSONObject query(JSONObject records,QueryOptions queryOptions) throws SkyflowException {
+    public JSONObject query(JSONObject queryObject,QueryOptions queryOptions) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.QuerySupportCalled.getLog());
         Validators.validateConfiguration(configuration);
         LogUtil.printInfoLog(Helpers.parameterizedString(InfoLogs.ValidatedSkyflowConfiguration.getLog(), "query"));
         JSONObject queryResponse = null;
         try {
-            JSONArray recordsArray = (JSONArray) records.get("records");
-            Object queryObject = recordsArray.get(0);
-            JSONObject queryOJsonbject = (JSONObject) queryObject;
-            Boolean isQueryContains=queryOJsonbject.containsKey("query");
-           if(!isQueryContains)
-           {
-               throw new SkyflowException(ErrorCode.InvalidQueryKey);
-           }
+           JSONObject queryJsonbject = (JSONObject) queryObject;
 
-                QueryInput queryInput = new ObjectMapper().readValue(records.toString(), QueryInput.class);
+            QueryRecordInput queryInput = new ObjectMapper().readValue(queryJsonbject.toString(), QueryRecordInput.class);
 
-            QueryRecordInput[] recordInputs = queryInput.getRecords();
-            if (recordInputs == null || recordInputs.length == 0) {
-                throw new SkyflowException(ErrorCode.EmptyRecords);
-            }
             JSONObject requestBody = Helpers.constructQueryRequest(queryInput, queryOptions);
 
             String url = configuration.getVaultURL() + "/v1/vaults/" + configuration.getVaultID() + "/query";
@@ -478,14 +467,14 @@ public final class Skyflow {
             queryResponse = (JSONObject) new JSONParser().parse(response);
         } catch (IOException e) {
             LogUtil.printErrorLog(ErrorLogs.InvalidQueryInput.getLog());
-            throw new SkyflowException(ErrorCode.InvalidQueryInput, e);
+            throw new SkyflowException(ErrorCode.InvalidQueryInput,e);
         } catch (ParseException e) {
             LogUtil.printErrorLog(Helpers.parameterizedString(ErrorLogs.ResponseParsingError.getLog(), "query"));
             throw new SkyflowException(ErrorCode.ResponseParsingError, e);
         }
         catch (SkyflowException e) {
             JSONObject queryErrorResponse = Helpers.constructQueryErrorObject(e);
-            throw new SkyflowException(500, "Server returned errors,check SkyflowException.Query() for more", queryErrorResponse);
+            throw new SkyflowException(400, "Query is missing", queryErrorResponse);
         }
         return queryResponse;
     }
