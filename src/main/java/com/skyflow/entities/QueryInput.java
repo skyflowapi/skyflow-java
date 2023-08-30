@@ -1,13 +1,13 @@
 package com.skyflow.entities;
 
 public class QueryInput {
-    private QueryRecordInput query;
+    private QueryRecordInput queryInput;
 
-    public QueryRecordInput getRecords() {
-        return query;
+    public QueryRecordInput getQueryInput() {
+        return queryInput;
     }
 
-    public void setRecords(QueryRecordInput query) {
-        this.query = query;
+    public void setQueryInput(QueryRecordInput queryInput) {
+        this.queryInput = queryInput;
     }
 }

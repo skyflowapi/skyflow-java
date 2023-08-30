@@ -674,10 +674,10 @@ public class SkyflowTest {
         QueryRecordInput inputRecord = new QueryRecordInput();
         QueryInput queryInput = new QueryInput();
 
-        assertNull(queryInput.getRecords());
+        assertNull(queryInput.getQueryInput());
 
-        queryInput.setRecords(inputRecord);
-        assertEquals(inputRecord, queryInput.getRecords());
+        queryInput.setQueryInput(inputRecord);
+        assertEquals(inputRecord, queryInput.getQueryInput());
     }
     @Test
     public void testGetAndSetQuery() {
