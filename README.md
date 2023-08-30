@@ -31,6 +31,7 @@ The Skyflow Java SDK is designed to help with integrating Skyflow into a Java ba
     - [Update](#update)
     - [Delete](#delete)
     - [Invoke Connection](#invoke-connection)
+    - [Query](#query)
   - [Logging](#logging)
   - [Reporting a Vulnerability](#reporting-a-vulnerability)
 
@@ -968,6 +969,52 @@ Sample invokeConnection Response
 }
 ```
 
+### Query
+
+To retrieve data with SQL queries, use the `query(queryInput, options)` method. `queryInput` is an object that takes the `query` parameter as follows:
+
+```java
+JSONObject queryInput = new JSONObject();
+queryInput.put("query", "<YOUR_SQL_QUERY>");
+QueryOptions options = new QueryOptions();
+skyflowClient.query(queryInput, options);
+```
+An [example](https://github.com/skyflowapi/skyflow-java/blob/master/samples/src/main/java/com/example/QueryExample.java) of query call:
+```java
+JSONObject queryInput = new JSONObject();
+queryInput.put("query", "SELECT * FROM cards WHERE skyflow_id='3ea3861-x107-40w8-la98-106sp08ea83f'");
+QueryOptions options = new QueryOptions();
+
+try {
+     JSONObject res = skyflowClient.query(queryInput, options);
+} catch (SkyflowException e) {
+     System.out.println(e.getData());
+     e.printStackTrace();
+}
+```
+
+Sample Response
+```java
+{
+  "records": [
+    {
+      "fields": {
+        "card_number": "XXXXXXXXXXXX1111",
+        "card_pin": "*REDACTED*",
+        "cvv": "",
+        "expiration_date": "*REDACTED*",
+        "expiration_month": "*REDACTED*",
+        "expiration_year": "*REDACTED*",
+        "name": "a***te",
+        "skyflow_id": "3ea3861-x107-40w8-la98-106sp08ea83f",
+        "ssn": "XXX-XX-6789",
+        "zip_code": null
+      },
+      "tokens": null
+    }
+  ]
+}
+```
 ## Logging
 
 The skyflow-java SDK provides useful logging using java inbuilt `java.util.logging`. By default the logging level of the SDK is set to `LogLevel.ERROR`. This can be changed by using `setLogLevel(LogLevel)` as shown below:
