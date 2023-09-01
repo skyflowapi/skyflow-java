@@ -42,6 +42,10 @@ public final class Skyflow {
         return insert(records, new InsertOptions(true));
     }
 
+    public JSONObject query(JSONObject queryObject) throws SkyflowException {
+        return query(queryObject, new QueryOptions());
+    }
+
     public JSONObject update(JSONObject records) throws SkyflowException {
         return update(records, new UpdateOptions(true));
     }
