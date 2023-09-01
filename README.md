@@ -976,17 +976,17 @@ To retrieve data with SQL queries, use the `query(queryInput, options)` method. 
 ```java
 JSONObject queryInput = new JSONObject();
 queryInput.put("query", "<YOUR_SQL_QUERY>");
-QueryOptions options = new QueryOptions();
-skyflowClient.query(queryInput, options);
+skyflowClient.query(queryInput);
 ```
+See [Query your data](https://docs.skyflow.com/query-data/) and [Execute Query](https://docs.skyflow.com/record/#QueryService_ExecuteQuery) for guidelines and restrictions on supported SQL statements, operators, and keywords.
+
 An [example](https://github.com/skyflowapi/skyflow-java/blob/master/samples/src/main/java/com/example/QueryExample.java) of query call:
 ```java
 JSONObject queryInput = new JSONObject();
 queryInput.put("query", "SELECT * FROM cards WHERE skyflow_id='3ea3861-x107-40w8-la98-106sp08ea83f'");
-QueryOptions options = new QueryOptions();
 
 try {
-     JSONObject res = skyflowClient.query(queryInput, options);
+     JSONObject res = skyflowClient.query(queryInput);
 } catch (SkyflowException e) {
      System.out.println(e.getData());
      e.printStackTrace();

@@ -3,7 +3,6 @@
 */
 package com.example;
 
-import com.skyflow.entities.QueryOptions;
 import com.skyflow.entities.ResponseToken;
 import com.skyflow.entities.SkyflowConfiguration;
 import com.skyflow.entities.TokenProvider;
@@ -25,9 +24,7 @@ public class Samples {
 
             queryInput.put("query", "<YOUR_SQL_QUERY>");
 
-            QueryOptions options = new QueryOptions();
-
-            JSONObject res = skyflowClient.query(queryInput, options);
+            JSONObject res = skyflowClient.query(queryInput);
 
             System.out.println(res);
         } catch (SkyflowException e) {
