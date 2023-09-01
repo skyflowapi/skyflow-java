@@ -1,7 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [1.11.0] - 2023-08-30
+## [1.11.0] - 2023-09-01
 ### Added
 - `query` vault API
 

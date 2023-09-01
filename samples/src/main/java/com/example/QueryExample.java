@@ -10,7 +10,6 @@ import com.skyflow.entities.TokenProvider;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.serviceaccount.util.Token;
 import com.skyflow.vault.Skyflow;
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 public class Samples {
