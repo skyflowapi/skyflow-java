@@ -47,4 +47,4 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: sarif-results
-        path: /home/runner/work/skyflow-java/results/javascript.sarif
+        path: /home/runner/work/skyflow-java/results/java.sarif
