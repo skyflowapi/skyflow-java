@@ -152,4 +152,17 @@ public final class Validators {
             }
         }
     }
+    public static void validateDeleteBySkyflowId(DeleteRecordInput deleteRecordInput) throws SkyflowException{
+        String table = deleteRecordInput.getTable();
+        String id = deleteRecordInput.getId();
+        if (table == null || table.trim().isEmpty()) {
+            LogUtil.printErrorLog(ErrorLogs.InvalidTable.getLog());
+            throw new SkyflowException(ErrorCode.InvalidTable);
+        }
+        if (id == null || id.trim().isEmpty()) {
+            LogUtil.printErrorLog(ErrorLogs.InvalidId.getLog());
+            throw new SkyflowException(ErrorCode.InvalidId);
+        }
+
+    }
 }

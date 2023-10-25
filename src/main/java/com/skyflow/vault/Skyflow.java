@@ -42,8 +42,15 @@ public final class Skyflow {
         return insert(records, new InsertOptions(true));
     }
 
+    public JSONObject query(JSONObject queryObject) throws SkyflowException {
+        return query(queryObject, new QueryOptions());
+    }
+
     public JSONObject update(JSONObject records) throws SkyflowException {
         return update(records, new UpdateOptions(true));
+    }
+    public JSONObject delete(JSONObject records) throws  SkyflowException {
+        return  delete(records, new DeleteOptions());
     }
 
     public JSONObject insert(JSONObject records, InsertOptions insertOptions) throws SkyflowException {
@@ -346,6 +353,71 @@ public final class Skyflow {
 
     }
 
+    public JSONObject delete(JSONObject records, DeleteOptions deleteOptions) throws SkyflowException {
+        LogUtil.printInfoLog(InfoLogs.deleteMethodCalled.getLog());
+        Validators.validateConfiguration(configuration);
+        LogUtil.printInfoLog(Helpers.parameterizedString(InfoLogs.ValidatedSkyflowConfiguration.getLog(), "delete"));
+
+        JSONObject deleteResponse = new JSONObject();
+        JSONArray successRecordsArray = new JSONArray();
+        JSONArray errorRecordsArray = new JSONArray();
+
+        try {
+            DeleteInput deleteInput = new ObjectMapper().readValue(records.toString(), DeleteInput.class);
+            DeleteRecordInput[] recordInputs = deleteInput.getRecords();
+            if (recordInputs == null || recordInputs.length == 0) {
+                throw new SkyflowException(ErrorCode.EmptyRecords);
+            }
+            Map<String, String> headers = new HashMap<>();
+            headers.put("Authorization", "Bearer " + TokenUtils.getBearerToken(configuration.getTokenProvider()));
+            headers.put(Constants.SDK_METRICS_HEADER_KEY, Helpers.getMetrics().toJSONString());
+            FutureTask[] futureTasks = new FutureTask[recordInputs.length];
+
+
+            for (int i = 0; i < recordInputs.length; i++) {
+                Callable<String> callable = new DeleteBySkyflowId(recordInputs[i], configuration.getVaultID(), configuration.getVaultURL(), headers, deleteOptions);
+                futureTasks[i] = new FutureTask(callable);
+                Thread t = new Thread(futureTasks[i]);
+                t.start();
+            }
+            for (FutureTask task : futureTasks) {
+                String taskData = (String) task.get();
+                JSONObject responseJson = (JSONObject) new JSONParser().parse(taskData);
+                if (responseJson.containsKey("error")) {
+                    errorRecordsArray.add(responseJson);
+                } else if (responseJson.containsKey("records")) {
+                    JSONArray resp = (JSONArray) new JSONParser().parse(responseJson.get("records").toString()) ;
+                    successRecordsArray.add(resp.get(0));
+                }
+            }
+            if (errorRecordsArray.isEmpty()) {
+                deleteResponse.put("records", successRecordsArray);
+            } else if (successRecordsArray.isEmpty()) {
+                deleteResponse.put("errors", errorRecordsArray);
+                ErrorCode serverError = ErrorCode.ServerReturnedErrors;
+                throw new SkyflowException(serverError.getCode(), serverError.getDescription(), deleteResponse);
+            } else {
+                deleteResponse.put("records", successRecordsArray);
+                deleteResponse.put("errors", errorRecordsArray);
+                ErrorCode serverError = ErrorCode.ServerReturnedErrors;
+                throw new SkyflowException(serverError.getCode(), serverError.getDescription(), deleteResponse);
+            }
+
+        }catch (IOException e) {
+            LogUtil.printErrorLog(ErrorLogs.InvalidDeleteInput.getLog());
+            throw new SkyflowException(ErrorCode.InvalidDeleteInput, e);
+        } catch (InterruptedException e) {
+            LogUtil.printErrorLog(Helpers.parameterizedString(ErrorLogs.ThreadInterruptedException.getLog(), "deleteById"));
+            throw new SkyflowException(ErrorCode.ThreadInterruptedException, e);
+        } catch (ExecutionException e) {
+            LogUtil.printErrorLog(Helpers.parameterizedString(ErrorLogs.ThreadExecutionException.getLog(), "deleteById"));
+            throw new SkyflowException(ErrorCode.ThreadExecutionException, e);
+        } catch (ParseException e) {
+            LogUtil.printErrorLog(Helpers.parameterizedString(ErrorLogs.ResponseParsingError.getLog(), "deleteById"));
+            throw new SkyflowException(ErrorCode.ResponseParsingError, e);
+        }
+        return deleteResponse;
+    }
     public JSONObject invokeConnection(JSONObject connectionConfig) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.InvokeConnectionCalled.getLog());
         JSONObject connectionResponse;
@@ -379,5 +451,37 @@ public final class Skyflow {
             throw new SkyflowException(ErrorCode.ResponseParsingError, exception);
         }
         return connectionResponse;
+    }
+
+    public JSONObject query(JSONObject queryObject,QueryOptions queryOptions) throws SkyflowException {
+        LogUtil.printInfoLog(InfoLogs.QuerySupportCalled.getLog());
+        Validators.validateConfiguration(configuration);
+        LogUtil.printInfoLog(Helpers.parameterizedString(InfoLogs.ValidatedSkyflowConfiguration.getLog(), "query"));
+        JSONObject queryResponse = null;
+        try {
+           JSONObject queryJsonbject = (JSONObject) queryObject;
+
+            QueryRecordInput queryInput = new ObjectMapper().readValue(queryJsonbject.toString(), QueryRecordInput.class);
+
+            JSONObject requestBody = Helpers.constructQueryRequest(queryInput, queryOptions);
+
+            String url = configuration.getVaultURL() + "/v1/vaults/" + configuration.getVaultID() + "/query";
+            Map<String, String> headers = new HashMap<>();
+            headers.put("Authorization", "Bearer " + TokenUtils.getBearerToken(configuration.getTokenProvider()));
+            headers.put(Constants.SDK_METRICS_HEADER_KEY, Helpers.getMetrics().toJSONString());
+            String response = HttpUtility.sendRequest("POST", new URL(url), requestBody, headers);
+            queryResponse = (JSONObject) new JSONParser().parse(response);
+        } catch (IOException e) {
+            LogUtil.printErrorLog(ErrorLogs.InvalidQueryInput.getLog());
+            throw new SkyflowException(ErrorCode.InvalidQueryInput,e);
+        } catch (ParseException e) {
+            LogUtil.printErrorLog(Helpers.parameterizedString(ErrorLogs.ResponseParsingError.getLog(), "query"));
+            throw new SkyflowException(ErrorCode.ResponseParsingError, e);
+        }
+        catch (SkyflowException e) {
+            JSONObject queryErrorResponse = Helpers.constructQueryErrorObject(e);
+            throw new SkyflowException(400, "Query is missing", queryErrorResponse);
+        }
+        return queryResponse;
     }
 }

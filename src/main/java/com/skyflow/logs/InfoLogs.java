@@ -13,6 +13,7 @@ public enum InfoLogs {
     ValidatingInvokeConnectionConfig("validating invoke connection configuration"),
     InsertMethodCalled("insert method has triggered"),
     UpdateMethodCalled("update method has triggered"),
+    deleteMethodCalled("delete method has triggered"),
     ConstructInsertResponse("constructing insert response"),
     ConstructUpdateResponse("constructing update response"),
     DetokenizeMethodCalled("detokenize method has triggered"),
@@ -20,6 +21,7 @@ public enum InfoLogs {
     GetMethodCalled("get method has triggered"),
     InvokeConnectionCalled("invokeConnection method has triggered"),
     GenerateBearerTokenCalled("generateBearerToken method has triggered"),
+    QuerySupportCalled("query method has triggered"),
     GenerateBearerTokenFromCredsCalled("generateBearerTokenFromCreds method has triggered"),
     ValidatingUpsertOptions("validating upsert options.");
     private final String log;
