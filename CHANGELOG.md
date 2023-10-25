@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+
+## [1.12.0] - 2023-10-25
+### Added
+- `tokens` support in Get Method
+
 ## [1.11.0] - 2023-09-01
 ### Added
 - `query` vault API
