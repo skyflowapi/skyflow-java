@@ -7,22 +7,33 @@ The Skyflow Java SDK is designed to help with integrating Skyflow into a Java ba
 
 # Table of Contents
 
-* [Features](#features)
-* [Installation](#installation)
-    * [Requirements](#requirements)
-    * [Configuration](#configuration)
-* [Service Account Bearer Token Generation](#service-account-token-generation)
-* [Service Account Bearer Token with Context Generation](#service-account-bearer-token-with-context-generation)
-* [Service Account Scoped Bearer Token Generation](#service-account-scoped-bearer-token-generation)
-* [Signed Data Tokens Generation](#signed-data-tokens-generation)
-* [Vault APIs](#vault-apis)
-    * [Insert](#insert)
-    * [Detokenize](#detokenize)
-    * [Get](#get)
-    * [GetById](#getbyid)
-    * [Update](#update)
-    * [InvokeConnection](#invoke-connection)
-*   [Logging](#logging)
+- [Skyflow Java](#skyflow-java)
+- [Table of Contents](#table-of-contents)
+  - [Features](#features)
+  - [Installation](#installation)
+    - [Requirements](#requirements)
+    - [Configuration](#configuration)
+      - [Gradle users](#gradle-users)
+      - [Maven users](#maven-users)
+  - [Service Account Bearer Token Generation](#service-account-bearer-token-generation)
+  - [Service Account Bearer Token with Context Generation](#service-account-bearer-token-with-context-generation)
+  - [Service Account Scoped Bearer Token Generation](#service-account-scoped-bearer-token-generation)
+  - [Signed Data Tokens Generation](#signed-data-tokens-generation)
+  - [Vault APIs](#vault-apis)
+    - [Insert](#insert)
+    - [Detokenize](#detokenize)
+    - [Get](#get)
+      - [Use Skyflow IDs](#use-skyflow-ids)
+      - [Use column name and values](#use-column-name-and-values)
+      - [Redaction types](#redaction-types)
+      - [Examples](#examples)
+    - [GetById](#getbyid)
+    - [Update](#update)
+    - [Delete](#delete)
+    - [Invoke Connection](#invoke-connection)
+    - [Query](#query)
+  - [Logging](#logging)
+  - [Reporting a Vulnerability](#reporting-a-vulnerability)
 
 ## Features
 
@@ -41,7 +52,7 @@ The Skyflow Java SDK is designed to help with integrating Skyflow into a Java ba
 
 Add this dependency to your project's build file:
 ```
-implementation 'com.skyflow:skyflow-java:1.8.2'
+implementation 'com.skyflow:skyflow-java:1.11.0'
 ```
 
 #### Maven users
@@ -51,7 +62,7 @@ Add this dependency to your project's POM:
     <dependency>
         <groupId>com.skyflow</groupId>
         <artifactId>skyflow-java</artifactId>
-        <version>1.9.0</version>
+        <version>1.11.0</version>
     </dependency>
 ```
 ---
@@ -942,6 +953,65 @@ Response:
 }
 ```
 
+## Delete
+To delete data from the vault, use the `delete(records, options?)` method of the Skyflow client. The `records` parameter takes an array of records to delete in the following format. The `options` parameter is optional and takes an object of deletion parameters. Currently, there are no supported deletion parameters.
+
+Call schema:
+
+```java
+JSONObject records = new JSONObject();
+JSONArray recordsArray = new JSONArray();
+
+JSONObject record = new JSONObject();
+
+record.put("id", "<SKYFLOW_ID_1>");
+record.put("table", "<TABLE_NAME>");
+recordsArray.add(record);
+records.put("records", recordsArray);
+
+skyflowClient.delete(records);
+```
+
+An example of delete call:
+```java
+JSONObject records = new JSONObject();
+JSONArray recordsArray = new JSONArray();
+
+JSONObject record = new JSONObject();
+record.put("id", "71be4592-b9af-4dec-8669-5b9c926afb4c");
+record.put("table", "cards");
+recordsArray.add(record);
+        
+JSONObject record2 = new JSONObject();
+record2.put("id", "2adf32e7-9a04-408e-b8bb-5b0a852422e0");
+record2.put("table", "cards");
+recordsArray.add(record2);
+
+records.put("records", recordsArray);
+
+try {
+     JSONObject response = skyflowClient.delete(records);
+} catch (SkyflowException e) {
+     e.printStackTrace();
+     System.out.println("error"+ e.getData());
+}
+```
+Response:
+```json
+{
+  "records": [
+    {
+     "skyflow_id": "71be4592-b9af-4dec-8669-5b9c926afb4c",
+     "deleted": true,
+    },
+    {
+     "skyflow_id": "2adf32e7-9a04-408e-b8bb-5b0a852422e0",
+     "deleted": true,
+    }
+  ]
+}
+```
+
 ## Invoke Connection
 
 Using the InvokeConnection method, you can integrate their server-side application with third party APIs and services without directly handling sensitive data. Prior to invoking the `InvokeConnection` method, you must have created a connection and have a connectionURL already generated. Once you have the connectionURL, you can invoke a connection by using the **invokeConnection(JSONObject config)** method. The JSONObject config parameter must include a `connectionURL` and `methodName`. The other fields are optional. 
@@ -1017,6 +1087,52 @@ Sample invokeConnection Response
 }
 ```
 
+### Query
+
+To retrieve data with SQL queries, use the `query(queryInput, options)` method. `queryInput` is an object that takes the `query` parameter as follows:
+
+```java
+JSONObject queryInput = new JSONObject();
+queryInput.put("query", "<YOUR_SQL_QUERY>");
+skyflowClient.query(queryInput);
+```
+See [Query your data](https://docs.skyflow.com/query-data/) and [Execute Query](https://docs.skyflow.com/record/#QueryService_ExecuteQuery) for guidelines and restrictions on supported SQL statements, operators, and keywords.
+
+An [example](https://github.com/skyflowapi/skyflow-java/blob/master/samples/src/main/java/com/example/QueryExample.java) of query call:
+```java
+JSONObject queryInput = new JSONObject();
+queryInput.put("query", "SELECT * FROM cards WHERE skyflow_id='3ea3861-x107-40w8-la98-106sp08ea83f'");
+
+try {
+     JSONObject res = skyflowClient.query(queryInput);
+} catch (SkyflowException e) {
+     System.out.println(e.getData());
+     e.printStackTrace();
+}
+```
+
+Sample Response
+```java
+{
+  "records": [
+    {
+      "fields": {
+        "card_number": "XXXXXXXXXXXX1111",
+        "card_pin": "*REDACTED*",
+        "cvv": "",
+        "expiration_date": "*REDACTED*",
+        "expiration_month": "*REDACTED*",
+        "expiration_year": "*REDACTED*",
+        "name": "a***te",
+        "skyflow_id": "3ea3861-x107-40w8-la98-106sp08ea83f",
+        "ssn": "XXX-XX-6789",
+        "zip_code": null
+      },
+      "tokens": null
+    }
+  ]
+}
+```
 ## Logging
 
 The skyflow-java SDK provides useful logging using java inbuilt `java.util.logging`. By default the logging level of the SDK is set to `LogLevel.ERROR`. This can be changed by using `setLogLevel(LogLevel)` as shown below:

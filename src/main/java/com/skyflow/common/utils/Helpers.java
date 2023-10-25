@@ -103,6 +103,38 @@ public final class Helpers {
         return postRequestInput;
 
     }
+    public static JSONObject constructQueryRequest(QueryRecordInput queryInput, QueryOptions options)
+            throws SkyflowException {
+        if (queryInput == null) {
+            throw new SkyflowException(ErrorCode.EmptyRecords);
+        }
+        JSONObject postRequestInput = new JSONObject();
+            if (queryInput.getQuery() == null||queryInput.getQuery().trim().isEmpty()) {
+                throw new SkyflowException(ErrorCode.InvalidQuery);
+            }
+        postRequestInput.put("query", queryInput.getQuery());
+        return postRequestInput;
+    }
+
+    public static JSONObject constructQueryErrorObject(SkyflowException skyflowException) {
+        JSONObject finalResponseError = new JSONObject();
+        try {
+            JSONObject errorObject = (JSONObject) ((JSONObject) new JSONParser().parse(skyflowException.getMessage())).get("error");
+            if (errorObject != null) {
+                JSONObject responseError = new JSONObject();
+                responseError.put("code", errorObject.get("http_code"));
+                responseError.put("description", errorObject.get("message"));
+                finalResponseError.put("error", responseError);
+            }
+        } catch (ParseException e) {
+            JSONObject responseError = new JSONObject();
+            responseError.put("code", skyflowException.getCode());
+            responseError.put("description", skyflowException.getMessage());
+            finalResponseError.put("error", responseError);
+
+        }
+        return finalResponseError;
+    }
 
     public static StringBuilder constructGetByIdRequestURLParams(GetByIdRecordInput record) {
         StringBuilder paramsList = new StringBuilder();
@@ -115,7 +147,7 @@ public final class Helpers {
         return paramsList;
     }
 
-    public static StringBuilder constructGetRequestURLParams(GetRecordInput record) {
+    public static StringBuilder constructGetRequestURLParams(GetRecordInput record, GetOptions getOptions) {
         StringBuilder paramsList = new StringBuilder();
 
         if (record.getIds() != null) {
@@ -130,8 +162,11 @@ public final class Helpers {
                 paramsList.append("column_values=").append(value).append("&");
             }
         }
-
-        paramsList.append("redaction=").append(record.getRedaction());
+        if(record.getRedaction() == null && getOptions.getOptionToken() == true){
+            paramsList.append("tokenization=").append(getOptions.getOptionToken());
+        } else {
+            paramsList.append("redaction=").append(record.getRedaction());
+        }
         return paramsList;
     }
 

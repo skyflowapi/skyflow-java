@@ -7,6 +7,7 @@ import com.skyflow.Configuration;
 import com.skyflow.common.utils.HttpUtility;
 import com.skyflow.common.utils.TokenUtils;
 import com.skyflow.entities.*;
+import com.skyflow.common.utils.Helpers;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.SkyflowException;
 import org.json.simple.JSONArray;
@@ -15,6 +16,8 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.Mockito;
+import static org.mockito.Mockito.*;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentMatchers;
 import org.powermock.api.mockito.PowerMockito;
@@ -27,6 +30,7 @@ import java.net.URL;
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+
 
 class DemoTokenProvider implements TokenProvider {
     @Override
@@ -478,6 +482,211 @@ public class SkyflowTest {
         } catch (SkyflowException skyflowException) {
             assertEquals(ErrorCode.InvalidColumnInUpsertOption.getDescription(), skyflowException.getMessage());
         }
+    }
+    @Test
+    @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility", "com.skyflow.common.utils.TokenUtils"})
+    public void testQuerySuccess() {
+        try {
+            SkyflowConfiguration config = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider());
+            Skyflow skyflowClient = Skyflow.init(config);
+            JSONObject queryInput = new JSONObject();
+            queryInput.put("query", "SELECT * FROM users");
+            PowerMockito.mockStatic(HttpUtility.class);
+            String mockResponse = "{\"response_key\":\"response_value\"}";
+            PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockResponse);
+            JSONObject response = skyflowClient.query(queryInput, new QueryOptions());
+            assertNotNull(response);
+        } catch (SkyflowException skyflowException) {
+            skyflowException.printStackTrace();
+            fail(INVALID_EXCEPTION_THROWN);
+        } catch (IOException e) {
+            e.printStackTrace();
+            fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+    @Test
+    public void testQueryMissing() {
+        try {
+            SkyflowConfiguration config = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider());
+            Skyflow skyflowClient = Skyflow.init(config);
+            JSONObject queryInput = new JSONObject();
+            queryInput.put("query", "");
+            QueryOptions queryOptions = new QueryOptions();
+            boolean exceptionThrown = false;
+            try {
+                JSONObject res = skyflowClient.query(queryInput, queryOptions);
+            } catch (SkyflowException skyflowException) {
+                exceptionThrown = true;
+                assertEquals(ErrorCode.InvalidQuery.getCode(), skyflowException.getCode());
+                assertEquals("Query is missing", skyflowException.getMessage());
+            }
+            assertTrue(exceptionThrown);
+        } catch (Exception e) {
+            fail("Caught unexpected exception: " + e.getMessage());
+        }
+    }
+    @Test
+    public void testInvalidQueryInput() {
+        try {
+            SkyflowConfiguration config = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider());
+            Skyflow skyflowClient = Skyflow.init(config);
+            JSONObject queryInput = new JSONObject();
+            queryInput.put("invalidQueryKey", "select * from cards");
+            QueryOptions queryOptions = new QueryOptions();
+            boolean exceptionThrown = false;
+            try {
+                JSONObject res = skyflowClient.query(queryInput, queryOptions);
+            } catch (SkyflowException skyflowException) {
+                exceptionThrown = true;
+                assertEquals("Invalid query input", skyflowException.getMessage());
+            }
+            assertTrue(exceptionThrown);
+        } catch (Exception e) {
+        }
+    }
+    @Test
+    public void testValidJsonParsing() {
+        String jsonMessage = "{\"error\":{\"http_code\":404,\"message\":\"Not Found\"}}";
+        SkyflowException skyflowException = new SkyflowException(
+                ErrorCode.InvalidVaultURL.getCode(),
+                jsonMessage
+        );
+        JSONObject result = Helpers.constructQueryErrorObject(skyflowException);
+    }
+
+    @Test
+    public void testValidSkyflowExceptionWithoutJson() {
+        SkyflowException skyflowException = new SkyflowException(
+                ErrorCode.EmptyVaultID.getCode(),
+                "Empty vaultID"
+        );
+        JSONObject result = Helpers.constructQueryErrorObject(skyflowException);
+    }
+    @Test
+    public void testInvalidJsonParsing() {
+        String invalidJsonMessage = "Invalid JSON";
+        SkyflowException skyflowException = new SkyflowException(
+                ErrorCode.InvalidVaultURL.getCode(),
+                invalidJsonMessage
+        );
+        JSONObject result = Helpers.constructQueryErrorObject(skyflowException);
+    }
+    @Test
+    public void testMissingErrorKeyInJson() {
+        String jsonMessage = "{\"status\":\"error\",\"http_code\":404,\"message\":\"Not Found\"}";
+        SkyflowException skyflowException = new SkyflowException(
+                ErrorCode.InvalidVaultURL.getCode(),
+                jsonMessage
+        );
+        JSONObject result = Helpers.constructQueryErrorObject(skyflowException);
+    }
+    @Test
+    public void testMissingHttpCodeInErrorJson() {
+        String jsonMessage = "{\"error\":{\"message\":\"Not Found\"}}";
+        SkyflowException skyflowException = new SkyflowException(
+                ErrorCode.InvalidVaultURL.getCode(),
+                jsonMessage
+        );
+        JSONObject result = Helpers.constructQueryErrorObject(skyflowException);
+    }
+    @Test
+    public void testMissingMessageInErrorJson() {
+        String jsonMessage = "{\"error\":{\"http_code\":404}}";
+        SkyflowException skyflowException = new SkyflowException(
+                ErrorCode.InvalidVaultURL.getCode(),
+                jsonMessage
+        );
+        JSONObject result = Helpers.constructQueryErrorObject(skyflowException);
+    }
+    @Test
+    public void testEmptyErrorObjectInJson() {
+        String jsonMessage = "{\"error\":{}}";
+        SkyflowException skyflowException = new SkyflowException(
+                ErrorCode.InvalidVaultURL.getCode(),
+                jsonMessage
+        );
+        JSONObject result = Helpers.constructQueryErrorObject(skyflowException);
+    }
+    @Test
+    public void testConstructQueryRequest() throws SkyflowException {
+        QueryRecordInput record = new QueryRecordInput();
+        record.setQuery("SELECT * FROM users");
+        QueryOptions options = new QueryOptions();
+
+        JSONObject result = Helpers.constructQueryRequest(record, options);
+        assertTrue(result.containsKey("query"));
+        assertEquals("SELECT * FROM users", result.get("query"));
+    }
+    @Test
+    @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility", "com.skyflow.common.utils.TokenUtils"})
+    public void testQueryIOException() {
+        try {
+            SkyflowConfiguration config = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider());
+            Skyflow skyflowClient = Skyflow.init(config);
+            JSONObject queryInput = new JSONObject();
+            queryInput.put("query", "SELECT * FROM table");
+            QueryOptions queryOptions = new QueryOptions();
+            PowerMockito.mockStatic(HttpUtility.class);
+            PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenThrow(new IOException());
+
+            try {
+                skyflowClient.query(queryInput, queryOptions);
+                fail("Expected SkyflowException to be thrown");
+            } catch (SkyflowException e) {
+                assertEquals(ErrorCode.InvalidQueryInput.getCode(), e.getCode());
+            }
+        } catch (SkyflowException e) {
+            fail("Caught unexpected SkyflowException: " + e.getMessage());
+        } catch (IOException ioException) {
+            fail("Caught unexpected IOException: " + ioException.getMessage());
+        }
+    }
+
+    @Test
+    @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility", "com.skyflow.common.utils.TokenUtils"})
+    public void testQueryParseException() {
+        try {
+            SkyflowConfiguration config = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider());
+            Skyflow skyflowClient = Skyflow.init(config);
+
+            JSONObject queryInput = new JSONObject();
+            queryInput.put("query", "SELECT * FROM table");
+            QueryOptions queryOptions = new QueryOptions();
+
+            PowerMockito.mockStatic(HttpUtility.class);
+            String mockResponse = "Invalid JSON";
+            PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockResponse);
+
+            try {
+                skyflowClient.query(queryInput, queryOptions);
+                fail("Expected SkyflowException to be thrown");
+            } catch (SkyflowException e) {
+                assertEquals(ErrorCode.ResponseParsingError.getCode(), e.getCode());
+            }
+        } catch (SkyflowException e) {
+            fail("Caught unexpected SkyflowException: " + e.getMessage());
+        } catch (IOException e) {
+            fail("Caught unexpected IOException: " + e.getMessage());
+        }
+    }
+    @Test
+    public void testGetAndSetRecords() {
+        QueryRecordInput inputRecord = new QueryRecordInput();
+        QueryInput queryInput = new QueryInput();
+
+        assertNull(queryInput.getQueryInput());
+
+        queryInput.setQueryInput(inputRecord);
+        assertEquals(inputRecord, queryInput.getQueryInput());
+    }
+    @Test
+    public void testGetAndSetQuery() {
+        QueryRecordInput queryRecordInput = new QueryRecordInput();
+        assertNull(queryRecordInput.getQuery());
+
+        String testQuery = "SELECT * FROM table";
+        queryRecordInput.setQuery(testQuery);
+        assertEquals(testQuery, queryRecordInput.getQuery());
     }
 
     @Test
