@@ -2,6 +2,8 @@ package com.skyflow.vault;
 
 import com.skyflow.common.utils.HttpUtility;
 import com.skyflow.common.utils.TokenUtils;
+import com.skyflow.entities.GetOptions;
+import com.skyflow.entities.GetRecordInput;
 import com.skyflow.entities.RedactionType;
 import com.skyflow.entities.SkyflowConfiguration;
 import com.skyflow.errors.ErrorCode;
@@ -555,4 +557,314 @@ public class GetMethodTest {
             Assert.fail(INVALID_EXCEPTION_THROWN);
         }
     }
+
+    @Test
+    @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility", "com.skyflow.common.utils.TokenUtils"})
+    public void testGetMethodWithNoRedactionNoToken() {
+                try {
+            SkyflowConfiguration config = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider());
+
+            Skyflow skyflowClient = Skyflow.init(config);
+
+            JSONObject records = new JSONObject();
+            JSONArray recordsArray = new JSONArray();
+            JSONObject record = new JSONObject();
+
+            JSONArray ids = new JSONArray();
+            ids.add(skyflowId);
+
+            record.put("ids", ids);
+            record.put("table", tableName);
+
+            recordsArray.add(record);
+            records.put("records", recordsArray);
+
+            skyflowClient.get(records);
+
+        } catch (SkyflowException e) {
+            JSONObject error = (JSONObject) ((JSONObject) (((JSONArray) e.getData().get("errors")).get(0))).get("error");
+
+            JSONArray errors = (JSONArray) e.getData().get("errors");
+            Assert.assertEquals(1, errors.size());
+            Assert.assertEquals(error.get("description"), ErrorCode.MissingRedaction.getDescription());
+                }
+    }
+    @Test
+    @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility", "com.skyflow.common.utils.TokenUtils"})
+    public void testGetMethodWithRedactionToken() {
+        try {
+            SkyflowConfiguration config = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider());
+
+            Skyflow skyflowClient = Skyflow.init(config);
+
+            JSONObject records = new JSONObject();
+            JSONArray recordsArray = new JSONArray();
+            JSONObject record = new JSONObject();
+
+            JSONArray ids = new JSONArray();
+            ids.add(skyflowId);
+
+            record.put("ids", ids);
+            record.put("table", tableName);
+            record.put("redaction", RedactionType.PLAIN_TEXT.toString());
+            recordsArray.add(record);
+            records.put("records", recordsArray);
+
+            skyflowClient.get(records, new GetOptions(true));
+
+        } catch (SkyflowException e) {
+            JSONObject error = (JSONObject) ((JSONObject) (((JSONArray) e.getData().get("errors")).get(0))).get("error");
+
+            JSONArray errors = (JSONArray) e.getData().get("errors");
+            Assert.assertEquals(1, errors.size());
+            Assert.assertEquals(error.get("description"), ErrorCode.RedactionWithTokenNotSupported.getDescription());
+        }
+    }
+    @Test
+    @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility", "com.skyflow.common.utils.TokenUtils"})
+    public void testGetMethodWithNoRedactionTokenForColumnValues() {
+        try {
+            SkyflowConfiguration config = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider());
+
+            Skyflow skyflowClient = Skyflow.init(config);
+
+
+            JSONObject records = new JSONObject();
+            JSONArray recordsArray = new JSONArray();
+            JSONObject record = new JSONObject();
+
+            JSONArray values = new JSONArray();
+            values.add(columnValue);
+
+            record.put("table", tableName);
+            record.put("columnName", columnName);
+            record.put("columnValues", values);
+
+            recordsArray.add(record);
+            records.put("records", recordsArray);
+
+            skyflowClient.get(records, new GetOptions(true));
+
+        } catch (SkyflowException e) {
+            JSONObject error = (JSONObject) ((JSONObject) (((JSONArray) e.getData().get("errors")).get(0))).get("error");
+
+            JSONArray errors = (JSONArray) e.getData().get("errors");
+            Assert.assertEquals(1, errors.size());
+            Assert.assertEquals(error.get("description"), ErrorCode.TokensGetColumnNotSupported.getDescription());
+        }
+    }
+    @Test
+    @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility", "com.skyflow.common.utils.TokenUtils"})
+    public void testGetMethodWithRedactionWithTokenForColumnValues() {
+        try {
+            SkyflowConfiguration config = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider());
+
+            Skyflow skyflowClient = Skyflow.init(config);
+
+
+            JSONObject records = new JSONObject();
+            JSONArray recordsArray = new JSONArray();
+            JSONObject record = new JSONObject();
+
+            JSONArray values = new JSONArray();
+            values.add(columnValue);
+
+            record.put("table", tableName);
+            record.put("columnName", columnName);
+            record.put("columnValues", values);
+            record.put("redaction", RedactionType.PLAIN_TEXT.toString());
+
+            recordsArray.add(record);
+            records.put("records", recordsArray);
+
+
+            skyflowClient.get(records, new GetOptions(true));
+
+        } catch (SkyflowException e) {
+            JSONObject error = (JSONObject) ((JSONObject) (((JSONArray) e.getData().get("errors")).get(0))).get("error");
+
+            JSONArray errors = (JSONArray) e.getData().get("errors");
+            Assert.assertEquals(1, errors.size());
+            Assert.assertEquals(error.get("description"), ErrorCode.TokensGetColumnNotSupported.getDescription());
+        }
+    }
+    @Test
+    @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility", "com.skyflow.common.utils.TokenUtils"})
+    public void testGetMethodWithNoRedactionNoTokenForColumnValues() {
+        try {
+            SkyflowConfiguration config = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider());
+
+            Skyflow skyflowClient = Skyflow.init(config);
+
+
+            JSONObject records = new JSONObject();
+            JSONArray recordsArray = new JSONArray();
+            JSONObject record = new JSONObject();
+
+            JSONArray values = new JSONArray();
+            values.add(columnValue);
+
+            record.put("table", tableName);
+            record.put("columnName", columnName);
+            record.put("columnValues", values);
+
+            recordsArray.add(record);
+            records.put("records", recordsArray);
+
+            skyflowClient.get(records);
+
+        } catch (SkyflowException e) {
+            JSONObject error = (JSONObject) ((JSONObject) (((JSONArray) e.getData().get("errors")).get(0))).get("error");
+
+            JSONArray errors = (JSONArray) e.getData().get("errors");
+            Assert.assertEquals(1, errors.size());
+            Assert.assertEquals(error.get("description"), ErrorCode.MissingRedaction.getDescription());
+        }
+
+    }
+    @Test
+    @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility", "com.skyflow.common.utils.TokenUtils"})
+    public void testGetMethodWithNoRedactionFalseTokenForColumnValues() {
+        try {
+            SkyflowConfiguration config = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider());
+
+            Skyflow skyflowClient = Skyflow.init(config);
+
+
+            JSONObject records = new JSONObject();
+            JSONArray recordsArray = new JSONArray();
+            JSONObject record = new JSONObject();
+
+            JSONArray values = new JSONArray();
+            values.add(columnValue);
+
+            record.put("table", tableName);
+            record.put("columnName", columnName);
+            record.put("columnValues", values);
+
+            recordsArray.add(record);
+            records.put("records", recordsArray);
+
+            skyflowClient.get(records, new GetOptions(false));
+
+        } catch (SkyflowException e) {
+            JSONObject error = (JSONObject) ((JSONObject) (((JSONArray) e.getData().get("errors")).get(0))).get("error");
+
+            JSONArray errors = (JSONArray) e.getData().get("errors");
+            Assert.assertEquals(1, errors.size());
+            Assert.assertEquals(error.get("description"), ErrorCode.MissingRedaction.getDescription());
+        }
+    }
+    @Test
+    @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility", "com.skyflow.common.utils.TokenUtils"})
+    public void testGetMethodWithNoRedactionFalseToken() {
+        try {
+            SkyflowConfiguration config = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider());
+
+            Skyflow skyflowClient = Skyflow.init(config);
+
+            JSONObject records = new JSONObject();
+            JSONArray recordsArray = new JSONArray();
+            JSONObject record = new JSONObject();
+
+            JSONArray ids = new JSONArray();
+            ids.add(skyflowId);
+
+            record.put("ids", ids);
+            record.put("table", tableName);
+            recordsArray.add(record);
+            records.put("records", recordsArray);
+
+            skyflowClient.get(records, new GetOptions(false));
+
+        } catch (SkyflowException e) {
+            JSONObject error = (JSONObject) ((JSONObject) (((JSONArray) e.getData().get("errors")).get(0))).get("error");
+
+            JSONArray errors = (JSONArray) e.getData().get("errors");
+            Assert.assertEquals(1, errors.size());
+            Assert.assertEquals(error.get("description"), ErrorCode.MissingRedaction.getDescription());
+        }
+    }
+    @Test
+    @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility", "com.skyflow.common.utils.TokenUtils"})
+    public void testGetMethodWithRedactionFalseTokenSuccess() {
+        try {
+            SkyflowConfiguration config = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider());
+
+            Skyflow skyflowClient = Skyflow.init(config);
+
+            JSONObject records = new JSONObject();
+            JSONArray recordsArray = new JSONArray();
+            JSONObject record = new JSONObject();
+
+            JSONArray ids = new JSONArray();
+            ids.add(skyflowId);
+
+            record.put("ids", ids);
+            record.put("table", tableName);
+            record.put("redaction", RedactionType.PLAIN_TEXT.toString());
+            recordsArray.add(record);
+            records.put("records", recordsArray);
+
+            PowerMockito.mockStatic(HttpUtility.class);
+            String mockResponse = "{\"records\":[{\"fields\":{\"bank_account_number\":\"123451234554321\",\"pin_code\":\"121342\",\"name\":\"demo\",\"skyflow_id\":\"skyflowId123\"}}]}";
+            PowerMockito.when(HttpUtility.sendRequest(ArgumentMatchers.anyString(),
+                            ArgumentMatchers.<URL>any(),
+                            ArgumentMatchers.<JSONObject>any(),
+                            ArgumentMatchers.<String, String>anyMap()))
+                    .thenReturn(mockResponse);
+            JSONObject response = skyflowClient.get(records, new GetOptions(false));
+            JSONArray responseRecords = (JSONArray) response.get("records");
+
+            Assert.assertEquals(1, responseRecords.size());
+            Assert.assertEquals(tableName, ((JSONObject) responseRecords.get(0)).get("table"));
+            Assert.assertNotNull(((JSONObject) responseRecords.get(0)).get("fields"));
+
+        } catch (SkyflowException | IOException exception) {
+            exception.printStackTrace();
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+    @Test
+    @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility", "com.skyflow.common.utils.TokenUtils"})
+    public void testGetMethodWithRedactionFalseTokenSuccess2() {
+        try {
+            SkyflowConfiguration config = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider());
+
+            Skyflow skyflowClient = Skyflow.init(config);
+            JSONObject records = new JSONObject();
+            JSONArray recordsArray = new JSONArray();
+            JSONObject record = new JSONObject();
+
+            JSONArray values = new JSONArray();
+            values.add(columnValue);
+
+            record.put("table", tableName);
+            record.put("columnName", columnName);
+            record.put("columnValues", values);
+            record.put("redaction", RedactionType.PLAIN_TEXT.toString());
+
+            recordsArray.add(record);
+            records.put("records", recordsArray);
+
+            PowerMockito.mockStatic(HttpUtility.class);
+            String mockResponse = "{\"records\":[{\"fields\":{\"bank_account_number\":\"123451234554321\",\"pin_code\":\"121342\",\"name\":\"demo\",\"skyflow_id\":\"skyflowId123\"}}]}";
+            PowerMockito.when(HttpUtility.sendRequest(ArgumentMatchers.anyString(),
+                            ArgumentMatchers.<URL>any(),
+                            ArgumentMatchers.<JSONObject>any(),
+                            ArgumentMatchers.<String, String>anyMap()))
+                    .thenReturn(mockResponse);
+            JSONObject response = skyflowClient.get(records, new GetOptions(false));
+            JSONArray responseRecords = (JSONArray) response.get("records");
+
+            Assert.assertEquals(1, responseRecords.size());
+            Assert.assertEquals(tableName, ((JSONObject) responseRecords.get(0)).get("table"));
+            Assert.assertNotNull(((JSONObject) responseRecords.get(0)).get("fields"));
+
+        } catch (SkyflowException | IOException exception) {
+            exception.printStackTrace();
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
 }

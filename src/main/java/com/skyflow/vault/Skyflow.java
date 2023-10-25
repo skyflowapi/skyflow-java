@@ -216,8 +216,10 @@ public final class Skyflow {
 
         return finalResponse;
     }
-
     public JSONObject get(JSONObject getInput) throws SkyflowException {
+        return get(getInput, new GetOptions(false));
+    }
+    public JSONObject get(JSONObject getInput, GetOptions getOptions ) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.GetMethodCalled.getLog());
         Validators.validateConfiguration(configuration);
         LogUtil.printInfoLog(Helpers.parameterizedString(InfoLogs.ValidatedSkyflowConfiguration.getLog(), "get"));
@@ -226,7 +228,7 @@ public final class Skyflow {
         JSONArray successRecordsArray = new JSONArray();
         JSONArray errorRecordsArray = new JSONArray();
         try {
-            GetInput input = new ObjectMapper().readValue(getInput.toString(), GetInput.class);
+            GetInput input = new ObjectMapper().readValue(getInput.toJSONString(), GetInput.class);
             GetRecordInput[] recordInputs = input.getRecords();
 
             if (recordInputs == null || recordInputs.length == 0) {
@@ -239,7 +241,7 @@ public final class Skyflow {
 
             FutureTask[] futureTasks = new FutureTask[recordInputs.length];
             for (int i = 0; i < recordInputs.length; i++) {
-                Callable<String> callable = new Get(recordInputs[i], configuration.getVaultID(), configuration.getVaultURL(), headers);
+                Callable<String> callable = new Get(recordInputs[i], configuration.getVaultID(), configuration.getVaultURL(), headers, getOptions);
                 futureTasks[i] = new FutureTask(callable);
 
                 Thread t = new Thread(futureTasks[i]);

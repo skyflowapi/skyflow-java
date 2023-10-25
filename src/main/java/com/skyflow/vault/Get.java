@@ -4,6 +4,7 @@ import com.skyflow.common.utils.Helpers;
 import com.skyflow.common.utils.HttpUtility;
 import com.skyflow.common.utils.LogUtil;
 import com.skyflow.common.utils.Validators;
+import com.skyflow.entities.GetOptions;
 import com.skyflow.entities.GetRecordInput;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.SkyflowException;
@@ -25,19 +26,22 @@ public final class Get implements Callable<String> {
     private final String vaultURL;
     private final Map<String, String> headers;
 
-    public Get(GetRecordInput record, String vaultID, String vaultURL, Map<String, String> headers) {
+    private final GetOptions getOptions;
+
+    public Get(GetRecordInput record, String vaultID, String vaultURL, Map<String, String> headers, GetOptions getOptions) {
         this.record = record;
         this.vaultID = vaultID;
         this.vaultURL = vaultURL;
         this.headers = headers;
+        this.getOptions = getOptions;
     }
 
     @Override
     public String call() throws Exception {
         String response = null;
         try {
-            Validators.validateGetRequestRecord(record);
-            StringBuilder paramsList = Helpers.constructGetRequestURLParams(record);
+            Validators.validateGetRequestRecord(record, getOptions);
+            StringBuilder paramsList = Helpers.constructGetRequestURLParams(record, getOptions);
 
             String url = vaultURL + "/v1/vaults/" + vaultID + "/" + record.getTable() + "?" + paramsList;
 
