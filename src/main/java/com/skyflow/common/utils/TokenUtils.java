@@ -17,22 +17,11 @@ import java.util.Date;
 
 public final class TokenUtils {
 
-    private static String token = null;
+    private String token;
 
-    public static String getBearerToken(TokenProvider tokenProvider) throws SkyflowException {
-        if (token != null && isTokenValid(token))
-            return token;
-
-        try {
-            token = tokenProvider.getBearerToken();
-            isTokenValid(token);
-        } catch (SkyflowException exception) {
-            throw exception;
-        } catch (Exception e) {
-            LogUtil.printErrorLog(Helpers.parameterizedString(ErrorLogs.BearerThrownException.getLog(), e.getMessage()));
-            throw new SkyflowException(ErrorCode.BearerThrownException.getCode(), e.getMessage(), e);
-        }
-        return token;
+    public TokenUtils() {
+        LogUtil.printInfoLog("TOKEN UTILS INSTANCE CREATED");
+        this.token = null;
     }
 
     public static boolean isTokenValid(String token) throws SkyflowException {
@@ -56,11 +45,26 @@ public final class TokenUtils {
 
     public static JSONObject decoded(String encodedToken) throws ParseException, SkyflowException {
         String[] split = encodedToken.split("\\.");
-        if(split.length < 3) {
+        if (split.length < 3) {
             throw new SkyflowException(ErrorCode.InvalidBearerToken);
         }
         byte[] decodedBytes = Base64.decodeBase64(split[1]);
         return (JSONObject) new JSONParser().parse(new String(decodedBytes, StandardCharsets.UTF_8));
     }
 
+    public String getBearerToken(TokenProvider tokenProvider) throws SkyflowException {
+        if (token != null && isTokenValid(token))
+            return token;
+
+        try {
+            token = tokenProvider.getBearerToken();
+            isTokenValid(token);
+        } catch (SkyflowException exception) {
+            throw exception;
+        } catch (Exception e) {
+            LogUtil.printErrorLog(Helpers.parameterizedString(ErrorLogs.BearerThrownException.getLog(), e.getMessage()));
+            throw new SkyflowException(ErrorCode.BearerThrownException.getCode(), e.getMessage(), e);
+        }
+        return token;
+    }
 }

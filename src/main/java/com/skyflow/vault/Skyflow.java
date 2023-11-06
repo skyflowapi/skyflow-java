@@ -28,9 +28,11 @@ import java.util.concurrent.FutureTask;
 
 public final class Skyflow {
     private final SkyflowConfiguration configuration;
+    private final TokenUtils tokenUtils;
 
     private Skyflow(SkyflowConfiguration config) {
         this.configuration = config;
+        this.tokenUtils = new TokenUtils();
         LogUtil.printInfoLog(InfoLogs.InitializedClient.getLog());
     }
 
@@ -68,7 +70,7 @@ public final class Skyflow {
             String url = configuration.getVaultURL() + "/v1/vaults/" + configuration.getVaultID();
 
             Map<String, String> headers = new HashMap<>();
-            headers.put("Authorization", "Bearer " + TokenUtils.getBearerToken(configuration.getTokenProvider()));
+            headers.put("Authorization", "Bearer " + tokenUtils.getBearerToken(configuration.getTokenProvider()));
             headers.put(Constants.SDK_METRICS_HEADER_KEY, Helpers.getMetrics().toJSONString());
             String response = HttpUtility.sendRequest("POST", new URL(url), requestBody, headers);
             insertResponse = (JSONObject) new JSONParser().parse(response);
@@ -102,7 +104,7 @@ public final class Skyflow {
             }
             String apiEndpointURL = this.configuration.getVaultURL() + "/v1/vaults/" + this.configuration.getVaultID() + "/detokenize";
             Map<String, String> headers = new HashMap<>();
-            headers.put("Authorization", "Bearer " + TokenUtils.getBearerToken(configuration.getTokenProvider()));
+            headers.put("Authorization", "Bearer " + tokenUtils.getBearerToken(configuration.getTokenProvider()));
             headers.put(Constants.SDK_METRICS_HEADER_KEY, Helpers.getMetrics().toJSONString());
 
             FutureTask[] futureTasks = new FutureTask[inputRecords.length];
@@ -165,7 +167,7 @@ public final class Skyflow {
             }
 
             Map<String, String> headers = new HashMap<>();
-            headers.put("Authorization", "Bearer " + TokenUtils.getBearerToken(configuration.getTokenProvider()));
+            headers.put("Authorization", "Bearer " + tokenUtils.getBearerToken(configuration.getTokenProvider()));
             headers.put(Constants.SDK_METRICS_HEADER_KEY, Helpers.getMetrics().toJSONString());
 
             FutureTask[] futureTasks = new FutureTask[recordInputs.length];
@@ -236,7 +238,7 @@ public final class Skyflow {
             }
 
             Map<String, String> headers = new HashMap<>();
-            headers.put("Authorization", "Bearer " + TokenUtils.getBearerToken(configuration.getTokenProvider()));
+            headers.put("Authorization", "Bearer " + tokenUtils.getBearerToken(configuration.getTokenProvider()));
             headers.put(Constants.SDK_METRICS_HEADER_KEY, Helpers.getMetrics().toJSONString());
 
             FutureTask[] futureTasks = new FutureTask[recordInputs.length];
@@ -306,7 +308,7 @@ public final class Skyflow {
             }
 
             Map<String, String> headers = new HashMap<>();
-            headers.put("Authorization", "Bearer " + TokenUtils.getBearerToken(configuration.getTokenProvider()));
+            headers.put("Authorization", "Bearer " + tokenUtils.getBearerToken(configuration.getTokenProvider()));
             headers.put(Constants.SDK_METRICS_HEADER_KEY, Helpers.getMetrics().toJSONString());
 
             FutureTask[] futureTasks = new FutureTask[recordInputs.length];
@@ -369,7 +371,7 @@ public final class Skyflow {
                 throw new SkyflowException(ErrorCode.EmptyRecords);
             }
             Map<String, String> headers = new HashMap<>();
-            headers.put("Authorization", "Bearer " + TokenUtils.getBearerToken(configuration.getTokenProvider()));
+            headers.put("Authorization", "Bearer " + tokenUtils.getBearerToken(configuration.getTokenProvider()));
             headers.put(Constants.SDK_METRICS_HEADER_KEY, Helpers.getMetrics().toJSONString());
             FutureTask[] futureTasks = new FutureTask[recordInputs.length];
 
@@ -431,7 +433,7 @@ public final class Skyflow {
                 headers = Helpers.constructConnectionHeadersMap((JSONObject) connectionConfig.get("requestHeader"));
             }
             if (!headers.containsKey("x-skyflow-authorization")) {
-                headers.put("x-skyflow-authorization", TokenUtils.getBearerToken(configuration.getTokenProvider()));
+                headers.put("x-skyflow-authorization", tokenUtils.getBearerToken(configuration.getTokenProvider()));
             }
             headers.put(Constants.SDK_METRICS_HEADER_KEY, Helpers.getMetrics().toJSONString());
             String requestMethod = connectionConfig.get("methodName").toString();
@@ -467,7 +469,7 @@ public final class Skyflow {
 
             String url = configuration.getVaultURL() + "/v1/vaults/" + configuration.getVaultID() + "/query";
             Map<String, String> headers = new HashMap<>();
-            headers.put("Authorization", "Bearer " + TokenUtils.getBearerToken(configuration.getTokenProvider()));
+            headers.put("Authorization", "Bearer " + tokenUtils.getBearerToken(configuration.getTokenProvider()));
             headers.put(Constants.SDK_METRICS_HEADER_KEY, Helpers.getMetrics().toJSONString());
             String response = HttpUtility.sendRequest("POST", new URL(url), requestBody, headers);
             queryResponse = (JSONObject) new JSONParser().parse(response);
