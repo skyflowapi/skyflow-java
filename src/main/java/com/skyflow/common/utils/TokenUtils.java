@@ -7,6 +7,7 @@ import com.skyflow.entities.TokenProvider;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.logs.ErrorLogs;
+import com.skyflow.logs.InfoLogs;
 import org.apache.commons.codec.binary.Base64;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -20,7 +21,7 @@ public final class TokenUtils {
     private String token;
 
     public TokenUtils() {
-        LogUtil.printInfoLog("TOKEN UTILS INSTANCE CREATED");
+        LogUtil.printInfoLog(InfoLogs.TokenUtilsInstanceCreated.getLog());
         this.token = null;
     }
 
