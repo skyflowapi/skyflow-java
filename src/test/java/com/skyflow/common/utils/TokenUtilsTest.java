@@ -6,7 +6,6 @@ package com.skyflow.common.utils;
 import com.skyflow.entities.TokenProvider;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.SkyflowException;
-import com.skyflow.serviceaccount.util.Token;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -15,9 +14,23 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import static org.junit.Assert.assertEquals;
 
 class InvalidTokenProvider implements TokenProvider {
+
+    private final boolean isException;
+
+    public InvalidTokenProvider() {
+        this.isException = false;
+    }
+
+    public InvalidTokenProvider(boolean isException) {
+        this.isException = isException;
+    }
+
     @Override
     public String getBearerToken() throws Exception {
-        return "invalid_token";
+        if (!isException)
+            return "invalid_token";
+        else
+            throw new Exception("EXCEPTION THROWN!!");
     }
 }
 
@@ -32,11 +45,12 @@ class InvalidTokenProvider2 implements TokenProvider {
 @PrepareForTest
 public class TokenUtilsTest {
 
-    @Test
-    public void testInvalidGetBearerToken(){
+    TokenUtils tokenUtils = new TokenUtils();
 
+    @Test
+    public void testInvalidGetBearerToken() {
         try {
-            String token = TokenUtils.getBearerToken(new InvalidTokenProvider());
+            String token = tokenUtils.getBearerToken(new InvalidTokenProvider());
         } catch (SkyflowException e) {
             assertEquals(e.getMessage(), ErrorCode.InvalidBearerToken.getDescription());
         }
@@ -44,9 +58,9 @@ public class TokenUtilsTest {
 
     @Test
     @PrepareForTest
-    public void testInvalidGetBearerToken2(){
+    public void testInvalidGetBearerToken2() {
         try {
-            String token = TokenUtils.getBearerToken(new InvalidTokenProvider2());
+            String token = tokenUtils.getBearerToken(new InvalidTokenProvider2());
         } catch (SkyflowException e) {
             assertEquals(e.getMessage(), ErrorCode.InvalidBearerToken.getDescription());
         }
@@ -59,6 +73,15 @@ public class TokenUtilsTest {
             assertEquals(false, TokenUtils.isTokenValid(token));
         } catch (SkyflowException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    public void testGetBearerTokenException() {
+        try {
+            String token = tokenUtils.getBearerToken(new InvalidTokenProvider(true));
+        } catch (SkyflowException e) {
+            assertEquals(e.getMessage(), "EXCEPTION THROWN!!");
         }
     }
 }

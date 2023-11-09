@@ -23,7 +23,8 @@ public enum InfoLogs {
     GenerateBearerTokenCalled("generateBearerToken method has triggered"),
     QuerySupportCalled("query method has triggered"),
     GenerateBearerTokenFromCredsCalled("generateBearerTokenFromCreds method has triggered"),
-    ValidatingUpsertOptions("validating upsert options.");
+    ValidatingUpsertOptions("validating upsert options."),
+    TokenUtilsInstanceCreated("token utils instance created");
     private final String log;
 
     InfoLogs(String log) {
