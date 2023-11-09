@@ -1,7 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [1.12.1] - 2023-11-07
+## [1.12.1] - 2023-11-09
 ### Fixed
 - Static Bearer token being used for multiple Skyflow Client instances.
 
