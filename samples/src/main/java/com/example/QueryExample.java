@@ -11,7 +11,7 @@ import com.skyflow.serviceaccount.util.Token;
 import com.skyflow.vault.Skyflow;
 import org.json.simple.JSONObject;
 
-public class Samples {
+public class QueryExample {
 
     public static void main(String[] args) {
 

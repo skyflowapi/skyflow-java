@@ -1,10 +1,13 @@
 /*
 	Copyright (c) 2023 Skyflow, Inc. 
 */
+package com.example;
+
 import com.skyflow.entities.ResponseToken;
 import com.skyflow.entities.SkyflowConfiguration;
 import com.skyflow.entities.TokenProvider;
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.serviceaccount.util.Token;
 import com.skyflow.vault.Skyflow;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -15,8 +18,11 @@ public class DeleteExample {
     public static void main(String[] args) {
 
         try {
-            SkyflowConfiguration config = new SkyflowConfiguration("<your_vaultID>",
-                    "<your_vaultURL>", new DemoTokenProvider());
+            SkyflowConfiguration config = new SkyflowConfiguration(
+                    "<your_vaultID>",
+                    "<your_vaultURL>",
+                    new DemoTokenProvider()
+            );
             Skyflow skyflowClient = Skyflow.init(config);
             JSONObject records = new JSONObject();
             JSONArray recordsArray = new JSONArray();
@@ -38,7 +44,7 @@ public class DeleteExample {
             System.out.println(response);
         } catch (SkyflowException e) {
             e.printStackTrace();
-            System.out.println("error"+ e.getData());
+            System.out.println("error" + e.getData());
         }
 
     }
@@ -52,7 +58,7 @@ public class DeleteExample {
             ResponseToken response = null;
             try {
                 String filePath = "<YOUR_CREDENTIALS_FILE_PATH>";
-                if(Token.isExpired(bearerToken)) {
+                if (Token.isExpired(bearerToken)) {
                     response = Token.generateBearerToken(filePath);
                     bearerToken = response.getAccessToken();
                 }
