@@ -78,7 +78,13 @@ public class TokenUtilsValidTokenTest {
             System.out.println("Second token"+token);
             assertEquals(secondToken,"aa.valid_token.dd");
         } catch (SkyflowException e) {
+            System.out.println("------------------------------------");
             System.out.println(e.getMessage());
+            System.out.println("------------------------------------");
+            System.out.println(e.getCode());
+            System.out.println("------------------------------------");
+            e.printStackTrace();
+            System.out.println("------------------------------------");
             Assert.fail("EXCEPTION THROWN!!");
         }
     }
