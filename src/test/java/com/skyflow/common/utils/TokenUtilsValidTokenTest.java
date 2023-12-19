@@ -73,9 +73,12 @@ public class TokenUtilsValidTokenTest {
         try {
             String token = tokenUtils.getBearerToken(new ValidTokenProvider());
             assertEquals(token,"aa.valid_token.dd");
+            System.out.println("First token"+token);
             String secondToken = tokenUtils.getBearerToken(new ValidTokenProvider());
+            System.out.println("Second token"+token);
             assertEquals(secondToken,"aa.valid_token.dd");
         } catch (SkyflowException e) {
+            System.out.println(e.getMessage());
             Assert.fail("EXCEPTION THROWN!!");
         }
     }
@@ -84,8 +87,10 @@ public class TokenUtilsValidTokenTest {
     public void testInValidToken() {
         try {
             String token = tokenUtils.getBearerToken(new InvalidBearerTokenProvider());
+            System.out.println("Second test case "+token);
             Assert.fail("should throw execution");
         } catch (SkyflowException e) {
+            System.out.println(e.getMessage());
             assertEquals(e.getMessage(), ErrorCode.InvalidBearerToken.getDescription());
 
         }
