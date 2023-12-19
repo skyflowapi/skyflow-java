@@ -169,7 +169,7 @@ public class SkyflowTest {
     @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility", "com.skyflow.common.utils.TokenUtils"})
     public void testInsertSuccessWithTokens() {
         try {
-            SkyflowConfiguration config = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider());
+            SkyflowConfiguration config = new SkyflowConfiguration("vaultID", "https://vaulturl.com", new DemoTokenProvider());
 
             Skyflow skyflowClient = Skyflow.init(config);
             JSONObject records = new JSONObject();
@@ -188,7 +188,7 @@ public class SkyflowTest {
 
             PowerMockito.mockStatic(HttpUtility.class);
             String mockResponse =
-                    "{\"vaultID\":\"vault123\",\"responses\":[{\"records\":[{\"skyflow_id\":\"id1\"}]},{\"fields\":{\"first_name\":\"token1\"}}]}";
+                    "{\"vaultID\":\"vault123\",\"responses\":[{\"records\":[{\"skyflow_id\":\"id1\", \"tokens\":{\"first_name\":\"token1\"}}]}]}";
             PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockResponse);
 
             JSONObject res = skyflowClient.insert(records, insertOptions);
@@ -227,7 +227,7 @@ public class SkyflowTest {
 
             PowerMockito.mockStatic(HttpUtility.class);
             String mockResponse =
-                    "{\"vaultID\":\"vault123\",\"responses\":[{\"records\":[{\"skyflow_id\":\"id1\"}]},{\"fields\":{\"first_name\":\"token1\"}}]}";
+                    "{\"vaultID\":\"vault123\",\"responses\":[{\"records\":[{\"skyflow_id\":\"id1\", \"tokens\":{\"first_name\":\"token1\"}}]}]}";
             PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockResponse);
             JSONObject res = skyflowClient.insert(records);
             JSONArray responseRecords = (JSONArray) res.get("records");
@@ -268,7 +268,7 @@ public class SkyflowTest {
 
             PowerMockito.mockStatic(HttpUtility.class);
             String mockResponse =
-                    "{\"vaultID\":\"vault123\",\"responses\":[{\"records\":[{\"skyflow_id\":\"id1\"}]},{\"fields\":{\"first_name\":\"token1\"}}]}";
+                    "{\"vaultID\":\"vault123\",\"responses\":[{\"records\":[{\"skyflow_id\":\"id1\", \"tokens\":{\"first_name\":\"token1\"}}]}]}";
             PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockResponse);
 
             JSONObject res = skyflowClient.insert(records, insertOptions);

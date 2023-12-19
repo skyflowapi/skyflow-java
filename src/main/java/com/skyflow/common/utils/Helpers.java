@@ -64,16 +64,11 @@ public final class Helpers {
             postRequestInput.put("fields", record.getFields());
             if (options.getUpsertOptions() != null)
                 postRequestInput.put("upsert", getUpsertColumn(record.getTable(), options.getUpsertOptions()));
+            if (isTokens){
+                postRequestInput.put("tokenization", true);
+            }
             requestBodyContent.add(postRequestInput);
 
-            if (isTokens) {
-                JSONObject getRequestInput = new JSONObject();
-                getRequestInput.put("method", "GET");
-                getRequestInput.put("tableName", record.getTable());
-                getRequestInput.put("ID", String.format("$responses.%d.records.0.skyflow_id", 2 * i));
-                getRequestInput.put("tokenization", true);
-                requestBodyContent.add(getRequestInput);
-            }
         }
         finalRequest.put("records", requestBodyContent);
 
@@ -177,20 +172,19 @@ public final class Helpers {
         JSONObject insertResponse = new JSONObject();
         if (tokens) {
             for (int index = 0; index < responses.size(); index++) {
-                if (index % 2 != 0) {
-                    String skyflowId = (String) ((JSONObject) ((JSONArray) ((JSONObject) responses.get(index - 1))
+                    String skyflowId = (String) ((JSONObject) ((JSONArray) ((JSONObject) responses.get(index))
                             .get("records")).get(0)).get("skyflow_id");
 
                     JSONObject newObj = new JSONObject();
                     newObj.put("table", ((JSONObject) requestRecords.get(index)).get("tableName"));
 
-                    JSONObject newFields = (JSONObject) ((JSONObject) responses.get(index)).get("fields");
+                    JSONObject newFields = (JSONObject) ((JSONObject) ((JSONArray) ((JSONObject) responses.get(index))
+                            .get("records")).get(0)).get("tokens");
                     newFields.remove("*");
                     newFields.put("skyflow_id", skyflowId);
                     newObj.put("fields", newFields);
 
                     updatedResponses.add(newObj);
-                }
             }
         } else {
             for (int index = 0; index < responses.size(); index++) {
