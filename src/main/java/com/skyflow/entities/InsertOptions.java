@@ -7,10 +7,12 @@ public class InsertOptions {
 
     private boolean tokens;
     private UpsertOption[] upsertOptions;
+    private Boolean continueOnError;
 
     public InsertOptions() {
         this.tokens = true;
         this.upsertOptions = null;
+        this.continueOnError = null;
     }
 
     public InsertOptions(boolean tokens) {
@@ -28,11 +30,35 @@ public class InsertOptions {
         this.upsertOptions = upsertOptions;
     }
 
+    public InsertOptions(Boolean continueOnError) {
+        this.continueOnError = continueOnError;
+    }
+
+    public InsertOptions(boolean tokens, Boolean continueOnError) {
+        this.tokens = tokens;
+        this.continueOnError = continueOnError;
+    }
+
+    public InsertOptions(UpsertOption[] upsertOptions, Boolean continueOnError) {
+        this.upsertOptions = upsertOptions;
+        this.continueOnError = continueOnError;
+    }
+
+    public InsertOptions(boolean tokens, UpsertOption[] upsertOptions, Boolean continueOnError) {
+        this.tokens = tokens;
+        this.upsertOptions = upsertOptions;
+        this.continueOnError = continueOnError;
+    }
+
     public boolean isTokens() {
         return tokens;
     }
 
     public UpsertOption[] getUpsertOptions() {
         return upsertOptions;
+    }
+
+    public Boolean getContinueOnError() {
+        return continueOnError;
     }
 }

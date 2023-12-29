@@ -17,6 +17,11 @@ import static com.skyflow.common.utils.Helpers.formatJsonToFormEncodedString;
 import static com.skyflow.common.utils.Helpers.formatJsonToMultiPartFormDataString;
 
 public final class HttpUtility {
+    private static String requestID;
+
+    public static String getRequestID() {
+        return requestID;
+    }
 
     public static String sendRequest(String method, URL url, JSONObject params, Map<String, String> headers) throws IOException, SkyflowException {
         HttpURLConnection connection = null;
@@ -61,6 +66,7 @@ public final class HttpUtility {
 
             int status = connection.getResponseCode();
             String requestID = connection.getHeaderField("x-request-id");
+            HttpUtility.requestID = requestID;
 
             Reader streamReader;
             if (status > 299) {
