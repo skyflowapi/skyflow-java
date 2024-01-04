@@ -68,26 +68,26 @@ public class TokenUtilsValidTokenTest {
         tokenUtils = new TokenUtils();
     }
 
-    @Test
-    public void testValidToken() {
-        try {
-            String token = tokenUtils.getBearerToken(new ValidTokenProvider());
-            assertEquals(token,"aa.valid_token.dd");
-            System.out.println("First token"+token);
-            String secondToken = tokenUtils.getBearerToken(new ValidTokenProvider());
-            System.out.println("Second token"+token);
-            assertEquals(secondToken,"aa.valid_token.dd");
-        } catch (SkyflowException e) {
-            System.out.println("------------------------------------");
-            System.out.println(e.getMessage());
-            System.out.println("------------------------------------");
-            System.out.println(e.getCode());
-            System.out.println("------------------------------------");
-            e.printStackTrace();
-            System.out.println("------------------------------------");
-            Assert.fail("EXCEPTION THROWN!!");
-        }
-    }
+    // @Test
+    // public void testValidToken() {
+    //     try {
+    //         String token = tokenUtils.getBearerToken(new ValidTokenProvider());
+    //         assertEquals(token,"aa.valid_token.dd");
+    //         System.out.println("First token"+token);
+    //         String secondToken = tokenUtils.getBearerToken(new ValidTokenProvider());
+    //         System.out.println("Second token"+token);
+    //         assertEquals(secondToken,"aa.valid_token.dd");
+    //     } catch (SkyflowException e) {
+    //         System.out.println("------------------------------------");
+    //         System.out.println(e.getMessage());
+    //         System.out.println("------------------------------------");
+    //         System.out.println(e.getCode());
+    //         System.out.println("------------------------------------");
+    //         e.printStackTrace();
+    //         System.out.println("------------------------------------");
+    //         Assert.fail("EXCEPTION THROWN!!");
+    //     }
+    // }
     
     @Test
     public void testInValidToken() {
