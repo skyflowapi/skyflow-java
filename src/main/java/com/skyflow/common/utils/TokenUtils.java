@@ -41,6 +41,11 @@ public final class TokenUtils {
     private static boolean isExpired(String encodedToken) throws ParseException, SkyflowException {
         long currentTime = new Date().getTime() / 1000;
         long expiryTime = (long) decoded(encodedToken).get("exp");
+        System.out.println("--------------------------------");
+        System.out.println(encodedToken);
+        System.out.println(currentTime);
+        System.out.println(expiryTime);
+        System.out.println("----------------------------------");  
         return currentTime > expiryTime;
     }
 
