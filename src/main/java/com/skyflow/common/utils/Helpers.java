@@ -41,7 +41,7 @@ public final class Helpers {
         JSONObject finalRequest = new JSONObject();
         List<JSONObject> requestBodyContent = new ArrayList<JSONObject>();
         boolean isTokens = options.isTokens();
-        Boolean continueOnError = options.getContinueOnError();
+        boolean continueOnError = options.isContinueOnError();
         InsertRecordInput[] records = recordsInput.getRecords();
 
         if (records == null || records.length == 0) {
@@ -72,9 +72,7 @@ public final class Helpers {
 
         }
         finalRequest.put("records", requestBodyContent);
-        if (continueOnError != null) {
-            finalRequest.put("continueOnError", continueOnError);
-        }
+        finalRequest.put("continueOnError", continueOnError);
 
         return finalRequest;
     }
@@ -176,9 +174,9 @@ public final class Helpers {
         JSONObject insertResponse = new JSONObject();
 
         boolean tokens = options.isTokens();
-        Boolean continueOnError = options.getContinueOnError();
+        boolean continueOnError = options.isContinueOnError();
 
-        if (continueOnError != null && continueOnError) {
+        if (continueOnError) {
             for (int index = 0; index < responses.size(); index++) {
                 JSONObject body = (JSONObject) ((JSONObject) responses.get(index)).get("Body");
                 Long status = (Long) ((JSONObject) responses.get(index)).get("Status");
@@ -436,13 +434,5 @@ public final class Helpers {
             details.put("sdk_runtime_details", "Java@" + javaVersion);
 
         return details;
-    }
-
-    private static JSONObject buildInsetResponseWithContinueOnError(){
-        return new JSONObject();
-    }
-
-    private static JSONObject buildInsetResponseWithoutContinueOnError(){
-        return new JSONObject();
     }
 }
