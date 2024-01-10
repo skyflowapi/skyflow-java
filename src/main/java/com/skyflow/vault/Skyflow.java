@@ -75,7 +75,7 @@ public final class Skyflow {
             String response = HttpUtility.sendRequest("POST", new URL(url), requestBody, headers);
             insertResponse = (JSONObject) new JSONParser().parse(response);
             LogUtil.printInfoLog(InfoLogs.ConstructInsertResponse.getLog());
-            insertResponse = Helpers.constructInsertResponse(insertResponse, (List) requestBody.get("records"), insertOptions.isTokens());
+            insertResponse = Helpers.constructInsertResponse(insertResponse, (List) requestBody.get("records"), insertOptions);
         } catch (IOException e) {
             LogUtil.printErrorLog(ErrorLogs.InvalidInsertInput.getLog());
             throw new SkyflowException(ErrorCode.InvalidInsertInput, e);

@@ -55,7 +55,8 @@ public enum ErrorLogs {
     MissingRedaction("Missing Redaction property."),
     TokensGetColumnNotSupported("Interface: get method - column_name or column_values cannot be used with tokens in options."),
     RedactionWithTokenNotSupported("Interface: get method - redaction cannot be used when tokens are true in options."),
-    InvalidToken("Invalid Token value");
+    InvalidToken("Invalid Token value"),
+    BearerTokenExpired("Bearer token is invalid or expired.");
 
     private final String log;
 

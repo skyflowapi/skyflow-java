@@ -59,7 +59,10 @@ public final class TokenUtils {
 
         try {
             token = tokenProvider.getBearerToken();
-            isTokenValid(token);
+            if(!isTokenValid(token)){
+                LogUtil.printErrorLog(ErrorLogs.BearerTokenExpired.getLog());
+                throw new SkyflowException(ErrorCode.BearerTokenExpired);
+            }
         } catch (SkyflowException exception) {
             throw exception;
         } catch (Exception e) {

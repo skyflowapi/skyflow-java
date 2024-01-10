@@ -4,10 +4,10 @@
 package com.skyflow.vault;
 
 import com.skyflow.Configuration;
+import com.skyflow.common.utils.Helpers;
 import com.skyflow.common.utils.HttpUtility;
 import com.skyflow.common.utils.TokenUtils;
 import com.skyflow.entities.*;
-import com.skyflow.common.utils.Helpers;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.SkyflowException;
 import org.json.simple.JSONArray;
@@ -16,8 +16,6 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.mockito.Mockito;
-import static org.mockito.Mockito.*;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentMatchers;
 import org.powermock.api.mockito.PowerMockito;
@@ -30,7 +28,6 @@ import java.net.URL;
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-
 
 class DemoTokenProvider implements TokenProvider {
     @Override
@@ -57,6 +54,7 @@ public class SkyflowTest {
     private static String tableName = null;
     private static String columnName = null;
     private static String INVALID_EXCEPTION_THROWN = "Should not have thrown any exception";
+    private static final String EXCEPTION_NOT_THROWN = "Should have thrown an exception";
 
 
     @BeforeClass
@@ -169,7 +167,7 @@ public class SkyflowTest {
     @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility", "com.skyflow.common.utils.TokenUtils"})
     public void testInsertSuccessWithTokens() {
         try {
-            SkyflowConfiguration config = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider());
+            SkyflowConfiguration config = new SkyflowConfiguration("vaultID", "https://vaulturl.com", new DemoTokenProvider());
 
             Skyflow skyflowClient = Skyflow.init(config);
             JSONObject records = new JSONObject();
@@ -188,7 +186,7 @@ public class SkyflowTest {
 
             PowerMockito.mockStatic(HttpUtility.class);
             String mockResponse =
-                    "{\"vaultID\":\"vault123\",\"responses\":[{\"records\":[{\"skyflow_id\":\"id1\"}]},{\"fields\":{\"first_name\":\"token1\"}}]}";
+                    "{\"vaultID\":\"vault123\",\"responses\":[{\"records\":[{\"skyflow_id\":\"id1\", \"tokens\":{\"first_name\":\"token1\"}}]}]}";
             PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockResponse);
 
             JSONObject res = skyflowClient.insert(records, insertOptions);
@@ -227,7 +225,7 @@ public class SkyflowTest {
 
             PowerMockito.mockStatic(HttpUtility.class);
             String mockResponse =
-                    "{\"vaultID\":\"vault123\",\"responses\":[{\"records\":[{\"skyflow_id\":\"id1\"}]},{\"fields\":{\"first_name\":\"token1\"}}]}";
+                    "{\"vaultID\":\"vault123\",\"responses\":[{\"records\":[{\"skyflow_id\":\"id1\", \"tokens\":{\"first_name\":\"token1\"}}]}]}";
             PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockResponse);
             JSONObject res = skyflowClient.insert(records);
             JSONArray responseRecords = (JSONArray) res.get("records");
@@ -268,7 +266,7 @@ public class SkyflowTest {
 
             PowerMockito.mockStatic(HttpUtility.class);
             String mockResponse =
-                    "{\"vaultID\":\"vault123\",\"responses\":[{\"records\":[{\"skyflow_id\":\"id1\"}]},{\"fields\":{\"first_name\":\"token1\"}}]}";
+                    "{\"vaultID\":\"vault123\",\"responses\":[{\"records\":[{\"skyflow_id\":\"id1\", \"tokens\":{\"first_name\":\"token1\"}}]}]}";
             PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockResponse);
 
             JSONObject res = skyflowClient.insert(records, insertOptions);
@@ -319,6 +317,251 @@ public class SkyflowTest {
         } catch (SkyflowException skyflowException) {
             skyflowException.printStackTrace();
             fail(INVALID_EXCEPTION_THROWN);
+        } catch (IOException e) {
+            e.printStackTrace();
+            fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility", "com.skyflow.common.utils.TokenUtils"})
+    public void testInsertWithContinueOnErrorAsTrueWithTokens() {
+        try {
+            SkyflowConfiguration config = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider());
+
+            Skyflow skyflowClient = Skyflow.init(config);
+            JSONObject records = new JSONObject();
+            JSONArray recordsArray = new JSONArray();
+
+            JSONObject record1 = new JSONObject();
+            record1.put("table", tableName);
+            JSONObject fields1 = new JSONObject();
+            fields1.put(columnName, "john");
+            record1.put("fields", fields1);
+
+            JSONObject record2 = new JSONObject();
+            record2.put("table", tableName);
+            JSONObject fields2 = new JSONObject();
+            fields2.put(columnName, "jane");
+            record2.put("fields", fields2);
+
+            recordsArray.add(record1);
+            recordsArray.add(record2);
+            records.put("records", recordsArray);
+
+            InsertOptions insertOptions = new InsertOptions(true, true);
+
+            PowerMockito.mockStatic(HttpUtility.class);
+            String mockResponse = "{\"vaultID\":\"vault123\",\"responses\":[{\"Status\":400,\"Body\":{\"error\":\"Error Inserting Records due to unique constraint violation\"}},{\"Status\":200,\"Body\":{\"records\":[{\"skyflow_id\":\"id1\",\"tokens\":{\"first_name\":\"token1\"}}]}}]}";
+            PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockResponse);
+            JSONObject res = skyflowClient.insert(records, insertOptions);
+            JSONArray responseSuccessRecords = (JSONArray) res.get("records");
+            JSONArray responseErrorRecords = (JSONArray) res.get("errors");
+
+            assertEquals(1, responseSuccessRecords.size());
+            assertEquals(tableName, ((JSONObject) responseSuccessRecords.get(0)).get("table"));
+            assertEquals(1, ((JSONObject) responseSuccessRecords.get(0)).get("request_index"));
+            assertNotNull(((JSONObject) responseSuccessRecords.get(0)).get("fields"));
+
+            assertEquals(1, responseErrorRecords.size());
+            assertEquals(0, ((JSONObject) ((JSONObject) responseErrorRecords.get(0)).get("error")).get("request_index"));
+            assertNotNull(((JSONObject) ((JSONObject) responseErrorRecords.get(0)).get("error")).get("description"));
+        } catch (SkyflowException skyflowException) {
+            skyflowException.printStackTrace();
+            fail(INVALID_EXCEPTION_THROWN);
+        } catch (IOException e) {
+            e.printStackTrace();
+            fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility", "com.skyflow.common.utils.TokenUtils"})
+    public void testInsertWithContinueOnErrorAsTrueWithoutTokens() {
+        try {
+            SkyflowConfiguration config = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider());
+
+            Skyflow skyflowClient = Skyflow.init(config);
+            JSONObject records = new JSONObject();
+            JSONArray recordsArray = new JSONArray();
+
+            JSONObject record1 = new JSONObject();
+            record1.put("table", tableName);
+            JSONObject fields1 = new JSONObject();
+            fields1.put(columnName, "first");
+            record1.put("fields", fields1);
+
+            JSONObject record2 = new JSONObject();
+            record2.put("table", tableName);
+            JSONObject fields2 = new JSONObject();
+            fields2.put(columnName, "second");
+            record2.put("fields", fields2);
+
+            recordsArray.add(record1);
+            recordsArray.add(record2);
+            records.put("records", recordsArray);
+
+            InsertOptions insertOptions = new InsertOptions(false, true);
+
+            PowerMockito.mockStatic(HttpUtility.class);
+            String mockResponse = "{\"vaultID\":\"vault123\",\"responses\":[{\"Status\":400,\"Body\":{\"error\":\"Error Inserting Records due to unique constraint violation\"}},{\"Status\":200,\"Body\":{\"records\":[{\"skyflow_id\":\"id1\"}]}}]}";
+            PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockResponse);
+            JSONObject res = skyflowClient.insert(records, insertOptions);
+            JSONArray responseSuccessRecords = (JSONArray) res.get("records");
+            JSONArray responseErrorRecords = (JSONArray) res.get("errors");
+
+            assertEquals(1, responseSuccessRecords.size());
+            assertEquals(tableName, ((JSONObject) responseSuccessRecords.get(0)).get("table"));
+            assertEquals(1, ((JSONObject) responseSuccessRecords.get(0)).get("request_index"));
+            assertNotNull(((JSONObject) responseSuccessRecords.get(0)).get("skyflow_id"));
+            assertNull(((JSONObject) responseSuccessRecords.get(0)).get("tokens"));
+
+            assertEquals(1, responseErrorRecords.size());
+            assertEquals(0, ((JSONObject) ((JSONObject) responseErrorRecords.get(0)).get("error")).get("request_index"));
+            assertNotNull(((JSONObject) ((JSONObject) responseErrorRecords.get(0)).get("error")).get("description"));
+        } catch (SkyflowException skyflowException) {
+            skyflowException.printStackTrace();
+            fail(INVALID_EXCEPTION_THROWN);
+        } catch (IOException e) {
+            e.printStackTrace();
+            fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+    @Test
+    @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility", "com.skyflow.common.utils.TokenUtils"})
+    public void testInsertWithContinueOnErrorAsTrueWithUpsert() {
+        try {
+            SkyflowConfiguration config = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider());
+
+            Skyflow skyflowClient = Skyflow.init(config);
+            JSONObject records = new JSONObject();
+            JSONArray recordsArray = new JSONArray();
+
+            JSONObject record1 = new JSONObject();
+            record1.put("table", tableName);
+            JSONObject fields1 = new JSONObject();
+            fields1.put(columnName, "first");
+            record1.put("fields", fields1);
+
+            JSONObject record2 = new JSONObject();
+            record2.put("table", tableName);
+            JSONObject fields2 = new JSONObject();
+            fields2.put(columnName, "second");
+            record2.put("fields", fields2);
+
+            recordsArray.add(record1);
+            recordsArray.add(record2);
+            records.put("records", recordsArray);
+
+            UpsertOption upsertOption = new UpsertOption(tableName, columnName);
+            InsertOptions insertOptions = new InsertOptions(new UpsertOption[]{upsertOption}, true);
+
+            PowerMockito.mockStatic(HttpUtility.class);
+            String mockResponse = "{\"vaultID\":\"vault123\",\"responses\":[{\"Status\":400,\"Body\":{\"error\":\"Error Inserting Records due to unique constraint violation\"}},{\"Status\":200,\"Body\":{\"records\":[{\"skyflow_id\":\"id1\"}]}}]}";
+            PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockResponse);
+            JSONObject res = skyflowClient.insert(records, insertOptions);
+            JSONArray responseSuccessRecords = (JSONArray) res.get("records");
+            JSONArray responseErrorRecords = (JSONArray) res.get("errors");
+
+            assertEquals(1, responseSuccessRecords.size());
+            assertEquals(tableName, ((JSONObject) responseSuccessRecords.get(0)).get("table"));
+            assertEquals(1, ((JSONObject) responseSuccessRecords.get(0)).get("request_index"));
+            assertNotNull(((JSONObject) responseSuccessRecords.get(0)).get("skyflow_id"));
+            assertNull(((JSONObject) responseSuccessRecords.get(0)).get("tokens"));
+
+            assertEquals(1, responseErrorRecords.size());
+            assertEquals(0, ((JSONObject) ((JSONObject) responseErrorRecords.get(0)).get("error")).get("request_index"));
+            assertNotNull(((JSONObject) ((JSONObject) responseErrorRecords.get(0)).get("error")).get("description"));
+        } catch (SkyflowException skyflowException) {
+            skyflowException.printStackTrace();
+            fail(INVALID_EXCEPTION_THROWN);
+        } catch (IOException e) {
+            e.printStackTrace();
+            fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+    @Test
+    @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility", "com.skyflow.common.utils.TokenUtils"})
+    public void testInsertWithContinueOnErrorWithUpsertAndTokens() {
+        try {
+            SkyflowConfiguration config = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider());
+
+            Skyflow skyflowClient = Skyflow.init(config);
+            JSONObject records = new JSONObject();
+            JSONArray recordsArray = new JSONArray();
+
+            JSONObject record1 = new JSONObject();
+            record1.put("table", tableName);
+            JSONObject fields1 = new JSONObject();
+            fields1.put(columnName, "first");
+            record1.put("fields", fields1);
+
+            JSONObject record2 = new JSONObject();
+            record2.put("table", tableName);
+            JSONObject fields2 = new JSONObject();
+            fields2.put(columnName, "second");
+            record2.put("fields", fields2);
+
+            recordsArray.add(record1);
+            recordsArray.add(record2);
+            records.put("records", recordsArray);
+
+            UpsertOption upsertOption = new UpsertOption(tableName, columnName);
+            InsertOptions insertOptions = new InsertOptions(false, new UpsertOption[]{upsertOption}, true);
+
+            PowerMockito.mockStatic(HttpUtility.class);
+            String mockResponse = "{\"vaultID\":\"vault123\",\"responses\":[{\"Status\":400,\"Body\":{\"error\":\"Error Inserting Records due to unique constraint violation\"}},{\"Status\":200,\"Body\":{\"records\":[{\"skyflow_id\":\"id1\"}]}}]}";
+            PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockResponse);
+            JSONObject res = skyflowClient.insert(records, insertOptions);
+            JSONArray responseSuccessRecords = (JSONArray) res.get("records");
+            JSONArray responseErrorRecords = (JSONArray) res.get("errors");
+
+            assertEquals(1, responseSuccessRecords.size());
+            assertEquals(tableName, ((JSONObject) responseSuccessRecords.get(0)).get("table"));
+            assertEquals(1, ((JSONObject) responseSuccessRecords.get(0)).get("request_index"));
+            assertNotNull(((JSONObject) responseSuccessRecords.get(0)).get("skyflow_id"));
+            assertNull(((JSONObject) responseSuccessRecords.get(0)).get("tokens"));
+
+            assertEquals(1, responseErrorRecords.size());
+            assertEquals(0, ((JSONObject) ((JSONObject) responseErrorRecords.get(0)).get("error")).get("request_index"));
+            assertNotNull(((JSONObject) ((JSONObject) responseErrorRecords.get(0)).get("error")).get("description"));
+        } catch (SkyflowException skyflowException) {
+            skyflowException.printStackTrace();
+            fail(INVALID_EXCEPTION_THROWN);
+        } catch (IOException e) {
+            e.printStackTrace();
+            fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility", "com.skyflow.common.utils.TokenUtils"})
+    public void testInsertParseException() {
+        try {
+            SkyflowConfiguration config = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider());
+
+            Skyflow skyflowClient = Skyflow.init(config);
+            JSONObject records = new JSONObject();
+            JSONArray recordsArray = new JSONArray();
+
+            JSONObject record1 = new JSONObject();
+            record1.put("table", tableName);
+            JSONObject fields1 = new JSONObject();
+            fields1.put(columnName, "first");
+            record1.put("fields", fields1);
+
+            recordsArray.add(record1);
+            records.put("records", recordsArray);
+
+            InsertOptions insertOptions = new InsertOptions(false, true);
+
+            PowerMockito.mockStatic(HttpUtility.class);
+            String mockResponse = "{\"vaultID\":\"vault123\",\"responses\":[{\"Status\":200,\"Body\":{\"records\":[{\"skyflow_id\":\"id1\"]}";
+            PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockResponse);
+            JSONObject res = skyflowClient.insert(records, insertOptions);
+            fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException skyflowException) {
+            assertEquals(ErrorCode.ResponseParsingError.getDescription(), skyflowException.getMessage());
         } catch (IOException e) {
             e.printStackTrace();
             fail(INVALID_EXCEPTION_THROWN);

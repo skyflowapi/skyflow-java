@@ -30,7 +30,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest(fullyQualifiedNames = "com.skyflow.common.utils.TokenUtils")
+@PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.TokenUtils", "com.skyflow.common.utils.HttpUtility"})
 public class HelpersTest {
 
     private static String tableName = null;
@@ -45,6 +45,9 @@ public class HelpersTest {
         PowerMockito.when(TokenUtils.isTokenValid("valid_token")).thenReturn(true);
         PowerMockito.when(TokenUtils.isTokenValid("not_a_valid_token")).thenReturn(false);
 
+        PowerMockito.mockStatic(HttpUtility.class);
+        PowerMockito.when(HttpUtility.getRequestID()).thenReturn("abc");
+
         tableName = "account_details";
         columnName = "card_number";
         columnValue[0] = "123451234554321";
@@ -53,9 +56,9 @@ public class HelpersTest {
 
     @Test
     public void testMessageWithRequestID(){
-        String message = Helpers.appendRequestId("message", "abc");
+        String message = Helpers.appendRequestId("message", HttpUtility.getRequestID());
         String expectedMessage = "message" + " - requestId: " + "abc";
-        assertEquals(message,expectedMessage);
+        assertEquals(expectedMessage, message);
     }
 
     @Test
