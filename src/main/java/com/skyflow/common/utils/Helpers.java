@@ -198,9 +198,11 @@ public final class Helpers {
                     successResponses.add(successObj);
                 } else {
                     JSONObject failureObj = new JSONObject();
-                    failureObj.put("code", status);
-                    failureObj.put("description", appendRequestId((String) body.get("error"), HttpUtility.getRequestID()));
-                    failureObj.put("request_index", index);
+                    JSONObject errorObj = new JSONObject();
+                    errorObj.put("code", status);
+                    errorObj.put("description", appendRequestId((String) body.get("error"), HttpUtility.getRequestID()));
+                    errorObj.put("request_index", index);
+                    failureObj.put("error", errorObj);
                     failureResponses.add(failureObj);
                 }
             }

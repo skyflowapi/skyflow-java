@@ -364,8 +364,8 @@ public class SkyflowTest {
             assertNotNull(((JSONObject) responseSuccessRecords.get(0)).get("fields"));
 
             assertEquals(1, responseErrorRecords.size());
-            assertEquals(0, ((JSONObject) responseErrorRecords.get(0)).get("request_index"));
-            assertNotNull(((JSONObject) responseErrorRecords.get(0)).get("description"));
+            assertEquals(0, ((JSONObject) ((JSONObject) responseErrorRecords.get(0)).get("error")).get("request_index"));
+            assertNotNull(((JSONObject) ((JSONObject) responseErrorRecords.get(0)).get("error")).get("description"));
         } catch (SkyflowException skyflowException) {
             skyflowException.printStackTrace();
             fail(INVALID_EXCEPTION_THROWN);
@@ -417,8 +417,8 @@ public class SkyflowTest {
             assertNull(((JSONObject) responseSuccessRecords.get(0)).get("tokens"));
 
             assertEquals(1, responseErrorRecords.size());
-            assertEquals(0, ((JSONObject) responseErrorRecords.get(0)).get("request_index"));
-            assertNotNull(((JSONObject) responseErrorRecords.get(0)).get("description"));
+            assertEquals(0, ((JSONObject) ((JSONObject) responseErrorRecords.get(0)).get("error")).get("request_index"));
+            assertNotNull(((JSONObject) ((JSONObject) responseErrorRecords.get(0)).get("error")).get("description"));
         } catch (SkyflowException skyflowException) {
             skyflowException.printStackTrace();
             fail(INVALID_EXCEPTION_THROWN);
@@ -470,8 +470,8 @@ public class SkyflowTest {
             assertNull(((JSONObject) responseSuccessRecords.get(0)).get("tokens"));
 
             assertEquals(1, responseErrorRecords.size());
-            assertEquals(0, ((JSONObject) responseErrorRecords.get(0)).get("request_index"));
-            assertNotNull(((JSONObject) responseErrorRecords.get(0)).get("description"));
+            assertEquals(0, ((JSONObject) ((JSONObject) responseErrorRecords.get(0)).get("error")).get("request_index"));
+            assertNotNull(((JSONObject) ((JSONObject) responseErrorRecords.get(0)).get("error")).get("description"));
         } catch (SkyflowException skyflowException) {
             skyflowException.printStackTrace();
             fail(INVALID_EXCEPTION_THROWN);
@@ -523,8 +523,8 @@ public class SkyflowTest {
             assertNull(((JSONObject) responseSuccessRecords.get(0)).get("tokens"));
 
             assertEquals(1, responseErrorRecords.size());
-            assertEquals(0, ((JSONObject) responseErrorRecords.get(0)).get("request_index"));
-            assertNotNull(((JSONObject) responseErrorRecords.get(0)).get("description"));
+            assertEquals(0, ((JSONObject) ((JSONObject) responseErrorRecords.get(0)).get("error")).get("request_index"));
+            assertNotNull(((JSONObject) ((JSONObject) responseErrorRecords.get(0)).get("error")).get("description"));
         } catch (SkyflowException skyflowException) {
             skyflowException.printStackTrace();
             fail(INVALID_EXCEPTION_THROWN);
