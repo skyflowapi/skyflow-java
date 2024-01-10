@@ -62,7 +62,7 @@ Add this dependency to your project's POM:
     <dependency>
         <groupId>com.skyflow</groupId>
         <artifactId>skyflow-java</artifactId>
-        <version>1.12.1</version>
+        <version>1.13.0</version>
     </dependency>
 ```
 ---
