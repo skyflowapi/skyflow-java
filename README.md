@@ -296,21 +296,19 @@ Example implementation of DemoTokenProvider using credentials file content is as
 ```java
 import com.skyflow.entities.TokenProvider;
 
-static class DemoTokenProvider implements TokenProvider {
-    
-        @Override
-        public String getBearerToken() throws Exception {
-            ResponseToken res = null;
-            try {
-                String filePath = "<your_credentials_file_content>";
-                res = Token.generateBearerTokenFromCreds(filePath);
-            } catch (SkyflowException e) {
-                e.printStackTrace();
-            }
-            return res.getAccessToken();
+static class DemoTokenProvider implements TokenProvider { 
+    @Override
+    public String getBearerToken() throws Exception {
+        ResponseToken res = null;
+        try {
+            String filePath = "<your_credentials_file_content>";
+            res = Token.generateBearerTokenFromCreds(filePath);
+        } catch (SkyflowException e) {
+            e.printStackTrace();
         }
         return res.getAccessToken();
     }
+    return res.getAccessToken();
 }
 ```
 
@@ -318,7 +316,7 @@ All Vault APIs must be invoked using a client instance.
 
 ## Insert
 
-To insert data into your vault, use the **insert(JSONObject insertInput, InsertOptions options)** method. The first parameter `insertInput` is a JSON object that must have a `records` key and takes an array of records to insert into the vault as a value. The second parameter, `options` is an InsertOptions object that provides further options for your insert call, including **upsert** operations as shown below:
+To insert data into your vault, use the **insert(JSONObject insertInput, InsertOptions options)** method. The first parameter `insertInput` is a JSON object that must have a `records` key and takes an array of records to insert into the vault as a value. The second parameter, `options` is an `InsertOptions` object that provides further options for your insert call, including **upsert** operations as shown below:
 ```java
 import com.skyflow.entities.InsertOptions;
 import com.skyflow.entities.UpsertOption;
@@ -350,7 +348,7 @@ InsertOptions insertOptions = new InsertOptions(
         );
    
 ```
-An [example](https://github.com/skyflowapi/skyflow-java/blob/master/samples/src/main/java/com/example/InsertExample.java) of insert call with upsert support
+An [example](https://github.com/skyflowapi/skyflow-java/blob/master/samples/src/main/java/com/example/InsertWithUpsertExample.java) of insert call with upsert support
 ```java
 JSONObject recordsJson = new JSONObject();
 JSONArray recordsArrayJson = new JSONArray();
@@ -371,26 +369,86 @@ UpsertOption[] upsertOptions = new UpsertOption[1];
 upsertOptions[0] = new UpsertOption("cards", "cardNumber");
 
 // Pass Upsert options in the insert method options.
-
 InsertOptions insertOptions = new InsertOptions(true, upsertOptions);
 
-try{
-        JSONObject insertResponse = skyflowClient.insert(records,insertOptions);
-        System.out.println(insertResponse);
-    } catch(SkyflowException exception){
-        System.out.println(exception);
-    }
+try {
+    JSONObject insertResponse = skyflowClient.insert(records,insertOptions);
+    System.out.println(insertResponse);
+} catch (SkyflowException exception) {
+    System.out.println(exception);
+}
 ```
 Sample insert Response
-```JS
+```js
 {
     "records": [
         {
             "table": "cards",
             "fields": {
+                "skyflow_id": "16419435-aa63-4823-aae7-19c6a2d6a19f",
                 "cardNumber": "f3907186-e7e2-466f-91e5-48e12c2bcbc1",
                 "cvv": "1989cb56-63da-4482-a2df-1f74cd0dd1a5",
             },
+        }
+    ]
+}
+```
+
+An [example](https://github.com/skyflowapi/skyflow-java/blob/master/samples/src/main/java/com/example/InsertWithContinueOnErrorExample.java) of Insert call with `continueOnError` support:
+```java
+JSONObject records = new JSONObject();
+JSONArray recordsArray = new JSONArray();
+
+JSONObject invalidRecord = new JSONObject();
+invalidRecord.put("table", "cards");
+JSONObject invalidRecordFields = new JSONObject();
+invalidRecordFields.put("namee", "john doe");
+invalidRecordFields.put("card_number", "4111111111111111");
+invalidRecordFields.put("cvv", "1125");
+invalidRecord.put("fields", invalidRecordFields);
+
+JSONObject validRecord = new JSONObject();
+validRecord.put("table", "cards");
+JSONObject validRecordFields = new JSONObject();
+validRecordFields.put("name", "jane doe");
+validRecordFields.put("card_number", "4111111111111111");
+validRecordFields.put("cvv", "1125");
+validRecord.put("fields", validRecordFields);
+
+recordsArray.add(invalidRecord);
+recordsArray.add(validRecord);
+records.put("records", recordsArray);
+
+try {
+    InsertOptions insertOptions = new InsertOptions(true, true);
+    JSONObject insertResponse = skyflowClient.insert(records, insertOptions);
+    System.out.println(insertResponse);
+} catch (SkyflowException e) {
+    System.out.println(e);
+    e.printStackTrace();
+}
+```
+
+Sample Response:
+```js
+{
+    "records": [
+        {
+            "table": "cards",
+            "fields": {
+                "skyflow_id": "16419435-aa63-4823-aae7-19c6a2d6a19f",
+                "cardNumber": "f3907186-e7e2-466f-91e5-48e12c2bcbc1",
+                "cvv": "1989cb56-63da-4482-a2df-1f74cd0dd1a5",
+                "name": "245d3a0f-a2d3-443b-8a20-8c17de86e186",
+            },
+            "request_index": 1,
+        }
+    ],
+    "errors"; [
+        "error": {
+            "code":400,
+            "description":"Invalid field present in JSON namee - requestId: 87fb2e32-6287-4e61-8304-9268df12bfe8",
+            "request_index": 0,
         }
     ]
 }
