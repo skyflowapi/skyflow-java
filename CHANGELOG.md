@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.13.0] - 2024-01-10
+### Added
+- Continue on error support for batch Insert.
+
 ## [1.12.1] - 2023-11-09
 ### Fixed
 - Static Bearer token being used for multiple Skyflow Client instances.

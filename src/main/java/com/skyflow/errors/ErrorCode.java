@@ -58,8 +58,9 @@ public enum ErrorCode {
     InvalidColumnInUpsertOption(400, "Invalid column in upsert object, non empty string is required."),
     MissingRedaction(400, "Missing Redaction Property"),
     TokensGetColumnNotSupported(400,"Interface: get method - column_name or column_values cannot be used with tokens in options."),
-    RedactionWithTokenNotSupported(400, "Interface: get method - redaction cannot be used when tokens are true in options.");
+    RedactionWithTokenNotSupported(400, "Interface: get method - redaction cannot be used when tokens are true in options."),
 
+    BearerTokenExpired(400,"Bearer token is invalid or expired.");
     private final int code;
     private final String description;
 

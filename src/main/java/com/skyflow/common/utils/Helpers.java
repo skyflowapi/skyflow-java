@@ -41,6 +41,7 @@ public final class Helpers {
         JSONObject finalRequest = new JSONObject();
         List<JSONObject> requestBodyContent = new ArrayList<JSONObject>();
         boolean isTokens = options.isTokens();
+        boolean continueOnError = options.isContinueOnError();
         InsertRecordInput[] records = recordsInput.getRecords();
 
         if (records == null || records.length == 0) {
@@ -64,18 +65,14 @@ public final class Helpers {
             postRequestInput.put("fields", record.getFields());
             if (options.getUpsertOptions() != null)
                 postRequestInput.put("upsert", getUpsertColumn(record.getTable(), options.getUpsertOptions()));
+            if (isTokens){
+                postRequestInput.put("tokenization", true);
+            }
             requestBodyContent.add(postRequestInput);
 
-            if (isTokens) {
-                JSONObject getRequestInput = new JSONObject();
-                getRequestInput.put("method", "GET");
-                getRequestInput.put("tableName", record.getTable());
-                getRequestInput.put("ID", String.format("$responses.%d.records.0.skyflow_id", 2 * i));
-                getRequestInput.put("tokenization", true);
-                requestBodyContent.add(getRequestInput);
-            }
         }
         finalRequest.put("records", requestBodyContent);
+        finalRequest.put("continueOnError", continueOnError);
 
         return finalRequest;
     }
@@ -170,27 +167,58 @@ public final class Helpers {
         return paramsList;
     }
 
-    public static JSONObject constructInsertResponse(JSONObject response, List requestRecords, boolean tokens) {
-
+    public static JSONObject constructInsertResponse(JSONObject response, List requestRecords, InsertOptions options) {
         JSONArray responses = (JSONArray) response.get("responses");
-        JSONArray updatedResponses = new JSONArray();
+        JSONArray successResponses = new JSONArray();
+        JSONArray failureResponses = new JSONArray();
         JSONObject insertResponse = new JSONObject();
-        if (tokens) {
+
+        boolean tokens = options.isTokens();
+        boolean continueOnError = options.isContinueOnError();
+
+        if (continueOnError) {
             for (int index = 0; index < responses.size(); index++) {
-                if (index % 2 != 0) {
-                    String skyflowId = (String) ((JSONObject) ((JSONArray) ((JSONObject) responses.get(index - 1))
-                            .get("records")).get(0)).get("skyflow_id");
-
-                    JSONObject newObj = new JSONObject();
-                    newObj.put("table", ((JSONObject) requestRecords.get(index)).get("tableName"));
-
-                    JSONObject newFields = (JSONObject) ((JSONObject) responses.get(index)).get("fields");
-                    newFields.remove("*");
-                    newFields.put("skyflow_id", skyflowId);
-                    newObj.put("fields", newFields);
-
-                    updatedResponses.add(newObj);
+                JSONObject body = (JSONObject) ((JSONObject) responses.get(index)).get("Body");
+                Long status = (Long) ((JSONObject) responses.get(index)).get("Status");
+                if (body.containsKey("records")) {
+                    JSONObject record = ((JSONObject) ((JSONArray) body.get("records")).get(0));
+                    String skyflowID = (String) record.get("skyflow_id");
+                    JSONObject responseTokens = (JSONObject) record.get("tokens");
+                    String table = (String) ((JSONObject) requestRecords.get(index)).get("tableName");
+                    JSONObject successObj = new JSONObject();
+                    successObj.put("table", table);
+                    successObj.put("request_index", index);
+                    if (tokens) {
+                        responseTokens.remove("*");
+                        responseTokens.put("skyflow_id", skyflowID);
+                        successObj.put("fields", responseTokens);
+                    } else {
+                        successObj.put("skyflow_id", skyflowID);
+                    }
+                    successResponses.add(successObj);
+                } else {
+                    JSONObject failureObj = new JSONObject();
+                    JSONObject errorObj = new JSONObject();
+                    errorObj.put("code", status);
+                    errorObj.put("description", appendRequestId((String) body.get("error"), HttpUtility.getRequestID()));
+                    errorObj.put("request_index", index);
+                    failureObj.put("error", errorObj);
+                    failureResponses.add(failureObj);
                 }
+            }
+        } else if (tokens) {
+            for (int index = 0; index < responses.size(); index++) {
+                String skyflowId = (String) ((JSONObject) ((JSONArray) ((JSONObject) responses.get(index))
+                        .get("records")).get(0)).get("skyflow_id");
+                JSONObject newObj = new JSONObject();
+                newObj.put("table", ((JSONObject) requestRecords.get(index)).get("tableName"));
+                JSONObject newFields = (JSONObject) ((JSONObject) ((JSONArray) ((JSONObject) responses.get(index))
+                        .get("records")).get(0)).get("tokens");
+                newFields.remove("*");
+                newFields.put("skyflow_id", skyflowId);
+                newObj.put("fields", newFields);
+                newObj.put("request_index", index);
+                successResponses.add(newObj);
             }
         } else {
             for (int index = 0; index < responses.size(); index++) {
@@ -200,11 +228,16 @@ public final class Helpers {
                 newObj.put("skyflow_id",
                         ((JSONObject) ((JSONArray) ((JSONObject) responses.get(index)).get("records")).get(0))
                                 .get("skyflow_id"));
-
-                updatedResponses.add(newObj);
+                newObj.put("request_index", index);
+                successResponses.add(newObj);
             }
         }
-        insertResponse.put("records", updatedResponses);
+        if (successResponses.size() > 0) {
+            insertResponse.put("records", successResponses);
+        }
+        if (failureResponses.size() > 0) {
+            insertResponse.put("errors", failureResponses);
+        }
         return insertResponse;
     }
 
@@ -404,6 +437,4 @@ public final class Helpers {
 
         return details;
     }
-
-
 }
