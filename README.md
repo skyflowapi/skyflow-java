@@ -445,7 +445,7 @@ Sample Response:
         }
     ],
     "errors"; [
-        {
+        "error": {
             "code":400,
             "description":"Invalid field present in JSON namee - requestId: 87fb2e32-6287-4e61-8304-9268df12bfe8",
             "request_index": 0,
