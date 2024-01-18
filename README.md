@@ -52,7 +52,7 @@ The Skyflow Java SDK is designed to help with integrating Skyflow into a Java ba
 
 Add this dependency to your project's build file:
 ```
-implementation 'com.skyflow:skyflow-java:1.12.1'
+implementation 'com.skyflow:skyflow-java:1.13.0'
 ```
 
 #### Maven users
