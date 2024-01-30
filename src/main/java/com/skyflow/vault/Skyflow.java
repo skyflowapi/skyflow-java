@@ -118,7 +118,7 @@ public final class Skyflow {
                 String taskData = (String) task.get();
                 JSONParser parser = new JSONParser();
                 JSONObject responseJson = (JSONObject) parser.parse(taskData);
-                if (responseJson.containsKey("error")) {
+                if (responseJson.containsKey("error") && responseJson.get("error") != null ) {
                     errorRecordsArray.add(responseJson);
                 } else if (responseJson.containsKey("value")) {
                     successRecordsArray.add(responseJson);
