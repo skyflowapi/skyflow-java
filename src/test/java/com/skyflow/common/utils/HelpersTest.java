@@ -35,6 +35,7 @@ public class HelpersTest {
 
     private static String tableName = null;
     private static String columnName = null;
+    private static String reqId = null;
     private static String[] columnValue = new String[1];
     private static String[] ids =  new String[1];
     private static String INVALID_EXCEPTION_THROWN = "Should not have thrown any exception";
@@ -47,7 +48,7 @@ public class HelpersTest {
 
         PowerMockito.mockStatic(HttpUtility.class);
         PowerMockito.when(HttpUtility.getRequestID()).thenReturn("abc");
-
+        reqId = HttpUtility.getRequestID();
         tableName = "account_details";
         columnName = "card_number";
         columnValue[0] = "123451234554321";
@@ -56,7 +57,7 @@ public class HelpersTest {
 
     @Test
     public void testMessageWithRequestID(){
-        String message = Helpers.appendRequestId("message", HttpUtility.getRequestID());
+        String message = Helpers.appendRequestId("message", reqId);
         String expectedMessage = "message" + " - requestId: " + "abc";
         assertEquals(expectedMessage, message);
     }
