@@ -966,6 +966,39 @@ public class SkyflowTest {
 
     @Test
     @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility", "com.skyflow.common.utils.TokenUtils"})
+    public void testFormattedDetokenizeSuccess() {
+        try {
+            SkyflowConfiguration config = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider());
+
+            Skyflow skyflowClient = Skyflow.init(config);
+            JSONObject records = new JSONObject();
+            JSONArray recordsArray = new JSONArray();
+            JSONObject record = new JSONObject();
+            record.put("token", token);
+            recordsArray.add(record);
+            records.put("records", recordsArray);
+
+            PowerMockito.mockStatic(HttpUtility.class);
+            String mockResponse = "{\"records\":[{\"token\":\"token123\",\"valueType\":\"INTEGER\",\"value\":\"10\",\"test\":\"test123\"}]}";
+            PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockResponse);
+
+            JSONObject res = skyflowClient.detokenize(records);
+            JSONArray responseRecords = (JSONArray) res.get("records");
+            assertEquals(1, responseRecords.size());
+            assertEquals(token, ((JSONObject) responseRecords.get(0)).get("token"));
+            assertEquals(null, ((JSONObject) responseRecords.get(0)).get("test"));
+            assertTrue(((JSONObject) responseRecords.get(0)).containsKey("value"));
+        } catch (SkyflowException skyflowException) {
+            skyflowException.printStackTrace();
+            fail(INVALID_EXCEPTION_THROWN);
+        } catch (IOException e) {
+            e.printStackTrace();
+            fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility", "com.skyflow.common.utils.TokenUtils"})
     public void testDetokenizeError() {
         try {
             SkyflowConfiguration config = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider());

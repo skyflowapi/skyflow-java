@@ -56,8 +56,10 @@ final class Detokenize implements Callable<String> {
             JSONObject responseJson = (JSONObject) parser.parse(apiResponse);
             JSONArray responseRecords = (JSONArray) responseJson.get("records");
             JSONObject responseObject = (JSONObject) responseRecords.get(0);
-            responseObject.remove("valueType");
-            response = responseObject.toJSONString();
+            JSONObject formattedResponseJson = new JSONObject();
+            formattedResponseJson.put("value", responseObject.get("value"));
+            formattedResponseJson.put("token", responseObject.get("token"));
+            response = formattedResponseJson.toJSONString();
         } catch (IOException e) {
             LogUtil.printErrorLog(ErrorLogs.Server.getLog());
             throw new SkyflowException(ErrorCode.Server, e);
