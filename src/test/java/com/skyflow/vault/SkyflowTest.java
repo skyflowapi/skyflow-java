@@ -10,10 +10,12 @@ import com.skyflow.common.utils.TokenUtils;
 import com.skyflow.entities.*;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.logs.ErrorLogs;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -1870,5 +1872,383 @@ public class SkyflowTest {
             fail(INVALID_EXCEPTION_THROWN);
         }
     }
+    @Test
+    @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility", "com.skyflow.common.utils.TokenUtils"})
+    public void testInsertBulkEmptyTable() {
+        try {
+            SkyflowConfiguration config = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider());
+
+            Skyflow skyflowClient = Skyflow.init(config);
+            JSONObject records = new JSONObject();
+            JSONArray recordsArray = new JSONArray();
+            JSONObject record = new JSONObject();
+            JSONObject fields = new JSONObject();
+            fields.put(columnName, "first");
+            record.put("fields", fields);
+
+            recordsArray.add(record);
+
+            records.put("records", recordsArray);
+
+            InsertBulkOptions insertOptions = new InsertBulkOptions(false);
+            JSONObject res = skyflowClient.insertBulk(records, insertOptions);
+        } catch (SkyflowException skyflowException) {
+            assertEquals(ErrorCode.InvalidTable.getDescription(), skyflowException.getMessage());
+        }
+    }
+
+    @Test
+    @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility", "com.skyflow.common.utils.TokenUtils"})
+    public void testInsertBulkEmptyFields() {
+        try {
+            SkyflowConfiguration config = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider());
+
+            Skyflow skyflowClient = Skyflow.init(config);
+            JSONObject records = new JSONObject();
+            JSONArray recordsArray = new JSONArray();
+            JSONObject record = new JSONObject();
+            record.put("table", tableName);
+            recordsArray.add(record);
+
+            records.put("records", recordsArray);
+
+            InsertBulkOptions insertOptions = new InsertBulkOptions(true);
+            JSONObject res = skyflowClient.insertBulk(records, insertOptions);
+        } catch (SkyflowException skyflowException) {
+            assertEquals(ErrorCode.InvalidFields.getDescription(), skyflowException.getMessage());
+        }
+    }
+
+    @Test
+    public void testInsertBulkInvalidInput() {
+        try {
+            SkyflowConfiguration config = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider());
+
+            Skyflow skyflowClient = Skyflow.init(config);
+            JSONObject records = new JSONObject();
+            JSONArray recordsArray = new JSONArray();
+            JSONObject record = new JSONObject();
+            record.put("invalidTableKey", tableName);
+            recordsArray.add(record);
+
+            records.put("records", recordsArray);
+
+            InsertBulkOptions insertOptions = new InsertBulkOptions(true);
+            JSONObject res = skyflowClient.insertBulk(records, insertOptions);
+        } catch (SkyflowException skyflowException) {
+            assertEquals(ErrorCode.InvalidInsertInput.getDescription(), skyflowException.getMessage());
+        }
+    }
+
+    @Test
+    public void testInsertBulkWithEmptyArrayUpsertOptions() {
+        try {
+            SkyflowConfiguration config = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider());
+
+            Skyflow skyflowClient = Skyflow.init(config);
+            UpsertOption[] upsertOptions = new UpsertOption[]{};
+            InsertBulkOptions insertOptions = new InsertBulkOptions(true, upsertOptions);
+            JSONObject records = new JSONObject();
+            JSONObject res = skyflowClient.insertBulk(records, insertOptions);
+        } catch (SkyflowException skyflowException) {
+            assertEquals(ErrorCode.InvalidUpsertOptionType.getDescription(), skyflowException.getMessage());
+        }
+
+        try {
+            SkyflowConfiguration config = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider());
+
+            Skyflow skyflowClient = Skyflow.init(config);
+            UpsertOption[] upsertOptions = new UpsertOption[3];
+            InsertBulkOptions insertOptions = new InsertBulkOptions(true, upsertOptions);
+            JSONObject records = new JSONObject();
+            JSONObject res = skyflowClient.insertBulk(records, insertOptions);
+        } catch (SkyflowException skyflowException) {
+            assertEquals(ErrorCode.InvalidUpsertObjectType.getDescription(), skyflowException.getMessage());
+        }
+    }
+
+    @Test
+    public void testInsertBulkWithInvalidTableInUpsertOptions() {
+        try {
+            SkyflowConfiguration config = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider());
+
+            Skyflow skyflowClient = Skyflow.init(config);
+            InsertBulkOptions insertOptions = new InsertBulkOptions(true, new UpsertOption[]{new UpsertOption(null, "column")});
+            JSONObject records = new JSONObject();
+            JSONObject res = skyflowClient.insertBulk(records, insertOptions);
+        } catch (SkyflowException skyflowException) {
+            assertEquals(ErrorCode.InvalidTableInUpsertOption.getDescription(), skyflowException.getMessage());
+        }
+        try {
+            SkyflowConfiguration config = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider());
+
+            Skyflow skyflowClient = Skyflow.init(config);
+            InsertBulkOptions insertOptions = new InsertBulkOptions(true, new UpsertOption[]{new UpsertOption("", "column")});
+            JSONObject records = new JSONObject();
+            JSONObject res = skyflowClient.insertBulk(records, insertOptions);
+        } catch (SkyflowException skyflowException) {
+            assertEquals(ErrorCode.InvalidTableInUpsertOption.getDescription(), skyflowException.getMessage());
+        }
+    }
+
+    @Test
+    public void testInsertBulkWithInvalidColumnInUpsertOptions() {
+        try {
+            SkyflowConfiguration config = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider());
+
+            Skyflow skyflowClient = Skyflow.init(config);
+            InsertBulkOptions insertOptions = new InsertBulkOptions(true, new UpsertOption[]{new UpsertOption("table1", null)});
+            JSONObject records = new JSONObject();
+            JSONObject res = skyflowClient.insertBulk(records, insertOptions);
+        } catch (SkyflowException skyflowException) {
+            assertEquals(ErrorCode.InvalidColumnInUpsertOption.getDescription(), skyflowException.getMessage());
+        }
+        try {
+            SkyflowConfiguration config = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider());
+
+            Skyflow skyflowClient = Skyflow.init(config);
+            InsertBulkOptions insertOptions = new InsertBulkOptions(true, new UpsertOption[]{new UpsertOption("table2", "")});
+            JSONObject records = new JSONObject();
+            JSONObject res = skyflowClient.insertBulk(records, insertOptions);
+        } catch (SkyflowException skyflowException) {
+            assertEquals(ErrorCode.InvalidColumnInUpsertOption.getDescription(), skyflowException.getMessage());
+        }
+    }
+
+
+    @Test
+    public void testInvalidConfigWithEmptyVaultIDInInsertBulk() {
+        Configuration.setLogLevel(LogLevel.WARN);
+        SkyflowConfiguration testConfig = new SkyflowConfiguration("", vaultURL, new DemoTokenProvider());
+        try {
+            Skyflow skyflow = Skyflow.init(testConfig);
+            skyflow.insertBulk(new JSONObject(), new InsertBulkOptions());
+        } catch (SkyflowException e) {
+            assertEquals(e.getCode(), ErrorCode.EmptyVaultID.getCode());
+            assertEquals(e.getMessage(), ErrorCode.EmptyVaultID.getDescription());
+        }
+    }
+
+    @Test
+    public void testInvalidConfigWithInvalidVaultURLInInsertBulk() {
+        Configuration.setLogLevel(LogLevel.OFF);
+        SkyflowConfiguration testConfig = new SkyflowConfiguration(vaultID, "//valid.url.com", new DemoTokenProvider());
+        try {
+            Skyflow skyflow = Skyflow.init(testConfig);
+            skyflow.insertBulk(new JSONObject(), new InsertBulkOptions());
+        } catch (SkyflowException e) {
+            assertEquals(e.getCode(), ErrorCode.InvalidVaultURL.getCode());
+            assertEquals(e.getMessage(), ErrorCode.InvalidVaultURL.getDescription());
+        }
+    }
+        @Test
+    @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility", "com.skyflow.common.utils.TokenUtils"})
+    public void testInsertBulkSuccessWithUpsertOptions() {
+        try {
+            SkyflowConfiguration config = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider());
+
+            Skyflow skyflowClient = Skyflow.init(config);
+            JSONObject records = new JSONObject();
+            JSONArray recordsArray = new JSONArray();
+            JSONObject record = new JSONObject();
+            record.put("table", tableName);
+            JSONObject fields = new JSONObject();
+            fields.put(columnName, "first");
+            record.put("fields", fields);
+
+            recordsArray.add(record);
+
+            records.put("records", recordsArray);
+
+            UpsertOption upsertOption = new UpsertOption(tableName, columnName);
+            InsertBulkOptions insertOptions = new InsertBulkOptions(new UpsertOption[]{upsertOption});
+
+            PowerMockito.mockStatic(HttpUtility.class);
+            String mockResponse =
+                    "{\"records\":[{\"skyflow_id\":\"id1\", \"tokens\":{\"first_name\":\"token1\"}}]}";
+            PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockResponse);
+
+            JSONObject res = skyflowClient.insertBulk(records, insertOptions);
+            JSONArray responseRecords = (JSONArray) res.get("records");
+
+            assertEquals(1, responseRecords.size());
+            assertEquals(tableName, ((JSONObject) responseRecords.get(0)).get("table"));
+            assertNotNull(((JSONObject) responseRecords.get(0)).get("fields"));
+        } catch (SkyflowException skyflowException) {
+            skyflowException.printStackTrace();
+            fail(INVALID_EXCEPTION_THROWN);
+        } catch (IOException e) {
+            e.printStackTrace();
+            fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+    @Test
+    @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility", "com.skyflow.common.utils.TokenUtils"})
+    public void testInsertBulkSuccessWithoutTokens() {
+        try {
+            SkyflowConfiguration config = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider());
+
+            Skyflow skyflowClient = Skyflow.init(config);
+            JSONObject records = new JSONObject();
+            JSONArray recordsArray = new JSONArray();
+            JSONObject record = new JSONObject();
+            record.put("table", tableName);
+            JSONObject fields = new JSONObject();
+            fields.put(columnName, "first");
+            record.put("fields", fields);
+
+            recordsArray.add(record);
+
+            records.put("records", recordsArray);
+
+            InsertBulkOptions insertOptions = new InsertBulkOptions(false);
+
+            PowerMockito.mockStatic(HttpUtility.class);
+            String mockResponse = "{\"records\":[{\"skyflow_id\":\"id1\"}]}";
+            PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockResponse);
+            JSONObject res = skyflowClient.insertBulk(records, insertOptions);
+            JSONArray responseRecords = (JSONArray) res.get("records");
+
+            assertEquals(1, responseRecords.size());
+            assertEquals(tableName, ((JSONObject) responseRecords.get(0)).get("table"));
+            assertNotNull(((JSONObject) responseRecords.get(0)).get("skyflow_id"));
+        } catch (SkyflowException skyflowException) {
+            skyflowException.printStackTrace();
+            fail(INVALID_EXCEPTION_THROWN);
+        } catch (IOException e) {
+            e.printStackTrace();
+            fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+        @Test
+    public void testInsertBulkWithInvalidSkyflowConfig() {
+        try {
+            SkyflowConfiguration config = new SkyflowConfiguration(vaultID, vaultURL, null);
+
+            Skyflow skyflowClient = Skyflow.init(config);
+            JSONObject records = new JSONObject();
+
+            JSONObject res = skyflowClient.insertBulk(records);
+        } catch (SkyflowException e) {
+            assertEquals(ErrorCode.InvalidTokenProvider.getDescription(), e.getMessage());
+        }
+    } 
+    @Test
+    @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility", "com.skyflow.common.utils.TokenUtils"})
+    public void testInsertBulkSuccessWithTokens() {
+        try {
+            SkyflowConfiguration config = new SkyflowConfiguration("vaultID", "https://vaulturl.com", new DemoTokenProvider());
+
+            Skyflow skyflowClient = Skyflow.init(config);
+            JSONObject records = new JSONObject();
+            JSONArray recordsArray = new JSONArray();
+            JSONObject record = new JSONObject();
+            record.put("table", tableName);
+            JSONObject fields = new JSONObject();
+            fields.put(columnName, "first");
+            record.put("fields", fields);
+
+            recordsArray.add(record);
+
+            records.put("records", recordsArray);
+
+            InsertBulkOptions insertOptions = new InsertBulkOptions();
+
+            PowerMockito.mockStatic(HttpUtility.class);
+            String mockResponse =
+                    "{\"records\":[{\"skyflow_id\":\"id1\", \"tokens\":{\"first_name\":\"token1\"}}]}";
+            PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockResponse);
+
+            JSONObject res = skyflowClient.insertBulk(records, insertOptions);
+            JSONArray responseRecords = (JSONArray) res.get("records");
+
+            assertEquals(1, responseRecords.size());
+            assertEquals(tableName, ((JSONObject) responseRecords.get(0)).get("table"));
+            assertNotNull(((JSONObject) responseRecords.get(0)).get("fields"));
+        } catch (SkyflowException skyflowException) {
+            skyflowException.printStackTrace();
+            fail(INVALID_EXCEPTION_THROWN);
+        } catch (IOException e) {
+            e.printStackTrace();
+            fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+    @Test
+    @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility", "com.skyflow.common.utils.TokenUtils"})
+    public void testInsertBulkErrorsWithTokens() {
+        try {
+            SkyflowConfiguration config = new SkyflowConfiguration("vaultID", "https://vaulturl.com", new DemoTokenProvider());
+
+            Skyflow skyflowClient = Skyflow.init(config);
+            JSONObject records = new JSONObject();
+            JSONArray recordsArray = new JSONArray();
+            JSONObject record = new JSONObject();
+            record.put("table", tableName);
+            JSONObject fields = new JSONObject();
+            fields.put(columnName, "first");
+            record.put("fields", fields);
+
+            recordsArray.add(record);
+
+            records.put("records", recordsArray);
+
+            InsertBulkOptions insertOptions = new InsertBulkOptions();
+
+            PowerMockito.mockStatic(HttpUtility.class);
+            String mockResponse =
+                    "{\"error\":{\"grpc_code\":3,\"http_code\":400,\"message\":\"Invalid field present in JSON cardholder_nam\",\"http_status\":\"Bad Request\",\"details\":[]}}";
+            PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenThrow(new SkyflowException(500, mockResponse));
+
+            JSONObject res = skyflowClient.insertBulk(records, insertOptions);
+        } catch (SkyflowException skyflowException) {
+            JSONArray errors = (JSONArray) skyflowException.getData().get("errors");
+            Assert.assertEquals(1, errors.size());
+            skyflowException.printStackTrace();
+//            fail(ErrorLogs.ServerReturnedErrors.getLog());
+        } catch (IOException e) {
+            e.printStackTrace();
+            fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    @PrepareForTest(fullyQualifiedNames = {"com.skyflow.common.utils.HttpUtility", "com.skyflow.common.utils.TokenUtils"})
+    public void testInsertBulkSuccessWithoutInsertOptions() {
+        try {
+            SkyflowConfiguration config = new SkyflowConfiguration(vaultID, vaultURL, new DemoTokenProvider());
+
+            Skyflow skyflowClient = Skyflow.init(config);
+            JSONObject records = new JSONObject();
+            JSONArray recordsArray = new JSONArray();
+            JSONObject record = new JSONObject();
+            record.put("table", tableName);
+            JSONObject fields = new JSONObject();
+            fields.put(columnName, "first");
+            record.put("fields", fields);
+
+            recordsArray.add(record);
+
+            records.put("records", recordsArray);
+
+            PowerMockito.mockStatic(HttpUtility.class);
+            String mockResponse =
+                    "{\"records\":[{\"skyflow_id\":\"id1\", \"tokens\":{\"first_name\":\"token1\"}}]}";
+            PowerMockito.when(HttpUtility.sendRequest(anyString(), ArgumentMatchers.<URL>any(), ArgumentMatchers.<JSONObject>any(), ArgumentMatchers.<String, String>anyMap())).thenReturn(mockResponse);
+            JSONObject res = skyflowClient.insertBulk(records);
+            JSONArray responseRecords = (JSONArray) res.get("records");
+
+            assertEquals(1, responseRecords.size());
+            assertEquals(tableName, ((JSONObject) responseRecords.get(0)).get("table"));
+            assertNotNull(((JSONObject) responseRecords.get(0)).get("fields"));
+        } catch (SkyflowException skyflowException) {
+            skyflowException.printStackTrace();
+            fail(INVALID_EXCEPTION_THROWN);
+        } catch (IOException e) {
+            e.printStackTrace();
+            fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+
 }
 

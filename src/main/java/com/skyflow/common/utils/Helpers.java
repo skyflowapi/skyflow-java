@@ -25,7 +25,7 @@ public final class Helpers {
 
     private static final String LINE_FEED = "\r\n";
 
-    private static String getUpsertColumn(String tableName, UpsertOption[] upsertOptions) {
+    public static String getUpsertColumn(String tableName, UpsertOption[] upsertOptions) {
         String upsertColumn = "";
 
         for (UpsertOption upsertOption : upsertOptions) {

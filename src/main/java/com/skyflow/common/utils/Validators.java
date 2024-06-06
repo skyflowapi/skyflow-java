@@ -165,4 +165,12 @@ public final class Validators {
         }
 
     }
+    public static void validateInsertRecord(InsertRecordInput record) throws SkyflowException {
+        if (record.getTable() == null || record.getTable().isEmpty()) {
+            throw new SkyflowException(ErrorCode.InvalidTable);
+        }
+        if (record.getFields() == null) {
+            throw new SkyflowException(ErrorCode.InvalidFields);
+        }
+    }
 }
