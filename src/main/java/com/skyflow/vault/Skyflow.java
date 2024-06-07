@@ -44,8 +44,8 @@ public final class Skyflow {
         return insert(records, new InsertOptions(true));
     }
 
-    public JSONObject insertBulk(JSONObject records) throws SkyflowException {
-        return insertBulk(records, new InsertBulkOptions(true));
+    public JSONObject insertUsingBulk(JSONObject records) throws SkyflowException {
+        return insertUsingBulk(records, new InsertBulkOptions(true));
     }
 
     public JSONObject query(JSONObject queryObject) throws SkyflowException {
@@ -102,7 +102,6 @@ public final class Skyflow {
         try {
             DetokenizeInput detokenizeInput = new ObjectMapper().readValue(records.toJSONString(), DetokenizeInput.class);
             DetokenizeRecord[] inputRecords = detokenizeInput.getRecords();
-
             if (inputRecords == null || inputRecords.length == 0) {
                 throw new SkyflowException(ErrorCode.EmptyRecords);
             }
@@ -490,7 +489,7 @@ public final class Skyflow {
         }
         return queryResponse;
     }
-    public JSONObject insertBulk(JSONObject records, InsertBulkOptions insertOptions) throws SkyflowException {
+    public JSONObject insertUsingBulk(JSONObject records, InsertBulkOptions insertOptions) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.InsertBulkMethodCalled.getLog());
         Validators.validateConfiguration(configuration);
         LogUtil.printInfoLog(Helpers.parameterizedString(InfoLogs.ValidatedSkyflowConfiguration.getLog(), "insert"));
@@ -507,10 +506,11 @@ public final class Skyflow {
             headers.put("Authorization", "Bearer " + tokenUtils.getBearerToken(configuration.getTokenProvider()));
             headers.put(Constants.SDK_METRICS_HEADER_KEY, Helpers.getMetrics().toJSONString());
 
-            if (records == null || insertInput.getRecords().length == 0) {
+            InsertRecordInput[] inputRecords = insertInput.getRecords();
+
+            if (inputRecords == null || insertInput.getRecords().length == 0) {
                 throw new SkyflowException(ErrorCode.EmptyRecords);
             }
-            InsertRecordInput[] inputRecords = insertInput.getRecords();
 
             for (int i = 0; i < inputRecords.length; i++) {
                 Validators.validateInsertRecord(inputRecords[i]);

@@ -61,6 +61,8 @@ public final class Insert implements Callable<String> {
             JSONArray responseRecords = (JSONArray) responseJson.get("records");
             JSONObject responseObject = (JSONObject) responseRecords.get(0);
             JSONObject formattedResponseJson = new JSONObject();
+            formattedResponseJson.put("table", record.getTable());
+            formattedResponseJson.put("request_index", requestIndex);
             if (insertOptions.isTokens()) {
                 JSONObject responseTokens = (JSONObject) responseObject.get("tokens");
                 responseTokens.remove("*");
@@ -70,8 +72,6 @@ public final class Insert implements Callable<String> {
             } else {
                 formattedResponseJson.put("skyflow_id", responseObject.get("skyflow_id"));
             }
-            formattedResponseJson.put("table", record.getTable());
-            formattedResponseJson.put("request_index", requestIndex);
 
             JSONObject resRecords = new JSONObject();
             JSONArray responseArray = new JSONArray();
