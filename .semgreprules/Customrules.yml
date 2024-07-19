@@ -28,4 +28,3 @@ rules:
     - docker
   patterns:
   - pattern-regex: log\.Logger\(\).*(appConfig).*
-  
