@@ -44,6 +44,10 @@ public final class Skyflow {
         return insert(records, new InsertOptions(true));
     }
 
+    public JSONObject insertBulk(JSONObject records) throws SkyflowException {
+        return insertBulk(records, new InsertBulkOptions(true));
+    }
+
     public JSONObject query(JSONObject queryObject) throws SkyflowException {
         return query(queryObject, new QueryOptions());
     }
@@ -98,7 +102,6 @@ public final class Skyflow {
         try {
             DetokenizeInput detokenizeInput = new ObjectMapper().readValue(records.toJSONString(), DetokenizeInput.class);
             DetokenizeRecord[] inputRecords = detokenizeInput.getRecords();
-
             if (inputRecords == null || inputRecords.length == 0) {
                 throw new SkyflowException(ErrorCode.EmptyRecords);
             }
@@ -485,5 +488,78 @@ public final class Skyflow {
             throw new SkyflowException(400, "Query is missing", queryErrorResponse);
         }
         return queryResponse;
+    }
+    public JSONObject insertBulk(JSONObject records, InsertBulkOptions insertOptions) throws SkyflowException {
+        LogUtil.printInfoLog(InfoLogs.InsertBulkMethodCalled.getLog());
+        Validators.validateConfiguration(configuration);
+        LogUtil.printInfoLog(Helpers.parameterizedString(InfoLogs.ValidatedSkyflowConfiguration.getLog(), "insert"));
+        JSONObject finalResponse = new JSONObject();
+        JSONArray successRecordsArray = new JSONArray();
+        JSONArray errorRecordsArray = new JSONArray();
+
+        if (insertOptions.getUpsertOptions() != null)
+            Validators.validateUpsertOptions(insertOptions.getUpsertOptions());
+        try {
+            InsertInput insertInput = new ObjectMapper().readValue(records.toString(), InsertInput.class);
+
+            Map<String, String> headers = new HashMap<>();
+            headers.put("Authorization", "Bearer " + tokenUtils.getBearerToken(configuration.getTokenProvider()));
+            headers.put(Constants.SDK_METRICS_HEADER_KEY, Helpers.getMetrics().toJSONString());
+
+            InsertRecordInput[] inputRecords = insertInput.getRecords();
+
+            if (inputRecords == null || insertInput.getRecords().length == 0) {
+                throw new SkyflowException(ErrorCode.EmptyRecords);
+            }
+
+            for (int i = 0; i < inputRecords.length; i++) {
+                Validators.validateInsertRecord(inputRecords[i]);
+            }
+            FutureTask[] futureTasks = new FutureTask[inputRecords.length];
+            for (int index = 0; index < inputRecords.length; index++) {
+                Callable<String> callable = new Insert(inputRecords[index], configuration.getVaultID(), configuration.getVaultURL(), headers, insertOptions, index);
+                futureTasks[index] = new FutureTask(callable);
+
+                Thread thread = new Thread(futureTasks[index]);
+                thread.start();
+            }
+            for (FutureTask task : futureTasks) {
+                String taskData = (String) task.get();
+                JSONParser parser = new JSONParser();
+                JSONObject responseJson = (JSONObject) parser.parse(taskData);
+                if (responseJson.containsKey("error")) {
+                    errorRecordsArray.add(responseJson);
+                } else if (responseJson.containsKey("records")) {
+                    JSONArray successRes = (JSONArray) responseJson.get("records");
+                    successRecordsArray.add(successRes.get(0));
+                }
+            }
+            if (errorRecordsArray.isEmpty()) {
+                finalResponse.put("records", successRecordsArray);
+            } else if (successRecordsArray.isEmpty()) {
+                finalResponse.put("errors", errorRecordsArray);
+                throw new SkyflowException(ErrorCode.ServerReturnedErrors.getCode(), ErrorLogs.ServerReturnedErrors.getLog(), finalResponse);
+            } else {
+                finalResponse.put("records", successRecordsArray);
+                finalResponse.put("errors", errorRecordsArray);
+                throw new SkyflowException(ErrorCode.ServerReturnedErrors.getCode(), ErrorLogs.ServerReturnedErrors.getLog(), finalResponse);
+            }
+
+        } catch (IOException var9) {
+            LogUtil.printErrorLog(ErrorLogs.InvalidInsertInput.getLog());
+            throw new SkyflowException(ErrorCode.InvalidInsertInput, var9);
+        } catch (ParseException var10) {
+            LogUtil.printErrorLog(Helpers.parameterizedString(ErrorLogs.ResponseParsingError.getLog(), new String[]{"Insert"}));
+            throw new SkyflowException(ErrorCode.ResponseParsingError, var10);
+        } catch (InterruptedException e) {
+            LogUtil.printErrorLog(Helpers.parameterizedString(ErrorLogs.ThreadInterruptedException.getLog(), "Insert"));
+            throw new SkyflowException(ErrorCode.ThreadInterruptedException, e);
+        } catch (ExecutionException e) {
+            LogUtil.printErrorLog(Helpers.parameterizedString(ErrorLogs.ThreadExecutionException.getLog(), "Insert"));
+            throw new SkyflowException(ErrorCode.ThreadExecutionException, e);
+        }
+
+        return finalResponse;
+
     }
 }
