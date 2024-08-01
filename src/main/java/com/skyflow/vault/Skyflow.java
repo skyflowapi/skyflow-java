@@ -44,8 +44,8 @@ public final class Skyflow {
         return insert(records, new InsertOptions(true));
     }
 
-    public JSONObject insertUsingBulk(JSONObject records) throws SkyflowException {
-        return insertUsingBulk(records, new InsertBulkOptions(true));
+    public JSONObject insertBulk(JSONObject records) throws SkyflowException {
+        return insertBulk(records, new InsertBulkOptions(true));
     }
 
     public JSONObject query(JSONObject queryObject) throws SkyflowException {
@@ -489,7 +489,7 @@ public final class Skyflow {
         }
         return queryResponse;
     }
-    public JSONObject insertUsingBulk(JSONObject records, InsertBulkOptions insertOptions) throws SkyflowException {
+    public JSONObject insertBulk(JSONObject records, InsertBulkOptions insertOptions) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.InsertBulkMethodCalled.getLog());
         Validators.validateConfiguration(configuration);
         LogUtil.printInfoLog(Helpers.parameterizedString(InfoLogs.ValidatedSkyflowConfiguration.getLog(), "insert"));
