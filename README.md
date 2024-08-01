@@ -21,7 +21,7 @@ The Skyflow Java SDK is designed to help with integrating Skyflow into a Java ba
   - [Signed Data Tokens Generation](#signed-data-tokens-generation)
   - [Vault APIs](#vault-apis)
     - [Insert](#insert)
-    - [InsertUsingBulk](#insertUsingBulk)
+    - [InsertBulk](#insertbulk)
     - [Detokenize](#detokenize)
     - [Get](#get)
       - [Use Skyflow IDs](#use-skyflow-ids)
@@ -457,9 +457,9 @@ Sample Response:
 }
 ```
 
-## InsertUsingBulk
+## InsertBulk
 
-To insert data into your vault using Bulk operation, use the **insertUsingBulk(JSONObject insertInput, InsertBulkOptions options)** method. The first parameter `insertInput` is a JSON object that must have a `records` key and takes an array of records to insert into the vault as a value. The second parameter, `options` is an `InsertOptions` object that provides further options for your insert call, including **upsert** operations as shown below:
+To insert data into your vault using Bulk operation, use the **insertBulk(JSONObject insertInput, InsertBulkOptions options)** method. The first parameter `insertInput` is a JSON object that must have a `records` key and takes an array of records to insert into the vault as a value. The second parameter, `options` is an `InsertOptions` object that provides further options for your insert call, including **upsert** operations as shown below:
 
 ```java
 import com.skyflow.entities.InsertOptions;
@@ -516,7 +516,7 @@ upsertOptions[0] = new UpsertOption("cards", "cardNumber");
 InsertBulkOptions insertOptions = new InsertBulkOptions(true, upsertOptions);
 
 try {
-    JSONObject insertResponse = skyflowClient.insertUsingBulk(records,insertOptions);
+    JSONObject insertResponse = skyflowClient.insertBulk(records,insertOptions);
     System.out.println(insertResponse);
 } catch (SkyflowException exception) {
     System.out.println(exception);
@@ -565,7 +565,7 @@ records.put("records", recordsArray);
 
 try {
     InsertBulkOptions insertOptions = new InsertBulkOptions(true);
-    JSONObject insertResponse = skyflowClient.insertUsingBulk(records, insertOptions);
+    JSONObject insertResponse = skyflowClient.insertBulk(records, insertOptions);
     System.out.println(insertResponse);
 } catch (SkyflowException e) {
     System.out.println(e);
