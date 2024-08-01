@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [1.15.0] - 2024-08-01
+### Added
+- insert data using bulk operation `insertBulk`
+
 ## [1.14.0] - 2024-02-01
 ### Fixed
 - handling of detokenize response to aviod breaking changes.

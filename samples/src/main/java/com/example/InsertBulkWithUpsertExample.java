@@ -8,7 +8,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 
-public class InsertUsingBulkExampleWithUpsertExample {
+public class InsertBulkWithUpsertExample {
 
     public static void main(String[] args) {
 
@@ -37,7 +37,7 @@ public class InsertUsingBulkExampleWithUpsertExample {
 
             // pass upsert options in insert method options.
             InsertBulkOptions insertOptions = new InsertBulkOptions(true, upsertOptions);
-            JSONObject res = skyflowClient.insertUsingBulk(records, insertOptions);
+            JSONObject res = skyflowClient.insertBulk(records, insertOptions);
 
             System.out.println(res);
         } catch (SkyflowException e) {

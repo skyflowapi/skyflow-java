@@ -6,7 +6,7 @@ import com.skyflow.serviceaccount.util.Token;
 import com.skyflow.vault.Skyflow;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-public class InsertUsingBulkExample {
+public class InsertBulkExample {
 
     public static void main(String[] args) {
 
@@ -26,7 +26,7 @@ public class InsertUsingBulkExample {
             recordsArray.add(record);
             records.put("records", recordsArray);
 
-            JSONObject res = skyflowClient.insertUsingBulk(records);
+            JSONObject res = skyflowClient.insertBulk(records);
 
             System.out.println(res);
         } catch (SkyflowException e) {
