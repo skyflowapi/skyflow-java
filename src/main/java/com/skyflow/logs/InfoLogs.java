@@ -12,6 +12,8 @@ public enum InfoLogs {
     ValidatedSkyflowConfiguration("validated skyflow configuration in %s1 method"),
     ValidatingInvokeConnectionConfig("validating invoke connection configuration"),
     InsertMethodCalled("insert method has triggered"),
+    InsertBulkMethodCalled("insertBulk method has triggered"),
+
     UpdateMethodCalled("update method has triggered"),
     deleteMethodCalled("delete method has triggered"),
     ConstructInsertResponse("constructing insert response"),
