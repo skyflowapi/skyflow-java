@@ -21,6 +21,7 @@ The Skyflow Java SDK is designed to help with integrating Skyflow into a Java ba
   - [Signed Data Tokens Generation](#signed-data-tokens-generation)
   - [Vault APIs](#vault-apis)
     - [Insert](#insert)
+    - [InsertBulk](#insertbulk)
     - [Detokenize](#detokenize)
     - [Get](#get)
       - [Use Skyflow IDs](#use-skyflow-ids)
@@ -422,6 +423,149 @@ records.put("records", recordsArray);
 try {
     InsertOptions insertOptions = new InsertOptions(true, true);
     JSONObject insertResponse = skyflowClient.insert(records, insertOptions);
+    System.out.println(insertResponse);
+} catch (SkyflowException e) {
+    System.out.println(e);
+    e.printStackTrace();
+}
+```
+
+Sample Response:
+```js
+{
+    "records": [
+        {
+            "table": "cards",
+            "fields": {
+                "skyflow_id": "16419435-aa63-4823-aae7-19c6a2d6a19f",
+                "cardNumber": "f3907186-e7e2-466f-91e5-48e12c2bcbc1",
+                "cvv": "1989cb56-63da-4482-a2df-1f74cd0dd1a5",
+                "name": "245d3a0f-a2d3-443b-8a20-8c17de86e186",
+            },
+            "request_index": 1,
+        }
+    ],
+    "errors": [
+        {
+            "error": {
+                "code":400,
+                "description":"Invalid field present in JSON namee - requestId: 87fb2e32-6287-4e61-8304-9268df12bfe8",
+                "request_index": 0,
+            }
+        }
+    ]
+}
+```
+
+## InsertBulk
+
+To insert data into your vault using Bulk operation, use the **insertBulk(JSONObject insertInput, InsertBulkOptions options)** method. The first parameter `insertInput` is a JSON object that must have a `records` key and takes an array of records to insert into the vault as a value. The second parameter, `options` is an `InsertOptions` object that provides further options for your insert call, including **upsert** operations as shown below:
+
+```java
+import com.skyflow.entities.InsertOptions;
+import com.skyflow.entities.UpsertOption;
+// initialize Skyflow
+
+// construct insert input
+JSONObject records = new JSONObject();
+JSONArray recordsArray = new JSONArray();
+
+JSONObject record = new JSONObject();
+record.put("table", "<your_table_name>");
+
+JSONObject fields = new JSONObject();
+fields.put("<field_name>", "<field_value>");
+record.put("fields", fields);
+recordsArray.add(record);
+records.put("records", recordsArray);
+
+// Create an upsert option and insert it into the UpsertOption array.
+UpsertOption[] upsertOptions = new UpsertOption[1];
+upsertOptions[0] = new UpsertOption(
+          '<table_name>',    // Table name.
+          '<unique_column_name>' // Unique column in the table.
+        );
+// Indicates whether or not tokens should be returned for the inserted data. Defaults to 'True'
+InsertBulkOptions insertOptions = new InsertBulkOptions(
+            true,
+            upsertOptions
+        );
+```
+An [example]() of insert call with upsert support:
+
+```java
+JSONObject recordsJson = new JSONObject();
+JSONArray recordsArrayJson = new JSONArray();
+
+JSONObject recordJson = new JSONObject();
+recordJson.put("table", "cards");
+
+JSONObject fieldsJson = new JSONObject();
+fields.put("cardNumber", "41111111111");
+fields.put("cvv","123");
+
+recordJson.put("fields", fieldsJson);
+recordsArrayJson.add(record);
+recordsJson.put("records", recordsArrayJson);
+
+// Create an Uupsert option and insert it into the UpsertOptions array.
+UpsertOption[] upsertOptions = new UpsertOption[1];
+upsertOptions[0] = new UpsertOption("cards", "cardNumber");
+
+// Pass Upsert options in the insert method options.
+InsertBulkOptions insertOptions = new InsertBulkOptions(true, upsertOptions);
+
+try {
+    JSONObject insertResponse = skyflowClient.insertBulk(records,insertOptions);
+    System.out.println(insertResponse);
+} catch (SkyflowException exception) {
+    System.out.println(exception);
+}
+```
+Sample insert Response
+```js
+{
+    "records": [
+        {
+            "table": "cards",
+            "fields": {
+                "skyflow_id": "16419435-aa63-4823-aae7-19c6a2d6a19f",
+                "cardNumber": "f3907186-e7e2-466f-91e5-48e12c2bcbc1",
+                "cvv": "1989cb56-63da-4482-a2df-1f74cd0dd1a5",
+            },
+        }
+    ]
+}
+```
+
+An [example]() of Insert using bulk call:
+```java
+JSONObject records = new JSONObject();
+JSONArray recordsArray = new JSONArray();
+
+JSONObject invalidRecord = new JSONObject();
+invalidRecord.put("table", "cards");
+JSONObject invalidRecordFields = new JSONObject();
+invalidRecordFields.put("namee", "john doe");
+invalidRecordFields.put("card_number", "4111111111111111");
+invalidRecordFields.put("cvv", "1125");
+invalidRecord.put("fields", invalidRecordFields);
+
+JSONObject validRecord = new JSONObject();
+validRecord.put("table", "cards");
+JSONObject validRecordFields = new JSONObject();
+validRecordFields.put("name", "jane doe");
+validRecordFields.put("card_number", "4111111111111111");
+validRecordFields.put("cvv", "1125");
+validRecord.put("fields", validRecordFields);
+
+recordsArray.add(invalidRecord);
+recordsArray.add(validRecord);
+records.put("records", recordsArray);
+
+try {
+    InsertBulkOptions insertOptions = new InsertBulkOptions(true);
+    JSONObject insertResponse = skyflowClient.insertBulk(records, insertOptions);
     System.out.println(insertResponse);
 } catch (SkyflowException e) {
     System.out.println(e);
