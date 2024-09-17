@@ -1,10 +1,10 @@
 package com.skyflow.vault.model.request;
 
-public class AuditRequest {
+public class ListEventRequest {
     //    members
 
     //    constructor
-    public AuditRequest() {
+    public ListEventRequest() {
     }
 
     //    getters ans setters

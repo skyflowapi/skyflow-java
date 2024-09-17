@@ -1,9 +1,9 @@
 package com.skyflow.vault.model.response;
 
-public class DetectResponse {
+public class ListEventResponse {
     //    members
 
-    public DetectResponse() {
+    public ListEventResponse() {
     }
 
     //    getters ans setters

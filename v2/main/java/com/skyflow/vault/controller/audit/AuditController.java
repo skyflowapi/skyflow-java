@@ -1,6 +1,6 @@
 package com.skyflow.vault.controller.audit;
 
-import com.skyflow.vault.model.response.AuditResponse;
+import com.skyflow.vault.model.response.ListEventResponse;
 
 public class AuditController {
     public AuditController() {
@@ -11,7 +11,8 @@ public class AuditController {
         return null;
     }
 
-    public AuditResponse list() {
+    // Check for correct return type in python interfaces
+    public ListEventResponse list() {
         //    return audit events
         return null;
     }

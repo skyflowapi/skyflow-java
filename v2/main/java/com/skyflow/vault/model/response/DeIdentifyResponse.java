@@ -1,9 +1,9 @@
 package com.skyflow.vault.model.response;
 
-public class AuditResponse {
+public class DeIdentifyResponse {
     //    members
 
-    public AuditResponse() {
+    public DeIdentifyResponse() {
     }
 
     //    getters ans setters

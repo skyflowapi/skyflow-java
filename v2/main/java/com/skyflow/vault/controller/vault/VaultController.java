@@ -1,9 +1,9 @@
-package com.skyflow.vault.service;
+package com.skyflow.vault.controller.vault;
 
-public class VaultService {
+public class VaultController {
     // members
 
-    public VaultService() {
+    public VaultController() {
     }
 
     public static T initialize() {

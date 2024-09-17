@@ -1,9 +1,9 @@
 package com.skyflow.vault.model.response;
 
-public class ConnectionResponse {
+public class GetBinResponse {
     //    members
 
-    public ConnectionResponse() {
+    public GetBinResponse() {
     }
 
     //    getters ans setters

@@ -1,6 +1,6 @@
 package com.skyflow.vault.controller.connections;
 
-import com.skyflow.vault.model.response.ConnectionResponse;
+import com.skyflow.vault.model.response.InvokeConnectionResponse;
 
 public class ConnectionsController {
     public ConnectionsController() {
@@ -11,7 +11,8 @@ public class ConnectionsController {
         return null;
     }
 
-    public ConnectionResponse invoke() {
+    // check in python interfaces
+    public InvokeConnectionResponse invoke() {
         //    invoke the connection
         return null;
     }

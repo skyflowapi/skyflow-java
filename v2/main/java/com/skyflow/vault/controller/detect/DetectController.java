@@ -1,6 +1,6 @@
 package com.skyflow.vault.controller.detect;
 
-import com.skyflow.vault.model.response.DetectResponse;
+import com.skyflow.vault.model.response.DeIdentifyResponse;
 
 public class DetectController {
     public DetectController() {
@@ -11,17 +11,18 @@ public class DetectController {
         return null;
     }
 
-    public DetectResponse deIdentify() {
+    // should return detect controller
+    public DetectController deIdentify() {
+        //    return detect controller
+        return null;
+    }
+
+    public DeIdentifyResponse text() {
         //    return detect response
         return null;
     }
 
-    public DetectResponse text() {
-        //    return detect response
-        return null;
-    }
-
-    public DetectResponse file() {
+    public DeIdentifyResponse file() {
         //    return detect response
         return null;
     }

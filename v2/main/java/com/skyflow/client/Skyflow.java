@@ -4,27 +4,18 @@ import com.skyflow.config.ConnectionConfig;
 import com.skyflow.config.Credentials;
 import com.skyflow.config.ManagementConfig;
 import com.skyflow.config.VaultConfig;
-import com.skyflow.management.service.ManagementService;
+import com.skyflow.management.controller.management.ManagementController;
 import com.skyflow.utils.Builder;
 import com.skyflow.utils.LogLevel;
 import com.skyflow.vault.controller.connections.ConnectionsController;
-import com.skyflow.vault.service.VaultService;
+import com.skyflow.vault.controller.vault.VaultController;
 
-import java.util.ArrayList;
-
-public class SkyflowClient {
-    ArrayList<VaultConfig> vaultConfigs = new ArrayList<>();
-    ArrayList<ConnectionConfig> connectionConfigs = new ArrayList<>();
-    ArrayList<ManagementConfig> managementConfigs = new ArrayList<>();
-    Credentials credentials;
+public class Skyflow {
     Builder builder;
     // other members
 
-    public SkyflowClient(VaultConfig vaultConfig, ConnectionConfig connectionConfig, ManagementConfig managementConfig, Credentials credentials) {
-        this.vaultConfigs.add(vaultConfig);
-        this.connectionConfigs.add(connectionConfig);
-        this.managementConfigs.add(managementConfig);
-        this.credentials = credentials;
+    public Skyflow(VaultConfig vaultConfig, ConnectionConfig connectionConfig, ManagementConfig managementConfig, Credentials credentials) {
+        // set members accordingly
     }
 
     public Builder Builder() {
@@ -37,13 +28,18 @@ public class SkyflowClient {
         return builder;
     }
 
-    public Builder removeVaultConfig(String vaultId) {
-        // remove vault config with vault id
+    public VaultConfig getVaultConfig(String vaultId) {
+        // get vault config with vault id
+        return null;
+    }
+
+    public Builder updateVaultConfig(VaultConfig vaultConfig) {
+        // update vault config with vault id
         return builder;
     }
 
-    public Builder updateVaultConfig(String vaultId, VaultConfig vaultConfig) {
-        // update vault config with vault id
+    public Builder removeVaultConfig(String vaultId) {
+        // remove vault config with vault id
         return builder;
     }
 
@@ -52,13 +48,18 @@ public class SkyflowClient {
         return builder;
     }
 
-    public Builder removeConnectionConfig(String connectionId, ConnectionConfig connectionConfig) {
-        // remove connection config with connection id
+    public ConnectionConfig getConnectionConfig(String connectionId) {
+        // get connection config with connection id
+        return null;
+    }
+
+    public Builder updateConnectionConfig(ConnectionConfig connectionConfig) {
+        // update connection config with connection id
         return builder;
     }
 
-    public Builder updateConnectionConfig(String connectionId, ConnectionConfig connectionConfig) {
-        // update connection config with connection id
+    public Builder removeConnectionConfig(String connectionId) {
+        // remove connection config with connection id
         return builder;
     }
 
@@ -67,24 +68,39 @@ public class SkyflowClient {
         return builder;
     }
 
-    public Builder removeManagementConfig(String managementId, ManagementConfig managementConfig) {
-        // remove management config with management id
-        return builder;
+    public ManagementConfig getManagementConfig(String managementId) {
+        // get management config with management id
+        return null;
     }
 
-    public Builder updateManagementConfig(String managementId, ManagementConfig managementConfig) {
+    public Builder updateManagementConfig(ManagementConfig managementConfig) {
         // update management config with management id
         return builder;
     }
 
-    public Builder setCredentials(Credentials credentials) {
+    public Builder removeManagementConfig(String managementId) {
+        // remove management config with management id
+        return builder;
+    }
+
+    public Builder addSkyflowCredentials(Credentials credentials) {
         // set credentials
         return builder;
     }
 
-    public Builder logLevel(LogLevel logLevel) {
+    public Builder updateSkyflowCredentials(Credentials credentials) {
+        // set credentials
+        return builder;
+    }
+
+    public Builder setLogLevel(LogLevel logLevel) {
         // set log level
         return builder;
+    }
+
+    public LogLevel getLogLevel() {
+        // get log level
+        return null;
     }
 
     public Builder updateLogLevel(LogLevel logLevel) {
@@ -92,12 +108,12 @@ public class SkyflowClient {
         return builder;
     }
 
-    public SkyflowClient build() {
+    public Skyflow build() {
         // return built skyflow client instance
         return this;
     }
 
-    public VaultService vault(String vaultId) {
+    public VaultController vault(String vaultId) {
         // (cache) - store the vault object in a list, don't create object if object already exits
         // return vault Object using static func
         return null;
@@ -109,7 +125,7 @@ public class SkyflowClient {
         return null;
     }
 
-    public ManagementService management() {
+    public ManagementController management() {
         // cache management object if created
         // return management object using static func
         return null;

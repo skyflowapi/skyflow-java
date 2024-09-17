@@ -1,6 +1,6 @@
 package com.skyflow.vault.controller.binlookup;
 
-import com.skyflow.vault.model.response.BinLookupResponse;
+import com.skyflow.vault.model.response.GetBinResponse;
 
 public class BinLookupController {
     public BinLookupController() {
@@ -11,7 +11,7 @@ public class BinLookupController {
         return null;
     }
 
-    public BinLookupResponse get() {
+    public GetBinResponse get() {
         //    return bin lookup response (card metadata associated with BIN)
         return null;
     }
