@@ -1,14 +1,21 @@
 package com.skyflow.vault.controller.vault;
 
+import com.skyflow.config.VaultConfig;
+
 public class VaultController {
     // members
+    private VaultConfig vaultConfig;
 
-    public VaultController() {
+    public VaultController(VaultConfig vaultConfig) {
+        this.vaultConfig = vaultConfig;
     }
 
-    public static T initialize() {
-        // return vault service object
-        return T;
+    public void setVaultConfig(VaultConfig vaultConfig) {
+        this.vaultConfig = vaultConfig;
+    }
+
+    public VaultConfig getVaultConfig() {
+        return vaultConfig;
     }
 
     public T insert() {

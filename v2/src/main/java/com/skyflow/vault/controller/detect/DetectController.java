@@ -1,14 +1,9 @@
 package com.skyflow.vault.controller.detect;
 
-import com.skyflow.vault.model.response.DeIdentifyResponse;
+import com.skyflow.vault.detect.DeIdentifyResponse;
 
 public class DetectController {
     public DetectController() {
-    }
-
-    //    return detect controller object
-    public static DetectController initialize() {
-        return null;
     }
 
     // should return detect controller

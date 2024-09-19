@@ -6,11 +6,6 @@ public class VaultService {
     public VaultService() {
     }
 
-    public static T initialize() {
-        // return vault service object
-        return T;
-    }
-
     public T insert() {
         return T;
     }
