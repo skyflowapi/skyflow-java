@@ -1,4 +1,4 @@
-package com.skyflow.vault.controller.connections;
+package com.skyflow.vault.controller;
 
 import com.skyflow.vault.connection.InvokeConnectionResponse;
 

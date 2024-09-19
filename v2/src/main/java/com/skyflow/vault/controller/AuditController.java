@@ -1,4 +1,4 @@
-package com.skyflow.vault.controller.audit;
+package com.skyflow.vault.controller;
 
 import com.skyflow.vault.audit.ListEventResponse;
 

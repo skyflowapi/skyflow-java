@@ -4,8 +4,8 @@ import com.skyflow.config.ConnectionConfig;
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.LogLevel;
-import com.skyflow.vault.controller.connections.ConnectionController;
-import com.skyflow.vault.controller.vault.VaultController;
+import com.skyflow.vault.controller.ConnectionController;
+import com.skyflow.vault.controller.VaultController;
 
 import java.util.ArrayList;
 

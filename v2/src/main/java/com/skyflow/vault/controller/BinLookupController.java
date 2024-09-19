@@ -1,4 +1,4 @@
-package com.skyflow.vault.controller.bin;
+package com.skyflow.vault.controller;
 
 import com.skyflow.vault.bin.GetBinResponse;
 

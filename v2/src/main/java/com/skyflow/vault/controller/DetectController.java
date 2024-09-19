@@ -1,4 +1,4 @@
-package com.skyflow.vault.controller.detect;
+package com.skyflow.vault.controller;
 
 import com.skyflow.vault.detect.DeIdentifyResponse;
 
