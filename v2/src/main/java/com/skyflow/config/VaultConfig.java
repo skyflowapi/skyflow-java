@@ -1,9 +1,9 @@
 package com.skyflow.config;
 
 import com.skyflow.enums.ENV;
+import com.skyflow.utils.Utils;
 
 public class VaultConfig {
-    //    members
     private String vaultId;
     private String clusterId;
     private ENV env;
@@ -48,12 +48,16 @@ public class VaultConfig {
         this.credentials = credentials;
     }
 
+    public String getVaultURL() {
+        return Utils.getVaultURL(this.clusterId, this.env);
+    }
+
     @Override
     public String toString() {
-        return "VaultConfig{" +
-                "vaultId='" + vaultId + '\'' +
-                ", clusterId='" + clusterId + '\'' +
-                ", env=" + env +
-                '}';
+        return "VaultConfig {" +
+                "\tvaultId: '" + vaultId + "'," +
+                "\tclusterId: '" + clusterId + "'," +
+                "\tenv: " + env +
+                "\n}";
     }
 }

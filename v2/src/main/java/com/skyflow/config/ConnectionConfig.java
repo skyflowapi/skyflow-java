@@ -5,11 +5,14 @@ public class ConnectionConfig {
     private String connectionUrl;
     private Credentials credentials;
 
-    //    constructor
-    ConnectionConfig() {
+    public ConnectionConfig() {
         this.connectionId = null;
         this.connectionUrl = null;
         this.credentials = null;
+    }
+
+    public String getConnectionId() {
+        return connectionId;
     }
 
     public void setConnectionId(String connectionId) {
