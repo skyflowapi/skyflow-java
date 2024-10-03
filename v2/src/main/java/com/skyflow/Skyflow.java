@@ -111,7 +111,7 @@ public final class Skyflow {
         public SkyflowClientBuilder updateVaultConfig(VaultConfig vaultConfig) throws SkyflowException {
             if (this.vaultClientsMap.containsKey(vaultConfig.getVaultId())) {
                 VaultConfig updatedConfig = findAndUpdateVaultConfig(vaultConfig);
-                this.vaultClientsMap.get(updatedConfig.getVaultId()).updateVaultConfig(updatedConfig);
+                this.vaultClientsMap.get(updatedConfig.getVaultId()).updateVaultURL();
             } else {
                 // display error log, throw error, or both
             }

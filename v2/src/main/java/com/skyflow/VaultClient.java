@@ -2,7 +2,6 @@ package com.skyflow;
 
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
-import com.skyflow.enums.ENV;
 import com.skyflow.generated.rest.ApiClient;
 import com.skyflow.generated.rest.api.RecordsApi;
 import com.skyflow.generated.rest.api.TokensApi;
@@ -53,17 +52,7 @@ public class VaultClient {
         prioritiseCredentials();
     }
 
-    protected void updateVaultConfig(VaultConfig vaultConfig) {
-        ENV env = vaultConfig.getEnv() != null ? vaultConfig.getEnv() : this.vaultConfig.getEnv();
-        String clusterId = vaultConfig.getClusterId() != null ? vaultConfig.getClusterId() : this.vaultConfig.getClusterId();
-        Credentials credentials = vaultConfig.getCredentials() != null ? vaultConfig.getCredentials() : this.vaultConfig.getCredentials();
-        this.vaultConfig.setEnv(env);
-        this.vaultConfig.setClusterId(clusterId);
-        this.vaultConfig.setCredentials(credentials);
-        updateVaultURL();
-    }
-
-    private void updateVaultURL() {
+    protected void updateVaultURL() {
         String vaultURL = Utils.getVaultURL(this.vaultConfig.getClusterId(), this.vaultConfig.getEnv());
         this.apiClient.setBasePath(vaultURL);
     }
