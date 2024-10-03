@@ -7,13 +7,17 @@ public class Credentials {
     private ArrayList<String> roles;
     private String context;
     private String credentialsString;
+    private String token;
 
-    //    constructor
-    Credentials() {
+    public Credentials() {
         this.path = null;
         this.roles = new ArrayList<>();
         this.context = null;
         this.credentialsString = null;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
     }
 
     public void setPath(String path) {

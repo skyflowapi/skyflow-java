@@ -48,6 +48,11 @@ public class VaultClient {
         return vaultConfig;
     }
 
+    protected void setCommonCredentials(Credentials commonCredentials) {
+        this.commonCredentials = commonCredentials;
+        prioritiseCredentials();
+    }
+
     protected void updateVaultConfig(VaultConfig vaultConfig) {
         ENV env = vaultConfig.getEnv() != null ? vaultConfig.getEnv() : this.vaultConfig.getEnv();
         String clusterId = vaultConfig.getClusterId() != null ? vaultConfig.getClusterId() : this.vaultConfig.getClusterId();
@@ -56,11 +61,6 @@ public class VaultClient {
         this.vaultConfig.setClusterId(clusterId);
         this.vaultConfig.setCredentials(credentials);
         updateVaultURL();
-    }
-
-    protected void setCommonCredentials(Credentials commonCredentials) {
-        this.commonCredentials = commonCredentials;
-        prioritiseCredentials();
     }
 
     private void updateVaultURL() {
