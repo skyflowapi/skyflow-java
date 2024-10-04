@@ -55,9 +55,9 @@ public class VaultConfig {
     @Override
     public String toString() {
         return "VaultConfig {" +
-                "\tvaultId: '" + vaultId + "'," +
-                "\tclusterId: '" + clusterId + "'," +
-                "\tenv: " + env +
+                "\n\tvaultId: '" + vaultId + "'," +
+                "\n\tclusterId: '" + clusterId + "'," +
+                "\n\tenv: " + env +
                 "\n}";
     }
 }
