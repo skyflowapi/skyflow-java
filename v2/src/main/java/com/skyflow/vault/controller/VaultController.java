@@ -3,8 +3,11 @@ package com.skyflow.vault.controller;
 import com.skyflow.VaultClient;
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.generated.rest.auth.HttpBearerAuth;
 import com.skyflow.generated.rest.models.V1DetokenizePayload;
 import com.skyflow.generated.rest.models.V1DetokenizeResponse;
+import com.skyflow.serviceaccount.util.Token;
 import com.skyflow.utils.Utils;
 import com.skyflow.vault.data.InsertRequest;
 import com.skyflow.vault.data.InsertResponse;
@@ -15,6 +18,8 @@ public final class VaultController extends VaultClient {
     private DetectController detectController;
     private AuditController auditController;
     private BinLookupController binLookupController;
+
+    private String token;
 
     public VaultController(VaultConfig vaultConfig, Credentials credentials) {
         super(vaultConfig, credentials);
@@ -28,10 +33,9 @@ public final class VaultController extends VaultClient {
     }
 
     public DetokenizeResponse detokenize(DetokenizeRequest detokenizeRequest) {
-        System.out.println(super.getVaultConfig());
         V1DetokenizeResponse result = null;
         try {
-            Utils.updateBearerTokenIfExpired(super.getApiClient(), super.getFinalCredentials());
+            setBearerToken();
             V1DetokenizePayload payload = detokenizeRequest.getDetokenizePayload();
             result = super.getTokensApi().recordServiceDetokenize(super.getVaultConfig().getVaultId(), payload);
         } catch (Exception e) {
@@ -83,5 +87,14 @@ public final class VaultController extends VaultClient {
             this.detectController = new DetectController(super.getApiClient());
         }
         return this.detectController;
+    }
+
+    private void setBearerToken() throws SkyflowException {
+        Utils.verifyCredentials(super.getFinalCredentials());
+        if (token == null || Token.isExpired(token)) {
+            token = Utils.generateBearerToken(super.getFinalCredentials());
+        }
+        HttpBearerAuth Bearer = (HttpBearerAuth) super.getApiClient().getAuthentication("Bearer");
+        Bearer.setBearerToken(token);
     }
 }
