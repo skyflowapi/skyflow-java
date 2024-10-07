@@ -52,7 +52,12 @@ public class VaultClient {
         prioritiseCredentials();
     }
 
-    protected void updateVaultURL() {
+    protected void updateVaultConfig() {
+        updateVaultURL();
+        prioritiseCredentials();
+    }
+
+    private void updateVaultURL() {
         String vaultURL = Utils.getVaultURL(this.vaultConfig.getClusterId(), this.vaultConfig.getEnv());
         this.apiClient.setBasePath(vaultURL);
     }

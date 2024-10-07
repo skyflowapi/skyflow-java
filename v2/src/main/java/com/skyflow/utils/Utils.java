@@ -2,8 +2,18 @@ package com.skyflow.utils;
 
 import com.skyflow.config.Credentials;
 import com.skyflow.enums.ENV;
-import com.skyflow.generated.rest.ApiClient;
-import com.skyflow.generated.rest.auth.HttpBearerAuth;
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.serviceaccount.util.BearerToken;
+import org.apache.commons.codec.binary.Base64;
+
+import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
 
 public class Utils {
     public static String getVaultURL(String clusterId, ENV env) {
@@ -27,11 +37,75 @@ public class Utils {
         return sb.toString();
     }
 
-    public static void updateBearerTokenIfExpired(ApiClient apiClient, Credentials credentials) {
-        HttpBearerAuth Bearer = (HttpBearerAuth) apiClient.getAuthentication("Bearer");
-        // check validity of bearer token
-        // String token = Bearer.getBearerToken();
-        // generate bearer token, set in ApiClient if expired or null
-        Bearer.setBearerToken("BEARER_TOKEN");
+    public static String generateBearerToken(Credentials credentials) throws SkyflowException {
+        if (credentials.getPath() != null) {
+            return BearerToken.builder()
+                    .setCredentials(new File(credentials.getPath()))
+                    .setRoles(credentials.getRoles())
+                    .setCtx(credentials.getContext())
+                    .build()
+                    .getBearerToken();
+        } else if (credentials.getCredentialsString() != null) {
+            return BearerToken.builder()
+                    .setCredentials(credentials.getCredentialsString())
+                    .setRoles(credentials.getRoles())
+                    .setCtx(credentials.getContext())
+                    .build()
+                    .getBearerToken();
+        } else {
+            return credentials.getToken();
+        }
+    }
+
+    public static PrivateKey getPrivateKeyFromPem(String pemKey) throws SkyflowException {
+        String PKCS8PrivateHeader = Constants.PKCS8_PRIVATE_HEADER;
+        String PKCS8PrivateFooter = Constants.PKCS8_PRIVATE_FOOTER;
+
+        String privateKeyContent = pemKey;
+        PrivateKey privateKey = null;
+
+        if (pemKey.contains(PKCS8PrivateHeader)) {
+            privateKeyContent = privateKeyContent.replace(PKCS8PrivateHeader, "");
+            privateKeyContent = privateKeyContent.replace(PKCS8PrivateFooter, "");
+            privateKeyContent = privateKeyContent.replace("\n", "");
+            privateKeyContent = privateKeyContent.replace("\r\n", "");
+            privateKey = parsePkcs8PrivateKey(Base64.decodeBase64(privateKeyContent));
+        } else {
+            // display error log and throw error
+        }
+        return privateKey;
+    }
+
+    public static String getBaseURL(String url) throws MalformedURLException {
+        URL parsedUrl = new URL(url);
+        String protocol = parsedUrl.getProtocol();
+        String host = parsedUrl.getHost();
+        return new StringBuilder(protocol).append("://").append(host).toString();
+    }
+
+    public static void verifyCredentials(Credentials credentials) throws SkyflowException {
+        int nonNullMembers = 0;
+        if (credentials.getPath() != null) nonNullMembers++;
+        if (credentials.getCredentialsString() != null) nonNullMembers++;
+        if (credentials.getToken() != null) nonNullMembers++;
+
+        if (nonNullMembers != 1) {
+            throw new SkyflowException("only one of tokens, path, and credentialsString is allowed");
+        }
+    }
+
+    private static PrivateKey parsePkcs8PrivateKey(byte[] pkcs8Bytes) throws SkyflowException {
+        KeyFactory keyFactory;
+        PrivateKey privateKey = null;
+        try {
+            PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(pkcs8Bytes);
+            keyFactory = KeyFactory.getInstance("RSA");
+            privateKey = keyFactory.generatePrivate(keySpec);
+        } catch (NoSuchAlgorithmException e) {
+            // display error log and throw error
+        } catch (InvalidKeySpecException e) {
+            // display error log and throw error
+        }
+        return privateKey;
     }
 }

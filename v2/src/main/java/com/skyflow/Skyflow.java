@@ -62,6 +62,20 @@ public final class Skyflow {
         return this;
     }
 
+    public Skyflow updateSkyflowCredentials(Credentials credentials) {
+        this.builder.addSkyflowCredentials(credentials);
+        return this;
+    }
+
+    public Skyflow updateLogLevel(LogLevel logLevel) {
+        this.builder.setLogLevel(logLevel);
+        return this;
+    }
+
+    public LogLevel getLogLevel() {
+        return this.builder.logLevel;
+    }
+
     // in case no id is passed, return first vault controller
     public VaultController vault() {
         String vaultId = (String) this.builder.vaultClientsMap.keySet().toArray()[0];
@@ -111,7 +125,7 @@ public final class Skyflow {
         public SkyflowClientBuilder updateVaultConfig(VaultConfig vaultConfig) throws SkyflowException {
             if (this.vaultClientsMap.containsKey(vaultConfig.getVaultId())) {
                 VaultConfig updatedConfig = findAndUpdateVaultConfig(vaultConfig);
-                this.vaultClientsMap.get(updatedConfig.getVaultId()).updateVaultURL();
+                this.vaultClientsMap.get(updatedConfig.getVaultId()).updateVaultConfig();
             } else {
                 // display error log, throw error, or both
             }

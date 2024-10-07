@@ -7,7 +7,7 @@
     <groupId>com.skyflow</groupId>
     <artifactId>skyflow-java</artifactId>
     <version>1.15.0</version>
-    <packaging>jar</packaging>
+    <packaging>pom</packaging>
 
     <name>${project.groupId}:${project.artifactId}</name>
     <description>Skyflow SDK for the Java programming language</description>
@@ -25,6 +25,10 @@
             <name>skyflow</name>
         </developer>
     </developers>
+    <modules>
+        <module>v1</module>
+        <module>v2</module>
+    </modules>
     <scm>
         <connection>scm:git:git://github.com:skyflowapi/skyflow-java.git</connection>
         <developerConnection>scm:git:ssh://github.com:skyflowapi/skyflow-java.git</developerConnection>
@@ -51,36 +55,6 @@
     </distributionManagement>
 
     <dependencies>
-        <dependency>
-            <groupId>io.github.cdimascio</groupId>
-            <artifactId>dotenv-java</artifactId>
-            <version>3.0.0</version>
-        </dependency>
-        <dependency>
-            <groupId>com.google.code.findbugs</groupId>
-            <artifactId>jsr305</artifactId>
-            <version>3.0.2</version>
-        </dependency>
-        <dependency>
-            <groupId>io.gsonfire</groupId>
-            <artifactId>gson-fire</artifactId>
-            <version>${gson-fire-version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.google.code.gson</groupId>
-            <artifactId>gson</artifactId>
-            <version>${gson-version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.squareup.okhttp3</groupId>
-            <artifactId>okhttp</artifactId>
-            <version>${okhttp-version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.squareup.okhttp3</groupId>
-            <artifactId>logging-interceptor</artifactId>
-            <version>${okhttp-version}</version>
-        </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
