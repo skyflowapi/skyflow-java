@@ -51,8 +51,8 @@ public class DetokenizeResponse {
     @Override
     public String toString() {
         StringBuilder response = new StringBuilder("{");
-        response.append("\n\t").append("\"detokenizedFields\": ").append(toIndentedString(detokenizedFields)).append("\"");
-        response.append("\n\t").append("\"errors\": \"").append(toIndentedString(errorRecords)).append("\"");
+        response.append("\n\t").append("\"detokenizedFields\": ").append(toIndentedString(detokenizedFields));
+        response.append("\n\t").append("\"errors\": \"").append(toIndentedString(errorRecords));
         response.append("\n}");
         return response.toString();
     }

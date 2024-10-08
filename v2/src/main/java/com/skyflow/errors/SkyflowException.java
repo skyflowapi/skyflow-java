@@ -1,11 +1,98 @@
 package com.skyflow.errors;
 
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+
+import java.util.List;
+import java.util.Map;
+
 public class SkyflowException extends Exception {
-    // members
+    private String requestId;
+    private int code;
+    private String message;
+    private JSONArray details;
+    private JSONObject responseBody;
+
+    public SkyflowException() {
+    }
 
     public SkyflowException(String message) {
         super(message);
+        this.message = message;
     }
 
-    // getters and setters
+    public SkyflowException(Throwable cause) {
+        super(cause);
+    }
+
+    public SkyflowException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public SkyflowException(int code, String message) {
+        super(message);
+        this.code = code;
+    }
+
+    public SkyflowException(int code, Throwable cause, Map<String, List<String>> responseHeaders, String responseBody) {
+        this(cause);
+        this.code = code;
+        setRequestId(responseHeaders);
+        setResponseBody(responseBody);
+    }
+
+    private void setResponseBody(String responseBody) {
+        try {
+            if (responseBody != null) {
+                JSONParser parser = new JSONParser();
+                this.responseBody = (JSONObject) parser.parse(responseBody);
+                setMessage();
+                setDetails();
+            }
+        } catch (ParseException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public String getRequestId() {
+        return requestId;
+    }
+
+    private void setRequestId(Map<String, List<String>> responseHeaders) {
+        if (responseHeaders != null) {
+            List<String> ids = responseHeaders.get("x-request-id");
+            this.requestId = ids.get(0);
+        }
+    }
+
+    private void setMessage() {
+        this.message = (String) (((JSONObject) responseBody.get("error")).get("message"));
+    }
+
+    private void setDetails() {
+        this.details = (JSONArray) (((JSONObject) responseBody.get("error")).get("details"));
+    }
+
+    public int getCode() {
+        return code;
+    }
+
+    @Override
+    public String getMessage() {
+        return message;
+    }
+
+    @Override
+    public String toString() {
+        return String.format(
+                "%n requestId: %s%n code: %s%n message: %s%n details: %s",
+                this.requestId, this.code, this.message, this.details
+        );
+    }
+
+    public JSONArray getDetails() {
+        return details;
+    }
 }

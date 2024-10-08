@@ -7,7 +7,8 @@ import java.util.HashMap;
 
 public class InsertRequest {
     private final String table;
-    private final ArrayList<HashMap<String, String>> data;
+    private final ArrayList<HashMap<String, String>> values;
+    private final ArrayList<HashMap<String, String>> tokens;
     private final Boolean returnTokens;
     private final String upsert;
     private final Boolean homogeneous;
@@ -16,7 +17,8 @@ public class InsertRequest {
 
     private InsertRequest(InsertRequestBuilder builder) {
         this.table = builder.table;
-        this.data = builder.data;
+        this.values = builder.values;
+        this.tokens = builder.tokens;
         this.returnTokens = builder.returnTokens;
         this.upsert = builder.upsert;
         this.homogeneous = builder.homogeneous;
@@ -32,8 +34,12 @@ public class InsertRequest {
         return table;
     }
 
-    public ArrayList<HashMap<String, String>> getData() {
-        return this.data;
+    public ArrayList<HashMap<String, String>> getValues() {
+        return this.values;
+    }
+
+    public ArrayList<HashMap<String, String>> getTokens() {
+        return this.tokens;
     }
 
     public Boolean getReturnTokens() {
@@ -58,20 +64,26 @@ public class InsertRequest {
 
     public static final class InsertRequestBuilder {
         private String table;
-        private ArrayList<HashMap<String, String>> data;
-        private Boolean returnTokens;
+        private ArrayList<HashMap<String, String>> values;
+        private ArrayList<HashMap<String, String>> tokens;
+        private Boolean returnTokens = true;
         private String upsert;
         private Boolean homogeneous;
         private Boolean tokenMode;
-        private Byot tokenStrict;
+        private Byot tokenStrict = Byot.DISABLE;
 
         public InsertRequestBuilder table(String table) {
             this.table = table;
             return this;
         }
 
-        public InsertRequestBuilder data(ArrayList<HashMap<String, String>> data) {
-            this.data = data;
+        public InsertRequestBuilder values(ArrayList<HashMap<String, String>> values) {
+            this.values = values;
+            return this;
+        }
+
+        public InsertRequestBuilder tokens(ArrayList<HashMap<String, String>> tokens) {
+            this.tokens = tokens;
             return this;
         }
 
