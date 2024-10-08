@@ -5,7 +5,10 @@ import com.skyflow.config.VaultConfig;
 import com.skyflow.generated.rest.ApiClient;
 import com.skyflow.generated.rest.api.RecordsApi;
 import com.skyflow.generated.rest.api.TokensApi;
+import com.skyflow.generated.rest.models.V1DetokenizePayload;
+import com.skyflow.generated.rest.models.V1DetokenizeRecordRequest;
 import com.skyflow.utils.Utils;
+import com.skyflow.vault.tokens.DetokenizeRequest;
 import io.github.cdimascio.dotenv.Dotenv;
 
 public class VaultClient {
@@ -55,6 +58,18 @@ public class VaultClient {
     protected void updateVaultConfig() {
         updateVaultURL();
         prioritiseCredentials();
+    }
+
+    protected V1DetokenizePayload getDetokenizePayload(DetokenizeRequest request) {
+        V1DetokenizePayload payload = new V1DetokenizePayload();
+        payload.setContinueOnError(request.getContinueOnError());
+        for (String token : request.getTokens()) {
+            V1DetokenizeRecordRequest recordRequest = new V1DetokenizeRecordRequest();
+            recordRequest.setToken(token);
+            recordRequest.setRedaction(request.getRedactionType().getRedaction());
+            payload.addDetokenizationParametersItem(recordRequest);
+        }
+        return payload;
     }
 
     private void updateVaultURL() {

@@ -15,7 +15,7 @@ import java.security.PrivateKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 
-public class Utils {
+public final class Utils {
     public static String getVaultURL(String clusterId, ENV env) {
         StringBuilder sb = new StringBuilder(Constants.SECURE_PROTOCOL);
         sb.append(clusterId);
@@ -80,18 +80,7 @@ public class Utils {
         URL parsedUrl = new URL(url);
         String protocol = parsedUrl.getProtocol();
         String host = parsedUrl.getHost();
-        return new StringBuilder(protocol).append("://").append(host).toString();
-    }
-
-    public static void verifyCredentials(Credentials credentials) throws SkyflowException {
-        int nonNullMembers = 0;
-        if (credentials.getPath() != null) nonNullMembers++;
-        if (credentials.getCredentialsString() != null) nonNullMembers++;
-        if (credentials.getToken() != null) nonNullMembers++;
-
-        if (nonNullMembers != 1) {
-            throw new SkyflowException("only one of tokens, path, and credentialsString is allowed");
-        }
+        return String.format("%s://%s", protocol, host);
     }
 
     private static PrivateKey parsePkcs8PrivateKey(byte[] pkcs8Bytes) throws SkyflowException {

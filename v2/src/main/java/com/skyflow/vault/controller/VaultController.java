@@ -4,11 +4,13 @@ import com.skyflow.VaultClient;
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.generated.rest.ApiException;
 import com.skyflow.generated.rest.auth.HttpBearerAuth;
 import com.skyflow.generated.rest.models.V1DetokenizePayload;
 import com.skyflow.generated.rest.models.V1DetokenizeResponse;
 import com.skyflow.serviceaccount.util.Token;
 import com.skyflow.utils.Utils;
+import com.skyflow.utils.validations.Validations;
 import com.skyflow.vault.data.InsertRequest;
 import com.skyflow.vault.data.InsertResponse;
 import com.skyflow.vault.tokens.DetokenizeRequest;
@@ -32,14 +34,15 @@ public final class VaultController extends VaultClient {
         return null;
     }
 
-    public DetokenizeResponse detokenize(DetokenizeRequest detokenizeRequest) {
+    public DetokenizeResponse detokenize(DetokenizeRequest detokenizeRequest) throws SkyflowException {
         V1DetokenizeResponse result = null;
         try {
+            Validations.validateDetokenizeRequest(detokenizeRequest);
             setBearerToken();
-            V1DetokenizePayload payload = detokenizeRequest.getDetokenizePayload();
+            V1DetokenizePayload payload = super.getDetokenizePayload(detokenizeRequest);
             result = super.getTokensApi().recordServiceDetokenize(super.getVaultConfig().getVaultId(), payload);
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (ApiException e) {
+            throw new SkyflowException(e.getCode(), e, e.getResponseHeaders(), e.getResponseBody());
         }
         return new DetokenizeResponse(result);
     }
@@ -90,7 +93,7 @@ public final class VaultController extends VaultClient {
     }
 
     private void setBearerToken() throws SkyflowException {
-        Utils.verifyCredentials(super.getFinalCredentials());
+        Validations.validateCredentials(super.getFinalCredentials());
         if (token == null || Token.isExpired(token)) {
             token = Utils.generateBearerToken(super.getFinalCredentials());
         }

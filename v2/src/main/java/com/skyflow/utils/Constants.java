@@ -1,6 +1,6 @@
 package com.skyflow.utils;
 
-public class Constants {
+public final class Constants {
     public static final String SECURE_PROTOCOL = "https://";
     public static final String DEV_DOMAIN = ".vault.skyflowapis.dev";
     public static final String STAGE_DOMAIN = ".vault.skyflowapis.tech";
