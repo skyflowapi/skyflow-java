@@ -3,6 +3,7 @@ package com.skyflow;
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
 import com.skyflow.generated.rest.ApiClient;
+import com.skyflow.generated.rest.api.QueryApi;
 import com.skyflow.generated.rest.api.RecordsApi;
 import com.skyflow.generated.rest.api.TokensApi;
 import com.skyflow.generated.rest.models.RecordServiceInsertRecordBody;
@@ -21,6 +22,7 @@ import java.util.List;
 public class VaultClient {
     private final RecordsApi recordsApi;
     private final TokensApi tokensApi;
+    private final QueryApi queryApi;
     private final ApiClient apiClient;
     private final VaultConfig vaultConfig;
     private Credentials commonCredentials;
@@ -31,8 +33,9 @@ public class VaultClient {
         this.vaultConfig = vaultConfig;
         this.commonCredentials = credentials;
         this.apiClient = new ApiClient();
-        this.tokensApi = new TokensApi(this.apiClient);
         this.recordsApi = new RecordsApi(this.apiClient);
+        this.tokensApi = new TokensApi(this.apiClient);
+        this.queryApi = new QueryApi(this.apiClient);
         updateVaultURL();
         prioritiseCredentials();
     }
@@ -47,6 +50,10 @@ public class VaultClient {
 
     protected TokensApi getTokensApi() {
         return tokensApi;
+    }
+
+    protected QueryApi getQueryApi() {
+        return queryApi;
     }
 
     protected ApiClient getApiClient() {
@@ -92,7 +99,9 @@ public class VaultClient {
         for (int index = 0; index < values.size(); index++) {
             V1FieldRecords record = new V1FieldRecords();
             record.setFields(values.get(index));
-            record.setTokens(tokens.get(index));
+            if (tokens != null) {
+                record.setTokens(tokens.get(index));
+            }
             records.add(record);
         }
         insertRecordBody.setRecords(records);

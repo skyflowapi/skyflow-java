@@ -10,16 +10,21 @@ import java.util.HashMap;
 import java.util.List;
 
 public class InsertResponse {
-    private final V1InsertRecordResponse generatedResponse;
+//    private final V1InsertRecordResponse generatedResponse;
     private final ArrayList<HashMap<String, String>> insertedFields;
     private final ArrayList<HashMap<String, String>> errorFields;
 
-    public InsertResponse(V1InsertRecordResponse response) throws SkyflowException {
-        this.generatedResponse = response;
-        this.insertedFields = new ArrayList<>();
-        this.errorFields = new ArrayList<>();
-        this.createResponse();
+    public InsertResponse(ArrayList<HashMap<String, String>> insertedFields, ArrayList<HashMap<String, String>> errorFields) {
+        this.insertedFields = insertedFields;
+        this.errorFields = errorFields;
     }
+
+//    public InsertResponse(V1InsertRecordResponse response) throws SkyflowException {
+//        this.generatedResponse = response;
+//        this.insertedFields = new ArrayList<>();
+//        this.errorFields = new ArrayList<>();
+//        this.createResponse();
+//    }
 
     public ArrayList<HashMap<String, String>> getInsertedFields() {
         return insertedFields;
@@ -29,38 +34,38 @@ public class InsertResponse {
         return errorFields;
     }
 
-    private void createResponse() throws SkyflowException {
-        List<V1RecordMetaProperties> records = this.generatedResponse.getRecords();
-        if (records != null && !records.isEmpty()) {
-            createSuccessResponse(records);
-        }
-    }
+//    private void createResponse() throws SkyflowException {
+//        List<V1RecordMetaProperties> records = this.generatedResponse.getRecords();
+//        if (records != null && !records.isEmpty()) {
+//            createSuccessResponse(records);
+//        }
+//    }
 
-    private void createSuccessResponse(List<V1RecordMetaProperties> records) throws SkyflowException {
-        try {
-            for (V1RecordMetaProperties record : records) {
-                HashMap<String, String> insertRecord = new HashMap<>();
-
-                String skyflowId = record.getSkyflowId();
-                insertRecord.put("skyflowId", skyflowId);
-
-                /*
-                Getting unchecked cast warning, however, this type is inferred
-                from an exception trying to cast into another type. Therefore,
-                this type cast will not fail.
-                 */
-                LinkedTreeMap<String, String> tokensMap = (LinkedTreeMap<String, String>) record.getTokens();
-                if (tokensMap != null) {
-                    for (String key : tokensMap.keySet()) {
-                        insertRecord.put(key, tokensMap.get(key));
-                    }
-                }
-                insertedFields.add(insertRecord);
-            }
-        } catch (Exception e) {
-            throw new SkyflowException(e);
-        }
-    }
+//    private void createSuccessResponse(List<V1RecordMetaProperties> records) throws SkyflowException {
+//        try {
+//            for (V1RecordMetaProperties record : records) {
+//                HashMap<String, String> insertRecord = new HashMap<>();
+//
+//                String skyflowId = record.getSkyflowId();
+//                insertRecord.put("skyflowId", skyflowId);
+//
+//                /*
+//                Getting unchecked cast warning, however, this type is inferred
+//                from an exception trying to cast into another type. Therefore,
+//                this type cast will not fail.
+//                 */
+//                LinkedTreeMap<String, String> tokensMap = (LinkedTreeMap<String, String>) record.getTokens();
+//                if (tokensMap != null) {
+//                    for (String key : tokensMap.keySet()) {
+//                        insertRecord.put(key, tokensMap.get(key));
+//                    }
+//                }
+//                insertedFields.add(insertRecord);
+//            }
+//        } catch (Exception e) {
+//            throw new SkyflowException(e);
+//        }
+//    }
 
     @Override
     public String toString() {

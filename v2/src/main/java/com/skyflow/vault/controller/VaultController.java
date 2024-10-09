@@ -1,5 +1,6 @@
 package com.skyflow.vault.controller;
 
+import com.google.gson.internal.LinkedTreeMap;
 import com.skyflow.VaultClient;
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
@@ -17,6 +18,7 @@ import com.skyflow.vault.tokens.DetokenizeRequest;
 import com.skyflow.vault.tokens.DetokenizeResponse;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public final class VaultController extends VaultClient {
@@ -32,19 +34,47 @@ public final class VaultController extends VaultClient {
         this.binLookupController = null;
         this.detectController = null;
     }
+    
+    private static synchronized HashMap<String, String> getFormattedInsertRecord(V1RecordMetaProperties record) {
+        HashMap<String, String> insertRecord = new HashMap<>();
+        String skyflowId = record.getSkyflowId();
+        insertRecord.put("skyflowId", skyflowId);
+
+        /*
+        Getting unchecked cast warning, however, this type is inferred
+        from an exception trying to cast into another type. Therefore,
+        this type cast will not fail.
+        */
+        LinkedTreeMap<String, String> tokensMap = (LinkedTreeMap<String, String>) record.getTokens();
+        if (tokensMap != null) {
+            for (String key : tokensMap.keySet()) {
+                insertRecord.put(key, tokensMap.get(key));
+            }
+        }
+        return insertRecord;
+    }
 
     public InsertResponse insert(InsertRequest insertRequest) throws SkyflowException {
         V1InsertRecordResponse result = null;
+        ArrayList<HashMap<String, String>> insertedFields = new ArrayList<>();
+        ArrayList<HashMap<String, String>> errorFields = new ArrayList<>();
         try {
             Validations.validateInsertRequest(insertRequest);
             setBearerToken();
             RecordServiceInsertRecordBody insertBody = super.getInsertRequestBody(insertRequest);
             result = super.getRecordsApi().recordServiceInsertRecord(
                     super.getVaultConfig().getVaultId(), insertRequest.getTable(), insertBody);
+            List<V1RecordMetaProperties> records = result.getRecords();
+            if (records != null) {
+                for (V1RecordMetaProperties record : records) {
+                    HashMap<String, String> insertRecord = getFormattedInsertRecord(record);
+                    insertedFields.add(insertRecord);
+                }
+            }
         } catch (ApiException e) {
             throw new SkyflowException(e.getCode(), e, e.getResponseHeaders(), e.getResponseBody());
         }
-        return new InsertResponse(result);
+        return new InsertResponse(insertedFields, errorFields);
     }
 
     public DetokenizeResponse detokenize(DetokenizeRequest detokenizeRequest) throws SkyflowException {
