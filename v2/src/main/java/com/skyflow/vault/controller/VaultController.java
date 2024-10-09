@@ -6,17 +6,18 @@ import com.skyflow.config.VaultConfig;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.generated.rest.ApiException;
 import com.skyflow.generated.rest.auth.HttpBearerAuth;
-import com.skyflow.generated.rest.models.RecordServiceInsertRecordBody;
-import com.skyflow.generated.rest.models.V1DetokenizePayload;
-import com.skyflow.generated.rest.models.V1DetokenizeResponse;
-import com.skyflow.generated.rest.models.V1InsertRecordResponse;
+import com.skyflow.generated.rest.models.*;
 import com.skyflow.serviceaccount.util.Token;
 import com.skyflow.utils.Utils;
 import com.skyflow.utils.validations.Validations;
 import com.skyflow.vault.data.InsertRequest;
 import com.skyflow.vault.data.InsertResponse;
+import com.skyflow.vault.tokens.DetokenizeRecordResponse;
 import com.skyflow.vault.tokens.DetokenizeRequest;
 import com.skyflow.vault.tokens.DetokenizeResponse;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public final class VaultController extends VaultClient {
     private DetectController detectController;
@@ -48,15 +49,33 @@ public final class VaultController extends VaultClient {
 
     public DetokenizeResponse detokenize(DetokenizeRequest detokenizeRequest) throws SkyflowException {
         V1DetokenizeResponse result = null;
+        ArrayList<DetokenizeRecordResponse> detokenizedFields = new ArrayList<>();
+        ArrayList<DetokenizeRecordResponse> errorRecords = new ArrayList<>();
         try {
             Validations.validateDetokenizeRequest(detokenizeRequest);
             setBearerToken();
             V1DetokenizePayload payload = super.getDetokenizePayload(detokenizeRequest);
             result = super.getTokensApi().recordServiceDetokenize(super.getVaultConfig().getVaultId(), payload);
+            List<V1DetokenizeRecordResponse> records = result.getRecords();
+            if (records != null) {
+                for (V1DetokenizeRecordResponse record : records) {
+                    DetokenizeRecordResponse recordResponse = new DetokenizeRecordResponse(record);
+                    if (record.getError() != null) {
+                        errorRecords.add(recordResponse);
+                    } else {
+                        detokenizedFields.add(recordResponse);
+                    }
+                }
+            }
         } catch (ApiException e) {
             throw new SkyflowException(e.getCode(), e, e.getResponseHeaders(), e.getResponseBody());
         }
-        return new DetokenizeResponse(result);
+
+        if (!errorRecords.isEmpty()){
+            // handle partial case, throw error and send data in error
+            // or simply log as a partial success and return proper response
+        }
+        return new DetokenizeResponse(detokenizedFields, errorRecords);
     }
 
     public Object get(Object getRequest) {

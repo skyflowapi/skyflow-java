@@ -1,41 +1,34 @@
 package com.skyflow.vault.tokens;
 
+import com.skyflow.generated.rest.models.V1DetokenizeRecordResponse;
+
 public class DetokenizeRecordResponse {
-    private String token;
-    private String value;
-    private String type;
-    private String error;
+    private final String token;
+    private final String value;
+    private final String type;
+    private final String error;
+
+    public DetokenizeRecordResponse(V1DetokenizeRecordResponse record) {
+        this.token = record.getToken();
+        this.value = record.getValue();
+        this.type = record.getValueType().getValue();
+        this.error = record.getError();
+    }
 
     public String getError() {
         return error;
-    }
-
-    void setError(String error) {
-        this.error = error;
     }
 
     public String getToken() {
         return token;
     }
 
-    void setToken(String token) {
-        this.token = token;
-    }
-
     public String getValue() {
         return value;
     }
 
-    void setValue(String value) {
-        this.value = value;
-    }
-
     public String getType() {
         return type;
-    }
-
-    void setType(String type) {
-        this.type = type;
     }
 
     @Override
