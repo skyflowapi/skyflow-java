@@ -4,6 +4,7 @@ import com.skyflow.config.ConnectionConfig;
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.data.GetRequest;
 import com.skyflow.vault.data.InsertRequest;
 import com.skyflow.vault.tokens.DetokenizeRequest;
 
@@ -35,5 +36,8 @@ public class Validations {
 
     public static void validateInsertRequest(InsertRequest insertRequest) throws SkyflowException {
 
+    }
+
+    public static void validateGetRequest(GetRequest getRequest) throws SkyflowException {
     }
 }

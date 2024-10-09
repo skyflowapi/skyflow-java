@@ -4,6 +4,7 @@ import com.google.gson.internal.LinkedTreeMap;
 import com.skyflow.VaultClient;
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
+import com.skyflow.enums.RedactionType;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.generated.rest.ApiException;
 import com.skyflow.generated.rest.auth.HttpBearerAuth;
@@ -11,6 +12,8 @@ import com.skyflow.generated.rest.models.*;
 import com.skyflow.serviceaccount.util.Token;
 import com.skyflow.utils.Utils;
 import com.skyflow.utils.validations.Validations;
+import com.skyflow.vault.data.GetRequest;
+import com.skyflow.vault.data.GetResponse;
 import com.skyflow.vault.data.InsertRequest;
 import com.skyflow.vault.data.InsertResponse;
 import com.skyflow.vault.tokens.DetokenizeRecordResponse;
@@ -34,7 +37,7 @@ public final class VaultController extends VaultClient {
         this.binLookupController = null;
         this.detectController = null;
     }
-    
+
     private static synchronized HashMap<String, String> getFormattedInsertRecord(V1RecordMetaProperties record) {
         HashMap<String, String> insertRecord = new HashMap<>();
         String skyflowId = record.getSkyflowId();
@@ -52,6 +55,28 @@ public final class VaultController extends VaultClient {
             }
         }
         return insertRecord;
+    }
+
+    private static synchronized HashMap<String, String> getFormattedGetRecord(V1FieldRecords record) {
+        HashMap<String, String> getRecord = new HashMap<>();
+
+        /*
+        Getting unchecked cast warning, however, this type is inferred
+        from an exception trying to cast into another type. Therefore,
+        this type cast will not fail.
+        */
+        LinkedTreeMap<String, String> map = null;
+        if (record.getTokens() != null) {
+            map = (LinkedTreeMap<String, String>) record.getTokens();
+        } else {
+            map = (LinkedTreeMap<String, String>) record.getFields();
+        }
+        if (map != null) {
+            for (String key : map.keySet()) {
+                getRecord.put(key, map.get(key));
+            }
+        }
+        return getRecord;
     }
 
     public InsertResponse insert(InsertRequest insertRequest) throws SkyflowException {
@@ -101,15 +126,45 @@ public final class VaultController extends VaultClient {
             throw new SkyflowException(e.getCode(), e, e.getResponseHeaders(), e.getResponseBody());
         }
 
-        if (!errorRecords.isEmpty()){
+        if (!errorRecords.isEmpty()) {
             // handle partial case, throw error and send data in error
             // or simply log as a partial success and return proper response
         }
         return new DetokenizeResponse(detokenizedFields, errorRecords);
     }
 
-    public Object get(Object getRequest) {
-        return null;
+    public GetResponse get(GetRequest getRequest) throws SkyflowException {
+        V1BulkGetRecordResponse result = null;
+        ArrayList<HashMap<String, String>> data = new ArrayList<>();
+        ArrayList<HashMap<String, String>> errors = new ArrayList<>();
+        try {
+            Validations.validateGetRequest(getRequest);
+            setBearerToken();
+            RedactionType redactionType = getRequest.getRedactionType();
+            result = super.getRecordsApi().recordServiceBulkGetRecord(
+                    super.getVaultConfig().getVaultId(),
+                    getRequest.getTable(),
+                    getRequest.getIds(),
+                    redactionType != null ? redactionType.toString() : null,
+                    getRequest.getTokenization(),
+                    getRequest.getFields(),
+                    getRequest.getOffset(),
+                    getRequest.getLimit(),
+                    getRequest.getDownloadURL(),
+                    getRequest.getColumnName(),
+                    getRequest.getColumnValues(),
+                    getRequest.getOrderBy()
+            );
+            List<V1FieldRecords> records = result.getRecords();
+            if (records != null) {
+                for (V1FieldRecords record : records) {
+                    data.add(getFormattedGetRecord(record));
+                }
+            }
+        } catch (ApiException e) {
+            throw new SkyflowException(e.getCode(), e, e.getResponseHeaders(), e.getResponseBody());
+        }
+        return new GetResponse(data, errors);
     }
 
     public Object update(Object updateRequest) {
