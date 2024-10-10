@@ -1,7 +1,7 @@
 package com.skyflow.utils;
 
 import com.skyflow.config.Credentials;
-import com.skyflow.enums.ENV;
+import com.skyflow.enums.Env;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.serviceaccount.util.BearerToken;
 import org.apache.commons.codec.binary.Base64;
@@ -16,7 +16,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 
 public final class Utils {
-    public static String getVaultURL(String clusterId, ENV env) {
+    public static String getVaultURL(String clusterId, Env env) {
         StringBuilder sb = new StringBuilder(Constants.SECURE_PROTOCOL);
         sb.append(clusterId);
         switch (env) {

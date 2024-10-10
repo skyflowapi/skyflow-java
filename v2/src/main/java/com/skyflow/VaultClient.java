@@ -6,12 +6,10 @@ import com.skyflow.generated.rest.ApiClient;
 import com.skyflow.generated.rest.api.QueryApi;
 import com.skyflow.generated.rest.api.RecordsApi;
 import com.skyflow.generated.rest.api.TokensApi;
-import com.skyflow.generated.rest.models.RecordServiceInsertRecordBody;
-import com.skyflow.generated.rest.models.V1DetokenizePayload;
-import com.skyflow.generated.rest.models.V1DetokenizeRecordRequest;
-import com.skyflow.generated.rest.models.V1FieldRecords;
+import com.skyflow.generated.rest.models.*;
 import com.skyflow.utils.Utils;
 import com.skyflow.vault.data.InsertRequest;
+import com.skyflow.vault.data.UpdateRequest;
 import com.skyflow.vault.tokens.DetokenizeRequest;
 import io.github.cdimascio.dotenv.Dotenv;
 
@@ -93,8 +91,8 @@ public class VaultClient {
         insertRecordBody.setUpsert(request.getUpsert());
         insertRecordBody.setByot(request.getTokenStrict().getBYOT());
 
-        List<HashMap<String, String>> values = request.getValues();
-        List<HashMap<String, String>> tokens = request.getTokens();
+        List<HashMap<String, Object>> values = request.getValues();
+        List<HashMap<String, Object>> tokens = request.getTokens();
         List<V1FieldRecords> records = new ArrayList<>();
         for (int index = 0; index < values.size(); index++) {
             V1FieldRecords record = new V1FieldRecords();
@@ -106,6 +104,21 @@ public class VaultClient {
         }
         insertRecordBody.setRecords(records);
         return insertRecordBody;
+    }
+
+    protected RecordServiceUpdateRecordBody getUpdateRequestBody(UpdateRequest request) {
+        RecordServiceUpdateRecordBody updateRequestBody = new RecordServiceUpdateRecordBody();
+        updateRequestBody.byot(request.getByot().getBYOT());
+        updateRequestBody.setTokenization(request.getReturnTokens());
+        HashMap<String, Object> values = request.getValues();
+        HashMap<String, Object> tokens = request.getTokens();
+        V1FieldRecords record = new V1FieldRecords();
+        record.setFields(values);
+        if (tokens != null) {
+            record.setTokens(tokens);
+        }
+        updateRequestBody.setRecord(record);
+        return updateRequestBody;
     }
 
     private void updateVaultURL() {

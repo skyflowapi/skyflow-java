@@ -11,10 +11,10 @@ import java.util.List;
 
 public class InsertResponse {
 //    private final V1InsertRecordResponse generatedResponse;
-    private final ArrayList<HashMap<String, String>> insertedFields;
-    private final ArrayList<HashMap<String, String>> errorFields;
+    private final ArrayList<HashMap<String, Object>> insertedFields;
+    private final ArrayList<HashMap<String, Object>> errorFields;
 
-    public InsertResponse(ArrayList<HashMap<String, String>> insertedFields, ArrayList<HashMap<String, String>> errorFields) {
+    public InsertResponse(ArrayList<HashMap<String, Object>> insertedFields, ArrayList<HashMap<String, Object>> errorFields) {
         this.insertedFields = insertedFields;
         this.errorFields = errorFields;
     }
@@ -26,11 +26,11 @@ public class InsertResponse {
 //        this.createResponse();
 //    }
 
-    public ArrayList<HashMap<String, String>> getInsertedFields() {
+    public ArrayList<HashMap<String, Object>> getInsertedFields() {
         return insertedFields;
     }
 
-    public ArrayList<HashMap<String, String>> getErrorFields() {
+    public ArrayList<HashMap<String, Object>> getErrorFields() {
         return errorFields;
     }
 
@@ -44,7 +44,7 @@ public class InsertResponse {
 //    private void createSuccessResponse(List<V1RecordMetaProperties> records) throws SkyflowException {
 //        try {
 //            for (V1RecordMetaProperties record : records) {
-//                HashMap<String, String> insertRecord = new HashMap<>();
+//                HashMap<String, Object> insertRecord = new HashMap<>();
 //
 //                String skyflowId = record.getSkyflowId();
 //                insertRecord.put("skyflowId", skyflowId);
@@ -76,10 +76,10 @@ public class InsertResponse {
         return response.toString();
     }
 
-    private String formatRecords(ArrayList<HashMap<String, String>> records) {
+    private String formatRecords(ArrayList<HashMap<String, Object>> records) {
         StringBuilder sb = new StringBuilder("[");
         for (int index = 0; index < records.size(); index++) {
-            HashMap<String, String> map = records.get(index);
+            HashMap<String, Object> map = records.get(index);
             sb.append("{");
             for (String key : map.keySet()) {
                 sb.append("\n\t\"").append(key).append("\": \"").append(map.get(key)).append("\",");

@@ -84,15 +84,22 @@ public class GetRequest {
     public static class GetRequestBuilder {
         private String table;
         private ArrayList<String> ids;
-        private RedactionType redactionType = RedactionType.PLAIN_TEXT;
-        private Boolean tokenization = false;
+        private RedactionType redactionType;
+        private Boolean tokenization;
         private List<String> fields;
-        private String offset = null;
-        private String limit = null;
-        private Boolean downloadURL = true;
+        private String offset;
+        private String limit;
+        private Boolean downloadURL;
         private String columnName;
         private ArrayList<String> columnValues;
-        private String orderBy = Constants.ORDER_ASCENDING;
+        private String orderBy;
+
+        private GetRequestBuilder() {
+            this.redactionType = RedactionType.PLAIN_TEXT;
+            this.tokenization = false;
+            this.downloadURL = true;
+            this.orderBy = Constants.ORDER_ASCENDING;
+        }
 
         public GetRequestBuilder table(String table) {
             this.table = table;

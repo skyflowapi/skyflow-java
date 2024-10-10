@@ -4,19 +4,19 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class GetResponse {
-    private final ArrayList<HashMap<String, String>> data;
-    private final ArrayList<HashMap<String, String>> errors;
+    private final ArrayList<HashMap<String, Object>> data;
+    private final ArrayList<HashMap<String, Object>> errors;
 
-    public GetResponse(ArrayList<HashMap<String, String>> data, ArrayList<HashMap<String, String>> errors) {
+    public GetResponse(ArrayList<HashMap<String, Object>> data, ArrayList<HashMap<String, Object>> errors) {
         this.data = data;
         this.errors = errors;
     }
 
-    public ArrayList<HashMap<String, String>> getData() {
+    public ArrayList<HashMap<String, Object>> getData() {
         return data;
     }
 
-    public ArrayList<HashMap<String, String>> getErrors() {
+    public ArrayList<HashMap<String, Object>> getErrors() {
         return errors;
     }
 
@@ -29,10 +29,10 @@ public class GetResponse {
         return response.toString();
     }
 
-    private String formatRecords(ArrayList<HashMap<String, String>> records) {
+    private String formatRecords(ArrayList<HashMap<String, Object>> records) {
         StringBuilder sb = new StringBuilder("[");
         for (int index = 0; index < records.size(); index++) {
-            HashMap<String, String> map = records.get(index);
+            HashMap<String, Object> map = records.get(index);
             sb.append("{");
             for (String key : map.keySet()) {
                 sb.append("\n\t\"").append(key).append("\": \"").append(map.get(key)).append("\",");

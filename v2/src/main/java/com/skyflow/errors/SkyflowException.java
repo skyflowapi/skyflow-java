@@ -1,9 +1,9 @@
 package com.skyflow.errors;
 
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
 
 import java.util.List;
 import java.util.Map;
@@ -12,8 +12,8 @@ public class SkyflowException extends Exception {
     private String requestId;
     private int code;
     private String message;
-    private JSONArray details;
-    private JSONObject responseBody;
+    private JsonArray details;
+    private JsonObject responseBody;
 
     public SkyflowException() {
     }
@@ -46,12 +46,11 @@ public class SkyflowException extends Exception {
     private void setResponseBody(String responseBody) {
         try {
             if (responseBody != null) {
-                JSONParser parser = new JSONParser();
-                this.responseBody = (JSONObject) parser.parse(responseBody);
+                this.responseBody = JsonParser.parseString(responseBody).getAsJsonObject();
                 setMessage();
                 setDetails();
             }
-        } catch (ParseException e) {
+        } catch (JsonSyntaxException e) {
             throw new RuntimeException(e);
         }
     }
@@ -68,11 +67,11 @@ public class SkyflowException extends Exception {
     }
 
     private void setMessage() {
-        this.message = (String) (((JSONObject) responseBody.get("error")).get("message"));
+        this.message = ((JsonObject) responseBody.get("error")).get("message").getAsString();
     }
 
     private void setDetails() {
-        this.details = (JSONArray) (((JSONObject) responseBody.get("error")).get("details"));
+        this.details = ((JsonObject) responseBody.get("error")).get("details").getAsJsonArray();
     }
 
     public int getCode() {
@@ -92,7 +91,7 @@ public class SkyflowException extends Exception {
         );
     }
 
-    public JSONArray getDetails() {
+    public JsonArray getDetails() {
         return details;
     }
 }

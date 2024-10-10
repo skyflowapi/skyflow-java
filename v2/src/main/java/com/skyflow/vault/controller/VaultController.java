@@ -12,10 +12,7 @@ import com.skyflow.generated.rest.models.*;
 import com.skyflow.serviceaccount.util.Token;
 import com.skyflow.utils.Utils;
 import com.skyflow.utils.validations.Validations;
-import com.skyflow.vault.data.GetRequest;
-import com.skyflow.vault.data.GetResponse;
-import com.skyflow.vault.data.InsertRequest;
-import com.skyflow.vault.data.InsertResponse;
+import com.skyflow.vault.data.*;
 import com.skyflow.vault.tokens.DetokenizeRecordResponse;
 import com.skyflow.vault.tokens.DetokenizeRequest;
 import com.skyflow.vault.tokens.DetokenizeResponse;
@@ -38,8 +35,8 @@ public final class VaultController extends VaultClient {
         this.detectController = null;
     }
 
-    private static synchronized HashMap<String, String> getFormattedInsertRecord(V1RecordMetaProperties record) {
-        HashMap<String, String> insertRecord = new HashMap<>();
+    private static synchronized HashMap<String, Object> getFormattedInsertRecord(V1RecordMetaProperties record) {
+        HashMap<String, Object> insertRecord = new HashMap<>();
         String skyflowId = record.getSkyflowId();
         insertRecord.put("skyflowId", skyflowId);
 
@@ -48,7 +45,7 @@ public final class VaultController extends VaultClient {
         from an exception trying to cast into another type. Therefore,
         this type cast will not fail.
         */
-        LinkedTreeMap<String, String> tokensMap = (LinkedTreeMap<String, String>) record.getTokens();
+        LinkedTreeMap<String, Object> tokensMap = (LinkedTreeMap<String, Object>) record.getTokens();
         if (tokensMap != null) {
             for (String key : tokensMap.keySet()) {
                 insertRecord.put(key, tokensMap.get(key));
@@ -57,19 +54,19 @@ public final class VaultController extends VaultClient {
         return insertRecord;
     }
 
-    private static synchronized HashMap<String, String> getFormattedGetRecord(V1FieldRecords record) {
-        HashMap<String, String> getRecord = new HashMap<>();
+    private static synchronized HashMap<String, Object> getFormattedGetRecord(V1FieldRecords record) {
+        HashMap<String, Object> getRecord = new HashMap<>();
 
         /*
         Getting unchecked cast warning, however, this type is inferred
         from an exception trying to cast into another type. Therefore,
         this type cast will not fail.
         */
-        LinkedTreeMap<String, String> map = null;
+        LinkedTreeMap<String, Object> map;
         if (record.getTokens() != null) {
-            map = (LinkedTreeMap<String, String>) record.getTokens();
+            map = (LinkedTreeMap<String, Object>) record.getTokens();
         } else {
-            map = (LinkedTreeMap<String, String>) record.getFields();
+            map = (LinkedTreeMap<String, Object>) record.getFields();
         }
         if (map != null) {
             for (String key : map.keySet()) {
@@ -79,10 +76,29 @@ public final class VaultController extends VaultClient {
         return getRecord;
     }
 
+    private static HashMap<String, Object> getFormattedUpdateRecord(V1UpdateRecordResponse record) {
+        HashMap<String, Object> updateTokens = new HashMap<>();
+        /*
+        Getting unchecked cast warning, however, this type is inferred
+        from an exception trying to cast into another type. Therefore,
+        this type cast will not fail.
+        */
+        LinkedTreeMap<String, Object> map = null;
+        if (record.getTokens() != null) {
+            map = (LinkedTreeMap<String, Object>) record.getTokens();
+        }
+        if (map != null) {
+            for (String key : map.keySet()) {
+                updateTokens.put(key, map.get(key));
+            }
+        }
+        return updateTokens;
+    }
+
     public InsertResponse insert(InsertRequest insertRequest) throws SkyflowException {
         V1InsertRecordResponse result = null;
-        ArrayList<HashMap<String, String>> insertedFields = new ArrayList<>();
-        ArrayList<HashMap<String, String>> errorFields = new ArrayList<>();
+        ArrayList<HashMap<String, Object>> insertedFields = new ArrayList<>();
+        ArrayList<HashMap<String, Object>> errorFields = new ArrayList<>();
         try {
             Validations.validateInsertRequest(insertRequest);
             setBearerToken();
@@ -92,7 +108,7 @@ public final class VaultController extends VaultClient {
             List<V1RecordMetaProperties> records = result.getRecords();
             if (records != null) {
                 for (V1RecordMetaProperties record : records) {
-                    HashMap<String, String> insertRecord = getFormattedInsertRecord(record);
+                    HashMap<String, Object> insertRecord = getFormattedInsertRecord(record);
                     insertedFields.add(insertRecord);
                 }
             }
@@ -135,8 +151,8 @@ public final class VaultController extends VaultClient {
 
     public GetResponse get(GetRequest getRequest) throws SkyflowException {
         V1BulkGetRecordResponse result = null;
-        ArrayList<HashMap<String, String>> data = new ArrayList<>();
-        ArrayList<HashMap<String, String>> errors = new ArrayList<>();
+        ArrayList<HashMap<String, Object>> data = new ArrayList<>();
+        ArrayList<HashMap<String, Object>> errors = new ArrayList<>();
         try {
             Validations.validateGetRequest(getRequest);
             setBearerToken();
@@ -167,8 +183,26 @@ public final class VaultController extends VaultClient {
         return new GetResponse(data, errors);
     }
 
-    public Object update(Object updateRequest) {
-        return null;
+    public UpdateResponse update(UpdateRequest updateRequest) throws SkyflowException {
+        V1UpdateRecordResponse result;
+        String skyflowId;
+        HashMap<String, Object> tokensMap;
+        try {
+            Validations.validateUpdateRequest(updateRequest);
+            setBearerToken();
+            RecordServiceUpdateRecordBody updateBody = super.getUpdateRequestBody(updateRequest);
+            result = super.getRecordsApi().recordServiceUpdateRecord(
+                    super.getVaultConfig().getVaultId(),
+                    updateRequest.getTable(),
+                    updateRequest.getId(),
+                    updateBody
+            );
+            skyflowId = result.getSkyflowId();
+            tokensMap = getFormattedUpdateRecord(result);
+        } catch (ApiException e) {
+            throw new SkyflowException(e.getCode(), e, e.getResponseHeaders(), e.getResponseBody());
+        }
+        return new UpdateResponse(skyflowId, tokensMap);
     }
 
     public Object delete(Object deleteRequest) {
