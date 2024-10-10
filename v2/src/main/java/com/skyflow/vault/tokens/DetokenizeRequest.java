@@ -32,8 +32,7 @@ public class DetokenizeRequest {
         private RedactionType redactionType;
         private Boolean continueOnError;
 
-        public DetokenizeRequestBuilder() {
-            this.tokens = new ArrayList<>();
+        private DetokenizeRequestBuilder() {
             this.redactionType = RedactionType.PLAIN_TEXT;
             this.continueOnError = true;
         }
