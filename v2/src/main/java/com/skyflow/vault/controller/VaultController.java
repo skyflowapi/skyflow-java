@@ -76,7 +76,7 @@ public final class VaultController extends VaultClient {
         return getRecord;
     }
 
-    private static HashMap<String, Object> getFormattedUpdateRecord(V1UpdateRecordResponse record) {
+    private static synchronized HashMap<String, Object> getFormattedUpdateRecord(V1UpdateRecordResponse record) {
         HashMap<String, Object> updateTokens = new HashMap<>();
         /*
         Getting unchecked cast warning, however, this type is inferred
@@ -205,8 +205,22 @@ public final class VaultController extends VaultClient {
         return new UpdateResponse(skyflowId, tokensMap);
     }
 
-    public Object delete(Object deleteRequest) {
-        return null;
+    public DeleteResponse delete(DeleteRequest deleteRequest) throws SkyflowException {
+        V1BulkDeleteRecordResponse result;
+        try {
+            Validations.validateDeleteRequest(deleteRequest);
+            setBearerToken();
+            RecordServiceBulkDeleteRecordBody deleteBody = new RecordServiceBulkDeleteRecordBody();
+            for (String id : deleteRequest.getIds()) {
+                deleteBody.addSkyflowIdsItem(id);
+            }
+            result = super.getRecordsApi().recordServiceBulkDeleteRecord(
+                    super.getVaultConfig().getVaultId(), deleteRequest.getTable(), deleteBody);
+            System.out.println(result);
+        } catch (ApiException e) {
+            throw new SkyflowException(e.getCode(), e, e.getResponseHeaders(), e.getResponseBody());
+        }
+        return new DeleteResponse((ArrayList<String>) result.getRecordIDResponse());
     }
 
     public Object uploadFile(Object uploadFileRequest) {

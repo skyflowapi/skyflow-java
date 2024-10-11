@@ -4,6 +4,7 @@ import com.skyflow.config.ConnectionConfig;
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.data.DeleteRequest;
 import com.skyflow.vault.data.GetRequest;
 import com.skyflow.vault.data.InsertRequest;
 import com.skyflow.vault.data.UpdateRequest;
@@ -43,5 +44,8 @@ public class Validations {
     }
 
     public static void validateUpdateRequest(UpdateRequest updateRequest) throws SkyflowException {
+    }
+
+    public static void validateDeleteRequest(DeleteRequest deleteRequest) throws SkyflowException {
     }
 }
