@@ -15,9 +15,9 @@ public class DeleteResponse {
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder("{");
-        sb.append("\n\t\"deletedIds\": ").append(formatIds());
-        return sb.append("\n}").toString();
+        StringBuilder response = new StringBuilder("{");
+        response.append("\n\t\"deletedIds\": ").append(formatIds());
+        return response.append("\n}").toString();
     }
 
     private String formatIds() {

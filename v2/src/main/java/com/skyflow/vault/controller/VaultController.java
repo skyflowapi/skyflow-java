@@ -95,6 +95,25 @@ public final class VaultController extends VaultClient {
         return updateTokens;
     }
 
+    private static synchronized HashMap<String, Object> getFormattedQueryRecord(V1FieldRecords record) {
+        HashMap<String, Object> queryRecord = new HashMap<>();
+        /*
+        Getting unchecked cast warning, however, this type is inferred
+        from an exception trying to cast into another type. Therefore,
+        this type cast will not fail.
+        */
+        LinkedTreeMap<String, Object> map = null;
+        if (record.getFields() != null) {
+            map = (LinkedTreeMap<String, Object>) record.getFields();
+        }
+        if (map != null) {
+            for (String key : map.keySet()) {
+                queryRecord.put(key, map.get(key));
+            }
+        }
+        return queryRecord;
+    }
+
     public InsertResponse insert(InsertRequest insertRequest) throws SkyflowException {
         V1InsertRecordResponse result = null;
         ArrayList<HashMap<String, Object>> insertedFields = new ArrayList<>();
@@ -216,7 +235,6 @@ public final class VaultController extends VaultClient {
             }
             result = super.getRecordsApi().recordServiceBulkDeleteRecord(
                     super.getVaultConfig().getVaultId(), deleteRequest.getTable(), deleteBody);
-            System.out.println(result);
         } catch (ApiException e) {
             throw new SkyflowException(e.getCode(), e, e.getResponseHeaders(), e.getResponseBody());
         }
@@ -227,8 +245,23 @@ public final class VaultController extends VaultClient {
         return null;
     }
 
-    public Object query(Object queryRequest) {
-        return null;
+    public QueryResponse query(QueryRequest queryRequest) throws SkyflowException {
+        V1GetQueryResponse result;
+        ArrayList<HashMap<String, Object>> fields = new ArrayList<>();
+        try {
+            Validations.validateQueryRequest(queryRequest);
+            setBearerToken();
+            result = super.getQueryApi().queryServiceExecuteQuery(
+                    super.getVaultConfig().getVaultId(), new QueryServiceExecuteQueryBody().query(queryRequest.getQuery()));
+            if (result.getRecords() != null) {
+                for (V1FieldRecords record : result.getRecords()) {
+                    fields.add(getFormattedQueryRecord(record));
+                }
+            }
+        } catch (ApiException e) {
+            throw new SkyflowException(e.getCode(), e, e.getResponseHeaders(), e.getResponseBody());
+        }
+        return new QueryResponse(fields);
     }
 
     public Object tokenize(Object tokenizeRequest) {
