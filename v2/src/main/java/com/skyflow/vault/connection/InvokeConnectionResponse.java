@@ -1,10 +1,18 @@
 package com.skyflow.vault.connection;
 
-public class InvokeConnectionResponse {
-    //    members
+import com.google.gson.JsonObject;
 
-    public InvokeConnectionResponse() {
+public class InvokeConnectionResponse {
+    private JsonObject response;
+
+    public InvokeConnectionResponse(JsonObject response) {
+        this.response = response;
     }
 
-    //    getters ans setters
+    @Override
+    public String toString() {
+        return "InvokeConnectionResponse{" +
+                "response=" + response +
+                '}';
+    }
 }
