@@ -1,9 +1,11 @@
 package com.skyflow.utils;
 
+import com.skyflow.config.ConnectionConfig;
 import com.skyflow.config.Credentials;
 import com.skyflow.enums.Env;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.serviceaccount.util.BearerToken;
+import com.skyflow.vault.connection.InvokeConnectionRequest;
 import org.apache.commons.codec.binary.Base64;
 
 import java.io.File;
@@ -14,6 +16,8 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.util.HashMap;
+import java.util.Map;
 
 public final class Utils {
     public static String getVaultURL(String clusterId, Env env) {
@@ -97,4 +101,39 @@ public final class Utils {
         }
         return privateKey;
     }
+
+    public static String constructConnectionURL(ConnectionConfig config, InvokeConnectionRequest invokeConnectionRequest) {
+        StringBuilder filledURL = new StringBuilder((String) config.getConnectionUrl());
+
+        if (invokeConnectionRequest.getPathParams() != null && !invokeConnectionRequest.getPathParams().isEmpty()) {
+            for (Map.Entry<String, String> entry : invokeConnectionRequest.getPathParams().entrySet()) {
+                String key = entry.getKey();
+                String value = entry.getValue();
+                filledURL = new StringBuilder(filledURL.toString().replace(String.format("{%s}", key), value));
+            }
+        }
+
+        if(invokeConnectionRequest.getQueryParams() != null && !invokeConnectionRequest.getQueryParams().isEmpty()) {
+            filledURL.append("?");
+            for (Map.Entry<String, String> entry : invokeConnectionRequest.getQueryParams().entrySet()) {
+                String key = entry.getKey();
+                String value = entry.getValue();
+                filledURL.append(key).append("=").append(value).append("&");
+            }
+            filledURL = new StringBuilder(filledURL.substring(0, filledURL.length() - 1));
+        }
+
+        return filledURL.toString();
+    }
+
+    public static Map<String, String> constructConnectionHeadersMap(Map<String, String> requestHeaders) {
+        Map<String, String> headersMap = new HashMap<>();
+        for (Map.Entry<String, String> entry : requestHeaders.entrySet()) {
+            String key = entry.getKey();
+            String value = entry.getValue();
+            headersMap.put(key.toLowerCase(), value);
+        }
+        return headersMap;
+    }
+
 }
