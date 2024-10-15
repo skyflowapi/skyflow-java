@@ -16,6 +16,11 @@ import com.skyflow.vault.data.*;
 import com.skyflow.vault.tokens.DetokenizeRecordResponse;
 import com.skyflow.vault.tokens.DetokenizeRequest;
 import com.skyflow.vault.tokens.DetokenizeResponse;
+import com.skyflow.vault.tokens.TokenizeRequest;
+import com.skyflow.vault.tokens.TokenizeResponse;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -264,8 +269,26 @@ public final class VaultController extends VaultClient {
         return new QueryResponse(fields);
     }
 
-    public Object tokenize(Object tokenizeRequest) {
-        return null;
+    public TokenizeResponse tokenize(TokenizeRequest tokenizeRequest) throws SkyflowException {
+        V1TokenizeResponse result = null;
+        List<String> list = new ArrayList<>();
+        try {
+            Validations.validateTokenizeRequest(tokenizeRequest);
+            setBearerToken();
+            V1TokenizePayload payload = super.getTokenizePayload(tokenizeRequest);
+            result = super.getTokensApi().recordServiceTokenize(super.getVaultConfig().getVaultId(), payload);
+            if(result!=null && result.getRecords().size()>0) {
+
+                for(V1TokenizeRecordResponse response : result.getRecords()) {
+                    if(response.getToken()!=null) {
+                        list.add(response.getToken());
+                    }
+                }
+            }
+        }  catch (ApiException e) {
+            throw new SkyflowException(e.getResponseBody());
+        }
+        return new TokenizeResponse(list);
     }
 
     public BinLookupController lookUpBin() {

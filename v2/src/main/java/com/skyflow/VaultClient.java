@@ -7,10 +7,12 @@ import com.skyflow.generated.rest.api.QueryApi;
 import com.skyflow.generated.rest.api.RecordsApi;
 import com.skyflow.generated.rest.api.TokensApi;
 import com.skyflow.generated.rest.models.*;
+import com.skyflow.utils.ColumnValue;
 import com.skyflow.utils.Utils;
 import com.skyflow.vault.data.InsertRequest;
 import com.skyflow.vault.data.UpdateRequest;
 import com.skyflow.vault.tokens.DetokenizeRequest;
+import com.skyflow.vault.tokens.TokenizeRequest;
 import io.github.cdimascio.dotenv.Dotenv;
 
 import java.util.ArrayList;
@@ -119,6 +121,17 @@ public class VaultClient {
         }
         updateRequestBody.setRecord(record);
         return updateRequestBody;
+    }
+
+    protected V1TokenizePayload getTokenizePayload(TokenizeRequest request) {
+        V1TokenizePayload payload = new V1TokenizePayload();
+        for(ColumnValue columnValue: request.getColumnValues()) {
+            V1TokenizeRecordRequest recordRequest = new V1TokenizeRecordRequest();
+            recordRequest.setValue(columnValue.getValue());
+            recordRequest.setColumnGroup(columnValue.getColumnGroup());
+            payload.addTokenizationParametersItem(recordRequest);
+        }
+        return payload;
     }
 
     private void updateVaultURL() {
