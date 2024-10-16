@@ -86,7 +86,7 @@ public class VaultClient {
         return payload;
     }
 
-    protected RecordServiceInsertRecordBody getInsertRequestBody(InsertRequest request) {
+    protected RecordServiceInsertRecordBody getBulkInsertRequestBody(InsertRequest request) {
         RecordServiceInsertRecordBody insertRecordBody = new RecordServiceInsertRecordBody();
         insertRecordBody.setTokenization(request.getReturnTokens());
         insertRecordBody.setHomogeneous(request.getHomogeneous());
@@ -108,9 +108,35 @@ public class VaultClient {
         return insertRecordBody;
     }
 
+    protected RecordServiceBatchOperationBody getBatchInsertRequestBody(InsertRequest request) {
+        RecordServiceBatchOperationBody insertRequestBody = new RecordServiceBatchOperationBody();
+        insertRequestBody.setContinueOnError(true);
+        insertRequestBody.setByot(request.getTokenStrict().getBYOT());
+
+        ArrayList<HashMap<String, Object>> values = request.getValues();
+        ArrayList<HashMap<String, Object>> tokens = request.getTokens();
+        List<V1BatchRecord> records = new ArrayList<>();
+
+        for (int index = 0; index < values.size(); index++) {
+            V1BatchRecord record = new V1BatchRecord();
+            record.setMethod(BatchRecordMethod.POST);
+            record.setTableName(request.getTable());
+            record.setUpsert(request.getUpsert());
+            record.setTokenization(request.getReturnTokens());
+            record.setFields(values.get(index));
+            if (tokens != null) {
+                record.setTokens(tokens.get(index));
+            }
+            records.add(record);
+        }
+
+        insertRequestBody.setRecords(records);
+        return insertRequestBody;
+    }
+
     protected RecordServiceUpdateRecordBody getUpdateRequestBody(UpdateRequest request) {
         RecordServiceUpdateRecordBody updateRequestBody = new RecordServiceUpdateRecordBody();
-        updateRequestBody.byot(request.getByot().getBYOT());
+        updateRequestBody.byot(request.getTokenStrict().getBYOT());
         updateRequestBody.setTokenization(request.getReturnTokens());
         HashMap<String, Object> values = request.getValues();
         HashMap<String, Object> tokens = request.getTokens();
@@ -125,7 +151,7 @@ public class VaultClient {
 
     protected V1TokenizePayload getTokenizePayload(TokenizeRequest request) {
         V1TokenizePayload payload = new V1TokenizePayload();
-        for(ColumnValue columnValue: request.getColumnValues()) {
+        for (ColumnValue columnValue : request.getColumnValues()) {
             V1TokenizeRecordRequest recordRequest = new V1TokenizeRecordRequest();
             recordRequest.setValue(columnValue.getValue());
             recordRequest.setColumnGroup(columnValue.getColumnGroup());

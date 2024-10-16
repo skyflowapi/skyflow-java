@@ -13,6 +13,7 @@ public class InsertRequest {
     private final String upsert;
     private final Boolean homogeneous;
     private final Boolean tokenMode;
+    private final Boolean continueOnError;
     private final Byot tokenStrict;
 
     private InsertRequest(InsertRequestBuilder builder) {
@@ -23,6 +24,7 @@ public class InsertRequest {
         this.upsert = builder.upsert;
         this.homogeneous = builder.homogeneous;
         this.tokenMode = builder.tokenMode;
+        this.continueOnError = builder.continueOnError;
         this.tokenStrict = builder.tokenStrict;
     }
 
@@ -58,6 +60,10 @@ public class InsertRequest {
         return tokenMode;
     }
 
+    public Boolean getContinueOnError() {
+        return continueOnError;
+    }
+
     public Byot getTokenStrict() {
         return tokenStrict;
     }
@@ -70,10 +76,14 @@ public class InsertRequest {
         private String upsert;
         private Boolean homogeneous;
         private Boolean tokenMode;
+        private Boolean continueOnError;
         private Byot tokenStrict;
 
         private InsertRequestBuilder() {
             this.returnTokens = true;
+            this.homogeneous = true;
+            this.tokenMode = true;
+            this.continueOnError = false;
             this.tokenStrict = Byot.DISABLE;
         }
 
@@ -93,7 +103,7 @@ public class InsertRequest {
         }
 
         public InsertRequestBuilder returnTokens(Boolean returnTokens) {
-            this.returnTokens = returnTokens;
+            this.returnTokens = returnTokens == null || returnTokens;
             return this;
         }
 
@@ -103,17 +113,22 @@ public class InsertRequest {
         }
 
         public InsertRequestBuilder homogeneous(Boolean homogeneous) {
-            this.homogeneous = homogeneous;
+            this.homogeneous = homogeneous == null || homogeneous;
             return this;
         }
 
         public InsertRequestBuilder tokenMode(Boolean tokenMode) {
-            this.tokenMode = tokenMode;
+            this.tokenMode = tokenMode == null || tokenMode;
+            return this;
+        }
+
+        public InsertRequestBuilder continueOnError(Boolean continueOnError) {
+            this.continueOnError = continueOnError != null && continueOnError;
             return this;
         }
 
         public InsertRequestBuilder tokenStrict(Byot tokenStrict) {
-            this.tokenStrict = tokenStrict;
+            this.tokenStrict = tokenStrict == null ? Byot.DISABLE : tokenStrict;
             return this;
         }
 

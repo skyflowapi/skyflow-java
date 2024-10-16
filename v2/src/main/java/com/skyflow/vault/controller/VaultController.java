@@ -1,5 +1,6 @@
 package com.skyflow.vault.controller;
 
+import com.google.gson.*;
 import com.google.gson.internal.LinkedTreeMap;
 import com.skyflow.VaultClient;
 import com.skyflow.config.Credentials;
@@ -13,18 +14,12 @@ import com.skyflow.serviceaccount.util.Token;
 import com.skyflow.utils.Utils;
 import com.skyflow.utils.validations.Validations;
 import com.skyflow.vault.data.*;
-import com.skyflow.vault.tokens.DetokenizeRecordResponse;
-import com.skyflow.vault.tokens.DetokenizeRequest;
-import com.skyflow.vault.tokens.DetokenizeResponse;
-import com.skyflow.vault.tokens.TokenizeRequest;
-import com.skyflow.vault.tokens.TokenizeResponse;
-
-import java.util.ArrayList;
-import java.util.List;
+import com.skyflow.vault.tokens.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public final class VaultController extends VaultClient {
     private DetectController detectController;
@@ -40,7 +35,34 @@ public final class VaultController extends VaultClient {
         this.detectController = null;
     }
 
-    private static synchronized HashMap<String, Object> getFormattedInsertRecord(V1RecordMetaProperties record) {
+    private static synchronized HashMap<String, Object> getFormattedBatchInsertRecord(Object record, int requestIndex) {
+        HashMap<String, Object> insertRecord = new HashMap<>();
+        Gson gson = new Gson();
+        String jsonString = gson.toJson(record);
+        JsonObject bodyObject = JsonParser.parseString(jsonString).getAsJsonObject().get("Body").getAsJsonObject();
+        JsonArray records = bodyObject.getAsJsonArray("records");
+        JsonPrimitive error = bodyObject.getAsJsonPrimitive("error");
+
+        if (records != null) {
+            for (JsonElement recordElement : records) {
+                JsonObject recordObject = recordElement.getAsJsonObject();
+                insertRecord.put("skyflow_id", recordObject.get("skyflow_id").getAsString());
+
+                Map<String, JsonElement> tokensMap = recordObject.get("tokens").getAsJsonObject().asMap();
+                for (String key : tokensMap.keySet()) {
+                    insertRecord.put(key, tokensMap.get(key));
+                }
+            }
+        }
+
+        if (error != null) {
+            insertRecord.put("error", error.getAsString());
+        }
+        insertRecord.put("request_index", requestIndex);
+        return insertRecord;
+    }
+
+    private static synchronized HashMap<String, Object> getFormattedBulkInsertRecord(V1RecordMetaProperties record) {
         HashMap<String, Object> insertRecord = new HashMap<>();
         String skyflowId = record.getSkyflowId();
         insertRecord.put("skyflowId", skyflowId);
@@ -120,20 +142,37 @@ public final class VaultController extends VaultClient {
     }
 
     public InsertResponse insert(InsertRequest insertRequest) throws SkyflowException {
-        V1InsertRecordResponse result = null;
+        V1InsertRecordResponse bulkInsertResult = null;
+        V1BatchOperationResponse batchInsertResult = null;
         ArrayList<HashMap<String, Object>> insertedFields = new ArrayList<>();
         ArrayList<HashMap<String, Object>> errorFields = new ArrayList<>();
+        Boolean continueOnError = insertRequest.getContinueOnError();
         try {
             Validations.validateInsertRequest(insertRequest);
             setBearerToken();
-            RecordServiceInsertRecordBody insertBody = super.getInsertRequestBody(insertRequest);
-            result = super.getRecordsApi().recordServiceInsertRecord(
-                    super.getVaultConfig().getVaultId(), insertRequest.getTable(), insertBody);
-            List<V1RecordMetaProperties> records = result.getRecords();
-            if (records != null) {
-                for (V1RecordMetaProperties record : records) {
-                    HashMap<String, Object> insertRecord = getFormattedInsertRecord(record);
-                    insertedFields.add(insertRecord);
+            if (continueOnError) {
+                RecordServiceBatchOperationBody insertBody = super.getBatchInsertRequestBody(insertRequest);
+                batchInsertResult = super.getRecordsApi().recordServiceBatchOperation(super.getVaultConfig().getVaultId(), insertBody);
+                List<Object> records = batchInsertResult.getResponses();
+                for (int index = 0; index < records.size(); index++) {
+                    Object record = records.get(index);
+                    HashMap<String, Object> insertRecord = getFormattedBatchInsertRecord(record, index);
+                    if (insertRecord.containsKey("skyflow_id")) {
+                        insertedFields.add(insertRecord);
+                    } else {
+                        errorFields.add(insertRecord);
+                    }
+                }
+            } else {
+                RecordServiceInsertRecordBody insertBody = super.getBulkInsertRequestBody(insertRequest);
+                bulkInsertResult = super.getRecordsApi().recordServiceInsertRecord(
+                        super.getVaultConfig().getVaultId(), insertRequest.getTable(), insertBody);
+                List<V1RecordMetaProperties> records = bulkInsertResult.getRecords();
+                if (records != null) {
+                    for (V1RecordMetaProperties record : records) {
+                        HashMap<String, Object> insertRecord = getFormattedBulkInsertRecord(record);
+                        insertedFields.add(insertRecord);
+                    }
                 }
             }
         } catch (ApiException e) {
@@ -277,15 +316,15 @@ public final class VaultController extends VaultClient {
             setBearerToken();
             V1TokenizePayload payload = super.getTokenizePayload(tokenizeRequest);
             result = super.getTokensApi().recordServiceTokenize(super.getVaultConfig().getVaultId(), payload);
-            if(result!=null && result.getRecords().size()>0) {
+            if (result != null && result.getRecords().size() > 0) {
 
-                for(V1TokenizeRecordResponse response : result.getRecords()) {
-                    if(response.getToken()!=null) {
+                for (V1TokenizeRecordResponse response : result.getRecords()) {
+                    if (response.getToken() != null) {
                         list.add(response.getToken());
                     }
                 }
             }
-        }  catch (ApiException e) {
+        } catch (ApiException e) {
             throw new SkyflowException(e.getResponseBody());
         }
         return new TokenizeResponse(list);

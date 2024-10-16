@@ -45,7 +45,7 @@ public class UpdateRequest {
         return tokens;
     }
 
-    public Byot getByot() {
+    public Byot getTokenStrict() {
         return tokenStrict;
     }
 
