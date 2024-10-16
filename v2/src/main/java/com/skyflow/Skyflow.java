@@ -3,7 +3,7 @@ package com.skyflow;
 import com.skyflow.config.ConnectionConfig;
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
-import com.skyflow.enums.ENV;
+import com.skyflow.enums.Env;
 import com.skyflow.enums.LogLevel;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.vault.controller.ConnectionController;
@@ -199,7 +199,7 @@ public final class Skyflow {
             if (previousConfig == null) {
                 // display error log, throw error, or both
             } else {
-                ENV env = vaultConfig.getEnv() != null ? vaultConfig.getEnv() : previousConfig.getEnv();
+                Env env = vaultConfig.getEnv() != null ? vaultConfig.getEnv() : previousConfig.getEnv();
                 String clusterId = vaultConfig.getClusterId() != null ? vaultConfig.getClusterId() : previousConfig.getClusterId();
                 Credentials credentials = vaultConfig.getCredentials() != null ? vaultConfig.getCredentials() : previousConfig.getCredentials();
                 previousConfig.setEnv(env);

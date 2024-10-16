@@ -1,6 +1,6 @@
 package com.skyflow.enums;
 
-public enum ENV {
+public enum Env {
     DEV,
     STAGE,
     SANDBOX,

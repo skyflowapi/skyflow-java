@@ -7,20 +7,24 @@ import java.util.HashMap;
 
 public class InsertRequest {
     private final String table;
-    private final ArrayList<HashMap<String, String>> data;
+    private final ArrayList<HashMap<String, Object>> values;
+    private final ArrayList<HashMap<String, Object>> tokens;
     private final Boolean returnTokens;
     private final String upsert;
     private final Boolean homogeneous;
     private final Boolean tokenMode;
+    private final Boolean continueOnError;
     private final Byot tokenStrict;
 
     private InsertRequest(InsertRequestBuilder builder) {
         this.table = builder.table;
-        this.data = builder.data;
+        this.values = builder.values;
+        this.tokens = builder.tokens;
         this.returnTokens = builder.returnTokens;
         this.upsert = builder.upsert;
         this.homogeneous = builder.homogeneous;
         this.tokenMode = builder.tokenMode;
+        this.continueOnError = builder.continueOnError;
         this.tokenStrict = builder.tokenStrict;
     }
 
@@ -32,8 +36,12 @@ public class InsertRequest {
         return table;
     }
 
-    public ArrayList<HashMap<String, String>> getData() {
-        return this.data;
+    public ArrayList<HashMap<String, Object>> getValues() {
+        return this.values;
+    }
+
+    public ArrayList<HashMap<String, Object>> getTokens() {
+        return this.tokens;
     }
 
     public Boolean getReturnTokens() {
@@ -52,31 +60,50 @@ public class InsertRequest {
         return tokenMode;
     }
 
+    public Boolean getContinueOnError() {
+        return continueOnError;
+    }
+
     public Byot getTokenStrict() {
         return tokenStrict;
     }
 
     public static final class InsertRequestBuilder {
         private String table;
-        private ArrayList<HashMap<String, String>> data;
+        private ArrayList<HashMap<String, Object>> values;
+        private ArrayList<HashMap<String, Object>> tokens;
         private Boolean returnTokens;
         private String upsert;
         private Boolean homogeneous;
         private Boolean tokenMode;
+        private Boolean continueOnError;
         private Byot tokenStrict;
+
+        private InsertRequestBuilder() {
+            this.returnTokens = true;
+            this.homogeneous = true;
+            this.tokenMode = true;
+            this.continueOnError = false;
+            this.tokenStrict = Byot.DISABLE;
+        }
 
         public InsertRequestBuilder table(String table) {
             this.table = table;
             return this;
         }
 
-        public InsertRequestBuilder data(ArrayList<HashMap<String, String>> data) {
-            this.data = data;
+        public InsertRequestBuilder values(ArrayList<HashMap<String, Object>> values) {
+            this.values = values;
+            return this;
+        }
+
+        public InsertRequestBuilder tokens(ArrayList<HashMap<String, Object>> tokens) {
+            this.tokens = tokens;
             return this;
         }
 
         public InsertRequestBuilder returnTokens(Boolean returnTokens) {
-            this.returnTokens = returnTokens;
+            this.returnTokens = returnTokens == null || returnTokens;
             return this;
         }
 
@@ -86,17 +113,22 @@ public class InsertRequest {
         }
 
         public InsertRequestBuilder homogeneous(Boolean homogeneous) {
-            this.homogeneous = homogeneous;
+            this.homogeneous = homogeneous == null || homogeneous;
             return this;
         }
 
         public InsertRequestBuilder tokenMode(Boolean tokenMode) {
-            this.tokenMode = tokenMode;
+            this.tokenMode = tokenMode == null || tokenMode;
+            return this;
+        }
+
+        public InsertRequestBuilder continueOnError(Boolean continueOnError) {
+            this.continueOnError = continueOnError != null && continueOnError;
             return this;
         }
 
         public InsertRequestBuilder tokenStrict(Byot tokenStrict) {
-            this.tokenStrict = tokenStrict;
+            this.tokenStrict = tokenStrict == null ? Byot.DISABLE : tokenStrict;
             return this;
         }
 
