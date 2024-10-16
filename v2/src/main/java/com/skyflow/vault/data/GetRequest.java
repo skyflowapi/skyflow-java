@@ -112,12 +112,12 @@ public class GetRequest {
         }
 
         public GetRequestBuilder redactionType(RedactionType redactionType) {
-            this.redactionType = redactionType;
+            this.redactionType = redactionType == null ? RedactionType.PLAIN_TEXT : redactionType;
             return this;
         }
 
         public GetRequestBuilder tokenization(Boolean tokenization) {
-            this.tokenization = tokenization;
+            this.tokenization = tokenization != null && tokenization;
             return this;
         }
 
@@ -137,7 +137,7 @@ public class GetRequest {
         }
 
         public GetRequestBuilder downloadURL(Boolean downloadURL) {
-            this.downloadURL = downloadURL;
+            this.downloadURL = downloadURL == null || downloadURL;
             return this;
         }
 
@@ -152,7 +152,7 @@ public class GetRequest {
         }
 
         public GetRequestBuilder orderBy(String orderBy) {
-            this.orderBy = orderBy;
+            this.orderBy = orderBy == null ? Constants.ORDER_ASCENDING : orderBy;
             return this;
         }
 
