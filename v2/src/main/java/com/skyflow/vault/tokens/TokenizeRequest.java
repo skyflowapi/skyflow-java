@@ -27,7 +27,7 @@ public class TokenizeRequest {
             this.columnValues = new ArrayList<>();
         }
 
-        public TokenizeRequestBuilder columnValues(List<ColumnValue> columnValues) {
+        public TokenizeRequestBuilder values(List<ColumnValue> columnValues) {
             this.columnValues = columnValues;
             return this;
         }

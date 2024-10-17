@@ -6,12 +6,14 @@ import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.Byot;
 import com.skyflow.enums.RedactionType;
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.utils.ColumnValue;
 import com.skyflow.vault.data.*;
 import com.skyflow.vault.tokens.DetokenizeRequest;
 import com.skyflow.vault.tokens.TokenizeRequest;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public class Validations {
 
@@ -184,8 +186,21 @@ public class Validations {
         }
     }
 
-    public static void validateTokenizeRequest(TokenizeRequest tokenizeRequest) throws SkyflowException {
+        public static void validateTokenizeRequest(TokenizeRequest tokenizeRequest) throws SkyflowException {
+        List<ColumnValue> columnValues = tokenizeRequest.getColumnValues();
 
+        if(columnValues == null || columnValues.isEmpty()) {
+            throw new SkyflowException();
+        } else {
+            for(ColumnValue value : columnValues) {
+                if (value.getValue() == null || value.getValue().isEmpty() ) {
+                    throw new SkyflowException();
+                }
+                else if(value.getColumnGroup() ==  null || value.getColumnGroup().isEmpty()) {
+                    throw new SkyflowException();
+                }
+            }
+        }
     }
 
     private static void validateTokensForInsertRequest(
