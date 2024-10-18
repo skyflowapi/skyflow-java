@@ -1,9 +1,4 @@
-package com.skyflow.utils;
-
-import com.skyflow.enums.RedactionType;
-import com.skyflow.vault.tokens.DetokenizeRequest;
-
-import java.util.ArrayList;
+package com.skyflow.vault.tokens;
 
 public class ColumnValue {
 
@@ -29,9 +24,7 @@ public class ColumnValue {
         private String value;
         private String columnGroup;
 
-        public ColumnValueBuilder() {
-            this.value = "";
-            this.columnGroup = "";
+        private ColumnValueBuilder() {
         }
 
         public ColumnValueBuilder value(String value) {
