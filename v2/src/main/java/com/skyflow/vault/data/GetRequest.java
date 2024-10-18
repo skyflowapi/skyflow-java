@@ -7,30 +7,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class GetRequest {
-    private final String table;
-    private final ArrayList<String> ids;
-    private final RedactionType redactionType;
-    private final Boolean tokenization;
-    private final List<String> fields;
-    private final String offset;
-    private final String limit;
-    private final Boolean downloadURL;
-    private final String columnName;
-    private final ArrayList<String> columnValues;
-    private final String orderBy;
+    private final GetRequestBuilder builder;
 
     private GetRequest(GetRequestBuilder builder) {
-        this.table = builder.table;
-        this.ids = builder.ids;
-        this.redactionType = builder.redactionType;
-        this.tokenization = builder.tokenization;
-        this.fields = builder.fields;
-        this.offset = builder.offset;
-        this.limit = builder.limit;
-        this.downloadURL = builder.downloadURL;
-        this.columnName = builder.columnName;
-        this.columnValues = builder.columnValues;
-        this.orderBy = builder.orderBy;
+        this.builder = builder;
     }
 
     public static GetRequestBuilder builder() {
@@ -38,50 +18,50 @@ public class GetRequest {
     }
 
     public String getTable() {
-        return table;
+        return this.builder.table;
     }
 
     public ArrayList<String> getIds() {
-        return ids;
+        return this.builder.ids;
     }
 
     public RedactionType getRedactionType() {
-        return redactionType;
+        return this.builder.redactionType;
     }
 
     public Boolean getTokenization() {
-        return tokenization;
+        return this.builder.tokenization;
     }
 
     public List<String> getFields() {
-        return fields;
+        return this.builder.fields;
     }
 
     public String getOffset() {
-        return offset;
+        return this.builder.offset;
     }
 
     public String getLimit() {
-        return limit;
+        return this.builder.limit;
     }
 
     public Boolean getDownloadURL() {
-        return downloadURL;
+        return this.builder.downloadURL;
     }
 
     public String getColumnName() {
-        return columnName;
+        return this.builder.columnName;
     }
 
     public ArrayList<String> getColumnValues() {
-        return columnValues;
+        return this.builder.columnValues;
     }
 
     public String getOrderBy() {
-        return orderBy;
+        return this.builder.orderBy;
     }
 
-    public static class GetRequestBuilder {
+    public static final class GetRequestBuilder {
         private String table;
         private ArrayList<String> ids;
         private RedactionType redactionType;

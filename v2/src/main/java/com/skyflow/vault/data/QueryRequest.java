@@ -1,10 +1,10 @@
 package com.skyflow.vault.data;
 
 public class QueryRequest {
-    private final String query;
+    private final QueryRequestBuilder builder;
 
     private QueryRequest(QueryRequestBuilder builder) {
-        this.query = builder.query;
+        this.builder = builder;
     }
 
     public static QueryRequestBuilder builder() {
@@ -12,10 +12,10 @@ public class QueryRequest {
     }
 
     public String getQuery() {
-        return query;
+        return this.builder.query;
     }
 
-    public static class QueryRequestBuilder {
+    public static final class QueryRequestBuilder {
         private String query;
 
         private QueryRequestBuilder() {
