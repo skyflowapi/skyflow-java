@@ -1,8 +1,6 @@
 package com.skyflow.vault.tokens;
 
 import com.skyflow.enums.RedactionType;
-import com.skyflow.generated.rest.models.V1DetokenizePayload;
-import com.skyflow.generated.rest.models.V1DetokenizeRecordRequest;
 
 import java.util.ArrayList;
 
@@ -29,25 +27,12 @@ public class DetokenizeRequest {
         return this.builder.continueOnError;
     }
 
-    public V1DetokenizePayload getDetokenizePayload() {
-        V1DetokenizePayload payload = new V1DetokenizePayload();
-        payload.setContinueOnError(this.getContinueOnError());
-        for (String token : this.getTokens()) {
-            V1DetokenizeRecordRequest recordRequest = new V1DetokenizeRecordRequest();
-            recordRequest.setToken(token);
-            recordRequest.setRedaction(this.getRedactionType().getRedaction());
-            payload.addDetokenizationParametersItem(recordRequest);
-        }
-        return payload;
-    }
-
     public static final class DetokenizeRequestBuilder {
         private ArrayList<String> tokens;
         private RedactionType redactionType;
         private Boolean continueOnError;
 
-        public DetokenizeRequestBuilder() {
-            this.tokens = new ArrayList<>();
+        private DetokenizeRequestBuilder() {
             this.redactionType = RedactionType.PLAIN_TEXT;
             this.continueOnError = true;
         }
