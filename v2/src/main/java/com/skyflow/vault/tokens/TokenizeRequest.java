@@ -23,7 +23,7 @@ public class TokenizeRequest {
     public static final class TokenizeRequestBuilder {
         private List<ColumnValue> columnValues;
 
-        public TokenizeRequestBuilder() {
+        private TokenizeRequestBuilder() {
             this.columnValues = new ArrayList<>();
         }
 

@@ -3,10 +3,15 @@ package com.skyflow.utils.validations;
 import com.skyflow.config.ConnectionConfig;
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
+import com.skyflow.enums.RequestMethod;
+import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.connection.InvokeConnectionRequest;
 import com.skyflow.vault.data.*;
 import com.skyflow.vault.tokens.DetokenizeRequest;
 import com.skyflow.vault.tokens.TokenizeRequest;
+
+import java.net.URL;
 
 // Add config and request validations
 public class Validations {
@@ -17,6 +22,37 @@ public class Validations {
 
     public static void validateConnectionConfig(ConnectionConfig connectionConfig) throws SkyflowException {
 
+    }
+
+    public static void validateInvokeConnectionRequest(InvokeConnectionRequest invokeConnectionRequest) throws SkyflowException {
+        if (invokeConnectionRequest.getRequestHeaders().containsKey("connectionURL")) {
+            String connectionURL = invokeConnectionRequest.getRequestHeaders().get("connectionURL");
+            if (isInvalidURL(connectionURL)) {
+                throw new SkyflowException();
+            }
+        } else {
+            throw new SkyflowException();
+        }
+
+        if (invokeConnectionRequest.getMethodName()!=null) {
+            try {
+                RequestMethod requestMethod = RequestMethod.valueOf(invokeConnectionRequest.getMethodName());
+            } catch (Exception e) {
+                throw new SkyflowException();
+            }
+        } else {
+            throw new SkyflowException();
+        }
+    }
+
+    private static boolean isInvalidURL(String configURL) {
+        try {
+            URL url = new URL(configURL);
+            if (!url.getProtocol().equals("https")) throw new Exception();
+        } catch (Exception e) {
+            return true;
+        }
+        return false;
     }
 
     public static void validateCredentials(Credentials credentials) throws SkyflowException {
