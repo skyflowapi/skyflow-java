@@ -103,7 +103,7 @@ public final class Utils {
     }
 
     public static String constructConnectionURL(ConnectionConfig config, InvokeConnectionRequest invokeConnectionRequest) {
-        StringBuilder filledURL = new StringBuilder((String) config.getConnectionUrl());
+        StringBuilder filledURL = new StringBuilder(config.getConnectionUrl());
 
         if (invokeConnectionRequest.getPathParams() != null && !invokeConnectionRequest.getPathParams().isEmpty()) {
             for (Map.Entry<String, String> entry : invokeConnectionRequest.getPathParams().entrySet()) {

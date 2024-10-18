@@ -19,6 +19,7 @@ import com.google.gson.JsonObject;
 import java.net.URL;
 
 import java.io.IOException;
+import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -49,33 +50,36 @@ public class ConnectionController extends ConnectionClient {
     public InvokeConnectionResponse invoke(InvokeConnectionRequest invokeConnectionRequest) throws SkyflowException, IOException {
 
         InvokeConnectionResponse connectionResponse;
-        setBearerToken();
-        String filledURL = Utils.constructConnectionURL(connectionConfig, invokeConnectionRequest);
-        Map<String, String> headers = new HashMap<>();
+        try {
+            Validations.validateInvokeConnectionRequest(invokeConnectionRequest);
+            setBearerToken();
+            String filledURL = Utils.constructConnectionURL(connectionConfig, invokeConnectionRequest);
+            Map<String, String> headers = new HashMap<>();
 
-        if (invokeConnectionRequest.getRequestHeaders().containsKey("requestHeader")) {
-            headers = Utils.constructConnectionHeadersMap(invokeConnectionRequest.getRequestHeaders());
-        }
-        if (!headers.containsKey("x-skyflow-authorization")) {
-            headers.put("x-skyflow-authorization", token);
-        }
-
-        String requestMethod = invokeConnectionRequest.getMethodName();
-        JsonObject requestBody = null;
-        Object requestBodyObject = invokeConnectionRequest.getRequestBody();
-
-        if(requestBodyObject!=null) {
-            try {
-                requestBody = (JsonObject) convertObjectToJson(requestBodyObject);
-                System.out.println("Converted requestBody to JsonObject: " + requestBody.toString());
-            } catch (Exception e) {
-                System.out.println("Error while converting requestBody to JsonObject: " + e.getMessage());
+            if (invokeConnectionRequest.getRequestHeaders().containsKey("requestHeader")) {
+                headers = Utils.constructConnectionHeadersMap(invokeConnectionRequest.getRequestHeaders());
             }
-        }
+            if (!headers.containsKey("x-skyflow-authorization")) {
+                headers.put("x-skyflow-authorization", token);
+            }
 
-        String response = HttpUtility.sendRequest(requestMethod, new URL(filledURL), requestBody, headers);
-//        connectionResponse = (JsonObject) new JsonParser().parse(response);
-        connectionResponse = new InvokeConnectionResponse((JsonObject) new JsonParser().parse(response));
+            String requestMethod = invokeConnectionRequest.getMethodName();
+            JsonObject requestBody = null;
+            Object requestBodyObject = invokeConnectionRequest.getRequestBody();
+
+            if(requestBodyObject!=null) {
+                try {
+                    requestBody = convertObjectToJson(requestBodyObject);
+                } catch (Exception e) {
+                    throw new SkyflowException();
+                }
+            }
+
+            String response = HttpUtility.sendRequest(requestMethod, new URL(filledURL), requestBody, headers);
+            connectionResponse = new InvokeConnectionResponse((JsonObject) new JsonParser().parse(response));
+        } catch (IOException e) {
+            throw new SkyflowException();
+        }
         return connectionResponse;
     }
 
