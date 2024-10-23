@@ -8,6 +8,7 @@ import com.skyflow.enums.Env;
 import com.skyflow.enums.RedactionType;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.utils.ColumnValue;
+import com.skyflow.utils.Constants;
 import com.skyflow.vault.data.*;
 import com.skyflow.vault.tokens.DetokenizeRequest;
 import com.skyflow.vault.tokens.TokenizeRequest;
@@ -17,6 +18,8 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Validations {
 
@@ -61,12 +64,35 @@ public class Validations {
 
     public static void validateCredentials(Credentials credentials) throws SkyflowException {
         int nonNullMembers = 0;
-        if (credentials.getPath() != null) nonNullMembers++;
-        if (credentials.getCredentialsString() != null) nonNullMembers++;
-        if (credentials.getToken() != null) nonNullMembers++;
+        String path = credentials.getPath();
+        String credentialsString = credentials.getCredentialsString();
+        String token = credentials.getToken();
+        String apiKey = credentials.getApiKey();
+
+        if (path != null) nonNullMembers++;
+        if (credentialsString != null) nonNullMembers++;
+        if (token != null) nonNullMembers++;
+        if (apiKey != null) nonNullMembers++;
 
         if (nonNullMembers != 1) {
             throw new SkyflowException();
+        } else if (path != null && path.trim().isEmpty()) {
+            throw new SkyflowException();
+        } else if (credentialsString != null && credentialsString.trim().isEmpty()) {
+            throw new SkyflowException();
+        } else if (token != null && token.trim().isEmpty()) {
+            throw new SkyflowException();
+        } else if (apiKey != null) {
+            if (apiKey.trim().isEmpty()) {
+                throw new SkyflowException();
+            } else {
+                Pattern pattern = Pattern.compile(Constants.API_KEY_REGEX);
+                Matcher matcher = pattern.matcher(apiKey);
+                if (!matcher.matches()) {
+                    // invalid api key
+                    throw new SkyflowException();
+                }
+            }
         }
     }
 

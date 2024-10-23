@@ -52,8 +52,10 @@ public final class Utils {
                     .setCtx(credentials.getContext())
                     .build()
                     .getBearerToken();
-        } else {
+        } else if (credentials.getToken() != null) {
             return credentials.getToken();
+        } else {
+            return credentials.getApiKey();
         }
     }
 
