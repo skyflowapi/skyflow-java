@@ -6,26 +6,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class InsertRequest {
-    private final String table;
-    private final ArrayList<HashMap<String, Object>> values;
-    private final ArrayList<HashMap<String, Object>> tokens;
-    private final Boolean returnTokens;
-    private final String upsert;
-    private final Boolean homogeneous;
-    private final Boolean tokenMode;
-    private final Boolean continueOnError;
-    private final Byot tokenStrict;
+    private final InsertRequestBuilder builder;
 
     private InsertRequest(InsertRequestBuilder builder) {
-        this.table = builder.table;
-        this.values = builder.values;
-        this.tokens = builder.tokens;
-        this.returnTokens = builder.returnTokens;
-        this.upsert = builder.upsert;
-        this.homogeneous = builder.homogeneous;
-        this.tokenMode = builder.tokenMode;
-        this.continueOnError = builder.continueOnError;
-        this.tokenStrict = builder.tokenStrict;
+        this.builder = builder;
     }
 
     public static InsertRequestBuilder builder() {
@@ -33,39 +17,39 @@ public class InsertRequest {
     }
 
     public String getTable() {
-        return table;
+        return this.builder.table;
     }
 
     public ArrayList<HashMap<String, Object>> getValues() {
-        return this.values;
+        return this.builder.values;
     }
 
     public ArrayList<HashMap<String, Object>> getTokens() {
-        return this.tokens;
+        return this.builder.tokens;
     }
 
     public Boolean getReturnTokens() {
-        return returnTokens;
+        return this.builder.returnTokens;
     }
 
     public String getUpsert() {
-        return upsert;
+        return this.builder.upsert;
     }
 
     public Boolean getHomogeneous() {
-        return homogeneous;
+        return this.builder.homogeneous;
     }
 
     public Boolean getTokenMode() {
-        return tokenMode;
+        return this.builder.tokenMode;
     }
 
     public Boolean getContinueOnError() {
-        return continueOnError;
+        return this.builder.continueOnError;
     }
 
     public Byot getTokenStrict() {
-        return tokenStrict;
+        return this.builder.tokenStrict;
     }
 
     public static final class InsertRequestBuilder {
@@ -81,8 +65,7 @@ public class InsertRequest {
 
         private InsertRequestBuilder() {
             this.returnTokens = true;
-            this.homogeneous = true;
-            this.tokenMode = true;
+            this.tokenMode = false;
             this.continueOnError = false;
             this.tokenStrict = Byot.DISABLE;
         }
@@ -113,12 +96,12 @@ public class InsertRequest {
         }
 
         public InsertRequestBuilder homogeneous(Boolean homogeneous) {
-            this.homogeneous = homogeneous == null || homogeneous;
+            this.homogeneous = homogeneous;
             return this;
         }
 
         public InsertRequestBuilder tokenMode(Boolean tokenMode) {
-            this.tokenMode = tokenMode == null || tokenMode;
+            this.tokenMode = tokenMode != null && tokenMode;
             return this;
         }
 

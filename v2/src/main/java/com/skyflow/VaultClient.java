@@ -7,7 +7,7 @@ import com.skyflow.generated.rest.api.QueryApi;
 import com.skyflow.generated.rest.api.RecordsApi;
 import com.skyflow.generated.rest.api.TokensApi;
 import com.skyflow.generated.rest.models.*;
-import com.skyflow.utils.ColumnValue;
+import com.skyflow.vault.tokens.ColumnValue;
 import com.skyflow.utils.Utils;
 import com.skyflow.vault.data.InsertRequest;
 import com.skyflow.vault.data.UpdateRequest;

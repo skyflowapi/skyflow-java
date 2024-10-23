@@ -3,12 +3,10 @@ package com.skyflow.vault.data;
 import java.util.ArrayList;
 
 public class DeleteRequest {
-    private final String table;
-    private final ArrayList<String> ids;
+    private final DeleteRequestBuilder builder;
 
     private DeleteRequest(DeleteRequestBuilder builder) {
-        this.table = builder.table;
-        this.ids = builder.ids;
+        this.builder = builder;
     }
 
     public static DeleteRequestBuilder builder() {
@@ -16,14 +14,14 @@ public class DeleteRequest {
     }
 
     public String getTable() {
-        return table;
+        return this.builder.table;
     }
 
     public ArrayList<String> getIds() {
-        return ids;
+        return this.builder.ids;
     }
 
-    public static class DeleteRequestBuilder {
+    public static final class DeleteRequestBuilder {
         private String table;
         private ArrayList<String> ids;
 
