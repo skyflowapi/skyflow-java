@@ -1,9 +1,9 @@
 package com.skyflow.enums;
 
 public enum LogLevel {
+    OFF,
     ERROR,
-    WARNING,
+    WARN,
     INFO,
-    DEBUG,
-    OFF
+    DEBUG
 }

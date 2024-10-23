@@ -6,6 +6,8 @@ import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.Env;
 import com.skyflow.enums.LogLevel;
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.utils.LogUtil;
+import com.skyflow.utils.validations.Validations;
 import com.skyflow.vault.controller.ConnectionController;
 import com.skyflow.vault.controller.VaultController;
 
@@ -28,7 +30,6 @@ public final class Skyflow {
     }
 
     public VaultConfig getVaultConfig(String vaultId) {
-        // get vault config with vault id
         return this.builder.vaultConfigMap.get(vaultId);
     }
 
@@ -48,7 +49,6 @@ public final class Skyflow {
     }
 
     public ConnectionConfig getConnectionConfig(String connectionId) {
-        // get connection config with connection id
         return this.builder.connectionsMap.get(connectionId).getConnectionConfig();
     }
 
@@ -62,7 +62,7 @@ public final class Skyflow {
         return this;
     }
 
-    public Skyflow updateSkyflowCredentials(Credentials credentials) {
+    public Skyflow updateSkyflowCredentials(Credentials credentials) throws SkyflowException {
         this.builder.addSkyflowCredentials(credentials);
         return this;
     }
@@ -76,7 +76,6 @@ public final class Skyflow {
         return this.builder.logLevel;
     }
 
-    // in case no id is passed, return first vault controller
     public VaultController vault() {
         String vaultId = (String) this.builder.vaultClientsMap.keySet().toArray()[0];
         return this.vault(vaultId);
@@ -86,7 +85,7 @@ public final class Skyflow {
         return this.builder.vaultClientsMap.get(vaultId);
     }
 
-    // in case no id is passed, return first connection controller
+    // In case no id is passed, return first connection controller
     public ConnectionController connection() {
         String connectionId = (String) this.builder.connectionsMap.keySet().toArray()[0];
         return this.connection(connectionId);
@@ -112,9 +111,10 @@ public final class Skyflow {
         }
 
         public SkyflowClientBuilder addVaultConfig(VaultConfig vaultConfig) throws SkyflowException {
-            // check if vaultConfig already exists
+            Validations.validateVaultConfig(vaultConfig);
             if (this.vaultClientsMap.containsKey(vaultConfig.getVaultId())) {
                 // display error log, throw error, or both
+                throw new SkyflowException();
             } else {
                 this.vaultConfigMap.put(vaultConfig.getVaultId(), vaultConfig);
                 this.vaultClientsMap.put(vaultConfig.getVaultId(), new VaultController(vaultConfig, this.skyflowCredentials));
@@ -128,6 +128,7 @@ public final class Skyflow {
                 this.vaultClientsMap.get(updatedConfig.getVaultId()).updateVaultConfig();
             } else {
                 // display error log, throw error, or both
+                throw new SkyflowException();
             }
             return this;
         }
@@ -138,6 +139,7 @@ public final class Skyflow {
                 this.vaultConfigMap.remove(vaultId);
             } else {
                 // display error log, throw error, or both
+                throw new SkyflowException();
             }
             return this;
         }
@@ -172,32 +174,33 @@ public final class Skyflow {
             return this;
         }
 
-        public SkyflowClientBuilder addSkyflowCredentials(Credentials credentials) {
-            // set credentials and update in vault controllers
+        public SkyflowClientBuilder addSkyflowCredentials(Credentials credentials) throws SkyflowException {
+            Validations.validateCredentials(credentials);
             this.skyflowCredentials = credentials;
             for (VaultController vault : this.vaultClientsMap.values()) {
                 vault.setCommonCredentials(this.skyflowCredentials);
             }
-            for (ConnectionController controller : this.connectionsMap.values()) {
-                controller.setCommonCredentials(this.skyflowCredentials);
+            for (ConnectionController connection : this.connectionsMap.values()) {
+                connection.setCommonCredentials(this.skyflowCredentials);
             }
             return this;
         }
 
         public SkyflowClientBuilder setLogLevel(LogLevel logLevel) {
             this.logLevel = logLevel;
+            LogUtil.setupLogger(logLevel);
             return this;
         }
 
         public Skyflow build() {
-            // return built skyflow client instance
             return new Skyflow(this);
         }
 
-        private VaultConfig findAndUpdateVaultConfig(VaultConfig vaultConfig) {
+        private VaultConfig findAndUpdateVaultConfig(VaultConfig vaultConfig) throws SkyflowException {
             VaultConfig previousConfig = this.vaultConfigMap.get(vaultConfig.getVaultId());
             if (previousConfig == null) {
                 // display error log, throw error, or both
+                throw new SkyflowException();
             } else {
                 Env env = vaultConfig.getEnv() != null ? vaultConfig.getEnv() : previousConfig.getEnv();
                 String clusterId = vaultConfig.getClusterId() != null ? vaultConfig.getClusterId() : previousConfig.getClusterId();

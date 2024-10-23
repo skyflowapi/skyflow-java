@@ -225,7 +225,7 @@ public final class VaultController extends VaultClient {
                     getRequest.getTable(),
                     getRequest.getIds(),
                     redactionType != null ? redactionType.toString() : null,
-                    getRequest.getTokenization(),
+                    getRequest.getReturnTokens(),
                     getRequest.getFields(),
                     getRequest.getOffset(),
                     getRequest.getLimit(),

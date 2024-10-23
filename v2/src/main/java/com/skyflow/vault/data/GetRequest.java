@@ -10,7 +10,7 @@ public class GetRequest {
     private final String table;
     private final ArrayList<String> ids;
     private final RedactionType redactionType;
-    private final Boolean tokenization;
+    private final Boolean returnTokens;
     private final List<String> fields;
     private final String offset;
     private final String limit;
@@ -23,7 +23,7 @@ public class GetRequest {
         this.table = builder.table;
         this.ids = builder.ids;
         this.redactionType = builder.redactionType;
-        this.tokenization = builder.tokenization;
+        this.returnTokens = builder.returnTokens;
         this.fields = builder.fields;
         this.offset = builder.offset;
         this.limit = builder.limit;
@@ -49,8 +49,8 @@ public class GetRequest {
         return redactionType;
     }
 
-    public Boolean getTokenization() {
-        return tokenization;
+    public Boolean getReturnTokens() {
+        return returnTokens;
     }
 
     public List<String> getFields() {
@@ -85,7 +85,7 @@ public class GetRequest {
         private String table;
         private ArrayList<String> ids;
         private RedactionType redactionType;
-        private Boolean tokenization;
+        private Boolean returnTokens;
         private List<String> fields;
         private String offset;
         private String limit;
@@ -95,8 +95,6 @@ public class GetRequest {
         private String orderBy;
 
         private GetRequestBuilder() {
-            this.redactionType = RedactionType.PLAIN_TEXT;
-            this.tokenization = false;
             this.downloadURL = true;
             this.orderBy = Constants.ORDER_ASCENDING;
         }
@@ -112,12 +110,12 @@ public class GetRequest {
         }
 
         public GetRequestBuilder redactionType(RedactionType redactionType) {
-            this.redactionType = redactionType == null ? RedactionType.PLAIN_TEXT : redactionType;
+            this.redactionType = redactionType;
             return this;
         }
 
-        public GetRequestBuilder tokenization(Boolean tokenization) {
-            this.tokenization = tokenization != null && tokenization;
+        public GetRequestBuilder returnTokens(Boolean returnTokens) {
+            this.returnTokens = returnTokens;
             return this;
         }
 
