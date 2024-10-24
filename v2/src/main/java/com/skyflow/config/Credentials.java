@@ -8,6 +8,7 @@ public class Credentials {
     private String context;
     private String credentialsString;
     private String token;
+    private String apiKey;
 
     public Credentials() {
         this.path = null;
@@ -54,5 +55,13 @@ public class Credentials {
 
     public void setToken(String token) {
         this.token = token;
+    }
+
+    public String getApiKey() {
+        return apiKey;
+    }
+
+    public void setApiKey(String apiKey) {
+        this.apiKey = apiKey;
     }
 }

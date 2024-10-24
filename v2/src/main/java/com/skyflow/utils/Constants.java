@@ -11,4 +11,5 @@ public final class Constants {
     public static final String GRANT_TYPE = "urn:ietf:params:oauth:grant-type:jwt-bearer";
     public static final String SIGNED_DATA_TOKEN_PREFIX = "signed_token_";
     public static final String ORDER_ASCENDING = "ASCENDING";
+    public static final String API_KEY_REGEX = "^sky-[a-zA-Z0-9]{5}-[a-fA-F0-9]{32}$";
 }

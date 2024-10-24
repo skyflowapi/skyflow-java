@@ -1,5 +1,6 @@
 package com.skyflow.serviceaccount.util;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
@@ -49,13 +50,13 @@ public class BearerToken {
     ) throws SkyflowException {
         try {
             if (credentialsFile == null || !credentialsFile.isFile()) {
-                throw new SkyflowException("credentials file is not a valid file.");
+                throw new SkyflowException();
             }
             FileReader reader = new FileReader(String.valueOf(credentialsFile));
             JsonObject serviceAccountCredentials = JsonParser.parseReader(reader).getAsJsonObject();
             return getBearerTokenFromCredentials(serviceAccountCredentials, context, roles);
         } catch (JsonSyntaxException e) {
-            throw new SkyflowException("credentials string is not in valid json string format");
+            throw new SkyflowException();
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
         }
@@ -66,12 +67,12 @@ public class BearerToken {
     ) throws SkyflowException {
         try {
             if (credentials == null || credentials.isEmpty()) {
-                throw new SkyflowException("credentials string cannot bt empty");
+                throw new SkyflowException();
             }
             JsonObject serviceAccountCredentials = JsonParser.parseString(credentials).getAsJsonObject();
             return getBearerTokenFromCredentials(serviceAccountCredentials, context, roles);
         } catch (JsonSyntaxException e) {
-            throw new SkyflowException("credentials string is not in valid json string format");
+            throw new SkyflowException();
         }
     }
 
@@ -79,30 +80,32 @@ public class BearerToken {
             JsonObject credentials, String context, ArrayList<String> roles
     ) throws SkyflowException {
         try {
-            String privateKey = credentials.get("privateKey").getAsString();
+            JsonElement privateKey = credentials.get("privateKey");
             if (privateKey == null) {
-                throw new SkyflowException("privateKey not found");
+                throw new SkyflowException();
             }
 
-            String clientID = credentials.get("clientID").getAsString();
+            JsonElement clientID = credentials.get("clientID");
             if (clientID == null) {
-                throw new SkyflowException("clientID not found");
+                throw new SkyflowException();
             }
 
-            String keyID = credentials.get("keyID").getAsString();
+            JsonElement keyID = credentials.get("keyID");
             if (keyID == null) {
-                throw new SkyflowException("keyID not found");
+                throw new SkyflowException();
             }
 
-            String tokenURI = credentials.get("tokenURI").getAsString();
+            JsonElement tokenURI = credentials.get("tokenURI");
             if (tokenURI == null) {
-                throw new SkyflowException("tokenURI not found");
+                throw new SkyflowException();
             }
 
-            PrivateKey pvtKey = Utils.getPrivateKeyFromPem(privateKey);
-            String signedUserJWT = getSignedToken(clientID, keyID, tokenURI, pvtKey, context);
+            PrivateKey pvtKey = Utils.getPrivateKeyFromPem(privateKey.getAsString());
+            String signedUserJWT = getSignedToken(
+                    clientID.getAsString(), keyID.getAsString(), tokenURI.getAsString(), pvtKey, context
+            );
 
-            String basePath = Utils.getBaseURL(tokenURI);
+            String basePath = Utils.getBaseURL(tokenURI.getAsString());
             apiClient.setBasePath(basePath);
 
             V1GetAuthTokenRequest body = new V1GetAuthTokenRequest();
@@ -115,7 +118,7 @@ public class BearerToken {
             }
             return authenticationApi.authenticationServiceGetAuthToken(body);
         } catch (MalformedURLException e) {
-            throw new SkyflowException("Invalid value for tokenURI in credentials");
+            throw new SkyflowException();
         } catch (ApiException e) {
             throw new RuntimeException(e);
         }
