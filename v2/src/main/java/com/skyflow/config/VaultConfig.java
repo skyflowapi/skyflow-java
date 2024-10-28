@@ -37,7 +37,7 @@ public class VaultConfig {
     }
 
     public void setEnv(Env env) {
-        this.env = env;
+        this.env = env == null ? Env.PROD : env;
     }
 
     public Credentials getCredentials() {

@@ -12,7 +12,6 @@ public class Credentials {
 
     public Credentials() {
         this.path = null;
-        this.roles = new ArrayList<>();
         this.context = null;
         this.credentialsString = null;
     }

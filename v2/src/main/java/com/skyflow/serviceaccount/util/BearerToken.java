@@ -4,14 +4,19 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
+import com.skyflow.errors.ErrorCode;
+import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.generated.rest.ApiClient;
 import com.skyflow.generated.rest.ApiException;
 import com.skyflow.generated.rest.api.AuthenticationApi;
 import com.skyflow.generated.rest.models.V1GetAuthTokenRequest;
 import com.skyflow.generated.rest.models.V1GetAuthTokenResponse;
+import com.skyflow.logs.ErrorLogs;
+import com.skyflow.logs.InfoLogs;
 import com.skyflow.utils.Constants;
 import com.skyflow.utils.Utils;
+import com.skyflow.utils.logger.LogUtil;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 
@@ -48,31 +53,41 @@ public class BearerToken {
     private static V1GetAuthTokenResponse generateBearerTokenFromCredentials(
             File credentialsFile, String context, ArrayList<String> roles
     ) throws SkyflowException {
+        LogUtil.printInfoLog(InfoLogs.GENERATE_BEARER_TOKEN_FROM_CREDENTIALS_TRIGGERED.getLog());
         try {
             if (credentialsFile == null || !credentialsFile.isFile()) {
-                throw new SkyflowException();
+                LogUtil.printErrorLog(ErrorLogs.INVALID_CREDENTIALS_FILE.getLog());
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidCredentials.getMessage());
             }
             FileReader reader = new FileReader(String.valueOf(credentialsFile));
             JsonObject serviceAccountCredentials = JsonParser.parseReader(reader).getAsJsonObject();
             return getBearerTokenFromCredentials(serviceAccountCredentials, context, roles);
         } catch (JsonSyntaxException e) {
-            throw new SkyflowException();
+            LogUtil.printErrorLog(ErrorLogs.INVALID_CREDENTIALS_FILE_FORMAT.getLog());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), Utils.parameterizedString(
+                    ErrorMessage.FileInvalidJson.getMessage(), credentialsFile.getAbsolutePath()));
         } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
+            LogUtil.printErrorLog(ErrorLogs.CREDENTIALS_FILE_NOT_FOUND.getLog());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), Utils.parameterizedString(
+                    ErrorMessage.FileNotFound.getMessage(), credentialsFile.getAbsolutePath()));
         }
     }
 
     private static V1GetAuthTokenResponse generateBearerTokenFromCredentialString(
             String credentials, String context, ArrayList<String> roles
     ) throws SkyflowException {
+        LogUtil.printInfoLog(InfoLogs.GENERATE_BEARER_TOKEN_FROM_CREDENTIALS_STRING_TRIGGERED.getLog());
         try {
             if (credentials == null || credentials.isEmpty()) {
-                throw new SkyflowException();
+                LogUtil.printErrorLog(ErrorLogs.INVALID_CREDENTIALS_STRING.getLog());
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidCredentials.getMessage());
             }
             JsonObject serviceAccountCredentials = JsonParser.parseString(credentials).getAsJsonObject();
             return getBearerTokenFromCredentials(serviceAccountCredentials, context, roles);
         } catch (JsonSyntaxException e) {
-            throw new SkyflowException();
+            LogUtil.printErrorLog(ErrorLogs.INVALID_CREDENTIALS_STRING_FORMAT.getLog());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(),
+                    ErrorMessage.CredentialsStringInvalidJson.getMessage());
         }
     }
 
@@ -82,22 +97,26 @@ public class BearerToken {
         try {
             JsonElement privateKey = credentials.get("privateKey");
             if (privateKey == null) {
-                throw new SkyflowException();
+                LogUtil.printErrorLog(ErrorLogs.PRIVATE_KEY_IS_REQUIRED.getLog());
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.MissingPrivateKey.getMessage());
             }
 
             JsonElement clientID = credentials.get("clientID");
             if (clientID == null) {
-                throw new SkyflowException();
+                LogUtil.printErrorLog(ErrorLogs.CLIENT_ID_IS_REQUIRED.getLog());
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.MissingClientId.getMessage());
             }
 
             JsonElement keyID = credentials.get("keyID");
             if (keyID == null) {
-                throw new SkyflowException();
+                LogUtil.printErrorLog(ErrorLogs.KEY_ID_IS_REQUIRED.getLog());
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.MissingKeyId.getMessage());
             }
 
             JsonElement tokenURI = credentials.get("tokenURI");
             if (tokenURI == null) {
-                throw new SkyflowException();
+                LogUtil.printErrorLog(ErrorLogs.TOKEN_URI_IS_REQUIRED.getLog());
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.MissingTokenUri.getMessage());
             }
 
             PrivateKey pvtKey = Utils.getPrivateKeyFromPem(privateKey.getAsString());
@@ -118,9 +137,11 @@ public class BearerToken {
             }
             return authenticationApi.authenticationServiceGetAuthToken(body);
         } catch (MalformedURLException e) {
-            throw new SkyflowException();
+            LogUtil.printErrorLog(ErrorLogs.INVALID_TOKEN_URI.getLog());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidTokenUri.getMessage());
         } catch (ApiException e) {
-            throw new RuntimeException(e);
+            LogUtil.printErrorLog(ErrorLogs.BEARER_TOKEN_REJECTED.getLog());
+            throw new SkyflowException(e.getCode(), e, e.getResponseHeaders(), e.getResponseBody());
         }
     }
 
@@ -151,19 +172,17 @@ public class BearerToken {
     }
 
     public synchronized String getBearerToken() throws SkyflowException {
+        LogUtil.printInfoLog(InfoLogs.GET_BEARER_TOKEN_TRIGGERED.getLog());
         V1GetAuthTokenResponse response;
         String accessToken = null;
-        try {
-            if (this.credentialsFile != null && Objects.equals(this.credentialsType, "FILE")) {
-                response = generateBearerTokenFromCredentials(this.credentialsFile, this.ctx, this.roles);
-                accessToken = response.getAccessToken();
-            } else if (this.credentialsString != null && Objects.equals(this.credentialsType, "STRING")) {
-                response = generateBearerTokenFromCredentialString(this.credentialsString, this.ctx, this.roles);
-                accessToken = response.getAccessToken();
-            }
-        } catch (SkyflowException e) {
-            e.printStackTrace();
+        if (this.credentialsFile != null && Objects.equals(this.credentialsType, "FILE")) {
+            response = generateBearerTokenFromCredentials(this.credentialsFile, this.ctx, this.roles);
+            accessToken = response.getAccessToken();
+        } else if (this.credentialsString != null && Objects.equals(this.credentialsType, "STRING")) {
+            response = generateBearerTokenFromCredentialString(this.credentialsString, this.ctx, this.roles);
+            accessToken = response.getAccessToken();
         }
+        LogUtil.printInfoLog(InfoLogs.GET_BEARER_TOKEN_SUCCESS.getLog());
         return accessToken;
     }
 

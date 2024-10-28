@@ -5,8 +5,13 @@ import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.Env;
 import com.skyflow.enums.LogLevel;
+import com.skyflow.errors.ErrorCode;
+import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
-import com.skyflow.utils.LogUtil;
+import com.skyflow.logs.ErrorLogs;
+import com.skyflow.logs.InfoLogs;
+import com.skyflow.utils.Utils;
+import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.utils.validations.Validations;
 import com.skyflow.vault.controller.ConnectionController;
 import com.skyflow.vault.controller.VaultController;
@@ -18,6 +23,7 @@ public final class Skyflow {
 
     private Skyflow(SkyflowClientBuilder builder) {
         this.builder = builder;
+        LogUtil.printInfoLog(InfoLogs.CLIENT_INITIALIZED.getLog());
     }
 
     public static SkyflowClientBuilder builder() {
@@ -111,13 +117,18 @@ public final class Skyflow {
         }
 
         public SkyflowClientBuilder addVaultConfig(VaultConfig vaultConfig) throws SkyflowException {
+            LogUtil.printInfoLog(InfoLogs.VALIDATING_VAULT_CONFIG.getLog());
             Validations.validateVaultConfig(vaultConfig);
             if (this.vaultClientsMap.containsKey(vaultConfig.getVaultId())) {
-                // display error log, throw error, or both
-                throw new SkyflowException();
+                LogUtil.printErrorLog(Utils.parameterizedString(
+                        ErrorLogs.VAULT_CONFIG_EXISTS.getLog(), vaultConfig.getVaultId()
+                ));
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(),
+                        ErrorMessage.VaultIdAlreadyInConfigList.getMessage());
             } else {
                 this.vaultConfigMap.put(vaultConfig.getVaultId(), vaultConfig);
                 this.vaultClientsMap.put(vaultConfig.getVaultId(), new VaultController(vaultConfig, this.skyflowCredentials));
+                LogUtil.printInfoLog(InfoLogs.VAULT_CONTROLLER_INITIALIZED.getLog());
             }
             return this;
         }
@@ -127,8 +138,10 @@ public final class Skyflow {
                 VaultConfig updatedConfig = findAndUpdateVaultConfig(vaultConfig);
                 this.vaultClientsMap.get(updatedConfig.getVaultId()).updateVaultConfig();
             } else {
-                // display error log, throw error, or both
-                throw new SkyflowException();
+                LogUtil.printErrorLog(Utils.parameterizedString(
+                        ErrorLogs.VAULT_CONFIG_DOES_NOT_EXIST.getLog(), vaultConfig.getVaultId()
+                ));
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.VaultIdNotInConfigList.getMessage());
             }
             return this;
         }
@@ -138,8 +151,8 @@ public final class Skyflow {
                 this.vaultClientsMap.remove(vaultId);
                 this.vaultConfigMap.remove(vaultId);
             } else {
-                // display error log, throw error, or both
-                throw new SkyflowException();
+                LogUtil.printErrorLog(Utils.parameterizedString(ErrorLogs.VAULT_CONFIG_DOES_NOT_EXIST.getLog(), vaultId));
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.VaultIdNotInConfigList.getMessage());
             }
             return this;
         }
@@ -187,8 +200,11 @@ public final class Skyflow {
         }
 
         public SkyflowClientBuilder setLogLevel(LogLevel logLevel) {
-            this.logLevel = logLevel;
+            this.logLevel = logLevel == null ? LogLevel.ERROR : logLevel;
             LogUtil.setupLogger(logLevel);
+            LogUtil.printInfoLog(Utils.parameterizedString(
+                    InfoLogs.CURRENT_LOG_LEVEL.getLog(), String.valueOf(logLevel)
+            ));
             return this;
         }
 
@@ -199,7 +215,9 @@ public final class Skyflow {
         private VaultConfig findAndUpdateVaultConfig(VaultConfig vaultConfig) throws SkyflowException {
             VaultConfig previousConfig = this.vaultConfigMap.get(vaultConfig.getVaultId());
             if (previousConfig == null) {
-                // display error log, throw error, or both
+                LogUtil.printErrorLog(Utils.parameterizedString(
+                        ErrorLogs.VAULT_CONFIG_DOES_NOT_EXIST.getLog(), vaultConfig.getVaultId()
+                ));
                 throw new SkyflowException();
             } else {
                 Env env = vaultConfig.getEnv() != null ? vaultConfig.getEnv() : previousConfig.getEnv();

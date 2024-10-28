@@ -63,7 +63,7 @@ public class UpdateRequest {
         }
 
         public UpdateRequestBuilder returnTokens(Boolean returnTokens) {
-            this.returnTokens = returnTokens;
+            this.returnTokens = returnTokens == null || returnTokens;
             return this;
         }
 
@@ -78,7 +78,7 @@ public class UpdateRequest {
         }
 
         public UpdateRequestBuilder tokenStrict(Byot tokenStrict) {
-            this.tokenStrict = tokenStrict;
+            this.tokenStrict = tokenStrict == null ? Byot.DISABLE : tokenStrict;
             return this;
         }
 

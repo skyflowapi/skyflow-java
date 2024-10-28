@@ -30,7 +30,7 @@ public class GetRequest {
     }
 
     public Boolean getReturnTokens() {
-        return returnTokens;
+        return this.builder.returnTokens;
     }
 
     public List<String> getFields() {

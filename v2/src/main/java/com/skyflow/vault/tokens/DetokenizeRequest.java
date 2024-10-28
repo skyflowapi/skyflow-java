@@ -48,7 +48,7 @@ public class DetokenizeRequest {
         }
 
         public DetokenizeRequestBuilder continueOnError(Boolean continueOnError) {
-            this.continueOnError = continueOnError;
+            this.continueOnError = continueOnError == null || continueOnError;
             return this;
         }
 

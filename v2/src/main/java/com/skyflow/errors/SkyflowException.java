@@ -7,6 +7,7 @@ import com.google.gson.JsonSyntaxException;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class SkyflowException extends Exception {
     private String requestId;
@@ -34,13 +35,19 @@ public class SkyflowException extends Exception {
     public SkyflowException(int code, String message) {
         super(message);
         this.code = code;
+        this.message = message;
     }
 
     public SkyflowException(int code, Throwable cause, Map<String, List<String>> responseHeaders, String responseBody) {
         this(cause);
         this.code = code;
+        String contentType = responseHeaders.get("content-type").get(0);
         setRequestId(responseHeaders);
-        setResponseBody(responseBody);
+        if (Objects.equals(contentType, "application/json")) {
+            setResponseBody(responseBody);
+        } else if (Objects.equals(contentType, "text/plain")) {
+            this.message = responseBody;
+        }
     }
 
     private void setResponseBody(String responseBody) {
@@ -86,8 +93,8 @@ public class SkyflowException extends Exception {
     @Override
     public String toString() {
         return String.format(
-                "%n requestId: %s%n code: %s%n message: %s%n details: %s",
-                this.requestId, this.code, this.message, this.details
+                "%n requestId: %s%n code: %s%n message: %s",
+                this.requestId, this.code, this.message
         );
     }
 
