@@ -4,7 +4,6 @@ import com.skyflow.enums.RedactionType;
 import com.skyflow.utils.Constants;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class GetRequest {
     private final GetRequestBuilder builder;
@@ -33,7 +32,7 @@ public class GetRequest {
         return this.builder.returnTokens;
     }
 
-    public List<String> getFields() {
+    public ArrayList<String> getFields() {
         return this.builder.fields;
     }
 
@@ -66,7 +65,7 @@ public class GetRequest {
         private ArrayList<String> ids;
         private RedactionType redactionType;
         private Boolean returnTokens;
-        private List<String> fields;
+        private ArrayList<String> fields;
         private String offset;
         private String limit;
         private Boolean downloadURL;
@@ -99,7 +98,7 @@ public class GetRequest {
             return this;
         }
 
-        public GetRequestBuilder fields(List<String> fields) {
+        public GetRequestBuilder fields(ArrayList<String> fields) {
             this.fields = fields;
             return this;
         }

@@ -128,7 +128,8 @@ public final class Skyflow {
             } else {
                 this.vaultConfigMap.put(vaultConfig.getVaultId(), vaultConfig);
                 this.vaultClientsMap.put(vaultConfig.getVaultId(), new VaultController(vaultConfig, this.skyflowCredentials));
-                LogUtil.printInfoLog(InfoLogs.VAULT_CONTROLLER_INITIALIZED.getLog());
+                LogUtil.printInfoLog(Utils.parameterizedString(
+                        InfoLogs.VAULT_CONTROLLER_INITIALIZED.getLog(), vaultConfig.getVaultId()));
             }
             return this;
         }
