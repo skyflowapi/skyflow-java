@@ -134,7 +134,8 @@ public class Validations {
                     }
                 }
             }
-        } else if (context != null && context.trim().isEmpty()) {
+        }
+        if (context != null && context.trim().isEmpty()) {
             LogUtil.printErrorLog(ErrorLogs.EMPTY_OR_NULL_CONTEXT.getLog());
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyContext.getMessage());
         }

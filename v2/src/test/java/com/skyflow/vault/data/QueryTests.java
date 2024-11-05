@@ -19,6 +19,9 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(fullyQualifiedNames = "com.skyflow.serviceaccount.util.Token")
 public class QueryTests {
@@ -28,6 +31,7 @@ public class QueryTests {
     private static String clusterID = null;
     private static String query = null;
     private static Skyflow skyflowClient = null;
+    private static HashMap<String, Object> queryRecord = null;
 
     @BeforeClass
     public static void setup() throws SkyflowException {
@@ -48,6 +52,9 @@ public class QueryTests {
         vaultConfig.setCredentials(credentials);
 
         query = "test_query";
+        queryRecord = new HashMap<>();
+        queryRecord.put("name", "test_name");
+        queryRecord.put("card_number", "test_card_number");
 
 //        skyflowClient = Skyflow.builder().setLogLevel(LogLevel.DEBUG).addVaultConfig(vaultConfig).build();
     }
@@ -90,6 +97,22 @@ public class QueryTests {
                     Utils.parameterizedString(ErrorMessage.EmptyQuery.getMessage(), Constants.SDK_PREFIX),
                     e.getMessage()
             );
+        }
+    }
+
+    @Test
+    public void testQueryResponse() {
+        try {
+            ArrayList<HashMap<String, Object>> fields = new ArrayList<>();
+            fields.add(queryRecord);
+            QueryResponse response = new QueryResponse(fields);
+            String responseString = "{\n\t\"fields\": " +
+                    "[{\n\t\t\"card_number\": \"test_card_number\",\n\t\t\"name\": \"test_name\"," +
+                    "\n\t\t\"tokenizedData\": " + null + "\n\t}]\n}";
+            Assert.assertEquals(1, response.getFields().size());
+            Assert.assertEquals(responseString, response.toString());
+        } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
         }
     }
 }

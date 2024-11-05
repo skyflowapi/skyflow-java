@@ -217,8 +217,6 @@ public class UpdateTests {
                 .id(skyflowID).table(table).values(valueMap).tokens(tokenMap).tokenStrict(Byot.DISABLE)
                 .build();
         try {
-            System.out.println(valueMap);
-            System.out.println(tokenMap);
             Validations.validateUpdateRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
@@ -253,8 +251,6 @@ public class UpdateTests {
                 .id(skyflowID).table(table).values(valueMap).tokenStrict(Byot.ENABLE_STRICT)
                 .build();
         try {
-            System.out.println(valueMap);
-            System.out.println(tokenMap);
             Validations.validateUpdateRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
@@ -273,8 +269,6 @@ public class UpdateTests {
                 .id(skyflowID).table(table).values(valueMap).tokens(emptyTokenMap).tokenStrict(Byot.ENABLE)
                 .build();
         try {
-            System.out.println(valueMap);
-            System.out.println(tokenMap);
             Validations.validateUpdateRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
@@ -289,8 +283,6 @@ public class UpdateTests {
                 .id(skyflowID).table(table).values(valueMap).tokens(tokenMap).tokenStrict(Byot.ENABLE_STRICT)
                 .build();
         try {
-            System.out.println(valueMap);
-            System.out.println(tokenMap);
             Validations.validateUpdateRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
@@ -305,8 +297,6 @@ public class UpdateTests {
                 .id(skyflowID).table(table).values(valueMap).tokens(tokenMap).tokenStrict(Byot.ENABLE_STRICT)
                 .build();
         try {
-            System.out.println(valueMap);
-            System.out.println(tokenMap);
             Validations.validateUpdateRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
@@ -322,8 +312,6 @@ public class UpdateTests {
                 .id(skyflowID).table(table).values(valueMap).tokens(tokenMap).tokenStrict(Byot.ENABLE_STRICT)
                 .build();
         try {
-            System.out.println(valueMap);
-            System.out.println(tokenMap);
             Validations.validateUpdateRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
@@ -341,8 +329,6 @@ public class UpdateTests {
                 .id(skyflowID).table(table).values(valueMap).tokens(tokenMap).tokenStrict(Byot.ENABLE_STRICT)
                 .build();
         try {
-            System.out.println(valueMap);
-            System.out.println(tokenMap);
             Validations.validateUpdateRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
@@ -359,8 +345,6 @@ public class UpdateTests {
                 .id(skyflowID).table(table).values(valueMap).tokens(tokenMap).tokenStrict(Byot.ENABLE_STRICT)
                 .build();
         try {
-            System.out.println(valueMap);
-            System.out.println(tokenMap);
             Validations.validateUpdateRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
@@ -369,4 +353,19 @@ public class UpdateTests {
         }
     }
 
+    @Test
+    public void testUpdateResponse() {
+        try {
+            tokenMap.put("test_column_2", "test_token_2");
+            UpdateResponse response = new UpdateResponse(skyflowID, tokenMap);
+            String responseString = "{\n\t\"skyflowId\": " + skyflowID + "\n\t\"tokens\": "
+                    + "{\n\t\t\"test_column_1\": \"test_token_1\","
+                    + "\n\t\t\"test_column_2\": \"test_token_2\",\n\t}\n}";
+            Assert.assertEquals(skyflowID, response.getSkyflowId());
+            Assert.assertEquals(2, response.getTokens().size());
+            Assert.assertEquals(responseString, response.toString());
+        } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
 }

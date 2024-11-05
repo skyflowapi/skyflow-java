@@ -152,4 +152,16 @@ public class DeleteTests {
             );
         }
     }
+
+    @Test
+    public void testDeleteResponse() {
+        try {
+            DeleteResponse response = new DeleteResponse(ids);
+            String responseString = "{\n\t\"deletedIds\": [\n\t\t\"" + skyflowID + "\"]\n}";
+            Assert.assertEquals(1, response.getDeletedIds().size());
+            Assert.assertEquals(responseString, response.toString());
+        } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
 }

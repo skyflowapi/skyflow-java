@@ -93,6 +93,8 @@ public class InsertTests {
             Assert.assertEquals(1, request.getTokens().size());
             Assert.assertEquals(Byot.ENABLE, request.getTokenStrict());
             Assert.assertTrue(request.getContinueOnError());
+            Assert.assertTrue(request.getReturnTokens());
+            Assert.assertTrue(request.getTokenMode());
             Assert.assertFalse(request.getHomogeneous());
         } catch (SkyflowException e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
@@ -294,8 +296,6 @@ public class InsertTests {
     @Test
     public void testInsufficientTokensWithTokenStrictEnableStrictInInsertRequestValidations1() {
         tokens.add(tokenMap);
-        System.out.println(values);
-        System.out.println(tokens);
         InsertRequest request = InsertRequest.builder()
                 .table(table).values(values).tokens(tokens).tokenStrict(Byot.ENABLE_STRICT)
                 .build();

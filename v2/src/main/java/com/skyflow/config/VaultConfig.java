@@ -1,7 +1,6 @@
 package com.skyflow.config;
 
 import com.skyflow.enums.Env;
-import com.skyflow.utils.Utils;
 
 public class VaultConfig {
     private String vaultId;
@@ -46,10 +45,6 @@ public class VaultConfig {
 
     public void setCredentials(Credentials credentials) {
         this.credentials = credentials;
-    }
-
-    public String getVaultURL() {
-        return Utils.getVaultURL(this.clusterId, this.env);
     }
 
     @Override

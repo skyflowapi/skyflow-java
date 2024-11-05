@@ -13,6 +13,7 @@ import com.skyflow.utils.Constants;
 import com.skyflow.utils.Utils;
 import com.skyflow.utils.validations.Validations;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -69,6 +70,13 @@ public class GetTests {
         table = "test_table";
     }
 
+    @Before
+    public void setupTest() {
+        ids.clear();
+        fields.clear();
+        columnValues.clear();
+    }
+
     @Test
     public void testValidGetByIdInputInGetRequestValidations() {
         try {
@@ -103,6 +111,7 @@ public class GetTests {
     public void testValidGetByColumnValuesInputInGetRequestValidations() {
         try {
             columnValues.add(columnValue);
+            fields.add(field);
             GetRequest request = GetRequest.builder()
                     .table(table)
                     .columnName(columnName)
@@ -132,7 +141,6 @@ public class GetTests {
 
     @Test
     public void testNoTableInGetRequestValidations() {
-        ids.clear();
         ids.add(skyflowID);
         GetRequest request = GetRequest.builder().ids(ids).build();
         try {
@@ -149,7 +157,6 @@ public class GetTests {
 
     @Test
     public void testEmptyTableInGetRequestValidations() {
-        ids.clear();
         ids.add(skyflowID);
         GetRequest request = GetRequest.builder().ids(ids).table("").build();
         try {
@@ -166,7 +173,6 @@ public class GetTests {
 
     @Test
     public void testEmptyIdsInGetRequestValidations() {
-        ids.clear();
         GetRequest request = GetRequest.builder().ids(ids).table(table).build();
         try {
             Validations.validateGetRequest(request);
@@ -199,13 +205,9 @@ public class GetTests {
 
     @Test
     public void testEmptyFieldsInGetRequestValidations() {
-        ids.clear();
         ids.add(skyflowID);
-        fields.clear();
         GetRequest request = GetRequest.builder().ids(ids).table(table).fields(fields).build();
         try {
-            System.out.println(ids);
-            System.out.println(fields);
             Validations.validateGetRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
@@ -219,12 +221,11 @@ public class GetTests {
 
     @Test
     public void testEmptyFieldInFieldsInGetRequestValidations() {
+        ids.add(skyflowID);
         fields.add(field);
         fields.add("");
         GetRequest request = GetRequest.builder().ids(ids).table(table).fields(fields).build();
         try {
-            System.out.println(ids);
-            System.out.println(fields);
             Validations.validateGetRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
@@ -349,6 +350,7 @@ public class GetTests {
 
     @Test
     public void testBothIdsAndColumnNameInGetRequestValidations() {
+        ids.add(skyflowID);
         GetRequest request = GetRequest.builder()
                 .table(table).redactionType(RedactionType.PLAIN_TEXT).ids(ids).columnName(columnName)
                 .build();
@@ -366,6 +368,7 @@ public class GetTests {
 
     @Test
     public void testBothIdsAndColumnValuesInGetRequestValidations() {
+        ids.add(skyflowID);
         GetRequest request = GetRequest.builder()
                 .table(table).redactionType(RedactionType.PLAIN_TEXT).ids(ids).columnValues(columnValues)
                 .build();
@@ -434,7 +437,6 @@ public class GetTests {
 
     @Test
     public void testEmptyColumnValuesInGetRequestValidations() {
-        columnValues.clear();
         GetRequest request = GetRequest.builder()
                 .table(table).redactionType(RedactionType.PLAIN_TEXT).columnName(columnName).columnValues(columnValues)
                 .build();

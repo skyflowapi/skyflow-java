@@ -3,7 +3,7 @@ package com.skyflow.vault.data;
 import java.util.ArrayList;
 
 public class DeleteResponse {
-    private ArrayList<String> deletedIds;
+    private final ArrayList<String> deletedIds;
 
     public DeleteResponse(ArrayList<String> deletedIds) {
         this.deletedIds = deletedIds;
