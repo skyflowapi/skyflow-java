@@ -1,54 +1,26 @@
 package com.skyflow.vault.controller;
 
+import com.skyflow.VaultClient;
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
-import com.skyflow.generated.rest.ApiClient;
-import com.skyflow.generated.rest.api.RecordsApi;
-import com.skyflow.generated.rest.api.TokensApi;
 import com.skyflow.generated.rest.models.V1DetokenizePayload;
 import com.skyflow.generated.rest.models.V1DetokenizeResponse;
 import com.skyflow.utils.Utils;
-import com.skyflow.vault.audit.ListEventRequest;
-import com.skyflow.vault.bin.GetBinRequest;
 import com.skyflow.vault.data.InsertRequest;
 import com.skyflow.vault.data.InsertResponse;
-import com.skyflow.vault.detect.DeIdentifyRequest;
 import com.skyflow.vault.tokens.DetokenizeRequest;
 import com.skyflow.vault.tokens.DetokenizeResponse;
 
-public class VaultController {
-    private final RecordsApi recordsApi;
-    private final TokensApi tokensApi;
-    private final ApiClient apiClient;
+public final class VaultController extends VaultClient {
     private DetectController detectController;
     private AuditController auditController;
     private BinLookupController binLookupController;
-    private VaultConfig vaultConfig;
-    private Credentials commonCredentials;
 
     public VaultController(VaultConfig vaultConfig, Credentials credentials) {
-        this.vaultConfig = vaultConfig;
-        this.commonCredentials = credentials;
+        super(vaultConfig, credentials);
         this.auditController = null;
         this.binLookupController = null;
         this.detectController = null;
-
-        this.apiClient = new ApiClient();
-        this.apiClient.setBasePath(this.vaultConfig.getVaultURL());
-        this.tokensApi = new TokensApi(this.apiClient);
-        this.recordsApi = new RecordsApi(this.apiClient);
-    }
-
-    public void setCommonCredentials(Credentials commonCredentials) {
-        this.commonCredentials = commonCredentials;
-    }
-
-    public VaultConfig getVaultConfig() {
-        return vaultConfig;
-    }
-
-    public void setVaultConfig(VaultConfig vaultConfig) {
-        this.vaultConfig = vaultConfig;
     }
 
     public InsertResponse insert(InsertRequest insertRequest) {
@@ -56,13 +28,12 @@ public class VaultController {
     }
 
     public DetokenizeResponse detokenize(DetokenizeRequest detokenizeRequest) {
+        System.out.println(super.getVaultConfig());
         V1DetokenizeResponse result = null;
         try {
-            // prioritise credentials here
-            Utils.updateBearerTokenIfExpired(this.apiClient, this.commonCredentials);
+            Utils.updateBearerTokenIfExpired(super.getApiClient(), super.getFinalCredentials());
             V1DetokenizePayload payload = detokenizeRequest.getDetokenizePayload();
-            result = this.tokensApi.recordServiceDetokenize(this.vaultConfig.getVaultId(), payload);
-            System.out.println(result);
+            result = super.getTokensApi().recordServiceDetokenize(super.getVaultConfig().getVaultId(), payload);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -93,23 +64,23 @@ public class VaultController {
         return null;
     }
 
-    public BinLookupController lookUpBin(GetBinRequest getBinRequest) {
+    public BinLookupController lookUpBin() {
         if (this.binLookupController == null) {
-            this.binLookupController = new BinLookupController(this.vaultConfig, this.apiClient);
+            this.binLookupController = new BinLookupController(super.getApiClient());
         }
         return this.binLookupController;
     }
 
-    public AuditController audit(ListEventRequest listEventRequest) {
+    public AuditController audit() {
         if (this.auditController == null) {
-            this.auditController = new AuditController(this.vaultConfig, this.apiClient);
+            this.auditController = new AuditController(super.getApiClient());
         }
         return this.auditController;
     }
 
-    public DetectController detect(DeIdentifyRequest deIdentifyRequest) {
+    public DetectController detect() {
         if (this.detectController == null) {
-            this.detectController = new DetectController(this.vaultConfig, this.apiClient);
+            this.detectController = new DetectController(super.getApiClient());
         }
         return this.detectController;
     }
