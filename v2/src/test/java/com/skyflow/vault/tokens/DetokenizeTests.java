@@ -9,17 +9,23 @@ import com.skyflow.enums.RedactionType;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.generated.rest.ApiClient;
 import com.skyflow.generated.rest.ApiException;
 import com.skyflow.generated.rest.api.TokensApi;
 import com.skyflow.generated.rest.models.V1DetokenizeResponse;
+import com.skyflow.serviceaccount.util.Token;
 import com.skyflow.utils.Constants;
 import com.skyflow.utils.Utils;
 import com.skyflow.utils.validations.Validations;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.ArgumentMatchers;
 import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.ArrayList;
 
@@ -38,13 +44,14 @@ public class DetokenizeTests {
     private static String token = null;
     private static ArrayList<String> tokens = null;
     private static Skyflow skyflowClient = null;
+    private ApiClient mockApiClient;
+    private TokensApi mockTokensApi;
 
     @BeforeClass
     public static void setup() throws SkyflowException, NoSuchMethodException {
 //        PowerMockito.mockStatic(Token.class);
 //        PowerMockito.when(Token.isExpired("valid_token")).thenReturn(true);
 //        PowerMockito.when(Token.isExpired("not_a_valid_token")).thenReturn(false);
-//        PowerMockito.mock(ApiClient.class);
 
         vaultID = "vault123";
         clusterID = "cluster123";
@@ -60,7 +67,21 @@ public class DetokenizeTests {
 
         token = "test_token_1";
         tokens = new ArrayList<>();
+
+//        System.setProperty("ssl.TrustManagerFactory.algorithm", "PKIX");
     }
+
+//    @Before
+//    public void setupMock() throws ApiException {
+//        mockApiClient = PowerMockito.mock(ApiClient.class);
+//        mockTokensApi = PowerMockito.mock(TokensApi.class);
+//
+//        V1DetokenizeResponse mockResponse = new V1DetokenizeResponse();
+//        PowerMockito
+//                .when(mockTokensApi.recordServiceDetokenize(ArgumentMatchers.anyString(), ArgumentMatchers.any()))
+//                .thenReturn(mockResponse);
+//
+//    }
 
     @Test
     public void testValidInputInDetokenizeRequestValidations() {

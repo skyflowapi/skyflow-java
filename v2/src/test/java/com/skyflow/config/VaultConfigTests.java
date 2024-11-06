@@ -1,7 +1,5 @@
-package com.skyflow.vault.config;
+package com.skyflow.config;
 
-import com.skyflow.config.Credentials;
-import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.Env;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
@@ -43,7 +41,7 @@ public class VaultConfigTests {
     }
 
     @Test
-    public void testValidVaultConfigWithCredentials() {
+    public void testValidVaultConfigWithCredentialsInValidations() {
         try {
             VaultConfig vaultConfig = new VaultConfig();
             vaultConfig.setVaultId(vaultID);
@@ -62,7 +60,7 @@ public class VaultConfigTests {
     }
 
     @Test
-    public void testValidVaultConfigWithoutCredentials() {
+    public void testValidVaultConfigWithoutCredentialsInValidations() {
         try {
             VaultConfig vaultConfig = new VaultConfig();
             vaultConfig.setVaultId(vaultID);
@@ -80,7 +78,7 @@ public class VaultConfigTests {
     }
 
     @Test
-    public void testDefaultEnvInVaultConfigWithCredentials() {
+    public void testDefaultEnvInVaultConfigWithCredentialsInValidations() {
         try {
             VaultConfig vaultConfig = new VaultConfig();
             vaultConfig.setVaultId(vaultID);
@@ -98,7 +96,7 @@ public class VaultConfigTests {
     }
 
     @Test
-    public void testDefaultEnvInVaultConfigWithoutCredentials() {
+    public void testDefaultEnvInVaultConfigWithoutCredentialsInValidations() {
         try {
             VaultConfig vaultConfig = new VaultConfig();
             vaultConfig.setVaultId(vaultID);
@@ -115,7 +113,7 @@ public class VaultConfigTests {
     }
 
     @Test
-    public void testNoVaultIdInVaultConfig() {
+    public void testNoVaultIdInVaultConfigInValidations() {
         VaultConfig vaultConfig = new VaultConfig();
         try {
             vaultConfig.setClusterId(clusterID);
@@ -129,7 +127,7 @@ public class VaultConfigTests {
     }
 
     @Test
-    public void testEmptyVaultIdInVaultConfig() {
+    public void testEmptyVaultIdInVaultConfigInValidations() {
         try {
             VaultConfig vaultConfig = new VaultConfig();
             vaultConfig.setVaultId("");
@@ -144,7 +142,7 @@ public class VaultConfigTests {
     }
 
     @Test
-    public void testNoClusterIdInVaultConfig() {
+    public void testNoClusterIdInVaultConfigInValidations() {
         try {
             VaultConfig vaultConfig = new VaultConfig();
             vaultConfig.setVaultId(vaultID);
@@ -158,7 +156,7 @@ public class VaultConfigTests {
     }
 
     @Test
-    public void testEmptyClusterIdInVaultConfig() {
+    public void testEmptyClusterIdInVaultConfigInValidations() {
         try {
             VaultConfig vaultConfig = new VaultConfig();
             vaultConfig.setVaultId(vaultID);

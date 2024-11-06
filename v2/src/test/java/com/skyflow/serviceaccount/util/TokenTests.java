@@ -1,6 +1,5 @@
-package com.skyflow.vault.serviceaccount.util;
+package com.skyflow.serviceaccount.util;
 
-import com.skyflow.serviceaccount.util.Token;
 import org.junit.Assert;
 import org.junit.Test;
 

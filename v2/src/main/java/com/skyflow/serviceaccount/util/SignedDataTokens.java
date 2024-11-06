@@ -60,11 +60,11 @@ public class SignedDataTokens {
         } catch (JsonSyntaxException e) {
             LogUtil.printErrorLog(ErrorLogs.INVALID_CREDENTIALS_FILE_FORMAT.getLog());
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), Utils.parameterizedString(
-                    ErrorMessage.FileInvalidJson.getMessage(), credentialsFile.getAbsolutePath()));
+                    ErrorMessage.FileInvalidJson.getMessage(), credentialsFile.getPath()));
         } catch (FileNotFoundException e) {
             LogUtil.printErrorLog(ErrorLogs.CREDENTIALS_FILE_NOT_FOUND.getLog());
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), Utils.parameterizedString(
-                    ErrorMessage.FileNotFound.getMessage(), credentialsFile.getAbsolutePath()));
+                    ErrorMessage.FileNotFound.getMessage(), credentialsFile.getPath()));
         }
         return responseToken;
     }

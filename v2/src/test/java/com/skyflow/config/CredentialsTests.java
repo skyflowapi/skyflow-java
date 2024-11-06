@@ -1,4 +1,4 @@
-package com.skyflow.vault.config;
+package com.skyflow.config;
 
 import com.skyflow.config.Credentials;
 import com.skyflow.errors.ErrorCode;
