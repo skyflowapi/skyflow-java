@@ -29,8 +29,8 @@ public class GetRequest {
         return this.builder.redactionType;
     }
 
-    public Boolean getTokenization() {
-        return this.builder.tokenization;
+    public Boolean getReturnTokens() {
+        return this.builder.returnTokens;
     }
 
     public List<String> getFields() {
@@ -65,7 +65,7 @@ public class GetRequest {
         private String table;
         private ArrayList<String> ids;
         private RedactionType redactionType;
-        private Boolean tokenization;
+        private Boolean returnTokens;
         private List<String> fields;
         private String offset;
         private String limit;
@@ -75,8 +75,6 @@ public class GetRequest {
         private String orderBy;
 
         private GetRequestBuilder() {
-            this.redactionType = RedactionType.PLAIN_TEXT;
-            this.tokenization = false;
             this.downloadURL = true;
             this.orderBy = Constants.ORDER_ASCENDING;
         }
@@ -96,8 +94,8 @@ public class GetRequest {
             return this;
         }
 
-        public GetRequestBuilder tokenization(Boolean tokenization) {
-            this.tokenization = tokenization;
+        public GetRequestBuilder returnTokens(Boolean returnTokens) {
+            this.returnTokens = returnTokens;
             return this;
         }
 
@@ -117,7 +115,7 @@ public class GetRequest {
         }
 
         public GetRequestBuilder downloadURL(Boolean downloadURL) {
-            this.downloadURL = downloadURL;
+            this.downloadURL = downloadURL == null || downloadURL;
             return this;
         }
 
@@ -132,7 +130,7 @@ public class GetRequest {
         }
 
         public GetRequestBuilder orderBy(String orderBy) {
-            this.orderBy = orderBy;
+            this.orderBy = orderBy == null ? Constants.ORDER_ASCENDING : orderBy;
             return this;
         }
 

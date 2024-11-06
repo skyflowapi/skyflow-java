@@ -2,8 +2,12 @@ package com.skyflow.utils;
 
 import com.skyflow.config.Credentials;
 import com.skyflow.enums.Env;
+import com.skyflow.errors.ErrorCode;
+import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.logs.ErrorLogs;
 import com.skyflow.serviceaccount.util.BearerToken;
+import com.skyflow.utils.logger.LogUtil;
 import org.apache.commons.codec.binary.Base64;
 
 import java.io.File;
@@ -71,7 +75,8 @@ public final class Utils {
             privateKeyContent = privateKeyContent.replace("\r\n", "");
             privateKey = parsePkcs8PrivateKey(Base64.decodeBase64(privateKeyContent));
         } else {
-            // display error log and throw error
+            LogUtil.printErrorLog(ErrorLogs.JWT_INVALID_FORMAT.getLog());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.JwtInvalidFormat.getMessage());
         }
         return privateKey;
     }
@@ -83,6 +88,13 @@ public final class Utils {
         return String.format("%s://%s", protocol, host);
     }
 
+    public static String parameterizedString(String base, String... args) {
+        for (int index = 0; index < args.length; index++) {
+            base = base.replace("%s" + (index + 1), args[index]);
+        }
+        return base;
+    }
+
     private static PrivateKey parsePkcs8PrivateKey(byte[] pkcs8Bytes) throws SkyflowException {
         KeyFactory keyFactory;
         PrivateKey privateKey = null;
@@ -91,9 +103,11 @@ public final class Utils {
             keyFactory = KeyFactory.getInstance("RSA");
             privateKey = keyFactory.generatePrivate(keySpec);
         } catch (NoSuchAlgorithmException e) {
-            // display error log and throw error
+            LogUtil.printErrorLog(ErrorLogs.INVALID_ALGORITHM.getLog());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidAlgorithm.getMessage());
         } catch (InvalidKeySpecException e) {
-            // display error log and throw error
+            LogUtil.printErrorLog(ErrorLogs.INVALID_KEY_SPEC.getLog());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidKeySpec.getMessage());
         }
         return privateKey;
     }
