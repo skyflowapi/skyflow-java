@@ -3,14 +3,26 @@ package com.skyflow;
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
 import com.skyflow.generated.rest.ApiClient;
+import com.skyflow.generated.rest.api.QueryApi;
 import com.skyflow.generated.rest.api.RecordsApi;
 import com.skyflow.generated.rest.api.TokensApi;
+import com.skyflow.generated.rest.models.*;
+import com.skyflow.vault.tokens.ColumnValue;
 import com.skyflow.utils.Utils;
+import com.skyflow.vault.data.InsertRequest;
+import com.skyflow.vault.data.UpdateRequest;
+import com.skyflow.vault.tokens.DetokenizeRequest;
+import com.skyflow.vault.tokens.TokenizeRequest;
 import io.github.cdimascio.dotenv.Dotenv;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 public class VaultClient {
     private final RecordsApi recordsApi;
     private final TokensApi tokensApi;
+    private final QueryApi queryApi;
     private final ApiClient apiClient;
     private final VaultConfig vaultConfig;
     private Credentials commonCredentials;
@@ -21,8 +33,9 @@ public class VaultClient {
         this.vaultConfig = vaultConfig;
         this.commonCredentials = credentials;
         this.apiClient = new ApiClient();
-        this.tokensApi = new TokensApi(this.apiClient);
         this.recordsApi = new RecordsApi(this.apiClient);
+        this.tokensApi = new TokensApi(this.apiClient);
+        this.queryApi = new QueryApi(this.apiClient);
         updateVaultURL();
         prioritiseCredentials();
     }
@@ -37,6 +50,10 @@ public class VaultClient {
 
     protected TokensApi getTokensApi() {
         return tokensApi;
+    }
+
+    protected QueryApi getQueryApi() {
+        return queryApi;
     }
 
     protected ApiClient getApiClient() {
@@ -55,6 +72,92 @@ public class VaultClient {
     protected void updateVaultConfig() {
         updateVaultURL();
         prioritiseCredentials();
+    }
+
+    protected V1DetokenizePayload getDetokenizePayload(DetokenizeRequest request) {
+        V1DetokenizePayload payload = new V1DetokenizePayload();
+        payload.setContinueOnError(request.getContinueOnError());
+        for (String token : request.getTokens()) {
+            V1DetokenizeRecordRequest recordRequest = new V1DetokenizeRecordRequest();
+            recordRequest.setToken(token);
+            recordRequest.setRedaction(request.getRedactionType().getRedaction());
+            payload.addDetokenizationParametersItem(recordRequest);
+        }
+        return payload;
+    }
+
+    protected RecordServiceInsertRecordBody getBulkInsertRequestBody(InsertRequest request) {
+        RecordServiceInsertRecordBody insertRecordBody = new RecordServiceInsertRecordBody();
+        insertRecordBody.setTokenization(request.getReturnTokens());
+        insertRecordBody.setHomogeneous(request.getHomogeneous());
+        insertRecordBody.setUpsert(request.getUpsert());
+        insertRecordBody.setByot(request.getTokenStrict().getBYOT());
+
+        List<HashMap<String, Object>> values = request.getValues();
+        List<HashMap<String, Object>> tokens = request.getTokens();
+        List<V1FieldRecords> records = new ArrayList<>();
+        for (int index = 0; index < values.size(); index++) {
+            V1FieldRecords record = new V1FieldRecords();
+            record.setFields(values.get(index));
+            if (tokens != null) {
+                record.setTokens(tokens.get(index));
+            }
+            records.add(record);
+        }
+        insertRecordBody.setRecords(records);
+        return insertRecordBody;
+    }
+
+    protected RecordServiceBatchOperationBody getBatchInsertRequestBody(InsertRequest request) {
+        RecordServiceBatchOperationBody insertRequestBody = new RecordServiceBatchOperationBody();
+        insertRequestBody.setContinueOnError(true);
+        insertRequestBody.setByot(request.getTokenStrict().getBYOT());
+
+        ArrayList<HashMap<String, Object>> values = request.getValues();
+        ArrayList<HashMap<String, Object>> tokens = request.getTokens();
+        List<V1BatchRecord> records = new ArrayList<>();
+
+        for (int index = 0; index < values.size(); index++) {
+            V1BatchRecord record = new V1BatchRecord();
+            record.setMethod(BatchRecordMethod.POST);
+            record.setTableName(request.getTable());
+            record.setUpsert(request.getUpsert());
+            record.setTokenization(request.getReturnTokens());
+            record.setFields(values.get(index));
+            if (tokens != null) {
+                record.setTokens(tokens.get(index));
+            }
+            records.add(record);
+        }
+
+        insertRequestBody.setRecords(records);
+        return insertRequestBody;
+    }
+
+    protected RecordServiceUpdateRecordBody getUpdateRequestBody(UpdateRequest request) {
+        RecordServiceUpdateRecordBody updateRequestBody = new RecordServiceUpdateRecordBody();
+        updateRequestBody.byot(request.getTokenStrict().getBYOT());
+        updateRequestBody.setTokenization(request.getReturnTokens());
+        HashMap<String, Object> values = request.getValues();
+        HashMap<String, Object> tokens = request.getTokens();
+        V1FieldRecords record = new V1FieldRecords();
+        record.setFields(values);
+        if (tokens != null) {
+            record.setTokens(tokens);
+        }
+        updateRequestBody.setRecord(record);
+        return updateRequestBody;
+    }
+
+    protected V1TokenizePayload getTokenizePayload(TokenizeRequest request) {
+        V1TokenizePayload payload = new V1TokenizePayload();
+        for (ColumnValue columnValue : request.getColumnValues()) {
+            V1TokenizeRecordRequest recordRequest = new V1TokenizeRecordRequest();
+            recordRequest.setValue(columnValue.getValue());
+            recordRequest.setColumnGroup(columnValue.getColumnGroup());
+            payload.addTokenizationParametersItem(recordRequest);
+        }
+        return payload;
     }
 
     private void updateVaultURL() {

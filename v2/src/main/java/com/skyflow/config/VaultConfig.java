@@ -1,18 +1,18 @@
 package com.skyflow.config;
 
-import com.skyflow.enums.ENV;
+import com.skyflow.enums.Env;
 import com.skyflow.utils.Utils;
 
 public class VaultConfig {
     private String vaultId;
     private String clusterId;
-    private ENV env;
+    private Env env;
     private Credentials credentials;
 
     public VaultConfig() {
         this.vaultId = null;
         this.clusterId = null;
-        this.env = ENV.PROD;
+        this.env = Env.PROD;
         this.credentials = null;
     }
 
@@ -32,11 +32,11 @@ public class VaultConfig {
         this.clusterId = clusterId;
     }
 
-    public ENV getEnv() {
+    public Env getEnv() {
         return env;
     }
 
-    public void setEnv(ENV env) {
+    public void setEnv(Env env) {
         this.env = env;
     }
 
