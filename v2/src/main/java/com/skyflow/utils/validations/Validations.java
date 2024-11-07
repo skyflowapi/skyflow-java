@@ -579,17 +579,15 @@ public class Validations {
     public static void validateTokenizeRequest(TokenizeRequest tokenizeRequest) throws SkyflowException {
         List<ColumnValue> columnValues = tokenizeRequest.getColumnValues();
 
-        if (columnValues == null || columnValues.isEmpty()) {
-            if (columnValues == null) {
-                LogUtil.printErrorLog(Utils.parameterizedString(
-                        ErrorLogs.COLUMN_VALUES_IS_REQUIRED_TOKENIZE.getLog(), InterfaceName.TOKENIZE.getName()
-                ));
-                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.ColumnValuesKeyErrorTokenize.getMessage());
-            } else {
-                LogUtil.printErrorLog(Utils.parameterizedString(
-                        ErrorLogs.EMPTY_COLUMN_VALUES.getLog(), InterfaceName.TOKENIZE.getName()
-                ));
-            }
+        if (columnValues == null) {
+            LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.COLUMN_VALUES_IS_REQUIRED_TOKENIZE.getLog(), InterfaceName.TOKENIZE.getName()
+            ));
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.ColumnValuesKeyErrorTokenize.getMessage());
+        } else if (columnValues.isEmpty()) {
+            LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.EMPTY_COLUMN_VALUES.getLog(), InterfaceName.TOKENIZE.getName()
+            ));
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyColumnValues.getMessage());
         } else {
             for (int index = 0; index < columnValues.size(); index++) {

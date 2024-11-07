@@ -155,14 +155,10 @@ public class SignedDataTokens {
     public synchronized List<SignedDataTokenResponse> getSignedDataTokens() throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.GET_SIGNED_DATA_TOKENS_TRIGGERED.getLog());
         List<SignedDataTokenResponse> signedToken = new ArrayList<>();
-        try {
-            if (this.credentialsFile != null && Objects.equals(this.credentialsType, "FILE")) {
-                signedToken = generateSignedTokenFromCredentialsFile(this.credentialsFile, this.dataTokens, this.timeToLive, this.ctx);
-            } else if (this.credentialsString != null && Objects.equals(this.credentialsType, "STRING")) {
-                signedToken = generateSignedTokensFromCredentialsString(this.credentialsString, this.dataTokens, this.timeToLive, this.ctx);
-            }
-        } catch (SkyflowException e) {
-            e.printStackTrace();
+        if (this.credentialsFile != null && Objects.equals(this.credentialsType, "FILE")) {
+            signedToken = generateSignedTokenFromCredentialsFile(this.credentialsFile, this.dataTokens, this.timeToLive, this.ctx);
+        } else if (this.credentialsString != null && Objects.equals(this.credentialsType, "STRING")) {
+            signedToken = generateSignedTokensFromCredentialsString(this.credentialsString, this.dataTokens, this.timeToLive, this.ctx);
         }
         LogUtil.printInfoLog(InfoLogs.GET_SIGNED_DATA_TOKEN_SUCCESS.getLog());
         return signedToken;

@@ -1,6 +1,5 @@
 package com.skyflow.vault.tokens;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class TokenizeRequest {
@@ -22,7 +21,6 @@ public class TokenizeRequest {
         private List<ColumnValue> columnValues;
 
         private TokenizeRequestBuilder() {
-            this.columnValues = new ArrayList<>();
         }
 
         public TokenizeRequestBuilder values(List<ColumnValue> columnValues) {
