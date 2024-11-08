@@ -3,8 +3,8 @@ package com.skyflow.vault.data;
 import java.util.HashMap;
 
 public class UpdateResponse {
-    private String skyflowId;
-    private HashMap<String, Object> tokens;
+    private final String skyflowId;
+    private final HashMap<String, Object> tokens;
 
     public UpdateResponse(String skyflowId, HashMap<String, Object> tokens) {
         this.skyflowId = skyflowId;

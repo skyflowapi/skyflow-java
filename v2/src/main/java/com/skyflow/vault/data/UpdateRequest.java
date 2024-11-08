@@ -5,20 +5,10 @@ import com.skyflow.enums.Byot;
 import java.util.HashMap;
 
 public class UpdateRequest {
-    private final String table;
-    private final String id;
-    private final Boolean returnTokens;
-    private final HashMap<String, Object> values;
-    private final HashMap<String, Object> tokens;
-    private final Byot tokenStrict;
+    private final UpdateRequestBuilder builder;
 
     private UpdateRequest(UpdateRequestBuilder builder) {
-        this.table = builder.table;
-        this.id = builder.id;
-        this.returnTokens = builder.returnTokens;
-        this.values = builder.values;
-        this.tokens = builder.tokens;
-        this.tokenStrict = builder.tokenStrict;
+        this.builder = builder;
     }
 
     public static UpdateRequestBuilder builder() {
@@ -26,30 +16,30 @@ public class UpdateRequest {
     }
 
     public String getTable() {
-        return table;
+        return this.builder.table;
     }
 
     public String getId() {
-        return id;
+        return this.builder.id;
     }
 
     public Boolean getReturnTokens() {
-        return returnTokens;
+        return this.builder.returnTokens;
     }
 
     public HashMap<String, Object> getValues() {
-        return values;
+        return this.builder.values;
     }
 
     public HashMap<String, Object> getTokens() {
-        return tokens;
+        return this.builder.tokens;
     }
 
-    public Byot getByot() {
-        return tokenStrict;
+    public Byot getTokenStrict() {
+        return this.builder.tokenStrict;
     }
 
-    public static class UpdateRequestBuilder {
+    public static final class UpdateRequestBuilder {
         private String table;
         private String id;
         private Boolean returnTokens;
@@ -73,7 +63,7 @@ public class UpdateRequest {
         }
 
         public UpdateRequestBuilder returnTokens(Boolean returnTokens) {
-            this.returnTokens = returnTokens;
+            this.returnTokens = returnTokens == null || returnTokens;
             return this;
         }
 
@@ -88,7 +78,7 @@ public class UpdateRequest {
         }
 
         public UpdateRequestBuilder tokenStrict(Byot tokenStrict) {
-            this.tokenStrict = tokenStrict;
+            this.tokenStrict = tokenStrict == null ? Byot.DISABLE : tokenStrict;
             return this;
         }
 

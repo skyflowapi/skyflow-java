@@ -4,33 +4,12 @@ import com.skyflow.enums.RedactionType;
 import com.skyflow.utils.Constants;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class GetRequest {
-    private final String table;
-    private final ArrayList<String> ids;
-    private final RedactionType redactionType;
-    private final Boolean tokenization;
-    private final List<String> fields;
-    private final String offset;
-    private final String limit;
-    private final Boolean downloadURL;
-    private final String columnName;
-    private final ArrayList<String> columnValues;
-    private final String orderBy;
+    private final GetRequestBuilder builder;
 
     private GetRequest(GetRequestBuilder builder) {
-        this.table = builder.table;
-        this.ids = builder.ids;
-        this.redactionType = builder.redactionType;
-        this.tokenization = builder.tokenization;
-        this.fields = builder.fields;
-        this.offset = builder.offset;
-        this.limit = builder.limit;
-        this.downloadURL = builder.downloadURL;
-        this.columnName = builder.columnName;
-        this.columnValues = builder.columnValues;
-        this.orderBy = builder.orderBy;
+        this.builder = builder;
     }
 
     public static GetRequestBuilder builder() {
@@ -38,55 +17,55 @@ public class GetRequest {
     }
 
     public String getTable() {
-        return table;
+        return this.builder.table;
     }
 
     public ArrayList<String> getIds() {
-        return ids;
+        return this.builder.ids;
     }
 
     public RedactionType getRedactionType() {
-        return redactionType;
+        return this.builder.redactionType;
     }
 
-    public Boolean getTokenization() {
-        return tokenization;
+    public Boolean getReturnTokens() {
+        return this.builder.returnTokens;
     }
 
-    public List<String> getFields() {
-        return fields;
+    public ArrayList<String> getFields() {
+        return this.builder.fields;
     }
 
     public String getOffset() {
-        return offset;
+        return this.builder.offset;
     }
 
     public String getLimit() {
-        return limit;
+        return this.builder.limit;
     }
 
     public Boolean getDownloadURL() {
-        return downloadURL;
+        return this.builder.downloadURL;
     }
 
     public String getColumnName() {
-        return columnName;
+        return this.builder.columnName;
     }
 
     public ArrayList<String> getColumnValues() {
-        return columnValues;
+        return this.builder.columnValues;
     }
 
     public String getOrderBy() {
-        return orderBy;
+        return this.builder.orderBy;
     }
 
-    public static class GetRequestBuilder {
+    public static final class GetRequestBuilder {
         private String table;
         private ArrayList<String> ids;
         private RedactionType redactionType;
-        private Boolean tokenization;
-        private List<String> fields;
+        private Boolean returnTokens;
+        private ArrayList<String> fields;
         private String offset;
         private String limit;
         private Boolean downloadURL;
@@ -95,8 +74,6 @@ public class GetRequest {
         private String orderBy;
 
         private GetRequestBuilder() {
-            this.redactionType = RedactionType.PLAIN_TEXT;
-            this.tokenization = false;
             this.downloadURL = true;
             this.orderBy = Constants.ORDER_ASCENDING;
         }
@@ -116,12 +93,12 @@ public class GetRequest {
             return this;
         }
 
-        public GetRequestBuilder tokenization(Boolean tokenization) {
-            this.tokenization = tokenization;
+        public GetRequestBuilder returnTokens(Boolean returnTokens) {
+            this.returnTokens = returnTokens;
             return this;
         }
 
-        public GetRequestBuilder fields(List<String> fields) {
+        public GetRequestBuilder fields(ArrayList<String> fields) {
             this.fields = fields;
             return this;
         }
@@ -137,7 +114,7 @@ public class GetRequest {
         }
 
         public GetRequestBuilder downloadURL(Boolean downloadURL) {
-            this.downloadURL = downloadURL;
+            this.downloadURL = downloadURL == null || downloadURL;
             return this;
         }
 
@@ -152,7 +129,7 @@ public class GetRequest {
         }
 
         public GetRequestBuilder orderBy(String orderBy) {
-            this.orderBy = orderBy;
+            this.orderBy = orderBy == null ? Constants.ORDER_ASCENDING : orderBy;
             return this;
         }
 

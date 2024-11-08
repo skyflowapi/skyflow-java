@@ -43,12 +43,12 @@ public class DetokenizeRequest {
         }
 
         public DetokenizeRequestBuilder redactionType(RedactionType redactionType) {
-            this.redactionType = redactionType;
+            this.redactionType = redactionType == null ? RedactionType.PLAIN_TEXT : redactionType;
             return this;
         }
 
         public DetokenizeRequestBuilder continueOnError(Boolean continueOnError) {
-            this.continueOnError = continueOnError;
+            this.continueOnError = continueOnError == null || continueOnError;
             return this;
         }
 

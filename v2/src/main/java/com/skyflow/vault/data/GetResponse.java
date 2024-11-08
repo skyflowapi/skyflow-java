@@ -24,7 +24,7 @@ public class GetResponse {
     public String toString() {
         StringBuilder response = new StringBuilder("{");
         response.append("\n\t\"data\": ").append(formatRecords(data));
-        response.append("\n\t\"errors\": ").append(formatRecords(errors));
+        response.append(",\n\t\"errors\": ").append(formatRecords(errors));
         response.append("\n}");
         return response.toString();
     }

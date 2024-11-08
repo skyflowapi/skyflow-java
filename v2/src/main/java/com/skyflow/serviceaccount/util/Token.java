@@ -1,12 +1,16 @@
 package com.skyflow.serviceaccount.util;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
+import com.skyflow.errors.ErrorCode;
+import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.logs.ErrorLogs;
+import com.skyflow.logs.InfoLogs;
+import com.skyflow.utils.logger.LogUtil;
 import org.apache.commons.codec.binary.Base64;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 
-import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
@@ -15,30 +19,28 @@ public class Token {
         long expiryTime;
         long currentTime;
         try {
-            if (token == null || token.isEmpty()) {
-                // print info log
+            if (token == null || token.trim().isEmpty()) {
+                LogUtil.printInfoLog(InfoLogs.EMPTY_BEARER_TOKEN.getLog());
                 return true;
             }
 
             currentTime = new Date().getTime() / 1000;
-            expiryTime = (long) decoded(token).get("exp");
+            expiryTime = decoded(token).get("exp").getAsLong();
 
-        } catch (ParseException e) {
-            // display info log
-            return true;
-        } catch (SkyflowException e) {
-            // display info log
+        } catch (JsonSyntaxException | SkyflowException e) {
+            LogUtil.printErrorLog(ErrorLogs.INVALID_BEARER_TOKEN.getLog());
             return true;
         }
         return currentTime > expiryTime;
     }
 
-    static JSONObject decoded(String encodedToken) throws ParseException, SkyflowException {
+    static JsonObject decoded(String encodedToken) throws JsonSyntaxException, SkyflowException {
         String[] split = encodedToken.split("\\.");
         if (split.length < 3) {
-            throw new SkyflowException("invalid bearer token");
+            LogUtil.printErrorLog(ErrorLogs.INVALID_BEARER_TOKEN.getLog());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.JwtDecodeError.getMessage());
         }
         byte[] decodedBytes = Base64.decodeBase64(split[1]);
-        return (JSONObject) new JSONParser().parse(new String(decodedBytes, StandardCharsets.UTF_8));
+        return JsonParser.parseString(new String(decodedBytes, StandardCharsets.UTF_8)).getAsJsonObject();
     }
 }

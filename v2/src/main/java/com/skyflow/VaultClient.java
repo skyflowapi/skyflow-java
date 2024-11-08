@@ -2,15 +2,24 @@ package com.skyflow;
 
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
+import com.skyflow.errors.ErrorCode;
+import com.skyflow.errors.ErrorMessage;
+import com.skyflow.errors.SkyflowException;
 import com.skyflow.generated.rest.ApiClient;
 import com.skyflow.generated.rest.api.QueryApi;
 import com.skyflow.generated.rest.api.RecordsApi;
 import com.skyflow.generated.rest.api.TokensApi;
+import com.skyflow.generated.rest.auth.HttpBearerAuth;
 import com.skyflow.generated.rest.models.*;
-import com.skyflow.utils.ColumnValue;
+import com.skyflow.logs.InfoLogs;
+import com.skyflow.serviceaccount.util.Token;
+import com.skyflow.utils.Constants;
 import com.skyflow.utils.Utils;
+import com.skyflow.utils.logger.LogUtil;
+import com.skyflow.utils.validations.Validations;
 import com.skyflow.vault.data.InsertRequest;
 import com.skyflow.vault.data.UpdateRequest;
+import com.skyflow.vault.tokens.ColumnValue;
 import com.skyflow.vault.tokens.DetokenizeRequest;
 import com.skyflow.vault.tokens.TokenizeRequest;
 import io.github.cdimascio.dotenv.Dotenv;
@@ -27,6 +36,8 @@ public class VaultClient {
     private final VaultConfig vaultConfig;
     private Credentials commonCredentials;
     private Credentials finalCredentials;
+    private String token;
+    private String apiKey;
 
     protected VaultClient(VaultConfig vaultConfig, Credentials credentials) {
         super();
@@ -64,6 +75,10 @@ public class VaultClient {
         return vaultConfig;
     }
 
+    protected String getToken() {
+        return token;
+    }
+
     protected void setCommonCredentials(Credentials commonCredentials) {
         this.commonCredentials = commonCredentials;
         prioritiseCredentials();
@@ -86,7 +101,7 @@ public class VaultClient {
         return payload;
     }
 
-    protected RecordServiceInsertRecordBody getInsertRequestBody(InsertRequest request) {
+    protected RecordServiceInsertRecordBody getBulkInsertRequestBody(InsertRequest request) {
         RecordServiceInsertRecordBody insertRecordBody = new RecordServiceInsertRecordBody();
         insertRecordBody.setTokenization(request.getReturnTokens());
         insertRecordBody.setHomogeneous(request.getHomogeneous());
@@ -108,9 +123,35 @@ public class VaultClient {
         return insertRecordBody;
     }
 
+    protected RecordServiceBatchOperationBody getBatchInsertRequestBody(InsertRequest request) {
+        RecordServiceBatchOperationBody insertRequestBody = new RecordServiceBatchOperationBody();
+        insertRequestBody.setContinueOnError(true);
+        insertRequestBody.setByot(request.getTokenStrict().getBYOT());
+
+        ArrayList<HashMap<String, Object>> values = request.getValues();
+        ArrayList<HashMap<String, Object>> tokens = request.getTokens();
+        List<V1BatchRecord> records = new ArrayList<>();
+
+        for (int index = 0; index < values.size(); index++) {
+            V1BatchRecord record = new V1BatchRecord();
+            record.setMethod(BatchRecordMethod.POST);
+            record.setTableName(request.getTable());
+            record.setUpsert(request.getUpsert());
+            record.setTokenization(request.getReturnTokens());
+            record.setFields(values.get(index));
+            if (tokens != null) {
+                record.setTokens(tokens.get(index));
+            }
+            records.add(record);
+        }
+
+        insertRequestBody.setRecords(records);
+        return insertRequestBody;
+    }
+
     protected RecordServiceUpdateRecordBody getUpdateRequestBody(UpdateRequest request) {
         RecordServiceUpdateRecordBody updateRequestBody = new RecordServiceUpdateRecordBody();
-        updateRequestBody.byot(request.getByot().getBYOT());
+        updateRequestBody.byot(request.getTokenStrict().getBYOT());
         updateRequestBody.setTokenization(request.getReturnTokens());
         HashMap<String, Object> values = request.getValues();
         HashMap<String, Object> tokens = request.getTokens();
@@ -125,13 +166,38 @@ public class VaultClient {
 
     protected V1TokenizePayload getTokenizePayload(TokenizeRequest request) {
         V1TokenizePayload payload = new V1TokenizePayload();
-        for(ColumnValue columnValue: request.getColumnValues()) {
+        for (ColumnValue columnValue : request.getColumnValues()) {
             V1TokenizeRecordRequest recordRequest = new V1TokenizeRecordRequest();
             recordRequest.setValue(columnValue.getValue());
             recordRequest.setColumnGroup(columnValue.getColumnGroup());
             payload.addTokenizationParametersItem(recordRequest);
         }
         return payload;
+    }
+
+    protected void setBearerToken() throws SkyflowException {
+        Validations.validateCredentials(this.finalCredentials);
+        if (this.finalCredentials.getApiKey() != null) {
+            setApiKey();
+            return;
+        } else if (token == null || Token.isExpired(token)) {
+            LogUtil.printInfoLog(InfoLogs.BEARER_TOKEN_EXPIRED.getLog());
+            token = Utils.generateBearerToken(this.finalCredentials);
+        } else {
+            LogUtil.printInfoLog(InfoLogs.REUSE_BEARER_TOKEN.getLog());
+        }
+        HttpBearerAuth Bearer = (HttpBearerAuth) this.apiClient.getAuthentication("Bearer");
+        Bearer.setBearerToken(token);
+    }
+
+    private void setApiKey() {
+        if (apiKey == null) {
+            apiKey = this.finalCredentials.getApiKey();
+        } else {
+            LogUtil.printInfoLog(InfoLogs.REUSE_API_KEY.getLog());
+        }
+        HttpBearerAuth Bearer = (HttpBearerAuth) this.apiClient.getAuthentication("Bearer");
+        Bearer.setBearerToken(apiKey);
     }
 
     private void updateVaultURL() {
@@ -147,14 +213,17 @@ public class VaultClient {
                 this.finalCredentials = this.commonCredentials;
             } else {
                 Dotenv dotenv = Dotenv.load();
-                String sysCredentials = dotenv.get("SKYFLOW_CREDENTIALS");
+                String sysCredentials = dotenv.get(Constants.ENV_CREDENTIALS_KEY_NAME);
                 if (sysCredentials == null) {
-                    // throw error for not passing any credentials
+                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(),
+                            ErrorMessage.EmptyCredentials.getMessage());
                 } else {
                     this.finalCredentials = new Credentials();
                     this.finalCredentials.setCredentialsString(sysCredentials);
                 }
             }
+            token = null;
+            apiKey = null;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class QueryResponse {
-    private ArrayList<HashMap<String, Object>> fields;
+    private final ArrayList<HashMap<String, Object>> fields;
     private ArrayList<HashMap<String, Object>> tokenizedData;
 
     public QueryResponse(ArrayList<HashMap<String, Object>> fields) {

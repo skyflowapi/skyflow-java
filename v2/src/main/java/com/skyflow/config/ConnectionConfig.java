@@ -19,8 +19,16 @@ public class ConnectionConfig {
         this.connectionId = connectionId;
     }
 
+    public String getConnectionUrl() {
+        return connectionUrl;
+    }
+
     public void setConnectionUrl(String connectionUrl) {
         this.connectionUrl = connectionUrl;
+    }
+
+    public Credentials getCredentials() {
+        return credentials;
     }
 
     public void setCredentials(Credentials credentials) {
