@@ -3,14 +3,10 @@ package com.skyflow.utils.validations;
 import com.skyflow.config.ConnectionConfig;
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
-
-import com.skyflow.enums.RequestMethod;
-import com.skyflow.errors.ErrorCode;
-import com.skyflow.errors.SkyflowException;
-import com.skyflow.vault.connection.InvokeConnectionRequest;
 import com.skyflow.enums.Byot;
 import com.skyflow.enums.InterfaceName;
 import com.skyflow.enums.RedactionType;
+import com.skyflow.enums.RequestMethod;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
@@ -18,14 +14,12 @@ import com.skyflow.logs.ErrorLogs;
 import com.skyflow.utils.Constants;
 import com.skyflow.utils.Utils;
 import com.skyflow.utils.logger.LogUtil;
+import com.skyflow.vault.connection.InvokeConnectionRequest;
 import com.skyflow.vault.data.*;
 import com.skyflow.vault.tokens.ColumnValue;
 import com.skyflow.vault.tokens.DetokenizeRequest;
 import com.skyflow.vault.tokens.TokenizeRequest;
 
-import java.net.URL;
-
-// Add config and request validations
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -92,7 +86,7 @@ public class Validations {
             throw new SkyflowException();
         }
 
-        if (invokeConnectionRequest.getMethodName()!=null) {
+        if (invokeConnectionRequest.getMethodName() != null) {
             try {
                 RequestMethod requestMethod = RequestMethod.valueOf(invokeConnectionRequest.getMethodName());
             } catch (Exception e) {

@@ -8,8 +8,8 @@ import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.logs.ErrorLogs;
 import com.skyflow.serviceaccount.util.BearerToken;
-import com.skyflow.vault.connection.InvokeConnectionRequest;
 import com.skyflow.utils.logger.LogUtil;
+import com.skyflow.vault.connection.InvokeConnectionRequest;
 import org.apache.commons.codec.binary.Base64;
 
 import java.io.File;
@@ -127,7 +127,7 @@ public final class Utils {
             }
         }
 
-        if(invokeConnectionRequest.getQueryParams() != null && !invokeConnectionRequest.getQueryParams().isEmpty()) {
+        if (invokeConnectionRequest.getQueryParams() != null && !invokeConnectionRequest.getQueryParams().isEmpty()) {
             filledURL.append("?");
             for (Map.Entry<String, String> entry : invokeConnectionRequest.getQueryParams().entrySet()) {
                 String key = entry.getKey();

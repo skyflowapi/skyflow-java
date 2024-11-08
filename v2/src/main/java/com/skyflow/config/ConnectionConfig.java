@@ -35,12 +35,4 @@ public class ConnectionConfig {
         this.credentials = credentials;
     }
 
-    public String getConnectionUrl() {
-        return connectionUrl;
-    }
-
-    public Credentials getCredentials() {
-        return credentials;
-    }
-
 }

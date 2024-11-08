@@ -39,7 +39,7 @@ public final class Skyflow {
         return this.builder.vaultConfigMap.get(vaultId);
     }
 
-    public Skyflow updateVaultConfig(VaultConfig vaultConfig) throws Exception {
+    public Skyflow updateVaultConfig(VaultConfig vaultConfig) throws SkyflowException {
         this.builder.updateVaultConfig(vaultConfig);
         return this;
     }
@@ -206,7 +206,7 @@ public final class Skyflow {
 
         public SkyflowClientBuilder setLogLevel(LogLevel logLevel) {
             this.logLevel = logLevel == null ? LogLevel.ERROR : logLevel;
-            LogUtil.setupLogger(logLevel);
+            LogUtil.setupLogger(this.logLevel);
             LogUtil.printInfoLog(Utils.parameterizedString(
                     InfoLogs.CURRENT_LOG_LEVEL.getLog(), String.valueOf(logLevel)
             ));
@@ -219,19 +219,12 @@ public final class Skyflow {
 
         private VaultConfig findAndUpdateVaultConfig(VaultConfig vaultConfig) throws SkyflowException {
             VaultConfig previousConfig = this.vaultConfigMap.get(vaultConfig.getVaultId());
-            if (previousConfig == null) {
-                LogUtil.printErrorLog(Utils.parameterizedString(
-                        ErrorLogs.VAULT_CONFIG_DOES_NOT_EXIST.getLog(), vaultConfig.getVaultId()
-                ));
-                throw new SkyflowException();
-            } else {
-                Env env = vaultConfig.getEnv() != null ? vaultConfig.getEnv() : previousConfig.getEnv();
-                String clusterId = vaultConfig.getClusterId() != null ? vaultConfig.getClusterId() : previousConfig.getClusterId();
-                Credentials credentials = vaultConfig.getCredentials() != null ? vaultConfig.getCredentials() : previousConfig.getCredentials();
-                previousConfig.setEnv(env);
-                previousConfig.setClusterId(clusterId);
-                previousConfig.setCredentials(credentials);
-            }
+            Env env = vaultConfig.getEnv() != null ? vaultConfig.getEnv() : previousConfig.getEnv();
+            String clusterId = vaultConfig.getClusterId() != null ? vaultConfig.getClusterId() : previousConfig.getClusterId();
+            Credentials credentials = vaultConfig.getCredentials() != null ? vaultConfig.getCredentials() : previousConfig.getCredentials();
+            previousConfig.setEnv(env);
+            previousConfig.setClusterId(clusterId);
+            previousConfig.setCredentials(credentials);
             return previousConfig;
         }
     }
