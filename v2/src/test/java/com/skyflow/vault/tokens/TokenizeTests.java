@@ -1,7 +1,9 @@
 package com.skyflow.vault.tokens;
 
 import com.skyflow.Skyflow;
+import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
+import com.skyflow.enums.Env;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
@@ -30,6 +32,18 @@ public class TokenizeTests {
 
     @BeforeClass
     public static void setup() {
+        vaultID = "vault123";
+        clusterID = "cluster123";
+
+        Credentials credentials = new Credentials();
+        credentials.setToken("valid-token");
+
+        vaultConfig = new VaultConfig();
+        vaultConfig.setVaultId(vaultID);
+        vaultConfig.setClusterId(clusterID);
+        vaultConfig.setEnv(Env.DEV);
+        vaultConfig.setCredentials(credentials);
+
         columnValues = new ArrayList<>();
         value = "test_value";
         group = "test_group";

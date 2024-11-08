@@ -26,8 +26,6 @@ public final class VaultController extends VaultClient {
     private AuditController auditController;
     private BinLookupController binLookupController;
 
-    private String token;
-
     public VaultController(VaultConfig vaultConfig, Credentials credentials) {
         super(vaultConfig, credentials);
         this.auditController = null;

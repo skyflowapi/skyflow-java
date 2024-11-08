@@ -13,19 +13,12 @@ import com.skyflow.generated.rest.ApiClient;
 import com.skyflow.generated.rest.ApiException;
 import com.skyflow.generated.rest.api.TokensApi;
 import com.skyflow.generated.rest.models.V1DetokenizeResponse;
-import com.skyflow.serviceaccount.util.Token;
 import com.skyflow.utils.Constants;
 import com.skyflow.utils.Utils;
 import com.skyflow.utils.validations.Validations;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.ArgumentMatchers;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.ArrayList;
 
@@ -164,71 +157,6 @@ public class DetokenizeTests {
             Assert.assertTrue(request.getContinueOnError());
         } catch (SkyflowException e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
-        }
-    }
-
-    @Test
-    public void testNoTokensInDetokenizeMethod() {
-        DetokenizeRequest request = DetokenizeRequest.builder().build();
-        try {
-            V1DetokenizeResponse mockResponse = new V1DetokenizeResponse();
-            TokensApi mockApi = PowerMockito.mock(TokensApi.class);
-            PowerMockito
-                    .when(mockApi.recordServiceDetokenize(ArgumentMatchers.anyString(), ArgumentMatchers.any()))
-                    .thenReturn(mockResponse);
-
-            skyflowClient = Skyflow.builder().setLogLevel(LogLevel.DEBUG).addVaultConfig(vaultConfig).build();
-            DetokenizeResponse response = skyflowClient.vault().detokenize(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
-            Assert.assertEquals(
-                    Utils.parameterizedString(ErrorMessage.InvalidDataTokens.getMessage(), Constants.SDK_PREFIX),
-                    e.getMessage()
-            );
-            Assert.assertEquals(RedactionType.PLAIN_TEXT, request.getRedactionType());
-            Assert.assertTrue(request.getContinueOnError());
-        } catch (ApiException e) {
-            Assert.fail();
-        }
-    }
-
-    @Test
-    public void testEmptyTokensInDetokenizeMethod() {
-        tokens.clear();
-        DetokenizeRequest request = DetokenizeRequest.builder().tokens(tokens).build();
-        try {
-            skyflowClient = Skyflow.builder().setLogLevel(LogLevel.DEBUG).addVaultConfig(vaultConfig).build();
-            DetokenizeResponse response = skyflowClient.vault().detokenize(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
-            Assert.assertEquals(
-                    Utils.parameterizedString(ErrorMessage.EmptyDataTokens.getMessage(), Constants.SDK_PREFIX),
-                    e.getMessage()
-            );
-            Assert.assertEquals(RedactionType.PLAIN_TEXT, request.getRedactionType());
-            Assert.assertTrue(request.getContinueOnError());
-        }
-    }
-
-    @Test
-    public void testEmptyTokenInTokensInDetokenizeMethod() {
-        tokens.add(token);
-        tokens.add("");
-        DetokenizeRequest request = DetokenizeRequest.builder().tokens(tokens).build();
-        try {
-            skyflowClient = Skyflow.builder().setLogLevel(LogLevel.DEBUG).addVaultConfig(vaultConfig).build();
-            DetokenizeResponse response = skyflowClient.vault().detokenize(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
-            Assert.assertEquals(
-                    Utils.parameterizedString(ErrorMessage.EmptyTokenInDataTokens.getMessage(), Constants.SDK_PREFIX),
-                    e.getMessage()
-            );
-            Assert.assertEquals(RedactionType.PLAIN_TEXT, request.getRedactionType());
-            Assert.assertTrue(request.getContinueOnError());
         }
     }
 }

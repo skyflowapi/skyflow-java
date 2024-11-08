@@ -105,11 +105,14 @@ public class QueryTests {
         try {
             ArrayList<HashMap<String, Object>> fields = new ArrayList<>();
             fields.add(queryRecord);
+            fields.add(queryRecord);
             QueryResponse response = new QueryResponse(fields);
             String responseString = "{\n\t\"fields\": " +
                     "[{\n\t\t\"card_number\": \"test_card_number\",\n\t\t\"name\": \"test_name\"," +
+                    "\n\t\t\"tokenizedData\": " + null + "\n\t}, " +
+                    "{\n\t\t\"card_number\": \"test_card_number\",\n\t\t\"name\": \"test_name\"," +
                     "\n\t\t\"tokenizedData\": " + null + "\n\t}]\n}";
-            Assert.assertEquals(1, response.getFields().size());
+            Assert.assertEquals(2, response.getFields().size());
             Assert.assertEquals(responseString, response.toString());
         } catch (Exception e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);

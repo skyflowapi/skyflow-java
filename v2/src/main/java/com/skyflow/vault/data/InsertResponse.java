@@ -24,7 +24,7 @@ public class InsertResponse {
     public String toString() {
         StringBuilder response = new StringBuilder("{");
         response.append("\n\t\"insertedFields\": ").append(formatRecords(insertedFields));
-        response.append("\n\t\"errors\": ").append(formatRecords(errorFields));
+        response.append(",\n\t\"errors\": ").append(formatRecords(errorFields));
         response.append("\n}");
         return response.toString();
     }

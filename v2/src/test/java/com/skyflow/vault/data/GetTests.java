@@ -22,6 +22,7 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(fullyQualifiedNames = "com.skyflow.serviceaccount.util.Token")
@@ -469,5 +470,31 @@ public class GetTests {
                     e.getMessage()
             );
         }
+    }
+
+    @Test
+    public void testGetResponse() {
+        try {
+            ArrayList<HashMap<String, Object>> data = new ArrayList<>();
+            HashMap<String, Object> record = new HashMap<>();
+            record.put("test_column_1", "test_value_1");
+            record.put("test_column_2", "test_value_2");
+            data.add(record);
+            data.add(record);
+            ArrayList<HashMap<String, Object>> errors = new ArrayList<>();
+            GetResponse response = new GetResponse(data, errors);
+            String responseString = "{\n\t\"data\": [" +
+                    "{\n\t\t\"test_column_1\": \"test_value_1\"," +
+                    "\n\t\t\"test_column_2\": \"test_value_2\",\n\t}, " +
+                    "{\n\t\t\"test_column_1\": \"test_value_1\"," +
+                    "\n\t\t\"test_column_2\": \"test_value_2\",\n\t}]" +
+                    ",\n\t\"errors\": " + errors + "\n}";
+            Assert.assertEquals(2, response.getData().size());
+            Assert.assertTrue(response.getErrors().isEmpty());
+            Assert.assertEquals(responseString, response.toString());
+        } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+
     }
 }

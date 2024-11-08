@@ -13,6 +13,7 @@ import com.skyflow.utils.Constants;
 import com.skyflow.utils.Utils;
 import com.skyflow.utils.validations.Validations;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -62,11 +63,19 @@ public class InsertTests {
         values = new ArrayList<>();
         tokens = new ArrayList<>();
         valueMap = new HashMap<>();
+        tokenMap = new HashMap<>();
+        upsert = "upsert_column";
+    }
+
+    @Before
+    public void setupTest() {
+        values.clear();
+        tokens.clear();
+        valueMap.clear();
         valueMap.put("test_column_1", "test_value_1");
         valueMap.put("test_column_2", "test_value_2");
-        tokenMap = new HashMap<>();
+        tokenMap.clear();
         tokenMap.put("test_column_1", "test_token_1");
-        upsert = "upsert_column";
     }
 
     @Test
@@ -148,7 +157,6 @@ public class InsertTests {
 
     @Test
     public void testEmptyValuesInInsertRequestValidations() {
-        values.clear();
         InsertRequest request = InsertRequest.builder().table(table).values(values).build();
         try {
             Validations.validateInsertRequest(request);
@@ -181,8 +189,8 @@ public class InsertTests {
 
     @Test
     public void testEmptyValueInValuesInInsertRequestValidations() {
-        valueMap.remove("");
         valueMap.put("test_column_3", "");
+        values.add(valueMap);
         InsertRequest request = InsertRequest.builder().table(table).values(values).build();
         try {
             Validations.validateInsertRequest(request);
@@ -198,7 +206,7 @@ public class InsertTests {
 
     @Test
     public void testEmptyUpsertInInsertRequestValidations() {
-        valueMap.remove("test_column_3");
+        values.add(valueMap);
         InsertRequest request = InsertRequest.builder().table(table).values(values).upsert("").build();
         try {
             Validations.validateInsertRequest(request);
@@ -214,6 +222,7 @@ public class InsertTests {
 
     @Test
     public void testUpsertWithHomogenousInInsertRequestValidations() {
+        values.add(valueMap);
         InsertRequest request = InsertRequest.builder()
                 .table(table).values(values).upsert(upsert).homogeneous(true)
                 .build();
@@ -231,6 +240,7 @@ public class InsertTests {
 
     @Test
     public void testTokensWithTokenStrictDisableInInsertRequestValidations() {
+        values.add(valueMap);
         InsertRequest request = InsertRequest.builder().table(table).values(values).tokens(tokens).build();
         try {
             Validations.validateInsertRequest(request);
@@ -246,6 +256,7 @@ public class InsertTests {
 
     @Test
     public void testNoTokensWithTokenStrictEnableInInsertRequestValidations() {
+        values.add(valueMap);
         InsertRequest request = InsertRequest.builder()
                 .table(table).values(values).tokenStrict(Byot.ENABLE)
                 .build();
@@ -263,6 +274,7 @@ public class InsertTests {
 
     @Test
     public void testNoTokensWithTokenStrictEnableStrictInInsertRequestValidations() {
+        values.add(valueMap);
         InsertRequest request = InsertRequest.builder()
                 .table(table).values(values).tokenStrict(Byot.ENABLE_STRICT)
                 .build();
@@ -280,7 +292,7 @@ public class InsertTests {
 
     @Test
     public void testEmptyTokensWithTokenStrictEnableInInsertRequestValidations() {
-        tokens.clear();
+        values.add(valueMap);
         InsertRequest request = InsertRequest.builder()
                 .table(table).values(values).tokens(tokens).tokenStrict(Byot.ENABLE)
                 .build();
@@ -295,6 +307,7 @@ public class InsertTests {
 
     @Test
     public void testInsufficientTokensWithTokenStrictEnableStrictInInsertRequestValidations1() {
+        values.add(valueMap);
         tokens.add(tokenMap);
         InsertRequest request = InsertRequest.builder()
                 .table(table).values(values).tokens(tokens).tokenStrict(Byot.ENABLE_STRICT)
@@ -311,6 +324,8 @@ public class InsertTests {
     @Test
     public void testInsufficientTokensWithTokenStrictEnableStrictInInsertRequestValidations2() {
         values.add(valueMap);
+        values.add(valueMap);
+        tokens.add(tokenMap);
         InsertRequest request = InsertRequest.builder()
                 .table(table).values(values).tokens(tokens).tokenStrict(Byot.ENABLE_STRICT)
                 .build();
@@ -325,8 +340,9 @@ public class InsertTests {
 
     @Test
     public void testTokenValueMismatchInInsertRequestValidations() {
+        values.add(valueMap);
         tokenMap.put("test_column_3", "test_token_3");
-        values.remove(1);
+        tokens.add(tokenMap);
         InsertRequest request = InsertRequest.builder()
                 .table(table).values(values).tokens(tokens).tokenStrict(Byot.ENABLE_STRICT)
                 .build();
@@ -341,9 +357,9 @@ public class InsertTests {
 
     @Test
     public void testEmptyKeyInTokensInInsertRequestValidations() {
-        tokenMap.remove("test_column_2");
-        tokenMap.remove("test_column_3");
         tokenMap.put("", "test_token_2");
+        values.add(valueMap);
+        tokens.add(tokenMap);
         InsertRequest request = InsertRequest.builder()
                 .table(table).values(values).tokens(tokens).tokenStrict(Byot.ENABLE_STRICT)
                 .build();
@@ -358,8 +374,9 @@ public class InsertTests {
 
     @Test
     public void testEmptyValueInTokensInInsertRequestValidations() {
-        tokenMap.remove("");
         tokenMap.put("test_column_2", "");
+        values.add(valueMap);
+        tokens.add(tokenMap);
         InsertRequest request = InsertRequest.builder()
                 .table(table).values(values).tokens(tokens).tokenStrict(Byot.ENABLE_STRICT)
                 .build();
@@ -369,6 +386,27 @@ public class InsertTests {
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
             Assert.assertEquals(ErrorMessage.EmptyValueInTokens.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testInsertResponse() {
+        try {
+            ArrayList<HashMap<String, Object>> errorFields = new ArrayList<>();
+            values.add(valueMap);
+            values.add(valueMap);
+            InsertResponse response = new InsertResponse(values, errorFields);
+            String responseString = "{\n\t\"insertedFields\": [" +
+                    "{\n\t\t\"test_column_1\": \"test_value_1\"," +
+                    "\n\t\t\"test_column_2\": \"test_value_2\",\n\t}, " +
+                    "{\n\t\t\"test_column_1\": \"test_value_1\"," +
+                    "\n\t\t\"test_column_2\": \"test_value_2\",\n\t}]" +
+                    ",\n\t\"errors\": " + errorFields + "\n}";
+            Assert.assertEquals(2, response.getInsertedFields().size());
+            Assert.assertTrue(response.getErrorFields().isEmpty());
+            Assert.assertEquals(responseString, response.toString());
+        } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
         }
     }
 
