@@ -105,6 +105,7 @@ public final class Skyflow {
         private final LinkedHashMap<String, ConnectionController> connectionsMap;
         private final LinkedHashMap<String, VaultController> vaultClientsMap;
         private final LinkedHashMap<String, VaultConfig> vaultConfigMap;
+        private final LinkedHashMap<String, ConnectionConfig> connectionConfigMap;
         private Credentials skyflowCredentials;
         private LogLevel logLevel;
 
@@ -112,6 +113,7 @@ public final class Skyflow {
             this.vaultClientsMap = new LinkedHashMap<>();
             this.vaultConfigMap = new LinkedHashMap<>();
             this.connectionsMap = new LinkedHashMap<>();
+            this.connectionConfigMap = new LinkedHashMap<>();
             this.skyflowCredentials = null;
             this.logLevel = LogLevel.ERROR;
         }
@@ -163,6 +165,7 @@ public final class Skyflow {
             if (this.connectionsMap.containsKey(connectionConfig.getConnectionId())) {
                 // display error log, throw error, or both
             } else {
+                this.connectionConfigMap.put(connectionConfig.getConnectionId(), connectionConfig);
                 ConnectionController controller = new ConnectionController(connectionConfig, this.skyflowCredentials);
                 this.connectionsMap.put(connectionConfig.getConnectionId(), controller);
             }
@@ -182,6 +185,7 @@ public final class Skyflow {
         public SkyflowClientBuilder removeConnectionConfig(String connectionId) {
             if (this.connectionsMap.containsKey(connectionId)) {
                 this.connectionsMap.remove(connectionId);
+                this.connectionConfigMap.remove(connectionId);
             } else {
                 // display error log, throw error, or both
             }
