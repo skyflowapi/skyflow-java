@@ -16,9 +16,6 @@ public class SkyflowException extends Exception {
     private JsonArray details;
     private JsonObject responseBody;
 
-    public SkyflowException() {
-    }
-
     public SkyflowException(String message) {
         super(message);
         this.message = message;

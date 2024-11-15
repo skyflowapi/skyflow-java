@@ -49,21 +49,21 @@ public final class Skyflow {
         return this;
     }
 
-    public Skyflow addConnectionConfig(ConnectionConfig connectionConfig) {
+    public Skyflow addConnectionConfig(ConnectionConfig connectionConfig) throws SkyflowException {
         this.builder.addConnectionConfig(connectionConfig);
         return this;
     }
 
     public ConnectionConfig getConnectionConfig(String connectionId) {
-        return this.builder.connectionsMap.get(connectionId).getConnectionConfig();
+        return this.builder.connectionConfigMap.get(connectionId);
     }
 
-    public Skyflow updateConnectionConfig(ConnectionConfig connectionConfig) {
+    public Skyflow updateConnectionConfig(ConnectionConfig connectionConfig) throws SkyflowException {
         this.builder.updateConnectionConfig(connectionConfig);
         return this;
     }
 
-    public Skyflow removeConnectionConfig(String connectionId) {
+    public Skyflow removeConnectionConfig(String connectionId) throws SkyflowException {
         this.builder.removeConnectionConfig(connectionId);
         return this;
     }
@@ -91,7 +91,6 @@ public final class Skyflow {
         return this.builder.vaultClientsMap.get(vaultId);
     }
 
-    // In case no id is passed, return first connection controller
     public ConnectionController connection() {
         String connectionId = (String) this.builder.connectionsMap.keySet().toArray()[0];
         return this.connection(connectionId);
@@ -137,6 +136,8 @@ public final class Skyflow {
         }
 
         public SkyflowClientBuilder updateVaultConfig(VaultConfig vaultConfig) throws SkyflowException {
+            LogUtil.printInfoLog(InfoLogs.VALIDATING_VAULT_CONFIG.getLog());
+            Validations.validateVaultConfig(vaultConfig);
             if (this.vaultClientsMap.containsKey(vaultConfig.getVaultId())) {
                 VaultConfig updatedConfig = findAndUpdateVaultConfig(vaultConfig);
                 this.vaultClientsMap.get(updatedConfig.getVaultId()).updateVaultConfig();
@@ -160,34 +161,51 @@ public final class Skyflow {
             return this;
         }
 
-        public SkyflowClientBuilder addConnectionConfig(ConnectionConfig connectionConfig) {
-            // check if connectionConfig already exists
+        public SkyflowClientBuilder addConnectionConfig(ConnectionConfig connectionConfig) throws SkyflowException {
+            LogUtil.printInfoLog(InfoLogs.VALIDATING_CONNECTION_CONFIG.getLog());
+            Validations.validateConnectionConfig(connectionConfig);
             if (this.connectionsMap.containsKey(connectionConfig.getConnectionId())) {
-                // display error log, throw error, or both
+                LogUtil.printErrorLog(Utils.parameterizedString(
+                        ErrorLogs.CONNECTION_CONFIG_EXISTS.getLog(), connectionConfig.getConnectionId()
+                ));
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(),
+                        ErrorMessage.ConnectionIdAlreadyInConfigList.getMessage());
             } else {
                 this.connectionConfigMap.put(connectionConfig.getConnectionId(), connectionConfig);
                 ConnectionController controller = new ConnectionController(connectionConfig, this.skyflowCredentials);
                 this.connectionsMap.put(connectionConfig.getConnectionId(), controller);
+                LogUtil.printInfoLog(Utils.parameterizedString(
+                        InfoLogs.CONNECTION_CONTROLLER_INITIALIZED.getLog(), connectionConfig.getConnectionId()));
             }
             return this;
         }
 
-        public SkyflowClientBuilder updateConnectionConfig(ConnectionConfig connectionConfig) {
+        public SkyflowClientBuilder updateConnectionConfig(ConnectionConfig connectionConfig) throws SkyflowException {
+            LogUtil.printInfoLog(InfoLogs.VALIDATING_CONNECTION_CONFIG.getLog());
+            Validations.validateConnectionConfig(connectionConfig);
             if (this.connectionsMap.containsKey(connectionConfig.getConnectionId())) {
-                ConnectionController controller = this.connectionsMap.get(connectionConfig.getConnectionId());
-                controller.setConnectionConfig(connectionConfig);
+                ConnectionConfig updatedConfig = findAndUpdateConnectionConfig(connectionConfig);
+                this.connectionsMap.get(updatedConfig.getConnectionId()).updateConnectionConfig(connectionConfig);
             } else {
-                // display error log, throw error, or both
+                LogUtil.printErrorLog(Utils.parameterizedString(
+                        ErrorLogs.CONNECTION_CONFIG_DOES_NOT_EXIST.getLog(), connectionConfig.getConnectionId()
+                ));
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(),
+                        ErrorMessage.ConnectionIdNotInConfigList.getMessage());
             }
             return this;
         }
 
-        public SkyflowClientBuilder removeConnectionConfig(String connectionId) {
+        public SkyflowClientBuilder removeConnectionConfig(String connectionId) throws SkyflowException {
             if (this.connectionsMap.containsKey(connectionId)) {
                 this.connectionsMap.remove(connectionId);
                 this.connectionConfigMap.remove(connectionId);
             } else {
-                // display error log, throw error, or both
+                LogUtil.printErrorLog(Utils.parameterizedString(
+                        ErrorLogs.CONNECTION_CONFIG_DOES_NOT_EXIST.getLog(), connectionId
+                ));
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(),
+                        ErrorMessage.ConnectionIdNotInConfigList.getMessage());
             }
             return this;
         }
@@ -217,13 +235,22 @@ public final class Skyflow {
             return new Skyflow(this);
         }
 
-        private VaultConfig findAndUpdateVaultConfig(VaultConfig vaultConfig) throws SkyflowException {
+        private VaultConfig findAndUpdateVaultConfig(VaultConfig vaultConfig) {
             VaultConfig previousConfig = this.vaultConfigMap.get(vaultConfig.getVaultId());
             Env env = vaultConfig.getEnv() != null ? vaultConfig.getEnv() : previousConfig.getEnv();
             String clusterId = vaultConfig.getClusterId() != null ? vaultConfig.getClusterId() : previousConfig.getClusterId();
             Credentials credentials = vaultConfig.getCredentials() != null ? vaultConfig.getCredentials() : previousConfig.getCredentials();
             previousConfig.setEnv(env);
             previousConfig.setClusterId(clusterId);
+            previousConfig.setCredentials(credentials);
+            return previousConfig;
+        }
+
+        private ConnectionConfig findAndUpdateConnectionConfig(ConnectionConfig connectionConfig) {
+            ConnectionConfig previousConfig = this.connectionConfigMap.get(connectionConfig.getConnectionId());
+            String connectionURL = connectionConfig.getConnectionUrl() != null ? connectionConfig.getConnectionUrl() : previousConfig.getConnectionUrl();
+            Credentials credentials = connectionConfig.getCredentials() != null ? connectionConfig.getCredentials() : previousConfig.getCredentials();
+            previousConfig.setConnectionUrl(connectionURL);
             previousConfig.setCredentials(credentials);
             return previousConfig;
         }

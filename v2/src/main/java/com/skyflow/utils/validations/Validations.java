@@ -6,7 +6,6 @@ import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.Byot;
 import com.skyflow.enums.InterfaceName;
 import com.skyflow.enums.RedactionType;
-import com.skyflow.enums.RequestMethod;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
@@ -20,11 +19,11 @@ import com.skyflow.vault.tokens.ColumnValue;
 import com.skyflow.vault.tokens.DetokenizeRequest;
 import com.skyflow.vault.tokens.TokenizeRequest;
 
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -67,44 +66,77 @@ public class Validations {
         } else if (connectionUrl.trim().isEmpty()) {
             LogUtil.printErrorLog(ErrorLogs.EMPTY_CONNECTION_URL.getLog());
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyConnectionUrl.getMessage());
-        }
-        try {
-            URL url = new URL(connectionUrl);
-        } catch (MalformedURLException e) {
+        } else if (isInvalidURL(connectionUrl)) {
             LogUtil.printErrorLog(ErrorLogs.INVALID_CONNECTION_URL.getLog());
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidConnectionUrlFormat.getMessage());
         }
     }
 
     public static void validateInvokeConnectionRequest(InvokeConnectionRequest invokeConnectionRequest) throws SkyflowException {
-        if (invokeConnectionRequest.getRequestHeaders().containsKey("connectionURL")) {
-            String connectionURL = invokeConnectionRequest.getRequestHeaders().get("connectionURL");
-            if (isInvalidURL(connectionURL)) {
-                throw new SkyflowException();
+        Map<String, String> requestHeaders = invokeConnectionRequest.getRequestHeaders();
+        Map<String, String> pathParams = invokeConnectionRequest.getPathParams();
+        Map<String, String> queryParams = invokeConnectionRequest.getQueryParams();
+        Object requestBody = invokeConnectionRequest.getRequestBody();
+
+        if (requestHeaders != null) {
+            if (requestHeaders.isEmpty()) {
+                LogUtil.printErrorLog(Utils.parameterizedString(
+                        ErrorLogs.EMPTY_REQUEST_HEADERS.getLog(), InterfaceName.INVOKE_CONNECTION.getName()));
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyRequestHeaders.getMessage());
+            } else {
+                for (String header : requestHeaders.keySet()) {
+                    String headerValue = requestHeaders.get(header);
+                    if (header == null || header.trim().isEmpty() || headerValue == null || headerValue.trim().isEmpty()) {
+                        LogUtil.printErrorLog(Utils.parameterizedString(
+                                ErrorLogs.INVALID_REQUEST_HEADERS.getLog(), InterfaceName.INVOKE_CONNECTION.getName()));
+                        throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidRequestHeaders.getMessage());
+                    }
+                }
             }
-        } else {
-            throw new SkyflowException();
         }
 
-        if (invokeConnectionRequest.getMethodName() != null) {
-            try {
-                RequestMethod requestMethod = RequestMethod.valueOf(invokeConnectionRequest.getMethodName());
-            } catch (Exception e) {
-                throw new SkyflowException();
+        if (pathParams != null) {
+            if (pathParams.isEmpty()) {
+                LogUtil.printErrorLog(Utils.parameterizedString(
+                        ErrorLogs.EMPTY_PATH_PARAMS.getLog(), InterfaceName.INVOKE_CONNECTION.getName()));
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyPathParams.getMessage());
+            } else {
+                for (String param : pathParams.keySet()) {
+                    String paramValue = pathParams.get(param);
+                    if (param == null || param.trim().isEmpty() || paramValue == null || paramValue.trim().isEmpty()) {
+                        LogUtil.printErrorLog(Utils.parameterizedString(
+                                ErrorLogs.INVALID_PATH_PARAM.getLog(), InterfaceName.INVOKE_CONNECTION.getName()));
+                        throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidPathParams.getMessage());
+                    }
+                }
             }
-        } else {
-            throw new SkyflowException();
         }
-    }
 
-    private static boolean isInvalidURL(String configURL) {
-        try {
-            URL url = new URL(configURL);
-            if (!url.getProtocol().equals("https")) throw new Exception();
-        } catch (Exception e) {
-            return true;
+        if (queryParams != null) {
+            if (queryParams.isEmpty()) {
+                LogUtil.printErrorLog(Utils.parameterizedString(
+                        ErrorLogs.EMPTY_QUERY_PARAMS.getLog(), InterfaceName.INVOKE_CONNECTION.getName()));
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyQueryParams.getMessage());
+            } else {
+                for (String param : queryParams.keySet()) {
+                    String paramValue = queryParams.get(param);
+                    if (param == null || param.trim().isEmpty() || paramValue == null || paramValue.trim().isEmpty()) {
+                        LogUtil.printErrorLog(Utils.parameterizedString(
+                                ErrorLogs.INVALID_QUERY_PARAM.getLog(), InterfaceName.INVOKE_CONNECTION.getName()));
+                        throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidQueryParams.getMessage());
+                    }
+                }
+            }
         }
-        return false;
+
+        if (requestBody != null) {
+            Map<String, String> requestBodyMap = (Map<String, String>) requestBody;
+            if (requestBodyMap.isEmpty()) {
+                LogUtil.printErrorLog(Utils.parameterizedString(
+                        ErrorLogs.EMPTY_REQUEST_BODY.getLog(), InterfaceName.INVOKE_CONNECTION.getName()));
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyRequestBody.getMessage());
+            }
+        }
     }
 
     public static void validateCredentials(Credentials credentials) throws SkyflowException {
@@ -641,6 +673,16 @@ public class Validations {
                 }
             }
         }
+    }
+
+    private static boolean isInvalidURL(String configURL) {
+        try {
+            URL url = new URL(configURL);
+            if (!url.getProtocol().equals("https")) throw new Exception();
+        } catch (Exception e) {
+            return true;
+        }
+        return false;
     }
 
     private static void validateTokensForInsertRequest(

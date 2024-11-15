@@ -1,11 +1,7 @@
 package com.skyflow.vault.connection;
 
-import com.google.gson.JsonObject;
-import com.skyflow.enums.RedactionType;
-import com.skyflow.vault.tokens.DetokenizeRequest;
-import com.skyflow.vault.tokens.TokenizeRequest;
+import com.skyflow.enums.RequestMethod;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -21,11 +17,7 @@ public class InvokeConnectionRequest {
         return new InvokeConnectionRequestBuilder();
     }
 
-    public InvokeConnectionRequest getConnectionRequest() {
-        return new InvokeConnectionRequest(builder);
-    }
-
-    public String getMethodName() {
+    public RequestMethod getMethodName() {
         return builder.methodName;
     }
 
@@ -45,24 +37,23 @@ public class InvokeConnectionRequest {
         return builder.requestBody;
     }
 
-    public static final class InvokeConnectionRequestBuilder{
-
-        private String methodName;
+    public static final class InvokeConnectionRequestBuilder {
+        private RequestMethod methodName;
         private Map<String, String> pathParams;
         private Map<String, String> queryParams;
         private Map<String, String> requestHeaders;
         private Object requestBody;
 
-        public InvokeConnectionRequestBuilder() {
-            this.methodName = "";
+        private InvokeConnectionRequestBuilder() {
+            this.methodName = RequestMethod.POST;
             this.pathParams = new HashMap<>();
             this.queryParams = new HashMap<>();
             this.requestHeaders = new HashMap<>();
             this.requestBody = new Object();
         }
 
-        public InvokeConnectionRequestBuilder methodName(String methodName) {
-            this.methodName = methodName;
+        public InvokeConnectionRequestBuilder methodName(RequestMethod methodName) {
+            this.methodName = methodName == null ? RequestMethod.POST : methodName;
             return this;
         }
 

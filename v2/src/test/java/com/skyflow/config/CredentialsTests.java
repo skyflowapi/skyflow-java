@@ -1,6 +1,5 @@
 package com.skyflow.config;
 
-import com.skyflow.config.Credentials;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
@@ -8,6 +7,7 @@ import com.skyflow.generated.rest.ApiClient;
 import com.skyflow.serviceaccount.util.Token;
 import com.skyflow.utils.validations.Validations;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -46,6 +46,11 @@ public class CredentialsTests {
         roles = new ArrayList<>();
         role = "test_credentials_role";
         context = "test_context_value";
+    }
+
+    @Before
+    public void setupTest() {
+        roles.clear();
     }
 
     @Test
@@ -217,7 +222,6 @@ public class CredentialsTests {
     @Test
     public void testEmptyRolesInCredentials() {
         try {
-            roles.clear();
             Credentials credentials = new Credentials();
             credentials.setPath(path);
             credentials.setRoles(roles);

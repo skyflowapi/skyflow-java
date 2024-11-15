@@ -51,10 +51,6 @@ public class VaultClient {
         prioritiseCredentials();
     }
 
-    protected Credentials getFinalCredentials() {
-        return finalCredentials;
-    }
-
     protected RecordsApi getRecordsApi() {
         return recordsApi;
     }
@@ -73,10 +69,6 @@ public class VaultClient {
 
     protected VaultConfig getVaultConfig() {
         return vaultConfig;
-    }
-
-    protected String getToken() {
-        return token;
     }
 
     protected void setCommonCredentials(Credentials commonCredentials) {

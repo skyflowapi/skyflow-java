@@ -91,7 +91,20 @@ public enum ErrorLogs {
     COLUMN_VALUES_IS_REQUIRED_TOKENIZE("Invalid %s1 request. ColumnValues are required."),
     EMPTY_OR_NULL_COLUMN_GROUP_IN_COLUMN_VALUES("Invalid %s1 request. Column group can not be null or empty in column values at index %s2."),
     TOKENIZE_REQUEST_REJECTED("Tokenize request resulted in failure."),
-    DELETE_REQUEST_REJECTED("Delete request resulted in failure.");
+    DELETE_REQUEST_REJECTED("Delete request resulted in failure."),
+
+    // invoke connection interface
+    INVOKE_CONNECTION_INVALID_CONNECTION_URL("Invalid %s1 request. Connection URL is not a valid URL."),
+    EMPTY_REQUEST_HEADERS("Invalid %s1 request. Request headers can not be empty."),
+    INVALID_REQUEST_HEADERS("Invalid %s1 request. Request header can not be null or empty in request headers."),
+    EMPTY_PATH_PARAMS("Invalid %s1 request. Path params can not be empty."),
+    INVALID_PATH_PARAM("Invalid %s1 request. Path parameter can not be null or empty in path params."),
+    EMPTY_QUERY_PARAMS("Invalid %s1 request. Query params can not be empty."),
+    INVALID_QUERY_PARAM("Invalid %s1 request. Query parameter can not be null or empty in query params."),
+    EMPTY_REQUEST_BODY("Invalid %s1 request. Request body can not be empty."),
+    INVALID_REQUEST_BODY("Invalid %s1 request. Request body can not be empty."),
+    INVOKE_CONNECTION_REQUEST_REJECTED("Invoke connection request resulted in failure."),
+    ;
 
     private final String log;
 

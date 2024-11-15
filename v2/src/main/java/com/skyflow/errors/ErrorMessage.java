@@ -20,8 +20,8 @@ public enum ErrorMessage {
     // connection config
     InvalidConnectionId("%s1 Initialization failed. Invalid connection ID. Specify a valid connection ID."),
     EmptyConnectionId("%s1 Initialization failed. Invalid connection ID. Connection ID must not be empty."),
-    EmptyConnectionUrl("%s1 Initialization failed. Invalid connection URL. Connection URL must not be empty."),
     InvalidConnectionUrl("%s1 Initialization failed. Invalid connection URL. Specify a valid connection URL."),
+    EmptyConnectionUrl("%s1 Initialization failed. Invalid connection URL. Connection URL must not be empty."),
     InvalidConnectionUrlFormat("%s1 Initialization failed. Connection URL is not a valid URL. Specify a valid connection URL."),
 
     // credentials
@@ -112,9 +112,13 @@ public enum ErrorMessage {
     ColumnValuesKeyErrorTokenize("%s1 Validation error. 'columnValues' key is missing from the payload. Specify a 'columnValues' key."),
     EmptyColumnGroupInColumnValue("%s1 Validation error. Invalid column group in column value. Specify a valid column group."),
 
-    //connection
+    // connection
+    InvalidRequestHeaders("%s1 Validation error. Request headers aren't valid. Specify valid request headers."),
+    EmptyRequestHeaders("%s1 Validation error. Request headers are empty. Specify valid ."),
     InvalidPathParams("%s1 Validation error. Path parameters aren't valid. Specify valid path parameters."),
     EmptyPathParams("%s1 Validation error. Path parameters are empty. Specify valid path parameters."),
+    InvalidQueryParams("%s1 Validation error. Query parameters aren't valid. Specify valid query parameters."),
+    EmptyQueryParams("%s1 Validation error. Query parameters are empty. Specify valid query parameters."),
     InvalidRequestBody("%s1 Validation error. Invalid request body. Specify the request body as an object."),
     EmptyRequestBody("%s1 Validation error. Request body can't be empty. Specify a valid request body."),
 

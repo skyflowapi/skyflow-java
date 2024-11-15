@@ -20,6 +20,7 @@ public class SkyflowTests {
     private static String newClusterID = null;
     private static String connectionID = null;
     private static String connectionURL = null;
+    private static String newConnectionURL = null;
     private static String token = null;
 
     @BeforeClass
@@ -29,6 +30,7 @@ public class SkyflowTests {
         newClusterID = "new_test_cluster_id";
         connectionID = "test_connection_id";
         connectionURL = "https://test.connection.url";
+        newConnectionURL = "https://new.test.connection.url";
         token = "test_token";
     }
 
@@ -147,8 +149,6 @@ public class SkyflowTests {
             skyflowClient.updateVaultConfig(config);
         } catch (SkyflowException e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
-        } catch (Exception e) {
-            Assert.fail(INVALID_EXCEPTION_THROWN);
         }
     }
 
@@ -208,10 +208,10 @@ public class SkyflowTests {
             config.setConnectionId("");
             config.setConnectionUrl(connectionURL);
             Skyflow.builder().addConnectionConfig(config).build();
-//            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (Exception e) {
-//            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
-            Assert.assertEquals(ErrorMessage.EmptyVaultId.getMessage(), e.getMessage());
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorMessage.EmptyConnectionId.getMessage(), e.getMessage());
         }
     }
 
@@ -223,10 +223,134 @@ public class SkyflowTests {
             config.setConnectionUrl(connectionURL);
             Skyflow skyflowClient = Skyflow.builder().build();
             skyflowClient.addConnectionConfig(config);
-//            Assert.fail(EXCEPTION_NOT_THROWN);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorMessage.EmptyConnectionId.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testAddingValidConnectionConfigInSkyflowClient() {
+        try {
+            ConnectionConfig config = new ConnectionConfig();
+            config.setConnectionId(connectionID);
+            config.setConnectionUrl(connectionURL);
+            Skyflow skyflowClient = Skyflow.builder().build();
+            skyflowClient.addConnectionConfig(config);
         } catch (Exception e) {
-//            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
-            Assert.assertEquals(ErrorMessage.EmptyVaultId.getMessage(), e.getMessage());
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testAddingExistingConnectionConfigInSkyflowClient() {
+        try {
+            ConnectionConfig config = new ConnectionConfig();
+            config.setConnectionId(connectionID);
+            config.setConnectionUrl(connectionURL);
+            Skyflow skyflowClient = Skyflow.builder().addConnectionConfig(config).build();
+            skyflowClient.addConnectionConfig(config);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorMessage.ConnectionIdAlreadyInConfigList.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testUpdatingNonExistentConnectionConfigInSkyflowBuilder() {
+        try {
+            ConnectionConfig config = new ConnectionConfig();
+            config.setConnectionId(connectionID);
+            config.setConnectionUrl(connectionURL);
+            Skyflow.builder().updateConnectionConfig(config).build();
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorMessage.ConnectionIdNotInConfigList.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testUpdatingNonExistentConnectionConfigInSkyflowClient() {
+        try {
+            ConnectionConfig config = new ConnectionConfig();
+            config.setConnectionId(connectionID);
+            config.setConnectionUrl(connectionURL);
+            Skyflow skyflowClient = Skyflow.builder().build();
+            skyflowClient.updateConnectionConfig(config);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorMessage.ConnectionIdNotInConfigList.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testUpdatingValidConnectionConfigInSkyflowClient() {
+        try {
+            ConnectionConfig config = new ConnectionConfig();
+            config.setConnectionId(connectionID);
+            config.setConnectionUrl(connectionURL);
+            Skyflow skyflowClient = Skyflow.builder().addConnectionConfig(config).build();
+
+            Credentials credentials = new Credentials();
+            credentials.setToken(token);
+
+            config.setConnectionUrl(newConnectionURL);
+            config.setCredentials(credentials);
+
+            skyflowClient.updateConnectionConfig(config);
+        } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testRemovingNonExistentConnectionConfigInSkyflowBuilder() {
+        try {
+            Skyflow.builder().removeConnectionConfig(connectionID).build();
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorMessage.ConnectionIdNotInConfigList.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testRemovingNonExistentConnectionConfigInSkyflowClient() {
+        try {
+            Skyflow skyflowClient = Skyflow.builder().build();
+            skyflowClient.removeConnectionConfig(connectionID);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorMessage.ConnectionIdNotInConfigList.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testRemovingValidConnectionConfigInSkyflowClient() {
+        try {
+            ConnectionConfig config = new ConnectionConfig();
+            config.setConnectionId(connectionID);
+            config.setConnectionUrl(connectionURL);
+            Skyflow skyflowClient = Skyflow.builder().addConnectionConfig(config).build();
+            skyflowClient.removeConnectionConfig(connectionID);
+        } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testGettingNonExistentConnectionConfigInSkyflowClient() {
+        try {
+            Skyflow skyflowClient = Skyflow.builder().build();
+            ConnectionConfig config = skyflowClient.getConnectionConfig(connectionID);
+            Assert.assertNull(config);
+        } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
         }
     }
 
@@ -245,9 +369,17 @@ public class SkyflowTests {
     @Test
     public void testUpdatingValidSkyflowCredentialsInSkyflowClient() {
         try {
+            VaultConfig vaultConfig = new VaultConfig();
+            vaultConfig.setVaultId(vaultID);
+            vaultConfig.setClusterId(clusterID);
+
+            ConnectionConfig connectionConfig = new ConnectionConfig();
+            connectionConfig.setConnectionId(connectionID);
+            connectionConfig.setConnectionUrl(connectionURL);
+
             Credentials credentials = new Credentials();
             credentials.setToken(token);
-            Skyflow skyflowClient = Skyflow.builder().build();
+            Skyflow skyflowClient = Skyflow.builder().addVaultConfig(vaultConfig).addConnectionConfig(connectionConfig).build();
             skyflowClient.updateSkyflowCredentials(credentials);
         } catch (SkyflowException e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
@@ -260,7 +392,6 @@ public class SkyflowTests {
             Skyflow skyflowClient = Skyflow.builder().setLogLevel(null).build();
             Assert.assertEquals(LogLevel.ERROR, skyflowClient.getLogLevel());
         } catch (Exception e) {
-            e.printStackTrace();
             Assert.fail(INVALID_EXCEPTION_THROWN);
         }
     }
@@ -276,6 +407,5 @@ public class SkyflowTests {
             Assert.fail(INVALID_EXCEPTION_THROWN);
         }
     }
-
 
 }

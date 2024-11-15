@@ -2,30 +2,29 @@ package com.skyflow;
 
 import com.skyflow.config.ConnectionConfig;
 import com.skyflow.config.Credentials;
-import com.skyflow.config.VaultConfig;
-import com.skyflow.generated.rest.ApiClient;
-import com.skyflow.generated.rest.api.RecordsApi;
-import com.skyflow.generated.rest.api.TokensApi;
+import com.skyflow.errors.ErrorCode;
+import com.skyflow.errors.ErrorMessage;
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.logs.InfoLogs;
+import com.skyflow.serviceaccount.util.Token;
+import com.skyflow.utils.Constants;
+import com.skyflow.utils.Utils;
+import com.skyflow.utils.logger.LogUtil;
+import com.skyflow.utils.validations.Validations;
 import io.github.cdimascio.dotenv.Dotenv;
 
 public class ConnectionClient {
-
     private final ConnectionConfig connectionConfig;
+    protected String token;
+    protected String apiKey;
     private Credentials commonCredentials;
     private Credentials finalCredentials;
-    private final ApiClient apiClient;
-
 
     protected ConnectionClient(ConnectionConfig connectionConfig, Credentials credentials) {
         super();
         this.connectionConfig = connectionConfig;
         this.commonCredentials = credentials;
-        this.apiClient = new ApiClient();
         prioritiseCredentials();
-    }
-
-    protected Credentials getFinalCredentials() {
-        return finalCredentials;
     }
 
     protected ConnectionConfig getConnectionConfig() {
@@ -37,8 +36,29 @@ public class ConnectionClient {
         prioritiseCredentials();
     }
 
-    protected ApiClient getApiClient() {
-        return apiClient;
+    protected void updateConnectionConfig(ConnectionConfig connectionConfig) {
+        prioritiseCredentials();
+    }
+
+    protected void setBearerToken() throws SkyflowException {
+        Validations.validateCredentials(this.finalCredentials);
+        if (this.finalCredentials.getApiKey() != null) {
+            setApiKey();
+            return;
+        } else if (token == null || Token.isExpired(token)) {
+            LogUtil.printInfoLog(InfoLogs.BEARER_TOKEN_EXPIRED.getLog());
+            token = Utils.generateBearerToken(this.finalCredentials);
+        } else {
+            LogUtil.printInfoLog(InfoLogs.REUSE_BEARER_TOKEN.getLog());
+        }
+    }
+
+    private void setApiKey() {
+        if (apiKey == null) {
+            apiKey = this.finalCredentials.getApiKey();
+        } else {
+            LogUtil.printInfoLog(InfoLogs.REUSE_API_KEY.getLog());
+        }
     }
 
     private void prioritiseCredentials() {
@@ -49,9 +69,10 @@ public class ConnectionClient {
                 this.finalCredentials = this.commonCredentials;
             } else {
                 Dotenv dotenv = Dotenv.load();
-                String sysCredentials = dotenv.get("SKYFLOW_CREDENTIALS");
+                String sysCredentials = dotenv.get(Constants.ENV_CREDENTIALS_KEY_NAME);
                 if (sysCredentials == null) {
-                    // throw error for not passing any credentials
+                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(),
+                            ErrorMessage.EmptyCredentials.getMessage());
                 } else {
                     this.finalCredentials = new Credentials();
                     this.finalCredentials.setCredentialsString(sysCredentials);
