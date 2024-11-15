@@ -1,0 +1,38 @@
+name: Publish package to the Maven Central Repository
+on:
+  push:
+    branches: [ releasei , "*"]
+  pull_request:
+    branches: [ releasei/* ]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v1
+
+      - name: Set up Maven Central Repository
+        uses: actions/setup-java@v1
+        with:
+          java-version: '1.8'
+          distribution: 'adopt'
+
+      - name: Configure Maven settings xml
+        run: |
+          mkdir -p ~/.m2
+          echo "<settings>
+                  <servers>
+                    <server>
+                      <id>central</id>
+                      <username>${{ secrets.ARTIFACTORY_USERNAME }}</username>
+                      <password>${{ secrets.ARTIFACTORY_PASSWORD }}</password>
+                    </server>
+                  </servers>
+                </settings>" > ~/.m2/settings.xml
+
+      - name: Build and deploy package
+        run: mvn clean deploy -DskipTests
+        env:
+         ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
+         ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
