@@ -32,7 +32,7 @@ jobs:
           json: ${{ secrets.TEST_CREDENTIALS_FILE_STRING }}
 
       - name: Build & Run tests with Maven
-        run: mvn -B package -DTEST_EXPIRED_TOKEN=${{ secrets.TEST_EXPIRED_TOKEN }} -DTEST_DATA_CREDENTIALS_FILE=${{ secrets.TEST_DATA_CREDENTIALS_FILE }} -f pom.xml
+        run: mvn -B package -DTEST_EXPIRED_TOKEN=${{ secrets.TEST_EXPIRED_TOKEN }} -DTEST_DATA_CREDENTIALS_FILE=${{ secrets.TEST_DATA_CREDENTIALS_FILE }} -DSKYFLOW_CREDENTIALS=${{ secrets.SKYFLOW_CREDENTIALS }} -f pom.xml
 
       - name: Codecov
         uses: codecov/codecov-action@v2.1.0
