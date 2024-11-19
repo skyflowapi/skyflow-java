@@ -7,7 +7,7 @@
     <groupId>com.skyflow</groupId>
     <artifactId>skyflow-java</artifactId>
     <version>1.15.0</version>
-    <packaging>pom</packaging>
+    <packaging>jar</packaging>
 
     <name>${project.groupId}:${project.artifactId}</name>
     <description>Skyflow SDK for the Java programming language</description>
@@ -25,10 +25,6 @@
             <name>skyflow</name>
         </developer>
     </developers>
-    <modules>
-        <module>v1</module>
-        <module>v2</module>
-    </modules>
     <scm>
         <connection>scm:git:git://github.com:skyflowapi/skyflow-java.git</connection>
         <developerConnection>scm:git:ssh://github.com:skyflowapi/skyflow-java.git</developerConnection>
@@ -41,6 +37,11 @@
         <okhttp-version>4.12.0</okhttp-version>
         <gson-version>2.10.1</gson-version>
         <gson-fire-version>1.9.0</gson-fire-version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <okhttp-version>4.12.0</okhttp-version>
+        <junit-version>4.13.2</junit-version>
+        <javax-xml-bind-version>2.3.1</javax-xml-bind-version>
+        <jakarta-annotation-version>1.3.5</jakarta-annotation-version>
     </properties>
 
     <distributionManagement>
@@ -55,15 +56,42 @@
     </distributionManagement>
 
     <dependencies>
+        <!-- newly added v2 dependencies -->
         <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-core</artifactId>
-            <version>2.13.0</version>
+            <groupId>io.github.cdimascio</groupId>
+            <artifactId>dotenv-java</artifactId>
+            <version>2.2.0</version>
         </dependency>
         <dependency>
-            <groupId>com.googlecode.json-simple</groupId>
-            <artifactId>json-simple</artifactId>
-            <version>1.1.1</version>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
+            <version>3.0.2</version>
+        </dependency>
+        <dependency>
+            <groupId>io.gsonfire</groupId>
+            <artifactId>gson-fire</artifactId>
+            <version>${gson-fire-version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>${gson-version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>okhttp</artifactId>
+            <version>${okhttp-version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>logging-interceptor</artifactId>
+            <version>${okhttp-version}</version>
+        </dependency>
+        <!-- existing dependencies -->
+        <dependency>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+            <version>1.15</version>
         </dependency>
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
@@ -71,31 +99,21 @@
             <version>0.9.1</version>
         </dependency>
         <dependency>
-            <groupId>commons-codec</groupId>
-            <artifactId>commons-codec</artifactId>
-            <version>1.15</version>
+            <groupId>jakarta.annotation</groupId>
+            <artifactId>jakarta.annotation-api</artifactId>
+            <version>${jakarta-annotation-version}</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>javax.xml.bind</groupId>
             <artifactId>jaxb-api</artifactId>
-            <version>2.3.1</version>
+            <version>${javax-xml-bind-version}</version>
         </dependency>
-        <dependency>
-            <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt-impl</artifactId>
-            <version>0.11.2</version>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt-jackson</artifactId>
-            <version>0.11.2</version>
-            <scope>runtime</scope>
-        </dependency>
+        <!-- existing test dependencies -->
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.13.2</version>
+            <version>${junit-version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -142,6 +160,14 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <version>3.2.0</version>
+                <configuration>
+                    <excludePackageNames>
+                        :com.skyflow.generated.rest
+                        :com.skyflow.generated.rest.api
+                        :com.skyflow.generated.rest.auth
+                        :com.skyflow.generated.rest.models
+                    </excludePackageNames>
+                </configuration>
                 <executions>
                     <execution>
                         <id>attach-javadocs</id>
