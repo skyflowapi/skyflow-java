@@ -24,7 +24,6 @@ public class ConnectionClient {
         super();
         this.connectionConfig = connectionConfig;
         this.commonCredentials = credentials;
-        prioritiseCredentials();
     }
 
     protected ConnectionConfig getConnectionConfig() {
@@ -41,11 +40,12 @@ public class ConnectionClient {
     }
 
     protected void setBearerToken() throws SkyflowException {
+        prioritiseCredentials();
         Validations.validateCredentials(this.finalCredentials);
         if (this.finalCredentials.getApiKey() != null) {
             setApiKey();
             return;
-        } else if (token == null || Token.isExpired(token)) {
+        } else if (Token.isExpired(token)) {
             LogUtil.printInfoLog(InfoLogs.BEARER_TOKEN_EXPIRED.getLog());
             token = Utils.generateBearerToken(this.finalCredentials);
         } else {

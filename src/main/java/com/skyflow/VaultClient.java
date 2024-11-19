@@ -48,7 +48,6 @@ public class VaultClient {
         this.tokensApi = new TokensApi(this.apiClient);
         this.queryApi = new QueryApi(this.apiClient);
         updateVaultURL();
-        prioritiseCredentials();
     }
 
     protected RecordsApi getRecordsApi() {
@@ -168,11 +167,12 @@ public class VaultClient {
     }
 
     protected void setBearerToken() throws SkyflowException {
+        prioritiseCredentials();
         Validations.validateCredentials(this.finalCredentials);
         if (this.finalCredentials.getApiKey() != null) {
             setApiKey();
             return;
-        } else if (token == null || Token.isExpired(token)) {
+        } else if (Token.isExpired(token)) {
             LogUtil.printInfoLog(InfoLogs.BEARER_TOKEN_EXPIRED.getLog());
             token = Utils.generateBearerToken(this.finalCredentials);
         } else {
