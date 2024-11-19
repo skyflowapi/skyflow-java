@@ -76,7 +76,7 @@ public class InvokeConnectionTests {
             Validations.validateInvokeConnectionRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.EmptyRequestHeaders.getMessage(), e.getMessage());
         }
     }
@@ -96,7 +96,7 @@ public class InvokeConnectionTests {
             Validations.validateInvokeConnectionRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.InvalidRequestHeaders.getMessage(), e.getMessage());
         }
     }
@@ -116,7 +116,7 @@ public class InvokeConnectionTests {
             Validations.validateInvokeConnectionRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.InvalidRequestHeaders.getMessage(), e.getMessage());
         }
     }
@@ -136,7 +136,7 @@ public class InvokeConnectionTests {
             Validations.validateInvokeConnectionRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.InvalidRequestHeaders.getMessage(), e.getMessage());
         }
     }
@@ -156,7 +156,7 @@ public class InvokeConnectionTests {
             Validations.validateInvokeConnectionRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.InvalidRequestHeaders.getMessage(), e.getMessage());
         }
     }
@@ -175,7 +175,7 @@ public class InvokeConnectionTests {
             Validations.validateInvokeConnectionRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.EmptyPathParams.getMessage(), e.getMessage());
         }
     }
@@ -196,7 +196,7 @@ public class InvokeConnectionTests {
             Validations.validateInvokeConnectionRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.InvalidPathParams.getMessage(), e.getMessage());
         }
     }
@@ -217,7 +217,7 @@ public class InvokeConnectionTests {
             Validations.validateInvokeConnectionRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.InvalidPathParams.getMessage(), e.getMessage());
         }
     }
@@ -238,7 +238,7 @@ public class InvokeConnectionTests {
             Validations.validateInvokeConnectionRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.InvalidPathParams.getMessage(), e.getMessage());
         }
     }
@@ -259,7 +259,7 @@ public class InvokeConnectionTests {
             Validations.validateInvokeConnectionRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.InvalidPathParams.getMessage(), e.getMessage());
         }
     }
@@ -279,7 +279,7 @@ public class InvokeConnectionTests {
             Validations.validateInvokeConnectionRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.EmptyQueryParams.getMessage(), e.getMessage());
         }
     }
@@ -301,7 +301,7 @@ public class InvokeConnectionTests {
             Validations.validateInvokeConnectionRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.InvalidQueryParams.getMessage(), e.getMessage());
         }
     }
@@ -323,7 +323,7 @@ public class InvokeConnectionTests {
             Validations.validateInvokeConnectionRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.InvalidQueryParams.getMessage(), e.getMessage());
         }
     }
@@ -345,7 +345,7 @@ public class InvokeConnectionTests {
             Validations.validateInvokeConnectionRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.InvalidQueryParams.getMessage(), e.getMessage());
         }
     }
@@ -367,7 +367,7 @@ public class InvokeConnectionTests {
             Validations.validateInvokeConnectionRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.InvalidQueryParams.getMessage(), e.getMessage());
         }
     }
@@ -388,7 +388,7 @@ public class InvokeConnectionTests {
             Validations.validateInvokeConnectionRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.EmptyRequestBody.getMessage(), e.getMessage());
         }
     }

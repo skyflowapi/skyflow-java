@@ -121,7 +121,7 @@ public class VaultConfigTests {
             Validations.validateVaultConfig(vaultConfig);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.InvalidVaultId.getMessage(), e.getMessage());
         }
     }
@@ -136,7 +136,7 @@ public class VaultConfigTests {
             Validations.validateVaultConfig(vaultConfig);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.EmptyVaultId.getMessage(), e.getMessage());
         }
     }
@@ -150,7 +150,7 @@ public class VaultConfigTests {
             Validations.validateVaultConfig(vaultConfig);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.InvalidClusterId.getMessage(), e.getMessage());
         }
     }
@@ -165,7 +165,7 @@ public class VaultConfigTests {
             Validations.validateVaultConfig(vaultConfig);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.EmptyClusterId.getMessage(), e.getMessage());
         }
     }

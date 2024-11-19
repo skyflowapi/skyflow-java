@@ -68,7 +68,7 @@ public class SignedDataTokensTests {
             signedTokens.getSignedDataTokens();
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.InvalidCredentials.getMessage(), e.getMessage());
         }
     }
@@ -81,7 +81,7 @@ public class SignedDataTokensTests {
             signedTokens.getSignedDataTokens();
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.InvalidCredentials.getMessage(), e.getMessage());
         }
     }
@@ -94,7 +94,7 @@ public class SignedDataTokensTests {
             signedTokens.getSignedDataTokens();
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
                     Utils.parameterizedString(ErrorMessage.FileInvalidJson.getMessage(), invalidJsonFilePath),
                     e.getMessage()
@@ -112,7 +112,7 @@ public class SignedDataTokensTests {
         } catch (SkyflowException e) {
             System.out.println("caught skyflow exception");
             System.out.println(e);
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
                     Utils.parameterizedString(ErrorMessage.InvalidCredentials.getMessage(), invalidJsonFilePath),
                     e.getMessage()
@@ -130,7 +130,7 @@ public class SignedDataTokensTests {
             signedTokens.getSignedDataTokens();
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
                     Utils.parameterizedString(ErrorMessage.CredentialsStringInvalidJson.getMessage(), invalidJsonFilePath),
                     e.getMessage()
@@ -147,7 +147,7 @@ public class SignedDataTokensTests {
             signedTokens.getSignedDataTokens();
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.MissingPrivateKey.getMessage(), e.getMessage());
         }
     }
@@ -161,7 +161,7 @@ public class SignedDataTokensTests {
             signedTokens.getSignedDataTokens();
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.MissingClientId.getMessage(), e.getMessage());
         }
     }
@@ -175,7 +175,7 @@ public class SignedDataTokensTests {
             signedTokens.getSignedDataTokens();
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.MissingKeyId.getMessage(), e.getMessage());
         }
     }
@@ -189,7 +189,7 @@ public class SignedDataTokensTests {
             signedTokens.getSignedDataTokens();
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.JwtInvalidFormat.getMessage(), e.getMessage());
         }
     }
@@ -202,7 +202,7 @@ public class SignedDataTokensTests {
             signedTokens.getSignedDataTokens();
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.InvalidKeySpec.getMessage(), e.getMessage());
         }
     }

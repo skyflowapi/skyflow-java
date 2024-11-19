@@ -44,7 +44,7 @@ public class SkyflowTests {
             Skyflow.builder().addVaultConfig(config).build();
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.EmptyVaultId.getMessage(), e.getMessage());
         }
     }
@@ -60,7 +60,7 @@ public class SkyflowTests {
             skyflowClient.addVaultConfig(config);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.EmptyVaultId.getMessage(), e.getMessage());
         }
     }
@@ -90,7 +90,7 @@ public class SkyflowTests {
             skyflowClient.addVaultConfig(config).addVaultConfig(config);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.VaultIdAlreadyInConfigList.getMessage(), e.getMessage());
         }
     }
@@ -105,7 +105,7 @@ public class SkyflowTests {
             Skyflow.builder().updateVaultConfig(config).build();
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.VaultIdNotInConfigList.getMessage(), e.getMessage());
         }
     }
@@ -121,7 +121,7 @@ public class SkyflowTests {
             skyflowClient.updateVaultConfig(config);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.VaultIdNotInConfigList.getMessage(), e.getMessage());
         } catch (Exception e) {
             Assert.assertEquals(ErrorMessage.VaultIdNotInConfigList.getMessage(), e.getMessage());
@@ -158,7 +158,7 @@ public class SkyflowTests {
             Skyflow.builder().removeVaultConfig(vaultID).build();
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.VaultIdNotInConfigList.getMessage(), e.getMessage());
         }
     }
@@ -184,7 +184,7 @@ public class SkyflowTests {
             skyflowClient.removeVaultConfig(vaultID);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.VaultIdNotInConfigList.getMessage(), e.getMessage());
         }
     }
@@ -210,7 +210,7 @@ public class SkyflowTests {
             Skyflow.builder().addConnectionConfig(config).build();
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.EmptyConnectionId.getMessage(), e.getMessage());
         }
     }
@@ -225,7 +225,7 @@ public class SkyflowTests {
             skyflowClient.addConnectionConfig(config);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.EmptyConnectionId.getMessage(), e.getMessage());
         }
     }
@@ -253,7 +253,7 @@ public class SkyflowTests {
             skyflowClient.addConnectionConfig(config);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.ConnectionIdAlreadyInConfigList.getMessage(), e.getMessage());
         }
     }
@@ -267,7 +267,7 @@ public class SkyflowTests {
             Skyflow.builder().updateConnectionConfig(config).build();
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.ConnectionIdNotInConfigList.getMessage(), e.getMessage());
         }
     }
@@ -282,7 +282,7 @@ public class SkyflowTests {
             skyflowClient.updateConnectionConfig(config);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.ConnectionIdNotInConfigList.getMessage(), e.getMessage());
         }
     }
@@ -313,7 +313,7 @@ public class SkyflowTests {
             Skyflow.builder().removeConnectionConfig(connectionID).build();
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.ConnectionIdNotInConfigList.getMessage(), e.getMessage());
         }
     }
@@ -325,7 +325,7 @@ public class SkyflowTests {
             skyflowClient.removeConnectionConfig(connectionID);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.ConnectionIdNotInConfigList.getMessage(), e.getMessage());
         }
     }
@@ -361,7 +361,7 @@ public class SkyflowTests {
             Skyflow.builder().addSkyflowCredentials(credentials).build();
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.NoTokenGenerationMeansPassed.getMessage(), e.getMessage());
         }
     }

@@ -136,7 +136,7 @@ public class CredentialsTests {
             Validations.validateCredentials(credentials);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.EmptyCredentialFilePath.getMessage(), e.getMessage());
         }
     }
@@ -149,7 +149,7 @@ public class CredentialsTests {
             Validations.validateCredentials(credentials);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.EmptyCredentialsString.getMessage(), e.getMessage());
         }
     }
@@ -162,7 +162,7 @@ public class CredentialsTests {
             Validations.validateCredentials(credentials);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.EmptyToken.getMessage(), e.getMessage());
         }
     }
@@ -175,7 +175,7 @@ public class CredentialsTests {
             Validations.validateCredentials(credentials);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.EmptyApikey.getMessage(), e.getMessage());
         }
     }
@@ -188,7 +188,7 @@ public class CredentialsTests {
             Validations.validateCredentials(credentials);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.InvalidApikey.getMessage(), e.getMessage());
         }
     }
@@ -202,7 +202,7 @@ public class CredentialsTests {
             Validations.validateCredentials(credentials);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.MultipleTokenGenerationMeansPassed.getMessage(), e.getMessage());
         }
     }
@@ -214,7 +214,7 @@ public class CredentialsTests {
             Validations.validateCredentials(credentials);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.NoTokenGenerationMeansPassed.getMessage(), e.getMessage());
         }
     }
@@ -228,7 +228,7 @@ public class CredentialsTests {
             Validations.validateCredentials(credentials);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.EmptyRoles.getMessage(), e.getMessage());
         }
     }
@@ -244,7 +244,7 @@ public class CredentialsTests {
             Validations.validateCredentials(credentials);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.EmptyRoleInRoles.getMessage(), e.getMessage());
         }
     }
@@ -258,7 +258,7 @@ public class CredentialsTests {
             Validations.validateCredentials(credentials);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.EmptyContext.getMessage(), e.getMessage());
         }
     }

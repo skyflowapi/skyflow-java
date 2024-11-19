@@ -62,7 +62,7 @@ public class BearerTokenTests {
             bearerToken.getBearerToken();
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.InvalidCredentials.getMessage(), e.getMessage());
         }
     }
@@ -75,7 +75,7 @@ public class BearerTokenTests {
             bearerToken.getBearerToken();
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.InvalidCredentials.getMessage(), e.getMessage());
         }
     }
@@ -88,7 +88,7 @@ public class BearerTokenTests {
             bearerToken.getBearerToken();
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
                     Utils.parameterizedString(ErrorMessage.FileInvalidJson.getMessage(), invalidJsonFilePath),
                     e.getMessage()
@@ -103,7 +103,7 @@ public class BearerTokenTests {
             bearerToken.getBearerToken();
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.InvalidCredentials.getMessage(), e.getMessage());
         }
     }
@@ -115,7 +115,7 @@ public class BearerTokenTests {
             bearerToken.getBearerToken();
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.CredentialsStringInvalidJson.getMessage(), e.getMessage());
         }
     }
@@ -130,7 +130,7 @@ public class BearerTokenTests {
             bearerToken.getBearerToken();
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.MissingPrivateKey.getMessage(), e.getMessage());
         }
     }
@@ -144,7 +144,7 @@ public class BearerTokenTests {
             bearerToken.getBearerToken();
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.MissingClientId.getMessage(), e.getMessage());
         }
     }
@@ -158,7 +158,7 @@ public class BearerTokenTests {
             bearerToken.getBearerToken();
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.MissingKeyId.getMessage(), e.getMessage());
         }
     }
@@ -172,7 +172,7 @@ public class BearerTokenTests {
             bearerToken.getBearerToken();
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.MissingTokenUri.getMessage(), e.getMessage());
         }
     }
@@ -186,7 +186,7 @@ public class BearerTokenTests {
             bearerToken.getBearerToken();
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.JwtInvalidFormat.getMessage(), e.getMessage());
         }
     }
@@ -199,7 +199,7 @@ public class BearerTokenTests {
             bearerToken.getBearerToken();
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.InvalidKeySpec.getMessage(), e.getMessage());
         }
     }
@@ -213,7 +213,7 @@ public class BearerTokenTests {
             bearerToken.getBearerToken();
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.InvalidTokenUri.getMessage(), e.getMessage());
         }
     }

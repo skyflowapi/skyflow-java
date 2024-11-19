@@ -42,7 +42,7 @@ public class ConnectionControllerTests {
             skyflowClient.connection().invoke(connectionRequest);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.EmptyRequestHeaders.getMessage(), e.getMessage());
         }
     }

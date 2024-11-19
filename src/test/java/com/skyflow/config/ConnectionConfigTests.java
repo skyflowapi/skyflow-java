@@ -1,7 +1,5 @@
 package com.skyflow.config;
 
-import com.skyflow.config.ConnectionConfig;
-import com.skyflow.config.Credentials;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
@@ -82,7 +80,7 @@ public class ConnectionConfigTests {
             Validations.validateConnectionConfig(connectionConfig);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.InvalidConnectionId.getMessage(), e.getMessage());
         }
     }
@@ -96,7 +94,7 @@ public class ConnectionConfigTests {
             Validations.validateConnectionConfig(connectionConfig);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.EmptyConnectionId.getMessage(), e.getMessage());
         }
     }
@@ -109,7 +107,7 @@ public class ConnectionConfigTests {
             Validations.validateConnectionConfig(connectionConfig);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.InvalidConnectionUrl.getMessage(), e.getMessage());
         }
     }
@@ -123,7 +121,7 @@ public class ConnectionConfigTests {
             Validations.validateConnectionConfig(connectionConfig);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.EmptyConnectionUrl.getMessage(), e.getMessage());
         }
     }
@@ -137,7 +135,7 @@ public class ConnectionConfigTests {
             Validations.validateConnectionConfig(connectionConfig);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.InvalidConnectionUrlFormat.getMessage(), e.getMessage());
         }
     }

@@ -84,7 +84,7 @@ public class DeleteTests {
             Validations.validateDeleteRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
                     Utils.parameterizedString(ErrorMessage.IdsKeyError.getMessage(), Constants.SDK_PREFIX),
                     e.getMessage()
@@ -100,7 +100,7 @@ public class DeleteTests {
             Validations.validateDeleteRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
                     Utils.parameterizedString(ErrorMessage.EmptyIds.getMessage(), Constants.SDK_PREFIX),
                     e.getMessage()
@@ -117,7 +117,7 @@ public class DeleteTests {
             Validations.validateDeleteRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
                     Utils.parameterizedString(ErrorMessage.EmptyIdInIds.getMessage(), Constants.SDK_PREFIX),
                     e.getMessage()
@@ -134,7 +134,7 @@ public class DeleteTests {
             Validations.validateDeleteRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
                     Utils.parameterizedString(ErrorMessage.TableKeyError.getMessage(), Constants.SDK_PREFIX),
                     e.getMessage()
@@ -151,7 +151,7 @@ public class DeleteTests {
             Validations.validateDeleteRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
                     Utils.parameterizedString(ErrorMessage.EmptyTable.getMessage(), Constants.SDK_PREFIX),
                     e.getMessage()

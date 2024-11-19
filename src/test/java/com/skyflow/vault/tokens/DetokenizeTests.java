@@ -53,7 +53,7 @@ public class DetokenizeTests {
             Validations.validateDetokenizeRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
                     Utils.parameterizedString(ErrorMessage.InvalidDataTokens.getMessage(), Constants.SDK_PREFIX),
                     e.getMessage()
@@ -70,7 +70,7 @@ public class DetokenizeTests {
             Validations.validateDetokenizeRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
                     Utils.parameterizedString(ErrorMessage.EmptyDataTokens.getMessage(), Constants.SDK_PREFIX),
                     e.getMessage()
@@ -89,7 +89,7 @@ public class DetokenizeTests {
             Validations.validateDetokenizeRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
                     Utils.parameterizedString(ErrorMessage.EmptyTokenInDataTokens.getMessage(), Constants.SDK_PREFIX),
                     e.getMessage()

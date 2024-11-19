@@ -76,7 +76,7 @@ public class TokenizeTests {
             Validations.validateTokenizeRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.ColumnValuesKeyErrorTokenize.getMessage(), e.getMessage());
         }
     }
@@ -88,7 +88,7 @@ public class TokenizeTests {
             Validations.validateTokenizeRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.EmptyColumnValues.getMessage(), e.getMessage());
         }
     }
@@ -102,7 +102,7 @@ public class TokenizeTests {
             Validations.validateTokenizeRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.EmptyValueInColumnValues.getMessage(), e.getMessage());
         }
     }
@@ -116,7 +116,7 @@ public class TokenizeTests {
             Validations.validateTokenizeRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getCode());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.EmptyColumnGroupInColumnValue.getMessage(), e.getMessage());
         }
     }

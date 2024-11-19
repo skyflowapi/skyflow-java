@@ -11,8 +11,10 @@ import java.util.Objects;
 
 public class SkyflowException extends Exception {
     private String requestId;
-    private int code;
+    private Integer grpcCode;
+    private Integer httpCode;
     private String message;
+    private String httpStatus;
     private JsonArray details;
     private JsonObject responseBody;
 
@@ -23,21 +25,23 @@ public class SkyflowException extends Exception {
 
     public SkyflowException(Throwable cause) {
         super(cause);
+        this.message = cause.getMessage();
     }
 
     public SkyflowException(String message, Throwable cause) {
         super(message, cause);
+        this.message = message;
     }
 
     public SkyflowException(int code, String message) {
         super(message);
-        this.code = code;
+        this.httpCode = code;
         this.message = message;
     }
 
-    public SkyflowException(int code, Throwable cause, Map<String, List<String>> responseHeaders, String responseBody) {
+    public SkyflowException(int httpCode, Throwable cause, Map<String, List<String>> responseHeaders, String responseBody) {
         this(cause);
-        this.code = code;
+        this.httpCode = httpCode;
         String contentType = responseHeaders.get("content-type").get(0);
         setRequestId(responseHeaders);
         if (Objects.equals(contentType, "application/json")) {
@@ -51,6 +55,8 @@ public class SkyflowException extends Exception {
         try {
             if (responseBody != null) {
                 this.responseBody = JsonParser.parseString(responseBody).getAsJsonObject();
+                setGrpcCode();
+                setHttpStatus();
                 setMessage();
                 setDetails();
             }
@@ -74,12 +80,32 @@ public class SkyflowException extends Exception {
         this.message = ((JsonObject) responseBody.get("error")).get("message").getAsString();
     }
 
+    private void setGrpcCode() {
+        this.grpcCode = ((JsonObject) responseBody.get("error")).get("grpc_code").getAsInt();
+    }
+
+    private void setHttpStatus() {
+        this.httpStatus = ((JsonObject) responseBody.get("error")).get("http_status").getAsString();
+    }
+
     private void setDetails() {
         this.details = ((JsonObject) responseBody.get("error")).get("details").getAsJsonArray();
     }
 
-    public int getCode() {
-        return code;
+    public int getHttpCode() {
+        return httpCode;
+    }
+
+    public JsonArray getDetails() {
+        return details;
+    }
+
+    public Integer getGrpcCode() {
+        return grpcCode;
+    }
+
+    public String getHttpStatus() {
+        return httpStatus;
     }
 
     @Override
@@ -90,12 +116,8 @@ public class SkyflowException extends Exception {
     @Override
     public String toString() {
         return String.format(
-                "%n requestId: %s%n code: %s%n message: %s",
-                this.requestId, this.code, this.message
+                "%n requestId: %s%n grpcCode: %s%n httpCode: %s%n httpStatus: %s%n message: %s%n details: %s",
+                this.requestId, this.grpcCode, this.httpCode, this.httpStatus, this.message, this.details
         );
-    }
-
-    public JsonArray getDetails() {
-        return details;
     }
 }
