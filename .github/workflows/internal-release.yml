@@ -1,0 +1,39 @@
+name: Publish package to the JFROG Artifactory
+on:
+  push:
+    tags: '*.*.*'
+    paths-ignore:
+      - "pom.xml"
+      - "*.md"
+    branches:
+      - release/*
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Set up Jfrog artifactory
+        uses: actions/setup-java@v1
+        with:
+          java-version: '1.8'
+          distribution: 'adopt'
+          server-id: central
+          server-username: JFROG_USERNAME
+          server-password: JFROG_PASSWORD
+          gpg-private-key: ${{ secrets.JFROG_GPG_KEY }} # Value of the GPG private key to import
+          gpg-passphrase: JFROG_GPG_PASSPHRASE # env variable for GPG private key passphrase
+
+      - name: create-json
+        id: create-json
+        uses: jsdaniell/create-json@1.1.2
+        with:
+          name: "credentials.json"
+          json: ${{ secrets.TEST_CREDENTIALS_FILE_STRING }}
+
+      - name: Publish package to Jfrog Artifactory
+        run: mvn clean deploy -P jfrog
+        env:
+          JFROG_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
+          JFROG_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
+          JFROG_GPG_PASSPHRASE: ${{ secrets.JFROG_GPG_PASSPHRASE }}
