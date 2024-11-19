@@ -1,16 +1,12 @@
-/*
-	Copyright (c) 2022 Skyflow, Inc.
-*/
-package com.example;
+package com.example.serviceaccount;
 
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.serviceaccount.util.BearerToken;
 
 import java.io.File;
 
-public class BearerTokenWithContextGenerationExample {
-    public static void main(String args[]) {
-
+public class BearerTokenGenerationWithContextExample {
+    public static void main(String[] args) {
         String bearerToken = null;
 
         // Generate BearerToken with context by specifying credentials.json file path
@@ -37,10 +33,8 @@ public class BearerTokenWithContextGenerationExample {
 
             bearerToken = token.getBearerToken();
             System.out.println(bearerToken);
-
         } catch (SkyflowException e) {
             e.printStackTrace();
         }
-
     }
 }
