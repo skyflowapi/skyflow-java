@@ -178,6 +178,7 @@
                 <configuration>
                     <excludes>
                         <exclude>**/example/*</exclude>
+                        <exclude>**/generated/rest/**</exclude>
                     </excludes>
                 </configuration>
                 <executions>
