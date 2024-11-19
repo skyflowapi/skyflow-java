@@ -14,21 +14,21 @@ import java.util.ArrayList;
 public class DeleteExample {
     public static void main(String[] args) throws SkyflowException {
         Credentials credentials = new Credentials();
-        credentials.setPath("<path_to_your_credentials_file_1>");
+        credentials.setPath("<YOUR_CREDENTIALS_FILE_PATH_1>");
 
         VaultConfig blitzConfig = new VaultConfig();
-        blitzConfig.setVaultId("<your_vault_id_1>");
-        blitzConfig.setClusterId("<your_cluster_id_1>");
+        blitzConfig.setVaultId("<YOUR_VAULT_ID_1>");
+        blitzConfig.setClusterId("<YOUR_CLUSTER_ID_1>");
         blitzConfig.setEnv(Env.DEV);
         blitzConfig.setCredentials(credentials);
 
         VaultConfig stageConfig = new VaultConfig();
-        stageConfig.setVaultId("<your_vault_id_2>");
-        stageConfig.setClusterId("<your_cluster_id_2>");
+        stageConfig.setVaultId("<YOUR_VAULT_ID_2>");
+        stageConfig.setClusterId("<YOUR_CLUSTER_ID_2>");
         stageConfig.setEnv(Env.STAGE);
 
         Credentials skyflowCredentials = new Credentials();
-        credentials.setPath("<path_to_your_credentials_file_2>");
+        credentials.setPath("<YOUR_CREDENTIALS_FILE_PATH_2>");
 
         Skyflow skyflowClient = Skyflow.builder()
                 .setLogLevel(LogLevel.DEBUG)
