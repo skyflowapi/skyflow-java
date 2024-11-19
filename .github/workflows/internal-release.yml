@@ -24,6 +24,13 @@ jobs:
           gpg-private-key: ${{ secrets.JFROG_GPG_KEY }} # Value of the GPG private key to import
           gpg-passphrase: JFROG_GPG_PASSPHRASE # env variable for GPG private key passphrase
 
+      - name: create env
+        id: create-env
+        run: |
+          touch .env
+          echo SKYFLOW_CREDENTIALS=${{ secrets.SKYFLOW_CREDENTIALS }} >> .env
+          echo TEST_EXPIRED_TOKEN=${{ secrets.TEST_EXPIRED_TOKEN }} >> .env
+
       - name: create-json
         id: create-json
         uses: jsdaniell/create-json@1.1.2
