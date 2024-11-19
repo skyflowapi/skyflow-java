@@ -6,7 +6,7 @@
 
     <groupId>com.skyflow</groupId>
     <artifactId>skyflow-java</artifactId>
-    <version>1.15.0-dev-5</version>
+    <version>1.15.0-dev-6</version>
     <packaging>jar</packaging>
 
     <name>${project.groupId}:${project.artifactId}</name>
@@ -252,17 +252,51 @@
         </repository>
     </repositories>
 
-    <distributionManagement>
-        <repository>
-            <id>central</id>
-            <name>prekarilabs.jfrog.io-releases</name>
-            <url>https://prekarilabs.jfrog.io/artifactory/skyflow-java</url>
-        </repository>
-        <snapshotRepository>
-            <id>snapshots</id>
-            <name>prekarilabs.jfrog.io-snapshots</name>
-            <url>https://prekarilabs.jfrog.io/artifactory/skyflow-java</url>
-        </snapshotRepository>
-    </distributionManagement>
+    <profiles>
+        <profile>
+            <id>maven-central</id>
+            <distributionManagement>
+                <repository>
+                    <id>ossrh</id>
+                    <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2</url>
+                </repository>
+                <snapshotRepository>
+                    <id>ossrh</id>
+                    <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
+                </snapshotRepository>
+            </distributionManagement>
+        </profile>
+
+
+        <profile>
+            <id>jfrog</id>
+            <distributionManagement>
+                <repository>
+                    <id>central</id>
+                    <name>prekarilabs.jfrog.io-releases</name>
+                    <url>https://prekarilabs.jfrog.io/artifactory/skyflow-java</url>
+                </repository>
+                <snapshotRepository>
+                    <id>snapshots</id>
+                    <name>prekarilabs.jfrog.io-snapshots</name>
+                    <url>https://prekarilabs.jfrog.io/artifactory/skyflow-java</url>
+                </snapshotRepository>
+            </distributionManagement>
+        </profile>
+    </profiles>
+
+
+<!--    <distributionManagement>-->
+<!--        <repository>-->
+<!--            <id>central</id>-->
+<!--            <name>prekarilabs.jfrog.io-releases</name>-->
+<!--            <url>https://prekarilabs.jfrog.io/artifactory/skyflow-java</url>-->
+<!--        </repository>-->
+<!--        <snapshotRepository>-->
+<!--            <id>snapshots</id>-->
+<!--            <name>prekarilabs.jfrog.io-snapshots</name>-->
+<!--            <url>https://prekarilabs.jfrog.io/artifactory/skyflow-java</url>-->
+<!--        </snapshotRepository>-->
+<!--    </distributionManagement>-->
 
 </project>
