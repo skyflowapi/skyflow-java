@@ -6,9 +6,9 @@ on:
       - "pom.xml"
       - "*.md"
     branches:
-      - release/*
-    pull-request:
-      - release/*
+      branches: [ release/*, '*' ]
+    pull_request:
+      branches: [ release/* ]
 
 jobs:
   publish:
