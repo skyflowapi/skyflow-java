@@ -1,7 +1,7 @@
 # Input Arguments
 Version=$1
 CommitHash=$2
-PomFile="../pom.xml"
+PomFile="$GITHUB_WORKSPACE/pom.xml"
 
 if [ -z "$Version" ]; then
     echo "Error: Version argument is required."

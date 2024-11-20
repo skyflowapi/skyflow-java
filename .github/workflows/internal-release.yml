@@ -7,6 +7,8 @@ on:
       - "*.md"
     branches:
       - release/*
+    pull-request:
+      - release/*
 
 jobs:
   publish:
@@ -29,6 +31,9 @@ jobs:
         uses: WyriHaximus/github-action-get-previous-tag@v1
         with:
             fallback: 1.0.0
+
+      - name: Print working directory
+        run: pwd
 
       - name: Bump Version
         run: |
@@ -58,7 +63,7 @@ jobs:
           json: ${{ secrets.TEST_CREDENTIALS_FILE_STRING }}
 
       - name: Publish package to Jfrog Artifactory
-        run: mvn clean deploy -P jfrog
+        run: mvn clean deplo -P jfrog
         env:
           JFROG_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
           JFROG_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
