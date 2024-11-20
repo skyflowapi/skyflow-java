@@ -40,7 +40,8 @@ public class ConnectionController extends ConnectionClient {
             String filledURL = Utils.constructConnectionURL(super.getConnectionConfig(), invokeConnectionRequest);
             Map<String, String> headers = new HashMap<>();
 
-            if (invokeConnectionRequest.getRequestHeaders().containsKey("requestHeader")) {
+            Map<String, String> requestHeaders = invokeConnectionRequest.getRequestHeaders();
+            if (requestHeaders != null && requestHeaders.containsKey("requestHeader")) {
                 headers = Utils.constructConnectionHeadersMap(invokeConnectionRequest.getRequestHeaders());
             }
             if (!headers.containsKey("x-skyflow-authorization")) {

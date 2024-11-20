@@ -12,6 +12,8 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.HashMap;
+
 public class ConnectionControllerTests {
     private static final String INVALID_EXCEPTION_THROWN = "Should not have thrown any exception";
     private static final String EXCEPTION_NOT_THROWN = "Should have thrown an exception";
@@ -37,13 +39,14 @@ public class ConnectionControllerTests {
     @Test
     public void testInvalidRequestInInvokeConnectionMethod() {
         try {
-            InvokeConnectionRequest connectionRequest = InvokeConnectionRequest.builder().build();
+            HashMap<String,String> requestBody = new HashMap<>();
+            InvokeConnectionRequest connectionRequest = InvokeConnectionRequest.builder().requestBody(requestBody).build();
             Skyflow skyflowClient = Skyflow.builder().setLogLevel(LogLevel.DEBUG).addConnectionConfig(connectionConfig).build();
             skyflowClient.connection().invoke(connectionRequest);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(ErrorMessage.EmptyRequestHeaders.getMessage(), e.getMessage());
+            Assert.assertEquals(ErrorMessage.EmptyRequestBody.getMessage(), e.getMessage());
         }
     }
 }

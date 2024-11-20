@@ -105,7 +105,7 @@ public class VaultClient {
         for (int index = 0; index < values.size(); index++) {
             V1FieldRecords record = new V1FieldRecords();
             record.setFields(values.get(index));
-            if (tokens != null) {
+            if (tokens != null && index < tokens.size()) {
                 record.setTokens(tokens.get(index));
             }
             records.add(record);
@@ -130,7 +130,7 @@ public class VaultClient {
             record.setUpsert(request.getUpsert());
             record.setTokenization(request.getReturnTokens());
             record.setFields(values.get(index));
-            if (tokens != null) {
+            if (tokens != null && index < tokens.size()) {
                 record.setTokens(tokens.get(index));
             }
             records.add(record);

@@ -23,7 +23,7 @@ public class DetokenizeResponse {
     public String toString() {
         StringBuilder response = new StringBuilder("{");
         response.append("\n\t").append("\"detokenizedFields\": ").append(toIndentedString(detokenizedFields));
-        response.append("\n\t").append("\"errors\": \"").append(toIndentedString(errorRecords));
+        response.append("\n\t").append("\"errors\": ").append(toIndentedString(errorRecords));
         response.append("\n}");
         return response.toString();
     }

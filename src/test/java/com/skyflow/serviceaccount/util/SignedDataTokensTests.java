@@ -206,4 +206,17 @@ public class SignedDataTokensTests {
             Assert.assertEquals(ErrorMessage.InvalidKeySpec.getMessage(), e.getMessage());
         }
     }
+
+    @Test
+    public void testSignedDataTokenResponse() {
+        try {
+            String signedToken = "test_signed_data_token";
+            SignedDataTokenResponse response = new SignedDataTokenResponse(dataToken, signedToken);
+            String responseString = "{\n\t\"dataToken\":\"" + dataToken + "\"," +
+                    "\n\t\"signedDataToken\":\"signed_token_" + signedToken + "\",\n}";
+            Assert.assertEquals(responseString, response.toString());
+        } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
 }

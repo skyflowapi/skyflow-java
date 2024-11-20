@@ -47,6 +47,8 @@ public class TokenizeTests {
         columnValues = new ArrayList<>();
         value = "test_value";
         group = "test_group";
+
+        tokens = new ArrayList<>();
     }
 
     @Before
@@ -118,6 +120,20 @@ public class TokenizeTests {
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.EmptyColumnGroupInColumnValue.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testTokenizeResponse() {
+        try {
+            tokens.add("1234-5678-9012-3456");
+            tokens.add("5678-9012-3456-7890");
+            TokenizeResponse response = new TokenizeResponse(tokens);
+            String responseString = "{\n\t\"tokens\": [1234-5678-9012-3456, 5678-9012-3456-7890]\n}";
+            Assert.assertEquals(2, response.getTokens().size());
+            Assert.assertEquals(responseString, response.toString());
+        } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
         }
     }
 }

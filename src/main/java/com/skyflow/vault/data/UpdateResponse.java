@@ -22,8 +22,10 @@ public class UpdateResponse {
     @Override
     public String toString() {
         StringBuilder response = new StringBuilder("{");
-        response.append("\n\t\"skyflowId\": ").append(skyflowId);
-        response.append("\n\t\"tokens\": ").append(formatRecords(tokens));
+        response.append("\n\t\"skyflowId\": \"").append(skyflowId).append("\"");
+        if (!tokens.isEmpty()) {
+            response.append("\n\t\"tokens\": ").append(formatRecords(tokens));
+        }
         response.append("\n}");
         return response.toString();
     }

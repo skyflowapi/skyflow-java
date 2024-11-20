@@ -46,9 +46,6 @@ public class InvokeConnectionRequest {
 
         private InvokeConnectionRequestBuilder() {
             this.methodName = RequestMethod.POST;
-            this.pathParams = new HashMap<>();
-            this.queryParams = new HashMap<>();
-            this.requestHeaders = new HashMap<>();
             this.requestBody = new Object();
         }
 

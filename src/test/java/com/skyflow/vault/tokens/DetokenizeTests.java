@@ -4,6 +4,8 @@ import com.skyflow.enums.RedactionType;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.generated.rest.models.DetokenizeRecordResponseValueType;
+import com.skyflow.generated.rest.models.V1DetokenizeRecordResponse;
 import com.skyflow.utils.Constants;
 import com.skyflow.utils.Utils;
 import com.skyflow.utils.validations.Validations;
@@ -109,6 +111,46 @@ public class DetokenizeTests {
             Assert.assertEquals(RedactionType.PLAIN_TEXT, request.getRedactionType());
             Assert.assertTrue(request.getContinueOnError());
         } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testDetokenizeResponse() {
+        try {
+            V1DetokenizeRecordResponse record1 = new V1DetokenizeRecordResponse();
+            record1.setToken("1234-5678-9012-3456");
+            record1.setValue("4111111111111111");
+            record1.setValueType(DetokenizeRecordResponseValueType.STRING);
+            DetokenizeRecordResponse field = new DetokenizeRecordResponse(record1);
+
+            V1DetokenizeRecordResponse record2 = new V1DetokenizeRecordResponse();
+            record2.setToken("3456-7890-1234-5678");
+            record2.setError("Invalid token");
+            DetokenizeRecordResponse error = new DetokenizeRecordResponse(record2);
+
+            ArrayList<DetokenizeRecordResponse> fields = new ArrayList<>();
+            fields.add(field);
+            fields.add(field);
+
+            ArrayList<DetokenizeRecordResponse> errors = new ArrayList<>();
+            errors.add(error);
+            errors.add(error);
+
+            DetokenizeResponse response = new DetokenizeResponse(fields, errors);
+            String responseString = "{\n\t\"detokenizedFields\": [{" +
+                    "\n\t\t\"token\": \"1234-5678-9012-3456\",\n\t\t\"value\": \"4111111111111111\",\n\t\t\"type\": \"STRING\",\n\t}, " +
+                    "{\n\t\t\"token\": \"1234-5678-9012-3456\",\n\t\t\"value\": \"4111111111111111\",\n\t\t\"type\": \"STRING\",\n\t}]" +
+                    "\n\t\"errors\": [{\n\t\t\"token\": \"3456-7890-1234-5678\",\n\t\t\"error\": \"Invalid token\",\n\t}, " +
+                    "{\n\t\t\"token\": \"3456-7890-1234-5678\",\n\t\t\"error\": \"Invalid token\",\n\t}]\n}";
+            Assert.assertEquals(2, response.getDetokenizedFields().size());
+            Assert.assertEquals(2, response.getErrors().size());
+            Assert.assertEquals("1234-5678-9012-3456", response.getDetokenizedFields().get(0).getToken());
+            Assert.assertEquals("4111111111111111", response.getDetokenizedFields().get(0).getValue());
+            Assert.assertEquals("STRING", response.getDetokenizedFields().get(0).getType());
+            Assert.assertEquals("Invalid token", response.getErrors().get(0).getError());
+            Assert.assertEquals(responseString, response.toString());
+        } catch (Exception e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
         }
     }

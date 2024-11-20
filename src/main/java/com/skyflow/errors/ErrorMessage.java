@@ -113,7 +113,7 @@ public enum ErrorMessage {
 
     // connection
     InvalidRequestHeaders("%s0 Validation error. Request headers aren't valid. Specify valid request headers."),
-    EmptyRequestHeaders("%s0 Validation error. Request headers are empty. Specify valid ."),
+    EmptyRequestHeaders("%s0 Validation error. Request headers are empty. Specify valid request headers."),
     InvalidPathParams("%s0 Validation error. Path parameters aren't valid. Specify valid path parameters."),
     EmptyPathParams("%s0 Validation error. Path parameters are empty. Specify valid path parameters."),
     InvalidQueryParams("%s0 Validation error. Query parameters aren't valid. Specify valid query parameters."),

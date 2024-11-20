@@ -370,7 +370,7 @@ public class UpdateTests {
             tokenMap.put("test_column_1", "test_token_1");
             tokenMap.put("test_column_2", "test_token_2");
             UpdateResponse response = new UpdateResponse(skyflowID, tokenMap);
-            String responseString = "{\n\t\"skyflowId\": " + skyflowID + "\n\t\"tokens\": "
+            String responseString = "{\n\t\"skyflowId\": \"" + skyflowID + "\"\n\t\"tokens\": "
                     + "{\n\t\t\"test_column_1\": \"test_token_1\","
                     + "\n\t\t\"test_column_2\": \"test_token_2\",\n\t}\n}";
             Assert.assertEquals(skyflowID, response.getSkyflowId());
