@@ -24,14 +24,33 @@ jobs:
           gpg-private-key: ${{ secrets.JFROG_GPG_KEY }} # Value of the GPG private key to import
           gpg-passphrase: JFROG_GPG_PASSPHRASE # env variable for GPG private key passphrase
 
-      - name: create env
+      - name: Get Previous tag
+        id: previoustag
+        uses: WyriHaximus/github-action-get-previous-tag@v1
+        with:
+            fallback: 1.0.0
+
+      - name: Bump Version
+        run: |
+          chmod +x ./scripts/bump_version.sh
+          ./scripts/bump_version.sh "${{ steps.previoustag.outputs.tag }}" "$(git rev-parse --short "$GITHUB_SHA")"
+
+      - name: Commit changes
+        run: |
+          git config user.name ${{ github.actor }}
+          git config user.email ${{ github.actor }}@users.noreply.github.com
+          git add pom.xml
+          git commit -m "[AUTOMATED] Private Release ${{ steps.previoustag.outputs.tag }}-dev.$(git rev-parse --short $GITHUB_SHA)"
+          git push origin -f
+
+      - name: Create env
         id: create-env
         run: |
           touch .env
           echo SKYFLOW_CREDENTIALS=${{ secrets.SKYFLOW_CREDENTIALS }} >> .env
           echo TEST_EXPIRED_TOKEN=${{ secrets.TEST_EXPIRED_TOKEN }} >> .env
 
-      - name: create-json
+      - name: Create credentials json
         id: create-json
         uses: jsdaniell/create-json@1.1.2
         with:
