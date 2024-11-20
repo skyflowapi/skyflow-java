@@ -38,3 +38,4 @@ else
     echo "--------------------------"
     echo "Done. Main project version now at $Version-dev.$CommitHash"
 fi
+
