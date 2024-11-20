@@ -30,7 +30,7 @@ public class InsertExample {
         stageConfig.setEnv(Env.STAGE);
 
         Credentials skyflowCredentials = new Credentials();
-        credentials.setPath("<YOUR_CREDENTIALS_FILE_PATH_2>");
+        skyflowCredentials.setPath("<YOUR_CREDENTIALS_FILE_PATH_2>");
 
         Skyflow skyflowClient = Skyflow.builder()
                 .setLogLevel(LogLevel.DEBUG)
@@ -41,17 +41,17 @@ public class InsertExample {
 
         ArrayList<HashMap<String, Object>> values1 = new ArrayList<>();
         HashMap<String, Object> value1 = new HashMap<>();
-        value1.put("<column_name_1>", "<column_value_1>");
-        value1.put("<column_name_2>", "<column_value_2>");
+        value1.put("<COLUMN_NAME_1>", "<COLUMN_VALUE_1>");
+        value1.put("<COLUMN_NAME_2>", "<COLUMN_VALUE_2>");
         values1.add(value1);
 
         ArrayList<HashMap<String, Object>> tokens = new ArrayList<>();
         HashMap<String, Object> token = new HashMap<>();
-        token.put("<column_name_2>", "<token_value_2>");
+        token.put("<COLUMN_NAME_2>", "<TOKEN_VALUE_2>");
         tokens.add(token);
 
         InsertRequest insertRequest = InsertRequest.builder()
-                .table("<table_name>")
+                .table("<TABLE_NAME>")
                 .continueOnError(true)
                 .tokenStrict(Byot.ENABLE)
                 .values(values1)
@@ -63,19 +63,19 @@ public class InsertExample {
 
         ArrayList<HashMap<String, Object>> values2 = new ArrayList<>();
         HashMap<String, Object> value2 = new HashMap<>();
-        value2.put("<column_name_1>", "<column_value_1>");
-        value2.put("<column_name_2>", "<column_value_1>");
+        value2.put("<COLUMN_NAME_1>", "<COLUMN_VALUE_1>");
+        value2.put("<COLUMN_NAME_2>", "<COLUMN_VALUE_2>");
         values2.add(value2);
 
         InsertRequest upsertRequest = InsertRequest.builder()
-                .table("<table_name>")
+                .table("<TABLE_NAME>")
                 .continueOnError(false)
                 .tokenStrict(Byot.DISABLE)
                 .values(values2)
                 .returnTokens(false)
-                .upsert("<upsert_column>")
+                .upsert("<UPSERT_COLUMN>")
                 .build();
-        InsertResponse upsertResponse = skyflowClient.vault("<your_vault_id_2>").insert(upsertRequest);
+        InsertResponse upsertResponse = skyflowClient.vault("<YOUR_VAULT_ID_2>").insert(upsertRequest);
         System.out.println(upsertResponse);
     }
 }

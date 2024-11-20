@@ -26,7 +26,7 @@ public class QueryExample {
         stageConfig.setEnv(Env.STAGE);
 
         Credentials skyflowCredentials = new Credentials();
-        credentials.setPath("<YOUR_CREDENTIALS_FILE_PATH_2>");
+        skyflowCredentials.setPath("<YOUR_CREDENTIALS_FILE_PATH_2>");
 
         Skyflow skyflowClient = Skyflow.builder()
                 .setLogLevel(LogLevel.DEBUG)
@@ -35,14 +35,14 @@ public class QueryExample {
                 .addSkyflowCredentials(skyflowCredentials)
                 .build();
 
-        String query1 = "<your_sql_query>";
+        String query1 = "<YOUR_SQL_QUERY>";
         QueryRequest queryRequest1 = QueryRequest.builder().query(query1).build();
         QueryResponse queryResponse1 = skyflowClient.vault().query(queryRequest1);
         System.out.println(queryResponse1);
 
-        String query2 = "<your_sql_query>";
+        String query2 = "<YOUR_SQL_QUERY>";
         QueryRequest queryRequest2 = QueryRequest.builder().query(query2).build();
-        QueryResponse queryResponse2 = skyflowClient.vault("<your_vault_id_2>").query(queryRequest2);
+        QueryResponse queryResponse2 = skyflowClient.vault("<YOUR_VAULT_ID_2>").query(queryRequest2);
         System.out.println(queryResponse2);
 
     }

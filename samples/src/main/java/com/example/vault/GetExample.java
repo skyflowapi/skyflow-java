@@ -29,7 +29,7 @@ public class GetExample {
         stageConfig.setEnv(Env.STAGE);
 
         Credentials skyflowCredentials = new Credentials();
-        credentials.setPath("<YOUR_CREDENTIALS_FILE_PATH_2>");
+        skyflowCredentials.setPath("<YOUR_CREDENTIALS_FILE_PATH_2>");
 
         Skyflow skyflowClient = Skyflow.builder()
                 .setLogLevel(LogLevel.DEBUG)
@@ -39,20 +39,20 @@ public class GetExample {
                 .build();
 
         ArrayList<String> ids = new ArrayList<>();
-        ids.add("<your_skyflow_id>");
-        GetRequest getByIdRequest = GetRequest.builder().returnTokens(true).ids(ids).table("<table_name>").build();
+        ids.add("<YOUR_SKYFLOW_ID>");
+        GetRequest getByIdRequest = GetRequest.builder().returnTokens(true).ids(ids).table("<TABLE_NAME>").build();
         GetResponse getByIdResponse = skyflowClient.vault().get(getByIdRequest);
         System.out.println(getByIdResponse);
 
         ArrayList<String> columnValues = new ArrayList<>();
-        columnValues.add("<your_skyflow_id>");
+        columnValues.add("<YOUR_COLUMN_VALUE>");
         GetRequest getByColumnRequest = GetRequest.builder()
-                .table("<table_name>")
-                .columnName("<column_name>")
+                .table("<TABLE_NAME>")
+                .columnName("<COLUMN_NAME>")
                 .columnValues(columnValues)
                 .redactionType(RedactionType.PLAIN_TEXT)
                 .build();
-        GetResponse getByColumnResponse = skyflowClient.vault("<your_vault_id_2>").get(getByColumnRequest);
+        GetResponse getByColumnResponse = skyflowClient.vault("<YOUR_VAULT_ID_2>").get(getByColumnRequest);
         System.out.println(getByColumnResponse);
     }
 }

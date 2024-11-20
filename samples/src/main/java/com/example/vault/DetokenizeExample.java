@@ -29,7 +29,7 @@ public class DetokenizeExample {
         stageConfig.setEnv(Env.STAGE);
 
         Credentials skyflowCredentials = new Credentials();
-        credentials.setPath("<YOUR_CREDENTIALS_FILE_PATH_2>");
+        skyflowCredentials.setPath("<YOUR_CREDENTIALS_FILE_PATH_2>");
 
         Skyflow skyflowClient = Skyflow.builder()
                 .setLogLevel(LogLevel.DEBUG)
@@ -39,19 +39,19 @@ public class DetokenizeExample {
                 .build();
 
         ArrayList<String> tokens1 = new ArrayList<>();
-        tokens1.add("<your_token_value_1>");
-        tokens1.add("<your_token_value_2>");
+        tokens1.add("<YOUR_TOKEN_VALUE_1>");
+        tokens1.add("<YOUR_TOKEN_VALUE_2>");
         DetokenizeRequest detokenizeRequest1 = DetokenizeRequest.builder().tokens(tokens1).continueOnError(true).build();
         DetokenizeResponse detokenizeResponse1 = skyflowClient.vault().detokenize(detokenizeRequest1);
         System.out.println(detokenizeResponse1);
 
         ArrayList<String> tokens2 = new ArrayList<>();
-        tokens2.add("<your_token_value_1>");
-        tokens2.add("<your_token_value_2>");
+        tokens2.add("<YOUR_TOKEN_VALUE_1>");
+        tokens2.add("<YOUR_TOKEN_VALUE_2>");
 
         DetokenizeRequest detokenizeRequest2 = DetokenizeRequest.builder()
                 .tokens(tokens2).continueOnError(false).redactionType(RedactionType.DEFAULT).build();
-        DetokenizeResponse detokenizeResponse2 = skyflowClient.vault("<your_vault_id_2>").detokenize(detokenizeRequest2);
+        DetokenizeResponse detokenizeResponse2 = skyflowClient.vault("<YOUR_VAULT_ID_2>").detokenize(detokenizeRequest2);
         System.out.println(detokenizeResponse2);
     }
 }

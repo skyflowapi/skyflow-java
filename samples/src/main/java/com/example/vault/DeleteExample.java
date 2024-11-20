@@ -28,7 +28,7 @@ public class DeleteExample {
         stageConfig.setEnv(Env.STAGE);
 
         Credentials skyflowCredentials = new Credentials();
-        credentials.setPath("<YOUR_CREDENTIALS_FILE_PATH_2>");
+        skyflowCredentials.setPath("<YOUR_CREDENTIALS_FILE_PATH_2>");
 
         Skyflow skyflowClient = Skyflow.builder()
                 .setLogLevel(LogLevel.DEBUG)
@@ -38,15 +38,15 @@ public class DeleteExample {
                 .build();
 
         ArrayList<String> ids1 = new ArrayList<>();
-        ids1.add("<your_token_value>");
-        DeleteRequest deleteRequest1 = DeleteRequest.builder().ids(ids1).table("<table_name>").build();
+        ids1.add("<YOUR_SKYFLOW_ID_VALUE>");
+        DeleteRequest deleteRequest1 = DeleteRequest.builder().ids(ids1).table("<TABLE_NAME>").build();
         DeleteResponse deleteResponse1 = skyflowClient.vault().delete(deleteRequest1);
         System.out.println(deleteResponse1);
 
         ArrayList<String> ids2 = new ArrayList<>();
-        ids2.add("<your_token_value>");
-        DeleteRequest deleteRequest2 = DeleteRequest.builder().ids(ids2).table("<table_name>").build();
-        DeleteResponse deleteResponse2 = skyflowClient.vault("<your_vault_id_2>").delete(deleteRequest2);
+        ids2.add("<YOUR_SKYFLOW_ID_VALUE>");
+        DeleteRequest deleteRequest2 = DeleteRequest.builder().ids(ids2).table("<TABLE_NAME>").build();
+        DeleteResponse deleteResponse2 = skyflowClient.vault("<YOUR_VAULT_ID_2>").delete(deleteRequest2);
         System.out.println(deleteResponse2);
     }
 }

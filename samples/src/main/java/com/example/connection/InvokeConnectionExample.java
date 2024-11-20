@@ -15,19 +15,19 @@ import java.util.Map;
 public class InvokeConnectionExample {
     public static void main(String[] args) throws SkyflowException {
         Credentials credentials = new Credentials();
-        credentials.setPath("<path_to_your_credentials_file_1>");
+        credentials.setPath("<YOUR_CREDENTIALS_FILE_PATH_1>");
 
         ConnectionConfig connectionConfig1 = new ConnectionConfig();
-        connectionConfig1.setConnectionId("<your_connection_id_1>");
-        connectionConfig1.setConnectionUrl("<your_connection_url_1>");
+        connectionConfig1.setConnectionId("<YOUR_CONNECTION_ID_1>");
+        connectionConfig1.setConnectionUrl("<YOUR_CONNECTION_URL_1>");
         connectionConfig1.setCredentials(credentials);
 
         ConnectionConfig connectionConfig2 = new ConnectionConfig();
-        connectionConfig2.setConnectionId("<your_connection_id_2>");
-        connectionConfig2.setConnectionUrl("<your_connection_url_2>");
+        connectionConfig2.setConnectionId("<YOUR_CONNECTION_ID_2>");
+        connectionConfig2.setConnectionUrl("<YOUR_CONNECTION_URL_2>");
 
         Credentials skyflowCredentials = new Credentials();
-        credentials.setPath("<path_to_your_credentials_file_2>");
+        skyflowCredentials.setPath("<YOUR_CREDENTIALS_FILE_PATH_2>");
 
         Skyflow skyflowClient = Skyflow.builder()
                 .setLogLevel(LogLevel.DEBUG)
@@ -37,11 +37,11 @@ public class InvokeConnectionExample {
                 .build();
 
         Map<String, String> requestBody = new HashMap<>();
-        requestBody.put("<column_name_1>", "<column_value_1>");
-        requestBody.put("<column_name_2>", "<column_value_2>");
+        requestBody.put("<COLUMN_NAME_1>", "<COLUMN_VALUE_1>");
+        requestBody.put("<COLUMN_NAME_2>", "<COLUMN_VALUE_2>");
         Map<String, String> requestHeaders = new HashMap<>();
-        requestHeaders.put("<header_name_1>", "<header_value_1>");
-        requestHeaders.put("<header_name_2>", "<header_value_2>");
+        requestHeaders.put("<HEADER_NAME_1>", "<HEADER_VALUE_1>");
+        requestHeaders.put("<HEADER_NAME_2>", "<HEADER_VALUE_2>");
         InvokeConnectionRequest invokeConnectionRequest1 = InvokeConnectionRequest.builder()
                 .methodName(RequestMethod.POST)
                 .requestBody(requestBody)
@@ -51,18 +51,18 @@ public class InvokeConnectionExample {
         System.out.println(invokeConnectionResponse1);
 
         Map<String, String> pathParams = new HashMap<>();
-        pathParams.put("<your_path_param_key_1>", "<your_path_param_value_1>");
-        pathParams.put("<your_path_param_key_2>", "<your_path_param_value_2>");
+        pathParams.put("<YOUR_PATH_PARAM_KEY_1>", "<YOUR_PATH_PARAM_VALUE_1>");
+        pathParams.put("<YOUR_PATH_PARAM_KEY_2>", "<YOUR_PATH_PARAM_VALUE_2>");
         Map<String, String> queryParams = new HashMap<>();
-        queryParams.put("<your_query_param_key_1>", "<your_query_param_value_1>");
-        queryParams.put("<your_query_param_key_2>", "<your_query_param_value_2>");
+        queryParams.put("<YOUR_QUERY_PARAM_KEY_1>", "<YOUR_QUERY_PARAM_VALUE_1>");
+        queryParams.put("<YOUR_QUERY_PARAM_KEY_2>", "<YOUR_QUERY_PARAM_VALUE_2>");
         InvokeConnectionRequest invokeConnectionRequest2 = InvokeConnectionRequest.builder()
                 .methodName(RequestMethod.GET)
                 .pathParams(pathParams)
                 .queryParams(queryParams)
                 .build();
         InvokeConnectionResponse invokeConnectionResponse2 = skyflowClient
-                .connection("<your_connection_id_2>").invoke(invokeConnectionRequest2);
+                .connection("<YOUR_CONNECTION_ID_2>").invoke(invokeConnectionRequest2);
         System.out.println(invokeConnectionResponse2);
     }
 }

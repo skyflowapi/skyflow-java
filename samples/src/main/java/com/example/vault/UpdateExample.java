@@ -29,7 +29,7 @@ public class UpdateExample {
         stageConfig.setEnv(Env.STAGE);
 
         Credentials skyflowCredentials = new Credentials();
-        credentials.setPath("<YOUR_CREDENTIALS_FILE_PATH_2>");
+        skyflowCredentials.setPath("<YOUR_CREDENTIALS_FILE_PATH_2>");
 
         Skyflow skyflowClient = Skyflow.builder()
                 .setLogLevel(LogLevel.DEBUG)
@@ -39,15 +39,15 @@ public class UpdateExample {
                 .build();
 
         HashMap<String, Object> values1 = new HashMap<>();
-        values1.put("<column_name_1>", "<column_value_1>");
-        values1.put("<column_name_2>", "<column_value_1>");
+        values1.put("<COLUMN_NAME_1>", "<COLUMN_VALUE_1>");
+        values1.put("<COLUMN_NAME_2>", "<COLUMN_VALUE_2>");
 
         HashMap<String, Object> tokens = new HashMap<>();
-        tokens.put("<column_name_2>", "<token_value_2>");
+        tokens.put("<COLUMN_NAME_2>", "<TOKEN_VALUE_2>");
 
         UpdateRequest updateRequest1 = UpdateRequest.builder()
-                .id("<your_skyflow_id")
-                .table("<table_name>")
+                .id("<YOUR_SKYFLOW_ID>")
+                .table("<TABLE_NAME>")
                 .tokenStrict(Byot.ENABLE)
                 .values(values1)
                 .tokens(tokens)
@@ -57,17 +57,17 @@ public class UpdateExample {
         System.out.println(updateResponse1);
 
         HashMap<String, Object> values2 = new HashMap<>();
-        values2.put("<column_name_1>", "<column_value_1>");
-        values2.put("<column_name_2>", "<column_value_1>");
+        values2.put("<COLUMN_NAME_1>", "<COLUMN_VALUE_1>");
+        values2.put("<COLUMN_NAME_2>", "<COLUMN_VALUE_2>");
 
         UpdateRequest updateRequest2 = UpdateRequest.builder()
-                .id("<your_skyflow_id")
-                .table("<table_name>")
+                .id("<YOUR_SKYFLOW_ID>")
+                .table("<TABLE_NAME>")
                 .tokenStrict(Byot.DISABLE)
                 .values(values2)
                 .returnTokens(false)
                 .build();
-        UpdateResponse updateResponse2 = skyflowClient.vault("<your_vault_id_2>").update(updateRequest2);
+        UpdateResponse updateResponse2 = skyflowClient.vault("<YOUR_VAULT_ID_2>").update(updateRequest2);
         System.out.println(updateResponse2);
     }
 }

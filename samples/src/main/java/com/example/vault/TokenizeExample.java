@@ -30,7 +30,7 @@ public class TokenizeExample {
         stageConfig.setEnv(Env.STAGE);
 
         Credentials skyflowCredentials = new Credentials();
-        credentials.setPath("<YOUR_CREDENTIALS_FILE_PATH_2>");
+        skyflowCredentials.setPath("<YOUR_CREDENTIALS_FILE_PATH_2>");
 
         Skyflow skyflowClient = Skyflow.builder()
                 .setLogLevel(LogLevel.DEBUG)
@@ -40,8 +40,8 @@ public class TokenizeExample {
                 .build();
 
         List<ColumnValue> columnValues1 = new ArrayList<>();
-        ColumnValue value1 = ColumnValue.builder().value("<your_value>").columnGroup("<your_column_group>").build();
-        ColumnValue value2 = ColumnValue.builder().value("<your_value>").columnGroup("<your_column_group>").build();
+        ColumnValue value1 = ColumnValue.builder().value("<VALUE>").columnGroup("<COLUMN_GROUP>").build();
+        ColumnValue value2 = ColumnValue.builder().value("<VALUE>").columnGroup("<COLUMN_GROUP>").build();
         columnValues1.add(value1);
         columnValues1.add(value2);
         TokenizeRequest tokenizeRequest1 = TokenizeRequest.builder().values(columnValues1).build();
@@ -49,12 +49,12 @@ public class TokenizeExample {
         System.out.println(tokenizeResponse1);
 
         List<ColumnValue> columnValues2 = new ArrayList<>();
-        ColumnValue value3 = ColumnValue.builder().value("<your_value>").columnGroup("<your_column_group>").build();
-        ColumnValue value4 = ColumnValue.builder().value("<your_value>").columnGroup("<your_column_group>").build();
+        ColumnValue value3 = ColumnValue.builder().value("<VALUE>").columnGroup("<COLUMN_GROUP>").build();
+        ColumnValue value4 = ColumnValue.builder().value("<VALUE>").columnGroup("<COLUMN_GROUP>").build();
         columnValues2.add(value3);
         columnValues2.add(value4);
         TokenizeRequest tokenizeRequest2 = TokenizeRequest.builder().values(columnValues2).build();
-        TokenizeResponse tokenizeResponse2 = skyflowClient.vault("<your_vault_id_2>").tokenize(tokenizeRequest2);
+        TokenizeResponse tokenizeResponse2 = skyflowClient.vault("<YOUR_VAULT_ID_2>").tokenize(tokenizeRequest2);
         System.out.println(tokenizeResponse2);
     }
 }
