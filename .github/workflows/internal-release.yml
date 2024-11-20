@@ -58,7 +58,7 @@ jobs:
           json: ${{ secrets.TEST_CREDENTIALS_FILE_STRING }}
 
       - name: Publish package to Jfrog Artifactory
-        run: mvn clean deplo -P jfrog
+        run: mvn clean deploy -P jfrog
         env:
           JFROG_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
           JFROG_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
