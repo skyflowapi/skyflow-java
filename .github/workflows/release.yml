@@ -26,7 +26,7 @@ jobs:
           json: ${{ secrets.TEST_CREDENTIALS_FILE_STRING }}
           
       - name: Publish package to Maven Central
-        run: mvn --batch-mode deploy
+        run: mvn --batch-mode deploy -P maven-central
         env:
           MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
