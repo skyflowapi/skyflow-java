@@ -12,7 +12,11 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
       - name: Set up Jfrog artifactory
         uses: actions/setup-java@v1
         with:
