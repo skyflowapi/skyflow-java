@@ -100,8 +100,11 @@ public enum ErrorMessage {
     PartialSuccess("%s0 Validation error. Check 'SkyflowError.data' for details."),
 
     // update
-    SkyflowIdKeyError("%s0 Validation error. 'id' key is missing from the payload. Specify an 'id' key."),
-    EmptySkyflowId("%s0 Validation error. 'id' can't be empty. Specify an id."),
+    DataKeyError("%s0 Validation error. 'data' key is missing from the payload. Specify a 'data' key."),
+    EmptyData("%s0 Validation error. 'data' can't be empty. Specify data."),
+    SkyflowIdKeyError("%s0 Validation error. 'skyflow_id' is missing from the data payload. Specify a 'skyflow_id'."),
+    InvalidSkyflowIdType("%s0 Validation error. Invalid type for 'skyflow_id' in data payload. Specify 'skyflow_id' as a string."),
+    EmptySkyflowId("%s0 Validation error. 'skyflow_id' can't be empty. Specify a skyflow id."),
 
     // query
     QueryKeyError("%s0 Validation error. 'query' key is missing from the payload. Specify a 'query' key."),

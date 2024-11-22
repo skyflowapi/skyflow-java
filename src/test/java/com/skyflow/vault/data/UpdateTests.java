@@ -32,7 +32,7 @@ public class UpdateTests {
     private static String clusterID = null;
     private static String skyflowID = null;
     private static String table = null;
-    private static HashMap<String, Object> valueMap = null;
+    private static HashMap<String, Object> dataMap = null;
     private static HashMap<String, Object> tokenMap = null;
     private static Skyflow skyflowClient = null;
 
@@ -56,34 +56,33 @@ public class UpdateTests {
 
         skyflowID = "test_update_id_1";
         table = "test_table";
-        valueMap = new HashMap<>();
+        dataMap = new HashMap<>();
         tokenMap = new HashMap<>();
     }
 
     @Before
     public void setupTest() {
-        valueMap.clear();
+        dataMap.clear();
         tokenMap.clear();
     }
 
     @Test
     public void testValidInputInUpdateRequestValidations() {
         try {
-            valueMap.put("test_column_1", "test_value_1");
-            valueMap.put("test_column_2", "test_value_2");
+            dataMap.put("skyflow_id", skyflowID);
+            dataMap.put("test_column_1", "test_value_1");
+            dataMap.put("test_column_2", "test_value_2");
             tokenMap.put("test_column_1", "test_token_1");
             UpdateRequest request = UpdateRequest.builder()
-                    .id(skyflowID)
                     .table(table)
-                    .values(valueMap)
+                    .data(dataMap)
                     .tokens(tokenMap)
                     .returnTokens(true)
                     .tokenStrict(Byot.ENABLE)
                     .build();
             Validations.validateUpdateRequest(request);
             Assert.assertEquals(table, request.getTable());
-            Assert.assertEquals(skyflowID, request.getId());
-            Assert.assertEquals(2, request.getValues().size());
+            Assert.assertEquals(3, request.getData().size());
             Assert.assertEquals(1, request.getTokens().size());
             Assert.assertTrue(request.getReturnTokens());
         } catch (SkyflowException e) {
@@ -93,7 +92,8 @@ public class UpdateTests {
 
     @Test
     public void testNoSkyflowIdInUpdateRequestValidations() {
-        UpdateRequest request = UpdateRequest.builder().table(table).build();
+        dataMap.put("test_column_1", "test_value_1");
+        UpdateRequest request = UpdateRequest.builder().table(table).data(dataMap).build();
         try {
             Validations.validateUpdateRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
@@ -107,8 +107,25 @@ public class UpdateTests {
     }
 
     @Test
+    public void testInvalidSkyflowIdTypeInUpdateRequestValidations() {
+        dataMap.put("skyflow_id", 123);
+        UpdateRequest request = UpdateRequest.builder().table(table).data(dataMap).build();
+        try {
+            Validations.validateUpdateRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(
+                    Utils.parameterizedString(ErrorMessage.InvalidSkyflowIdType.getMessage(), Constants.SDK_PREFIX),
+                    e.getMessage()
+            );
+        }
+    }
+
+    @Test
     public void testEmptySkyflowIdInUpdateRequestValidations() {
-        UpdateRequest request = UpdateRequest.builder().id("").table(table).build();
+        dataMap.put("skyflow_id", "");
+        UpdateRequest request = UpdateRequest.builder().table(table).data(dataMap).build();
         try {
             Validations.validateUpdateRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
@@ -123,7 +140,7 @@ public class UpdateTests {
 
     @Test
     public void testNoTableInUpdateRequestValidations() {
-        UpdateRequest request = UpdateRequest.builder().id(skyflowID).build();
+        UpdateRequest request = UpdateRequest.builder().build();
         try {
             Validations.validateUpdateRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
@@ -138,7 +155,7 @@ public class UpdateTests {
 
     @Test
     public void testEmptyTableInUpdateRequestValidations() {
-        UpdateRequest request = UpdateRequest.builder().id(skyflowID).table("").build();
+        UpdateRequest request = UpdateRequest.builder().table("").build();
         try {
             Validations.validateUpdateRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
@@ -153,14 +170,14 @@ public class UpdateTests {
 
     @Test
     public void testNoValuesInUpdateRequestValidations() {
-        UpdateRequest request = UpdateRequest.builder().id(skyflowID).table(table).build();
+        UpdateRequest request = UpdateRequest.builder().table(table).build();
         try {
             Validations.validateUpdateRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
-                    Utils.parameterizedString(ErrorMessage.ValuesKeyError.getMessage(), Constants.SDK_PREFIX),
+                    Utils.parameterizedString(ErrorMessage.DataKeyError.getMessage(), Constants.SDK_PREFIX),
                     e.getMessage()
             );
         }
@@ -168,14 +185,14 @@ public class UpdateTests {
 
     @Test
     public void testEmptyValuesInUpdateRequestValidations() {
-        UpdateRequest request = UpdateRequest.builder().id(skyflowID).table(table).values(valueMap).build();
+        UpdateRequest request = UpdateRequest.builder().table(table).data(dataMap).build();
         try {
             Validations.validateUpdateRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
-                    Utils.parameterizedString(ErrorMessage.EmptyValues.getMessage(), Constants.SDK_PREFIX),
+                    Utils.parameterizedString(ErrorMessage.EmptyData.getMessage(), Constants.SDK_PREFIX),
                     e.getMessage()
             );
         }
@@ -183,10 +200,11 @@ public class UpdateTests {
 
     @Test
     public void testEmptyKeyInValuesInUpdateRequestValidations() {
-        valueMap.put("test_column_1", "test_value_1");
-        valueMap.put("test_column_2", "test_value_2");
-        valueMap.put("", "test_value_3");
-        UpdateRequest request = UpdateRequest.builder().id(skyflowID).table(table).values(valueMap).build();
+        dataMap.put("skyflow_id", skyflowID);
+        dataMap.put("test_column_1", "test_value_1");
+        dataMap.put("test_column_2", "test_value_2");
+        dataMap.put("", "test_value_3");
+        UpdateRequest request = UpdateRequest.builder().table(table).data(dataMap).build();
         try {
             Validations.validateUpdateRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
@@ -201,10 +219,11 @@ public class UpdateTests {
 
     @Test
     public void testEmptyValueInValuesInUpdateRequestValidations() {
-        valueMap.put("test_column_1", "test_value_1");
-        valueMap.put("test_column_2", "test_value_2");
-        valueMap.put("test_column_3", "");
-        UpdateRequest request = UpdateRequest.builder().id(skyflowID).table(table).values(valueMap).build();
+        dataMap.put("skyflow_id", skyflowID);
+        dataMap.put("test_column_1", "test_value_1");
+        dataMap.put("test_column_2", "test_value_2");
+        dataMap.put("test_column_3", "");
+        UpdateRequest request = UpdateRequest.builder().table(table).data(dataMap).build();
         try {
             Validations.validateUpdateRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
@@ -219,11 +238,12 @@ public class UpdateTests {
 
     @Test
     public void testTokensWithTokenStrictDisableInUpdateRequestValidations() {
-        valueMap.put("test_column_1", "test_value_1");
-        valueMap.put("test_column_2", "test_value_2");
+        dataMap.put("skyflow_id", skyflowID);
+        dataMap.put("test_column_1", "test_value_1");
+        dataMap.put("test_column_2", "test_value_2");
         tokenMap.put("test_column_1", "test_token_1");
         UpdateRequest request = UpdateRequest.builder()
-                .id(skyflowID).table(table).values(valueMap).tokens(tokenMap).tokenStrict(Byot.DISABLE)
+                .table(table).data(dataMap).tokens(tokenMap).tokenStrict(Byot.DISABLE)
                 .build();
         try {
             Validations.validateUpdateRequest(request);
@@ -239,10 +259,11 @@ public class UpdateTests {
 
     @Test
     public void testNoTokensWithTokenStrictEnableInUpdateRequestValidations() {
-        valueMap.put("test_column_1", "test_value_1");
-        valueMap.put("test_column_2", "test_value_2");
+        dataMap.put("skyflow_id", skyflowID);
+        dataMap.put("test_column_1", "test_value_1");
+        dataMap.put("test_column_2", "test_value_2");
         UpdateRequest request = UpdateRequest.builder()
-                .id(skyflowID).table(table).values(valueMap).tokenStrict(Byot.ENABLE)
+                 .table(table).data(dataMap).tokenStrict(Byot.ENABLE)
                 .build();
         try {
             Validations.validateUpdateRequest(request);
@@ -258,10 +279,11 @@ public class UpdateTests {
 
     @Test
     public void testNoTokensWithTokenStrictEnableStrictInUpdateRequestValidations() {
-        valueMap.put("test_column_1", "test_value_1");
-        valueMap.put("test_column_2", "test_value_2");
+        dataMap.put("skyflow_id", skyflowID);
+        dataMap.put("test_column_1", "test_value_1");
+        dataMap.put("test_column_2", "test_value_2");
         UpdateRequest request = UpdateRequest.builder()
-                .id(skyflowID).table(table).values(valueMap).tokenStrict(Byot.ENABLE_STRICT)
+                 .table(table).data(dataMap).tokenStrict(Byot.ENABLE_STRICT)
                 .build();
         try {
             Validations.validateUpdateRequest(request);
@@ -277,10 +299,11 @@ public class UpdateTests {
 
     @Test
     public void testEmptyTokensWithTokenStrictEnableInUpdateRequestValidations() {
-        valueMap.put("test_column_1", "test_value_1");
-        valueMap.put("test_column_2", "test_value_2");
+        dataMap.put("skyflow_id", skyflowID);
+        dataMap.put("test_column_1", "test_value_1");
+        dataMap.put("test_column_2", "test_value_2");
         UpdateRequest request = UpdateRequest.builder()
-                .id(skyflowID).table(table).values(valueMap).tokens(tokenMap).tokenStrict(Byot.ENABLE)
+                .table(table).data(dataMap).tokens(tokenMap).tokenStrict(Byot.ENABLE)
                 .build();
         try {
             Validations.validateUpdateRequest(request);
@@ -293,11 +316,12 @@ public class UpdateTests {
 
     @Test
     public void testInsufficientTokensWithTokenStrictEnableStrictInUpdateRequestValidations() {
-        valueMap.put("test_column_1", "test_value_1");
-        valueMap.put("test_column_2", "test_value_2");
+        dataMap.put("skyflow_id", skyflowID);
+        dataMap.put("test_column_1", "test_value_1");
+        dataMap.put("test_column_2", "test_value_2");
         tokenMap.put("test_column_1", "test_token_1");
         UpdateRequest request = UpdateRequest.builder()
-                .id(skyflowID).table(table).values(valueMap).tokens(tokenMap).tokenStrict(Byot.ENABLE_STRICT)
+                .table(table).data(dataMap).tokens(tokenMap).tokenStrict(Byot.ENABLE_STRICT)
                 .build();
         try {
             Validations.validateUpdateRequest(request);
@@ -310,12 +334,13 @@ public class UpdateTests {
 
     @Test
     public void testTokenValueMismatchInUpdateRequestValidations() {
-        valueMap.put("test_column_1", "test_value_1");
-        valueMap.put("test_column_2", "test_value_2");
+        dataMap.put("skyflow_id", skyflowID);
+        dataMap.put("test_column_1", "test_value_1");
+        dataMap.put("test_column_2", "test_value_2");
         tokenMap.put("test_column_1", "test_token_1");
         tokenMap.put("test_column_3", "test_token_3");
         UpdateRequest request = UpdateRequest.builder()
-                .id(skyflowID).table(table).values(valueMap).tokens(tokenMap).tokenStrict(Byot.ENABLE_STRICT)
+                .table(table).data(dataMap).tokens(tokenMap).tokenStrict(Byot.ENABLE_STRICT)
                 .build();
         try {
             Validations.validateUpdateRequest(request);
@@ -328,12 +353,13 @@ public class UpdateTests {
 
     @Test
     public void testEmptyKeyInTokensInUpdateRequestValidations() {
-        valueMap.put("test_column_1", "test_value_1");
-        valueMap.put("test_column_2", "test_value_2");
+        dataMap.put("skyflow_id", skyflowID);
+        dataMap.put("test_column_1", "test_value_1");
+        dataMap.put("test_column_2", "test_value_2");
         tokenMap.put("test_column_1", "test_token_1");
         tokenMap.put("", "test_token_2");
         UpdateRequest request = UpdateRequest.builder()
-                .id(skyflowID).table(table).values(valueMap).tokens(tokenMap).tokenStrict(Byot.ENABLE_STRICT)
+                .table(table).data(dataMap).tokens(tokenMap).tokenStrict(Byot.ENABLE_STRICT)
                 .build();
         try {
             Validations.validateUpdateRequest(request);
@@ -346,12 +372,13 @@ public class UpdateTests {
 
     @Test
     public void testEmptyValueInTokensInUpdateRequestValidations() {
-        valueMap.put("test_column_1", "test_value_1");
-        valueMap.put("test_column_2", "test_value_2");
+        dataMap.put("skyflow_id", skyflowID);
+        dataMap.put("test_column_1", "test_value_1");
+        dataMap.put("test_column_2", "test_value_2");
         tokenMap.put("test_column_1", "test_token_1");
         tokenMap.put("test_column_2", "");
         UpdateRequest request = UpdateRequest.builder()
-                .id(skyflowID).table(table).values(valueMap).tokens(tokenMap).tokenStrict(Byot.ENABLE_STRICT)
+                .table(table).data(dataMap).tokens(tokenMap).tokenStrict(Byot.ENABLE_STRICT)
                 .build();
         try {
             Validations.validateUpdateRequest(request);
@@ -365,14 +392,14 @@ public class UpdateTests {
     @Test
     public void testUpdateResponse() {
         try {
-            valueMap.put("test_column_1", "test_value_1");
-            valueMap.put("test_column_2", "test_value_2");
+            dataMap.put("test_column_1", "test_value_1");
+            dataMap.put("test_column_2", "test_value_2");
             tokenMap.put("test_column_1", "test_token_1");
             tokenMap.put("test_column_2", "test_token_2");
             UpdateResponse response = new UpdateResponse(skyflowID, tokenMap);
-            String responseString = "{\n\t\"skyflowId\": \"" + skyflowID + "\"\n\t\"tokens\": "
-                    + "{\n\t\t\"test_column_1\": \"test_token_1\","
-                    + "\n\t\t\"test_column_2\": \"test_token_2\",\n\t}\n}";
+            String responseString = "{\n\t\"skyflowId\": \"" + skyflowID + "\""
+                    + "\n\t\"test_column_1\": \"test_token_1\","
+                    + "\n\t\"test_column_2\": \"test_token_2\",\n}";
             Assert.assertEquals(skyflowID, response.getSkyflowId());
             Assert.assertEquals(2, response.getTokens().size());
             Assert.assertEquals(responseString, response.toString());

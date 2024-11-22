@@ -19,16 +19,12 @@ public class UpdateRequest {
         return this.builder.table;
     }
 
-    public String getId() {
-        return this.builder.id;
-    }
-
     public Boolean getReturnTokens() {
         return this.builder.returnTokens;
     }
 
-    public HashMap<String, Object> getValues() {
-        return this.builder.values;
+    public HashMap<String, Object> getData() {
+        return this.builder.data;
     }
 
     public HashMap<String, Object> getTokens() {
@@ -41,9 +37,8 @@ public class UpdateRequest {
 
     public static final class UpdateRequestBuilder {
         private String table;
-        private String id;
         private Boolean returnTokens;
-        private HashMap<String, Object> values;
+        private HashMap<String, Object> data;
         private HashMap<String, Object> tokens;
         private Byot tokenStrict;
 
@@ -57,18 +52,13 @@ public class UpdateRequest {
             return this;
         }
 
-        public UpdateRequestBuilder id(String id) {
-            this.id = id;
-            return this;
-        }
-
         public UpdateRequestBuilder returnTokens(Boolean returnTokens) {
             this.returnTokens = returnTokens == null || returnTokens;
             return this;
         }
 
-        public UpdateRequestBuilder values(HashMap<String, Object> values) {
-            this.values = values;
+        public UpdateRequestBuilder data(HashMap<String, Object> data) {
+            this.data = data;
             return this;
         }
 

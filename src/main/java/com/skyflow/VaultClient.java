@@ -144,7 +144,7 @@ public class VaultClient {
         RecordServiceUpdateRecordBody updateRequestBody = new RecordServiceUpdateRecordBody();
         updateRequestBody.byot(request.getTokenStrict().getBYOT());
         updateRequestBody.setTokenization(request.getReturnTokens());
-        HashMap<String, Object> values = request.getValues();
+        HashMap<String, Object> values = request.getData();
         HashMap<String, Object> tokens = request.getTokens();
         V1FieldRecords record = new V1FieldRecords();
         record.setFields(values);

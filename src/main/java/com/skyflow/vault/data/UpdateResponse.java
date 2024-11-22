@@ -24,23 +24,17 @@ public class UpdateResponse {
         StringBuilder response = new StringBuilder("{");
         response.append("\n\t\"skyflowId\": \"").append(skyflowId).append("\"");
         if (!tokens.isEmpty()) {
-            response.append("\n\t\"tokens\": ").append(formatRecords(tokens));
+            response.append(formatTokens(tokens));
         }
         response.append("\n}");
         return response.toString();
     }
 
-    private String formatRecords(HashMap<String, Object> tokens) {
+    private String formatTokens(HashMap<String, Object> tokens) {
         StringBuilder sb = new StringBuilder();
-        sb.append("{");
         for (String key : tokens.keySet()) {
             sb.append("\n\t\"").append(key).append("\": \"").append(tokens.get(key)).append("\",");
         }
-        sb.append("\n}");
-        return toIndentedString(sb);
-    }
-
-    private String toIndentedString(Object o) {
-        return o.toString().replace("\n", "\n\t");
+        return sb.toString();
     }
 }

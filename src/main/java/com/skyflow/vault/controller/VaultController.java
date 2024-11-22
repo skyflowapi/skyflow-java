@@ -273,7 +273,7 @@ public final class VaultController extends VaultClient {
             result = super.getRecordsApi().recordServiceUpdateRecord(
                     super.getVaultConfig().getVaultId(),
                     updateRequest.getTable(),
-                    updateRequest.getId(),
+                    updateRequest.getData().get("skyflow_id").toString(),
                     updateBody
             );
             LogUtil.printInfoLog(InfoLogs.UPDATE_REQUEST_RESOLVED.getLog());

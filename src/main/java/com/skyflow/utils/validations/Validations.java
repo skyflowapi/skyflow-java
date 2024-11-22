@@ -486,8 +486,7 @@ public class Validations {
 
     public static void validateUpdateRequest(UpdateRequest updateRequest) throws SkyflowException {
         String table = updateRequest.getTable();
-        String skyflowId = updateRequest.getId();
-        HashMap<String, Object> values = updateRequest.getValues();
+        HashMap<String, Object> data = updateRequest.getData();
         HashMap<String, Object> tokens = updateRequest.getTokens();
         Byot tokenStrict = updateRequest.getTokenStrict();
 
@@ -501,26 +500,31 @@ public class Validations {
                     ErrorLogs.EMPTY_TABLE_NAME.getLog(), InterfaceName.UPDATE.getName()
             ));
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyTable.getMessage());
-        } else if (skyflowId == null) {
+        } else if (data == null) {
+            LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.DATA_IS_REQUIRED.getLog(), InterfaceName.UPDATE.getName()
+            ));
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.DataKeyError.getMessage());
+        } else if (data.isEmpty()) {
+            LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.EMPTY_DATA.getLog(), InterfaceName.UPDATE.getName()
+            ));
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyData.getMessage());
+        } else if (!data.containsKey("skyflow_id")) {
             LogUtil.printErrorLog(Utils.parameterizedString(
                     ErrorLogs.SKYFLOW_ID_IS_REQUIRED.getLog(), InterfaceName.UPDATE.getName()
             ));
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.SkyflowIdKeyError.getMessage());
-        } else if (skyflowId.trim().isEmpty()) {
+        } else if (!(data.get("skyflow_id") instanceof String)) {
+            LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.INVALID_SKYFLOW_ID_TYPE.getLog(), InterfaceName.UPDATE.getName()
+            ));
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidSkyflowIdType.getMessage());
+        } else if (data.get("skyflow_id").toString().trim().isEmpty()) {
             LogUtil.printErrorLog(Utils.parameterizedString(
                     ErrorLogs.EMPTY_SKYFLOW_ID.getLog(), InterfaceName.UPDATE.getName()
             ));
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptySkyflowId.getMessage());
-        } else if (values == null) {
-            LogUtil.printErrorLog(Utils.parameterizedString(
-                    ErrorLogs.VALUES_IS_REQUIRED.getLog(), InterfaceName.UPDATE.getName()
-            ));
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.ValuesKeyError.getMessage());
-        } else if (values.isEmpty()) {
-            LogUtil.printErrorLog(Utils.parameterizedString(
-                    ErrorLogs.EMPTY_VALUES.getLog(), InterfaceName.UPDATE.getName()
-            ));
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyValues.getMessage());
         } else if (tokens != null && tokens.isEmpty()) {
             LogUtil.printErrorLog(Utils.parameterizedString(
                     ErrorLogs.EMPTY_TOKENS.getLog(), InterfaceName.UPDATE.getName()
@@ -528,14 +532,14 @@ public class Validations {
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyTokens.getMessage());
         }
 
-        for (String key : values.keySet()) {
+        for (String key : data.keySet()) {
             if (key == null || key.trim().isEmpty()) {
                 LogUtil.printErrorLog(Utils.parameterizedString(
                         ErrorLogs.EMPTY_OR_NULL_KEY_IN_VALUES.getLog(), InterfaceName.UPDATE.getName()
                 ));
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyKeyInValues.getMessage());
             } else {
-                Object value = values.get(key);
+                Object value = data.get(key);
                 if (value == null || value.toString().trim().isEmpty()) {
                     LogUtil.printErrorLog(Utils.parameterizedString(
                             ErrorLogs.EMPTY_OR_NULL_VALUE_IN_VALUES.getLog(), InterfaceName.UPDATE.getName(), key
@@ -565,7 +569,7 @@ public class Validations {
                     throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), Utils.parameterizedString(
                             ErrorMessage.NoTokensWithByot.getMessage(), Byot.ENABLE.toString()));
                 }
-                validateTokensMapWithTokenStrict(tokens, values);
+                validateTokensMapWithTokenStrict(tokens, data);
                 break;
             case ENABLE_STRICT:
                 if (tokens == null) {
@@ -575,7 +579,7 @@ public class Validations {
                     ));
                     throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), Utils.parameterizedString(
                             ErrorMessage.NoTokensWithByot.getMessage(), Byot.ENABLE_STRICT.toString()));
-                } else if (tokens.size() != values.size()) {
+                } else if (tokens.size() != (data.size() - 1)) {
                     LogUtil.printErrorLog(Utils.parameterizedString(
                             ErrorLogs.INSUFFICIENT_TOKENS_PASSED_FOR_BYOT_ENABLE_STRICT.getLog(),
                             InterfaceName.INSERT.getName()
@@ -583,7 +587,7 @@ public class Validations {
                     throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(),
                             ErrorMessage.InsufficientTokensPassedForByotEnableStrict.getMessage());
                 }
-                validateTokensMapWithTokenStrict(tokens, values);
+                validateTokensMapWithTokenStrict(tokens, data);
                 break;
         }
     }
