@@ -1,4 +1,5 @@
 # Skyflow Java
+
 The Skyflow Java SDK is designed to help with integrating Skyflow into a Java backend.
 
 [![CI](https://img.shields.io/static/v1?label=CI&message=passing&color=green?style=plastic&logo=github)](https://github.com/skyflowapi/skyflow-java/actions)
@@ -9,141 +10,112 @@ The Skyflow Java SDK is designed to help with integrating Skyflow into a Java ba
 
 - [Skyflow Java](#skyflow-java)
 - [Table of Contents](#table-of-contents)
-  - [Features](#features)
-  - [Installation](#installation)
-    - [Requirements](#requirements)
-    - [Configuration](#configuration)
-      - [Gradle users](#gradle-users)
-      - [Maven users](#maven-users)
-  - [Service Account Bearer Token Generation](#service-account-bearer-token-generation)
-  - [Service Account Bearer Token with Context Generation](#service-account-bearer-token-with-context-generation)
-  - [Service Account Scoped Bearer Token Generation](#service-account-scoped-bearer-token-generation)
-  - [Signed Data Tokens Generation](#signed-data-tokens-generation)
-  - [Vault APIs](#vault-apis)
-    - [Insert](#insert)
-    - [InsertBulk](#insertbulk)
-    - [Detokenize](#detokenize)
-    - [Get](#get)
-      - [Use Skyflow IDs](#use-skyflow-ids)
-      - [Use column name and values](#use-column-name-and-values)
-      - [Redaction types](#redaction-types)
-      - [Examples](#examples)
-    - [GetById](#getbyid)
-    - [Update](#update)
-    - [Delete](#delete)
-    - [Invoke Connection](#invoke-connection)
-    - [Query](#query)
-  - [Logging](#logging)
-  - [Reporting a Vulnerability](#reporting-a-vulnerability)
+    - [Features](#features)
+    - [Installation](#installation)
+        - [Requirements](#requirements)
+        - [Configuration](#configuration)
+            - [Gradle users](#gradle-users)
+            - [Maven users](#maven-users)
+    - [Service Account Bearer Token Generation](#service-account-bearer-token-generation)
+    - [Service Account Bearer Token with Context Generation](#service-account-bearer-token-with-context-generation)
+    - [Service Account Scoped Bearer Token Generation](#service-account-scoped-bearer-token-generation)
+    - [Signed Data Tokens Generation](#signed-data-tokens-generation)
+    - [Vault APIs](#vault-apis)
+        - [Insert](#insert-data-into-the-vault)
+        - [Detokenize](#detokenize)
+        - [Get](#get)
+            - [Use Skyflow IDs](#get-by-skyflow-ids)
+            - [Use column name and values](#get-by-column-name-and-column-values)
+            - [Redaction types](#redaction-types)
+        - [Update](#update)
+        - [Delete](#delete)
+        - [Query](#query)
+    - [Connections](#connections)
+        - [Invoke Connection](#invoke-connection)
+    - [Logging](#logging)
+    - [Reporting a Vulnerability](#reporting-a-vulnerability)
 
 ## Features
 
-- Authenticate with a Skyflow service account and generate a bearer token.
-- Insert, retrieve and tokenize sensitive data.
-- Invoke connections to call downstream third party APIs without directly handling sensitive data.
+- Authentication with a Skyflow Service Account and generation of a bearer token
+- Vault API operations to insert, retrieve and tokenize sensitive data
+- Invoking connections to call downstream third party APIs without directly handling sensitive data
 
 ## Installation
 
 ### Requirements
+
 - Java 1.8 and above
 
 ### Configuration
 ---
+
 #### Gradle users
 
 Add this dependency to your project's build file:
+
 ```
-implementation 'com.skyflow:skyflow-java:1.15.0'
+implementation 'com.skyflow:skyflow-java:2.0.0'
 ```
 
 #### Maven users
+
 Add this dependency to your project's POM:
 
 ```xml
-    <dependency>
-        <groupId>com.skyflow</groupId>
-        <artifactId>skyflow-java</artifactId>
-        <version>1.15.0</version>
-    </dependency>
+
+<dependency>
+    <groupId>com.skyflow</groupId>
+    <artifactId>skyflow-java</artifactId>
+    <version>2.0.0</version>
+</dependency>
 ```
+
 ---
 
 ## Service Account Bearer Token Generation
-The [Service Account](https://github.com/skyflowapi/skyflow-java/tree/main/src/main/java/com/skyflow/serviceaccount) java module is used to generate service account tokens from service account credentials file which is downloaded upon creation of service account. The token generated from this module is valid for 60 minutes and can be used to make API calls to vault services as well as management API(s) based on the permissions of the service account.
 
-The `generateBearerToken(filepath)` function takes the credentials file path for token generation, alternatively, you can also send the entire credentials as string, by using `generateBearerTokenFromCreds(credentials)` 
+The [Service Account](https://github.com/skyflowapi/skyflow-java/tree/main/src/main/java/com/skyflow/serviceaccount/util)
+java module is used to generate service account tokens from service account credentials file which is downloaded upon
+creation of service account. The token generated from this module is valid for 60 minutes and can be used to make API
+calls to vault services as well as management API(s) based on the permissions of the service account.
 
-[Example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/TokenGenerationExample.java
+The `BearerToken` utility class allows to generate bearer token with the help of credentials json file. Alternatively,
+you can also send the entire credentials as a string.
+
+[Example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/serviceaccount/BearerTokenGenerationExample.java
 ):
 
 ```java
-
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.serviceaccount.util.BearerToken;
 import com.skyflow.serviceaccount.util.Token;
-import com.skyflow.entities.ResponseToken;
 
-public class TokenGenerationUtil {
-
-    private static String bearerToken = null;
-
-    public static String getSkyflowBearerToken() {
-        try {
-            String filePath = "<YOUR_CREDENTIALS_FILE_PATH>";
-            if(Token.isExpired(bearerToken)) {
-                ResponseToken response = Token.generateBearerToken(filePath);
-                // or Token.generateBearerTokenFromCreds(credentialsString) 
-                bearerToken = response.getAccessToken();
-            }
-        } catch (SkyflowException e) {
-            e.printStackTrace();
-        }
-
-        return bearerToken;
-    }
-}
-```
-
-## Service Account Bearer Token with Context Generation 
-
-Context-Aware Authorization enables you to embed context values into a Bearer token when you generate it, and reference those values in your policies for more dynamic access control of data in the vault or validating signed data tokens during detokenization. It can be used to track end user identity when making API calls using service accounts.
-
-The service account generated with `context_id` identifier enabled can be used to generate bearer tokens with `context`, which is a `jwt` claim for a skyflow generated bearer token. The token generated from this service account will have a `context_identifier` claim and is valid for 60 minutes and can be used to make API calls to vault services as well as management API(s) based on the permissions of the service account.
-
-[Example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/BearerTokenWithContextGenerationExample.java):
-
-``` java
-import com.skyflow.entities.ResponseToken;
-import com.skyflow.errors.SkyflowException;
-import com.skyflow.serviceaccount.util.Token;
 import java.io.File;
 
-public class BearerTokenWithContextGeneration {
-    public static void main(String args[]) {
-        String bearerToken = null;
-        // Generate a bearer token using a service account key file with a context value of "abc".
+public class BearerTokenGenerationExample {
+    public static void main(String[] args) {
+        String token = null;
+        // Generate BearerToken by specifying credentials.json file path
         try {
             String filePath = "<YOUR_CREDENTIALS_FILE_PATH>";
-            BearerToken token = new BearerToken.BearerTokenBuilder()
-                .setCredentials(new File(filePath))
-                .setContext("abc")
-                .build();
-
-            bearerToken = token.getBearerToken();
-            System.out.println(bearerToken);
-        } catch (Exception e) {
+            if (Token.isExpired(token)) {
+                BearerToken bearerToken = BearerToken.builder().setCredentials(new File(filePath)).build();
+                token = bearerToken.getBearerToken();
+            }
+            System.out.println(token);
+        } catch (SkyflowException e) {
             e.printStackTrace();
         }
-        // Generate a bearer token using a service account key string with a context value of "abc".
+
+        // Generate BearerToken by specifying credentials.json as string
         try {
             String fileContents = "<YOUR_CREDENTIALS_FILE_CONTENTS_AS_STRING>";
-            BearerToken token = new BearerToken.BearerTokenBuilder()
-                .setCredentials(fileContents)
-                .setContext("abc")
-                .build();
-
-            bearerToken = token.getBearerToken();
-            System.out.println(bearerToken);
-
+            if (Token.isExpired(token)) {
+                BearerToken bearerToken = BearerToken.builder().setCredentials(fileContents).build();
+                token = bearerToken.getBearerToken();
+            }
+            System.out.println(token);
         } catch (SkyflowException e) {
             e.printStackTrace();
         }
@@ -151,1230 +123,1353 @@ public class BearerTokenWithContextGeneration {
 }
 ```
 
-Note: 
-- You can pass either a service account key credentials file path or a service account key credentials as string to the `setCredentials` method of the BearerTokenBuilder class.
-- If you pass both a file path and string to the `setCredentials` method, the last method used takes precedence.
-- To generate multiple bearer tokens using a thread, see this [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/BearerTokenGenerationUsingThreadsExample.java)
+## Service Account Bearer Token with Context Generation
+
+Context-Aware Authorization enables you to embed context values into a Bearer token when you generate it, and reference
+those values in your policies for more dynamic access control of data in the vault or validating signed data tokens
+during detokenization. It can be used to track end user identity when making API calls using service accounts.
+
+The service account generated with `context_id` identifier enabled can be used to generate bearer tokens with `context`,
+which is a `jwt` claim for a skyflow generated bearer token. The token generated from this service account will have a
+`context_identifier` claim and is valid for 60 minutes and can be used to make API calls to vault services as well as
+management API(s) based on the permissions of the service account.
+
+[Example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/serviceaccount/BearerTokenGenerationWithContextExample.java):
+
+``` java
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.serviceaccount.util.BearerToken;
+
+import java.io.File;
+
+public class BearerTokenGenerationWithContextExample {
+    public static void main(String[] args) {
+        String bearerToken = null;
+        // Generate BearerToken with context by specifying credentials.json file path
+        try {
+            String filePath = "<YOUR_CREDENTIALS_FILE_PATH>";
+            BearerToken token = BearerToken.builder()
+                    .setCredentials(new File(filePath))
+                    .setCtx("abc")
+                    .build();
+
+            bearerToken = token.getBearerToken();
+            System.out.println(bearerToken);
+        } catch (SkyflowException e) {
+            e.printStackTrace();
+        }
+
+        // Generate BearerToken with context by specifying credentials.json as string
+        try {
+            String fileContents = "<YOUR_CREDENTIALS_FILE_CONTENTS_AS_STRING>";
+            BearerToken token = BearerToken.builder()
+                    .setCredentials(fileContents)
+                    .setCtx("abc")
+                    .build();
+
+            bearerToken = token.getBearerToken();
+            System.out.println(bearerToken);
+        } catch (SkyflowException e) {
+            e.printStackTrace();
+        }
+    }
+}
+```
 
 ## Service Account Scoped Bearer Token Generation
 
-A service account that has multiple roles can generate bearer tokens with access restricted to a specific role by providing the appropriate `roleID`. Generated bearer tokens are valid for 60 minutes and can only perform operations with the permissions associated with the specified role.
+A service account that has multiple roles can generate bearer tokens with access restricted to a specific role by
+providing the appropriate `roleID`. Generated bearer tokens are valid for 60 minutes and can only perform operations
+with the permissions associated with the specified role.
 
-[Example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/ScopedTokenGenerationExample.java):
+[Example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/serviceaccount/ScopedTokenGenerationExample.java):
 
 ```java
-import java.io.File;
-
-public class ScopedTokenGeneration {
-    public static void main(String args[]) {
-        String scopedToken = null;
-        // Generate a bearer token using a service account file path scoped to a specific role.
-        try {
-            String filePath = "<YOUR_CREDENTIALS_FILE_PATH>";
-            BearerToken token = new BearerToken.BearerTokenBuilder()
-                .setCredentials(new File(filePath))
-                .setRoles(new String[] {
-                    "roleID"
-                })
-                .build();
-
-            scopedToken = token.getBearerToken();
-            System.out.println(scopedToken);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-}
-```
-Note: 
-- You can pass either a service account key credentials file path or a service account key credentials as string to the `setCredentials` method of the BearerTokenBuilder class.
-- If you pass both a file path and string to the `setCredentials` method, the last method used takes precedence.
-## Signed Data Tokens Generation
-
-Skyflow generates data tokens when sensitive data is inserted into the vault. These data tokens can be digitally signed with the private key of the service account credentials, which adds an additional layer of protection. Signed tokens can be detokenized by passing the signed data token and a bearer token generated from service account credentials. The service account must have appropriate permissions and context to detokenize the signed data tokens.
-
-
-[Example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/SignedTokenGenerationExample.java):
-
-``` java
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.serviceaccount.util.BearerToken;
+
 import java.io.File;
-import java.util.List;
+import java.util.ArrayList;
 
-public class SignedTokenGeneration {
-    public static void main(String args[]) {
-        List < SignedDataTokenResponse > signedTokenValue;
-        // Generate signed data tokens using a service account file path, context information, and a time to live.
+public class ScopedTokenGenerationExample {
+    public static void main(String[] args) {
+        String scopedToken = null;
+        // Generate Scoped Token  by specifying credentials.json file path
         try {
+            ArrayList<String> roles = new ArrayList<>();
+            roles.add("ROLE_ID");
             String filePath = "<YOUR_CREDENTIALS_FILE_PATH>";
-            String context = "abc";
-            SignedDataTokens signedToken = new SignedDataTokens.SignedDataTokensBuilder()
-                .setCredentials(new File(filePath))
-                .setContext(context)
-                .setTimeToLive(30.0) // Time to live set in seconds.
-                .setDataTokens(new String[] {
-                    "dataToken1"
-                }).build();
+            BearerToken bearerToken = BearerToken.builder()
+                    .setCredentials(new File(filePath))
+                    .setRoles(roles)
+                    .build();
 
-            signedTokenValue = signedToken.getSignedDataTokens();
-            System.out.println(signedTokenValue);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        // Generate signed data tokens using a service account key string, context information, and a time to live.
-        try {
-            String fileContents = "<YOUR_CREDENTIALS_FILE_CONTENTS_AS_STRING>";
-            String context = "abc";
-            SignedDataTokens signedToken = new SignedDataTokens.SignedDataTokensBuilder()
-                .setCredentials(fileContents)
-                .setContext(context)
-                .setTimeToLive(30.0) // Time to live set in seconds.
-                .setDataTokens(new String[] {
-                    "dataToken1"
-                }).build();
-
-            signedTokenValue = signedToken.getSignedDataTokens();
-            System.out.println(signedTokenValue);
-
+            scopedToken = bearerToken.getBearerToken();
+            System.out.println(scopedToken);
         } catch (SkyflowException e) {
             e.printStackTrace();
         }
     }
 }
 ```
+
+Notes:
+
+- You can pass either a service account key credentials file path or a service account key credentials as string to the
+  `setCredentials` method of the BearerTokenBuilder class.
+- If you pass both a file path and string to the `setCredentials` method, the last method used takes precedence.
+- To generate multiple bearer tokens using a thread, see
+  this [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/serviceaccount/BearerTokenGenerationUsingThreadsExample.java)
+
+## Signed Data Tokens Generation
+
+Skyflow generates data tokens when sensitive data is inserted into the vault. These data tokens can be digitally signed
+with the private key of the service account credentials, which adds an additional layer of protection. Signed tokens can
+be detokenized by passing the signed data token and a bearer token generated from service account credentials. The
+service account must have appropriate permissions and context to detokenize the signed data tokens.
+
+[Example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/serviceaccount/SignedTokenGenerationExample.java):
+
+``` java
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.serviceaccount.util.SignedDataTokenResponse;
+import com.skyflow.serviceaccount.util.SignedDataTokens;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+
+public class SignedTokenGenerationExample {
+    public static void main(String[] args) {
+        List<SignedDataTokenResponse> signedTokenValues;
+        // Generate Signed data token with context by specifying credentials.json file path
+        try {
+            String filePath = "<YOUR_CREDENTIALS_FILE_PATH>";
+            String context = "abc";
+            ArrayList<String> dataTokens = new ArrayList<>();
+            dataTokens.add("YOUR_DATA_TOKEN_1");
+            SignedDataTokens signedToken = SignedDataTokens.builder()
+                    .setCredentials(new File(filePath))
+                    .setCtx(context)
+                    .setTimeToLive(30) // in seconds
+                    .setDataTokens(dataTokens)
+                    .build();
+            signedTokenValues = signedToken.getSignedDataTokens();
+            System.out.println(signedTokenValues);
+        } catch (SkyflowException e) {
+            e.printStackTrace();
+        }
+
+        // Generate Signed data token with context by specifying credentials.json as string
+        try {
+            String fileContents = "<YOUR_CREDENTIALS_FILE_CONTENTS_AS_STRING>";
+            String context = "abc";
+            ArrayList<String> dataTokens = new ArrayList<>();
+            dataTokens.add("YOUR_DATA_TOKEN_1");
+            SignedDataTokens signedToken = SignedDataTokens.builder()
+                    .setCredentials(fileContents)
+                    .setCtx(context)
+                    .setTimeToLive(30) // in seconds
+                    .setDataTokens(dataTokens)
+                    .build();
+            signedTokenValues = signedToken.getSignedDataTokens();
+            System.out.println(signedTokenValues);
+        } catch (SkyflowException e) {
+            e.printStackTrace();
+        }
+    }
+}
+```
+
 Response:
 
 ``` java
 [
     {
-        "token":"5530-4316-0674-5748",
-        "signedToken":"signed_token_eyJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJzLCpZjA"
+        "dataToken":"5530-4316-0674-5748",
+        "signedDataToken":"signed_token_eyJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJzLCpZjA"
     }
 ]
 ```
-Note: 
-- You can pass either a service account key credentials file path or a service account key credentials as string to the `setCredentials` method of the SignedDataTokensBuilder class.
+
+Notes:
+
+- You can pass either a service account key credentials file path or a service account key credentials as string to the
+  `setCredentials` method of the SignedDataTokensBuilder class.
 - If you pass both a file path and string to the `setCredentials` method, the last method used takes precedence.
 - Time to live value expects time as seconds.
 - The default time to live value is 60 seconds.
 
 ## Vault APIs
-The [Vault](https://github.com/skyflowapi/skyflow-java/tree/main/src/main/java/com/skyflow/vault) module is used to perform operations on the vault such as inserting records, detokenizing tokens, retrieving tokens for a skyflow_id and to invoke a connection.
+
+The [Vault](https://github.com/skyflowapi/skyflow-java/tree/main/src/main/java/com/skyflow/vault) module is used to
+perform operations on the vault such as inserting records, detokenizing tokens and retrieving tokens for a skyflow_id.
 
 To use this module, the skyflow client must first be initialized as follows.
+
 ```java
-import com.skyflow.vault.Skyflow;
-import com.skyflow.entities.SkyflowConfiguration;
+import com.skyflow.Skyflow;
+import com.skyflow.config.Credentials;
+import com.skyflow.config.VaultConfig;
+import com.skyflow.enums.Env;
+import com.skyflow.enums.LogLevel;
+import com.skyflow.errors.SkyflowException;
 
-// DemoTokenProvider class is an implementation of the TokenProvider interface
-DemoTokenProvider demoTokenProvider = new DemoTokenProvider(); 
+public class InitSkyflowClient {
+    public static void main(String[] args) throws SkyflowException {
+        // Pass only one of apiKey, token, credentialsString or path in credentials        
+        Credentials credentials = new Credentials();
+        credentials.setToken("<BEARER_TOKEN>");
 
-SkyflowConfiguration skyflowConfig = new SkyflowConfiguration(<VAULT_ID>,<VAULT_URL>,demoTokenProvider);
+        VaultConfig config = new VaultConfig();
+        config.setVaultId("<VAULT_ID>");      // Primary vault
+        config.setClusterId("<CLUSTER_ID>");  // ID from your vault URL Eg https://{clusterId}.vault.skyflowapis.com
+        config.setEnv(Env.PROD);              // Env by default is set to PROD
+        config.setCredentials(credentials);   // Individual credentials
 
-Skyflow skyflowClient = Skyflow.init(skyflowConfig);
-```
-Example implementation of DemoTokenProvider using credentials file path is as follows
-```java
-import com.skyflow.entities.TokenProvider;
+        JsonObject credentialsObject = new JsonObject();
+        credentialsObject.addProperty("clientID", "<YOUR_CLIENT_ID>");
+        credentialsObject.addProperty("clientName", "<YOUR_CLIENT_NAME>");
+        credentialsObject.addProperty("TokenURI", "<YOUR_TOKEN_URI>");
+        credentialsObject.addProperty("keyID", "<YOUR_KEY_ID>");
+        credentialsObject.addProperty("privateKey", "<YOUR_PRIVATE_KEY>");
 
-static class DemoTokenProvider implements TokenProvider {
-    
-        @Override
-        public String getBearerToken() throws Exception {
-            ResponseToken res = null;
-            try {
-                String filePath = "<your_credentials_file_path>";
-                res = Token.generateBearerToken(filePath);
-            } catch (SkyflowException e) {
-                e.printStackTrace();
-            }
-            return res.getAccessToken();
-        }
+        // To generate Bearer Token from credentials string.
+        Credentials skyflowCredentials = new Credentials();
+        skyflowCredentials.setCredentialsString(credentialsObject.toString());
+
+        Skyflow skyflowClient = Skyflow.builder()
+                .setLogLevel(LogLevel.INFO)                // Set log level. By default, it is set to ERROR
+                .addVaultConfig(config)                    // Add vault config
+                .addSkyflowCredentials(skyflowCredentials) // Skyflow credentials will be used if no individual credentials are passed
+                .build();
     }
-```
-
-Example implementation of DemoTokenProvider using credentials file content is as follows
-```java
-import com.skyflow.entities.TokenProvider;
-
-static class DemoTokenProvider implements TokenProvider { 
-    @Override
-    public String getBearerToken() throws Exception {
-        ResponseToken res = null;
-        try {
-            String filePath = "<your_credentials_file_content>";
-            res = Token.generateBearerTokenFromCreds(filePath);
-        } catch (SkyflowException e) {
-            e.printStackTrace();
-        }
-        return res.getAccessToken();
-    }
-    return res.getAccessToken();
 }
 ```
+
+Notes:
+
+- If both Skyflow common credentials and individual credentials at the configuration level are provided, the individual
+  credentials at the configuration level will take priority.
 
 All Vault APIs must be invoked using a client instance.
 
-## Insert
+## Insert data into the vault
 
-To insert data into your vault, use the **insert(JSONObject insertInput, InsertOptions options)** method. The first parameter `insertInput` is a JSON object that must have a `records` key and takes an array of records to insert into the vault as a value. The second parameter, `options` is an `InsertOptions` object that provides further options for your insert call, including **upsert** operations as shown below:
+To insert data into your vault, use the `insert` method. The `InsertRequest` class is used to create an insert request,
+which contains the values to be inserted in the form of a list of records. Additionally, you can provide options in the
+insert request, such as returning tokenized data, upserting records, and continuing on error.
+
+Insert call schema
+
 ```java
-import com.skyflow.entities.InsertOptions;
-import com.skyflow.entities.UpsertOption;
-// initialize Skyflow
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.data.InsertRequest;
+import com.skyflow.vault.data.InsertResponse;
 
-// construct insert input
-JSONObject records = new JSONObject();
-JSONArray recordsArray = new JSONArray();
+import java.util.ArrayList;
+import java.util.HashMap;
 
-JSONObject record = new JSONObject();
-record.put("table", "<your_table_name>");
+public class InsertSchema {
+    public static void main(String[] args) {
+        try {
+            // Initialize skyflow client   
+            ArrayList<HashMap<String, Object>> insertData = new ArrayList<>();
 
-JSONObject fields = new JSONObject();
-fields.put("<field_name>", "<field_value>");
-record.put("fields", fields);
-recordsArray.add(record);
-records.put("records", recordsArray);
+            HashMap<String, Object> insertRecord1 = new HashMap<>();
+            insertRecord1.put("<FIELD_NAME_1>", "<VALUE_1>");
+            insertRecord1.put("<FIELD_NAME_2>", "<VALUE_2>");
 
-// Create an upsert option and insert it into the UpsertOption array.
-UpsertOption[] upsertOptions = new UpsertOption[1];
-upsertOptions[0] = new UpsertOption(
-          '<table_name>',    // Table name.
-          '<unique_column_name>' // Unique column in the table.
-        );
-// Indicates whether or not tokens should be returned for the inserted data. Defaults to 'True'
-InsertOptions insertOptions = new InsertOptions(
-            true,
-            upsertOptions
-        );
-   
-```
-An [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/InsertWithUpsertExample.java) of insert call with upsert support
-```java
-JSONObject recordsJson = new JSONObject();
-JSONArray recordsArrayJson = new JSONArray();
+            HashMap<String, Object> insertRecord2 = new HashMap<>();
+            insertRecord2.put("<FIELD_NAME_1>", "<VALUE_1>");
+            insertRecord2.put("<FIELD_NAME_2>", "<VALUE_2>");
 
-JSONObject recordJson = new JSONObject();
-recordJson.put("table", "cards");
+            insertData.add(insertRecord1);
+            insertData.add(insertRecord2);
 
-JSONObject fieldsJson = new JSONObject();
-fields.put("cardNumber", "41111111111");
-fields.put("cvv","123");
-
-recordJson.put("fields", fieldsJson);
-recordsArrayJson.add(record);
-recordsJson.put("records", recordsArrayJson);
-
-// Create an Uupsert option and insert it into the UpsertOptions array.
-UpsertOption[] upsertOptions = new UpsertOption[1];
-upsertOptions[0] = new UpsertOption("cards", "cardNumber");
-
-// Pass Upsert options in the insert method options.
-InsertOptions insertOptions = new InsertOptions(true, upsertOptions);
-
-try {
-    JSONObject insertResponse = skyflowClient.insert(records,insertOptions);
-    System.out.println(insertResponse);
-} catch (SkyflowException exception) {
-    System.out.println(exception);
+            InsertRequest insertRequest = InsertRequest.builder().table("<TABLE_NAME>").values(insertData).build();
+            InsertResponse insertResponse = skyflowClient.vault("<VAULT_ID>").insert();
+            System.out.println("Insert Response: " + insertResponse);
+        } catch (SkyflowException e) {
+            System.out.println("Error occurred: ");
+            System.out.println(e);
+        }
+    }
 }
 ```
-Sample insert Response
+
+Insert
+call [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/vault/InsertExample.java)
+
+```java
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.data.InsertRequest;
+import com.skyflow.vault.data.InsertResponse;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+
+public class InsertExample {
+    public static void main(String[] args) {
+        try {
+            // Initialize skyflow client   
+            ArrayList<HashMap<String, Object>> insertData = new ArrayList<>();
+            HashMap<String, Object> insertRecord = new HashMap<>();
+            insertRecord.put("card_number", "4111111111111111");
+            insertRecord.put("cardholder_name", "john doe");
+            insertData.add(insertRecord);
+
+            InsertRequest insertRequest = InsertRequest.builder()
+                    .table("table1")
+                    .values(insertData)
+                    .returnTokens(true)
+                    .build();
+            InsertResponse insertResponse = skyflowClient.vault("9f27764a10f7946fe56b3258e117").insert();
+            System.out.println("Insert Response: " + insertResponse);
+        } catch (SkyflowException e) {
+            System.out.println("Error occurred: ");
+            System.out.println(e);
+        }
+    }
+}
+```
+
+Skyflow returns tokens for the record you just inserted.
+
+```js
+Insert Response: {
+	"insertedFields": [{
+		"card_number": "5484-7829-1702-9110",
+		"request_index": "0",
+		"skyflow_id": "9fac9201-7b8a-4446-93f8-5244e1213bd1",
+		"cardholder_name": "b2308e2a-c1f5-469b-97b7-1f193159399b",
+	}],
+	"errors": []
+}
+```
+
+Insert call example with `continueOnError` option
+
+```java
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.data.InsertRequest;
+import com.skyflow.vault.data.InsertResponse;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+
+public class InsertExample {
+    public static void main(String[] args) {
+        try {
+            // Initialize skyflow client   
+            ArrayList<HashMap<String, Object>> insertData = new ArrayList<>();
+
+            HashMap<String, Object> insertRecord1 = new HashMap<>();
+            insertRecord1.put("card_number", "4111111111111111");
+            insertRecord1.put("cardholder_name", "john doe");
+
+            HashMap<String, Object> insertRecord2 = new HashMap<>();
+            insertRecord2.put("card_numbe", "4111111111111111");
+            insertRecord2.put("cardholder_name", "jane doe");
+
+            insertData.add(insertRecord1);
+            insertData.add(insertRecord2);
+
+            InsertRequest insertRequest = InsertRequest.builder()
+                    .table("table1")
+                    .values(insertData)
+                    .returnTokens(true)
+                    .continueOnError(true)
+                    .build();
+            InsertResponse insertResponse = skyflowClient.vault("9f27764a10f7946fe56b3258e117").insert();
+            System.out.println("Insert Response: " + insertResponse);
+        } catch (SkyflowException e) {
+            System.out.println("Error occurred: ");
+            System.out.println(e);
+        }
+    }
+}
+```
+
+Sample response:
+
 ```js
 {
-    "records": [
-        {
-            "table": "cards",
-            "fields": {
-                "skyflow_id": "16419435-aa63-4823-aae7-19c6a2d6a19f",
-                "cardNumber": "f3907186-e7e2-466f-91e5-48e12c2bcbc1",
-                "cvv": "1989cb56-63da-4482-a2df-1f74cd0dd1a5",
-            },
-        }
-    ]
+	"insertedFields": [{
+		"card_number": "5484-7829-1702-9110",
+		"request_index": "0",
+		"skyflow_id": "9fac9201-7b8a-4446-93f8-5244e1213bd1",
+		"cardholder_name": "b2308e2a-c1f5-469b-97b7-1f193159399b",
+	}],
+	"errors": [{
+		"request_index": "1",
+		"error": "Insert failed. Column card_numbe is invalid. Specify a valid column.",
+	}]
 }
 ```
 
-An [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/InsertWithContinueOnErrorExample.java) of Insert call with `continueOnError` support:
+Insert call example with `upsert` option
+
 ```java
-JSONObject records = new JSONObject();
-JSONArray recordsArray = new JSONArray();
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.data.InsertRequest;
+import com.skyflow.vault.data.InsertResponse;
 
-JSONObject invalidRecord = new JSONObject();
-invalidRecord.put("table", "cards");
-JSONObject invalidRecordFields = new JSONObject();
-invalidRecordFields.put("namee", "john doe");
-invalidRecordFields.put("card_number", "4111111111111111");
-invalidRecordFields.put("cvv", "1125");
-invalidRecord.put("fields", invalidRecordFields);
+import java.util.ArrayList;
+import java.util.HashMap;
 
-JSONObject validRecord = new JSONObject();
-validRecord.put("table", "cards");
-JSONObject validRecordFields = new JSONObject();
-validRecordFields.put("name", "jane doe");
-validRecordFields.put("card_number", "4111111111111111");
-validRecordFields.put("cvv", "1125");
-validRecord.put("fields", validRecordFields);
+public class InsertExample {
+    public static void main(String[] args) {
+        try {
+            // Initialize skyflow client   
+            ArrayList<HashMap<String, Object>> upsertData = new ArrayList<>();
+            HashMap<String, Object> upsertRecord = new HashMap<>();
+            upsertRecord.put("cardholder_name", "jane doe");
+            upsertData.add(upsertRecord);
 
-recordsArray.add(invalidRecord);
-recordsArray.add(validRecord);
-records.put("records", recordsArray);
-
-try {
-    InsertOptions insertOptions = new InsertOptions(true, true);
-    JSONObject insertResponse = skyflowClient.insert(records, insertOptions);
-    System.out.println(insertResponse);
-} catch (SkyflowException e) {
-    System.out.println(e);
-    e.printStackTrace();
+            InsertRequest insertRequest = InsertRequest.builder()
+                    .table("table1")
+                    .values(upsertData)
+                    .returnTokens(true)
+                    .upsert("cardholder_name")
+                    .build();
+            InsertResponse insertResponse = skyflowClient.vault("9f27764a10f7946fe56b3258e117").insert();
+            System.out.println("Insert Response: " + insertResponse);
+        } catch (SkyflowException e) {
+            System.out.println("Error occurred: ");
+            System.out.println(e);
+        }
+    }
 }
 ```
 
-Sample Response:
+Skyflow returns tokens, with `upsert` support, for the record you just inserted.
+
 ```js
 {
-    "records": [
-        {
-            "table": "cards",
-            "fields": {
-                "skyflow_id": "16419435-aa63-4823-aae7-19c6a2d6a19f",
-                "cardNumber": "f3907186-e7e2-466f-91e5-48e12c2bcbc1",
-                "cvv": "1989cb56-63da-4482-a2df-1f74cd0dd1a5",
-                "name": "245d3a0f-a2d3-443b-8a20-8c17de86e186",
-            },
-            "request_index": 1,
-        }
-    ],
-    "errors": [
-        {
-            "error": {
-                "code":400,
-                "description":"Invalid field present in JSON namee - requestId: 87fb2e32-6287-4e61-8304-9268df12bfe8",
-                "request_index": 0,
-            }
-        }
-    ]
-}
-```
-
-## InsertBulk
-
-To insert data into your vault using Bulk operation, use the **insertBulk(JSONObject insertInput, InsertBulkOptions options)** method. The first parameter `insertInput` is a JSON object that must have a `records` key and takes an array of records to insert into the vault as a value. The second parameter, `options` is an `InsertOptions` object that provides further options for your insert call, including **upsert** operations as shown below:
-
-```java
-import com.skyflow.entities.InsertOptions;
-import com.skyflow.entities.UpsertOption;
-// initialize Skyflow
-
-// construct insert input
-JSONObject records = new JSONObject();
-JSONArray recordsArray = new JSONArray();
-
-JSONObject record = new JSONObject();
-record.put("table", "<your_table_name>");
-
-JSONObject fields = new JSONObject();
-fields.put("<field_name>", "<field_value>");
-record.put("fields", fields);
-recordsArray.add(record);
-records.put("records", recordsArray);
-
-// Create an upsert option and insert it into the UpsertOption array.
-UpsertOption[] upsertOptions = new UpsertOption[1];
-upsertOptions[0] = new UpsertOption(
-          '<table_name>',    // Table name.
-          '<unique_column_name>' // Unique column in the table.
-        );
-// Indicates whether or not tokens should be returned for the inserted data. Defaults to 'True'
-InsertBulkOptions insertOptions = new InsertBulkOptions(
-            true,
-            upsertOptions
-        );
-```
-An [example]() of insert call with upsert support:
-
-```java
-JSONObject recordsJson = new JSONObject();
-JSONArray recordsArrayJson = new JSONArray();
-
-JSONObject recordJson = new JSONObject();
-recordJson.put("table", "cards");
-
-JSONObject fieldsJson = new JSONObject();
-fields.put("cardNumber", "41111111111");
-fields.put("cvv","123");
-
-recordJson.put("fields", fieldsJson);
-recordsArrayJson.add(record);
-recordsJson.put("records", recordsArrayJson);
-
-// Create an Uupsert option and insert it into the UpsertOptions array.
-UpsertOption[] upsertOptions = new UpsertOption[1];
-upsertOptions[0] = new UpsertOption("cards", "cardNumber");
-
-// Pass Upsert options in the insert method options.
-InsertBulkOptions insertOptions = new InsertBulkOptions(true, upsertOptions);
-
-try {
-    JSONObject insertResponse = skyflowClient.insertBulk(records,insertOptions);
-    System.out.println(insertResponse);
-} catch (SkyflowException exception) {
-    System.out.println(exception);
-}
-```
-Sample insert Response
-```js
-{
-    "records": [
-        {
-            "table": "cards",
-            "fields": {
-                "skyflow_id": "16419435-aa63-4823-aae7-19c6a2d6a19f",
-                "cardNumber": "f3907186-e7e2-466f-91e5-48e12c2bcbc1",
-                "cvv": "1989cb56-63da-4482-a2df-1f74cd0dd1a5",
-            },
-        }
-    ]
-}
-```
-
-An [example]() of Insert using bulk call:
-```java
-JSONObject records = new JSONObject();
-JSONArray recordsArray = new JSONArray();
-
-JSONObject invalidRecord = new JSONObject();
-invalidRecord.put("table", "cards");
-JSONObject invalidRecordFields = new JSONObject();
-invalidRecordFields.put("namee", "john doe");
-invalidRecordFields.put("card_number", "4111111111111111");
-invalidRecordFields.put("cvv", "1125");
-invalidRecord.put("fields", invalidRecordFields);
-
-JSONObject validRecord = new JSONObject();
-validRecord.put("table", "cards");
-JSONObject validRecordFields = new JSONObject();
-validRecordFields.put("name", "jane doe");
-validRecordFields.put("card_number", "4111111111111111");
-validRecordFields.put("cvv", "1125");
-validRecord.put("fields", validRecordFields);
-
-recordsArray.add(invalidRecord);
-recordsArray.add(validRecord);
-records.put("records", recordsArray);
-
-try {
-    InsertBulkOptions insertOptions = new InsertBulkOptions(true);
-    JSONObject insertResponse = skyflowClient.insertBulk(records, insertOptions);
-    System.out.println(insertResponse);
-} catch (SkyflowException e) {
-    System.out.println(e);
-    e.printStackTrace();
-}
-```
-
-Sample Response:
-```js
-{
-    "records": [
-        {
-            "table": "cards",
-            "fields": {
-                "skyflow_id": "16419435-aa63-4823-aae7-19c6a2d6a19f",
-                "cardNumber": "f3907186-e7e2-466f-91e5-48e12c2bcbc1",
-                "cvv": "1989cb56-63da-4482-a2df-1f74cd0dd1a5",
-                "name": "245d3a0f-a2d3-443b-8a20-8c17de86e186",
-            },
-            "request_index": 1,
-        }
-    ],
-    "errors": [
-        {
-            "error": {
-                "code":400,
-                "description":"Invalid field present in JSON namee - requestId: 87fb2e32-6287-4e61-8304-9268df12bfe8",
-                "request_index": 0,
-            }
-        }
-    ]
+	"insertedFields": [{
+		"skyflowId": "9fac9201-7b8a-4446-93f8-5244e1213bd1",
+		"cardholder_name": "73ce45ce-20fd-490e-9310-c1d4f603ee83" 
+	}],
+	"errors": []
 }
 ```
 
 ## Detokenize
 
-To retrieve record data using tokens, use the **detokenize(JSONObject records)** method. TheJSONObject must have a `records` key that takes an JSON array of record objects to fetch:
+To retrieve tokens from your vault, you can use the `detokenize` method. The `DetokenizeRequest` class requires a list
+of detokenization data to be provided as input. Additionally, the redaction type and continue on error are optional
+parameters.
 
 ```java
-JSONObject recordsJson = new JSONObject();
+import com.skyflow.enums.RedactionType;
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.tokens.DetokenizeRequest;
+import com.skyflow.vault.tokens.DetokenizeResponse;
 
-JSONObject recordJson = new JSONObject();
-recordJson.put("token", "<token>");
-recordJson.put("redaction", <Skyflow.RedactionType>); // Optional. Redaction to apply for retrieved data. E.g. RedactionType.DEFAULT.toString()
+import java.util.ArrayList;
 
-JSONArray recordsArrayJson = new JSONArray();
-recordsArrayJson.put(recordJson);
-
-recordsJson.put("records", recordsArrayJson);
-```
-
-Note: `redaction` defaults to [`RedactionType.PLAIN_TEXT`](#redaction-types).
-
-The following [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/DetokenizeExample.java) code makes a detokenize call to reveal the masked value of a token:
-
-```java
-JSONObject recordsJson = new JSONObject();
-
-JSONObject validRecordJson = new JSONObject();
-validRecordJson.put("token", "45012507-f72b-4f5c-9bf9-86b133bae719");
-validRecordJson.put("redaction", RedactionType.MASKED.toString());
-
-JSONObject invalidRecordJson = new JSONObject();
-invalidRecordJson.put("token","invalid-token");
-
-JSONArray recordsArrayJson = new JSONArray();
-recordsArrayJson.put(validRecordJson);
-recordsArrayJson.put(invalidRecordJson);
-
-recordsJson.put("records", recordsArrayJson);
-try {
-    JSONObject detokenizeResponse = skyflowClient.detokenize(recordsJson);
-    System.out.println(detokenizeResponse);
-} catch (SkyflowExeception exception) {
-    if (exception.getData() != null)
-        System.out.println(exception.getData());
-    else
-        System.out.println(exception);
+public class DetokenizeSchema {
+    public static void main(String[] args) {
+        try {
+            // Initialize skyflow client
+            ArrayList<String> tokens = new ArrayList<>();
+            tokens.add("<YOUR_TOKEN_VALUE_1>");
+            tokens.add("<YOUR_TOKEN_VALUE_2>");
+            tokens.add("<YOUR_TOKEN_VALUE_3>");
+            DetokenizeRequest detokenizeRequest = DetokenizeRequest.builder()
+                    .tokens(tokens)
+                    .continueOnError(true)
+                    .redactionType(RedactionType.PLAIN_TEXT)
+                    .build();
+            DetokenizeResponse detokenizeResponse = skyflowClient.vault("<VAULT_ID>").detokenize(detokenizeRequest);
+            System.out.println(detokenizeResponse);
+        } catch (SkyflowException e) {
+            System.out.println("Error occurred: ");
+            System.out.println(e);
+        }
+    }
 }
 ```
-The sample response:
+
+Notes:
+
+- `redactionType` defaults to [`RedactionType.PLAIN_TEXT`](#redaction-types).
+- `continueOnError` defaults to `true`.
+
+An [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/vault/DetokenizeExample.java)
+of a detokenize call:
+
+```java
+import com.skyflow.enums.RedactionType;
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.tokens.DetokenizeRequest;
+import com.skyflow.vault.tokens.DetokenizeResponse;
+
+import java.util.ArrayList;
+
+public class DetokenizeExample {
+    public static void main(String[] args) {
+        try {
+            // Initialize skyflow client
+            ArrayList<String> tokens = new ArrayList<>();
+            tokens.add("9738-1683-0486-1480");
+            tokens.add("6184-6357-8409-6668");
+            tokens.add("4914-9088-2814-3840");
+            DetokenizeRequest detokenizeRequest = DetokenizeRequest.builder()
+                    .tokens(tokens)
+                    .continueOnError(false)
+                    .redactionType(RedactionType.PLAIN_TEXT)
+                    .build();
+            DetokenizeResponse detokenizeResponse = skyflowClient.vault("9f27764a10f7946fe56b3258e117").detokenize(detokenizeRequest);
+            System.out.println(detokenizeResponse);
+        } catch (SkyflowException e) {
+            System.out.println("Error occurred: ");
+            System.out.println(e);
+        }
+    }
+}
+```
+
+Sample response:
+
 ```js
 {
-   "records": [
-      {
-        "token": "45012507-f72b-4f5c-9bf9-86b133bae719",
-        "value": "j***oe"
-      }
-    ],
-  "errors": [
-      {
-         "token": "invalid-token",
-         "error": {
-           "code": 404,
-           "description": "Tokens not found for invalid-token"
-         }
-     }
-   ]
+	"detokenizedFields": [{
+		"token": "9738-1683-0486-1480",
+		"value": "4111111111111115",
+		"type": "STRING",
+	}, {
+		"token": "6184-6357-8409-6668",
+		"value": "4111111111111119",
+		"type": "STRING",
+	}, {
+		"token": "4914-9088-2814-3840",
+		"value": "4111111111111118",
+		"type": "STRING",
+	}]
+	"errors": []
+}
+
+```
+
+An example of a detokenize call with `continueOnError` option:
+
+```java
+import com.skyflow.enums.RedactionType;
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.tokens.DetokenizeRequest;
+import com.skyflow.vault.tokens.DetokenizeResponse;
+
+import java.util.ArrayList;
+
+public class DetokenizeExample {
+    public static void main(String[] args) {
+        try {
+            // Initialize skyflow client
+            ArrayList<String> tokens = new ArrayList<>();
+            tokens.add("9738-1683-0486-1480");
+            tokens.add("6184-6357-8409-6668");
+            tokens.add("4914-9088-2814-384");
+            DetokenizeRequest detokenizeRequest = DetokenizeRequest.builder()
+                    .tokens(tokens)
+                    .continueOnError(true)
+                    .redactionType(RedactionType.PLAIN_TEXT)
+                    .build();
+            DetokenizeResponse detokenizeResponse = skyflowClient.vault("9f27764a10f7946fe56b3258e117").detokenize(detokenizeRequest);
+            System.out.println(detokenizeResponse);
+        } catch (SkyflowException e) {
+            System.out.println("Error occurred: ");
+            System.out.println(e);
+        }
+    }
+}
+```
+
+Sample response:
+
+```js
+{
+	"detokenizedFields": [{
+		"token": "9738-1683-0486-1480",
+		"value": "4111111111111115",
+		"type": "STRING",
+	}, {
+		"token": "6184-6357-8409-6668",
+		"value": "4111111111111119",
+		"type": "STRING",
+	}]
+	"errors": [{
+		"token": "4914-9088-2814-384",
+		"error": "Token Not Found",
+	}]
+}
+```
+
+## Tokenize
+
+To tokenize data, use the `tokenize` method. The `TokenizeRequest` class is utilized to create a tokenize request. In
+this request, you specify the `values` parameter, which is a list of `ColumnValue`. Each `ColumnValue` contains two
+properties: `value` and `columnGroup`.
+
+Tokenize Schema
+
+```java
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.tokens.ColumnValue;
+import com.skyflow.vault.tokens.TokenizeRequest;
+import com.skyflow.vault.tokens.TokenizeResponse;
+
+import java.util.ArrayList;
+
+public class TokenizeSchema {
+    public static void main(String[] args) {
+        try {
+            // Initialize Skyflow client
+            ArrayList<ColumnValue> columnValues = new ArrayList<>();
+
+            ColumnValue columnValue1 = ColumnValue.builder().value("<VALUE>").columnGroup("<COLUMN_GROUP>").build();
+            ColumnValue columnValue2 = ColumnValue.builder().value("<VALUE>").columnGroup("<COLUMN_GROUP>").build();
+
+            columnValues.add(columnValue1);
+            columnValues.add(columnValue2);
+
+            TokenizeRequest tokenizeRequest = TokenizeRequest.builder().values(columnValues).build();
+            TokenizeResponse tokenizeResponse = skyflowClient.vault("<VAULT_ID>").tokenize(tokenizeRequest);
+            System.out.println(tokenizeResponse);
+        } catch (SkyflowException e) {
+            System.out.println("Error occurred: ");
+            System.out.println(e);
+        }
+    }
+}
+```
+
+An [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/vault/TokenizeExample.java)
+of Tokenize call:
+
+```java
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.tokens.ColumnValue;
+import com.skyflow.vault.tokens.TokenizeRequest;
+import com.skyflow.vault.tokens.TokenizeResponse;
+
+import java.util.ArrayList;
+
+public class TokenizeSchema {
+    public static void main(String[] args) {
+        try {
+            // Initialize Skyflow client
+            ArrayList<ColumnValue> columnValues = new ArrayList<>();
+            ColumnValue columnValue = ColumnValue.builder().value("4111111111111111").columnGroup("card_number_cg").build();
+            columnValues.add(columnValue);
+
+            TokenizeRequest tokenizeRequest = TokenizeRequest.builder().values(columnValues).build();
+            TokenizeResponse tokenizeResponse = skyflowClient.vault("9f27764a10f7946fe56b3258e117").tokenize(tokenizeRequest);
+            System.out.println(tokenizeResponse);
+        } catch (SkyflowException e) {
+            System.out.println("Error occurred: ");
+            System.out.println(e);
+        }
+    }
+}
+```
+
+Sample response:
+
+```js
+{
+	"tokens": [5479-4229-4622-1393]
 }
 ```
 
 ## Get
-In order to retrieve data from your vault using Skyflow IDs or by Unique Column Values, use the **get(JSONObject records, GetOptions options)** method. The `records` parameter takes a JSONObject that should contain
-1. Either an array of Skyflow IDs to fetch
-2. Or a column name and array of column values
 
-The second parameter, options, is a GetOptions object that retrieves tokens of Skyflow IDs.
+To retrieve data using Skyflow IDs or unique column values, use the `get` method. The `GetRequest` class is used to
+create a get request, where you specify parameters such as the table name, redaction type, Skyflow IDs, column names,
+column values, and return tokens. If Skyflow IDs are provided, column names and column values cannot be used. Similarly,
+if column names or column values are provided, Skyflow IDs cannot be used.
 
-Note:
-- GetOptions parameter applicable only for retrieving tokens using Skyflow ID.
-- You can't pass GetOptions along with the redaction type.
-- `tokens` defaults to false.
-
-
-### Use Skyflow IDs
-
-1. Retrieve data using Redaction type:
+Get Schema
 
 ```java
-import com.skyflow.entities.RedactionType;
+import com.skyflow.enums.RedactionType;
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.data.GetRequest;
+import com.skyflow.vault.data.GetResponse;
 
-JSONObject records = new JSONObject();
-JSONArray recordsArray = new JSONArray();
-JSONObject record = new JSONObject();
-JSONArray ids = new JSONArray();
-ids.add("<your_skyflowId>");
+import java.util.ArrayList;
 
-record.put("ids", ids);
-record.put("table", "<your_table_name>");
-record.put("redaction", RedactionType);
+public class GetSchema {
+    public static void main(String[] args) {
+        try {
+            // Initialize Skyflow client
+            ArrayList<String> ids = new ArrayList<>();
+            ids.add("<SKYFLOW_ID_1>");
+            ids.add("<SKYFLOW_ID_2>");
+            GetRequest getByIdRequest = GetRequest.builder()
+                    .ids(ids)
+                    .table("<TABLE_NAME>")
+                    .returnTokens(false)
+                    .redactionType(RedactionType.PLAIN_TEXT)
+                    .build();
+            GetResponse getByIdResponse = skyflowClient.vault("<VAULT_ID>").get(getByIdRequest);
+            System.out.println(getByIdResponse);
 
-recordsArray.add(record);
-records.put("records", recordsArray);
-try {
-    JSONObject getResponse = skyflowClient.get(records);
-    System.out.println(getResponse);
-} catch(SkyflowException exception) {
-    if (exception.getData() != null) {
-        System.out.println(exception.getData());
-        } else {
-        System.out.println(exception);
+            GetRequest getTokensRequest = GetRequest.builder()
+                    .ids(ids)
+                    .table("<TABLE_NAME>")
+                    .returnTokens(true)
+                    .build();
+            GetResponse getTokensResponse = skyflowClient.vault("<VAULT_ID>").get(getTokensRequest);
+            System.out.println(getTokensResponse);
+
+            ArrayList<String> columnValues = new ArrayList<>();
+            columnValues.add("<COLUMN_VALUE_1>");
+            columnValues.add("<COLUMN_VALUE_2>");
+            GetRequest getByColumnRequest = GetRequest.builder()
+                    .table("<TABLE_NAME>")
+                    .columnName("<COLUMN_NAME>")
+                    .columnValues(columnValues)
+                    .redactionType(RedactionType.PLAIN_TEXT)
+                    .build();
+            GetResponse getByColumnResponse = skyflowClient.vault("<VAULT_ID>").get(getByColumnRequest);
+            System.out.println(getByColumnResponse);
+        } catch (SkyflowException e) {
+            System.out.println("Error occurred: ");
+            System.out.println(e);
         }
-}
-```
-2. Retrieve tokens using GetOptions:
-```java
-import com.skyflow.entities.*;
-
-JSONObject records = new JSONObject();
-JSONArray recordsArray = new JSONArray();
-
-JSONObject record = new JSONObject();
-JSONArray ids = new JSONArray();
-ids.add("<your_skyflowId>");
-
-record.put("ids", ids);
-record.put("table", "<your_table_name>");
-record.put("redaction", RedactionType);
-recordsArray.add(record);
-records.put("records", recordsArray);
-
-try { 
-    GetOptions options = new GetOptions(true);
-    JSONObject getResponse = skyflowClient.get(records, options);
-    System.out.println(getResponse);
-} catch(SkyflowException exception) {
-    if (exception.getData() != null) {
-        System.out.println(exception.getData());
-    } else {
-        System.out.println(exception);
-    }    
+    }
 }
 ```
 
-### Use column name and values
+### Get by skyflow IDs
+
+-
+
+An [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/vault/GetExample.java)
+of a get call to retrieve data using Redaction type:
 
 ```java
-import com.skyflow.entities.RedactionType;
+import com.skyflow.enums.RedactionType;
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.data.GetRequest;
+import com.skyflow.vault.data.GetResponse;
 
-JSONObject records = new JSONObject();
-JSONArray recordsArray = new JSONArray();
+import java.util.ArrayList;
 
-JSONObject record = new JSONObject();
-JSONArray values = new JSONArray();
-values.add("<your_column_value>");
+public class GetExample {
+    public static void main(String[] args) {
+        try {
+            // Initialize Skyflow client
+            ArrayList<String> ids = new ArrayList<>();
+            ids.add("a581d205-1969-4350-acbe-a2a13eb871a6");
+            ids.add("5ff887c3-b334-4294-9acc-70e78ae5164a");
+            GetRequest getByIdRequest = GetRequest.builder()
+                    .ids(ids)
+                    .table("table1")
+                    .returnTokens(false)
+                    .redactionType(RedactionType.PLAIN_TEXT)
+                    .build();
+            GetResponse getByIdResponse = skyflowClient.vault("9f27764a10f7946fe56b3258e117").get(getByIdRequest);
+            System.out.println(getByIdResponse);
+        } catch (SkyflowException e) {
+            System.out.println("Error occurred: ");
+            System.out.println(e);
+        }
+    }
+}
+```
 
-record.put("table", "<your_table_name>");
-record.put("column_name", "<your_column_name>");
-record.put("column_values", "<your_column_values>");
-record.put("redaction", RedactionType);
-recordsArray.add(record);
-records.put("records", recordsArray);
+Sample response:
+
+```js
+{
+	"data": [{
+		"card_number": "4555555555555553",
+		"email": "john.doe@gmail.com",
+		"name": "john doe",
+		"skyflow_id": "a581d205-1969-4350-acbe-a2a13eb871a6",
+	}, {
+		"card_number": "4555555555555559",
+		"email": "jane.doe@gmail.com",
+		"name": "jane doe",
+		"skyflow_id": "5ff887c3-b334-4294-9acc-70e78ae5164a",
+	}],
+	"errors": []
+}
+```
+
+-
+
+An [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/vault/getExample.java)
+of get call to retrieve tokens using Skyflow IDs:
+
+```java
+import com.skyflow.enums.RedactionType;
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.data.GetRequest;
+import com.skyflow.vault.data.GetResponse;
+
+import java.util.ArrayList;
+
+public class GetExample {
+    public static void main(String[] args) {
+        try {
+            // Initialize Skyflow client
+            ArrayList<String> ids = new ArrayList<>();
+            ids.add("a581d205-1969-4350-acbe-a2a13eb871a6");
+            ids.add("5ff887c3-b334-4294-9acc-70e78ae5164a");
+            GetRequest getTokensRequest = GetRequest.builder()
+                    .ids(ids)
+                    .table("table1")
+                    .returnTokens(true)
+                    .build();
+            GetResponse getTokensResponse = skyflowClient.vault("9f27764a10f7946fe56b3258e117").get(getTokensRequest);
+            System.out.println(getTokensResponse);
+        } catch (SkyflowException e) {
+            System.out.println("Error occurred: ");
+            System.out.println(e);
+        }
+    }
+}
+```
+
+Sample response:
+
+```js
+{
+	"data": [{
+		"card_number": "3998-2139-0328-0697",
+		"email": "c9a6c9555060@82c092e7.bd52",
+		"name": "82c092e7-74c0-4e60-bd52-c9a6c9555060",
+		"skyflow_id": "a581d205-1969-4350-acbe-a2a13eb871a6",
+	}, {
+		"card_number": "3562-0140-8820-7499",
+		"email": "6174366e2bc6@59f82e89.93fc",
+		"name": "59f82e89-138e-4f9b-93fc-6174366e2bc6",
+		"skyflow_id": "5ff887c3-b334-4294-9acc-70e78ae5164a",
+	}],
+	"errors": []
+}
+```
+
+### Get By column name and column values
+
+-
+
+An [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/vault/GetExample.java)
+of get call to retrieve data using column name and column values
+
+```java
+import com.skyflow.enums.RedactionType;
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.data.GetRequest;
+import com.skyflow.vault.data.GetResponse;
+
+import java.util.ArrayList;
+
+public class GetExample {
+    public static void main(String[] args) {
+        try {
+            // Initialize Skyflow client
+            ArrayList<String> columnValues = new ArrayList<>();
+            columnValues.add("john.doe@gmail.com");
+            columnValues.add("jane.doe@gmail.com");
+            GetRequest getByColumnRequest = GetRequest.builder()
+                    .table("table1")
+                    .columnName("email")
+                    .columnValues(columnValues)
+                    .redactionType(RedactionType.PLAIN_TEXT)
+                    .build();
+            GetResponse getByColumnResponse = skyflowClient.vault("9f27764a10f7946fe56b3258e117").get(getByColumnRequest);
+            System.out.println(getByColumnResponse);
+        } catch (SkyflowException e) {
+            System.out.println("Error occurred: ");
+            System.out.println(e);
+        }
+    }
+}
+```
+
+Sample response:
+
+```js
+{
+	"data": [{
+		"card_number": "4555555555555553",
+		"email": "john.doe@gmail.com",
+		"name": "john doe",
+		"skyflow_id": "a581d205-1969-4350-acbe-a2a13eb871a6",
+	}, {
+		"card_number": "4555555555555559",
+		"email": "jane.doe@gmail.com",
+		"name": "jane doe",
+		"skyflow_id": "5ff887c3-b334-4294-9acc-70e78ae5164a",
+	}],
+	"errors": []
+}
 ```
 
 ### Redaction types
+
 There are four accepted values for RedactionType:
+
 * `PLAIN_TEXT`
 * `MASKED`
 * `REDACTED`
 * `DEFAULT`
 
-### Examples
-An [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/GetExample.java) call using Skyflow IDs with RedactionType.
-
-```java
-import com.skyflow.entities.RedactionType;
-
-JSONObject recordsJson = new JSONObject();
-JSONArray recordsArrayJson = new JSONArray();
-
-JSONObject validRecord = new JSONObject();
-JSONArray idsJson = new JSONArray();
-idsJson.add("f8d8a622-b557-4c6b-a12c-c5ebe0b0bfd9");
-idsJson.add("da26de53-95d5-4bdb-99db-8d8c66a35ff9");
-validRecord.put("ids", idsJson);
-validRecord.put("table", "cards");
-validRecord.put("redaction", Redaction.PLAIN_TEXT.toString());
-
-JSONObject invalidRecord = new JSONObject();
-JSONArray invalidIdsJson = new JSONArray();
-invalidIdsJson.add("Invalid Skyflow ID");
-
-invalidRecord.put("ids", invalidIdsJson);
-invalidRecord.put("table", "cards");
-invalidRecord.put("redaction", Redaction.PLAIN_TEXT.toString());
-recordsArrayJson.add(validRecord);
-recordsArrayJson.add(invalidRecord);
-recordsJson.put("records", recordsArray);
-
-try {
-    JSONObject getResponse = skyflowClient.get(recordsJson);
-    System.out.println(getResponse);
-} catch(SkyflowException exception) {
-    if (exception.getData() != null) {
-        System.out.println(exception.getData());
-    } else {
-        System.out.println(exception);
-    }
-}
-```
-
-Sample response:
-
-```json
-{
-  "records": [
-    {
-      "fields": {
-        "card_number": "4111111111111111",
-        "cvv": "127",
-        "expiry_date": "11/35",
-        "fullname": "myname",
-        "id": "f8d8a622-b557-4c6b-a12c-c5ebe0b0bfd9"
-      },
-      "table": "cards"
-    },
-    {
-      "fields": {
-        "card_number": "4111111111111111",
-        "cvv": "317",
-        "expiry_date": "10/23",
-        "fullname": "sam",
-        "id": "da26de53-95d5-4bdb-99db-8d8c66a35ff9"
-      },
-      "table": "cards"
-    }
-  ],
-  "errors": [
-    {
-      "error": {
-        "code": "404",
-        "description": "No Records Found - requestId: fc531b8d-412e-9775-b945-4feacc9b8616"
-      },
-      "ids": ["Invalid Skyflow ID"]
-    }
-  ]
-}
-```
-
-An example call using Skyflow IDs with GetOptions:
-
-```java
-import com.skyflow.entities.*;
-
-JSONObject recordsJson = new JSONObject();
-JSONArray recordsArrayJson = new JSONArray();
-
-JSONObject validRecord = new JSONObject();
-JSONArray idsJson = new JSONArray();
-idsJson.add("f8d8a622-b557-4c6b-a12c-c5ebe0b0bfd9");
-idsJson.add("da26de53-95d5-4bdb-99db-8d8c66a35ff9");
-validRecord.put("ids", idsJson);
-validRecord.put("table", "cards");
-
-JSONObject invalidRecord = new JSONObject();
-JSONArray invalidIdsJson = new JSONArray();
-invalidIdsJson.add("Invalid Skyflow ID");
-
-invalidRecord.put("ids", invalidIdsJson);
-invalidRecord.put("table", "cards");
-recordsArrayJson.add(validRecord);
-recordsArrayJson.add(invalidRecord);
-recordsJson.put("records", recordsArray);
-GetOptions options = new GetOptions(true);
-try { 
-    JSONObject getResponse = skyflowClient.get(recordsJson, options);
-    System.out.println(getResponse);
-} catch(SkyflowException exception) {
-    if (exception.getData() != null) {
-        System.out.println(exception.getData());
-    } else {
-        System.out.println(exception);
-    }    
-}
-```
-Sample response:
-```json
-{
-  "records": [
-    {
-      "fields": {
-        "card_number": "4555-5176-5936-1930",
-        "expiry_date": "23396425-93c9-419b-834b-7750b76a34b0",
-        "fullname": "d6bb7fe5-6b77-4842-b898-221c51c3cc20",
-        "id": "f8d8a622-b557-4c6b-a12c-c5ebe0b0bfd9"
-      },
-      "table": "cards"
-    },
-    {
-      "fields": {
-        "card_number": "8882-7418-2776-6660",
-        "expiry_date": "284fb1f6-3c29-449f-8899-83a7839821bc",
-        "fullname": "45a69af3-e22a-4668-9016-08bb2ef2259d",
-        "id": "da26de53-95d5-4bdb-99db-8d8c66a35ff9"
-      },
-      "table": "cards"
-    }
-  ],
-  "errors": [
-    {
-      "error": {
-        "code": "404",
-        "description": "No Records Found - requestId: fc531b8d-412e-9775-b945-4feacc9b8616"
-      },
-      "ids": ["Invalid Skyflow ID"]
-    }
-  ]
-}
-```
-An [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/GetExample.java) call using column names and values.
-
-```java
-import com.skyflow.entities.RedactionType;
-
-JSONObject recordsJson = new JSONObject();
-JSONArray recordsArrayJson = new JSONArray();
-
-JSONObject validRecord = new JSONObject();
-JSONArray valuesJson = new JSONArray();
-valuesJson.add("123455432112345");
-valuesJson.add("123455432112346");
-
-validRecord.put("table", "account_details");
-validRecord.put("column_name", "bank_account_number");
-validRecord.put("column_values", valuesJson);
-validRecord.put("redaction", Redaction.PLAIN_TEXT.toString());
-
-JSONObject invalidRecord = new JSONObject();
-JSONArray invalidValuesJson = new JSONArray();
-invalidValuesJson.add("Invalid Skyflow column value");
-
-invalidRecord.put("table", "account_details");
-invalidRecord.put("column_name", "bank_account_number");
-invalidRecord.put("column_values", valuesJson);
-invalidRecord.put("redaction", Redaction.PLAIN_TEXT.toString());
-
-recordsArrayJson.add(validRecord);
-recordsArrayJson.add(invalidRecord);
-recordsJson.put("records", recordsArray);
-
-try {
-    JSONObject getResponse = skyflowClient.get(recordsJson);
-    System.out.println(getResponse);
-} catch(SkyflowException exception) {
-    if (exception.getData() != null) {
-        System.out.println(exception.getData());
-    } else {
-        System.out.println(exception);
-    }
-}
-```
-
-Sample response:
-
-```json
-{
-  "records": [
-    {
-      "fields": {
-        "bank_account_number": "123455432112345",
-        "pin_code": "123123",
-        "name": "john doe",
-        "id": "492c21a1-107f-4d10-ba2c-3482a411827d"
-      },
-      "table": "account_details"
-    },
-    {
-      "fields": {
-        "bank_account_number": "123455432112346",
-        "pin_code": "103113",
-        "name": "jane doe",
-        "id": "ac6c6221-bcd1-4265-8fc7-ae7a8fb6dfd5"
-      },
-      "table": "account_details"
-    }
-  ],
-  "errors": [
-    {
-      "columnName": ["bank_account_number"],
-      "error": {
-        "code": 404,
-        "description": "No Records Found - requestId: fc531b8d-412e-9775-b945-4feacc9b8616"
-      }
-    }
-  ]
-}
-```
-
-`Note:`
-While using detokenize and get methods, there is a possibility that some or all of the tokens might be invalid. In such cases, the data from the response consists of both errors and detokenized records. In the SDK, this will raise a SkyflowException and you can retrieve the data from the Exception object, as shown above.
-
-## GetById
-
-In order to retrieve data from your vault using SkyflowIDs, use the **getById(JSONObject records)** method. The `records` parameter takes a JSONObject that should contain an array of SkyflowIDs to be fetched, as shown below:
-```java
-import com.skyflow.entities.RedactionType;
-
-JSONObject records = new JSONObject();
-JSONArray recordsArray = new JSONArray();
-
-JSONObject record = new JSONObject();
-JSONArray ids = new JSONArray();
-ids.add("<your_skyflowId>");
-
-record.put("ids", ids);
-record.put("table", "<you_table_name>");
-record.put("redaction", RedactionType);
-recordsArray.add(record);
-records.put("records", recordsArray);
-```
-There are 4 accepted values in RedactionType:
-- `PLAIN_TEXT`
-- `MASKED`
-- `REDACTED`
-- `DEFAULT` 
-
-An [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/GetByIdExample.java) getById call 
-```java
-import com.skyflow.entities.RedactionType;
-
-JSONObject recordsJson = new JSONObject();
-JSONArray recordsArrayJson = new JSONArray();
-
-JSONObject validRecord = new JSONObject();
-JSONArray idsJson = new JSONArray();
-idsJson.add("f8d8a622-b557-4c6b-a12c-c5ebe0b0bfd9");
-idsJson.add("da26de53-95d5-4bdb-99db-8d8c66a35ff9");
-validRecord.put("ids",idsJson);
-validRecord.put("table","cards");
-validRecord.put("redaction",Redaction.PLAIN_TEXT.toString());
-
-JSONObject invalidRecord = new JSONObject();
-JSONArray invalidIdsJson = new JSONArray();
-invalidIdsJson.add("invalid skyflow ID");
-
-invalidRecord.put("ids",invalidIdsJson);
-invalidRecord.put("table","cards");
-invalidRecord.put("redaction",Redaction.PLAIN_TEXT.toString());
-recordsArrayJson.add(validRecord);
-recordsArrayJson.add(invalidRecord);
-recordsJson.put("records", recordsArrayJson);
-
-try{
-    JSONObject getByIdResponse = skyflowClient.getById(recordsJson);
-    System.out.println(getByIdResponse);
-}catch(SkyflowException exception){
-    if(exception.getData() != null)
-        System.out.println(exception.getData());
-    else
-        System.out.println(exception);
-}
-```
-Sample getById response
-```js
-{
-  "records": [
-      {
-          "fields": {
-              "card_number": "4111111111111111",
-              "cvv": "127",
-              "expiry_date": "11/35",
-              "fullname": "myname",
-              "id": "f8d8a622-b557-4c6b-a12c-c5ebe0b0bfd9"
-          },
-          "table": "cards"
-      },
-      {
-          "fields": {
-              "card_number": "4111111111111111",
-              "cvv": "317",
-              "expiry_date": "10/23",
-              "fullname": "sam",
-              "id": "da26de53-95d5-4bdb-99db-8d8c66a35ff9"
-          },
-          "table": "cards"
-      }
-  ],
-  "errors": [
-      {
-          "error": {
-              "code": "404",
-              "description": "No Records Found"
-          },
-          "ids": ["invalid skyflow id"]
-      }
-  ]
-}
-```
-`Note:` While using detokenize and getByID methods, there is a possibility that some or all of the tokens might be invalid. In such cases, the data from response consists of both errors and detokenized records. In the SDK, this will raise a SkyflowException and you can retrieve the data from this Exception object as shown above.
-
 ## Update
 
-In order to update the records in your vault by **skyflow_id**, use the **update(records, options)** method. The first parameter, `records`, is a JSONObject that must have a records key and takes an array of records to update as a value in the vault. The options parameter takes an object of update options and includes an option to return tokens for the updated fields as shown below:
+To update data in your vault, use the `update` method. The `UpdateRequest` class is used to create an update request,
+where you specify parameters such as the table name, data (as a map of key value pairs), tokens, returnTokens, and
+tokenStrict. If `returnTokens` is set to `true`, Skyflow returns tokens for the updated records. If `returnTokens` is
+set to `false`, Skyflow returns IDs for the updated records.
+
+Update Schema:
+
 ```java
-JSONObject records = new JSONObject();
-JSONArray recordsArray = new JSONArray();
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.data.UpdateRequest;
+import com.skyflow.vault.data.UpdateResponse;
 
-JSONObject record = new JSONObject();
-record.put("table", "<your_table_name>");
-record.put("id","<your_skyflow_id>");
+import java.util.HashMap;
 
-JSONObject fields = new JSONObject();
-fields.put("<field_name>", "<field_value>");
-record.put("fields", fields);
-recordsArray.add(record);
-records.put("records", recordsArray);
-UpdateOptions updateOptions = new UpdateOptions(true);
+public class UpdateSchema {
+    public static void main(String[] args) {
+        try {
+            // Initialize Skyflow client
+            HashMap<String, Object> data = new HashMap<>();
+            data.put("skyflow_id", "<SKYFLOW_ID>");
+            data.put("<COLUMN_NAME_1>", "<COLUMN_VALUE_1>");
+            data.put("<COLUMN_NAME_2>", "<COLUMN_VALUE_2>");
+
+            HashMap<String, Object> tokens = new HashMap<>();
+            tokens.put("<COLUMN_NAME_2>", "<TOKEN_VALUE_2>");
+
+            UpdateRequest updateRequest = UpdateRequest.builder()
+                    .table("<TABLE_NAME>")
+                    .tokenStrict(Byot.ENABLE)
+                    .data(data)
+                    .tokens(tokens)
+                    .returnTokens(true)
+                    .build();
+            UpdateResponse updateResponse = skyflowClient.vault("<VAULT_ID>").update(updateRequest);
+            System.out.println(updateResponse);
+        } catch (SkyflowException e) {
+            System.out.println("Error occurred: ");
+            System.out.println(e);
+        }
+    }
+}
 ```
 
-An [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/UpdateExample.java) of update call:
+An [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/vault/UpdateExample.java)
+of update call:
+
 ```java
-JSONObject records = new JSONObject();
-JSONArray recordsArray = new JSONArray();
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.data.UpdateRequest;
+import com.skyflow.vault.data.UpdateResponse;
 
-JSONObject record = new JSONObject();
-record.put("table", "cards");
-record.put("id","29ebda8d-5272-4063-af58-15cc674e332b");
+import java.util.HashMap;
 
-JSONObject fields = new JSONObject();
-fields.put("card_number", "5105105105105100");
-fields.put("cardholder_name", "Thomas");
-fields.put("expiration_date", "07/2032");
-record.put("fields", fields);
-recordsArray.add(record);
-records.put("records", recordsArray);
-UpdateOptions updateOptions = new UpdateOptions(true);
+public class UpdateExample {
+    public static void main(String[] args) {
+        try {
+            // Initialize Skyflow client
+            HashMap<String, Object> data = new HashMap<>();
+            data.put("skyflow_id", "5b699e2c-4301-4f9f-bcff-0a8fd3057413");
+            data.put("name", "john doe");
+            data.put("card_number", "4111111111111115");
 
-try {
-   JSONObject response = skyflowClient.update(records, updateOptions);
-}
-catch (SkyflowException e) {
-   e.printStackTrace();
+            HashMap<String, Object> tokens = new HashMap<>();
+            tokens.put("name", "72b8ffe3-c8d3-4b4f-8052-38b2a7405b5a");
+
+            UpdateRequest updateRequest = UpdateRequest.builder()
+                    .table("table1")
+                    .tokenStrict(Byot.ENABLE)
+                    .data(data)
+                    .tokens(tokens)
+                    .build();
+            UpdateResponse updateResponse = skyflowClient.vault("9f27764a10f7946fe56b3258e117").update(updateRequest);
+            System.out.println(updateResponse);
+        } catch (SkyflowException e) {
+            System.out.println("Error occurred: ");
+            System.out.println(e);
+        }
+    }
 }
 ```
-Response:
-```java
+
+Sample response:
+
+- `returnTokens` set to `true`
+
+```js
 {
-   "records": [
-       {
-           "id": "29ebda8d-5272-4063-af58-15cc674e332b",
-           "fields": {
-               "card_number": "93f28226-51b0-4f24-8151-78b5a61f028b",
-               "cardholder_name": "0838fd08-9b51-4db2-893c-48542f3b121e",
-               "expiration_date": "91d7ee77-262f-4d5d-8286-062b694c81fd",
-           },
-           "table": "cards"
-       }
-   ]
+  "skyflowId": "5b699e2c-4301-4f9f-bcff-0a8fd3057413",
+  "name": "72b8ffe3-c8d3-4b4f-8052-38b2a7405b5a",
+  "card_number": "4315-7650-1359-9681"
+}
+```
+
+- `returnTokens` set to `false`
+
+```js
+{
+  "skyflowId": "5b699e2c-4301-4f9f-bcff-0a8fd3057413"
 }
 ```
 
 ## Delete
-To delete data from the vault, use the `delete(records, options?)` method of the Skyflow client. The `records` parameter takes an array of records to delete in the following format. The `options` parameter is optional and takes an object of deletion parameters. Currently, there are no supported deletion parameters.
 
-Call schema:
+To delete records using Skyflow IDs, use the `delete` method. The `DeleteRequest` class accepts a list of Skyflow IDs
+that you want to delete, as shown below:
+
+Delete schema:
 
 ```java
-JSONObject records = new JSONObject();
-JSONArray recordsArray = new JSONArray();
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.data.DeleteRequest;
+import com.skyflow.vault.data.DeleteResponse;
 
-JSONObject record = new JSONObject();
+import java.util.ArrayList;
 
-record.put("id", "<SKYFLOW_ID_1>");
-record.put("table", "<TABLE_NAME>");
-recordsArray.add(record);
-records.put("records", recordsArray);
-
-skyflowClient.delete(records);
-```
-
-An example of delete call:
-```java
-JSONObject records = new JSONObject();
-JSONArray recordsArray = new JSONArray();
-
-JSONObject record = new JSONObject();
-record.put("id", "71be4592-b9af-4dec-8669-5b9c926afb4c");
-record.put("table", "cards");
-recordsArray.add(record);
-        
-JSONObject record2 = new JSONObject();
-record2.put("id", "2adf32e7-9a04-408e-b8bb-5b0a852422e0");
-record2.put("table", "cards");
-recordsArray.add(record2);
-
-records.put("records", recordsArray);
-
-try {
-     JSONObject response = skyflowClient.delete(records);
-} catch (SkyflowException e) {
-     e.printStackTrace();
-     System.out.println("error"+ e.getData());
+public class DeleteSchema {
+    public static void main(String[] args) {
+        try {
+            // Initialize Skyflow client
+            ArrayList<String> ids = new ArrayList<>();
+            ids.add("<SKYFLOW_ID_1>");
+            ids.add("<SKYFLOW_ID_2>");
+            ids.add("<SKYFLOW_ID_3>");
+            DeleteRequest deleteRequest = DeleteRequest.builder().ids(ids).table("<TABLE_NAME>").build();
+            DeleteResponse deleteResponse = skyflowClient.vault("<VAULT_ID>").delete(deleteRequest);
+            System.out.println(deleteResponse);
+        } catch (SkyflowException e) {
+            System.out.println("Error occurred: ");
+            System.out.println(e);
+        }
+    }
 }
 ```
-Response:
+
+An [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/vault/DeleteExample.java)
+of delete call:
+
+```java
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.data.DeleteRequest;
+import com.skyflow.vault.data.DeleteResponse;
+
+import java.util.ArrayList;
+
+public class DeleteExample {
+    public static void main(String[] args) {
+        try {
+            // Initialize Skyflow client
+            ArrayList<String> ids = new ArrayList<>();
+            ids.add("9cbf66df-6357-48f3-b77b-0f1acbb69280");
+            ids.add("ea74bef4-f27e-46fe-b6a0-a28e91b4477b");
+            ids.add("47700796-6d3b-4b54-9153-3973e281cafb");
+            DeleteRequest deleteRequest = DeleteRequest.builder().ids(ids).table("table1").build();
+            DeleteResponse deleteResponse = skyflowClient.vault("9f27764a10f7946fe56b3258e117").delete(deleteRequest);
+            System.out.println(deleteResponse);
+        } catch (SkyflowException e) {
+            System.out.println("Error occurred: ");
+            System.out.println(e);
+        }
+    }
+}
+```
+
+Sample response:
+
 ```json
 {
-  "records": [
-    {
-     "skyflow_id": "71be4592-b9af-4dec-8669-5b9c926afb4c",
-     "deleted": true,
-    },
-    {
-     "skyflow_id": "2adf32e7-9a04-408e-b8bb-5b0a852422e0",
-     "deleted": true,
-    }
+  "deletedIds": [
+    "9cbf66df-6357-48f3-b77b-0f1acbb69280",
+    "ea74bef4-f27e-46fe-b6a0-a28e91b4477b",
+    "47700796-6d3b-4b54-9153-3973e281cafb"
   ]
 }
 ```
 
+### Query
+
+To retrieve data with SQL queries, use the `query` method. The `QueryRequest` class accepts a `query` parameter as
+follows:
+
+Query Schema
+
+```java
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.data.QueryRequest;
+import com.skyflow.vault.data.QueryResponse;
+
+public class QueryExample {
+    public static void main(String[] args) {
+        try {
+            // initialize Skyflow client
+            String query = "<YOUR_SQL_QUERY>";
+            QueryRequest queryRequest = QueryRequest.builder().query(query).build();
+            QueryResponse queryResponse = skyflowClient.vault("<VAULT_ID>").query(queryRequest);
+            System.out.println(queryResponse);
+        } catch (SkyflowException e) {
+            System.out.println("Error occurred: ");
+            System.out.println(e);
+        }
+    }
+}
+```
+
+See [Query your data](https://docs.skyflow.com/query-data/)
+and [Execute Query](https://docs.skyflow.com/record/#QueryService_ExecuteQuery) for guidelines and restrictions on
+supported SQL statements, operators, and keywords.
+
+An [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/vault/QueryExample.java)
+of query call:
+
+```java
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.data.QueryRequest;
+import com.skyflow.vault.data.QueryResponse;
+
+public class QueryExample {
+    public static void main(String[] args) {
+        try {
+            // initialize Skyflow client
+            String query = "SELECT * FROM cards WHERE skyflow_id='3ea3861-x107-40w8-la98-106sp08ea83f'";
+            QueryRequest queryRequest = QueryRequest.builder().query(query).build();
+            QueryResponse queryResponse = skyflowClient.vault("9f27764a10f7946fe56b3258e117").query(queryRequest);
+            System.out.println(queryResponse);
+        } catch (SkyflowException e) {
+            System.out.println("Error occurred: ");
+            System.out.println(e);
+        }
+    }
+}
+```
+
+Sample response:
+
+```js
+{
+	"fields": [{
+		"card_number": "XXXXXXXXXXXX1112",
+		"name": "S***ar",
+		"skyflow_id": "3ea3861-x107-40w8-la98-106sp08ea83f",
+		"tokenizedData": null
+	}]
+}
+```
+
+# Connections
+
+The [connections](https://github.com/skyflowapi/skyflow-java/tree/main/src/main/java/com/skyflow/vault/connection)
+module is used to invoke INBOUND and/or OUTBOUND connections.
+
 ## Invoke Connection
 
-Using the InvokeConnection method, you can integrate their server-side application with third party APIs and services without directly handling sensitive data. Prior to invoking the `InvokeConnection` method, you must have created a connection and have a connectionURL already generated. Once you have the connectionURL, you can invoke a connection by using the **invokeConnection(JSONObject config)** method. The JSONObject config parameter must include a `connectionURL` and `methodName`. The other fields are optional. 
+Using Skyflow Connection, end-user applications can integrate checkout/card issuance flow with their apps/systems. To
+invoke connection, use the `invoke` method of the Skyflow client.
+
+Invoke Connection Schema:
+
 ```java
-JSONObject invokeConfig = new JSONObject();
-// connection url received when creating a skyflow connection integration
-invokeConfig.put("connectionURL", "<your_connection_url>"); 
-invokeConfig.put("methodName", RequestMethod);
+import com.skyflow.enums.RequestMethod;
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.connection.InvokeConnectionRequest;
+import com.skyflow.vault.connection.InvokeConnectionResponse;
 
-JSONObject pathParamsJson = new JSONObject();
-pathParamsJson.put("<path_param_key>", "<path_param_value>");
-invokeConfig.put("pathParams", pathParamsJson);
+import java.util.HashMap;
+import java.util.Map;
 
-JSONObject queryParamsJson = new JSONObject();
-queryParamsJson.put("<query_param_key>", "<query_param_value>");
-invokeConfig.put("queryParams", queryParamsJson);
+public class InvokeConnectionSchema {
+    public static void main(String[] args) {
+        try {
+            // Initialize Skyflow client
+            Map<String, String> requestBody = new HashMap<>();
+            requestBody.put("<COLUMN_NAME_1>", "<COLUMN_VALUE_1>");
+            requestBody.put("<COLUMN_NAME_2>", "<COLUMN_VALUE_2>");
 
-JSONObject requestHeadersJson = new JSONObject();
-requestHeadersJson.put("<request_header_key>", "<request_header_value>");
-invokeConfig.put("requestHeader", requestHeadersJson);
+            Map<String, String> requestHeaders = new HashMap<>();
+            requestHeaders.put("<HEADER_NAME_1>", "<HEADER_VALUE_1>");
+            requestHeaders.put("<HEADER_NAME_2>", "<HEADER_VALUE_2>");
 
-JSONObject requestBodyJson = new JSONObject();
-requestBodyJson.put("<request_body_key>", "<request_body_value>");
-invokeConfig.put("requestBody", requestBodyJson);
+            Map<String, String> pathParams = new HashMap<>();
+            pathParams.put("<YOUR_PATH_PARAM_KEY_1>", "<YOUR_PATH_PARAM_VALUE_1>");
+            pathParams.put("<YOUR_PATH_PARAM_KEY_2>", "<YOUR_PATH_PARAM_VALUE_2>");
+
+            Map<String, String> queryParams = new HashMap<>();
+            queryParams.put("<YOUR_QUERY_PARAM_KEY_1>", "<YOUR_QUERY_PARAM_VALUE_1>");
+            queryParams.put("<YOUR_QUERY_PARAM_KEY_2>", "<YOUR_QUERY_PARAM_VALUE_2>");
+
+            InvokeConnectionRequest invokeConnectionRequest = InvokeConnectionRequest.builder()
+                    .methodName(RequestMethod.POST)
+                    .requestBody(requestBody)
+                    .requestHeaders(requestHeaders)
+                    .pathParams(pathParams)
+                    .queryParams(queryParams)
+                    .build();
+            InvokeConnectionResponse invokeConnectionResponse = skyflowClient.connection("<CONNECTION_ID>").invoke(invokeConnectionRequest);
+            System.out.println(invokeConnectionResponse);
+        } catch (SkyflowException e) {
+            System.out.println("Error occurred: ");
+            System.out.println(e);
+        }
+    }
+}
 ```
 
 `methodName` supports the following methods:
+
 - GET
 - POST
 - PUT
 - PATCH
 - DELETE
 
+**pathParams, queryParams, requestHeader, requestBody** are the JSON objects represented as HashMaps, that will be sent
+through the connection integration url.
 
-**pathParams, queryParams, requestHeader, requestBody** are the JSON objects that will be sent through the connection integration url.
+An [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/connection/InvokeConnectionExample.java)
+of invokeConnection:
 
-An [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/InvokeConnectionExample.java) of invokeConnection:
 ```java
-JSONObject invokeConfig = new JSONObject();
-invokeConfig.put("connectionURL", "<your_connection_url>");
-invokeConfig.put("methodName", RequestMethod.POST);
+import com.skyflow.Skyflow;
+import com.skyflow.config.ConnectionConfig;
+import com.skyflow.config.Credentials;
+import com.skyflow.enums.LogLevel;
+import com.skyflow.enums.RequestMethod;
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.connection.InvokeConnectionRequest;
+import com.skyflow.vault.connection.InvokeConnectionResponse;
 
-JSONObject requestHeaderJson = new JSONObject();
-requestHeaderJson.put("Content-Type","application/json");
-requestHeaderJson.put("Authorization","<YOUR_CONNECTION_AUTH>");
+import java.util.HashMap;
+import java.util.Map;
 
-invokeConfig.put("requestHeader",requestHeaderJson);
+public class InvokeConnectionExample {
+    public static void main(String[] args) {
+        try {
+            Credentials credentials = new Credentials();
+            credentials.setPath("/path/to/credentials.json");
 
-JSONObject requestBodyJson = new JSONObject();
-requestBodyJson.put("expirationDate","12/2026");
-invokeConfig.put("requestBody",requestBodyJson);
+            ConnectionConfig connectionConfig = new ConnectionConfig();
+            connectionConfig.setConnectionId("");
+            connectionConfig.setConnectionUrl("https://connection.url.com");
+            connectionConfig.setCredentials(credentials);
 
-JSONObject pathParamsJson = new JSONObject();
-pathParamsJson.put("card_number","1852-344-234-34251");
-invokeConfig.put("pathParams",pathParamsJson);
+            Skyflow skyflowClient = Skyflow.builder()
+                    .setLogLevel(LogLevel.DEBUG)
+                    .addConnectionConfig(connectionConfig)
+                    .build();
 
-try{
-    JSONObject invokeConnectionResponse = skyflow.invokeConnection(invokeConfig);
-    System.out.println(invokeResponse)    
-}catch(SkyflowException exception){
-    System.out.println(exception);
+            Map<String, String> requestBody = new HashMap<>();
+            requestBody.put("card_number", "4337-1696-5866-0865");
+            requestBody.put("ssn", "524-41-4248");
+
+            Map<String, String> requestHeaders = new HashMap<>();
+            requestHeaders.put("Content-Type", "application/json");
+
+            InvokeConnectionRequest invokeConnectionRequest = InvokeConnectionRequest.builder()
+                    .methodName(RequestMethod.POST)
+                    .requestBody(requestBody)
+                    .requestHeaders(requestHeaders)
+                    .build();
+            InvokeConnectionResponse invokeConnectionResponse = skyflowClient.connection("<CONNECTION_ID>").invoke(invokeConnectionRequest);
+            System.out.println(invokeConnectionResponse);
+        } catch (SkyflowException e) {
+            System.out.println("Error occurred: ");
+            System.out.println(e);
+        }
+    }
 }
-
 ```
-Sample invokeConnection Response
+
+Sample response:
+
 ```js
-{
-    "receivedTimestamp": "2021-11-05 13:43:12.534",
-    "processingTimeinMs": 12,
-    "resource": {
-        "cvv2": "558"
-    }
+InvokeConnectionResponse{
+  response={
+    "card_number":"4337-1696-5866-0865",
+    "ssn":"524-41-4248"
 }
 ```
 
-### Query
-
-To retrieve data with SQL queries, use the `query(queryInput, options)` method. `queryInput` is an object that takes the `query` parameter as follows:
-
-```java
-JSONObject queryInput = new JSONObject();
-queryInput.put("query", "<YOUR_SQL_QUERY>");
-skyflowClient.query(queryInput);
-```
-See [Query your data](https://docs.skyflow.com/query-data/) and [Execute Query](https://docs.skyflow.com/record/#QueryService_ExecuteQuery) for guidelines and restrictions on supported SQL statements, operators, and keywords.
-
-An [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/QueryExample.java) of query call:
-```java
-JSONObject queryInput = new JSONObject();
-queryInput.put("query", "SELECT * FROM cards WHERE skyflow_id='3ea3861-x107-40w8-la98-106sp08ea83f'");
-
-try {
-     JSONObject res = skyflowClient.query(queryInput);
-} catch (SkyflowException e) {
-     System.out.println(e.getData());
-     e.printStackTrace();
-}
-```
-
-Sample Response
-```java
-{
-  "records": [
-    {
-      "fields": {
-        "card_number": "XXXXXXXXXXXX1111",
-        "card_pin": "*REDACTED*",
-        "cvv": "",
-        "expiration_date": "*REDACTED*",
-        "expiration_month": "*REDACTED*",
-        "expiration_year": "*REDACTED*",
-        "name": "a***te",
-        "skyflow_id": "3ea3861-x107-40w8-la98-106sp08ea83f",
-        "ssn": "XXX-XX-6789",
-        "zip_code": null
-      },
-      "tokens": null
-    }
-  ]
-}
-```
 ## Logging
 
-The skyflow-java SDK provides useful logging using java inbuilt `java.util.logging`. By default the logging level of the SDK is set to `LogLevel.ERROR`. This can be changed by using `setLogLevel(LogLevel)` as shown below:
+The skyflow java SDK provides useful logging using python's inbuilt `logging` library. By default, the logging level of
+the SDK is set to `LogLevel.ERROR`. This can be changed by using `setLogLevel(logLevel)` method as shown below:
 
 ```java
-import com.skyflow.entities.LogLevel;
-import com.skyflow.Configuration; 
+import com.skyflow.Skyflow;
+import com.skyflow.config.Credentials;
+import com.skyflow.config.VaultConfig;
+import com.skyflow.enums.Env;
+import com.skyflow.enums.LogLevel;
+import com.skyflow.errors.SkyflowException;
 
-// sets the skyflow-java SDK log level to INFO
-Configuration.setLogLevel(LogLevel.INFO);
+public class ChangeLogLevel {
+    public static void main(String[] args) throws SkyflowException {
+        // Pass only one of apiKey, token, credentialsString or path in credentials        
+        Credentials credentials = new Credentials();
+        credentials.setToken("<BEARER_TOKEN>");
+
+        VaultConfig config = new VaultConfig();
+        config.setVaultId("<VAULT_ID>");      // Primary vault
+        config.setClusterId("<CLUSTER_ID>");  // ID from your vault URL Eg https://{clusterId}.vault.skyflowapis.com
+        config.setEnv(Env.PROD);              // Env by default is set to PROD
+        config.setCredentials(credentials);   // Individual credentials
+
+        JsonObject credentialsObject = new JsonObject();
+        credentialsObject.addProperty("clientID", "<YOUR_CLIENT_ID>");
+        credentialsObject.addProperty("clientName", "<YOUR_CLIENT_NAME>");
+        credentialsObject.addProperty("TokenURI", "<YOUR_TOKEN_URI>");
+        credentialsObject.addProperty("keyID", "<YOUR_KEY_ID>");
+        credentialsObject.addProperty("privateKey", "<YOUR_PRIVATE_KEY>");
+
+        // To generate Bearer Token from credentials string.
+        Credentials skyflowCredentials = new Credentials();
+        skyflowCredentials.setCredentialsString(credentialsObject.toString());
+
+        Skyflow skyflowClient = Skyflow.builder()
+                .addVaultConfig(config)                    // Add vault config
+                .addSkyflowCredentials(skyflowCredentials) // Skyflow credentials will be used if no individual credentials are passed
+                .setLogLevel(LogLevel.INFO)                // Set log level. By default, it is set to ERROR
+                .build();
+    }
+}
 ```
 
-Current the following 5 log levels are supported:
+Currently, the following 5 log levels are supported:
 
 - `DEBUG`:
 
-   When `LogLevel.DEBUG` is passed, all level of logs will be printed(DEBUG, INFO, WARN, ERROR)
-   
-- `INFO`: 
+  When `LogLevel.DEBUG` is passed, all level of logs will be printed(DEBUG, INFO, WARN, ERROR)
 
-   When `LogLevel.INFO` is passed, INFO logs for every event that has occurred during the SDK flow execution will be printed along with WARN and ERROR logs
-   
-- `WARN`: 
+- `INFO`:
 
-   When `LogLevel.WARN` is passed, WARN and ERROR logs will be printed
-   
+  When `LogLevel.INFO` is passed, INFO logs for every event that has occurred during the SDK flow execution will be
+  printed along with WARN and ERROR logs
+
+- `WARN`:
+
+  When `LogLevel.WARN` is passed, WARN and ERROR logs will be printed
+
 - `ERROR`:
 
-   When `LogLevel.ERROR` is passed, only ERROR logs will be printed.
-   
-- `OFF`: 
+  When `LogLevel.ERROR` is passed, only ERROR logs will be printed.
 
-   `LogLevel.OFF` can be used to turn off all logging from the skyflow-java SDK.
-   
+- `OFF`:
 
-`Note`:
-  - The ranking of logging levels is as follows :  `DEBUG` < `INFO` < `WARN` < `ERROR`.
+  `LogLevel.OFF` can be used to turn off all logging from the skyflow-java SDK.
+
+`Note`: The ranking of logging levels is as follows :  `DEBUG` < `INFO` < `WARN` < `ERROR`.
 
 ## Reporting a Vulnerability
 
-If you discover a potential security issue in this project, please reach out to us at security@skyflow.com. Please do not create public GitHub issues or Pull Requests, as malicious actors could potentially view them.
+If you discover a potential security issue in this project, please reach out to us at security@skyflow.com. Please do
+not create public GitHub issues or Pull Requests, as malicious actors could potentially view them.
