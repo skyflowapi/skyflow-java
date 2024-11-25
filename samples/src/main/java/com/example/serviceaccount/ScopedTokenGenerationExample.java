@@ -15,14 +15,14 @@ public class ScopedTokenGenerationExample {
             ArrayList<String> roles = new ArrayList<>();
             roles.add("YOUR_ROLE_ID");
             String filePath = "<YOUR_CREDENTIALS_FILE_PATH>";
-            BearerToken bearerToken = new BearerToken.BearerTokenBuilder()
+            BearerToken bearerToken = BearerToken.builder()
                     .setCredentials(new File(filePath))
                     .setRoles(roles)
                     .build();
 
             scopedToken = bearerToken.getBearerToken();
             System.out.println(scopedToken);
-        } catch (Exception e) {
+        } catch (SkyflowException e) {
             e.printStackTrace();
         }
 
@@ -31,7 +31,7 @@ public class ScopedTokenGenerationExample {
             ArrayList<String> roles = new ArrayList<>();
             roles.add("YOUR_ROLE_ID");
             String fileContents = "<YOUR_CREDENTIALS_FILE_CONTENTS_AS_STRING>";
-            BearerToken bearerToken = new BearerToken.BearerTokenBuilder()
+            BearerToken bearerToken = BearerToken.builder()
                     .setCredentials(fileContents)
                     .setRoles(roles)
                     .build();

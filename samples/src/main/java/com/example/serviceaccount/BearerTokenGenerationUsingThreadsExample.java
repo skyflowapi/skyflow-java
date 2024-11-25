@@ -10,7 +10,7 @@ public class BearerTokenGenerationUsingThreadsExample {
         // Generate BearerToken with context by specifying credentials.json file path
         try {
             String filePath = "<YOUR_CREDENTIALS_FILE_PATH>";
-            final BearerToken bearerToken = new BearerToken.BearerTokenBuilder()
+            final BearerToken bearerToken = BearerToken.builder()
                     .setCredentials(new File(filePath))
                     .setCtx("abc")
                     .build();
@@ -35,7 +35,7 @@ public class BearerTokenGenerationUsingThreadsExample {
         // Generate BearerToken with context by specifying credentials.json as string
         try {
             String fileContents = "<YOUR_CREDENTIALS_FILE_CONTENTS_AS_STRING>";
-            final BearerToken bearerToken = new BearerToken.BearerTokenBuilder()
+            final BearerToken bearerToken = BearerToken.builder()
                     .setCredentials(fileContents)
                     .setCtx("abc")
                     .build();

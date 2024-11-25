@@ -18,7 +18,7 @@ public class BearerTokenGenerationExample {
                 token = bearerToken.getBearerToken();
             }
             System.out.println(token);
-        } catch (Exception e) {
+        } catch (SkyflowException e) {
             e.printStackTrace();
         }
 

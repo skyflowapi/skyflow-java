@@ -172,6 +172,9 @@ public class SignedDataTokens {
         private String ctx;
         private String credentialsType;
 
+        private SignedDataTokensBuilder() {
+        }
+
         private void setCredentialsType(String credentialsType) {
             this.credentialsType = credentialsType;
         }

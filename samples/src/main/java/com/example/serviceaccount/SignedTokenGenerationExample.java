@@ -18,7 +18,7 @@ public class SignedTokenGenerationExample {
             String context = "abc";
             ArrayList<String> dataTokens = new ArrayList<>();
             dataTokens.add("YOUR_DATA_TOKEN_1");
-            SignedDataTokens signedToken = new SignedDataTokens.SignedDataTokensBuilder()
+            SignedDataTokens signedToken = SignedDataTokens.builder()
                     .setCredentials(new File(filePath))
                     .setCtx(context)
                     .setTimeToLive(30) // in seconds
@@ -27,7 +27,7 @@ public class SignedTokenGenerationExample {
 
             signedTokenValues = signedToken.getSignedDataTokens();
             System.out.println(signedTokenValues);
-        } catch (Exception e) {
+        } catch (SkyflowException e) {
             e.printStackTrace();
         }
 
@@ -37,7 +37,7 @@ public class SignedTokenGenerationExample {
             String context = "abc";
             ArrayList<String> dataTokens = new ArrayList<>();
             dataTokens.add("YOUR_DATA_TOKEN_1");
-            SignedDataTokens signedToken = new SignedDataTokens.SignedDataTokensBuilder()
+            SignedDataTokens signedToken = SignedDataTokens.builder()
                     .setCredentials(fileContents)
                     .setCtx(context)
                     .setTimeToLive(30) // in seconds

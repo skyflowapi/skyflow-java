@@ -11,7 +11,6 @@ import com.skyflow.vault.tokens.TokenizeRequest;
 import com.skyflow.vault.tokens.TokenizeResponse;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class TokenizeExample {
     public static void main(String[] args) throws SkyflowException {
@@ -39,7 +38,7 @@ public class TokenizeExample {
                 .addSkyflowCredentials(skyflowCredentials)
                 .build();
 
-        List<ColumnValue> columnValues1 = new ArrayList<>();
+        ArrayList<ColumnValue> columnValues1 = new ArrayList<>();
         ColumnValue value1 = ColumnValue.builder().value("<VALUE>").columnGroup("<COLUMN_GROUP>").build();
         ColumnValue value2 = ColumnValue.builder().value("<VALUE>").columnGroup("<COLUMN_GROUP>").build();
         columnValues1.add(value1);
@@ -48,7 +47,7 @@ public class TokenizeExample {
         TokenizeResponse tokenizeResponse1 = skyflowClient.vault().tokenize(tokenizeRequest1);
         System.out.println(tokenizeResponse1);
 
-        List<ColumnValue> columnValues2 = new ArrayList<>();
+        ArrayList<ColumnValue> columnValues2 = new ArrayList<>();
         ColumnValue value3 = ColumnValue.builder().value("<VALUE>").columnGroup("<COLUMN_GROUP>").build();
         ColumnValue value4 = ColumnValue.builder().value("<VALUE>").columnGroup("<COLUMN_GROUP>").build();
         columnValues2.add(value3);

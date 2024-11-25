@@ -194,6 +194,9 @@ public class BearerToken {
         private ArrayList<String> roles;
         private String credentialsType;
 
+        private BearerTokenBuilder() {
+        }
+
         private void setCredentialsType(String credentialsType) {
             this.credentialsType = credentialsType;
         }
