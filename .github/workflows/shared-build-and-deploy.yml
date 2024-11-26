@@ -16,31 +16,23 @@ on:
         description: 'Id of the repository'
         required: true
         type: string
-
-      server-username:
-        description: 'Username of the repository'
-        required: true
-        type: string
-
-      server-password:
-        description: 'Password of the repository'
-        required: true
-        type: string
-
-      gpg-key:
-        description: 'GPG key to access the repository'
-        required: true
-        type: string
-
-      gpg-passphrase:
-        description: 'GPG passphrase to access the repository'
-        required: true
-        type: string
-
+      
       profile:
         description: 'Profile to pick from pom.xml'
         required: true
         type: string
+    secrets:
+      server-username:
+        required: true
+
+      server-password:
+        required: true
+
+      gpg-key:
+        required: true
+
+      gpg-passphrase:
+        required: true
 
 jobs:
   publish:
@@ -59,7 +51,7 @@ jobs:
           server-id: ${{ inputs.server-id }}
           server-username: SERVER_USERNAME
           server-password: SERVER_PASSWORD
-          gpg-private-key: ${{ inputs.gpg-key }} # Value of the GPG private key to import
+          gpg-private-key: ${{ secrets.gpg-key }} # Value of the GPG private key to import
           gpg-passphrase: GPG_PASSPHRASE # env variable for GPG private key passphrase
 
       - name: Get Previous tag
@@ -107,7 +99,6 @@ jobs:
       - name: Publish package
         run: mvn clean deploy -P ${{ inputs.profile }}
         env:
-          SERVER_USERNAME: ${{ inputs.server-username }}
-          SERVER_PASSWORD: ${{ inputs.server-password  }}
-          GPG_PASSPHRASE: ${{ inputs.gpg-passphrase }}
-          
+          SERVER_USERNAME: ${{ secrets.server-username }}
+          SERVER_PASSWORD: ${{ secrets.server-password  }}
+          GPG_PASSPHRASE: ${{ secrets.gpg-passphrase }}
