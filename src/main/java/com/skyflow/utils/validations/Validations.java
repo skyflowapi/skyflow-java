@@ -3,9 +3,9 @@ package com.skyflow.utils.validations;
 import com.skyflow.config.ConnectionConfig;
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
-import com.skyflow.enums.Byot;
 import com.skyflow.enums.InterfaceName;
 import com.skyflow.enums.RedactionType;
+import com.skyflow.enums.TokenMode;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
@@ -238,7 +238,7 @@ public class Validations {
         ArrayList<HashMap<String, Object>> tokens = insertRequest.getTokens();
         String upsert = insertRequest.getUpsert();
         Boolean homogeneous = insertRequest.getHomogeneous();
-        Byot tokenStrict = insertRequest.getTokenStrict();
+        TokenMode tokenMode = insertRequest.getTokenMode();
 
         if (table == null) {
             LogUtil.printErrorLog(Utils.parameterizedString(
@@ -296,46 +296,46 @@ public class Validations {
             }
         }
 
-        switch (tokenStrict) {
+        switch (tokenMode) {
             case DISABLE:
                 if (tokens != null) {
                     LogUtil.printErrorLog(Utils.parameterizedString(
-                            ErrorLogs.TOKENS_NOT_ALLOWED_WITH_BYOT_DISABLE.getLog(), InterfaceName.INSERT.getName()
+                            ErrorLogs.TOKENS_NOT_ALLOWED_WITH_TOKEN_MODE_DISABLE.getLog(), InterfaceName.INSERT.getName()
                     ));
-                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.TokensPassedForByotDisable.getMessage());
+                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.TokensPassedForTokenModeDisable.getMessage());
                 }
                 break;
             case ENABLE:
                 if (tokens == null) {
                     LogUtil.printErrorLog(Utils.parameterizedString(
-                            ErrorLogs.TOKENS_REQUIRED_WITH_BYOT.getLog(),
-                            InterfaceName.INSERT.getName(), Byot.ENABLE.toString()
+                            ErrorLogs.TOKENS_REQUIRED_WITH_TOKEN_MODE.getLog(),
+                            InterfaceName.INSERT.getName(), TokenMode.ENABLE.toString()
                     ));
                     throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(),
-                            Utils.parameterizedString(ErrorMessage.NoTokensWithByot.getMessage(), Byot.ENABLE.toString())
+                            Utils.parameterizedString(ErrorMessage.NoTokensWithTokenMode.getMessage(), TokenMode.ENABLE.toString())
                     );
                 }
-                validateTokensForInsertRequest(tokens, values, tokenStrict);
+                validateTokensForInsertRequest(tokens, values, tokenMode);
                 break;
             case ENABLE_STRICT:
                 if (tokens == null) {
                     LogUtil.printErrorLog(Utils.parameterizedString(
-                            ErrorLogs.TOKENS_REQUIRED_WITH_BYOT.getLog(),
-                            InterfaceName.INSERT.getName(), Byot.ENABLE_STRICT.toString()
+                            ErrorLogs.TOKENS_REQUIRED_WITH_TOKEN_MODE.getLog(),
+                            InterfaceName.INSERT.getName(), TokenMode.ENABLE_STRICT.toString()
                     ));
                     throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(),
-                            Utils.parameterizedString(ErrorMessage.NoTokensWithByot.getMessage(), Byot.ENABLE_STRICT.toString())
+                            Utils.parameterizedString(ErrorMessage.NoTokensWithTokenMode.getMessage(), TokenMode.ENABLE_STRICT.toString())
                     );
                 } else if (tokens.size() != values.size()) {
                     LogUtil.printErrorLog(Utils.parameterizedString(
-                            ErrorLogs.INSUFFICIENT_TOKENS_PASSED_FOR_BYOT_ENABLE_STRICT.getLog(),
+                            ErrorLogs.INSUFFICIENT_TOKENS_PASSED_FOR_TOKEN_MODE_ENABLE_STRICT.getLog(),
                             InterfaceName.INSERT.getName()
                     ));
                     throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(),
-                            ErrorMessage.InsufficientTokensPassedForByotEnableStrict.getMessage()
+                            ErrorMessage.InsufficientTokensPassedForTokenModeEnableStrict.getMessage()
                     );
                 }
-                validateTokensForInsertRequest(tokens, values, tokenStrict);
+                validateTokensForInsertRequest(tokens, values, tokenMode);
                 break;
         }
     }
@@ -488,7 +488,7 @@ public class Validations {
         String table = updateRequest.getTable();
         HashMap<String, Object> data = updateRequest.getData();
         HashMap<String, Object> tokens = updateRequest.getTokens();
-        Byot tokenStrict = updateRequest.getTokenStrict();
+        TokenMode tokenMode = updateRequest.getTokenMode();
 
         if (table == null) {
             LogUtil.printErrorLog(Utils.parameterizedString(
@@ -550,42 +550,42 @@ public class Validations {
             }
         }
 
-        switch (tokenStrict) {
+        switch (tokenMode) {
             case DISABLE:
                 if (tokens != null) {
                     LogUtil.printErrorLog(Utils.parameterizedString(
-                            ErrorLogs.TOKENS_NOT_ALLOWED_WITH_BYOT_DISABLE.getLog(), InterfaceName.INSERT.getName()
+                            ErrorLogs.TOKENS_NOT_ALLOWED_WITH_TOKEN_MODE_DISABLE.getLog(), InterfaceName.UPDATE.getName()
                     ));
                     throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(),
-                            ErrorMessage.TokensPassedForByotDisable.getMessage());
+                            ErrorMessage.TokensPassedForTokenModeDisable.getMessage());
                 }
                 break;
             case ENABLE:
                 if (tokens == null) {
                     LogUtil.printErrorLog(Utils.parameterizedString(
-                            ErrorLogs.TOKENS_REQUIRED_WITH_BYOT.getLog(),
-                            InterfaceName.INSERT.getName(), Byot.ENABLE.toString()
+                            ErrorLogs.TOKENS_REQUIRED_WITH_TOKEN_MODE.getLog(),
+                            InterfaceName.UPDATE.getName(), TokenMode.ENABLE.toString()
                     ));
                     throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), Utils.parameterizedString(
-                            ErrorMessage.NoTokensWithByot.getMessage(), Byot.ENABLE.toString()));
+                            ErrorMessage.NoTokensWithTokenMode.getMessage(), TokenMode.ENABLE.toString()));
                 }
                 validateTokensMapWithTokenStrict(tokens, data);
                 break;
             case ENABLE_STRICT:
                 if (tokens == null) {
                     LogUtil.printErrorLog(Utils.parameterizedString(
-                            ErrorLogs.TOKENS_REQUIRED_WITH_BYOT.getLog(),
-                            InterfaceName.INSERT.getName(), Byot.ENABLE_STRICT.toString()
+                            ErrorLogs.TOKENS_REQUIRED_WITH_TOKEN_MODE.getLog(),
+                            InterfaceName.UPDATE.getName(), TokenMode.ENABLE_STRICT.toString()
                     ));
                     throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), Utils.parameterizedString(
-                            ErrorMessage.NoTokensWithByot.getMessage(), Byot.ENABLE_STRICT.toString()));
+                            ErrorMessage.NoTokensWithTokenMode.getMessage(), TokenMode.ENABLE_STRICT.toString()));
                 } else if (tokens.size() != (data.size() - 1)) {
                     LogUtil.printErrorLog(Utils.parameterizedString(
-                            ErrorLogs.INSUFFICIENT_TOKENS_PASSED_FOR_BYOT_ENABLE_STRICT.getLog(),
-                            InterfaceName.INSERT.getName()
+                            ErrorLogs.INSUFFICIENT_TOKENS_PASSED_FOR_TOKEN_MODE_ENABLE_STRICT.getLog(),
+                            InterfaceName.UPDATE.getName()
                     ));
                     throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(),
-                            ErrorMessage.InsufficientTokensPassedForByotEnableStrict.getMessage());
+                            ErrorMessage.InsufficientTokensPassedForTokenModeEnableStrict.getMessage());
                 }
                 validateTokensMapWithTokenStrict(tokens, data);
                 break;
@@ -692,7 +692,7 @@ public class Validations {
     private static void validateTokensForInsertRequest(
             ArrayList<HashMap<String, Object>> tokens,
             ArrayList<HashMap<String, Object>> values,
-            Byot tokenStrict
+            TokenMode tokenStrict
     ) throws SkyflowException {
         if (tokens.isEmpty()) {
             LogUtil.printErrorLog(Utils.parameterizedString(
@@ -704,31 +704,37 @@ public class Validations {
         for (int index = 0; index < tokens.size(); index++) {
             HashMap<String, Object> tokensMap = tokens.get(index);
             HashMap<String, Object> valuesMap = values.get(index);
-            if (tokensMap.size() != valuesMap.size() && tokenStrict == Byot.ENABLE_STRICT) {
+            if (tokensMap.size() != valuesMap.size() && tokenStrict == TokenMode.ENABLE_STRICT) {
                 LogUtil.printErrorLog(Utils.parameterizedString(
-                        ErrorLogs.INSUFFICIENT_TOKENS_PASSED_FOR_BYOT_ENABLE_STRICT.getLog(),
+                        ErrorLogs.INSUFFICIENT_TOKENS_PASSED_FOR_TOKEN_MODE_ENABLE_STRICT.getLog(),
                         InterfaceName.INSERT.getName()
                 ));
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(),
-                        ErrorMessage.InsufficientTokensPassedForByotEnableStrict.getMessage()
+                        ErrorMessage.InsufficientTokensPassedForTokenModeEnableStrict.getMessage()
                 );
             }
-            validateTokensMapWithTokenStrict(tokensMap, valuesMap);
+            validateTokensMapWithTokenStrict(tokensMap, valuesMap, InterfaceName.INSERT.getName());
         }
     }
 
     private static void validateTokensMapWithTokenStrict(
             HashMap<String, Object> tokensMap, HashMap<String, Object> valuesMap
     ) throws SkyflowException {
+        validateTokensMapWithTokenStrict(tokensMap, valuesMap, InterfaceName.UPDATE.getName());
+    }
+
+    private static void validateTokensMapWithTokenStrict(
+            HashMap<String, Object> tokensMap, HashMap<String, Object> valuesMap, String interfaceName
+    ) throws SkyflowException {
         for (String key : tokensMap.keySet()) {
             if (key == null || key.trim().isEmpty()) {
                 LogUtil.printErrorLog(Utils.parameterizedString(
-                        ErrorLogs.EMPTY_OR_NULL_KEY_IN_TOKENS.getLog(), InterfaceName.INSERT.getName()
+                        ErrorLogs.EMPTY_OR_NULL_KEY_IN_TOKENS.getLog(), interfaceName
                 ));
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyKeyInTokens.getMessage());
             } else if (!valuesMap.containsKey(key)) {
                 LogUtil.printErrorLog(Utils.parameterizedString(
-                        ErrorLogs.MISMATCH_OF_FIELDS_AND_TOKENS.getLog(), InterfaceName.INSERT.getName()
+                        ErrorLogs.MISMATCH_OF_FIELDS_AND_TOKENS.getLog(), interfaceName
                 ));
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.MismatchOfFieldsAndTokens.getMessage());
             } else {
@@ -736,7 +742,7 @@ public class Validations {
                 if (value == null || value.toString().trim().isEmpty()) {
                     LogUtil.printErrorLog(Utils.parameterizedString(
                             ErrorLogs.EMPTY_OR_NULL_VALUE_IN_TOKENS.getLog(),
-                            InterfaceName.INSERT.getName(), key
+                            interfaceName, key
                     ));
                     throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyValueInTokens.getMessage());
                 }

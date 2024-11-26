@@ -3,19 +3,11 @@ package com.skyflow.config;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
-import com.skyflow.generated.rest.ApiClient;
-import com.skyflow.serviceaccount.util.Token;
 import com.skyflow.utils.validations.Validations;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(fullyQualifiedNames = "com.skyflow.serviceaccount.util.Token")
 public class ConnectionConfigTests {
     private static final String INVALID_EXCEPTION_THROWN = "Should not have thrown any exception";
     private static final String EXCEPTION_NOT_THROWN = "Should have thrown an exception";
@@ -25,12 +17,7 @@ public class ConnectionConfigTests {
     private static Credentials credentials = null;
 
     @BeforeClass
-    public static void setup() throws SkyflowException, NoSuchMethodException {
-        PowerMockito.mockStatic(Token.class);
-        PowerMockito.when(Token.isExpired("valid_token")).thenReturn(true);
-        PowerMockito.when(Token.isExpired("not_a_valid_token")).thenReturn(false);
-        PowerMockito.mock(ApiClient.class);
-
+    public static void setup() {
         connectionID = "connection123";
         connectionURL = "https://connection.url.com";
         invalidConnectionURL = "invalid.connection.url.com";

@@ -3,12 +3,11 @@ package com.skyflow.vault.data;
 import com.skyflow.Skyflow;
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
-import com.skyflow.enums.Byot;
+import com.skyflow.enums.TokenMode;
 import com.skyflow.enums.Env;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
-import com.skyflow.serviceaccount.util.Token;
 import com.skyflow.utils.Constants;
 import com.skyflow.utils.Utils;
 import com.skyflow.utils.validations.Validations;
@@ -16,15 +15,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.HashMap;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(fullyQualifiedNames = "com.skyflow.serviceaccount.util.Token")
 public class UpdateTests {
     private static final String INVALID_EXCEPTION_THROWN = "Should not have thrown any exception";
     private static final String EXCEPTION_NOT_THROWN = "Should have thrown an exception";
@@ -37,11 +30,7 @@ public class UpdateTests {
     private static Skyflow skyflowClient = null;
 
     @BeforeClass
-    public static void setup() throws SkyflowException {
-        PowerMockito.mockStatic(Token.class);
-        PowerMockito.when(Token.isExpired("valid_token")).thenReturn(true);
-        PowerMockito.when(Token.isExpired("not_a_valid_token")).thenReturn(false);
-
+    public static void setup() {
         vaultID = "vault123";
         clusterID = "cluster123";
 
@@ -78,7 +67,7 @@ public class UpdateTests {
                     .data(dataMap)
                     .tokens(tokenMap)
                     .returnTokens(true)
-                    .tokenStrict(Byot.ENABLE)
+                    .tokenMode(TokenMode.ENABLE)
                     .build();
             Validations.validateUpdateRequest(request);
             Assert.assertEquals(table, request.getTable());
@@ -243,7 +232,7 @@ public class UpdateTests {
         dataMap.put("test_column_2", "test_value_2");
         tokenMap.put("test_column_1", "test_token_1");
         UpdateRequest request = UpdateRequest.builder()
-                .table(table).data(dataMap).tokens(tokenMap).tokenStrict(Byot.DISABLE)
+                .table(table).data(dataMap).tokens(tokenMap).tokenMode(TokenMode.DISABLE)
                 .build();
         try {
             Validations.validateUpdateRequest(request);
@@ -251,7 +240,7 @@ public class UpdateTests {
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
-                    Utils.parameterizedString(ErrorMessage.TokensPassedForByotDisable.getMessage(), Constants.SDK_PREFIX),
+                    Utils.parameterizedString(ErrorMessage.TokensPassedForTokenModeDisable.getMessage(), Constants.SDK_PREFIX),
                     e.getMessage()
             );
         }
@@ -263,7 +252,7 @@ public class UpdateTests {
         dataMap.put("test_column_1", "test_value_1");
         dataMap.put("test_column_2", "test_value_2");
         UpdateRequest request = UpdateRequest.builder()
-                 .table(table).data(dataMap).tokenStrict(Byot.ENABLE)
+                .table(table).data(dataMap).tokenMode(TokenMode.ENABLE)
                 .build();
         try {
             Validations.validateUpdateRequest(request);
@@ -271,7 +260,7 @@ public class UpdateTests {
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
-                    Utils.parameterizedString(ErrorMessage.NoTokensWithByot.getMessage(), Byot.ENABLE.toString()),
+                    Utils.parameterizedString(ErrorMessage.NoTokensWithTokenMode.getMessage(), TokenMode.ENABLE.toString()),
                     e.getMessage()
             );
         }
@@ -283,7 +272,7 @@ public class UpdateTests {
         dataMap.put("test_column_1", "test_value_1");
         dataMap.put("test_column_2", "test_value_2");
         UpdateRequest request = UpdateRequest.builder()
-                 .table(table).data(dataMap).tokenStrict(Byot.ENABLE_STRICT)
+                .table(table).data(dataMap).tokenMode(TokenMode.ENABLE_STRICT)
                 .build();
         try {
             Validations.validateUpdateRequest(request);
@@ -291,7 +280,7 @@ public class UpdateTests {
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
-                    Utils.parameterizedString(ErrorMessage.NoTokensWithByot.getMessage(), Byot.ENABLE_STRICT.toString()),
+                    Utils.parameterizedString(ErrorMessage.NoTokensWithTokenMode.getMessage(), TokenMode.ENABLE_STRICT.toString()),
                     e.getMessage()
             );
         }
@@ -303,7 +292,7 @@ public class UpdateTests {
         dataMap.put("test_column_1", "test_value_1");
         dataMap.put("test_column_2", "test_value_2");
         UpdateRequest request = UpdateRequest.builder()
-                .table(table).data(dataMap).tokens(tokenMap).tokenStrict(Byot.ENABLE)
+                .table(table).data(dataMap).tokens(tokenMap).tokenMode(TokenMode.ENABLE)
                 .build();
         try {
             Validations.validateUpdateRequest(request);
@@ -321,14 +310,14 @@ public class UpdateTests {
         dataMap.put("test_column_2", "test_value_2");
         tokenMap.put("test_column_1", "test_token_1");
         UpdateRequest request = UpdateRequest.builder()
-                .table(table).data(dataMap).tokens(tokenMap).tokenStrict(Byot.ENABLE_STRICT)
+                .table(table).data(dataMap).tokens(tokenMap).tokenMode(TokenMode.ENABLE_STRICT)
                 .build();
         try {
             Validations.validateUpdateRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(ErrorMessage.InsufficientTokensPassedForByotEnableStrict.getMessage(), e.getMessage());
+            Assert.assertEquals(ErrorMessage.InsufficientTokensPassedForTokenModeEnableStrict.getMessage(), e.getMessage());
         }
     }
 
@@ -340,7 +329,7 @@ public class UpdateTests {
         tokenMap.put("test_column_1", "test_token_1");
         tokenMap.put("test_column_3", "test_token_3");
         UpdateRequest request = UpdateRequest.builder()
-                .table(table).data(dataMap).tokens(tokenMap).tokenStrict(Byot.ENABLE_STRICT)
+                .table(table).data(dataMap).tokens(tokenMap).tokenMode(TokenMode.ENABLE_STRICT)
                 .build();
         try {
             Validations.validateUpdateRequest(request);
@@ -359,7 +348,7 @@ public class UpdateTests {
         tokenMap.put("test_column_1", "test_token_1");
         tokenMap.put("", "test_token_2");
         UpdateRequest request = UpdateRequest.builder()
-                .table(table).data(dataMap).tokens(tokenMap).tokenStrict(Byot.ENABLE_STRICT)
+                .table(table).data(dataMap).tokens(tokenMap).tokenMode(TokenMode.ENABLE_STRICT)
                 .build();
         try {
             Validations.validateUpdateRequest(request);
@@ -378,7 +367,7 @@ public class UpdateTests {
         tokenMap.put("test_column_1", "test_token_1");
         tokenMap.put("test_column_2", "");
         UpdateRequest request = UpdateRequest.builder()
-                .table(table).data(dataMap).tokens(tokenMap).tokenStrict(Byot.ENABLE_STRICT)
+                .table(table).data(dataMap).tokens(tokenMap).tokenMode(TokenMode.ENABLE_STRICT)
                 .build();
         try {
             Validations.validateUpdateRequest(request);

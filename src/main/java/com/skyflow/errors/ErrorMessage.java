@@ -65,10 +65,10 @@ public enum ErrorMessage {
     EmptyValueInTokens("%s0 Validation error. Invalid value in tokens. Specify a valid value."),
     EmptyUpsert("%s0 Validation error. 'upsert' key can't be empty. Specify an upsert column."),
     HomogenousNotSupportedWithUpsert("%s0 Validation error. 'homogenous' is not supported with 'upsert'. Specify either 'homogenous' or 'upsert'."),
-    TokensPassedForByotDisable("%s0 Validation error. 'tokenStrict' wasn't specified. Set 'tokenStrict' to 'ENABLE' to insert tokens."),
-    NoTokensWithByot("%s0 Validation error. Tokens weren't specified for records while 'tokenStrict' was %s1. Specify tokens."),
+    TokensPassedForTokenModeDisable("%s0 Validation error. 'tokenMode' wasn't specified. Set 'tokenMode' to 'ENABLE' to insert tokens."),
+    NoTokensWithTokenMode("%s0 Validation error. Tokens weren't specified for records while 'tokenMode' was %s1. Specify tokens."),
     MismatchOfFieldsAndTokens("%s0 Validation error. 'fields' and 'tokens' have different columns names. Verify that 'fields' and 'tokens' columns match."),
-    InsufficientTokensPassedForByotEnableStrict("%s0 Validation error. 'tokenStrict' is set to 'ENABLE_STRICT', but some fields are missing tokens. Specify tokens for all fields."),
+    InsufficientTokensPassedForTokenModeEnableStrict("%s0 Validation error. 'tokenMode' is set to 'ENABLE_STRICT', but some fields are missing tokens. Specify tokens for all fields."),
     BatchInsertPartialSuccess("%s0 Insert operation completed with partial success."),
     BatchInsertFailure("%s0 Insert operation failed."),
 

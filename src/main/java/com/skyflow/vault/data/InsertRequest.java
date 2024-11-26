@@ -1,6 +1,6 @@
 package com.skyflow.vault.data;
 
-import com.skyflow.enums.Byot;
+import com.skyflow.enums.TokenMode;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -40,16 +40,12 @@ public class InsertRequest {
         return this.builder.homogeneous;
     }
 
-    public Boolean getTokenMode() {
-        return this.builder.tokenMode;
-    }
-
     public Boolean getContinueOnError() {
         return this.builder.continueOnError;
     }
 
-    public Byot getTokenStrict() {
-        return this.builder.tokenStrict;
+    public TokenMode getTokenMode() {
+        return this.builder.tokenMode;
     }
 
     public static final class InsertRequestBuilder {
@@ -59,15 +55,13 @@ public class InsertRequest {
         private Boolean returnTokens;
         private String upsert;
         private Boolean homogeneous;
-        private Boolean tokenMode;
         private Boolean continueOnError;
-        private Byot tokenStrict;
+        private TokenMode tokenMode;
 
         private InsertRequestBuilder() {
             this.returnTokens = true;
-            this.tokenMode = false;
             this.continueOnError = false;
-            this.tokenStrict = Byot.DISABLE;
+            this.tokenMode = TokenMode.DISABLE;
         }
 
         public InsertRequestBuilder table(String table) {
@@ -100,18 +94,13 @@ public class InsertRequest {
             return this;
         }
 
-        public InsertRequestBuilder tokenMode(Boolean tokenMode) {
-            this.tokenMode = tokenMode != null && tokenMode;
-            return this;
-        }
-
         public InsertRequestBuilder continueOnError(Boolean continueOnError) {
             this.continueOnError = continueOnError != null && continueOnError;
             return this;
         }
 
-        public InsertRequestBuilder tokenStrict(Byot tokenStrict) {
-            this.tokenStrict = tokenStrict == null ? Byot.DISABLE : tokenStrict;
+        public InsertRequestBuilder tokenMode(TokenMode tokenMode) {
+            this.tokenMode = tokenMode == null ? TokenMode.DISABLE : tokenMode;
             return this;
         }
 

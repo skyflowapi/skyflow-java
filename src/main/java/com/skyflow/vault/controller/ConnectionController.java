@@ -48,7 +48,7 @@ public class ConnectionController extends ConnectionClient {
                 headers.put("x-skyflow-authorization", token == null ? apiKey : token);
             }
 
-            RequestMethod requestMethod = invokeConnectionRequest.getMethodName();
+            RequestMethod requestMethod = invokeConnectionRequest.getMethod();
             JsonObject requestBody = null;
             Object requestBodyObject = invokeConnectionRequest.getRequestBody();
 

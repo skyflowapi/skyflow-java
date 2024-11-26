@@ -160,7 +160,7 @@ public class UtilsTests {
             connectionConfig.setConnectionUrl(connectionUrl);
 
             InvokeConnectionRequest request = InvokeConnectionRequest.builder()
-                    .methodName(RequestMethod.POST).pathParams(pathParams).queryParams(queryParams).build();
+                    .method(RequestMethod.POST).pathParams(pathParams).queryParams(queryParams).build();
             String filledUrl = Utils.constructConnectionURL(connectionConfig, request);
             Assert.assertEquals(connectionUrl + "?" + "query_param=value", filledUrl);
         } catch (Exception e) {

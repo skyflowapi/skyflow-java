@@ -46,7 +46,7 @@ public class InvokeConnectionTests {
         requestBody.put("key", "value");
         try {
             InvokeConnectionRequest request = InvokeConnectionRequest.builder()
-                    .methodName(RequestMethod.POST)
+                    .method(RequestMethod.POST)
                     .requestHeaders(requestHeaders)
                     .pathParams(pathParams)
                     .queryParams(queryParams)
@@ -56,7 +56,7 @@ public class InvokeConnectionTests {
             Assert.assertEquals(1, request.getQueryParams().size());
             Assert.assertEquals(1, request.getPathParams().size());
             Assert.assertEquals(1, request.getRequestHeaders().size());
-            Assert.assertEquals(RequestMethod.POST, request.getMethodName());
+            Assert.assertEquals(RequestMethod.POST, request.getMethod());
             Assert.assertNotNull(request.getRequestBody());
         } catch (SkyflowException e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
@@ -67,7 +67,7 @@ public class InvokeConnectionTests {
     public void testEmptyRequestHeadersInInvokeConnectionRequestValidations() {
         try {
             InvokeConnectionRequest request = InvokeConnectionRequest.builder()
-                    .methodName(RequestMethod.POST)
+                    .method(RequestMethod.POST)
                     .requestHeaders(requestHeaders)
                     .pathParams(pathParams)
                     .queryParams(queryParams)
@@ -87,7 +87,7 @@ public class InvokeConnectionTests {
             requestHeaders.put("header1", "value1");
             requestHeaders.put(null, "value2");
             InvokeConnectionRequest request = InvokeConnectionRequest.builder()
-                    .methodName(RequestMethod.POST)
+                    .method(RequestMethod.POST)
                     .requestHeaders(requestHeaders)
                     .pathParams(pathParams)
                     .queryParams(queryParams)
@@ -107,7 +107,7 @@ public class InvokeConnectionTests {
             requestHeaders.put("header1", "value");
             requestHeaders.put("", "value");
             InvokeConnectionRequest request = InvokeConnectionRequest.builder()
-                    .methodName(RequestMethod.POST)
+                    .method(RequestMethod.POST)
                     .requestHeaders(requestHeaders)
                     .pathParams(pathParams)
                     .queryParams(queryParams)
@@ -127,7 +127,7 @@ public class InvokeConnectionTests {
             requestHeaders.put("header1", "value");
             requestHeaders.put("header2", null);
             InvokeConnectionRequest request = InvokeConnectionRequest.builder()
-                    .methodName(RequestMethod.POST)
+                    .method(RequestMethod.POST)
                     .requestHeaders(requestHeaders)
                     .pathParams(pathParams)
                     .queryParams(queryParams)
@@ -147,7 +147,7 @@ public class InvokeConnectionTests {
             requestHeaders.put("header1", "value");
             requestHeaders.put("header2", "");
             InvokeConnectionRequest request = InvokeConnectionRequest.builder()
-                    .methodName(RequestMethod.POST)
+                    .method(RequestMethod.POST)
                     .requestHeaders(requestHeaders)
                     .pathParams(pathParams)
                     .queryParams(queryParams)
@@ -166,7 +166,7 @@ public class InvokeConnectionTests {
         try {
             requestHeaders.put("header1", "value");
             InvokeConnectionRequest request = InvokeConnectionRequest.builder()
-                    .methodName(RequestMethod.POST)
+                    .method(RequestMethod.POST)
                     .requestHeaders(requestHeaders)
                     .pathParams(pathParams)
                     .queryParams(queryParams)
@@ -187,7 +187,7 @@ public class InvokeConnectionTests {
             pathParams.put("path_param", "value");
             pathParams.put(null, "value");
             InvokeConnectionRequest request = InvokeConnectionRequest.builder()
-                    .methodName(RequestMethod.POST)
+                    .method(RequestMethod.POST)
                     .requestHeaders(requestHeaders)
                     .pathParams(pathParams)
                     .queryParams(queryParams)
@@ -208,7 +208,7 @@ public class InvokeConnectionTests {
             pathParams.put("path_param", "value");
             pathParams.put("", "value");
             InvokeConnectionRequest request = InvokeConnectionRequest.builder()
-                    .methodName(RequestMethod.POST)
+                    .method(RequestMethod.POST)
                     .requestHeaders(requestHeaders)
                     .pathParams(pathParams)
                     .queryParams(queryParams)
@@ -229,7 +229,7 @@ public class InvokeConnectionTests {
             pathParams.put("path_param1", "value");
             pathParams.put("path_param2", null);
             InvokeConnectionRequest request = InvokeConnectionRequest.builder()
-                    .methodName(RequestMethod.POST)
+                    .method(RequestMethod.POST)
                     .requestHeaders(requestHeaders)
                     .pathParams(pathParams)
                     .queryParams(queryParams)
@@ -250,7 +250,7 @@ public class InvokeConnectionTests {
             pathParams.put("path_param1", "value");
             pathParams.put("path_param2", "");
             InvokeConnectionRequest request = InvokeConnectionRequest.builder()
-                    .methodName(RequestMethod.POST)
+                    .method(RequestMethod.POST)
                     .requestHeaders(requestHeaders)
                     .pathParams(pathParams)
                     .queryParams(queryParams)
@@ -270,7 +270,7 @@ public class InvokeConnectionTests {
             requestHeaders.put("header1", "value");
             pathParams.put("path_param", "value");
             InvokeConnectionRequest request = InvokeConnectionRequest.builder()
-                    .methodName(RequestMethod.POST)
+                    .method(RequestMethod.POST)
                     .requestHeaders(requestHeaders)
                     .pathParams(pathParams)
                     .queryParams(queryParams)
@@ -292,7 +292,7 @@ public class InvokeConnectionTests {
             queryParams.put("query_param", "value");
             queryParams.put(null, "value");
             InvokeConnectionRequest request = InvokeConnectionRequest.builder()
-                    .methodName(RequestMethod.POST)
+                    .method(RequestMethod.POST)
                     .requestHeaders(requestHeaders)
                     .pathParams(pathParams)
                     .queryParams(queryParams)
@@ -314,7 +314,7 @@ public class InvokeConnectionTests {
             queryParams.put("query_param", "value");
             queryParams.put("", "value");
             InvokeConnectionRequest request = InvokeConnectionRequest.builder()
-                    .methodName(RequestMethod.POST)
+                    .method(RequestMethod.POST)
                     .requestHeaders(requestHeaders)
                     .pathParams(pathParams)
                     .queryParams(queryParams)
@@ -336,7 +336,7 @@ public class InvokeConnectionTests {
             queryParams.put("query_param1", "value");
             queryParams.put("query_param2", null);
             InvokeConnectionRequest request = InvokeConnectionRequest.builder()
-                    .methodName(RequestMethod.POST)
+                    .method(RequestMethod.POST)
                     .requestHeaders(requestHeaders)
                     .pathParams(pathParams)
                     .queryParams(queryParams)
@@ -358,7 +358,7 @@ public class InvokeConnectionTests {
             queryParams.put("query_param1", "value");
             queryParams.put("query_param2", "");
             InvokeConnectionRequest request = InvokeConnectionRequest.builder()
-                    .methodName(RequestMethod.POST)
+                    .method(RequestMethod.POST)
                     .requestHeaders(requestHeaders)
                     .pathParams(pathParams)
                     .queryParams(queryParams)
@@ -379,7 +379,7 @@ public class InvokeConnectionTests {
             pathParams.put("path_param", "value");
             queryParams.put("query_param", "value");
             InvokeConnectionRequest request = InvokeConnectionRequest.builder()
-                    .methodName(RequestMethod.POST)
+                    .method(RequestMethod.POST)
                     .requestHeaders(requestHeaders)
                     .pathParams(pathParams)
                     .queryParams(queryParams)
