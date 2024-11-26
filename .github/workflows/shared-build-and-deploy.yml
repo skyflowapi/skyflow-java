@@ -62,11 +62,11 @@ jobs:
 
       - name: Bump Version
         run: |
-          chmod +x ./ci-scripts/bump_version.sh
+          chmod +x ./scripts/bump_version.sh
           if ${{ inputs.is-internal }}; then
-            ./ci-scripts/bump_version.sh "${{ steps.previoustag.outputs.tag }}" "$(git rev-parse --short "$GITHUB_SHA")"
+            ./scripts/bump_version.sh "${{ steps.previoustag.outputs.tag }}" "$(git rev-parse --short "$GITHUB_SHA")"
           else
-            ./ci-scripts/bump_version.sh "${{ steps.previoustag.outputs.tag }}"
+            ./scripts/bump_version.sh "${{ steps.previoustag.outputs.tag }}"
           fi
 
       - name: Commit changes
