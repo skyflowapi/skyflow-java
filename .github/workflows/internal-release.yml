@@ -1,10 +1,16 @@
-name: Publish package to the Maven Central Repository
+name: Publish package to the JFROG Artifactory
 on:
   push:
     tags: '*.*.*'
+    paths-ignore:
+      - "pom.xml"
+      - "*.md"
+    branches:
+      - release/*
+
 jobs:
   build-and-deploy:
     uses: ./.github/workflows/shared-build-and-deploy.yml
     with:
       ref: ${{ github.ref_name }}
-      is-internal: false
+      is-internal: true

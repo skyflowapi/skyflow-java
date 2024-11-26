@@ -1,0 +1,104 @@
+name: Shared Build and Deploy
+on:
+  workflow_call:
+    inputs:
+      ref:
+        description: 'Git reference to use (e.g., main or branch name)'
+        required: true
+        type: string
+
+      is-internal:
+        description: 'Flag for internal release'
+        required: true
+        type: boolean
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ inputs.ref }}
+          fetch-depth: 0
+
+      - name: Set up Jfrog artifactory
+        if: ${{ inputs.is-internal }}
+        uses: actions/setup-java@v1
+        with:
+          java-version: '1.8'
+          distribution: 'adopt'
+          server-id: central
+          server-username: JFROG_USERNAME
+          server-password: JFROG_PASSWORD
+          gpg-private-key: ${{ secrets.JFROG_GPG_KEY }} # Value of the GPG private key to import
+          gpg-passphrase: JFROG_GPG_PASSPHRASE # env variable for GPG private key passphrase
+
+      - name: Set up Maven Central Repository
+        if: ${{ !inputs.is-internal }}
+        uses: actions/setup-java@v1
+        with:
+          java-version: '1.8'
+          distribution: 'adopt'
+          server-id: ossrh
+          server-username: MAVEN_USERNAME
+          server-password: MAVEN_PASSWORD
+          gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }} # Value of the GPG private key to import
+          gpg-passphrase: MAVEN_GPG_PASSPHRASE # env variable for GPG private key passphrase
+
+      - name: Get Previous tag
+        id: previoustag
+        uses: WyriHaximus/github-action-get-previous-tag@v1
+        with:
+          fallback: 1.0.0
+
+      - name: Bump Version
+        run: |
+          chmod +x ./ci-scripts/bump_version.sh
+          if ${{ inputs.is-internal }}; then
+            ./ci-scripts/bump_version.sh "${{ steps.previoustag.outputs.tag }}" "$(git rev-parse --short "$GITHUB_SHA")"
+          else
+            ./ci-scripts/bump_version.sh "${{ steps.previoustag.outputs.tag }}"
+          fi
+
+      - name: Commit changes
+        run: |
+          git config user.name ${{ github.actor }}
+          git config user.email ${{ github.actor }}@users.noreply.github.com
+          git add pom.xml
+          if ${{ inputs.is-internal }}; then
+            git commit -m "[AUTOMATED] Private Release ${{ steps.previoustag.outputs.tag }}-dev-$(git rev-parse --short $GITHUB_SHA)"
+            git push origin ${{ github.ref_name }} -f
+          else
+            git commit -m "[AUTOMATED] Public Release - ${{ steps.previoustag.outputs.tag }}"
+            git push origin
+
+      - name: Create env
+        if: ${{ inputs.is-internal }}
+        id: create-env
+        run: |
+          touch .env
+          echo SKYFLOW_CREDENTIALS=${{ secrets.SKYFLOW_CREDENTIALS }} >> .env
+          echo TEST_EXPIRED_TOKEN=${{ secrets.TEST_EXPIRED_TOKEN }} >> .env
+
+      - name: Create credentials json
+        id: create-json
+        uses: jsdaniell/create-json@1.1.2
+        with:
+          name: "credentials.json"
+          json: ${{ secrets.TEST_CREDENTIALS_FILE_STRING }}
+
+      - name: Publish package to Jfrog Artifactory
+        if: ${{ inputs.is-internal }}
+        run: mvn clean deploy -P jfrog
+        env:
+          JFROG_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
+          JFROG_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
+          JFROG_GPG_PASSPHRASE: ${{ secrets.JFROG_GPG_PASSPHRASE }}
+
+      - name: Publish package to Maven Central
+        if: ${{ !inputs.is-internal }}
+        run: mvn --batch-mode deploy -P maven-central
+        env:
+          MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
