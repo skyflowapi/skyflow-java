@@ -15,8 +15,11 @@ jobs:
       ref: ${{ github.ref_name }}
       is-internal: true
       server-id: central
+      profile: jfrog
+    secrets:
       server-username: ${{ secrets.ARTIFACTORY_USERNAME }}
       server-password: ${{ secrets.ARTIFACTORY_PASSWORD }}
       gpg-key: ${{ secrets.JFROG_GPG_KEY }}
       gpg-passphrase: ${{ secrets.JFROG_GPG_PASSPHRASE }}
-      profile: jfrog
+      
+    
