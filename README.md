@@ -1030,6 +1030,7 @@ set to `false`, Skyflow returns IDs for the updated records.
 Update Schema:
 
 ```java
+import com.skyflow.enums.TokenMode;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.vault.data.UpdateRequest;
 import com.skyflow.vault.data.UpdateResponse;
@@ -1050,7 +1051,7 @@ public class UpdateSchema {
 
             UpdateRequest updateRequest = UpdateRequest.builder()
                     .table("<TABLE_NAME>")
-                    .tokenStrict(Byot.ENABLE)
+                    .tokenMode(TokenMode.ENABLE)
                     .data(data)
                     .tokens(tokens)
                     .returnTokens(true)
@@ -1069,6 +1070,7 @@ An [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/ma
 of update call:
 
 ```java
+import com.skyflow.enums.TokenMode;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.vault.data.UpdateRequest;
 import com.skyflow.vault.data.UpdateResponse;
@@ -1089,7 +1091,7 @@ public class UpdateExample {
 
             UpdateRequest updateRequest = UpdateRequest.builder()
                     .table("table1")
-                    .tokenStrict(Byot.ENABLE)
+                    .tokenMode(TokenMode.ENABLE)
                     .data(data)
                     .tokens(tokens)
                     .build();
@@ -1308,7 +1310,7 @@ public class InvokeConnectionSchema {
             queryParams.put("<YOUR_QUERY_PARAM_KEY_2>", "<YOUR_QUERY_PARAM_VALUE_2>");
 
             InvokeConnectionRequest invokeConnectionRequest = InvokeConnectionRequest.builder()
-                    .methodName(RequestMethod.POST)
+                    .method(RequestMethod.POST)
                     .requestBody(requestBody)
                     .requestHeaders(requestHeaders)
                     .pathParams(pathParams)
@@ -1375,7 +1377,7 @@ public class InvokeConnectionExample {
             requestHeaders.put("Content-Type", "application/json");
 
             InvokeConnectionRequest invokeConnectionRequest = InvokeConnectionRequest.builder()
-                    .methodName(RequestMethod.POST)
+                    .method(RequestMethod.POST)
                     .requestBody(requestBody)
                     .requestHeaders(requestHeaders)
                     .build();
