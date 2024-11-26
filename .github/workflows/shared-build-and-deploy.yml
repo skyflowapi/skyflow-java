@@ -80,6 +80,7 @@ jobs:
           else
             git commit -m "[AUTOMATED] Public Release - ${{ steps.previoustag.outputs.tag }}"
             git push origin
+          fi
 
       - name: Create env
         if: ${{ inputs.is-internal }}
