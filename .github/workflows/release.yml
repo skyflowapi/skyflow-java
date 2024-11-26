@@ -9,8 +9,10 @@ jobs:
       ref: ${{ github.ref_name }}
       is-internal: false
       server-id: ossrh
+      profile: maven-central
+    secrets:
       server-username: ${{ secrets.OSSRH_USERNAME }}
       server-password: ${{ secrets.OSSRH_PASSWORD }}
       gpg-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
       gpg-passphrase: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
-      profile: maven-central
+      
