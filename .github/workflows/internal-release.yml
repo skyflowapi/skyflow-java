@@ -1,0 +1,69 @@
+name: Publish package to the JFROG Artifactory
+on:
+  push:
+    tags: '*.*.*'
+    paths-ignore:
+      - "pom.xml"
+      - "*.md"
+    branches:
+      - release/*
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - name: Set up Jfrog artifactory
+        uses: actions/setup-java@v1
+        with:
+          java-version: '1.8'
+          distribution: 'adopt'
+          server-id: central
+          server-username: JFROG_USERNAME
+          server-password: JFROG_PASSWORD
+          gpg-private-key: ${{ secrets.JFROG_GPG_KEY }} # Value of the GPG private key to import
+          gpg-passphrase: JFROG_GPG_PASSPHRASE # env variable for GPG private key passphrase
+
+      - name: Get Previous tag
+        id: previoustag
+        uses: WyriHaximus/github-action-get-previous-tag@v1
+        with:
+            fallback: 1.0.0
+
+      - name: Bump Version
+        run: |
+          chmod +x ./scripts/bump_version.sh
+          ./scripts/bump_version.sh "${{ steps.previoustag.outputs.tag }}" "$(git rev-parse --short "$GITHUB_SHA")"
+
+      - name: Commit changes
+        run: |
+          git config user.name ${{ github.actor }}
+          git config user.email ${{ github.actor }}@users.noreply.github.com
+          git add pom.xml
+          git commit -m "[AUTOMATED] Private Release ${{ steps.previoustag.outputs.tag }}-dev.$(git rev-parse --short $GITHUB_SHA)"
+          git push origin -f
+
+      - name: Create env
+        id: create-env
+        run: |
+          touch .env
+          echo SKYFLOW_CREDENTIALS=${{ secrets.SKYFLOW_CREDENTIALS }} >> .env
+          echo TEST_EXPIRED_TOKEN=${{ secrets.TEST_EXPIRED_TOKEN }} >> .env
+
+      - name: Create credentials json
+        id: create-json
+        uses: jsdaniell/create-json@1.1.2
+        with:
+          name: "credentials.json"
+          json: ${{ secrets.TEST_CREDENTIALS_FILE_STRING }}
+
+      - name: Publish package to Jfrog Artifactory
+        run: mvn clean deploy -P jfrog
+        env:
+          JFROG_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
+          JFROG_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
+          JFROG_GPG_PASSPHRASE: ${{ secrets.JFROG_GPG_PASSPHRASE }}

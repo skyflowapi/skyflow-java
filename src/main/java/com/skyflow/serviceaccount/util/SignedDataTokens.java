@@ -1,23 +1,22 @@
-/*
-	Copyright (c) 2022 Skyflow, Inc.
-*/
 package com.skyflow.serviceaccount.util;
 
-import com.skyflow.common.utils.Helpers;
-import com.skyflow.common.utils.LogUtil;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
 import com.skyflow.errors.ErrorCode;
+import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.logs.ErrorLogs;
 import com.skyflow.logs.InfoLogs;
+import com.skyflow.utils.Utils;
+import com.skyflow.utils.logger.LogUtil;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.io.IOException;
 import java.security.PrivateKey;
 import java.util.ArrayList;
 import java.util.Date;
@@ -27,32 +26,154 @@ import java.util.Objects;
 public class SignedDataTokens {
     private final File credentialsFile;
     private final String credentialsString;
-    private final String ctx;
-
-    private final String[] dataTokens;
-    private final Integer timeToLive;
-
     private final String credentialsType;
+    private final String ctx;
+    private final ArrayList<String> dataTokens;
+    private final Integer timeToLive;
 
     private SignedDataTokens(SignedDataTokensBuilder builder) {
         this.credentialsFile = builder.credentialsFile;
         this.credentialsString = builder.credentialsString;
-        this.ctx = builder.ctx;
-        this.timeToLive = builder.timeToLive;
-        this.dataTokens = builder.dataTokens;
         this.credentialsType = builder.credentialsType;
+        this.ctx = builder.ctx;
+        this.dataTokens = builder.dataTokens;
+        this.timeToLive = builder.timeToLive;
     }
 
-    // Builder class
+    public static SignedDataTokensBuilder builder() {
+        return new SignedDataTokensBuilder();
+    }
+
+    private static List<SignedDataTokenResponse> generateSignedTokenFromCredentialsFile(
+            File credentialsFile, ArrayList<String> dataTokens, Integer timeToLive, String context
+    ) throws SkyflowException {
+        LogUtil.printInfoLog(InfoLogs.GENERATE_SIGNED_TOKENS_FROM_CREDENTIALS_FILE_TRIGGERED.getLog());
+        List<SignedDataTokenResponse> responseToken;
+        try {
+            if (credentialsFile == null || !credentialsFile.isFile()) {
+                LogUtil.printErrorLog(ErrorLogs.INVALID_CREDENTIALS_FILE.getLog());
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidCredentials.getMessage());
+            }
+            FileReader reader = new FileReader(String.valueOf(credentialsFile));
+            JsonObject serviceAccountCredentials = JsonParser.parseReader(reader).getAsJsonObject();
+            responseToken = generateSignedTokensFromCredentials(serviceAccountCredentials, dataTokens, timeToLive, context);
+        } catch (JsonSyntaxException e) {
+            LogUtil.printErrorLog(ErrorLogs.INVALID_CREDENTIALS_FILE_FORMAT.getLog());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), Utils.parameterizedString(
+                    ErrorMessage.FileInvalidJson.getMessage(), credentialsFile.getPath()));
+        } catch (FileNotFoundException e) {
+            LogUtil.printErrorLog(ErrorLogs.CREDENTIALS_FILE_NOT_FOUND.getLog());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), Utils.parameterizedString(
+                    ErrorMessage.FileNotFound.getMessage(), credentialsFile.getPath()));
+        }
+        return responseToken;
+    }
+
+    private static List<SignedDataTokenResponse> generateSignedTokensFromCredentialsString(
+            String credentials, ArrayList<String> dataTokens, Integer timeToLive, String context
+    ) throws SkyflowException {
+        LogUtil.printInfoLog(InfoLogs.GENERATE_SIGNED_TOKENS_FROM_CREDENTIALS_STRING_TRIGGERED.getLog());
+        List<SignedDataTokenResponse> responseToken;
+        try {
+            if (credentials == null || credentials.isEmpty()) {
+                LogUtil.printErrorLog(ErrorLogs.INVALID_CREDENTIALS_STRING.getLog());
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidCredentials.getMessage());
+            }
+            JsonObject serviceAccountCredentials = JsonParser.parseString(credentials).getAsJsonObject();
+            responseToken = generateSignedTokensFromCredentials(serviceAccountCredentials, dataTokens, timeToLive, context);
+        } catch (JsonSyntaxException e) {
+            LogUtil.printErrorLog(ErrorLogs.INVALID_CREDENTIALS_STRING_FORMAT.getLog());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(),
+                    ErrorMessage.CredentialsStringInvalidJson.getMessage());
+        }
+        return responseToken;
+    }
+
+    private static List<SignedDataTokenResponse> generateSignedTokensFromCredentials(
+            JsonObject credentials, ArrayList<String> dataTokens, Integer timeToLive, String context
+    ) throws SkyflowException {
+        List<SignedDataTokenResponse> signedDataTokens = null;
+        try {
+            JsonElement privateKey = credentials.get("privateKey");
+            if (privateKey == null) {
+                LogUtil.printErrorLog(ErrorLogs.PRIVATE_KEY_IS_REQUIRED.getLog());
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.MissingPrivateKey.getMessage());
+            }
+
+            JsonElement clientID = credentials.get("clientID");
+            if (clientID == null) {
+                LogUtil.printErrorLog(ErrorLogs.CLIENT_ID_IS_REQUIRED.getLog());
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.MissingClientId.getMessage());
+            }
+
+            JsonElement keyID = credentials.get("keyID");
+            if (keyID == null) {
+                LogUtil.printErrorLog(ErrorLogs.KEY_ID_IS_REQUIRED.getLog());
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.MissingKeyId.getMessage());
+            }
+            PrivateKey pvtKey = Utils.getPrivateKeyFromPem(privateKey.getAsString());
+            signedDataTokens = getSignedToken(
+                    clientID.getAsString(), keyID.getAsString(), pvtKey, dataTokens, timeToLive, context);
+        } catch (RuntimeException e) {
+            LogUtil.printErrorLog(ErrorLogs.SIGNED_DATA_TOKENS_REJECTED.getLog());
+            throw new SkyflowException(e);
+        }
+        return signedDataTokens;
+    }
+
+    private static List<SignedDataTokenResponse> getSignedToken(
+            String clientID, String keyID, PrivateKey pvtKey,
+            ArrayList<String> dataTokens, Integer timeToLive, String context
+    ) {
+        final Date createdDate = new Date();
+        final Date expirationDate;
+
+        if (timeToLive != null) {
+            expirationDate = new Date(createdDate.getTime() + (timeToLive * 1000));
+        } else {
+            expirationDate = new Date(createdDate.getTime() + 60000); // Valid for 60 seconds
+        }
+
+        List<SignedDataTokenResponse> list = new ArrayList<>();
+        for (String dataToken : dataTokens) {
+            String eachSignedDataToken = Jwts.builder()
+                    .claim("iss", "sdk")
+                    .claim("iat", (createdDate.getTime() / 1000))
+                    .claim("key", keyID)
+                    .claim("sub", clientID)
+                    .claim("ctx", context)
+                    .claim("tok", dataToken)
+                    .setExpiration(expirationDate)
+                    .signWith(SignatureAlgorithm.RS256, pvtKey)
+                    .compact();
+            SignedDataTokenResponse responseObject = new SignedDataTokenResponse(dataToken, eachSignedDataToken);
+            list.add(responseObject);
+        }
+        return list;
+    }
+
+    public synchronized List<SignedDataTokenResponse> getSignedDataTokens() throws SkyflowException {
+        LogUtil.printInfoLog(InfoLogs.GET_SIGNED_DATA_TOKENS_TRIGGERED.getLog());
+        List<SignedDataTokenResponse> signedToken = new ArrayList<>();
+        if (this.credentialsFile != null && Objects.equals(this.credentialsType, "FILE")) {
+            signedToken = generateSignedTokenFromCredentialsFile(this.credentialsFile, this.dataTokens, this.timeToLive, this.ctx);
+        } else if (this.credentialsString != null && Objects.equals(this.credentialsType, "STRING")) {
+            signedToken = generateSignedTokensFromCredentialsString(this.credentialsString, this.dataTokens, this.timeToLive, this.ctx);
+        }
+        LogUtil.printInfoLog(InfoLogs.GET_SIGNED_DATA_TOKEN_SUCCESS.getLog());
+        return signedToken;
+    }
+
     public static class SignedDataTokensBuilder {
+        private ArrayList<String> dataTokens;
+        private Integer timeToLive;
         private File credentialsFile;
         private String credentialsString;
         private String ctx;
-
-        private String[] dataTokens;
-        private Integer timeToLive;
-
         private String credentialsType;
+
+        private SignedDataTokensBuilder() {
+        }
 
         private void setCredentialsType(String credentialsType) {
             this.credentialsType = credentialsType;
@@ -75,7 +196,7 @@ public class SignedDataTokens {
             return this;
         }
 
-        public SignedDataTokensBuilder setDataTokens(String[] dataTokens) {
+        public SignedDataTokensBuilder setDataTokens(ArrayList<String> dataTokens) {
             this.dataTokens = dataTokens;
             return this;
         }
@@ -88,137 +209,5 @@ public class SignedDataTokens {
         public SignedDataTokens build() {
             return new SignedDataTokens(this);
         }
-    }
-
-    public synchronized List<SignedDataTokenResponse> getSignedDataTokens() throws SkyflowException {
-        List<SignedDataTokenResponse> signedToken = new ArrayList<>();
-
-        try {
-            if (this.credentialsFile != null && Objects.equals(this.credentialsType, "FILE")) {
-                signedToken = generateSignedTokens(this.credentialsFile, this.dataTokens, this.timeToLive,
-                        this.ctx);
-            } else if (this.credentialsString != null && Objects.equals(this.credentialsType, "STRING")) {
-                signedToken = generateSignedTokensFromCredentialsString(this.credentialsString, this.dataTokens,
-                        this.timeToLive, this.ctx);
-
-            }
-        } catch (SkyflowException e) {
-            e.printStackTrace();
-        }
-        return signedToken;
-    }
-
-    private static List<SignedDataTokenResponse> generateSignedTokens(File credentialsPath, String[] dataTokens,
-            Integer timeToLive, String context) throws SkyflowException {
-        LogUtil.printInfoLog(InfoLogs.GenerateBearerTokenFromCredsCalled.getLog());
-        JSONParser parser = new JSONParser();
-        List<SignedDataTokenResponse> responseToken;
-
-        try {
-            if (credentialsPath == null || !credentialsPath.isFile()) {
-                LogUtil.printErrorLog(ErrorLogs.EmptyJSONString.getLog());
-                throw new SkyflowException(ErrorCode.EmptyJSONString);
-            }
-
-            Object obj = parser.parse(new FileReader(String.valueOf(credentialsPath)));
-            JSONObject saCreds = (JSONObject) obj;
-
-            responseToken = getSignedTokenFromCredsFile(saCreds, dataTokens, timeToLive, context);
-
-        } catch (ParseException e) {
-            LogUtil.printErrorLog(ErrorLogs.InvalidJSONStringFormat.getLog());
-            throw new SkyflowException(ErrorCode.InvalidJSONStringFormat, e);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        return responseToken;
-    }
-
-    private static List<SignedDataTokenResponse> generateSignedTokensFromCredentialsString(String credentials,
-            String[] dataTokens, Integer timeToLive, String context) throws SkyflowException {
-        LogUtil.printInfoLog(InfoLogs.GenerateBearerTokenFromCredsCalled.getLog());
-        JSONParser parser = new JSONParser();
-        List<SignedDataTokenResponse> responseToken;
-        LogUtil.printInfoLog(InfoLogs.GenerateBearerTokenFromCredsCalled.getLog());
-
-        try {
-            if (credentials == null || credentials.isEmpty()) {
-                LogUtil.printErrorLog(ErrorLogs.EmptyJSONString.getLog());
-                throw new SkyflowException(ErrorCode.EmptyJSONString);
-            }
-
-            Object obj = parser.parse(credentials);
-            JSONObject saCreds = (JSONObject) obj;
-
-            responseToken = getSignedTokenFromCredsFile(saCreds, dataTokens, timeToLive, context);
-
-        } catch (ParseException e) {
-            LogUtil.printErrorLog(ErrorLogs.InvalidJSONStringFormat.getLog());
-            throw new SkyflowException(ErrorCode.InvalidJSONStringFormat, e);
-        }
-
-        return responseToken;
-    }
-
-    private static List<SignedDataTokenResponse> getSignedTokenFromCredsFile(JSONObject creds, String[] dataTokens,
-            Integer timeToLive, String context) throws SkyflowException {
-        List<SignedDataTokenResponse> responseToken;
-
-        try {
-            String clientID = (String) creds.get("clientID");
-            if (clientID == null) {
-                LogUtil.printErrorLog(ErrorLogs.InvalidClientID.getLog());
-                throw new SkyflowException(ErrorCode.InvalidClientID);
-            }
-            String keyID = (String) creds.get("keyID");
-            if (keyID == null) {
-                LogUtil.printErrorLog(ErrorLogs.InvalidKeyID.getLog());
-                throw new SkyflowException(ErrorCode.InvalidKeyID);
-            }
-
-            PrivateKey pvtKey = Helpers.getPrivateKeyFromPem((String) creds.get("privateKey"));
-
-            responseToken = getSignedToken(clientID, keyID, pvtKey, dataTokens, timeToLive, context);
-
-        } catch (RuntimeException e) {
-            throw new SkyflowException(ErrorCode.IncorrectCredentials, e);
-        }
-
-        return responseToken;
-    }
-
-    private static List<SignedDataTokenResponse> getSignedToken(String clientID, String keyID, PrivateKey pvtKey,
-            String[] dataTokens, Integer timeToLive, String context) {
-        final Date createdDate = new Date();
-        final Date expirationDate;
-
-        if (timeToLive != null) {
-            expirationDate = new Date(createdDate.getTime() + (timeToLive * 1000));
-        } else {
-            expirationDate = new Date(createdDate.getTime() + 60000); // Valid for 60 seconds
-        }
-
-        List<SignedDataTokenResponse> list = new ArrayList<>();
-        String prefix = "signed_token_";
-        for (String dataToken : dataTokens) {
-
-            String eachSignedDataToken = Jwts.builder()
-                    .claim("iss", "sdk")
-                    .claim("iat", (createdDate.getTime()/1000))
-                    .claim("key", keyID)
-                    .claim("sub", clientID)
-                    .claim("ctx", context)
-                    .claim("tok", dataToken)
-                    .setExpiration(expirationDate)
-                    .signWith(SignatureAlgorithm.RS256, pvtKey)
-                    .compact();
-
-            SignedDataTokenResponse responseObject = new SignedDataTokenResponse(dataToken,
-                    prefix + eachSignedDataToken);
-
-            list.add(responseObject);
-        }
-        return list;
     }
 }
