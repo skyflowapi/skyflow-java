@@ -97,7 +97,7 @@ public class VaultClient {
         insertRecordBody.setTokenization(request.getReturnTokens());
         insertRecordBody.setHomogeneous(request.getHomogeneous());
         insertRecordBody.setUpsert(request.getUpsert());
-        insertRecordBody.setByot(request.getTokenStrict().getBYOT());
+        insertRecordBody.setByot(request.getTokenMode().getBYOT());
 
         List<HashMap<String, Object>> values = request.getValues();
         List<HashMap<String, Object>> tokens = request.getTokens();
@@ -117,7 +117,7 @@ public class VaultClient {
     protected RecordServiceBatchOperationBody getBatchInsertRequestBody(InsertRequest request) {
         RecordServiceBatchOperationBody insertRequestBody = new RecordServiceBatchOperationBody();
         insertRequestBody.setContinueOnError(true);
-        insertRequestBody.setByot(request.getTokenStrict().getBYOT());
+        insertRequestBody.setByot(request.getTokenMode().getBYOT());
 
         ArrayList<HashMap<String, Object>> values = request.getValues();
         ArrayList<HashMap<String, Object>> tokens = request.getTokens();
@@ -142,7 +142,7 @@ public class VaultClient {
 
     protected RecordServiceUpdateRecordBody getUpdateRequestBody(UpdateRequest request) {
         RecordServiceUpdateRecordBody updateRequestBody = new RecordServiceUpdateRecordBody();
-        updateRequestBody.byot(request.getTokenStrict().getBYOT());
+        updateRequestBody.byot(request.getTokenMode().getBYOT());
         updateRequestBody.setTokenization(request.getReturnTokens());
         HashMap<String, Object> values = request.getData();
         HashMap<String, Object> tokens = request.getTokens();

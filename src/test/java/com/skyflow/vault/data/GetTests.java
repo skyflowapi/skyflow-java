@@ -8,7 +8,6 @@ import com.skyflow.enums.RedactionType;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
-import com.skyflow.serviceaccount.util.Token;
 import com.skyflow.utils.Constants;
 import com.skyflow.utils.Utils;
 import com.skyflow.utils.validations.Validations;
@@ -16,16 +15,10 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(fullyQualifiedNames = "com.skyflow.serviceaccount.util.Token")
 public class GetTests {
     private static final String INVALID_EXCEPTION_THROWN = "Should not have thrown any exception";
     private static final String EXCEPTION_NOT_THROWN = "Should have thrown an exception";
@@ -42,10 +35,7 @@ public class GetTests {
     private static Skyflow skyflowClient = null;
 
     @BeforeClass
-    public static void setup() throws SkyflowException {
-        PowerMockito.mockStatic(Token.class);
-        PowerMockito.when(Token.isExpired("valid_token")).thenReturn(true);
-        PowerMockito.when(Token.isExpired("not_a_valid_token")).thenReturn(false);
+    public static void setup() {
 
         vaultID = "vault123";
         clusterID = "cluster123";
@@ -58,8 +48,6 @@ public class GetTests {
         vaultConfig.setClusterId(clusterID);
         vaultConfig.setEnv(Env.DEV);
         vaultConfig.setCredentials(credentials);
-
-//        skyflowClient = Skyflow.builder().setLogLevel(LogLevel.DEBUG).addVaultConfig(vaultConfig).build();
 
         skyflowID = "test_get_id_1";
         ids = new ArrayList<>();

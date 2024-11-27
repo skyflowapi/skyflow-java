@@ -1,6 +1,6 @@
 package com.skyflow.vault.data;
 
-import com.skyflow.enums.Byot;
+import com.skyflow.enums.TokenMode;
 
 import java.util.HashMap;
 
@@ -31,8 +31,8 @@ public class UpdateRequest {
         return this.builder.tokens;
     }
 
-    public Byot getTokenStrict() {
-        return this.builder.tokenStrict;
+    public TokenMode getTokenMode() {
+        return this.builder.tokenMode;
     }
 
     public static final class UpdateRequestBuilder {
@@ -40,11 +40,11 @@ public class UpdateRequest {
         private Boolean returnTokens;
         private HashMap<String, Object> data;
         private HashMap<String, Object> tokens;
-        private Byot tokenStrict;
+        private TokenMode tokenMode;
 
         private UpdateRequestBuilder() {
             this.returnTokens = true;
-            this.tokenStrict = Byot.DISABLE;
+            this.tokenMode = TokenMode.DISABLE;
         }
 
         public UpdateRequestBuilder table(String table) {
@@ -67,8 +67,8 @@ public class UpdateRequest {
             return this;
         }
 
-        public UpdateRequestBuilder tokenStrict(Byot tokenStrict) {
-            this.tokenStrict = tokenStrict == null ? Byot.DISABLE : tokenStrict;
+        public UpdateRequestBuilder tokenMode(TokenMode tokenStrict) {
+            this.tokenMode = tokenStrict == null ? TokenMode.DISABLE : tokenStrict;
             return this;
         }
 

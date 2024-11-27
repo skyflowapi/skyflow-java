@@ -3,12 +3,11 @@ package com.skyflow.vault.data;
 import com.skyflow.Skyflow;
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
-import com.skyflow.enums.Byot;
+import com.skyflow.enums.TokenMode;
 import com.skyflow.enums.Env;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
-import com.skyflow.serviceaccount.util.Token;
 import com.skyflow.utils.Constants;
 import com.skyflow.utils.Utils;
 import com.skyflow.utils.validations.Validations;
@@ -16,16 +15,10 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(fullyQualifiedNames = "com.skyflow.serviceaccount.util.Token")
 public class InsertTests {
     private static final String INVALID_EXCEPTION_THROWN = "Should not have thrown any exception";
     private static final String EXCEPTION_NOT_THROWN = "Should have thrown an exception";
@@ -40,10 +33,7 @@ public class InsertTests {
     private static Skyflow skyflowClient = null;
 
     @BeforeClass
-    public static void setup() throws SkyflowException {
-        PowerMockito.mockStatic(Token.class);
-        PowerMockito.when(Token.isExpired("valid_token")).thenReturn(true);
-        PowerMockito.when(Token.isExpired("not_a_valid_token")).thenReturn(false);
+    public static void setup() {
 
         vaultID = "vault123";
         clusterID = "cluster123";
@@ -91,8 +81,7 @@ public class InsertTests {
                     .upsert(upsert)
                     .values(values)
                     .tokens(tokens)
-                    .tokenMode(true)
-                    .tokenStrict(Byot.ENABLE)
+                    .tokenMode(TokenMode.ENABLE)
                     .build();
             Validations.validateInsertRequest(request);
 
@@ -100,10 +89,9 @@ public class InsertTests {
             Assert.assertEquals(upsert, request.getUpsert());
             Assert.assertEquals(1, request.getValues().size());
             Assert.assertEquals(1, request.getTokens().size());
-            Assert.assertEquals(Byot.ENABLE, request.getTokenStrict());
+            Assert.assertEquals(TokenMode.ENABLE, request.getTokenMode());
             Assert.assertTrue(request.getContinueOnError());
             Assert.assertTrue(request.getReturnTokens());
-            Assert.assertTrue(request.getTokenMode());
             Assert.assertFalse(request.getHomogeneous());
         } catch (SkyflowException e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
@@ -248,7 +236,7 @@ public class InsertTests {
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
-                    Utils.parameterizedString(ErrorMessage.TokensPassedForByotDisable.getMessage(), Constants.SDK_PREFIX),
+                    Utils.parameterizedString(ErrorMessage.TokensPassedForTokenModeDisable.getMessage(), Constants.SDK_PREFIX),
                     e.getMessage()
             );
         }
@@ -258,7 +246,7 @@ public class InsertTests {
     public void testNoTokensWithTokenStrictEnableInInsertRequestValidations() {
         values.add(valueMap);
         InsertRequest request = InsertRequest.builder()
-                .table(table).values(values).tokenStrict(Byot.ENABLE)
+                .table(table).values(values).tokenMode(TokenMode.ENABLE)
                 .build();
         try {
             Validations.validateInsertRequest(request);
@@ -266,7 +254,7 @@ public class InsertTests {
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
-                    Utils.parameterizedString(ErrorMessage.NoTokensWithByot.getMessage(), Byot.ENABLE.toString()),
+                    Utils.parameterizedString(ErrorMessage.NoTokensWithTokenMode.getMessage(), TokenMode.ENABLE.toString()),
                     e.getMessage()
             );
         }
@@ -276,7 +264,7 @@ public class InsertTests {
     public void testNoTokensWithTokenStrictEnableStrictInInsertRequestValidations() {
         values.add(valueMap);
         InsertRequest request = InsertRequest.builder()
-                .table(table).values(values).tokenStrict(Byot.ENABLE_STRICT)
+                .table(table).values(values).tokenMode(TokenMode.ENABLE_STRICT)
                 .build();
         try {
             Validations.validateInsertRequest(request);
@@ -284,7 +272,7 @@ public class InsertTests {
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
-                    Utils.parameterizedString(ErrorMessage.NoTokensWithByot.getMessage(), Byot.ENABLE_STRICT.toString()),
+                    Utils.parameterizedString(ErrorMessage.NoTokensWithTokenMode.getMessage(), TokenMode.ENABLE_STRICT.toString()),
                     e.getMessage()
             );
         }
@@ -294,7 +282,7 @@ public class InsertTests {
     public void testEmptyTokensWithTokenStrictEnableInInsertRequestValidations() {
         values.add(valueMap);
         InsertRequest request = InsertRequest.builder()
-                .table(table).values(values).tokens(tokens).tokenStrict(Byot.ENABLE)
+                .table(table).values(values).tokens(tokens).tokenMode(TokenMode.ENABLE)
                 .build();
         try {
             Validations.validateInsertRequest(request);
@@ -310,14 +298,14 @@ public class InsertTests {
         values.add(valueMap);
         tokens.add(tokenMap);
         InsertRequest request = InsertRequest.builder()
-                .table(table).values(values).tokens(tokens).tokenStrict(Byot.ENABLE_STRICT)
+                .table(table).values(values).tokens(tokens).tokenMode(TokenMode.ENABLE_STRICT)
                 .build();
         try {
             Validations.validateInsertRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(ErrorMessage.InsufficientTokensPassedForByotEnableStrict.getMessage(), e.getMessage());
+            Assert.assertEquals(ErrorMessage.InsufficientTokensPassedForTokenModeEnableStrict.getMessage(), e.getMessage());
         }
     }
 
@@ -327,14 +315,14 @@ public class InsertTests {
         values.add(valueMap);
         tokens.add(tokenMap);
         InsertRequest request = InsertRequest.builder()
-                .table(table).values(values).tokens(tokens).tokenStrict(Byot.ENABLE_STRICT)
+                .table(table).values(values).tokens(tokens).tokenMode(TokenMode.ENABLE_STRICT)
                 .build();
         try {
             Validations.validateInsertRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(ErrorMessage.InsufficientTokensPassedForByotEnableStrict.getMessage(), e.getMessage());
+            Assert.assertEquals(ErrorMessage.InsufficientTokensPassedForTokenModeEnableStrict.getMessage(), e.getMessage());
         }
     }
 
@@ -344,7 +332,7 @@ public class InsertTests {
         tokenMap.put("test_column_3", "test_token_3");
         tokens.add(tokenMap);
         InsertRequest request = InsertRequest.builder()
-                .table(table).values(values).tokens(tokens).tokenStrict(Byot.ENABLE_STRICT)
+                .table(table).values(values).tokens(tokens).tokenMode(TokenMode.ENABLE_STRICT)
                 .build();
         try {
             Validations.validateInsertRequest(request);
@@ -361,7 +349,7 @@ public class InsertTests {
         values.add(valueMap);
         tokens.add(tokenMap);
         InsertRequest request = InsertRequest.builder()
-                .table(table).values(values).tokens(tokens).tokenStrict(Byot.ENABLE_STRICT)
+                .table(table).values(values).tokens(tokens).tokenMode(TokenMode.ENABLE_STRICT)
                 .build();
         try {
             Validations.validateInsertRequest(request);
@@ -378,7 +366,7 @@ public class InsertTests {
         values.add(valueMap);
         tokens.add(tokenMap);
         InsertRequest request = InsertRequest.builder()
-                .table(table).values(values).tokens(tokens).tokenStrict(Byot.ENABLE_STRICT)
+                .table(table).values(values).tokens(tokens).tokenMode(TokenMode.ENABLE_STRICT)
                 .build();
         try {
             Validations.validateInsertRequest(request);

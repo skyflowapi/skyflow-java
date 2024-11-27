@@ -2,7 +2,6 @@ package com.skyflow.vault.connection;
 
 import com.skyflow.enums.RequestMethod;
 
-import java.util.HashMap;
 import java.util.Map;
 
 public class InvokeConnectionRequest {
@@ -17,8 +16,8 @@ public class InvokeConnectionRequest {
         return new InvokeConnectionRequestBuilder();
     }
 
-    public RequestMethod getMethodName() {
-        return builder.methodName;
+    public RequestMethod getMethod() {
+        return builder.method;
     }
 
     public Map<String, String> getPathParams() {
@@ -38,19 +37,19 @@ public class InvokeConnectionRequest {
     }
 
     public static final class InvokeConnectionRequestBuilder {
-        private RequestMethod methodName;
+        private RequestMethod method;
         private Map<String, String> pathParams;
         private Map<String, String> queryParams;
         private Map<String, String> requestHeaders;
         private Object requestBody;
 
         private InvokeConnectionRequestBuilder() {
-            this.methodName = RequestMethod.POST;
+            this.method = RequestMethod.POST;
             this.requestBody = new Object();
         }
 
-        public InvokeConnectionRequestBuilder methodName(RequestMethod methodName) {
-            this.methodName = methodName == null ? RequestMethod.POST : methodName;
+        public InvokeConnectionRequestBuilder method(RequestMethod method) {
+            this.method = method == null ? RequestMethod.POST : method;
             return this;
         }
 
