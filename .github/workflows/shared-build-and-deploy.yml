@@ -1,0 +1,105 @@
+name: Shared Build and Deploy
+on:
+  workflow_call:
+    inputs:
+      ref:
+        description: 'Git reference to use (e.g., main or branch name)'
+        required: true
+        type: string
+
+      is-internal:
+        description: 'Flag for internal release'
+        required: true
+        type: boolean
+
+      server-id:
+        description: 'Id of the repository'
+        required: true
+        type: string
+      
+      profile:
+        description: 'Profile to pick from pom.xml'
+        required: true
+        type: string
+    secrets:
+      server-username:
+        required: true
+
+      server-password:
+        required: true
+
+      gpg-key:
+        required: true
+
+      gpg-passphrase:
+        required: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ inputs.ref }}
+          fetch-depth: 0
+
+      - name: Set up maven or jfrog repository
+        uses: actions/setup-java@v1
+        with:
+          java-version: '1.8'
+          distribution: 'adopt'
+          server-id: ${{ inputs.server-id }}
+          server-username: SERVER_USERNAME
+          server-password: SERVER_PASSWORD
+          gpg-private-key: ${{ secrets.gpg-key }} # Value of the GPG private key to import
+          gpg-passphrase: GPG_PASSPHRASE # env variable for GPG private key passphrase
+
+      - name: Get Previous tag
+        id: previoustag
+        uses: WyriHaximus/github-action-get-previous-tag@v1
+        with:
+          fallback: 1.0.0
+
+      - name: Bump Version
+        run: |
+          chmod +x ./scripts/bump_version.sh
+          if ${{ inputs.is-internal }}; then
+            ./scripts/bump_version.sh "${{ steps.previoustag.outputs.tag }}" "$(git rev-parse --short "$GITHUB_SHA")"
+          else
+            ./scripts/bump_version.sh "${{ steps.previoustag.outputs.tag }}"
+          fi
+
+      - name: Commit changes
+        run: |
+          git config user.name ${{ github.actor }}
+          git config user.email ${{ github.actor }}@users.noreply.github.com
+          git add pom.xml
+          if ${{ inputs.is-internal }}; then
+            git commit -m "[AUTOMATED] Private Release ${{ steps.previoustag.outputs.tag }}-dev-$(git rev-parse --short $GITHUB_SHA)"
+            git push origin ${{ github.ref_name }} -f
+          else
+            git commit -m "[AUTOMATED] Public Release - ${{ steps.previoustag.outputs.tag }}"
+            git push origin
+          fi
+
+      - name: Create env
+        if: ${{ inputs.is-internal }}
+        id: create-env
+        run: |
+          touch .env
+          echo SKYFLOW_CREDENTIALS=${{ secrets.SKYFLOW_CREDENTIALS }} >> .env
+          echo TEST_EXPIRED_TOKEN=${{ secrets.TEST_EXPIRED_TOKEN }} >> .env
+
+      - name: Create credentials json
+        id: create-json
+        uses: jsdaniell/create-json@1.1.2
+        with:
+          name: "credentials.json"
+          json: ${{ secrets.TEST_CREDENTIALS_FILE_STRING }}
+
+      - name: Publish package
+        run: mvn clean deploy -P ${{ inputs.profile }}
+        env:
+          SERVER_USERNAME: ${{ secrets.server-username }}
+          SERVER_PASSWORD: ${{ secrets.server-password  }}
+          GPG_PASSPHRASE: ${{ secrets.gpg-passphrase }}
