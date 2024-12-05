@@ -400,8 +400,8 @@ public class InvokeConnectionTests {
             responseObject.addProperty("test_key_1", "test_value_1");
             responseObject.addProperty("test_key_2", "test_value_2");
             InvokeConnectionResponse connectionResponse = new InvokeConnectionResponse(responseObject);
-            String responseString = "InvokeConnectionResponse{" + "response=" + responseObject + "}";
-            Assert.assertEquals(responseString, connectionResponse.toString());
+            Assert.assertEquals(2, connectionResponse.getResponse().size());
+            Assert.assertEquals(responseObject.toString(), connectionResponse.toString());
         } catch (Exception e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
         }

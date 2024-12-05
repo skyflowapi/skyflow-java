@@ -126,6 +126,7 @@ public class DetokenizeTests {
 
             V1DetokenizeRecordResponse record2 = new V1DetokenizeRecordResponse();
             record2.setToken("3456-7890-1234-5678");
+            record2.setValue("");
             record2.setError("Invalid token");
             DetokenizeRecordResponse error = new DetokenizeRecordResponse(record2);
 
@@ -138,11 +139,11 @@ public class DetokenizeTests {
             errors.add(error);
 
             DetokenizeResponse response = new DetokenizeResponse(fields, errors);
-            String responseString = "{\n\t\"detokenizedFields\": [{" +
-                    "\n\t\t\"token\": \"1234-5678-9012-3456\",\n\t\t\"value\": \"4111111111111111\",\n\t\t\"type\": \"STRING\",\n\t}, " +
-                    "{\n\t\t\"token\": \"1234-5678-9012-3456\",\n\t\t\"value\": \"4111111111111111\",\n\t\t\"type\": \"STRING\",\n\t}]" +
-                    "\n\t\"errors\": [{\n\t\t\"token\": \"3456-7890-1234-5678\",\n\t\t\"error\": \"Invalid token\",\n\t}, " +
-                    "{\n\t\t\"token\": \"3456-7890-1234-5678\",\n\t\t\"error\": \"Invalid token\",\n\t}]\n}";
+            String responseString = "{\"detokenizedFields\":[{" +
+                    "\"token\":\"1234-5678-9012-3456\",\"value\":\"4111111111111111\",\"type\":\"STRING\"}," +
+                    "{\"token\":\"1234-5678-9012-3456\",\"value\":\"4111111111111111\",\"type\":\"STRING\"}]," +
+                    "\"errors\":[{\"token\":\"3456-7890-1234-5678\",\"error\":\"Invalid token\"}," +
+                    "{\"token\":\"3456-7890-1234-5678\",\"error\":\"Invalid token\"}]}";
             Assert.assertEquals(2, response.getDetokenizedFields().size());
             Assert.assertEquals(2, response.getErrors().size());
             Assert.assertEquals("1234-5678-9012-3456", response.getDetokenizedFields().get(0).getToken());

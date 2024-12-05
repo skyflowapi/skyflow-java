@@ -23,6 +23,7 @@ import com.skyflow.vault.tokens.ColumnValue;
 import com.skyflow.vault.tokens.DetokenizeRequest;
 import com.skyflow.vault.tokens.TokenizeRequest;
 import io.github.cdimascio.dotenv.Dotenv;
+import io.github.cdimascio.dotenv.DotenvException;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -44,6 +45,7 @@ public class VaultClient {
         this.vaultConfig = vaultConfig;
         this.commonCredentials = credentials;
         this.apiClient = new ApiClient();
+        apiClient.addDefaultHeader(Constants.SDK_METRICS_HEADER_KEY, Utils.getMetrics().toString());
         this.recordsApi = new RecordsApi(this.apiClient);
         this.tokensApi = new TokensApi(this.apiClient);
         this.queryApi = new QueryApi(this.apiClient);
@@ -70,12 +72,12 @@ public class VaultClient {
         return vaultConfig;
     }
 
-    protected void setCommonCredentials(Credentials commonCredentials) {
+    protected void setCommonCredentials(Credentials commonCredentials) throws SkyflowException {
         this.commonCredentials = commonCredentials;
         prioritiseCredentials();
     }
 
-    protected void updateVaultConfig() {
+    protected void updateVaultConfig() throws SkyflowException {
         updateVaultURL();
         prioritiseCredentials();
     }
@@ -197,7 +199,7 @@ public class VaultClient {
         this.apiClient.setBasePath(vaultURL);
     }
 
-    private void prioritiseCredentials() {
+    private void prioritiseCredentials() throws SkyflowException {
         try {
             if (this.vaultConfig.getCredentials() != null) {
                 this.finalCredentials = this.vaultConfig.getCredentials();
@@ -216,6 +218,9 @@ public class VaultClient {
             }
             token = null;
             apiKey = null;
+        } catch (DotenvException e) {
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(),
+                    ErrorMessage.EmptyCredentials.getMessage());
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

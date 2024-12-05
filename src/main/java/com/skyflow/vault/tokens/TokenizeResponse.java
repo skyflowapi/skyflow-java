@@ -1,5 +1,10 @@
 package com.skyflow.vault.tokens;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
 import java.util.List;
 
 public class TokenizeResponse {
@@ -15,8 +20,9 @@ public class TokenizeResponse {
 
     @Override
     public String toString() {
-        StringBuilder response = new StringBuilder("{");
-        response.append("\n\t\"tokens\": ").append(tokens);
-        return response.append("\n}").toString();
+        Gson gson = new Gson();
+        JsonObject responseObject = JsonParser.parseString(gson.toJson(this)).getAsJsonObject();
+        responseObject.add("errors", new JsonArray());
+        return responseObject.toString();
     }
 }

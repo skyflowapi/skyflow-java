@@ -1,5 +1,6 @@
 package com.skyflow.utils;
 
+import com.google.gson.JsonObject;
 import com.skyflow.config.ConnectionConfig;
 import com.skyflow.config.Credentials;
 import com.skyflow.enums.Env;
@@ -177,6 +178,37 @@ public class UtilsTests {
             Assert.assertTrue(headers.containsKey("header"));
             Assert.assertFalse(headers.containsKey("HEADER"));
             Assert.assertEquals("value", headers.get("header"));
+        } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testGetMetrics() {
+        try {
+            JsonObject metrics = Utils.getMetrics();
+            Assert.assertNotNull(metrics.get(Constants.SDK_METRIC_NAME_VERSION));
+            Assert.assertNotNull(metrics.get(Constants.SDK_METRIC_CLIENT_DEVICE_MODEL));
+            Assert.assertNotNull(metrics.get(Constants.SDK_METRIC_CLIENT_OS_DETAILS));
+            Assert.assertNotNull(metrics.get(Constants.SDK_METRIC_RUNTIME_DETAILS));
+        } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testGetMetricsWithException() {
+        try {
+            // Clearing System Properties explicitly to throw exception
+            System.clearProperty("os.name");
+            System.clearProperty("os.version");
+            System.clearProperty("java.version");
+
+            JsonObject metrics = Utils.getMetrics();
+            Assert.assertEquals("skyflow-java@v2", metrics.get(Constants.SDK_METRIC_NAME_VERSION).getAsString());
+            Assert.assertEquals("Java@", metrics.get(Constants.SDK_METRIC_RUNTIME_DETAILS).getAsString());
+            Assert.assertTrue(metrics.get(Constants.SDK_METRIC_CLIENT_DEVICE_MODEL).getAsString().isEmpty());
+            Assert.assertTrue(metrics.get(Constants.SDK_METRIC_CLIENT_OS_DETAILS).getAsString().isEmpty());
         } catch (Exception e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
         }

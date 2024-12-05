@@ -13,6 +13,7 @@ import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.logs.ErrorLogs;
 import com.skyflow.logs.InfoLogs;
+import com.skyflow.utils.Constants;
 import com.skyflow.utils.HttpUtility;
 import com.skyflow.utils.Utils;
 import com.skyflow.utils.logger.LogUtil;
@@ -44,8 +45,9 @@ public class ConnectionController extends ConnectionClient {
             if (requestHeaders != null && requestHeaders.containsKey("requestHeader")) {
                 headers = Utils.constructConnectionHeadersMap(invokeConnectionRequest.getRequestHeaders());
             }
-            if (!headers.containsKey("x-skyflow-authorization")) {
-                headers.put("x-skyflow-authorization", token == null ? apiKey : token);
+            if (!headers.containsKey(Constants.SDK_AUTH_HEADER_KEY)) {
+                headers.put(Constants.SDK_AUTH_HEADER_KEY, token == null ? apiKey : token);
+                headers.put(Constants.SDK_METRICS_HEADER_KEY, Utils.getMetrics().toString());
             }
 
             RequestMethod requestMethod = invokeConnectionRequest.getMethod();

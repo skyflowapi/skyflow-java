@@ -384,14 +384,14 @@ public class InsertTests {
             values.add(valueMap);
             values.add(valueMap);
             InsertResponse response = new InsertResponse(values, errorFields);
-            String responseString = "{\n\t\"insertedFields\": [" +
-                    "{\n\t\t\"test_column_1\": \"test_value_1\"," +
-                    "\n\t\t\"test_column_2\": \"test_value_2\",\n\t}, " +
-                    "{\n\t\t\"test_column_1\": \"test_value_1\"," +
-                    "\n\t\t\"test_column_2\": \"test_value_2\",\n\t}]" +
-                    ",\n\t\"errors\": " + errorFields + "\n}";
+            String responseString = "{\"insertedFields\":[" +
+                    "{\"test_column_1\":\"test_value_1\"," +
+                    "\"test_column_2\":\"test_value_2\"}," +
+                    "{\"test_column_1\":\"test_value_1\"," +
+                    "\"test_column_2\":\"test_value_2\"}]" +
+                    ",\"errors\":" + errorFields + "}";
             Assert.assertEquals(2, response.getInsertedFields().size());
-            Assert.assertTrue(response.getErrorFields().isEmpty());
+            Assert.assertTrue(response.getErrors().isEmpty());
             Assert.assertEquals(responseString, response.toString());
         } catch (Exception e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
