@@ -169,7 +169,6 @@ public class VaultClient {
     }
 
     protected void setBearerToken() throws SkyflowException {
-        prioritiseCredentials();
         Validations.validateCredentials(this.finalCredentials);
         if (this.finalCredentials.getApiKey() != null) {
             setApiKey();
