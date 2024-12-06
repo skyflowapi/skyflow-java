@@ -28,6 +28,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Validations {
+    private Validations() {
+    }
 
     public static void validateVaultConfig(VaultConfig vaultConfig) throws SkyflowException {
         String vaultId = vaultConfig.getVaultId();

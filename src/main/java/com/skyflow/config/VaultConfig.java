@@ -46,13 +46,4 @@ public class VaultConfig {
     public void setCredentials(Credentials credentials) {
         this.credentials = credentials;
     }
-
-    @Override
-    public String toString() {
-        return "VaultConfig {" +
-                "\n\tvaultId: '" + vaultId + "'," +
-                "\n\tclusterId: '" + clusterId + "'," +
-                "\n\tenv: " + env +
-                "\n}";
-    }
 }

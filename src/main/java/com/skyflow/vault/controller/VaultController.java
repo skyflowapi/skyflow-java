@@ -1,7 +1,6 @@
 package com.skyflow.vault.controller;
 
 import com.google.gson.*;
-import com.google.gson.internal.LinkedTreeMap;
 import com.skyflow.VaultClient;
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
@@ -19,9 +18,9 @@ import com.skyflow.vault.tokens.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public final class VaultController extends VaultClient {
+    private static final Gson gson = new Gson();
     private DetectController detectController;
     private AuditController auditController;
     private BinLookupController binLookupController;
@@ -35,7 +34,6 @@ public final class VaultController extends VaultClient {
 
     private static synchronized HashMap<String, Object> getFormattedBatchInsertRecord(Object record, int requestIndex) {
         HashMap<String, Object> insertRecord = new HashMap<>();
-        Gson gson = new Gson();
         String jsonString = gson.toJson(record);
         JsonObject bodyObject = JsonParser.parseString(jsonString).getAsJsonObject().get("Body").getAsJsonObject();
         JsonArray records = bodyObject.getAsJsonArray("records");
@@ -45,10 +43,9 @@ public final class VaultController extends VaultClient {
             for (JsonElement recordElement : records) {
                 JsonObject recordObject = recordElement.getAsJsonObject();
                 insertRecord.put("skyflow_id", recordObject.get("skyflow_id").getAsString());
-
-                Map<String, JsonElement> tokensMap = recordObject.get("tokens").getAsJsonObject().asMap();
-                for (String key : tokensMap.keySet()) {
-                    insertRecord.put(key, tokensMap.get(key));
+                JsonElement tokensElement = recordObject.get("tokens");
+                if (tokensElement != null) {
+                    insertRecord.putAll(tokensElement.getAsJsonObject().asMap());
                 }
             }
         }
@@ -63,78 +60,45 @@ public final class VaultController extends VaultClient {
     private static synchronized HashMap<String, Object> getFormattedBulkInsertRecord(V1RecordMetaProperties record) {
         HashMap<String, Object> insertRecord = new HashMap<>();
         String skyflowId = record.getSkyflowId();
-        insertRecord.put("skyflowId", skyflowId);
-
-        /*
-        Getting unchecked cast warning, however, this type is inferred
-        from an exception trying to cast into another type. Therefore,
-        this type cast will not fail.
-        */
-        LinkedTreeMap<String, Object> tokensMap = (LinkedTreeMap<String, Object>) record.getTokens();
-        if (tokensMap != null) {
-            for (String key : tokensMap.keySet()) {
-                insertRecord.put(key, tokensMap.get(key));
-            }
+        insertRecord.put("skyflow_id", skyflowId);
+        String tokensString = gson.toJson(record.getTokens());
+        if (tokensString != null) {
+            JsonObject tokensObject = JsonParser.parseString(tokensString).getAsJsonObject();
+            insertRecord.putAll(tokensObject.asMap());
         }
         return insertRecord;
     }
 
     private static synchronized HashMap<String, Object> getFormattedGetRecord(V1FieldRecords record) {
         HashMap<String, Object> getRecord = new HashMap<>();
-
-        /*
-        Getting unchecked cast warning, however, this type is inferred
-        from an exception trying to cast into another type. Therefore,
-        this type cast will not fail.
-        */
-        LinkedTreeMap<String, Object> map;
-        if (record.getTokens() != null) {
-            map = (LinkedTreeMap<String, Object>) record.getTokens();
-        } else {
-            map = (LinkedTreeMap<String, Object>) record.getFields();
-        }
-        if (map != null) {
-            for (String key : map.keySet()) {
-                getRecord.put(key, map.get(key));
-            }
+        String fieldsString = gson.toJson(record.getFields());
+        String tokensString = gson.toJson(record.getTokens());
+        if (fieldsString != null) {
+            JsonObject fieldsObject = JsonParser.parseString(fieldsString).getAsJsonObject();
+            getRecord.putAll(fieldsObject.asMap());
+        } else if (tokensString != null) {
+            JsonObject tokensObject = JsonParser.parseString(tokensString).getAsJsonObject();
+            getRecord.putAll(tokensObject.asMap());
         }
         return getRecord;
     }
 
     private static synchronized HashMap<String, Object> getFormattedUpdateRecord(V1UpdateRecordResponse record) {
         HashMap<String, Object> updateTokens = new HashMap<>();
-        /*
-        Getting unchecked cast warning, however, this type is inferred
-        from an exception trying to cast into another type. Therefore,
-        this type cast will not fail.
-        */
-        LinkedTreeMap<String, Object> map = null;
-        if (record.getTokens() != null) {
-            map = (LinkedTreeMap<String, Object>) record.getTokens();
-        }
-        if (map != null) {
-            for (String key : map.keySet()) {
-                updateTokens.put(key, map.get(key));
-            }
+        String tokensString = gson.toJson(record.getTokens());
+        if (tokensString != null) {
+            JsonObject tokensObject = JsonParser.parseString(tokensString).getAsJsonObject();
+            updateTokens.putAll(tokensObject.asMap());
         }
         return updateTokens;
     }
 
     private static synchronized HashMap<String, Object> getFormattedQueryRecord(V1FieldRecords record) {
         HashMap<String, Object> queryRecord = new HashMap<>();
-        /*
-        Getting unchecked cast warning, however, this type is inferred
-        from an exception trying to cast into another type. Therefore,
-        this type cast will not fail.
-        */
-        LinkedTreeMap<String, Object> map = null;
-        if (record.getFields() != null) {
-            map = (LinkedTreeMap<String, Object>) record.getFields();
-        }
-        if (map != null) {
-            for (String key : map.keySet()) {
-                queryRecord.put(key, map.get(key));
-            }
+        String fieldsString = gson.toJson(record.getFields());
+        if (fieldsString != null) {
+            JsonObject fieldsObject = JsonParser.parseString(fieldsString).getAsJsonObject();
+            queryRecord.putAll(fieldsObject.asMap());
         }
         return queryRecord;
     }
@@ -273,7 +237,7 @@ public final class VaultController extends VaultClient {
             result = super.getRecordsApi().recordServiceUpdateRecord(
                     super.getVaultConfig().getVaultId(),
                     updateRequest.getTable(),
-                    updateRequest.getData().get("skyflow_id").toString(),
+                    updateRequest.getData().remove("skyflow_id").toString(),
                     updateBody
             );
             LogUtil.printInfoLog(InfoLogs.UPDATE_REQUEST_RESOLVED.getLog());

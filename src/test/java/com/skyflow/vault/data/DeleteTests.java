@@ -149,7 +149,7 @@ public class DeleteTests {
         try {
             ids.add(skyflowID);
             DeleteResponse response = new DeleteResponse(ids);
-            String responseString = "{\n\t\"deletedIds\": [\n\t\t\"" + skyflowID + "\"]\n}";
+            String responseString = "{\"deletedIds\":[\"" + skyflowID + "\"],\"errors\":[]}";
             Assert.assertEquals(1, response.getDeletedIds().size());
             Assert.assertEquals(responseString, response.toString());
         } catch (Exception e) {

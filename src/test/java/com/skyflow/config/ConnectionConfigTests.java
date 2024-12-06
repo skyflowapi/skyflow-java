@@ -20,7 +20,7 @@ public class ConnectionConfigTests {
     public static void setup() {
         connectionID = "connection123";
         connectionURL = "https://connection.url.com";
-        invalidConnectionURL = "invalid.connection.url.com";
+        invalidConnectionURL = "http://connection.url.com";
 
         credentials = new Credentials();
         credentials.setToken("valid-token");

@@ -140,8 +140,6 @@ public class SkyflowTests {
             Credentials credentials = new Credentials();
             credentials.setToken(token);
 
-            skyflowClient.updateVaultConfig(config);
-
             config.setClusterId(newClusterID);
             config.setEnv(Env.PROD);
             config.setCredentials(credentials);

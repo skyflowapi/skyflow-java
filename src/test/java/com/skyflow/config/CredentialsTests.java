@@ -221,6 +221,22 @@ public class CredentialsTests {
     }
 
     @Test
+    public void testNullRoleInRolesInCredentials() {
+        try {
+            Credentials credentials = new Credentials();
+            credentials.setPath(path);
+            roles.add(role);
+            roles.add(null);
+            credentials.setRoles(roles);
+            Validations.validateCredentials(credentials);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(ErrorMessage.EmptyRoleInRoles.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
     public void testEmptyRoleInRolesInCredentials() {
         try {
             Credentials credentials = new Credentials();

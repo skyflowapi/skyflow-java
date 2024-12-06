@@ -8,7 +8,7 @@ public enum ErrorMessage {
     VaultIdNotInConfigList("%s0 Validation error. VaultId is missing from the config. Specify the vaultIds from configs."),
     ConnectionIdAlreadyInConfigList("%s0 Validation error. ConnectionId is present in an existing config. Specify a connectionId in config."),
     ConnectionIdNotInConfigList("%s0 Validation error. ConnectionId is missing from the config. Specify the connectionIds from configs."),
-    EmptyCredentials("%s0 Validation error. Invalid credentials. Specify a valid credentials."),
+    EmptyCredentials("%s0 Validation error. Invalid credentials. Credentials must not be empty."),
 
     // vault config
     InvalidVaultId("%s0 Initialization failed. Invalid vault ID. Specify a valid vault ID."),

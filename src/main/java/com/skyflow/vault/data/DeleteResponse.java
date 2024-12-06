@@ -1,5 +1,10 @@
 package com.skyflow.vault.data;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
 import java.util.ArrayList;
 
 public class DeleteResponse {
@@ -15,20 +20,9 @@ public class DeleteResponse {
 
     @Override
     public String toString() {
-        StringBuilder response = new StringBuilder("{");
-        response.append("\n\t\"deletedIds\": ").append(formatIds());
-        return response.append("\n}").toString();
-    }
-
-    private String formatIds() {
-        StringBuilder sb = new StringBuilder("[");
-        for (String id : deletedIds) {
-            sb.append("\n\t\"").append(id).append("\"");
-        }
-        return toIndentedString(sb.append("]"));
-    }
-
-    private String toIndentedString(Object o) {
-        return o.toString().replace("\n", "\n\t");
+        Gson gson = new Gson();
+        JsonObject responseObject = JsonParser.parseString(gson.toJson(this)).getAsJsonObject();
+        responseObject.add("errors", new JsonArray());
+        return responseObject.toString();
     }
 }
