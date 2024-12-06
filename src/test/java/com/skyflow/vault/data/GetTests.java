@@ -75,7 +75,7 @@ public class GetTests {
                     .ids(ids)
                     .table(table)
                     .returnTokens(true)
-                    .downloadURL(true)
+                    .downloadURL(false)
                     .offset("2")
                     .limit("1")
                     .fields(fields)
@@ -88,8 +88,8 @@ public class GetTests {
             Assert.assertEquals("2", request.getOffset());
             Assert.assertEquals("1", request.getLimit());
             Assert.assertEquals(Constants.ORDER_ASCENDING, request.getOrderBy());
-            Assert.assertTrue(request.getDownloadURL());
             Assert.assertTrue(request.getReturnTokens());
+            Assert.assertFalse(request.getDownloadURL());
             Assert.assertNull(request.getRedactionType());
         } catch (SkyflowException e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
@@ -106,11 +106,11 @@ public class GetTests {
                     .columnName(columnName)
                     .columnValues(columnValues)
                     .redactionType(RedactionType.PLAIN_TEXT)
-                    .downloadURL(true)
+                    .downloadURL(null)
                     .offset("2")
                     .limit("1")
                     .fields(fields)
-                    .orderBy(Constants.ORDER_ASCENDING)
+                    .orderBy(null)
                     .build();
             Validations.validateGetRequest(request);
             Assert.assertEquals(table, request.getTable());
@@ -176,6 +176,23 @@ public class GetTests {
     }
 
     @Test
+    public void testNullIdInIdsInGetRequestValidations() {
+        ids.add(skyflowID);
+        ids.add(null);
+        GetRequest request = GetRequest.builder().ids(ids).table(table).build();
+        try {
+            Validations.validateGetRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(
+                    Utils.parameterizedString(ErrorMessage.EmptyIdInIds.getMessage(), Constants.SDK_PREFIX),
+                    e.getMessage()
+            );
+        }
+    }
+
+    @Test
     public void testEmptyIdInIdsInGetRequestValidations() {
         ids.add(skyflowID);
         ids.add("");
@@ -203,6 +220,24 @@ public class GetTests {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
                     Utils.parameterizedString(ErrorMessage.EmptyFields.getMessage(), Constants.SDK_PREFIX),
+                    e.getMessage()
+            );
+        }
+    }
+
+    @Test
+    public void testNullFieldInFieldsInGetRequestValidations() {
+        ids.add(skyflowID);
+        fields.add(field);
+        fields.add(null);
+        GetRequest request = GetRequest.builder().ids(ids).table(table).fields(fields).build();
+        try {
+            Validations.validateGetRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(
+                    Utils.parameterizedString(ErrorMessage.EmptyFieldInFields.getMessage(), Constants.SDK_PREFIX),
                     e.getMessage()
             );
         }

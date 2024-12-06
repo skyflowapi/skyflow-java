@@ -88,6 +88,7 @@ public class VaultConfigTests {
             VaultConfig vaultConfig = new VaultConfig();
             vaultConfig.setVaultId(vaultID);
             vaultConfig.setClusterId(clusterID);
+            vaultConfig.setEnv(null);
             Validations.validateVaultConfig(vaultConfig);
 
             Assert.assertEquals(vaultID, vaultConfig.getVaultId());

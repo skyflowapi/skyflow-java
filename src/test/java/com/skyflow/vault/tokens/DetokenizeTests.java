@@ -41,7 +41,7 @@ public class DetokenizeTests {
                     tokens(tokens).redactionType(RedactionType.MASKED).continueOnError(false).build();
             Validations.validateDetokenizeRequest(request);
             Assert.assertEquals(1, tokens.size());
-            Assert.assertEquals(RedactionType.MASKED, request.getRedactionType());
+            Assert.assertEquals(RedactionType.MASKED.toString(), request.getRedactionType().toString());
             Assert.assertFalse(request.getContinueOnError());
         } catch (SkyflowException e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
@@ -86,6 +86,25 @@ public class DetokenizeTests {
     public void testEmptyTokenInTokensInDetokenizeRequestValidations() {
         tokens.add(token);
         tokens.add("");
+        DetokenizeRequest request = DetokenizeRequest.builder().tokens(tokens).build();
+        try {
+            Validations.validateDetokenizeRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(
+                    Utils.parameterizedString(ErrorMessage.EmptyTokenInDataTokens.getMessage(), Constants.SDK_PREFIX),
+                    e.getMessage()
+            );
+            Assert.assertEquals(RedactionType.PLAIN_TEXT, request.getRedactionType());
+            Assert.assertTrue(request.getContinueOnError());
+        }
+    }
+
+    @Test
+    public void testNullTokenInTokensInDetokenizeRequestValidations() {
+        tokens.add(token);
+        tokens.add(null);
         DetokenizeRequest request = DetokenizeRequest.builder().tokens(tokens).build();
         try {
             Validations.validateDetokenizeRequest(request);

@@ -3,8 +3,8 @@ package com.skyflow.vault.data;
 import com.skyflow.Skyflow;
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
-import com.skyflow.enums.TokenMode;
 import com.skyflow.enums.Env;
+import com.skyflow.enums.TokenMode;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
@@ -46,8 +46,6 @@ public class InsertTests {
         vaultConfig.setClusterId(clusterID);
         vaultConfig.setEnv(Env.DEV);
         vaultConfig.setCredentials(credentials);
-
-//        skyflowClient = Skyflow.builder().setLogLevel(LogLevel.DEBUG).addVaultConfig(vaultConfig).build();
 
         table = "test_table";
         values = new ArrayList<>();
@@ -92,6 +90,35 @@ public class InsertTests {
             Assert.assertEquals(TokenMode.ENABLE, request.getTokenMode());
             Assert.assertTrue(request.getContinueOnError());
             Assert.assertTrue(request.getReturnTokens());
+            Assert.assertFalse(request.getHomogeneous());
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testValidInputInInsertRequestValidationsWithTokenModeDisable() {
+        try {
+            values.add(valueMap);
+            tokens.add(tokenMap);
+            InsertRequest request = InsertRequest.builder()
+                    .table(table)
+                    .continueOnError(null)
+                    .returnTokens(null)
+                    .homogeneous(false)
+                    .upsert(upsert)
+                    .values(values)
+                    .tokenMode(null)
+                    .build();
+            Validations.validateInsertRequest(request);
+
+            Assert.assertEquals(table, request.getTable());
+            Assert.assertEquals(upsert, request.getUpsert());
+            Assert.assertEquals(1, request.getValues().size());
+            Assert.assertEquals(TokenMode.DISABLE, request.getTokenMode());
+            Assert.assertNull(request.getTokens());
+            Assert.assertTrue(request.getReturnTokens());
+            Assert.assertFalse(request.getContinueOnError());
             Assert.assertFalse(request.getHomogeneous());
         } catch (SkyflowException e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
