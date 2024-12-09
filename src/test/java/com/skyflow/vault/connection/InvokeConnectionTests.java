@@ -64,6 +64,30 @@ public class InvokeConnectionTests {
     }
 
     @Test
+    public void testValidInputInInvokeConnectionRequestValidationsWithNullRequestBody() {
+        queryParams.put("query_param", "value");
+        pathParams.put("path_param", "value");
+        requestHeaders.put("header", "value");
+        try {
+            InvokeConnectionRequest request = InvokeConnectionRequest.builder()
+                    .method(null)
+                    .requestHeaders(requestHeaders)
+                    .pathParams(pathParams)
+                    .queryParams(queryParams)
+                    .requestBody(null)
+                    .build();
+            Validations.validateInvokeConnectionRequest(request);
+            Assert.assertEquals(1, request.getQueryParams().size());
+            Assert.assertEquals(1, request.getPathParams().size());
+            Assert.assertEquals(1, request.getRequestHeaders().size());
+            Assert.assertEquals(RequestMethod.POST.toString(), request.getMethod().toString());
+            Assert.assertNull(request.getRequestBody());
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
     public void testEmptyRequestHeadersInInvokeConnectionRequestValidations() {
         try {
             InvokeConnectionRequest request = InvokeConnectionRequest.builder()
@@ -400,8 +424,8 @@ public class InvokeConnectionTests {
             responseObject.addProperty("test_key_1", "test_value_1");
             responseObject.addProperty("test_key_2", "test_value_2");
             InvokeConnectionResponse connectionResponse = new InvokeConnectionResponse(responseObject);
-            String responseString = "InvokeConnectionResponse{" + "response=" + responseObject + "}";
-            Assert.assertEquals(responseString, connectionResponse.toString());
+            Assert.assertEquals(2, connectionResponse.getResponse().size());
+            Assert.assertEquals(responseObject.toString(), connectionResponse.toString());
         } catch (Exception e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
         }

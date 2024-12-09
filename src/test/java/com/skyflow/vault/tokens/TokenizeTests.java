@@ -96,6 +96,20 @@ public class TokenizeTests {
     }
 
     @Test
+    public void testNullColumnValueInColumnValuesInTokenizeRequestValidations() {
+        try {
+            columnValue = ColumnValue.builder().value(null).columnGroup(group).build();
+            columnValues.add(columnValue);
+            TokenizeRequest request = TokenizeRequest.builder().values(columnValues).build();
+            Validations.validateTokenizeRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(ErrorMessage.EmptyValueInColumnValues.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
     public void testEmptyColumnValueInColumnValuesInTokenizeRequestValidations() {
         try {
             columnValue = ColumnValue.builder().value("").columnGroup(group).build();
@@ -106,6 +120,20 @@ public class TokenizeTests {
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.EmptyValueInColumnValues.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testNullColumnGroupInColumnValuesInTokenizeRequestValidations() {
+        try {
+            columnValue = ColumnValue.builder().value(value).columnGroup(null).build();
+            columnValues.add(columnValue);
+            TokenizeRequest request = TokenizeRequest.builder().values(columnValues).build();
+            Validations.validateTokenizeRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(ErrorMessage.EmptyColumnGroupInColumnValue.getMessage(), e.getMessage());
         }
     }
 
@@ -129,7 +157,9 @@ public class TokenizeTests {
             tokens.add("1234-5678-9012-3456");
             tokens.add("5678-9012-3456-7890");
             TokenizeResponse response = new TokenizeResponse(tokens);
-            String responseString = "{\n\t\"tokens\": [1234-5678-9012-3456, 5678-9012-3456-7890]\n}";
+            String responseString = "{\"tokens\":[" +
+                    "{\"token\":\"1234-5678-9012-3456\"},{\"token\":\"5678-9012-3456-7890\"}]" +
+                    ",\"errors\":[]}";
             Assert.assertEquals(2, response.getTokens().size());
             Assert.assertEquals(responseString, response.toString());
         } catch (Exception e) {

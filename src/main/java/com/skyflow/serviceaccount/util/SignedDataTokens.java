@@ -50,7 +50,7 @@ public class SignedDataTokens {
         LogUtil.printInfoLog(InfoLogs.GENERATE_SIGNED_TOKENS_FROM_CREDENTIALS_FILE_TRIGGERED.getLog());
         List<SignedDataTokenResponse> responseToken;
         try {
-            if (credentialsFile == null || !credentialsFile.isFile()) {
+            if (credentialsFile == null) {
                 LogUtil.printErrorLog(ErrorLogs.INVALID_CREDENTIALS_FILE.getLog());
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidCredentials.getMessage());
             }

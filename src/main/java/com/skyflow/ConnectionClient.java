@@ -12,6 +12,7 @@ import com.skyflow.utils.Utils;
 import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.utils.validations.Validations;
 import io.github.cdimascio.dotenv.Dotenv;
+import io.github.cdimascio.dotenv.DotenvException;
 
 public class ConnectionClient {
     private final ConnectionConfig connectionConfig;
@@ -30,12 +31,12 @@ public class ConnectionClient {
         return connectionConfig;
     }
 
-    protected void setCommonCredentials(Credentials commonCredentials) {
+    protected void setCommonCredentials(Credentials commonCredentials) throws SkyflowException {
         this.commonCredentials = commonCredentials;
         prioritiseCredentials();
     }
 
-    protected void updateConnectionConfig(ConnectionConfig connectionConfig) {
+    protected void updateConnectionConfig(ConnectionConfig connectionConfig) throws SkyflowException {
         prioritiseCredentials();
     }
 
@@ -44,7 +45,6 @@ public class ConnectionClient {
         Validations.validateCredentials(this.finalCredentials);
         if (this.finalCredentials.getApiKey() != null) {
             setApiKey();
-            return;
         } else if (Token.isExpired(token)) {
             LogUtil.printInfoLog(InfoLogs.BEARER_TOKEN_EXPIRED.getLog());
             token = Utils.generateBearerToken(this.finalCredentials);
@@ -61,8 +61,9 @@ public class ConnectionClient {
         }
     }
 
-    private void prioritiseCredentials() {
+    private void prioritiseCredentials() throws SkyflowException {
         try {
+            Credentials original = this.finalCredentials;
             if (this.connectionConfig.getCredentials() != null) {
                 this.finalCredentials = this.connectionConfig.getCredentials();
             } else if (this.commonCredentials != null) {
@@ -78,6 +79,13 @@ public class ConnectionClient {
                     this.finalCredentials.setCredentialsString(sysCredentials);
                 }
             }
+            if (original != null && !original.equals(this.finalCredentials)) {
+                token = null;
+                apiKey = null;
+            }
+        } catch (DotenvException e) {
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(),
+                    ErrorMessage.EmptyCredentials.getMessage());
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

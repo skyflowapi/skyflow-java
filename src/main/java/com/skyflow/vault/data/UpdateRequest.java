@@ -43,7 +43,7 @@ public class UpdateRequest {
         private TokenMode tokenMode;
 
         private UpdateRequestBuilder() {
-            this.returnTokens = true;
+            this.returnTokens = false;
             this.tokenMode = TokenMode.DISABLE;
         }
 
@@ -53,7 +53,7 @@ public class UpdateRequest {
         }
 
         public UpdateRequestBuilder returnTokens(Boolean returnTokens) {
-            this.returnTokens = returnTokens == null || returnTokens;
+            this.returnTokens = returnTokens != null && returnTokens;
             return this;
         }
 

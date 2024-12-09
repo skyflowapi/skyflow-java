@@ -1,51 +1,30 @@
 package com.skyflow.vault.data;
 
+import com.google.gson.Gson;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 
 public class InsertResponse {
     private final ArrayList<HashMap<String, Object>> insertedFields;
-    private final ArrayList<HashMap<String, Object>> errorFields;
+    private final ArrayList<HashMap<String, Object>> errors;
 
-    public InsertResponse(ArrayList<HashMap<String, Object>> insertedFields, ArrayList<HashMap<String, Object>> errorFields) {
+    public InsertResponse(ArrayList<HashMap<String, Object>> insertedFields, ArrayList<HashMap<String, Object>> errors) {
         this.insertedFields = insertedFields;
-        this.errorFields = errorFields;
+        this.errors = errors;
     }
 
     public ArrayList<HashMap<String, Object>> getInsertedFields() {
         return insertedFields;
     }
 
-    public ArrayList<HashMap<String, Object>> getErrorFields() {
-        return errorFields;
+    public ArrayList<HashMap<String, Object>> getErrors() {
+        return errors;
     }
 
     @Override
     public String toString() {
-        StringBuilder response = new StringBuilder("{");
-        response.append("\n\t\"insertedFields\": ").append(formatRecords(insertedFields));
-        response.append(",\n\t\"errors\": ").append(formatRecords(errorFields));
-        response.append("\n}");
-        return response.toString();
-    }
-
-    private String formatRecords(ArrayList<HashMap<String, Object>> records) {
-        StringBuilder sb = new StringBuilder("[");
-        for (int index = 0; index < records.size(); index++) {
-            HashMap<String, Object> map = records.get(index);
-            sb.append("{");
-            for (String key : map.keySet()) {
-                sb.append("\n\t\"").append(key).append("\": \"").append(map.get(key)).append("\",");
-            }
-            sb.append("\n}");
-            if (index != records.size() - 1) {
-                sb.append(", ");
-            }
-        }
-        return toIndentedString(sb.append("]"));
-    }
-
-    private String toIndentedString(Object o) {
-        return o.toString().replace("\n", "\n\t");
+        Gson gson = new Gson();
+        return gson.toJson(this);
     }
 }

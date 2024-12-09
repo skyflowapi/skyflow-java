@@ -1,5 +1,7 @@
 package com.skyflow.vault.data;
 
+import com.google.gson.*;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -17,30 +19,14 @@ public class QueryResponse {
 
     @Override
     public String toString() {
-        StringBuilder response = new StringBuilder("{");
-        response.append("\n\t\"fields\": ").append(formatFields());
-        return response.append("\n}").toString();
-    }
-
-    private String formatFields() {
-        StringBuilder sb = new StringBuilder("[");
-        for (int index = 0; index < fields.size(); index++) {
-            HashMap<String, Object> map = fields.get(index);
-            sb.append("{");
-            for (String key : map.keySet()) {
-                sb.append("\n\t\"").append(key).append("\": \"").append(map.get(key)).append("\",");
-            }
-            sb.append("\n\t\"tokenizedData\": ").append(tokenizedData);
-            sb.append("\n}");
-            if (index != fields.size() - 1) {
-                sb.append(", ");
-            }
+        Gson gson = new GsonBuilder().serializeNulls().create();
+        JsonObject responseObject = gson.toJsonTree(this).getAsJsonObject();
+        JsonArray fieldsArray = responseObject.get("fields").getAsJsonArray();
+        for (JsonElement fieldElement : fieldsArray) {
+            fieldElement.getAsJsonObject().add("tokenizedData", new JsonObject());
         }
-        return toIndentedString(sb.append("]"));
+        responseObject.add("errors", new JsonArray());
+        responseObject.remove("tokenizedData");
+        return responseObject.toString();
     }
-
-    private String toIndentedString(Object o) {
-        return o.toString().replace("\n", "\n\t");
-    }
-
 }

@@ -1,5 +1,6 @@
 package com.skyflow.utils;
 
+import com.google.gson.JsonObject;
 import com.skyflow.config.ConnectionConfig;
 import com.skyflow.config.Credentials;
 import com.skyflow.enums.Env;
@@ -7,6 +8,7 @@ import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.logs.ErrorLogs;
+import com.skyflow.logs.InfoLogs;
 import com.skyflow.serviceaccount.util.BearerToken;
 import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.vault.connection.InvokeConnectionRequest;
@@ -99,23 +101,6 @@ public final class Utils {
         return base;
     }
 
-    private static PrivateKey parsePkcs8PrivateKey(byte[] pkcs8Bytes) throws SkyflowException {
-        KeyFactory keyFactory;
-        PrivateKey privateKey = null;
-        try {
-            PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(pkcs8Bytes);
-            keyFactory = KeyFactory.getInstance("RSA");
-            privateKey = keyFactory.generatePrivate(keySpec);
-        } catch (NoSuchAlgorithmException e) {
-            LogUtil.printErrorLog(ErrorLogs.INVALID_ALGORITHM.getLog());
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidAlgorithm.getMessage());
-        } catch (InvalidKeySpecException e) {
-            LogUtil.printErrorLog(ErrorLogs.INVALID_KEY_SPEC.getLog());
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidKeySpec.getMessage());
-        }
-        return privateKey;
-    }
-
     public static String constructConnectionURL(ConnectionConfig config, InvokeConnectionRequest invokeConnectionRequest) {
         StringBuilder filledURL = new StringBuilder(config.getConnectionUrl());
 
@@ -150,4 +135,68 @@ public final class Utils {
         return headersMap;
     }
 
+    public static JsonObject getMetrics() {
+        JsonObject details = new JsonObject();
+        String sdkVersion = Constants.SDK_VERSION;
+        String deviceModel;
+        String osDetails;
+        String javaVersion;
+        // Retrieve device model
+        try {
+            deviceModel = System.getProperty("os.name");
+            if (deviceModel == null) throw new Exception();
+        } catch (Exception e) {
+            LogUtil.printInfoLog(parameterizedString(
+                    InfoLogs.UNABLE_TO_GENERATE_SDK_METRIC.getLog(),
+                    Constants.SDK_METRIC_CLIENT_DEVICE_MODEL
+            ));
+            deviceModel = "";
+        }
+
+        // Retrieve OS details
+        try {
+            osDetails = System.getProperty("os.version");
+            if (osDetails == null) throw new Exception();
+        } catch (Exception e) {
+            LogUtil.printInfoLog(parameterizedString(
+                    InfoLogs.UNABLE_TO_GENERATE_SDK_METRIC.getLog(),
+                    Constants.SDK_METRIC_CLIENT_OS_DETAILS
+            ));
+            osDetails = "";
+        }
+
+        // Retrieve Java version details
+        try {
+            javaVersion = System.getProperty("java.version");
+            if (javaVersion == null) throw new Exception();
+        } catch (Exception e) {
+            LogUtil.printInfoLog(parameterizedString(
+                    InfoLogs.UNABLE_TO_GENERATE_SDK_METRIC.getLog(),
+                    Constants.SDK_METRIC_RUNTIME_DETAILS
+            ));
+            javaVersion = "";
+        }
+        details.addProperty(Constants.SDK_METRIC_NAME_VERSION, Constants.SDK_METRIC_NAME_VERSION_PREFIX + sdkVersion);
+        details.addProperty(Constants.SDK_METRIC_CLIENT_DEVICE_MODEL, deviceModel);
+        details.addProperty(Constants.SDK_METRIC_RUNTIME_DETAILS, Constants.SDK_METRIC_RUNTIME_DETAILS_PREFIX + javaVersion);
+        details.addProperty(Constants.SDK_METRIC_CLIENT_OS_DETAILS, osDetails);
+        return details;
+    }
+
+    private static PrivateKey parsePkcs8PrivateKey(byte[] pkcs8Bytes) throws SkyflowException {
+        KeyFactory keyFactory;
+        PrivateKey privateKey = null;
+        try {
+            PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(pkcs8Bytes);
+            keyFactory = KeyFactory.getInstance("RSA");
+            privateKey = keyFactory.generatePrivate(keySpec);
+        } catch (NoSuchAlgorithmException e) {
+            LogUtil.printErrorLog(ErrorLogs.INVALID_ALGORITHM.getLog());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidAlgorithm.getMessage());
+        } catch (InvalidKeySpecException e) {
+            LogUtil.printErrorLog(ErrorLogs.INVALID_KEY_SPEC.getLog());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidKeySpec.getMessage());
+        }
+        return privateKey;
+    }
 }

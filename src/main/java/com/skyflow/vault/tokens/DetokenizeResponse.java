@@ -1,14 +1,16 @@
 package com.skyflow.vault.tokens;
 
+import com.google.gson.Gson;
+
 import java.util.ArrayList;
 
 public class DetokenizeResponse {
     private final ArrayList<DetokenizeRecordResponse> detokenizedFields;
-    private final ArrayList<DetokenizeRecordResponse> errorRecords;
+    private final ArrayList<DetokenizeRecordResponse> errors;
 
-    public DetokenizeResponse(ArrayList<DetokenizeRecordResponse> detokenizedFields, ArrayList<DetokenizeRecordResponse> errorRecords) {
+    public DetokenizeResponse(ArrayList<DetokenizeRecordResponse> detokenizedFields, ArrayList<DetokenizeRecordResponse> errors) {
         this.detokenizedFields = detokenizedFields;
-        this.errorRecords = errorRecords;
+        this.errors = errors;
     }
 
     public ArrayList<DetokenizeRecordResponse> getDetokenizedFields() {
@@ -16,19 +18,12 @@ public class DetokenizeResponse {
     }
 
     public ArrayList<DetokenizeRecordResponse> getErrors() {
-        return errorRecords;
+        return errors;
     }
 
     @Override
     public String toString() {
-        StringBuilder response = new StringBuilder("{");
-        response.append("\n\t").append("\"detokenizedFields\": ").append(toIndentedString(detokenizedFields));
-        response.append("\n\t").append("\"errors\": ").append(toIndentedString(errorRecords));
-        response.append("\n}");
-        return response.toString();
-    }
-
-    private String toIndentedString(Object o) {
-        return o.toString().replace("\n", "\n\t");
+        Gson gson = new Gson();
+        return gson.toJson(this);
     }
 }

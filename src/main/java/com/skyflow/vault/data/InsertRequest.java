@@ -59,7 +59,7 @@ public class InsertRequest {
         private TokenMode tokenMode;
 
         private InsertRequestBuilder() {
-            this.returnTokens = true;
+            this.returnTokens = false;
             this.continueOnError = false;
             this.tokenMode = TokenMode.DISABLE;
         }
@@ -80,7 +80,7 @@ public class InsertRequest {
         }
 
         public InsertRequestBuilder returnTokens(Boolean returnTokens) {
-            this.returnTokens = returnTokens == null || returnTokens;
+            this.returnTokens = returnTokens != null && returnTokens;
             return this;
         }
 

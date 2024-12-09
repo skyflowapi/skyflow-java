@@ -69,7 +69,7 @@ public class SignedDataTokensTests {
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(ErrorMessage.InvalidCredentials.getMessage(), e.getMessage());
+            Assert.assertEquals(Utils.parameterizedString(ErrorMessage.FileNotFound.getMessage(), ""), e.getMessage());
         }
     }
 
@@ -82,7 +82,9 @@ public class SignedDataTokensTests {
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(ErrorMessage.InvalidCredentials.getMessage(), e.getMessage());
+            Assert.assertEquals(
+                    Utils.parameterizedString(ErrorMessage.FileNotFound.getMessage(), invalidFilePath),
+                    e.getMessage());
         }
     }
 
@@ -212,9 +214,11 @@ public class SignedDataTokensTests {
         try {
             String signedToken = "test_signed_data_token";
             SignedDataTokenResponse response = new SignedDataTokenResponse(dataToken, signedToken);
-            String responseString = "{\n\t\"dataToken\":\"" + dataToken + "\"," +
-                    "\n\t\"signedDataToken\":\"signed_token_" + signedToken + "\",\n}";
+            String responseString = "{\"token\":\"" + dataToken + "\"," +
+                    "\"signedToken\":\"signed_token_" + signedToken + "\"}";
             Assert.assertEquals(responseString, response.toString());
+            Assert.assertEquals(dataToken, response.getToken());
+            Assert.assertEquals("signed_token_" + signedToken, response.getSignedToken());
         } catch (Exception e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
         }
