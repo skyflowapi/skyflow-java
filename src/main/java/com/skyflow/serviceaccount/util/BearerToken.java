@@ -55,7 +55,7 @@ public class BearerToken {
     ) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.GENERATE_BEARER_TOKEN_FROM_CREDENTIALS_TRIGGERED.getLog());
         try {
-            if (credentialsFile == null || !credentialsFile.isFile()) {
+            if (credentialsFile == null) {
                 LogUtil.printErrorLog(ErrorLogs.INVALID_CREDENTIALS_FILE.getLog());
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidCredentials.getMessage());
             }

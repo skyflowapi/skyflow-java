@@ -117,7 +117,7 @@ public class InsertTests {
             Assert.assertEquals(1, request.getValues().size());
             Assert.assertEquals(TokenMode.DISABLE, request.getTokenMode());
             Assert.assertNull(request.getTokens());
-            Assert.assertTrue(request.getReturnTokens());
+            Assert.assertFalse(request.getReturnTokens());
             Assert.assertFalse(request.getContinueOnError());
             Assert.assertFalse(request.getHomogeneous());
         } catch (SkyflowException e) {

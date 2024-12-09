@@ -34,7 +34,7 @@ public class DetokenizeRequest {
 
         private DetokenizeRequestBuilder() {
             this.redactionType = RedactionType.PLAIN_TEXT;
-            this.continueOnError = true;
+            this.continueOnError = false;
         }
 
         public DetokenizeRequestBuilder tokens(ArrayList<String> tokens) {
@@ -48,7 +48,7 @@ public class DetokenizeRequest {
         }
 
         public DetokenizeRequestBuilder continueOnError(Boolean continueOnError) {
-            this.continueOnError = continueOnError == null || continueOnError;
+            this.continueOnError = continueOnError != null && continueOnError;
             return this;
         }
 

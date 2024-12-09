@@ -621,7 +621,7 @@ public class Validations {
         } else {
             for (int index = 0; index < ids.size(); index++) {
                 String id = ids.get(index);
-                if (id.trim().isEmpty()) {
+                if (id == null || id.trim().isEmpty()) {
                     LogUtil.printErrorLog(Utils.parameterizedString(
                             ErrorLogs.EMPTY_OR_NULL_ID_IN_IDS.getLog(),
                             InterfaceName.DELETE.getName(), Integer.toString(index)

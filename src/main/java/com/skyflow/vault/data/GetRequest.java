@@ -76,6 +76,7 @@ public class GetRequest {
         private GetRequestBuilder() {
             this.downloadURL = true;
             this.orderBy = Constants.ORDER_ASCENDING;
+            this.redactionType = RedactionType.PLAIN_TEXT;
         }
 
         public GetRequestBuilder table(String table) {

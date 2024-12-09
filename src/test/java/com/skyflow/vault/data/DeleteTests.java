@@ -79,7 +79,6 @@ public class DeleteTests {
 
     @Test
     public void testEmptyIdsInDeleteRequestValidations() {
-//        ids.clear();
         DeleteRequest request = DeleteRequest.builder().ids(ids).table(table).build();
         try {
             Validations.validateDeleteRequest(request);
@@ -88,6 +87,23 @@ public class DeleteTests {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
                     Utils.parameterizedString(ErrorMessage.EmptyIds.getMessage(), Constants.SDK_PREFIX),
+                    e.getMessage()
+            );
+        }
+    }
+
+    @Test
+    public void testNullIdInIdsInDeleteRequestValidations() {
+        ids.add(skyflowID);
+        ids.add(null);
+        DeleteRequest request = DeleteRequest.builder().ids(ids).table(table).build();
+        try {
+            Validations.validateDeleteRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(
+                    Utils.parameterizedString(ErrorMessage.EmptyIdInIds.getMessage(), Constants.SDK_PREFIX),
                     e.getMessage()
             );
         }
@@ -112,7 +128,6 @@ public class DeleteTests {
 
     @Test
     public void testNoTableInDeleteRequestValidations() {
-//        ids.clear();
         ids.add(skyflowID);
         DeleteRequest request = DeleteRequest.builder().ids(ids).build();
         try {
@@ -129,7 +144,6 @@ public class DeleteTests {
 
     @Test
     public void testEmptyTableInDeleteRequestValidations() {
-//        ids.clear();
         ids.add(skyflowID);
         DeleteRequest request = DeleteRequest.builder().ids(ids).table("").build();
         try {

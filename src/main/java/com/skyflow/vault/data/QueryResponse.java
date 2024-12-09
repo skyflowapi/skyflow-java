@@ -19,13 +19,14 @@ public class QueryResponse {
 
     @Override
     public String toString() {
-        Gson gson = new Gson();
-        JsonObject responseObject = JsonParser.parseString(gson.toJson(this)).getAsJsonObject();
+        Gson gson = new GsonBuilder().serializeNulls().create();
+        JsonObject responseObject = gson.toJsonTree(this).getAsJsonObject();
         JsonArray fieldsArray = responseObject.get("fields").getAsJsonArray();
         for (JsonElement fieldElement : fieldsArray) {
-            fieldElement.getAsJsonObject().add("tokenizedData", null);
+            fieldElement.getAsJsonObject().add("tokenizedData", new JsonObject());
         }
         responseObject.add("errors", new JsonArray());
+        responseObject.remove("tokenizedData");
         return responseObject.toString();
     }
 }

@@ -61,7 +61,7 @@ public class DetokenizeTests {
                     e.getMessage()
             );
             Assert.assertEquals(RedactionType.PLAIN_TEXT, request.getRedactionType());
-            Assert.assertTrue(request.getContinueOnError());
+            Assert.assertFalse(request.getContinueOnError());
         }
     }
 
@@ -78,7 +78,7 @@ public class DetokenizeTests {
                     e.getMessage()
             );
             Assert.assertEquals(RedactionType.PLAIN_TEXT, request.getRedactionType());
-            Assert.assertTrue(request.getContinueOnError());
+            Assert.assertFalse(request.getContinueOnError());
         }
     }
 
@@ -97,7 +97,7 @@ public class DetokenizeTests {
                     e.getMessage()
             );
             Assert.assertEquals(RedactionType.PLAIN_TEXT, request.getRedactionType());
-            Assert.assertTrue(request.getContinueOnError());
+            Assert.assertFalse(request.getContinueOnError());
         }
     }
 
@@ -116,7 +116,7 @@ public class DetokenizeTests {
                     e.getMessage()
             );
             Assert.assertEquals(RedactionType.PLAIN_TEXT, request.getRedactionType());
-            Assert.assertTrue(request.getContinueOnError());
+            Assert.assertFalse(request.getContinueOnError());
         }
     }
 
@@ -128,7 +128,7 @@ public class DetokenizeTests {
         try {
             Validations.validateDetokenizeRequest(request);
             Assert.assertEquals(RedactionType.PLAIN_TEXT, request.getRedactionType());
-            Assert.assertTrue(request.getContinueOnError());
+            Assert.assertFalse(request.getContinueOnError());
         } catch (SkyflowException e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
         }

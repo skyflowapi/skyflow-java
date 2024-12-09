@@ -63,7 +63,9 @@ public class BearerTokenTests {
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(ErrorMessage.InvalidCredentials.getMessage(), e.getMessage());
+            Assert.assertEquals(
+                    Utils.parameterizedString(ErrorMessage.FileNotFound.getMessage(), ""), e.getMessage()
+            );
         }
     }
 
@@ -76,7 +78,10 @@ public class BearerTokenTests {
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(ErrorMessage.InvalidCredentials.getMessage(), e.getMessage());
+            Assert.assertEquals(
+                    Utils.parameterizedString(ErrorMessage.FileNotFound.getMessage(), invalidFilePath),
+                    e.getMessage()
+            );
         }
     }
 

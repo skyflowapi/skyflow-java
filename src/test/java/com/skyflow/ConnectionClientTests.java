@@ -46,7 +46,7 @@ public class ConnectionClientTests {
     public void testSetBearerToken() {
         try {
             Dotenv dotenv = Dotenv.load();
-            String bearerToken = dotenv.get("TEST_HUNDRED_TOKEN");
+            String bearerToken = dotenv.get("TEST_REUSABLE_TOKEN");
             Credentials credentials = new Credentials();
             credentials.setToken(bearerToken);
             connectionConfig.setCredentials(credentials);

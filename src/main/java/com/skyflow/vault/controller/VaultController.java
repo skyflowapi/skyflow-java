@@ -20,7 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 
 public final class VaultController extends VaultClient {
-    private static final Gson gson = new Gson();
+    private static final Gson gson = new GsonBuilder().serializeNulls().create();
     private DetectController detectController;
     private AuditController auditController;
     private BinLookupController binLookupController;
@@ -42,7 +42,7 @@ public final class VaultController extends VaultClient {
         if (records != null) {
             for (JsonElement recordElement : records) {
                 JsonObject recordObject = recordElement.getAsJsonObject();
-                insertRecord.put("skyflow_id", recordObject.get("skyflow_id").getAsString());
+                insertRecord.put("skyflowId", recordObject.get("skyflow_id").getAsString());
                 JsonElement tokensElement = recordObject.get("tokens");
                 if (tokensElement != null) {
                     insertRecord.putAll(tokensElement.getAsJsonObject().asMap());
@@ -53,16 +53,17 @@ public final class VaultController extends VaultClient {
         if (error != null) {
             insertRecord.put("error", error.getAsString());
         }
-        insertRecord.put("request_index", requestIndex);
+        insertRecord.put("requestIndex", requestIndex);
         return insertRecord;
     }
 
     private static synchronized HashMap<String, Object> getFormattedBulkInsertRecord(V1RecordMetaProperties record) {
         HashMap<String, Object> insertRecord = new HashMap<>();
         String skyflowId = record.getSkyflowId();
-        insertRecord.put("skyflow_id", skyflowId);
-        String tokensString = gson.toJson(record.getTokens());
-        if (tokensString != null) {
+        Object tokens = record.getTokens();
+        insertRecord.put("skyflowId", skyflowId);
+        if (tokens != null) {
+            String tokensString = gson.toJson(tokens);
             JsonObject tokensObject = JsonParser.parseString(tokensString).getAsJsonObject();
             insertRecord.putAll(tokensObject.asMap());
         }
@@ -71,12 +72,14 @@ public final class VaultController extends VaultClient {
 
     private static synchronized HashMap<String, Object> getFormattedGetRecord(V1FieldRecords record) {
         HashMap<String, Object> getRecord = new HashMap<>();
-        String fieldsString = gson.toJson(record.getFields());
-        String tokensString = gson.toJson(record.getTokens());
-        if (fieldsString != null) {
+        Object fields = record.getFields();
+        Object tokens = record.getTokens();
+        if (fields != null) {
+            String fieldsString = gson.toJson(fields);
             JsonObject fieldsObject = JsonParser.parseString(fieldsString).getAsJsonObject();
             getRecord.putAll(fieldsObject.asMap());
-        } else if (tokensString != null) {
+        } else if (tokens != null) {
+            String tokensString = gson.toJson(tokens);
             JsonObject tokensObject = JsonParser.parseString(tokensString).getAsJsonObject();
             getRecord.putAll(tokensObject.asMap());
         }
@@ -85,8 +88,9 @@ public final class VaultController extends VaultClient {
 
     private static synchronized HashMap<String, Object> getFormattedUpdateRecord(V1UpdateRecordResponse record) {
         HashMap<String, Object> updateTokens = new HashMap<>();
-        String tokensString = gson.toJson(record.getTokens());
-        if (tokensString != null) {
+        Object tokens = record.getTokens();
+        if (tokens != null) {
+            String tokensString = gson.toJson(tokens);
             JsonObject tokensObject = JsonParser.parseString(tokensString).getAsJsonObject();
             updateTokens.putAll(tokensObject.asMap());
         }
@@ -95,8 +99,9 @@ public final class VaultController extends VaultClient {
 
     private static synchronized HashMap<String, Object> getFormattedQueryRecord(V1FieldRecords record) {
         HashMap<String, Object> queryRecord = new HashMap<>();
-        String fieldsString = gson.toJson(record.getFields());
-        if (fieldsString != null) {
+        Object fields = record.getFields();
+        if (fields != null) {
+            String fieldsString = gson.toJson(fields);
             JsonObject fieldsObject = JsonParser.parseString(fieldsString).getAsJsonObject();
             queryRecord.putAll(fieldsObject.asMap());
         }
@@ -122,7 +127,7 @@ public final class VaultController extends VaultClient {
                 for (int index = 0; index < records.size(); index++) {
                     Object record = records.get(index);
                     HashMap<String, Object> insertRecord = getFormattedBatchInsertRecord(record, index);
-                    if (insertRecord.containsKey("skyflow_id")) {
+                    if (insertRecord.containsKey("skyflowId")) {
                         insertedFields.add(insertRecord);
                     } else {
                         errorFields.add(insertRecord);

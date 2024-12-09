@@ -119,7 +119,7 @@ public class VaultClientTests {
             tokens.add(token);
             DetokenizeRequest detokenizeRequest = DetokenizeRequest.builder().tokens(tokens).build();
             V1DetokenizePayload payload = vaultClient.getDetokenizePayload(detokenizeRequest);
-            Assert.assertTrue(payload.getContinueOnError());
+            Assert.assertFalse(payload.getContinueOnError());
             Assert.assertEquals(2, payload.getDetokenizationParameters().size());
         } catch (Exception e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
@@ -250,7 +250,7 @@ public class VaultClientTests {
     public void testSetBearerToken() {
         try {
             Dotenv dotenv = Dotenv.load();
-            String bearerToken = dotenv.get("TEST_HUNDRED_TOKEN");
+            String bearerToken = dotenv.get("TEST_REUSABLE_TOKEN");
             Credentials credentials = new Credentials();
             credentials.setToken(bearerToken);
             vaultConfig.setCredentials(credentials);

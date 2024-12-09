@@ -75,6 +75,7 @@ public class GetTests {
                     .ids(ids)
                     .table(table)
                     .returnTokens(true)
+                    .redactionType(null)
                     .downloadURL(false)
                     .offset("2")
                     .limit("1")
@@ -263,7 +264,7 @@ public class GetTests {
 
     @Test
     public void testNoRedactionInGetRequestValidations() {
-        GetRequest request = GetRequest.builder().table(table).build();
+        GetRequest request = GetRequest.builder().table(table).returnTokens(false).redactionType(null).build();
         try {
             Validations.validateGetRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
@@ -295,7 +296,9 @@ public class GetTests {
 
     @Test
     public void testReturnTokensWithColumnNameInGetRequestValidations() {
-        GetRequest request = GetRequest.builder().table(table).returnTokens(true).columnName(columnName).build();
+        GetRequest request = GetRequest.builder()
+                .table(table).returnTokens(true).redactionType(null).columnName(columnName)
+                .build();
         try {
             Validations.validateGetRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
@@ -310,7 +313,9 @@ public class GetTests {
 
     @Test
     public void testReturnTokensWithColumnValuesInGetRequestValidations() {
-        GetRequest request = GetRequest.builder().table(table).returnTokens(true).columnValues(columnValues).build();
+        GetRequest request = GetRequest.builder()
+                .table(table).returnTokens(true).redactionType(null).columnValues(columnValues)
+                .build();
         try {
             Validations.validateGetRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);

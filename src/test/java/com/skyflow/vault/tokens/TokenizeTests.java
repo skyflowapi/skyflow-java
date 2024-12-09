@@ -157,7 +157,9 @@ public class TokenizeTests {
             tokens.add("1234-5678-9012-3456");
             tokens.add("5678-9012-3456-7890");
             TokenizeResponse response = new TokenizeResponse(tokens);
-            String responseString = "{\"tokens\":[\"1234-5678-9012-3456\",\"5678-9012-3456-7890\"],\"errors\":[]}";
+            String responseString = "{\"tokens\":[" +
+                    "{\"token\":\"1234-5678-9012-3456\"},{\"token\":\"5678-9012-3456-7890\"}]" +
+                    ",\"errors\":[]}";
             Assert.assertEquals(2, response.getTokens().size());
             Assert.assertEquals(responseString, response.toString());
         } catch (Exception e) {

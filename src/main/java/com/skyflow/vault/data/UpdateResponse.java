@@ -1,6 +1,7 @@
 package com.skyflow.vault.data;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
@@ -27,11 +28,13 @@ public class UpdateResponse {
     public String toString() {
         Gson gson = new Gson();
         JsonObject responseObject = JsonParser.parseString(gson.toJson(this)).getAsJsonObject();
-        responseObject.add("skyflow_id", responseObject.remove("skyflowId"));
         JsonObject tokensObject = responseObject.remove("tokens").getAsJsonObject();
         for (String key : tokensObject.keySet()) {
             responseObject.add(key, tokensObject.get(key));
         }
-        return responseObject.toString();
+        JsonObject finalResponseObject = new JsonObject();
+        finalResponseObject.add("updatedField", responseObject);
+        finalResponseObject.add("errors", new JsonArray());
+        return finalResponseObject.toString();
     }
 }

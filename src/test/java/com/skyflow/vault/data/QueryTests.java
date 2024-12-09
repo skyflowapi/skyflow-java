@@ -95,8 +95,8 @@ public class QueryTests {
             fields.add(queryRecord);
             QueryResponse response = new QueryResponse(fields);
             String responseString = "{\"fields\":" +
-                    "[{\"card_number\":\"test_card_number\",\"name\":\"test_name\",\"tokenizedData\":null}," +
-                    "{\"card_number\":\"test_card_number\",\"name\":\"test_name\",\"tokenizedData\":null}]," +
+                    "[{\"card_number\":\"test_card_number\",\"name\":\"test_name\",\"tokenizedData\":{}}," +
+                    "{\"card_number\":\"test_card_number\",\"name\":\"test_name\",\"tokenizedData\":{}}]," +
                     "\"errors\":[]}";
             Assert.assertEquals(2, response.getFields().size());
             Assert.assertEquals(responseString, response.toString());

@@ -89,7 +89,7 @@ jobs:
           touch .env
           echo SKYFLOW_CREDENTIALS=${{ secrets.SKYFLOW_CREDENTIALS }} >> .env
           echo TEST_EXPIRED_TOKEN=${{ secrets.TEST_EXPIRED_TOKEN }} >> .env
-          echo TEST_HUNDRED_TOKEN=${{ secrets.TEST_HUNDRED_TOKEN }} >> .env
+          echo TEST_REUSABLE_TOKEN=${{ secrets.TEST_REUSABLE_TOKEN }} >> .env
 
       - name: Create credentials json
         id: create-json

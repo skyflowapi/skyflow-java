@@ -94,7 +94,7 @@ public class UpdateTests {
             Validations.validateUpdateRequest(request);
             Assert.assertEquals(table, request.getTable());
             Assert.assertEquals(3, request.getData().size());
-            Assert.assertTrue(request.getReturnTokens());
+            Assert.assertFalse(request.getReturnTokens());
             Assert.assertNull(request.getTokens());
         } catch (SkyflowException e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
@@ -446,9 +446,9 @@ public class UpdateTests {
             tokenMap.put("test_column_1", "test_token_1");
             tokenMap.put("test_column_2", "test_token_2");
             UpdateResponse response = new UpdateResponse(skyflowID, tokenMap);
-            String responseString = "{\"skyflow_id\":\"" + skyflowID + "\","
-                    + "\"test_column_1\":\"test_token_1\","
-                    + "\"test_column_2\":\"test_token_2\"}";
+            String responseString = "{\"updatedField\":{\"skyflowId\":\"" + skyflowID + "\","
+                    + "\"test_column_1\":\"test_token_1\",\"test_column_2\":\"test_token_2\"}" +
+                    ",\"errors\":[]}";
             Assert.assertEquals(skyflowID, response.getSkyflowId());
             Assert.assertEquals(2, response.getTokens().size());
             Assert.assertEquals(responseString, response.toString());

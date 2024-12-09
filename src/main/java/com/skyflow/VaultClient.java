@@ -169,6 +169,7 @@ public class VaultClient {
     }
 
     protected void setBearerToken() throws SkyflowException {
+        prioritiseCredentials();
         Validations.validateCredentials(this.finalCredentials);
         if (this.finalCredentials.getApiKey() != null) {
             setApiKey();
@@ -200,6 +201,7 @@ public class VaultClient {
 
     private void prioritiseCredentials() throws SkyflowException {
         try {
+            Credentials original = this.finalCredentials;
             if (this.vaultConfig.getCredentials() != null) {
                 this.finalCredentials = this.vaultConfig.getCredentials();
             } else if (this.commonCredentials != null) {
@@ -215,8 +217,10 @@ public class VaultClient {
                     this.finalCredentials.setCredentialsString(sysCredentials);
                 }
             }
-            token = null;
-            apiKey = null;
+            if (original != null && !original.equals(this.finalCredentials)) {
+                token = null;
+                apiKey = null;
+            }
         } catch (DotenvException e) {
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(),
                     ErrorMessage.EmptyCredentials.getMessage());

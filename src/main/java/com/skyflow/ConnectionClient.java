@@ -41,6 +41,7 @@ public class ConnectionClient {
     }
 
     protected void setBearerToken() throws SkyflowException {
+        prioritiseCredentials();
         Validations.validateCredentials(this.finalCredentials);
         if (this.finalCredentials.getApiKey() != null) {
             setApiKey();
@@ -62,6 +63,7 @@ public class ConnectionClient {
 
     private void prioritiseCredentials() throws SkyflowException {
         try {
+            Credentials original = this.finalCredentials;
             if (this.connectionConfig.getCredentials() != null) {
                 this.finalCredentials = this.connectionConfig.getCredentials();
             } else if (this.commonCredentials != null) {
@@ -77,8 +79,10 @@ public class ConnectionClient {
                     this.finalCredentials.setCredentialsString(sysCredentials);
                 }
             }
-            token = null;
-            apiKey = null;
+            if (original != null && !original.equals(this.finalCredentials)) {
+                token = null;
+                apiKey = null;
+            }
         } catch (DotenvException e) {
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(),
                     ErrorMessage.EmptyCredentials.getMessage());
