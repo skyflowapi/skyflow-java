@@ -198,6 +198,40 @@ public class SkyflowTests {
         }
     }
 
+    @Test
+    public void testGettingAlreadyRemovedVaultFromEmptyConfigs() {
+        try {
+            Skyflow skyflowClient = Skyflow.builder().build();
+            skyflowClient.vault();
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(ErrorMessage.VaultIdNotInConfigList.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testGettingAlreadyRemovedVaultFromNonEmptyConfigs() {
+        try {
+            VaultConfig primaryConfig = new VaultConfig();
+            primaryConfig.setVaultId(vaultID);
+            primaryConfig.setClusterId(clusterID);
+            primaryConfig.setEnv(Env.SANDBOX);
+
+            VaultConfig secondaryConfig = new VaultConfig();
+            secondaryConfig.setVaultId(vaultID + "123");
+            secondaryConfig.setClusterId(clusterID);
+            secondaryConfig.setEnv(Env.SANDBOX);
+            Skyflow skyflowClient = Skyflow.builder().addVaultConfig(primaryConfig).addVaultConfig(secondaryConfig).build();
+            skyflowClient.removeVaultConfig(vaultID);
+            skyflowClient.vault(vaultID);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(ErrorMessage.VaultIdNotInConfigList.getMessage(), e.getMessage());
+        }
+    }
+
 
     @Test
     public void testAddingInvalidConnectionConfigInSkyflowBuilder() {

@@ -1,25 +1,29 @@
 package com.skyflow.vault.connection;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 
 public class InvokeConnectionResponse {
-    private JsonObject response;
+    private final JsonObject data;
+    private final JsonObject metadata;
 
-    public InvokeConnectionResponse(JsonObject response) {
-        this.response = response;
+    public InvokeConnectionResponse(JsonObject data, JsonObject metadata) {
+        this.data = data;
+        this.metadata = metadata;
     }
 
-    public JsonObject getResponse() {
-        return response;
+    public JsonObject getData() {
+        return data;
+    }
+
+    public JsonObject getMetadata() {
+        return metadata;
     }
 
     @Override
     public String toString() {
-        Gson gson = new Gson();
-        JsonObject responseObject = JsonParser.parseString(gson.toJson(this)).getAsJsonObject();
-        responseObject = responseObject.remove("response").getAsJsonObject();
-        return responseObject.toString();
+        Gson gson = new GsonBuilder().serializeNulls().create();
+        return gson.toJson(this);
     }
 }

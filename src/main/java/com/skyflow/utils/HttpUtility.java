@@ -13,13 +13,12 @@ import java.util.Map;
 
 public final class HttpUtility {
 
+    private static final String LINE_FEED = "\r\n";
     private static String requestID;
 
     public static String getRequestID() {
         return requestID;
     }
-
-    private static final String LINE_FEED = "\r\n";
 
     public static String sendRequest(String method, URL url, JsonObject params, Map<String, String> headers) throws IOException, SkyflowException {
 
@@ -55,7 +54,7 @@ public final class HttpUtility {
                         input = formatJsonToFormEncodedString(params).getBytes(StandardCharsets.UTF_8);
                     } else if (requestContentType.contains("multipart/form-data")) {
                         input = formatJsonToMultiPartFormDataString(params, boundary).getBytes(StandardCharsets.UTF_8);
-                    }else {
+                    } else {
                         input = params.toString().getBytes(StandardCharsets.UTF_8);
                     }
 
@@ -66,7 +65,7 @@ public final class HttpUtility {
 
             int status = connection.getResponseCode();
             String requestID = connection.getHeaderField("x-request-id");
-            HttpUtility.requestID = requestID;
+            HttpUtility.requestID = requestID.split(",")[0];
 
             Reader streamReader;
             if (status > 299) {

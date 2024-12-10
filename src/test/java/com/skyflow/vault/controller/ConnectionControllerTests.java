@@ -39,7 +39,7 @@ public class ConnectionControllerTests {
     @Test
     public void testInvalidRequestInInvokeConnectionMethod() {
         try {
-            HashMap<String,String> requestBody = new HashMap<>();
+            HashMap<String, String> requestBody = new HashMap<>();
             InvokeConnectionRequest connectionRequest = InvokeConnectionRequest.builder().requestBody(requestBody).build();
             Skyflow skyflowClient = Skyflow.builder().setLogLevel(LogLevel.DEBUG).addConnectionConfig(connectionConfig).build();
             skyflowClient.connection().invoke(connectionRequest);
