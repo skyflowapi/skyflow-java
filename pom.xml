@@ -6,7 +6,7 @@
 
     <groupId>com.skyflow</groupId>
     <artifactId>skyflow-java</artifactId>
-    <version>1.15.0-dev.8339ce7</version>
+    <version>1.15.0-dev.f146b51</version>
     <packaging>jar</packaging>
 
     <name>${project.groupId}:${project.artifactId}</name>
