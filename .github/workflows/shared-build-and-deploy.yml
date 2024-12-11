@@ -3,22 +3,22 @@ on:
   workflow_call:
     inputs:
       ref:
-        description: 'Git reference to use (e.g., main or branch name)'
+        description: "Git reference to use (e.g., main or branch name)"
         required: true
         type: string
 
       is-internal:
-        description: 'Flag for internal release'
+        description: "Flag for internal release"
         required: true
         type: boolean
 
       server-id:
-        description: 'Id of the repository'
+        description: "Id of the repository"
         required: true
         type: string
-      
+
       profile:
-        description: 'Profile to pick from pom.xml'
+        description: "Profile to pick from pom.xml"
         required: true
         type: string
     secrets:
@@ -34,6 +34,9 @@ on:
       gpg-passphrase:
         required: true
 
+env:
+  TEST_REUSABLE_TOKEN: ${{ secrets.TEST_REUSABLE_TOKEN }}
+
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -46,8 +49,8 @@ jobs:
       - name: Set up maven or jfrog repository
         uses: actions/setup-java@v1
         with:
-          java-version: '1.8'
-          distribution: 'adopt'
+          java-version: "1.8"
+          distribution: "adopt"
           server-id: ${{ inputs.server-id }}
           server-username: SERVER_USERNAME
           server-password: SERVER_PASSWORD
@@ -89,7 +92,6 @@ jobs:
           touch .env
           echo SKYFLOW_CREDENTIALS=${{ secrets.SKYFLOW_CREDENTIALS }} >> .env
           echo TEST_EXPIRED_TOKEN=${{ secrets.TEST_EXPIRED_TOKEN }} >> .env
-          echo TEST_REUSABLE_TOKEN=${{ secrets.TEST_REUSABLE_TOKEN }} >> .env
 
       - name: Create credentials json
         id: create-json
