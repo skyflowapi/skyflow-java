@@ -264,7 +264,6 @@ public class VaultClientTests {
             HttpBearerAuth auth = (HttpBearerAuth) vaultClient.getApiClient().getAuthentication("Bearer");
             Assert.assertEquals(bearerToken, auth.getBearerToken());
         } catch (Exception e) {
-            e.printStackTrace();
             Assert.fail(INVALID_EXCEPTION_THROWN);
         }
     }

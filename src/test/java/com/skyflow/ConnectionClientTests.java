@@ -58,7 +58,6 @@ public class ConnectionClientTests {
             // re-use scenario
             connectionClient.setBearerToken();
         } catch (Exception e) {
-            e.printStackTrace();
             Assert.fail(INVALID_EXCEPTION_THROWN);
         }
     }

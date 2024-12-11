@@ -15,4 +15,6 @@ jobs:
       server-password: ${{ secrets.OSSRH_PASSWORD }}
       gpg-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
       gpg-passphrase: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
-      
+      skyflow-credentials: ${{ secrets.SKYFLOW_CREDENTIALS }} >> .env
+      test-expired-token: ${{ secrets.TEST_EXPIRED_TOKEN }} >> .env
+      test-reusable-token: ${{ secrets.TEST_REUSABLE_TOKEN }} >> .env

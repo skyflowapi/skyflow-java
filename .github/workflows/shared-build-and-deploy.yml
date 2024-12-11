@@ -34,6 +34,15 @@ on:
       gpg-passphrase:
         required: true
 
+      skyflow-credentials:
+        required: true
+
+      test-expired-token:
+        required: true
+
+      test-reusable-token:
+        required: true
+
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -87,9 +96,9 @@ jobs:
         id: create-env
         run: |
           touch .env
-          echo SKYFLOW_CREDENTIALS=${{ secrets.SKYFLOW_CREDENTIALS }} >> .env
-          echo TEST_EXPIRED_TOKEN=${{ secrets.TEST_EXPIRED_TOKEN }} >> .env
-          echo TEST_REUSABLE_TOKEN=${{ secrets.TEST_REUSABLE_TOKEN }} >> .env
+          echo SKYFLOW_CREDENTIALS=${{ secrets.skyflow-credentials }} >> .env
+          echo TEST_EXPIRED_TOKEN=${{ secrets.test-expired-token }} >> .env
+          echo TEST_REUSABLE_TOKEN=${{ secrets.test-reusable-token }} >> .env
 
       - name: Create credentials json
         id: create-json
