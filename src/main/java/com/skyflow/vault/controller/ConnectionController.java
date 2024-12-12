@@ -64,7 +64,10 @@ public class ConnectionController extends ConnectionClient {
             }
 
             String response = HttpUtility.sendRequest(requestMethod.name(), new URL(filledURL), requestBody, headers);
-            connectionResponse = new InvokeConnectionResponse((JsonObject) JsonParser.parseString(response));
+            JsonObject data = JsonParser.parseString(response).getAsJsonObject();
+            JsonObject metadata = new JsonObject();
+            metadata.addProperty("requestId", HttpUtility.getRequestID());
+            connectionResponse = new InvokeConnectionResponse(data, metadata);
             LogUtil.printInfoLog(InfoLogs.INVOKE_CONNECTION_REQUEST_RESOLVED.getLog());
         } catch (IOException e) {
             LogUtil.printErrorLog(ErrorLogs.INVOKE_CONNECTION_REQUEST_REJECTED.getLog());

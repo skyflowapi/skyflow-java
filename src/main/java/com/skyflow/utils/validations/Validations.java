@@ -1,5 +1,7 @@
 package com.skyflow.utils.validations;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.skyflow.config.ConnectionConfig;
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
@@ -132,8 +134,9 @@ public class Validations {
         }
 
         if (requestBody != null) {
-            Map<String, String> requestBodyMap = (Map<String, String>) requestBody;
-            if (requestBodyMap.isEmpty()) {
+            Gson gson = new Gson();
+            JsonObject bodyObject = gson.toJsonTree(requestBody).getAsJsonObject();
+            if (bodyObject.isEmpty()) {
                 LogUtil.printErrorLog(Utils.parameterizedString(
                         ErrorLogs.EMPTY_REQUEST_BODY.getLog(), InterfaceName.INVOKE_CONNECTION.getName()));
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyRequestBody.getMessage());

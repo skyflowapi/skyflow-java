@@ -28,7 +28,7 @@ public enum ErrorMessage {
     NoTokenGenerationMeansPassed("%s0 Initialization failed. Invalid credentials. Specify any one from 'path', 'credentialsString', 'token' or 'apiKey'."),
     EmptyCredentialFilePath("%s0 Initialization failed. Invalid credentials. Credentials file path must not be empty."),
     EmptyCredentialsString("%s0 Initialization failed. Invalid credentials. Credentials string must not be empty."),
-    EmptyToken("%s0 Initialization failed. Invalid credentials. Token mut not be empty."),
+    EmptyToken("%s0 Initialization failed. Invalid credentials. Token must not be empty."),
     EmptyApikey("%s0 Initialization failed. Invalid credentials. Api key must not be empty."),
     InvalidApikey("%s0 Initialization failed. Invalid credentials. Specify valid api key."),
     EmptyRoles("%s0 Initialization failed. Invalid roles. Specify at least one role."),

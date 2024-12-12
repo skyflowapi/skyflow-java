@@ -420,12 +420,17 @@ public class InvokeConnectionTests {
     @Test
     public void testInvokeConnectionResponse() {
         try {
-            JsonObject responseObject = new JsonObject();
-            responseObject.addProperty("test_key_1", "test_value_1");
-            responseObject.addProperty("test_key_2", "test_value_2");
-            InvokeConnectionResponse connectionResponse = new InvokeConnectionResponse(responseObject);
-            Assert.assertEquals(2, connectionResponse.getResponse().size());
-            Assert.assertEquals(responseObject.toString(), connectionResponse.toString());
+            JsonObject data = new JsonObject();
+            data.addProperty("test_key_1", "test_value_1");
+            data.addProperty("test_key_2", "test_value_2");
+            JsonObject metadata = new JsonObject();
+            metadata.addProperty("requestId", "12345");
+            InvokeConnectionResponse connectionResponse = new InvokeConnectionResponse(data, metadata);
+            String responseString = "{\"data\":{\"test_key_1\":\"test_value_1\",\"test_key_2\":\"test_value_2\"}," +
+                    "\"metadata\":{\"requestId\":\"12345\"}}";
+            Assert.assertEquals(2, connectionResponse.getData().size());
+            Assert.assertEquals(responseString, connectionResponse.toString());
+            Assert.assertEquals(1, connectionResponse.getMetadata().size());
         } catch (Exception e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
         }

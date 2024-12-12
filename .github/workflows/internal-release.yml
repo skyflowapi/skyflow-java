@@ -21,5 +21,6 @@ jobs:
       server-password: ${{ secrets.ARTIFACTORY_PASSWORD }}
       gpg-key: ${{ secrets.JFROG_GPG_KEY }}
       gpg-passphrase: ${{ secrets.JFROG_GPG_PASSPHRASE }}
-      
-    
+      skyflow-credentials: ${{ secrets.SKYFLOW_CREDENTIALS }} >> .env
+      test-expired-token: ${{ secrets.TEST_EXPIRED_TOKEN }} >> .env
+      test-reusable-token: ${{ secrets.TEST_REUSABLE_TOKEN }} >> .env

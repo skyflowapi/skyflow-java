@@ -82,13 +82,23 @@ public final class Skyflow {
         return this.builder.logLevel;
     }
 
-    public VaultController vault() {
-        String vaultId = (String) this.builder.vaultClientsMap.keySet().toArray()[0];
+    public VaultController vault() throws SkyflowException {
+        Object[] array = this.builder.vaultClientsMap.keySet().toArray();
+        if (array.length < 1) {
+            LogUtil.printErrorLog(ErrorLogs.VAULT_CONFIG_DOES_NOT_EXIST.getLog());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.VaultIdNotInConfigList.getMessage());
+        }
+        String vaultId = (String) array[0];
         return this.vault(vaultId);
     }
 
-    public VaultController vault(String vaultId) {
-        return this.builder.vaultClientsMap.get(vaultId);
+    public VaultController vault(String vaultId) throws SkyflowException {
+        VaultController controller = this.builder.vaultClientsMap.get(vaultId);
+        if (controller == null) {
+            LogUtil.printErrorLog(ErrorLogs.VAULT_CONFIG_DOES_NOT_EXIST.getLog());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.VaultIdNotInConfigList.getMessage());
+        }
+        return controller;
     }
 
     public ConnectionController connection() {
