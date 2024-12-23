@@ -20,9 +20,11 @@ jobs:
           java-version: "1.8"
           # distribution: zulu
           # java-version: ${{ github.event.inputs.java_version }}
-          # server-id: ossrh
-          # gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }} # Value of the GPG private key to import
-          # gpg-passphrase: ${{ secrets.MAVEN_GPG_PASSPHRASE }} # env variable for GPG private key passphrase
+          server-id: ossrh
+          server-username: ${{ secrets.OSSRH_USERNAME }}
+          server-password: ${{ secrets.OSSRH_PASSWORD }}
+          gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }} # Value of the GPG private key to import
+          gpg-passphrase: ${{ secrets.MAVEN_GPG_PASSPHRASE }} # env variable for GPG private key passphrase
 
       - name: Create env
         id: create-env
@@ -41,6 +43,10 @@ jobs:
 
       - name: Compile Package
         run: mvn clean install
+        env:
+          SERVER_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          SERVER_PASSWORD: ${{ secrets.OSSRH_PASSWORD  }}
+          GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
 
       # - name: Endor Labs SCA Scan
       #   uses: endorlabs/github-action@main
