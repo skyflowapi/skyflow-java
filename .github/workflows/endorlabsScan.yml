@@ -5,11 +5,11 @@ on:
     inputs:
       java_version:
         description: "The version of Java to be used for build"
-        default: "1.8"
+        default: "8.0.422"
         required: true
 
 jobs:
-  clone-build-scan:
+  build-and-scan:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -17,8 +17,6 @@ jobs:
         with:
           distribution: zulu
           java-version: ${{ github.event.inputs.java_version }}
-          gpg-private-key: ${{ secrets.GPG_KEY }} # Value of the GPG private key to import
-          gpg-passphrase: ${{ secrets.GPG_PASSPHRASE }} # env variable for GPG private key passphrase
 
       - name: Create env
         id: create-env
@@ -36,7 +34,7 @@ jobs:
           json: ${{ secrets.TEST_CREDENTIALS_FILE_STRING }}
 
       - name: Compile Package
-        run: mvn clean install
+        run: mvn -B package -DTEST_VAULT_ID=${{ secrets.TEST_VAULT_ID }} -DTEST_VAULT_URL=${{ secrets.TEST_VAULT_URL }} -DTEST_SKYFLOW_ID=${{ secrets.TEST_SKYFLOW_ID }} -DTEST_TOKEN=${{ secrets.TEST_TOKEN }} -DTEST_CREDENTIALS=${{ secrets.TEST_CREDENTIALS_FILE_STRING }} -DTEST_EXPIRED_TOKEN=${{ secrets.TEST_EXPIRED_TOKEN }} -DTEST_REUSABLE_TOKEN=${{ secrets.TEST_REUSABLE_TOKEN }} -DSKYFLOW_CREDENTIALS=${{ secrets.SKYFLOW_CREDENTIALS }} -f pom.xml
 
       - name: Endor Labs SCA Scan
         uses: endorlabs/github-action@main
