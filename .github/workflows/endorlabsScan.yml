@@ -1,8 +1,6 @@
 name: Endor Labs Scan Java Project
 
 on:
-  pull_request:
-    branches: [main]
   workflow_dispatch:
     inputs:
       java_version:
@@ -17,14 +15,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with:
-          java-version: "8.0.422"
           distribution: zulu
-          # java-version: ${{ github.event.inputs.java_version }}
-          # server-id: ossrh
-          # server-username: ${{ secrets.OSSRH_USERNAME }}
-          # server-password: ${{ secrets.OSSRH_PASSWORD }}
-          # gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }} # Value of the GPG private key to import
-          # gpg-passphrase: ${{ secrets.MAVEN_GPG_PASSPHRASE }} # env variable for GPG private key passphrase
+          java-version: ${{ github.event.inputs.java_version }}
 
       - name: Create env
         id: create-env
@@ -43,17 +35,13 @@ jobs:
 
       - name: Compile Package
         run: mvn -B package -DTEST_VAULT_ID=${{ secrets.TEST_VAULT_ID }} -DTEST_VAULT_URL=${{ secrets.TEST_VAULT_URL }} -DTEST_SKYFLOW_ID=${{ secrets.TEST_SKYFLOW_ID }} -DTEST_TOKEN=${{ secrets.TEST_TOKEN }} -DTEST_CREDENTIALS=${{ secrets.TEST_CREDENTIALS_FILE_STRING }} -DTEST_EXPIRED_TOKEN=${{ secrets.TEST_EXPIRED_TOKEN }} -DTEST_REUSABLE_TOKEN=${{ secrets.TEST_REUSABLE_TOKEN }} -DSKYFLOW_CREDENTIALS=${{ secrets.SKYFLOW_CREDENTIALS }} -f pom.xml
-        # env:
-        #   SERVER_USERNAME: ${{ secrets.OSSRH_USERNAME }}
-        #   SERVER_PASSWORD: ${{ secrets.OSSRH_PASSWORD  }}
-        #   GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
 
-      # - name: Endor Labs SCA Scan
-      #   uses: endorlabs/github-action@main
-      #   with:
-      #     namespace: "skyflow"
-      #     api: "https://api.endorlabs.com"
-      #     pr: false
-      #     enable_github_action_token: true
-      #     scan_dependencies: true
-      #     additional_args: "--as-default-branch --call-graph-languages=java"
+      - name: Endor Labs SCA Scan
+        uses: endorlabs/github-action@main
+        with:
+          namespace: "skyflow"
+          api: "https://api.endorlabs.com"
+          pr: false
+          enable_github_action_token: true
+          scan_dependencies: true
+          additional_args: "--as-default-branch --call-graph-languages=java"
