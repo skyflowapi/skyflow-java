@@ -1,7 +1,7 @@
-name: Public release
+name: Public beta release
 on:
   push:
-    tags: '*.*.*'
+    tags: '*.*.*-beta.*'
 jobs:
   build-and-deploy:
     uses: ./.github/workflows/shared-build-and-deploy.yml
@@ -9,7 +9,7 @@ jobs:
       ref: ${{ github.ref_name }}
       server-id: ossrh
       profile: maven-central
-      tag: 'public'
+      tag: 'beta'
     secrets:
       server-username: ${{ secrets.OSSRH_USERNAME }}
       server-password: ${{ secrets.OSSRH_PASSWORD }}
