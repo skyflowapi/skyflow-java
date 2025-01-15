@@ -7,6 +7,7 @@ import com.skyflow.enums.Env;
 import com.skyflow.enums.LogLevel;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
+import com.skyflow.errors.HttpStatus;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.generated.rest.ApiClient;
 import com.skyflow.generated.rest.api.TokensApi;
@@ -155,8 +156,8 @@ public class VaultControllerTests {
             );
             Assert.assertNull(e.getRequestId());
             Assert.assertNull(e.getGrpcCode());
-            Assert.assertNull(e.getHttpStatus());
-            Assert.assertNull(e.getDetails());
+            Assert.assertTrue(e.getDetails().isEmpty());
+            Assert.assertEquals(HttpStatus.BAD_REQUEST.getHttpStatus(), e.getHttpStatus());
         }
     }
 

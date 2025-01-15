@@ -37,6 +37,8 @@ public class SkyflowException extends Exception {
         super(message);
         this.httpCode = code;
         this.message = message;
+        this.httpStatus = HttpStatus.BAD_REQUEST.getHttpStatus();
+        this.details = new JsonArray();
     }
 
     public SkyflowException(int httpCode, Throwable cause, Map<String, List<String>> responseHeaders, String responseBody) {
