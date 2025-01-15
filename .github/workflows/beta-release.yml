@@ -1,7 +1,7 @@
 name: Publish package to the Maven Central Repository
 on:
   push:
-    tags: '*.*.*'
+    tags: '*.*.*-beta.*'
 jobs:
   build-and-deploy:
     uses: ./.github/workflows/shared-build-and-deploy.yml
@@ -10,7 +10,7 @@ jobs:
       is-internal: false
       server-id: ossrh
       profile: maven-central
-      tag: 'public'
+      tag: 'beta'
     secrets:
       server-username: ${{ secrets.OSSRH_USERNAME }}
       server-password: ${{ secrets.OSSRH_PASSWORD }}

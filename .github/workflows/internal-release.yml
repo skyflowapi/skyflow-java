@@ -1,7 +1,8 @@
 name: Publish package to the JFROG Artifactory
 on:
   push:
-    tags: '*.*.*'
+    tags-ignore:
+      - '*.*'
     paths-ignore:
       - "pom.xml"
       - "*.md"
@@ -16,6 +17,7 @@ jobs:
       is-internal: true
       server-id: central
       profile: jfrog
+      tag: 'internal'
     secrets:
       server-username: ${{ secrets.ARTIFACTORY_USERNAME }}
       server-password: ${{ secrets.ARTIFACTORY_PASSWORD }}

@@ -21,6 +21,11 @@ on:
         description: "Profile to pick from pom.xml"
         required: true
         type: string
+
+      tag:
+        description: 'Release Tag'
+        required: true
+        type: string
     secrets:
       server-username:
         required: true
@@ -49,7 +54,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
-          ref: ${{ inputs.ref }}
           fetch-depth: 0
 
       - name: Set up maven or jfrog repository
@@ -79,6 +83,7 @@ jobs:
           fi
 
       - name: Commit changes
+        if: ${{ inputs.tag == 'internal' || inputs.tag == 'public' }}
         run: |
           git config user.name ${{ github.actor }}
           git config user.email ${{ github.actor }}@users.noreply.github.com
