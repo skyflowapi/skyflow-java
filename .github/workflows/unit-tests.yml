@@ -1,0 +1,43 @@
+name: Run unit tests for v2
+
+on:
+  pull_request:
+    branches: [ "beta-release/25.1.1" ]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Set up maven or jfrog repository
+        uses: actions/setup-java@v1
+        with:
+          java-version: "1.8"
+          distribution: "adopt"
+          server-id: ossrh
+          server-username: SERVER_USERNAME
+          server-password: SERVER_PASSWORD
+          gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }} # Value of the GPG private key to import
+          gpg-passphrase: GPG_PASSPHRASE # env variable for GPG private key passphrase
+
+      - name: Create env
+        id: create-env
+        run: |
+          touch .env
+          echo SKYFLOW_CREDENTIALS=${{ secrets.SKYFLOW_CREDENTIALS }} >> .env
+          echo TEST_EXPIRED_TOKEN=${{ secrets.TEST_EXPIRED_TOKEN }} >> .env
+          echo TEST_REUSABLE_TOKEN=${{ secrets.TEST_REUSABLE_TOKEN }} >> .env
+
+      - name: Create credentials json
+        id: create-json
+        uses: jsdaniell/create-json@1.1.2
+        with:
+          name: "credentials.json"
+          json: ${{ secrets.TEST_CREDENTIALS_FILE_STRING }}
+
+      - name: Run tests
+        run: mvn clean install
+        
