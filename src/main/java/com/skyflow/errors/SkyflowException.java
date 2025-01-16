@@ -1,13 +1,9 @@
 package com.skyflow.errors;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.google.gson.JsonSyntaxException;
+import com.google.gson.*;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 public class SkyflowException extends Exception {
     private String requestId;
@@ -37,28 +33,27 @@ public class SkyflowException extends Exception {
         super(message);
         this.httpCode = code;
         this.message = message;
+        this.httpStatus = HttpStatus.BAD_REQUEST.getHttpStatus();
+        this.details = new JsonArray();
     }
 
     public SkyflowException(int httpCode, Throwable cause, Map<String, List<String>> responseHeaders, String responseBody) {
-        this(cause);
+        super(cause);
         this.httpCode = httpCode;
-        String contentType = responseHeaders.get("content-type").get(0);
         setRequestId(responseHeaders);
-        if (Objects.equals(contentType, "application/json")) {
-            setResponseBody(responseBody);
-        } else if (Objects.equals(contentType, "text/plain")) {
-            this.message = responseBody;
-        }
+        setResponseBody(responseBody);
     }
 
     private void setResponseBody(String responseBody) {
         try {
             if (responseBody != null) {
                 this.responseBody = JsonParser.parseString(responseBody).getAsJsonObject();
-                setGrpcCode();
-                setHttpStatus();
-                setMessage();
-                setDetails();
+                if (this.responseBody.get("error") != null) {
+                    setGrpcCode();
+                    setHttpStatus();
+                    setMessage();
+                    setDetails();
+                }
             }
         } catch (JsonSyntaxException e) {
             throw new RuntimeException(e);
@@ -72,24 +67,28 @@ public class SkyflowException extends Exception {
     private void setRequestId(Map<String, List<String>> responseHeaders) {
         if (responseHeaders != null) {
             List<String> ids = responseHeaders.get("x-request-id");
-            this.requestId = ids.get(0);
+            this.requestId = ids == null ? null : ids.get(0);
         }
     }
 
     private void setMessage() {
-        this.message = ((JsonObject) responseBody.get("error")).get("message").getAsString();
+        JsonElement messageElement = ((JsonObject) responseBody.get("error")).get("message");
+        this.message = messageElement == null ? null : messageElement.getAsString();
     }
 
     private void setGrpcCode() {
-        this.grpcCode = ((JsonObject) responseBody.get("error")).get("grpc_code").getAsInt();
+        JsonElement grpcElement = ((JsonObject) responseBody.get("error")).get("grpc_code");
+        this.grpcCode = grpcElement == null ? null : grpcElement.getAsInt();
     }
 
     private void setHttpStatus() {
-        this.httpStatus = ((JsonObject) responseBody.get("error")).get("http_status").getAsString();
+        JsonElement statusElement = ((JsonObject) responseBody.get("error")).get("http_status");
+        this.httpStatus = statusElement == null ? null : statusElement.getAsString();
     }
 
     private void setDetails() {
-        this.details = ((JsonObject) responseBody.get("error")).get("details").getAsJsonArray();
+        JsonElement detailsElement = ((JsonObject) responseBody.get("error")).get("details");
+        this.details = detailsElement == null ? null : detailsElement.getAsJsonArray();
     }
 
     public int getHttpCode() {

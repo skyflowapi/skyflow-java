@@ -43,7 +43,7 @@ public class HttpUtilityTests {
     @Before
     public void setup() throws IOException {
         expected = "{\"status\":\"success\"}";
-        expectedError = "{\"status\":\"something went wrong\"}";
+        expectedError = "{\"error\":{\"grpc_code\":123,\"http_code\":500,\"message\":\"something went wrong\",\"http_status\":\"internal server error\",\"details\":[]}}\n";
         mockConnection = Mockito.mock(HttpURLConnection.class);
         given(mockConnection.getInputStream()).willReturn(new ByteArrayInputStream(expected.getBytes()));
         given(mockConnection.getErrorStream()).willReturn(new ByteArrayInputStream(expectedError.getBytes()));
@@ -115,7 +115,11 @@ public class HttpUtilityTests {
             given(mockConnection.getResponseCode()).willReturn(500);
             String response = httpUtility.sendRequest("GET", url, null, null);
         } catch (SkyflowException e) {
-            Assert.assertEquals(expectedError, e.getMessage());
+            Assert.assertEquals(500, e.getHttpCode());
+            Assert.assertEquals(new Integer(123), e.getGrpcCode());
+            Assert.assertEquals("internal server error", e.getHttpStatus());
+            Assert.assertEquals("something went wrong", e.getMessage());
+            Assert.assertTrue(e.getDetails().isEmpty());
         } catch (Exception e) {
             fail(INVALID_EXCEPTION_THROWN);
         }
