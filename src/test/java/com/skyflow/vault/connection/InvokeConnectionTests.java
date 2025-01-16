@@ -423,12 +423,12 @@ public class InvokeConnectionTests {
             JsonObject data = new JsonObject();
             data.addProperty("test_key_1", "test_value_1");
             data.addProperty("test_key_2", "test_value_2");
-            JsonObject metadata = new JsonObject();
-            metadata.addProperty("requestId", "12345");
+            HashMap<String, String> metadata = new HashMap<>();
+            metadata.put("requestId", "12345");
             InvokeConnectionResponse connectionResponse = new InvokeConnectionResponse(data, metadata);
             String responseString = "{\"data\":{\"test_key_1\":\"test_value_1\",\"test_key_2\":\"test_value_2\"}," +
                     "\"metadata\":{\"requestId\":\"12345\"}}";
-            Assert.assertEquals(2, connectionResponse.getData().size());
+            Assert.assertNotNull(connectionResponse.getData());
             Assert.assertEquals(responseString, connectionResponse.toString());
             Assert.assertEquals(1, connectionResponse.getMetadata().size());
         } catch (Exception e) {
