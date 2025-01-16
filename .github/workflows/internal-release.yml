@@ -1,7 +1,8 @@
 name: Publish package to the JFROG Artifactory
 on:
   push:
-    tags: '*.*.*'
+    tags-ignore:
+      - '*.*'
     paths-ignore:
       - "pom.xml"
       - "*.md"
@@ -13,11 +14,14 @@ jobs:
     uses: ./.github/workflows/shared-build-and-deploy.yml
     with:
       ref: ${{ github.ref_name }}
-      is-internal: true
       server-id: central
       profile: jfrog
+      tag: 'internal'
     secrets:
       server-username: ${{ secrets.ARTIFACTORY_USERNAME }}
       server-password: ${{ secrets.ARTIFACTORY_PASSWORD }}
       gpg-key: ${{ secrets.JFROG_GPG_KEY }}
       gpg-passphrase: ${{ secrets.JFROG_GPG_PASSPHRASE }}
+      skyflow-credentials: ${{ secrets.SKYFLOW_CREDENTIALS }} >> .env
+      test-expired-token: ${{ secrets.TEST_EXPIRED_TOKEN }} >> .env
+      test-reusable-token: ${{ secrets.TEST_REUSABLE_TOKEN }} >> .env

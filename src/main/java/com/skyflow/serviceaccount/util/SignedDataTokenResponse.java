@@ -1,20 +1,29 @@
-/*
-	Copyright (c) 2022 Skyflow, Inc.
-*/
 package com.skyflow.serviceaccount.util;
 
-public class SignedDataTokenResponse {
-    String dataToken;
-    String signedDataToken;
+import com.google.gson.Gson;
+import com.skyflow.utils.Constants;
 
-    public SignedDataTokenResponse(String dataToken, String signedDataToken) {
-        this.dataToken = dataToken;
-        this.signedDataToken = signedDataToken;
+public class SignedDataTokenResponse {
+    private static final String prefix = Constants.SIGNED_DATA_TOKEN_PREFIX;
+    private final String token;
+    private final String signedToken;
+
+    public SignedDataTokenResponse(String token, String signedToken) {
+        this.token = token;
+        this.signedToken = new StringBuilder(prefix).append(signedToken).toString();
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public String getSignedToken() {
+        return signedToken;
     }
 
     @Override
     public String toString() {
-        return "{" + "dataToken: " + dataToken + "," + "signedDataToken: " + signedDataToken + "}";
-
+        Gson gson = new Gson();
+        return gson.toJson(this);
     }
 }

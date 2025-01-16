@@ -1,54 +1,122 @@
-/*
-	Copyright (c) 2022 Skyflow, Inc. 
-*/
 package com.skyflow.errors;
 
-import org.json.simple.JSONObject;
+import com.google.gson.*;
 
-public final class SkyflowException extends Exception {
-    private int code;
-    private JSONObject data;
+import java.util.List;
+import java.util.Map;
 
-    public SkyflowException(ErrorCode errorCode) {
-        super(errorCode.getDescription());
-        this.setCode(errorCode.getCode());
+public class SkyflowException extends Exception {
+    private String requestId;
+    private Integer grpcCode;
+    private Integer httpCode;
+    private String message;
+    private String httpStatus;
+    private JsonArray details;
+    private JsonObject responseBody;
+
+    public SkyflowException(String message) {
+        super(message);
+        this.message = message;
     }
 
-    public SkyflowException(ErrorCode errorCode, Throwable cause) {
-        super(errorCode.getDescription(), cause);
-        this.setCode(errorCode.getCode());
+    public SkyflowException(Throwable cause) {
+        super(cause);
+        this.message = cause.getMessage();
     }
 
-    public SkyflowException(int code, String description) {
-        super(description);
-        this.setCode(code);
+    public SkyflowException(String message, Throwable cause) {
+        super(message, cause);
+        this.message = message;
     }
 
-    public SkyflowException(int code, String description, Throwable cause) {
-        super(description, cause);
-        this.setCode(code);
+    public SkyflowException(int code, String message) {
+        super(message);
+        this.httpCode = code;
+        this.message = message;
+        this.httpStatus = HttpStatus.BAD_REQUEST.getHttpStatus();
+        this.details = new JsonArray();
     }
 
-    public SkyflowException(int code, String description, JSONObject data) {
-        super(description);
-        this.setCode(code);
-        setData(data);
+    public SkyflowException(int httpCode, Throwable cause, Map<String, List<String>> responseHeaders, String responseBody) {
+        super(cause);
+        this.httpCode = httpCode;
+        setRequestId(responseHeaders);
+        setResponseBody(responseBody);
     }
 
-    public int getCode() {
-        return code;
+    private void setResponseBody(String responseBody) {
+        try {
+            if (responseBody != null) {
+                this.responseBody = JsonParser.parseString(responseBody).getAsJsonObject();
+                if (this.responseBody.get("error") != null) {
+                    setGrpcCode();
+                    setHttpStatus();
+                    setMessage();
+                    setDetails();
+                }
+            }
+        } catch (JsonSyntaxException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    void setCode(int code) {
-        this.code = code;
+    public String getRequestId() {
+        return requestId;
     }
 
-
-    public JSONObject getData() {
-        return data;
+    private void setRequestId(Map<String, List<String>> responseHeaders) {
+        if (responseHeaders != null) {
+            List<String> ids = responseHeaders.get("x-request-id");
+            this.requestId = ids == null ? null : ids.get(0);
+        }
     }
 
-    void setData(JSONObject data) {
-        this.data = data;
+    private void setMessage() {
+        JsonElement messageElement = ((JsonObject) responseBody.get("error")).get("message");
+        this.message = messageElement == null ? null : messageElement.getAsString();
+    }
+
+    private void setGrpcCode() {
+        JsonElement grpcElement = ((JsonObject) responseBody.get("error")).get("grpc_code");
+        this.grpcCode = grpcElement == null ? null : grpcElement.getAsInt();
+    }
+
+    private void setHttpStatus() {
+        JsonElement statusElement = ((JsonObject) responseBody.get("error")).get("http_status");
+        this.httpStatus = statusElement == null ? null : statusElement.getAsString();
+    }
+
+    private void setDetails() {
+        JsonElement detailsElement = ((JsonObject) responseBody.get("error")).get("details");
+        this.details = detailsElement == null ? null : detailsElement.getAsJsonArray();
+    }
+
+    public int getHttpCode() {
+        return httpCode;
+    }
+
+    public JsonArray getDetails() {
+        return details;
+    }
+
+    public Integer getGrpcCode() {
+        return grpcCode;
+    }
+
+    public String getHttpStatus() {
+        return httpStatus;
+    }
+
+    @Override
+    public String getMessage() {
+        return message;
+    }
+
+    @Override
+    public String toString() {
+        return String.format(
+                "%n requestId: %s%n grpcCode: %s%n httpCode: %s%n httpStatus: %s%n message: %s%n details: %s",
+                this.requestId, this.grpcCode, this.httpCode, this.httpStatus, this.message, this.details
+        );
     }
 }

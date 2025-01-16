@@ -3,22 +3,22 @@ on:
   workflow_call:
     inputs:
       ref:
-        description: 'Git reference to use (e.g., main or branch name)'
+        description: "Git reference to use (e.g., main or branch name)"
         required: true
         type: string
-
-      is-internal:
-        description: 'Flag for internal release'
-        required: true
-        type: boolean
 
       server-id:
-        description: 'Id of the repository'
+        description: "Id of the repository"
         required: true
         type: string
-      
+
       profile:
-        description: 'Profile to pick from pom.xml'
+        description: "Profile to pick from pom.xml"
+        required: true
+        type: string
+
+      tag:
+        description: 'Release Tag'
         required: true
         type: string
     secrets:
@@ -34,20 +34,28 @@ on:
       gpg-passphrase:
         required: true
 
+      skyflow-credentials:
+        required: true
+
+      test-expired-token:
+        required: true
+
+      test-reusable-token:
+        required: true
+
 jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
         with:
-          ref: ${{ inputs.ref }}
           fetch-depth: 0
 
       - name: Set up maven or jfrog repository
         uses: actions/setup-java@v1
         with:
-          java-version: '1.8'
-          distribution: 'adopt'
+          java-version: "1.8"
+          distribution: "adopt"
           server-id: ${{ inputs.server-id }}
           server-username: SERVER_USERNAME
           server-password: SERVER_PASSWORD
@@ -63,32 +71,35 @@ jobs:
       - name: Bump Version
         run: |
           chmod +x ./scripts/bump_version.sh
-          if ${{ inputs.is-internal }}; then
+          if ${{ inputs.tag == 'internal' }}; then
             ./scripts/bump_version.sh "${{ steps.previoustag.outputs.tag }}" "$(git rev-parse --short "$GITHUB_SHA")"
           else
             ./scripts/bump_version.sh "${{ steps.previoustag.outputs.tag }}"
           fi
 
       - name: Commit changes
+        if: ${{ inputs.tag == 'internal' || inputs.tag == 'public' }}
         run: |
           git config user.name ${{ github.actor }}
           git config user.email ${{ github.actor }}@users.noreply.github.com
           git add pom.xml
-          if ${{ inputs.is-internal }}; then
+          if ${{ inputs.tag == 'internal' }}; then
             git commit -m "[AUTOMATED] Private Release ${{ steps.previoustag.outputs.tag }}-dev-$(git rev-parse --short $GITHUB_SHA)"
             git push origin ${{ github.ref_name }} -f
-          else
+          fi
+          if ${{ inputs.tag == 'public' }}; then
             git commit -m "[AUTOMATED] Public Release - ${{ steps.previoustag.outputs.tag }}"
             git push origin
           fi
 
       - name: Create env
-        if: ${{ inputs.is-internal }}
+        if: ${{ inputs.tag == 'internal' }}
         id: create-env
         run: |
           touch .env
-          echo SKYFLOW_CREDENTIALS=${{ secrets.SKYFLOW_CREDENTIALS }} >> .env
-          echo TEST_EXPIRED_TOKEN=${{ secrets.TEST_EXPIRED_TOKEN }} >> .env
+          echo SKYFLOW_CREDENTIALS=${{ secrets.skyflow-credentials }} >> .env
+          echo TEST_EXPIRED_TOKEN=${{ secrets.test-expired-token }} >> .env
+          echo TEST_REUSABLE_TOKEN=${{ secrets.test-reusable-token }} >> .env
 
       - name: Create credentials json
         id: create-json
