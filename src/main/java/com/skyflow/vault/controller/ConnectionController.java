@@ -26,7 +26,7 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ConnectionController extends ConnectionClient {
+public final class ConnectionController extends ConnectionClient {
     public ConnectionController(ConnectionConfig connectionConfig, Credentials credentials) {
         super(connectionConfig, credentials);
     }
@@ -65,8 +65,8 @@ public class ConnectionController extends ConnectionClient {
 
             String response = HttpUtility.sendRequest(requestMethod.name(), new URL(filledURL), requestBody, headers);
             JsonObject data = JsonParser.parseString(response).getAsJsonObject();
-            JsonObject metadata = new JsonObject();
-            metadata.addProperty("requestId", HttpUtility.getRequestID());
+            HashMap<String, String> metadata = new HashMap<>();
+            metadata.put("requestId", HttpUtility.getRequestID());
             connectionResponse = new InvokeConnectionResponse(data, metadata);
             LogUtil.printInfoLog(InfoLogs.INVOKE_CONNECTION_REQUEST_RESOLVED.getLog());
         } catch (IOException e) {

@@ -2,22 +2,23 @@ package com.skyflow.vault.connection;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
+
+import java.util.HashMap;
 
 public class InvokeConnectionResponse {
-    private final JsonObject data;
-    private final JsonObject metadata;
+    private final Object data;
+    private final HashMap<String, String> metadata;
 
-    public InvokeConnectionResponse(JsonObject data, JsonObject metadata) {
+    public InvokeConnectionResponse(Object data, HashMap<String, String> metadata) {
         this.data = data;
         this.metadata = metadata;
     }
 
-    public JsonObject getData() {
+    public Object getData() {
         return data;
     }
 
-    public JsonObject getMetadata() {
+    public HashMap<String, String> getMetadata() {
         return metadata;
     }
 

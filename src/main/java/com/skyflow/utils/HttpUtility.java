@@ -1,7 +1,7 @@
 package com.skyflow.utils;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.skyflow.errors.SkyflowException;
 
 import java.io.*;
@@ -9,7 +9,9 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public final class HttpUtility {
 
@@ -33,18 +35,18 @@ public final class HttpUtility {
             connection.setRequestProperty("content-type", "application/json");
             connection.setRequestProperty("Accept", "*/*");
 
-            if (headers != null && headers.size() > 0) {
+            if (headers != null && !headers.isEmpty()) {
                 for (Map.Entry<String, String> entry : headers.entrySet())
                     connection.setRequestProperty(entry.getKey(), entry.getValue());
 
                 // append dynamic boundary if content-type is multipart/form-data
                 if (headers.containsKey("content-type")) {
-                    if (headers.get("content-type") == "multipart/form-data") {
+                    if (Objects.equals(headers.get("content-type"), "multipart/form-data")) {
                         connection.setRequestProperty("content-type", "multipart/form-data; boundary=" + boundary);
                     }
                 }
             }
-            if (params != null && params.size() > 0) {
+            if (params != null && !params.isEmpty()) {
                 connection.setDoOutput(true);
                 try (DataOutputStream wr = new DataOutputStream(connection.getOutputStream())) {
                     byte[] input = null;
@@ -63,12 +65,12 @@ public final class HttpUtility {
                 }
             }
 
-            int status = connection.getResponseCode();
+            int httpCode = connection.getResponseCode();
             String requestID = connection.getHeaderField("x-request-id");
             HttpUtility.requestID = requestID.split(",")[0];
-
+            Map<String, List<String>> responseHeaders = connection.getHeaderFields();
             Reader streamReader;
-            if (status > 299) {
+            if (httpCode > 299) {
                 if (connection.getErrorStream() != null)
                     streamReader = new InputStreamReader(connection.getErrorStream());
                 else {
@@ -86,9 +88,8 @@ public final class HttpUtility {
                 response.append(inputLine);
             }
 
-            if (status > 299) {
-                String errorMsg = appendRequestIdToErrorObj(status, response.toString(), requestID);
-                throw new SkyflowException(errorMsg);
+            if (httpCode > 299) {
+                throw new SkyflowException(httpCode, new Throwable(), responseHeaders, response.toString());
             }
         } finally {
             if (in != null) {
@@ -127,13 +128,14 @@ public final class HttpUtility {
 
     private static HashMap<String, String> convertJsonToMap(JsonObject json, String rootKey) {
         HashMap<String, String> currentMap = new HashMap<>();
-        for (Object key : json.keySet()) {
-            Object currentValue = json.get((String) key);
-            String currentKey = rootKey.length() != 0 ? rootKey + '[' + key.toString() + ']' : rootKey + key.toString();
-            if (currentValue instanceof JsonObject) {
+        Map<String, JsonElement> jsonMap = json.asMap();
+        for (String key : jsonMap.keySet()) {
+            JsonElement currentValue = jsonMap.get(key);
+            String currentKey = !rootKey.isEmpty() ? rootKey + '[' + key + ']' : rootKey + key;
+            if (currentValue.isJsonObject()) {
                 currentMap.putAll(convertJsonToMap((JsonObject) currentValue, currentKey));
             } else {
-                currentMap.put(currentKey, currentValue.toString());
+                currentMap.put(currentKey, currentValue.getAsString());
             }
         }
         return currentMap;
@@ -154,22 +156,6 @@ public final class HttpUtility {
             message = message + " - requestId: " + requestId;
         }
         return message;
-    }
-
-    public static String appendRequestIdToErrorObj(int status, String error, String requestId) throws SkyflowException {
-        if (requestId != null && !requestId.isEmpty()) {
-            JsonObject errorObject = (JsonObject) new JsonParser().parse(error);
-            JsonObject tempError = (JsonObject) errorObject.get("error");
-            if (tempError != null) {
-                String message = String.valueOf(tempError.get("message"));
-                message = message + " - requestId: " + requestId;
-
-                tempError.addProperty("message", message);
-                errorObject.add("error", tempError);
-            }
-            error = errorObject.toString();
-        }
-        return error;
     }
 
     private static String makeFormEncodeKeyValuePair(String key, String value) {
