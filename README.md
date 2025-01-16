@@ -327,9 +327,9 @@ static class DemoTokenProvider implements TokenProvider {
             String filePath = "<YOUR_CREDENTIALS_FILE_HERE>";
             res = Token.generateBearerToken(filePath);
         } catch (SkyflowException e) {
-            e.printStackTrace();
+            System.out.println("Error occurred: ");
+            System.out.println(e);
         }
-        return res.getAccessToken();
     }
 }
 ```
@@ -642,6 +642,7 @@ public class InsertSchema {
         }
     }
 }
+
 ```
 
 Insert
@@ -1266,7 +1267,7 @@ There are four accepted values for RedactionType:
 * `REDACTED`
 * `DEFAULT`
 
-## Update
+- `returnTokens` set to `false`
 
 To update data in your vault, use the `update` method. The `UpdateRequest` class is used to create an update request,
 where you specify parameters such as the table name, data (as a map of key value pairs), tokens, returnTokens, and
@@ -1694,7 +1695,8 @@ public class ChangeLogLevel {
 
 Currently, the following 5 log levels are supported:
 
-- `DEBUG`:
+  When `LogLevel.INFO` is passed, INFO logs for every event that has occurred during the SDK flow execution will be
+  printed along with WARN and ERROR logs
 
   When `LogLevel.DEBUG` is passed, all level of logs will be printed(DEBUG, INFO, WARN, ERROR)
 
