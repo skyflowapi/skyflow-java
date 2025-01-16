@@ -93,7 +93,6 @@ jobs:
           fi
 
       - name: Create env
-        if: ${{ inputs.tag == 'internal' }}
         id: create-env
         run: |
           touch .env
