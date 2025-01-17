@@ -56,7 +56,6 @@ public class GetExample {
             ids.add("<YOUR_SKYFLOW_ID>");                  // Replace with the Skyflow ID to fetch the record
 
             GetRequest getByIdRequest = GetRequest.builder()
-                    .returnTokens(true)                   // Return tokens along with the fetched data
                     .ids(ids)                             // Specify the list of Skyflow IDs
                     .table("<TABLE_NAME>")                // Replace with the table name
                     .build();
