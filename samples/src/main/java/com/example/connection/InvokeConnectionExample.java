@@ -61,7 +61,7 @@ public class InvokeConnectionExample {
 
             // Build the POST request to invoke the connection
             InvokeConnectionRequest invokeConnectionRequest1 = InvokeConnectionRequest.builder()
-                    .methodName(RequestMethod.POST)       // Set the HTTP method to POST
+                    .method(RequestMethod.POST)       // Set the HTTP method to POST
                     .requestBody(requestBody)             // Set the request body
                     .requestHeaders(requestHeaders)       // Set the request headers
                     .build();
@@ -87,7 +87,7 @@ public class InvokeConnectionExample {
 
             // Build the GET request to invoke the connection
             InvokeConnectionRequest invokeConnectionRequest2 = InvokeConnectionRequest.builder()
-                    .methodName(RequestMethod.GET)       // Set the HTTP method to GET
+                    .method(RequestMethod.GET)       // Set the HTTP method to GET
                     .pathParams(pathParams)              // Set the path parameters
                     .queryParams(queryParams)            // Set the query parameters
                     .build();

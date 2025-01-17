@@ -3,7 +3,7 @@ package com.example.vault;
 import com.skyflow.Skyflow;
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
-import com.skyflow.enums.Byot;
+import com.skyflow.enums.TokenMode;
 import com.skyflow.enums.Env;
 import com.skyflow.enums.LogLevel;
 import com.skyflow.errors.SkyflowException;
@@ -62,7 +62,7 @@ public class UpdateExample {
 
             UpdateRequest updateRequest1 = UpdateRequest.builder()
                     .table("<TABLE_NAME>")                     // Replace with the table name
-                    .tokenStrict(Byot.ENABLE)                 // Enable BYOT for token validation
+                    .tokenMode(TokenMode.ENABLE)                 // Enable BYOT for token validation
                     .data(data1)                               // Data to update
                     .tokens(tokens)                            // Provide tokens for BYOT columns
                     .returnTokens(true)                        // Return tokens along with the update response
@@ -84,7 +84,7 @@ public class UpdateExample {
 
             UpdateRequest updateRequest2 = UpdateRequest.builder()
                     .table("<TABLE_NAME>")                     // Replace with the table name
-                    .tokenStrict(Byot.DISABLE)                // Disable BYOT
+                    .tokenMode(TokenMode.DISABLE)                // Disable BYOT
                     .data(data2)                               // Data to update
                     .returnTokens(false)                       // Do not return tokens
                     .build();

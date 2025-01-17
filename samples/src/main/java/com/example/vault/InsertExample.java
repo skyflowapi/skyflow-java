@@ -3,7 +3,7 @@ package com.example.vault;
 import com.skyflow.Skyflow;
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
-import com.skyflow.enums.Byot;
+import com.skyflow.enums.TokenMode;
 import com.skyflow.enums.Env;
 import com.skyflow.enums.LogLevel;
 import com.skyflow.errors.SkyflowException;
@@ -68,7 +68,7 @@ public class InsertExample {
             InsertRequest insertRequest = InsertRequest.builder()
                     .table("<TABLE_NAME>")                     // Replace with the table name
                     .continueOnError(true)                     // Continue inserting even if some records fail
-                    .tokenStrict(Byot.ENABLE)                 // Enable BYOT for token validation
+                    .tokenMode(TokenMode.ENABLE)                 // Enable BYOT for token validation
                     .values(values1)                           // Data to insert
                     .tokens(tokens)                            // Provide tokens for BYOT columns
                     .returnTokens(true)                        // Return tokens along with the response
@@ -92,7 +92,7 @@ public class InsertExample {
             InsertRequest upsertRequest = InsertRequest.builder()
                     .table("<TABLE_NAME>")                     // Replace with the table name
                     .continueOnError(false)                    // Stop inserting if any record fails
-                    .tokenStrict(Byot.DISABLE)                // Disable BYOT
+                    .tokenMode(TokenMode.DISABLE)                // Disable BYOT
                     .values(values2)                           // Data to insert
                     .returnTokens(false)                       // Do not return tokens
                     .upsert("<UPSERT_COLUMN>")                 // Replace with the column name used for upsert logic
