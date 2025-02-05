@@ -20,6 +20,7 @@ The Skyflow Java SDK is designed to help with integrating Skyflow into a Java ba
     - [Service Account Bearer Token with Context Generation](#service-account-bearer-token-with-context-generation)
     - [Service Account Scoped Bearer Token Generation](#service-account-scoped-bearer-token-generation)
     - [Signed Data Tokens Generation](#signed-data-tokens-generation)
+    - [Migrate from v1 to v2](#migrate-from-v1-to-v2)
     - [Vault APIs](#vault-apis)
         - [Insert](#insert-data-into-the-vault)
         - [Detokenize](#detokenize)
@@ -299,6 +300,253 @@ Notes:
 - If you pass both a file path and string to the `setCredentials` method, the last method used takes precedence.
 - Time to live value expects time as seconds.
 - The default time to live value is 60 seconds.
+
+## Migrate from v1 to v2
+
+Below are the steps to migrate the java sdk from v1 to v2.
+
+### 1. Authentication Options
+In V2, we have introduced multiple authentication options. 
+You can now provide credentials in the following ways: 
+
+- **API Key (Recommended)**
+- **Passing credentials as ENV.  (`SKYFLOW_CREDENTIALS`) (Recommended)**
+- **Path to your credentials JSON file**
+- **Stringified JSON of your credentials**
+- **Bearer token**
+
+These options allow you to choose the authentication method that best suits your use case.
+
+### V1 (Old)
+```java
+static class DemoTokenProvider implements TokenProvider {
+    @Override
+    public String getBearerToken() throws Exception {
+        ResponseToken res = null;
+        try {
+            String filePath = "<your_credentials_file_path>";
+            res = Token.generateBearerToken(filePath);
+        } catch (SkyflowException e) {
+            e.printStackTrace();
+        }
+        return res.getAccessToken();
+    }
+}
+```
+
+### V2 (New): Passing one of the following:
+```java
+// Option 1: API Key (Recommended)
+Credentials skyflowCredentials = new Credentials();
+skyflowCredentials.setApiKey("<YOUR_API_KEY>"); // Replace <API_KEY> with your actual API key
+
+// Option 2: Environment Variables (Recommended)
+// Set SKYFLOW_CREDENTIALS in your environment
+
+// Option 3: Credentials File
+skyflowCredentials.setPath("<YOUR_CREDENTIALS_FILE_PATH>"); // Replace with the path to credentials file
+
+// Option 4: Stringified JSON
+skyflowCredentials.setCredentialsString("<YOUR_CREDENTIALS_STRING>"); // Replace with the credentials string
+
+// Option 5: Bearer Token
+skyflowCredentials.setToken("<BEARER_TOKEN>"); // Replace <BEARER_TOKEN> with your actual authentication token.
+```
+
+**Notes:**
+1. Use only ONE authentication method.
+2. Environment variables take precedence over programmatic configuration.
+3. API Key or Environment Variables are recommended for production use.
+4. Secure storage of credentials is essential.
+5. For overriding behavior and priority order of credentials, refer to the README.
+
+---
+
+### 2. Client Initialization
+In V2, we have introduced a Builder design pattern for client initialization and added support for multi-vault. This allows you to configure multiple vaults during client initialization. 
+
+In V2, the log level is tied to each individual client instance.
+
+During client initialization, you can pass the following parameters: 
+- `vaultId` and clusterId: These values are derived from the vault ID & vault URL. 
+- `env`: Specify the environment (e.g., SANDBOX or PROD). 
+- `credentials`: The necessary authentication credentials.
+
+### V1 (Old)
+```java
+// DemoTokenProvider class is an implementation of the TokenProvider interface
+DemoTokenProvider demoTokenProvider = new DemoTokenProvider();
+SkyflowConfiguration skyflowConfig = new SkyflowConfiguration("<VAULT_ID>","<VAULT_URL>", demoTokenProvider);
+Skyflow skyflowClient = Skyflow.init(skyflowConfig);
+```
+
+### V2 (New)
+```java
+Credentials credentials = new Credentials();
+credentials.setPath("<YOUR_CREDENTIALS_FILE_PATH_1>"); // Replace with the path to the credentials file
+
+// Configure the first vault (Blitz)
+VaultConfig config = new VaultConfig();
+config.setVaultId("<YOUR_VAULT_ID_1>"); // Replace with the ID of the first vault
+config.setClusterId("<YOUR_CLUSTER_ID_1>"); // Replace with the cluster ID of the first vault
+config.setEnv(Env.DEV); // Set the environment (e.g., DEV, STAGE, PROD)
+config.setCredentials(credentials); // Associate the credentials with the vault
+
+// Set up credentials for the Skyflow client
+Credentials skyflowCredentials = new Credentials();
+skyflowCredentials.setPath("<YOUR_CREDENTIALS_FILE_PATH_2>"); // Replace with the path to another credentials file
+
+// Create a Skyflow client and add vault configurations
+Skyflow skyflowClient = Skyflow.builder()
+       .setLogLevel(LogLevel.DEBUG) // Enable debugging for detailed logs
+       .addVaultConfig(config)      // Add the first vault configuration
+       .addSkyflowCredentials(skyflowCredentials) // Add general Skyflow credentials
+       .build();
+```
+
+**Key Changes:**
+- `vaultUrl` replaced with `clusterId`.
+- Added environment specification (`env`).
+- Instance-specific log levels.
+- TypeScript support with proper type definitions.
+
+---
+
+### 3. Request & Response Structure
+In V2, we have removed the use of JSON objects from a third-party package. Instead, we have transitioned to accepting native ArrayList and HashMap data structures and adopted the Builder pattern for request creation. This request need 
+- `table`: The name of the table. 
+- `values`: An array of objects containing the data to be inserted. 
+The response will be of type InsertResponse class, which contains insertedFields and errors.
+
+### V1 (Old) Request Building
+```java
+JSONObject recordsJson = new JSONObject();
+JSONArray recordsArrayJson = new JSONArray();
+
+JSONObject recordJson = new JSONObject();
+recordJson.put("table", "cards");
+
+JSONObject fieldsJson = new JSONObject();
+fields.put("cardNumber", "41111111111");
+fields.put("cvv", "123");
+
+recordJson.put("fields", fieldsJson);
+recordsArrayJson.add(record);
+recordsJson.put("records", recordsArrayJson);
+try {
+    JSONObject insertResponse = skyflowClient.insert(records);
+    System.out.println(insertResponse);
+} catch (SkyflowException exception) {
+    System.out.println(exception);
+}
+```
+
+### V2 (New) Request Building
+```java
+ArrayList<HashMap<String, Object>> values = new ArrayList<>();
+HashMap<String, Object> value = new HashMap<>();
+value.put("<COLUMN_NAME_1>", "<COLUMN_VALUE_1>"); // Replace with column name and value
+value.put("<COLUMN_NAME_2>", "<COLUMN_VALUE_2>"); // Replace with another column name and value
+values.add(values);
+
+ArrayList<HashMap<String, Object>> tokens = new ArrayList<>();
+HashMap<String, Object> token = new HashMap<>();
+token.put("<COLUMN_NAME_2>", "<TOKEN_VALUE_2>"); // Replace with the token for COLUMN_NAME_2
+tokens.add(token);
+
+InsertRequest insertRequest = InsertRequest.builder()
+       .table("<TABLE_NAME>") // Replace with the table name
+       .continueOnError(true) // Continue inserting even if some records fail
+       .tokenMode(TokenMode.ENABLE) // Enable BYOT for token validation
+       .values(values)        // Data to insert
+       .tokens(tokens)        // Provide tokens for BYOT columns
+       .returnTokens(true)    // Return tokens along with the response
+       .build();
+```
+
+### V1 (Old) Response Structure
+```json
+{
+  "records": [
+    {
+      "table": "cards",
+      "fields": {
+        "skyflow_id": "16419435-aa63-4823-aae7-19c6a2d6a19f",
+        "cardNumber": "f3907186-e7e2-466f-91e5-48e12c2bcbc1",
+        "cvv": "1989cb56-63da-4482-a2df-1f74cd0dd1a5"
+      }
+    }
+  ]
+}
+```
+
+### V2 (New) Response Structure
+```json
+{
+  "insertedFields": [
+    {
+      "card_number": "5484-7829-1702-9110",
+      "request_index": "0",
+      "skyflow_id": "9fac9201-7b8a-4446-93f8-5244e1213bd1",
+      "cardholder_name": "b2308e2a-c1f5-469b-97b7-1f193159399b"
+    }
+  ],
+  "errors": []
+}
+```
+
+---
+
+## 4. Request Options
+In V2, with the introduction of the Builder design pattern has made handling optional fields in Java more efficient and straightforward.
+
+
+### V1 (Old)
+```java
+InsertOptions insertOptions = new InsertOptions(true);
+```
+
+### V2 (New)
+```java
+InsertRequest upsertRequest = new InsertRequest.builder()
+       .table("<TABLE_NAME>") // Replace with the table name
+       .continueOnError(false) // Stop inserting if any record fails
+       .tokenMode(TokenMode.DISABLE) // Disable BYOT
+       .values(values) // Data to insert
+       .returnTokens(false) // Do not return tokens
+       .upsert("<UPSERT_COLUMN>") // Replace with the column name used for upsert logic
+       .build();
+```
+
+---
+
+## 5. Enhanced Error Details
+The V2 error response includes:
+
+- `http_status`: The HTTP status code.
+- `grpc_code`: The gRPC code associated with the error.
+- `details` & `message`: A detailed description of the error.
+- `request_ID`: A unique request identifier for easier debugging.
+
+### V1 (Old) Error Structure
+```json
+{
+  code: "<http_code>",
+  description: "<description>"
+}
+```
+
+### V2 (New) Error Structure
+```json
+{
+  http_status: "<http_status>",
+  grpc_code: "<grpc_code>",
+  http_code: "<http_code>",
+  message: "<message>",
+  request_ID: "<request_ID>",
+  details: [ "<details>" ]
+}
+```
 
 ## Vault APIs
 
