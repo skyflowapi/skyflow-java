@@ -310,7 +310,7 @@ In V2, we have introduced multiple authentication options.
 You can now provide credentials in the following ways: 
 
 - **API Key (Recommended)**
-- **Passing credentials as ENV.  (`SKYFLOW_CREDENTIALS`) (Recommended)**
+- **Passing credentials as ENV.**  (`SKYFLOW_CREDENTIALS`) (**Recommended**)
 - **Path to your credentials JSON file**
 - **Stringified JSON of your credentials**
 - **Bearer token**
@@ -387,8 +387,8 @@ credentials.setPath("<YOUR_CREDENTIALS_FILE_PATH_1>"); // Replace with the path 
 
 // Configure the first vault (Blitz)
 VaultConfig config = new VaultConfig();
-config.setVaultId("<YOUR_VAULT_ID_1>"); // Replace with the ID of the first vault
-config.setClusterId("<YOUR_CLUSTER_ID_1>"); // Replace with the cluster ID of the first vault
+config.setVaultId("<YOUR_VAULT>"); // Replace with the ID of the first vault
+config.setClusterId("<YOUR_CLUSTER>"); // Replace with the cluster ID of the first vault
 config.setEnv(Env.DEV); // Set the environment (e.g., DEV, STAGE, PROD)
 config.setCredentials(credentials); // Associate the credentials with the vault
 
