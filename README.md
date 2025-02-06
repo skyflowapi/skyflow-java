@@ -324,7 +324,7 @@ static class DemoTokenProvider implements TokenProvider {
     public String getBearerToken() throws Exception {
         ResponseToken res = null;
         try {
-            String filePath = "<your_credentials_file_path>";
+            String filePath = "<YOUR_CREDENTIALS_FILE_HERE>";
             res = Token.generateBearerToken(filePath);
         } catch (SkyflowException e) {
             e.printStackTrace();
@@ -354,11 +354,11 @@ skyflowCredentials.setToken("<BEARER_TOKEN>"); // Replace <BEARER_TOKEN> with yo
 ```
 
 **Notes:**
-1. Use only ONE authentication method.
-2. Environment variables take precedence over programmatic configuration.
-3. API Key or Environment Variables are recommended for production use.
-4. Secure storage of credentials is essential.
-5. For overriding behavior and priority order of credentials, refer to the README.
+- Use only ONE authentication method.
+- Environment variables take precedence over programmatic configuration.
+- API Key or Environment Variables are recommended for production use.
+- Secure storage of credentials is essential.
+- For overriding behavior and priority order of credentials, refer to the README.
 
 ---
 
@@ -368,7 +368,7 @@ In V2, we have introduced a Builder design pattern for client initialization and
 In V2, the log level is tied to each individual client instance.
 
 During client initialization, you can pass the following parameters: 
-- `vaultId` and clusterId: These values are derived from the vault ID & vault URL. 
+- `vaultId` and `clusterId`: These values are derived from the vault ID & vault URL. 
 - `env`: Specify the environment (e.g., SANDBOX or PROD). 
 - `credentials`: The necessary authentication credentials.
 
@@ -408,7 +408,6 @@ Skyflow skyflowClient = Skyflow.builder()
 - `vaultUrl` replaced with `clusterId`.
 - Added environment specification (`env`).
 - Instance-specific log levels.
-- TypeScript support with proper type definitions.
 
 ---
 
@@ -531,20 +530,20 @@ The V2 error response includes:
 ### V1 (Old) Error Structure
 ```json
 {
-  code: "<http_code>",
-  description: "<description>"
+  "code": "<HTTP_CODE>",
+  "description": "<DESCRIPTION>"
 }
 ```
 
 ### V2 (New) Error Structure
 ```json
 {
-  http_status: "<http_status>",
-  grpc_code: "<grpc_code>",
-  http_code: "<http_code>",
-  message: "<message>",
-  request_ID: "<request_ID>",
-  details: [ "<details>" ]
+  "httpStatus": "<HTTP_STATUS>",
+  "grpcCode": "<GRPC_CODE>",
+  "httpCode": "<HTTP_CODE>",
+  "message": "<MESSAGE>",
+  "requestId": "<REQUEST_ID>",
+  "details": [ "<DETAILS>" ]
 }
 ```
 
