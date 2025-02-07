@@ -355,7 +355,6 @@ skyflowCredentials.setToken("<BEARER_TOKEN>"); // Replace <BEARER_TOKEN> with yo
 
 **Notes:**
 - Use only ONE authentication method.
-- Environment variables take precedence over programmatic configuration.
 - API Key or Environment Variables are recommended for production use.
 - Secure storage of credentials is essential.
 - For overriding behavior and priority order of credentials, refer to the README.
@@ -522,10 +521,10 @@ InsertRequest upsertRequest = new InsertRequest.builder()
 ## 5. Enhanced Error Details
 The V2 error response includes:
 
-- `http_status`: The HTTP status code.
-- `grpc_code`: The gRPC code associated with the error.
+- `httpStatus`: The HTTP status code.
+- `grpcCode`: The gRPC code associated with the error.
 - `details` & `message`: A detailed description of the error.
-- `request_ID`: A unique request identifier for easier debugging.
+- `requestId`: A unique request identifier for easier debugging.
 
 ### V1 (Old) Error Structure
 ```json
