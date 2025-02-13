@@ -20,6 +20,7 @@ import com.skyflow.utils.validations.Validations;
 import com.skyflow.vault.data.InsertRequest;
 import com.skyflow.vault.data.UpdateRequest;
 import com.skyflow.vault.tokens.ColumnValue;
+import com.skyflow.vault.tokens.DetokenizeData;
 import com.skyflow.vault.tokens.DetokenizeRequest;
 import com.skyflow.vault.tokens.TokenizeRequest;
 import io.github.cdimascio.dotenv.Dotenv;
@@ -85,10 +86,11 @@ public class VaultClient {
     protected V1DetokenizePayload getDetokenizePayload(DetokenizeRequest request) {
         V1DetokenizePayload payload = new V1DetokenizePayload();
         payload.setContinueOnError(request.getContinueOnError());
-        for (String token : request.getTokens()) {
+        payload.setDownloadURL(request.getDownloadURL());
+        for (DetokenizeData detokenizeDataRecord : request.getDetokenizeData()) {
             V1DetokenizeRecordRequest recordRequest = new V1DetokenizeRecordRequest();
-            recordRequest.setToken(token);
-            recordRequest.setRedaction(request.getRedactionType().getRedaction());
+            recordRequest.setToken(detokenizeDataRecord.getToken());
+            recordRequest.setRedaction(detokenizeDataRecord.getRedactionType().getRedaction());
             payload.addDetokenizationParametersItem(recordRequest);
         }
         return payload;
