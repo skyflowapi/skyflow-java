@@ -60,7 +60,7 @@ public class DetokenizeTests {
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
-                    Utils.parameterizedString(ErrorMessage.InvalidDataTokens.getMessage(), Constants.SDK_PREFIX),
+                    Utils.parameterizedString(ErrorMessage.InvalidDetokenizeData.getMessage(), Constants.SDK_PREFIX),
                     e.getMessage()
             );
             Assert.assertFalse(request.getContinueOnError());
@@ -77,7 +77,7 @@ public class DetokenizeTests {
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
-                    Utils.parameterizedString(ErrorMessage.EmptyDataTokens.getMessage(), Constants.SDK_PREFIX),
+                    Utils.parameterizedString(ErrorMessage.EmptyDetokenizeData.getMessage(), Constants.SDK_PREFIX),
                     e.getMessage()
             );
             Assert.assertFalse(request.getContinueOnError());
@@ -86,7 +86,7 @@ public class DetokenizeTests {
     }
 
     @Test
-    public void testEmptyTokenInTokensInDetokenizeRequestValidations() {
+    public void testEmptyTokenInDetokenizeRequestValidations() {
         DetokenizeData detokenizeDataRecord = new DetokenizeData("");
         detokenizeData.add(maskedRedactionRecord);
         detokenizeData.add(detokenizeDataRecord);
@@ -98,7 +98,7 @@ public class DetokenizeTests {
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
-                    Utils.parameterizedString(ErrorMessage.EmptyTokenInDataTokens.getMessage(), Constants.SDK_PREFIX),
+                    Utils.parameterizedString(ErrorMessage.EmptyTokenInDetokenizeData.getMessage(), Constants.SDK_PREFIX),
                     e.getMessage()
             );
             Assert.assertFalse(request.getContinueOnError());
@@ -107,7 +107,7 @@ public class DetokenizeTests {
     }
 
     @Test
-    public void testNullTokenInTokensInDetokenizeRequestValidations() {
+    public void testNullTokenInDetokenizeRequestValidations() {
         DetokenizeData detokenizeDataRecord = new DetokenizeData(null);
         detokenizeData.add(maskedRedactionRecord);
         detokenizeData.add(detokenizeDataRecord);
@@ -119,7 +119,7 @@ public class DetokenizeTests {
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
-                    Utils.parameterizedString(ErrorMessage.EmptyTokenInDataTokens.getMessage(), Constants.SDK_PREFIX),
+                    Utils.parameterizedString(ErrorMessage.EmptyTokenInDetokenizeData.getMessage(), Constants.SDK_PREFIX),
                     e.getMessage()
             );
             Assert.assertFalse(request.getContinueOnError());

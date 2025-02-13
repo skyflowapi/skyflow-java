@@ -216,23 +216,23 @@ public class Validations {
         ArrayList<DetokenizeData> detokenizeData = detokenizeRequest.getDetokenizeData();
         if (detokenizeData == null) {
             LogUtil.printErrorLog(Utils.parameterizedString(
-                    ErrorLogs.TOKENS_REQUIRED.getLog(), InterfaceName.DETOKENIZE.getName()
+                    ErrorLogs.DETOKENIZE_DATA_REQUIRED.getLog(), InterfaceName.DETOKENIZE.getName()
             ));
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidDataTokens.getMessage());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidDetokenizeData.getMessage());
         } else if (detokenizeData.isEmpty()) {
             LogUtil.printErrorLog(Utils.parameterizedString(
-                    ErrorLogs.EMPTY_TOKENS.getLog(), InterfaceName.DETOKENIZE.getName()
+                    ErrorLogs.EMPTY_DETOKENIZE_DATA.getLog(), InterfaceName.DETOKENIZE.getName()
             ));
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyDataTokens.getMessage());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyDetokenizeData.getMessage());
         } else {
             for (int index = 0; index < detokenizeData.size(); index++) {
                 String token = detokenizeData.get(index).getToken();
                 if (token == null || token.trim().isEmpty()) {
                     LogUtil.printErrorLog(Utils.parameterizedString(
-                            ErrorLogs.EMPTY_OR_NULL_TOKEN_IN_TOKENS.getLog(),
+                            ErrorLogs.EMPTY_OR_NULL_TOKEN_IN_DETOKENIZE_DATA.getLog(),
                             InterfaceName.DETOKENIZE.getName(), Integer.toString(index)
                     ));
-                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyTokenInDataTokens.getMessage());
+                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyTokenInDetokenizeData.getMessage());
                 }
             }
         }
