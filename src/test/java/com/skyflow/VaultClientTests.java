@@ -9,6 +9,7 @@ import com.skyflow.generated.rest.models.*;
 import com.skyflow.vault.data.InsertRequest;
 import com.skyflow.vault.data.UpdateRequest;
 import com.skyflow.vault.tokens.ColumnValue;
+import com.skyflow.vault.tokens.DetokenizeData;
 import com.skyflow.vault.tokens.DetokenizeRequest;
 import com.skyflow.vault.tokens.TokenizeRequest;
 import io.github.cdimascio.dotenv.Dotenv;
@@ -31,7 +32,7 @@ public class VaultClientTests {
     private static String value = null;
     private static String columnGroup = null;
     private static String apiKey = null;
-    private static ArrayList<String> tokens = null;
+    private static ArrayList<DetokenizeData> detokenizeData = null;
     private static ArrayList<HashMap<String, Object>> insertValues = null;
     private static ArrayList<HashMap<String, Object>> insertTokens = null;
     private static HashMap<String, Object> valueMap = null;
@@ -43,7 +44,7 @@ public class VaultClientTests {
         vaultID = "vault123";
         clusterID = "cluster123";
         token = "test_token";
-        tokens = new ArrayList<>();
+        detokenizeData = new ArrayList<>();
         table = "test_table";
         value = "test_value";
         columnGroup = "test_column_group";
@@ -115,11 +116,15 @@ public class VaultClientTests {
     @Test
     public void testGetDetokenizePayload() {
         try {
-            tokens.add(token);
-            tokens.add(token);
-            DetokenizeRequest detokenizeRequest = DetokenizeRequest.builder().tokens(tokens).build();
+            DetokenizeData detokenizeDataRecord1 = new DetokenizeData(token);
+            DetokenizeData detokenizeDataRecord2 = new DetokenizeData(token);
+            detokenizeData.add(detokenizeDataRecord1);
+            detokenizeData.add(detokenizeDataRecord2);
+            DetokenizeRequest detokenizeRequest = DetokenizeRequest.builder()
+                    .detokenizeData(detokenizeData).downloadURL(true).build();
             V1DetokenizePayload payload = vaultClient.getDetokenizePayload(detokenizeRequest);
             Assert.assertFalse(payload.getContinueOnError());
+            Assert.assertTrue(payload.getDownloadURL());
             Assert.assertEquals(2, payload.getDetokenizationParameters().size());
         } catch (Exception e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);

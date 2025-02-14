@@ -7,6 +7,7 @@ import com.skyflow.enums.Env;
 import com.skyflow.enums.LogLevel;
 import com.skyflow.enums.RedactionType;
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.tokens.DetokenizeData;
 import com.skyflow.vault.tokens.DetokenizeRequest;
 import com.skyflow.vault.tokens.DetokenizeResponse;
 
@@ -52,13 +53,15 @@ public class DetokenizeExample {
 
         // Example 1: Detokenize tokens from the first vault
         try {
-            ArrayList<String> tokens1 = new ArrayList<>();
-            tokens1.add("<YOUR_TOKEN_VALUE_1>");            // Replace with the first token to detokenize
-            tokens1.add("<YOUR_TOKEN_VALUE_2>");            // Replace with the second token to detokenize
+            ArrayList<DetokenizeData> detokenizeData1 = new ArrayList<>();
+            DetokenizeData detokenizeDataRecord1 = new DetokenizeData("<YOUR_TOKEN_VALUE_1>", RedactionType.MASKED);   // Replace with a token to detokenize with MASKED redaction
+            DetokenizeData detokenizeDataRecord2 = new DetokenizeData("<YOUR_TOKEN_VALUE_2>"); // Replace with another token to detokenize with PLAIN_TEXT redaction
+            detokenizeData1.add(detokenizeDataRecord1);
+            detokenizeData1.add(detokenizeDataRecord2);
 
             DetokenizeRequest detokenizeRequest1 = DetokenizeRequest.builder()
-                    .tokens(tokens1)                       // Specify the tokens to detokenize
-                    .continueOnError(true)                 // Continue processing even if an error occurs for some tokens
+                    .detokenizeData(detokenizeData1)     // Specify the tokens to detokenize with specified redaction types
+                    .continueOnError(true)              // Continue processing even if an error occurs for some tokens
                     .build();
 
             DetokenizeResponse detokenizeResponse1 = skyflowClient.vault().detokenize(detokenizeRequest1); // Perform detokenization
@@ -70,14 +73,16 @@ public class DetokenizeExample {
 
         // Example 2: Detokenize tokens from the second vault
         try {
-            ArrayList<String> tokens2 = new ArrayList<>();
-            tokens2.add("<YOUR_TOKEN_VALUE_1>");            // Replace with the first token to detokenize
-            tokens2.add("<YOUR_TOKEN_VALUE_2>");            // Replace with the second token to detokenize
+            ArrayList<DetokenizeData> detokenizeData2 = new ArrayList<>();
+            DetokenizeData detokenizeDataRecord3 = new DetokenizeData("<YOUR_TOKEN_VALUE_3>", RedactionType.DEFAULT);   // Replace with a token to detokenize
+            DetokenizeData detokenizeDataRecord4 = new DetokenizeData("<YOUR_TOKEN_VALUE_4>"); // Replace with another token to detokenize
+            detokenizeData2.add(detokenizeDataRecord3);
+            detokenizeData2.add(detokenizeDataRecord4);
 
             DetokenizeRequest detokenizeRequest2 = DetokenizeRequest.builder()
-                    .tokens(tokens2)                       // Specify the tokens to detokenize
-                    .continueOnError(false)                // Stop processing on the first error
-                    .redactionType(RedactionType.DEFAULT)  // Use the default redaction type for detokenization
+                    .detokenizeData(detokenizeData2)        // Specify the tokens to detokenize with specified redaction types
+                    .continueOnError(false)                 // Stop processing on the first error
+                    .downloadURL(true)                      // Specify whether to return URLs for file data type
                     .build();
 
             DetokenizeResponse detokenizeResponse2 = skyflowClient.vault("<YOUR_VAULT_ID_2>").detokenize(detokenizeRequest2); // Perform detokenization

@@ -73,9 +73,9 @@ public enum ErrorMessage {
     BatchInsertFailure("%s0 Insert operation failed."),
 
     // detokenize
-    InvalidDataTokens("%s0 Validation error. Invalid data tokens. Specify valid data tokens."),
-    EmptyDataTokens("%s0 Validation error. Invalid data tokens. Specify at least one data token."),
-    EmptyTokenInDataTokens("%s0 Validation error. Invalid data tokens. Specify a valid data token."),
+    InvalidDetokenizeData("%s0 Validation error. Invalid detokenize data. Specify valid detokenize data."),
+    EmptyDetokenizeData("%s0 Validation error. Invalid data tokens. Specify at least one data token."),
+    EmptyTokenInDetokenizeData("%s0 Validation error. Invalid data tokens. Specify a valid data token."),
 
     // get interface
     IdsKeyError("%s0 Validation error. 'ids' key is missing from the payload. Specify an 'ids' key."),

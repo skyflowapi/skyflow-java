@@ -19,30 +19,33 @@ import java.util.ArrayList;
 public class DetokenizeTests {
     private static final String INVALID_EXCEPTION_THROWN = "Should not have thrown any exception";
     private static final String EXCEPTION_NOT_THROWN = "Should have thrown an exception";
-    private static String token = null;
-    private static ArrayList<String> tokens = null;
+    private static ArrayList<DetokenizeData> detokenizeData = null;
+    private static DetokenizeData maskedRedactionRecord = null;
+    private static DetokenizeData plainRedactionRecord = null;
 
     @BeforeClass
     public static void setup() throws SkyflowException, NoSuchMethodException {
-        tokens = new ArrayList<>();
-        token = "test_token_1";
+        detokenizeData = new ArrayList<>();
+        maskedRedactionRecord = new DetokenizeData("test_token_1", RedactionType.MASKED);
+        plainRedactionRecord = new DetokenizeData("test_token_2");
     }
 
     @Before
     public void setupTest() {
-        tokens.clear();
+        detokenizeData.clear();
     }
 
     @Test
     public void testValidInputInDetokenizeRequestValidations() {
         try {
-            tokens.add(token);
-            DetokenizeRequest request = DetokenizeRequest.builder().
-                    tokens(tokens).redactionType(RedactionType.MASKED).continueOnError(false).build();
+            detokenizeData.add(maskedRedactionRecord);
+            DetokenizeRequest request = DetokenizeRequest.builder()
+                    .detokenizeData(detokenizeData).continueOnError(false).downloadURL(true).build();
             Validations.validateDetokenizeRequest(request);
-            Assert.assertEquals(1, tokens.size());
-            Assert.assertEquals(RedactionType.MASKED.toString(), request.getRedactionType().toString());
+            Assert.assertEquals(1, request.getDetokenizeData().size());
+            Assert.assertEquals(RedactionType.MASKED.toString(), request.getDetokenizeData().get(0).getRedactionType().toString());
             Assert.assertFalse(request.getContinueOnError());
+            Assert.assertTrue(request.getDownloadURL());
         } catch (SkyflowException e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
         }
@@ -57,78 +60,84 @@ public class DetokenizeTests {
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
-                    Utils.parameterizedString(ErrorMessage.InvalidDataTokens.getMessage(), Constants.SDK_PREFIX),
+                    Utils.parameterizedString(ErrorMessage.InvalidDetokenizeData.getMessage(), Constants.SDK_PREFIX),
                     e.getMessage()
             );
-            Assert.assertEquals(RedactionType.PLAIN_TEXT, request.getRedactionType());
             Assert.assertFalse(request.getContinueOnError());
+            Assert.assertFalse(request.getDownloadURL());
         }
     }
 
     @Test
     public void testEmptyTokensInDetokenizeRequestValidations() {
-        DetokenizeRequest request = DetokenizeRequest.builder().tokens(tokens).build();
+        DetokenizeRequest request = DetokenizeRequest.builder().detokenizeData(detokenizeData).build();
         try {
             Validations.validateDetokenizeRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
-                    Utils.parameterizedString(ErrorMessage.EmptyDataTokens.getMessage(), Constants.SDK_PREFIX),
+                    Utils.parameterizedString(ErrorMessage.EmptyDetokenizeData.getMessage(), Constants.SDK_PREFIX),
                     e.getMessage()
             );
-            Assert.assertEquals(RedactionType.PLAIN_TEXT, request.getRedactionType());
             Assert.assertFalse(request.getContinueOnError());
+            Assert.assertFalse(request.getDownloadURL());
         }
     }
 
     @Test
-    public void testEmptyTokenInTokensInDetokenizeRequestValidations() {
-        tokens.add(token);
-        tokens.add("");
-        DetokenizeRequest request = DetokenizeRequest.builder().tokens(tokens).build();
+    public void testEmptyTokenInDetokenizeRequestValidations() {
+        DetokenizeData detokenizeDataRecord = new DetokenizeData("");
+        detokenizeData.add(maskedRedactionRecord);
+        detokenizeData.add(detokenizeDataRecord);
+
+        DetokenizeRequest request = DetokenizeRequest.builder().detokenizeData(detokenizeData).build();
         try {
             Validations.validateDetokenizeRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
-                    Utils.parameterizedString(ErrorMessage.EmptyTokenInDataTokens.getMessage(), Constants.SDK_PREFIX),
+                    Utils.parameterizedString(ErrorMessage.EmptyTokenInDetokenizeData.getMessage(), Constants.SDK_PREFIX),
                     e.getMessage()
             );
-            Assert.assertEquals(RedactionType.PLAIN_TEXT, request.getRedactionType());
             Assert.assertFalse(request.getContinueOnError());
+            Assert.assertFalse(request.getDownloadURL());
         }
     }
 
     @Test
-    public void testNullTokenInTokensInDetokenizeRequestValidations() {
-        tokens.add(token);
-        tokens.add(null);
-        DetokenizeRequest request = DetokenizeRequest.builder().tokens(tokens).build();
+    public void testNullTokenInDetokenizeRequestValidations() {
+        DetokenizeData detokenizeDataRecord = new DetokenizeData(null);
+        detokenizeData.add(maskedRedactionRecord);
+        detokenizeData.add(detokenizeDataRecord);
+
+        DetokenizeRequest request = DetokenizeRequest.builder().detokenizeData(detokenizeData).build();
         try {
             Validations.validateDetokenizeRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
-                    Utils.parameterizedString(ErrorMessage.EmptyTokenInDataTokens.getMessage(), Constants.SDK_PREFIX),
+                    Utils.parameterizedString(ErrorMessage.EmptyTokenInDetokenizeData.getMessage(), Constants.SDK_PREFIX),
                     e.getMessage()
             );
-            Assert.assertEquals(RedactionType.PLAIN_TEXT, request.getRedactionType());
             Assert.assertFalse(request.getContinueOnError());
+            Assert.assertFalse(request.getDownloadURL());
         }
     }
 
     @Test
     public void testRedactionAndContinueOnErrorInDetokenizeRequestValidations() {
-        tokens.add(token);
+        detokenizeData.add(plainRedactionRecord);
+
         DetokenizeRequest request = DetokenizeRequest.builder().
-                tokens(tokens).redactionType(null).continueOnError(null).build();
+                detokenizeData(detokenizeData).continueOnError(null).build();
         try {
             Validations.validateDetokenizeRequest(request);
-            Assert.assertEquals(RedactionType.PLAIN_TEXT, request.getRedactionType());
+            Assert.assertEquals(RedactionType.PLAIN_TEXT, request.getDetokenizeData().get(0).getRedactionType());
             Assert.assertFalse(request.getContinueOnError());
+            Assert.assertFalse(request.getDownloadURL());
         } catch (SkyflowException e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
         }
