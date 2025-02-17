@@ -24,4 +24,5 @@ public final class Constants {
     public static final String SDK_METRIC_RUNTIME_DETAILS_PREFIX = "Java@";
     public static final String SDK_AUTH_HEADER_KEY = "x-skyflow-authorization";
     public static final String SDK_METRICS_HEADER_KEY = "sky-metadata";
+    public static final String REQUEST_ID_HEADER_KEY = "x-request-id";
 }

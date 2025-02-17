@@ -22,6 +22,7 @@ import java.util.HashMap;
 public class InsertTests {
     private static final String INVALID_EXCEPTION_THROWN = "Should not have thrown any exception";
     private static final String EXCEPTION_NOT_THROWN = "Should have thrown an exception";
+    private static final String requestId = "95be08fc-4d13-4335-8b8d-24e85d53ed1d";
     private static String vaultID = null;
     private static String clusterID = null;
     private static String table = null;
@@ -408,6 +409,11 @@ public class InsertTests {
     public void testInsertResponse() {
         try {
             ArrayList<HashMap<String, Object>> errorFields = new ArrayList<>();
+            HashMap<String, Object> error = new HashMap<>();
+            error.put("requestIndex", 0);
+            error.put("requestId", requestId);
+            error.put("error", "Insert failed");
+            errorFields.add(error);
             values.add(valueMap);
             values.add(valueMap);
             InsertResponse response = new InsertResponse(values, errorFields);
@@ -416,9 +422,9 @@ public class InsertTests {
                     "\"test_column_2\":\"test_value_2\"}," +
                     "{\"test_column_1\":\"test_value_1\"," +
                     "\"test_column_2\":\"test_value_2\"}]" +
-                    ",\"errors\":" + errorFields + "}";
+                    ",\"errors\":[{\"requestIndex\":0,\"requestId\":\"" + requestId + "\",\"error\":\"Insert failed\"}]}";
             Assert.assertEquals(2, response.getInsertedFields().size());
-            Assert.assertTrue(response.getErrors().isEmpty());
+            Assert.assertEquals(1, response.getErrors().size());
             Assert.assertEquals(responseString, response.toString());
         } catch (Exception e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);

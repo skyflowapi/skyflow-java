@@ -19,6 +19,7 @@ import java.util.ArrayList;
 public class DetokenizeTests {
     private static final String INVALID_EXCEPTION_THROWN = "Should not have thrown any exception";
     private static final String EXCEPTION_NOT_THROWN = "Should have thrown an exception";
+    private static final String requestId = "95be08fc-4d13-4335-8b8d-24e85d53ed1d";
     private static ArrayList<DetokenizeData> detokenizeData = null;
     private static DetokenizeData maskedRedactionRecord = null;
     private static DetokenizeData plainRedactionRecord = null;
@@ -156,7 +157,7 @@ public class DetokenizeTests {
             record2.setToken("3456-7890-1234-5678");
             record2.setValue("");
             record2.setError("Invalid token");
-            DetokenizeRecordResponse error = new DetokenizeRecordResponse(record2);
+            DetokenizeRecordResponse error = new DetokenizeRecordResponse(record2, requestId);
 
             ArrayList<DetokenizeRecordResponse> fields = new ArrayList<>();
             fields.add(field);
@@ -170,14 +171,15 @@ public class DetokenizeTests {
             String responseString = "{\"detokenizedFields\":[{" +
                     "\"token\":\"1234-5678-9012-3456\",\"value\":\"4111111111111111\",\"type\":\"STRING\"}," +
                     "{\"token\":\"1234-5678-9012-3456\",\"value\":\"4111111111111111\",\"type\":\"STRING\"}]," +
-                    "\"errors\":[{\"token\":\"3456-7890-1234-5678\",\"error\":\"Invalid token\"}," +
-                    "{\"token\":\"3456-7890-1234-5678\",\"error\":\"Invalid token\"}]}";
+                    "\"errors\":[{\"token\":\"3456-7890-1234-5678\",\"error\":\"Invalid token\",\"requestId\":\"" + requestId + "\"}," +
+                    "{\"token\":\"3456-7890-1234-5678\",\"error\":\"Invalid token\",\"requestId\":\"" + requestId + "\"}]}";
             Assert.assertEquals(2, response.getDetokenizedFields().size());
             Assert.assertEquals(2, response.getErrors().size());
             Assert.assertEquals("1234-5678-9012-3456", response.getDetokenizedFields().get(0).getToken());
             Assert.assertEquals("4111111111111111", response.getDetokenizedFields().get(0).getValue());
             Assert.assertEquals("STRING", response.getDetokenizedFields().get(0).getType());
             Assert.assertEquals("Invalid token", response.getErrors().get(0).getError());
+            Assert.assertEquals(requestId, response.getErrors().get(0).getRequestId());
             Assert.assertEquals(responseString, response.toString());
         } catch (Exception e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);

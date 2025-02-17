@@ -7,12 +7,18 @@ public class DetokenizeRecordResponse {
     private final String value;
     private final String type;
     private final String error;
+    private final String requestId;
 
     public DetokenizeRecordResponse(V1DetokenizeRecordResponse record) {
+        this(record, null);
+    }
+
+    public DetokenizeRecordResponse(V1DetokenizeRecordResponse record, String requestId) {
         this.token = record.getToken();
         this.value = record.getValue().isEmpty() ? null : record.getValue();
         this.type = record.getValueType().getValue().equals("NONE") ? null : record.getValueType().getValue();
         this.error = record.getError();
+        this.requestId = requestId;
     }
 
     public String getError() {
@@ -29,5 +35,9 @@ public class DetokenizeRecordResponse {
 
     public String getType() {
         return type;
+    }
+
+    public String getRequestId() {
+        return requestId;
     }
 }
