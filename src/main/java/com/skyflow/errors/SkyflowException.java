@@ -41,10 +41,10 @@ public class SkyflowException extends Exception {
         super(cause);
         this.httpCode = httpCode;
         setRequestId(responseHeaders);
-        setResponseBody(responseBody);
+        setResponseBody(responseBody, responseHeaders);
     }
 
-    private void setResponseBody(String responseBody) {
+    private void setResponseBody(String responseBody, Map<String, List<String>> responseHeaders) {
         try {
             if (responseBody != null) {
                 this.responseBody = JsonParser.parseString(responseBody).getAsJsonObject();
@@ -52,7 +52,7 @@ public class SkyflowException extends Exception {
                     setGrpcCode();
                     setHttpStatus();
                     setMessage();
-                    setDetails();
+                    setDetails(responseHeaders);
                 }
             }
         } catch (JsonSyntaxException e) {
@@ -86,9 +86,19 @@ public class SkyflowException extends Exception {
         this.httpStatus = statusElement == null ? null : statusElement.getAsString();
     }
 
-    private void setDetails() {
+    private void setDetails(Map<String, List<String>> responseHeaders) {
         JsonElement detailsElement = ((JsonObject) responseBody.get("error")).get("details");
-        this.details = detailsElement == null ? null : detailsElement.getAsJsonArray();
+        List<String> errorFromClientHeader = responseHeaders.get("error-from-client");
+        if (detailsElement != null) {
+            this.details = detailsElement.getAsJsonArray();
+        }
+        if (errorFromClientHeader != null) {
+            this.details = this.details == null ? new JsonArray() : this.details;
+            String errorFromClient = errorFromClientHeader.get(0);
+            JsonObject detailObject = new JsonObject();
+            detailObject.addProperty("errorFromClient", errorFromClient);
+            this.details.add(detailObject);
+        }
     }
 
     public int getHttpCode() {
