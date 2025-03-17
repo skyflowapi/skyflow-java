@@ -23,30 +23,23 @@ public class GetExample {
     public static void main(String[] args) throws SkyflowException {
         // Step 1: Set up credentials for the first vault configuration
         Credentials credentials = new Credentials();
-        credentials.setPath("<YOUR_CREDENTIALS_FILE_PATH_1>"); // Replace with the actual path to the credentials file
+        credentials.setCredentialsString("<YOUR_CREDENTIALS_STRING_1>"); // Replace with the actual credentials string
 
-        // Step 2: Configure the first vault (Blitz)
-        VaultConfig blitzConfig = new VaultConfig();
-        blitzConfig.setVaultId("<YOUR_VAULT_ID_1>");         // Replace with the ID of the first vault
-        blitzConfig.setClusterId("<YOUR_CLUSTER_ID_1>");     // Replace with the cluster ID of the first vault
-        blitzConfig.setEnv(Env.DEV);                        // Set the environment (e.g., DEV, STAGE, PROD)
-        blitzConfig.setCredentials(credentials);            // Associate the credentials with the vault
+        // Step 2: Configure the first vault
+        VaultConfig primaryVaultConfig = new VaultConfig();
+        primaryVaultConfig.setVaultId("<YOUR_VAULT_ID_1>");         // Replace with the ID of the first vault
+        primaryVaultConfig.setClusterId("<YOUR_CLUSTER_ID_1>");     // Replace with the cluster ID of the first vault
+        primaryVaultConfig.setEnv(Env.PROD);                        // Set the environment (e.g., DEV, STAGE, PROD)
+        primaryVaultConfig.setCredentials(credentials);            // Associate the credentials with the vault
 
-        // Step 3: Configure the second vault (Stage)
-        VaultConfig stageConfig = new VaultConfig();
-        stageConfig.setVaultId("<YOUR_VAULT_ID_2>");         // Replace with the ID of the second vault
-        stageConfig.setClusterId("<YOUR_CLUSTER_ID_2>");     // Replace with the cluster ID of the second vault
-        stageConfig.setEnv(Env.STAGE);                      // Set the environment for the second vault
-
-        // Step 4: Set up credentials for the Skyflow client
+        // Step 3: Set up credentials for the Skyflow client
         Credentials skyflowCredentials = new Credentials();
-        skyflowCredentials.setPath("<YOUR_CREDENTIALS_FILE_PATH_2>"); // Replace with the path to another credentials file
+        skyflowCredentials.setCredentialsString("<YOUR_CREDENTIALS_STRING_2>"); // Replace with another credentials string
 
-        // Step 5: Create a Skyflow client and add vault configurations
+        // Step 4: Create a Skyflow client and add vault configurations
         Skyflow skyflowClient = Skyflow.builder()
-                .setLogLevel(LogLevel.DEBUG)               // Enable debugging for detailed logs
-                .addVaultConfig(blitzConfig)               // Add the first vault configuration
-                .addVaultConfig(stageConfig)               // Add the second vault configuration
+                .setLogLevel(LogLevel.ERROR)               // Set log level to ERROR to minimize log output
+                .addVaultConfig(primaryVaultConfig)        // Add the first vault configuration
                 .addSkyflowCredentials(skyflowCredentials) // Add general Skyflow credentials
                 .build();
 
@@ -60,7 +53,7 @@ public class GetExample {
                     .table("<TABLE_NAME>")                // Replace with the table name
                     .build();
 
-            GetResponse getByIdResponse = skyflowClient.vault().get(getByIdRequest); // Perform the get operation
+            GetResponse getByIdResponse = skyflowClient.vault().get(getByIdRequest); // Fetch via skyflow IDs
             System.out.println("Get Response (By ID): " + getByIdResponse);
         } catch (SkyflowException e) {
             System.out.println("Error during fetch by ID:");
@@ -79,7 +72,7 @@ public class GetExample {
                     .redactionType(RedactionType.PLAIN_TEXT) // Fetch the data in plain text format
                     .build();
 
-            GetResponse getByColumnResponse = skyflowClient.vault("<YOUR_VAULT_ID_2>").get(getByColumnRequest); // Fetch from the second vault
+            GetResponse getByColumnResponse = skyflowClient.vault().get(getByColumnRequest); // Fetch via column values
             System.out.println("Get Response (By Column): " + getByColumnResponse);
         } catch (SkyflowException e) {
             System.out.println("Error during fetch by column:");
