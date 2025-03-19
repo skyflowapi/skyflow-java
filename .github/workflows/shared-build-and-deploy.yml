@@ -91,7 +91,6 @@ jobs:
           fi
 
       - name: Commit changes
-        if: ${{ inputs.tag == 'internal' || inputs.tag == 'public' }}
         run: |
           git config user.name ${{ github.actor }}
           git config user.email ${{ github.actor }}@users.noreply.github.com
