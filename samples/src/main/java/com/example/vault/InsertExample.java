@@ -3,9 +3,9 @@ package com.example.vault;
 import com.skyflow.Skyflow;
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
-import com.skyflow.enums.TokenMode;
 import com.skyflow.enums.Env;
 import com.skyflow.enums.LogLevel;
+import com.skyflow.enums.TokenMode;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.vault.data.InsertRequest;
 import com.skyflow.vault.data.InsertResponse;
@@ -18,91 +18,82 @@ import java.util.HashMap;
  * It includes:
  * 1. Setting up vault configurations.
  * 2. Creating a Skyflow client.
- * 3. Performing record insertion with and without BYOT (Bring Your Own Token).
+ * 3. Performing record insertion with and without TokenMode.
  * 4. Using upsert functionality to handle conflicts.
  */
 public class InsertExample {
     public static void main(String[] args) throws SkyflowException {
         // Step 1: Set up credentials for the first vault configuration
         Credentials credentials = new Credentials();
-        credentials.setPath("<YOUR_CREDENTIALS_FILE_PATH_1>"); // Replace with the path to the credentials file
+        credentials.setApiKey("<YOUR_API_KEY>"); // Replace with the actual API key
 
-        // Step 2: Configure the first vault (Blitz)
-        VaultConfig blitzConfig = new VaultConfig();
-        blitzConfig.setVaultId("<YOUR_VAULT_ID_1>");         // Replace with the ID of the first vault
-        blitzConfig.setClusterId("<YOUR_CLUSTER_ID_1>");     // Replace with the cluster ID of the first vault
-        blitzConfig.setEnv(Env.DEV);                        // Set the environment (e.g., DEV, STAGE, PROD)
-        blitzConfig.setCredentials(credentials);            // Associate the credentials with the vault
+        // Step 2: Configure the first vault
+        VaultConfig primaryVaultConfig = new VaultConfig();
+        primaryVaultConfig.setVaultId("<YOUR_VAULT_ID_1>");         // Replace with the first vault ID
+        primaryVaultConfig.setClusterId("<YOUR_CLUSTER_ID_1>");     // Replace with the first vault cluster ID
+        primaryVaultConfig.setEnv(Env.PROD);                        // Set the environment (e.g., DEV, STAGE, SANDBOX)
+        primaryVaultConfig.setCredentials(credentials);             // Associate credentials with the vault
 
-        // Step 3: Configure the second vault (Stage)
-        VaultConfig stageConfig = new VaultConfig();
-        stageConfig.setVaultId("<YOUR_VAULT_ID_2>");         // Replace with the ID of the second vault
-        stageConfig.setClusterId("<YOUR_CLUSTER_ID_2>");     // Replace with the cluster ID of the second vault
-        stageConfig.setEnv(Env.STAGE);                      // Set the environment for the second vault
-
-        // Step 4: Set up credentials for the Skyflow client
+        // Step 3: Set up credentials for the Skyflow client
         Credentials skyflowCredentials = new Credentials();
-        skyflowCredentials.setPath("<YOUR_CREDENTIALS_FILE_PATH_2>"); // Replace with the path to another credentials file
+        skyflowCredentials.setCredentialsString("<YOUR_CREDENTIALS_STRING>"); // Replace with the actual credentials string
 
-        // Step 5: Create a Skyflow client and add vault configurations
+        // Step 4: Create a Skyflow client and add vault configurations
         Skyflow skyflowClient = Skyflow.builder()
-                .setLogLevel(LogLevel.DEBUG)               // Enable debugging for detailed logs
-                .addVaultConfig(blitzConfig)               // Add the first vault configuration
-                .addVaultConfig(stageConfig)               // Add the second vault configuration
+                .setLogLevel(LogLevel.ERROR)               // Set log level to ERROR to limit output
+                .addVaultConfig(primaryVaultConfig)        // Add the vault configuration
                 .addSkyflowCredentials(skyflowCredentials) // Add general Skyflow credentials
                 .build();
 
-        // Example 1: Insert records into the first vault with BYOT enabled
+        // Example 1: Insert records into the first vault with TokenMode enabled
         try {
             ArrayList<HashMap<String, Object>> values1 = new ArrayList<>();
             HashMap<String, Object> value1 = new HashMap<>();
-            value1.put("<COLUMN_NAME_1>", "<COLUMN_VALUE_1>"); // Replace with column name and value
-            value1.put("<COLUMN_NAME_2>", "<COLUMN_VALUE_2>"); // Replace with another column name and value
+            value1.put("<COLUMN_NAME_1>", "<COLUMN_VALUE_1>"); // Replace with actual column name and value
+            value1.put("<COLUMN_NAME_2>", "<COLUMN_VALUE_2>"); // Replace with actual column name and value
             values1.add(value1);
 
             ArrayList<HashMap<String, Object>> tokens = new ArrayList<>();
             HashMap<String, Object> token = new HashMap<>();
-            token.put("<COLUMN_NAME_2>", "<TOKEN_VALUE_2>"); // Replace with the token for COLUMN_NAME_2
+            token.put("<COLUMN_NAME_2>", "<TOKEN_VALUE_2>"); // Replace with actual token value for COLUMN_NAME_2
             tokens.add(token);
 
             InsertRequest insertRequest = InsertRequest.builder()
-                    .table("<TABLE_NAME>")                     // Replace with the table name
+                    .table("<TABLE_NAME>")                     // Replace with the actual table name
                     .continueOnError(true)                     // Continue inserting even if some records fail
-                    .tokenMode(TokenMode.ENABLE)                 // Enable BYOT for token validation
+                    .tokenMode(TokenMode.ENABLE)               // Enable TokenMode for token validation
                     .values(values1)                           // Data to insert
-                    .tokens(tokens)                            // Provide tokens for BYOT columns
-                    .returnTokens(true)                        // Return tokens along with the response
+                    .tokens(tokens)                            // Provide tokens for TokenMode columns
+                    .returnTokens(true)                        // Return tokens in the response
                     .build();
 
             InsertResponse insertResponse = skyflowClient.vault().insert(insertRequest); // Perform the insertion
-            System.out.println("Insert Response (BYOT Enabled): " + insertResponse);
+            System.out.println("Insert Response (TokenMode Enabled): " + insertResponse);
         } catch (SkyflowException e) {
-            System.out.println("Error during insertion with BYOT enabled:");
-            e.printStackTrace();
+            System.out.println("Error during insertion with TokenMode enabled:" + e);
         }
 
-        // Example 2: Insert records into the second vault with BYOT disabled and upsert enabled
+        // Example 2: Insert records into the first vault with TokenMode disabled and upsert enabled
         try {
             ArrayList<HashMap<String, Object>> values2 = new ArrayList<>();
             HashMap<String, Object> value2 = new HashMap<>();
-            value2.put("<COLUMN_NAME_1>", "<COLUMN_VALUE_1>"); // Replace with column name and value
-            value2.put("<COLUMN_NAME_2>", "<COLUMN_VALUE_2>"); // Replace with another column name and value
+            value2.put("<COLUMN_NAME_1>", "<COLUMN_VALUE_1>"); // Replace with actual column name and value
+            value2.put("<COLUMN_NAME_2>", "<COLUMN_VALUE_2>"); // Replace with actual column name and value
             values2.add(value2);
 
             InsertRequest upsertRequest = InsertRequest.builder()
-                    .table("<TABLE_NAME>")                     // Replace with the table name
+                    .table("<TABLE_NAME>")                     // Replace with the actual table name
                     .continueOnError(false)                    // Stop inserting if any record fails
-                    .tokenMode(TokenMode.DISABLE)                // Disable BYOT
+                    .tokenMode(TokenMode.DISABLE)              // Disable TokenMode
                     .values(values2)                           // Data to insert
                     .returnTokens(false)                       // Do not return tokens
-                    .upsert("<UPSERT_COLUMN>")                 // Replace with the column name used for upsert logic
+                    .upsert("<UPSERT_COLUMN>")                 // Replace with the actual column name used for upsert logic
                     .build();
 
-            InsertResponse upsertResponse = skyflowClient.vault("<YOUR_VAULT_ID_2>").insert(upsertRequest); // Perform the insertion
+            InsertResponse upsertResponse = skyflowClient.vault().insert(upsertRequest); // Perform upsert operation
             System.out.println("Insert Response (Upsert Enabled): " + upsertResponse);
         } catch (SkyflowException e) {
-            System.out.println("Error during insertion with upsert enabled:");
-            e.printStackTrace();
+            System.out.println("Error during insertion with upsert enabled:" + e);
         }
     }
 }
