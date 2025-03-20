@@ -16,71 +16,49 @@ import java.util.ArrayList;
  * by specifying the vault configurations, credentials, and record IDs to delete.
  * <p>
  * Steps include:
- * 1. Setting up vault configurations.
- * 2. Creating a Skyflow client.
- * 3. Deleting records from the specified vault(s) using record IDs and table names.
+ * 1. Setting up Skyflow credentials.
+ * 2. Configuring the vault.
+ * 3. Creating a Skyflow client.
+ * 4. Setting the log level for debugging and error tracking.
+ * 5. Deleting records from the specified vault(s) using record IDs and table names.
  */
 public class DeleteExample {
     public static void main(String[] args) throws SkyflowException {
-        // Step 1: Set up credentials for the first vault configuration
+        // Step 1: Set up Skyflow credentials
         Credentials credentials = new Credentials();
-        credentials.setPath("<YOUR_CREDENTIALS_FILE_PATH_1>"); // Replace with the actual path to the credentials file
+        credentials.setPath("<YOUR_CREDENTIALS_FILE_PATH>"); // Replace with the actual path to the credentials file
 
-        // Step 2: Configure the first vault (Blitz)
-        VaultConfig blitzConfig = new VaultConfig();
-        blitzConfig.setVaultId("<YOUR_VAULT_ID_1>");         // Replace with the ID of the first vault
-        blitzConfig.setClusterId("<YOUR_CLUSTER_ID_1>");     // Replace with the cluster ID of the first vault
-        blitzConfig.setEnv(Env.DEV);                        // Set the environment (e.g., DEV, STAGE, PROD)
-        blitzConfig.setCredentials(credentials);            // Associate the credentials with the vault
+        // Step 2: Configure the first vault
+        VaultConfig primaryVaultConfig = new VaultConfig();
+        primaryVaultConfig.setVaultId("<YOUR_VAULT_ID_1>");         // Replace with the ID of the first vault
+        primaryVaultConfig.setClusterId("<YOUR_CLUSTER_ID_1>");     // Replace with the cluster ID of the first vault
+        primaryVaultConfig.setEnv(Env.PROD);                        // Set the environment (e.g., DEV, STAGE, PROD)
+        primaryVaultConfig.setCredentials(credentials);            // Associate the credentials with the vault
 
-        // Step 3: Configure the second vault (Stage)
-        VaultConfig stageConfig = new VaultConfig();
-        stageConfig.setVaultId("<YOUR_VAULT_ID_2>");         // Replace with the ID of the second vault
-        stageConfig.setClusterId("<YOUR_CLUSTER_ID_2>");     // Replace with the cluster ID of the second vault
-        stageConfig.setEnv(Env.STAGE);                      // Set the environment for the second vault
-
-        // Step 4: Set up credentials for the Skyflow client
+        // Step 3: Set up credentials for the Skyflow client
         Credentials skyflowCredentials = new Credentials();
-        skyflowCredentials.setPath("<YOUR_CREDENTIALS_FILE_PATH_2>"); // Replace with the path to another credentials file
+        skyflowCredentials.setCredentialsString("<YOUR_CREDENTIALS_STRING>"); // Replace with credentials string
 
-        // Step 5: Create a Skyflow client and add vault configurations
+        // Step 4: Create a Skyflow client and add vault configurations
         Skyflow skyflowClient = Skyflow.builder()
-                .setLogLevel(LogLevel.DEBUG)               // Enable debugging for detailed logs
-                .addVaultConfig(blitzConfig)               // Add the first vault configuration
-                .addVaultConfig(stageConfig)               // Add the second vault configuration
+                .setLogLevel(LogLevel.ERROR) // Set log level for debugging and error tracking
+                .addVaultConfig(primaryVaultConfig)               // Add the first vault configuration
                 .addSkyflowCredentials(skyflowCredentials) // Add general Skyflow credentials
                 .build();
 
-        // Example 1: Delete a record from the first vault
+        // Step 5: Delete a record from the first vault
         try {
-            ArrayList<String> ids1 = new ArrayList<>();
-            ids1.add("<YOUR_SKYFLOW_ID_VALUE>");           // Replace with the ID of the record to delete
-            DeleteRequest deleteRequest1 = DeleteRequest.builder()
-                    .ids(ids1)                             // Specify the record IDs to delete
+            ArrayList<String> ids = new ArrayList<>();
+            ids.add("<YOUR_SKYFLOW_ID_VALUE>");           // Replace with the ID of the record to delete
+            DeleteRequest deleteRequest = DeleteRequest.builder()
+                    .ids(ids)                             // Specify the record IDs to delete
                     .table("<TABLE_NAME>")                 // Replace with the table name
                     .build();
 
-            DeleteResponse deleteResponse1 = skyflowClient.vault().delete(deleteRequest1); // Perform the delete operation
-            System.out.println("Delete Response (Vault 1): " + deleteResponse1);
+            DeleteResponse deleteResponse = skyflowClient.vault().delete(deleteRequest); // Perform the delete operation
+            System.out.println("Delete Response: " + deleteResponse);
         } catch (SkyflowException e) {
-            System.out.println("Error during delete operation in Vault 1:");
-            e.printStackTrace();
-        }
-
-        // Example 2: Delete a record from the second vault
-        try {
-            ArrayList<String> ids2 = new ArrayList<>();
-            ids2.add("<YOUR_SKYFLOW_ID_VALUE>");           // Replace with the ID of the record to delete
-            DeleteRequest deleteRequest2 = DeleteRequest.builder()
-                    .ids(ids2)                             // Specify the record IDs to delete
-                    .table("<TABLE_NAME>")                 // Replace with the table name
-                    .build();
-
-            DeleteResponse deleteResponse2 = skyflowClient.vault("<YOUR_VAULT_ID_2>").delete(deleteRequest2); // Perform the delete operation
-            System.out.println("Delete Response (Vault 2): " + deleteResponse2);
-        } catch (SkyflowException e) {
-            System.out.println("Error during delete operation in Vault 2:");
-            e.printStackTrace();
+            System.out.println("Error during delete operation in Vault: " + e);
         }
     }
 }
