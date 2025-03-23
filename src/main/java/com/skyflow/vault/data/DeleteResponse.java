@@ -5,16 +5,17 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
-import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 public class DeleteResponse {
-    private final ArrayList<String> deletedIds;
+    private final Optional<List<String>> deletedIds;
 
-    public DeleteResponse(ArrayList<String> deletedIds) {
+    public DeleteResponse(Optional<List<String>> deletedIds) {
         this.deletedIds = deletedIds;
     }
 
-    public ArrayList<String> getDeletedIds() {
+    public Optional<List<String>> getDeletedIds() {
         return deletedIds;
     }
 

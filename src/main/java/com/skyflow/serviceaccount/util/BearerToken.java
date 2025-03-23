@@ -8,10 +8,11 @@ import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.generated.rest.ApiClient;
-import com.skyflow.generated.rest.ApiException;
-import com.skyflow.generated.rest.api.AuthenticationApi;
-import com.skyflow.generated.rest.models.V1GetAuthTokenRequest;
-import com.skyflow.generated.rest.models.V1GetAuthTokenResponse;
+import com.skyflow.generated.rest.ApiClientBuilder;
+import com.skyflow.generated.rest.core.ApiClientApiException;
+import com.skyflow.generated.rest.resources.authentication.AuthenticationClient;
+import com.skyflow.generated.rest.resources.authentication.requests.V1GetAuthTokenRequest;
+import com.skyflow.generated.rest.types.V1GetAuthTokenResponse;
 import com.skyflow.logs.ErrorLogs;
 import com.skyflow.logs.InfoLogs;
 import com.skyflow.utils.Constants;
@@ -30,8 +31,9 @@ import java.util.Date;
 import java.util.Objects;
 
 public class BearerToken {
-    private static final ApiClient apiClient = new ApiClient();
-    private static final AuthenticationApi authenticationApi = new AuthenticationApi(apiClient);
+    private static final ApiClientBuilder apiClientBuilder = new ApiClientBuilder();
+    private static ApiClient apiClient;
+    private static AuthenticationClient authenticationApi;
     private final File credentialsFile;
     private final String credentialsString;
     private final String ctx;
@@ -125,23 +127,24 @@ public class BearerToken {
             );
 
             String basePath = Utils.getBaseURL(tokenURI.getAsString());
-            apiClient.setBasePath(basePath);
+            apiClientBuilder.url(basePath);
+            apiClient = apiClientBuilder.token("token").build();
+            authenticationApi = apiClient.authentication();
 
-            V1GetAuthTokenRequest body = new V1GetAuthTokenRequest();
-            body.setGrantType(Constants.GRANT_TYPE);
-            body.setAssertion(signedUserJWT);
+            V1GetAuthTokenRequest._FinalStage authTokenBuilder = V1GetAuthTokenRequest.builder().grantType(Constants.GRANT_TYPE).assertion(signedUserJWT);
 
             if (roles != null) {
                 String scopedRoles = getScopeUsingRoles(roles);
-                body.setScope(scopedRoles);
+                authTokenBuilder.scope(scopedRoles);
             }
-            return authenticationApi.authenticationServiceGetAuthToken(body);
+            return authenticationApi.authenticationServiceGetAuthToken(authTokenBuilder.build());
         } catch (MalformedURLException e) {
             LogUtil.printErrorLog(ErrorLogs.INVALID_TOKEN_URI.getLog());
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidTokenUri.getMessage());
-        } catch (ApiException e) {
+        } catch (ApiClientApiException e) {
             LogUtil.printErrorLog(ErrorLogs.BEARER_TOKEN_REJECTED.getLog());
-            throw new SkyflowException(e.getCode(), e, e.getResponseHeaders(), e.getResponseBody());
+//            throw new SkyflowException(e.getCode(), e, e.getResponseHeaders(), e.getResponseBody());
+            throw e;
         }
     }
 
@@ -177,10 +180,10 @@ public class BearerToken {
         String accessToken = null;
         if (this.credentialsFile != null && Objects.equals(this.credentialsType, "FILE")) {
             response = generateBearerTokenFromCredentials(this.credentialsFile, this.ctx, this.roles);
-            accessToken = response.getAccessToken();
+            accessToken = response.getAccessToken().get();
         } else if (this.credentialsString != null && Objects.equals(this.credentialsType, "STRING")) {
             response = generateBearerTokenFromCredentialString(this.credentialsString, this.ctx, this.roles);
-            accessToken = response.getAccessToken();
+            accessToken = response.getAccessToken().get();
         }
         LogUtil.printInfoLog(InfoLogs.GET_BEARER_TOKEN_SUCCESS.getLog());
         return accessToken;

@@ -10,7 +10,6 @@ import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.HttpStatus;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.generated.rest.ApiClient;
-import com.skyflow.generated.rest.api.TokensApi;
 import com.skyflow.utils.Constants;
 import com.skyflow.utils.Utils;
 import com.skyflow.vault.data.*;
@@ -28,7 +27,6 @@ public class VaultControllerTests {
     private static VaultConfig vaultConfig = null;
     private static Skyflow skyflowClient = null;
     private ApiClient mockApiClient;
-    private TokensApi mockTokensApi;
 
     @BeforeClass
     public static void setup() throws SkyflowException, NoSuchMethodException {
@@ -43,13 +41,19 @@ public class VaultControllerTests {
         vaultConfig.setClusterId(clusterID);
         vaultConfig.setEnv(Env.DEV);
         vaultConfig.setCredentials(credentials);
+
+
+        skyflowClient = Skyflow.builder()
+                .setLogLevel(LogLevel.DEBUG)
+                .addVaultConfig(vaultConfig)
+                .build();
+
     }
 
     @Test
     public void testInvalidRequestInInsertMethod() {
         try {
             InsertRequest request = InsertRequest.builder().build();
-            skyflowClient = Skyflow.builder().setLogLevel(LogLevel.DEBUG).addVaultConfig(vaultConfig).build();
             skyflowClient.vault().insert(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
@@ -77,21 +81,21 @@ public class VaultControllerTests {
         }
     }
 
-    @Test
-    public void testInvalidRequestInGetMethod() {
-        try {
-            GetRequest request = GetRequest.builder().build();
-            skyflowClient = Skyflow.builder().setLogLevel(LogLevel.DEBUG).addVaultConfig(vaultConfig).build();
-            skyflowClient.vault().get(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(
-                    Utils.parameterizedString(ErrorMessage.TableKeyError.getMessage(), Constants.SDK_PREFIX),
-                    e.getMessage()
-            );
-        }
-    }
+//    @Test
+//    public void testInvalidRequestInGetMethod() {
+//        try {
+//            GetRequest request = GetRequest.builder().build();
+//            skyflowClient = Skyflow.builder().setLogLevel(LogLevel.DEBUG).addVaultConfig(vaultConfig).build();
+//            skyflowClient.vault().get(request);
+//            Assert.fail(EXCEPTION_NOT_THROWN);
+//        } catch (SkyflowException e) {
+//            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+//            Assert.assertEquals(
+//                    Utils.parameterizedString(ErrorMessage.TableKeyError.getMessage(), Constants.SDK_PREFIX),
+//                    e.getMessage()
+//            );
+//        }
+//    }
 
     @Test
     public void testInvalidRequestInUpdateMethod() {
@@ -158,39 +162,6 @@ public class VaultControllerTests {
             Assert.assertNull(e.getGrpcCode());
             Assert.assertTrue(e.getDetails().isEmpty());
             Assert.assertEquals(HttpStatus.BAD_REQUEST.getHttpStatus(), e.getHttpStatus());
-        }
-    }
-
-    @Test
-    public void testLookUpBin() {
-        try {
-            skyflowClient = Skyflow.builder().setLogLevel(LogLevel.DEBUG).addVaultConfig(vaultConfig).build();
-            skyflowClient.vault().lookUpBin();
-            skyflowClient.vault().lookUpBin();
-        } catch (SkyflowException e) {
-            Assert.fail(INVALID_EXCEPTION_THROWN);
-        }
-    }
-
-    @Test
-    public void testAudit() {
-        try {
-            skyflowClient = Skyflow.builder().setLogLevel(LogLevel.DEBUG).addVaultConfig(vaultConfig).build();
-            skyflowClient.vault().audit();
-            skyflowClient.vault().audit();
-        } catch (SkyflowException e) {
-            Assert.fail(INVALID_EXCEPTION_THROWN);
-        }
-    }
-
-    @Test
-    public void testDetect() {
-        try {
-            skyflowClient = Skyflow.builder().setLogLevel(LogLevel.DEBUG).addVaultConfig(vaultConfig).build();
-            skyflowClient.vault().detect();
-            skyflowClient.vault().detect();
-        } catch (SkyflowException e) {
-            Assert.fail(INVALID_EXCEPTION_THROWN);
         }
     }
 

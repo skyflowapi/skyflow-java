@@ -4,23 +4,24 @@ import com.google.gson.*;
 import com.skyflow.VaultClient;
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
-import com.skyflow.enums.RedactionType;
 import com.skyflow.errors.SkyflowException;
-import com.skyflow.generated.rest.ApiException;
-import com.skyflow.generated.rest.ApiResponse;
-import com.skyflow.generated.rest.models.*;
+import com.skyflow.generated.rest.core.ApiClientApiException;
+import com.skyflow.generated.rest.resources.query.requests.QueryServiceExecuteQueryBody;
+import com.skyflow.generated.rest.resources.records.requests.RecordServiceBatchOperationBody;
+import com.skyflow.generated.rest.resources.records.requests.RecordServiceBulkDeleteRecordBody;
+import com.skyflow.generated.rest.resources.records.requests.RecordServiceInsertRecordBody;
+import com.skyflow.generated.rest.resources.records.requests.RecordServiceUpdateRecordBody;
+import com.skyflow.generated.rest.resources.tokens.requests.V1DetokenizePayload;
+import com.skyflow.generated.rest.resources.tokens.requests.V1TokenizePayload;
+import com.skyflow.generated.rest.types.*;
 import com.skyflow.logs.ErrorLogs;
 import com.skyflow.logs.InfoLogs;
-import com.skyflow.utils.Constants;
 import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.utils.validations.Validations;
 import com.skyflow.vault.data.*;
 import com.skyflow.vault.tokens.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public final class VaultController extends VaultClient {
     private static final Gson gson = new GsonBuilder().serializeNulls().create();
@@ -62,7 +63,7 @@ public final class VaultController extends VaultClient {
 
     private static synchronized HashMap<String, Object> getFormattedBulkInsertRecord(V1RecordMetaProperties record) {
         HashMap<String, Object> insertRecord = new HashMap<>();
-        String skyflowId = record.getSkyflowId();
+        String skyflowId = String.valueOf(record.getSkyflowId());
         Object tokens = record.getTokens();
         insertRecord.put("skyflowId", skyflowId);
         if (tokens != null) {
@@ -73,22 +74,22 @@ public final class VaultController extends VaultClient {
         return insertRecord;
     }
 
-    private static synchronized HashMap<String, Object> getFormattedGetRecord(V1FieldRecords record) {
-        HashMap<String, Object> getRecord = new HashMap<>();
-        Object fields = record.getFields();
-        Object tokens = record.getTokens();
-        if (fields != null) {
-            String fieldsString = gson.toJson(fields);
-            JsonObject fieldsObject = JsonParser.parseString(fieldsString).getAsJsonObject();
-            getRecord.putAll(fieldsObject.asMap());
-        } else if (tokens != null) {
-            String tokensString = gson.toJson(tokens);
-            JsonObject tokensObject = JsonParser.parseString(tokensString).getAsJsonObject();
-            getRecord.putAll(tokensObject.asMap());
-        }
-        return getRecord;
-    }
-
+//    private static synchronized HashMap<String, Object> getFormattedGetRecord(V1FieldRecords record) {
+//        HashMap<String, Object> getRecord = new HashMap<>();
+//        Object fields = record.getFields();
+//        Object tokens = record.getTokens();
+//        if (fields != null) {
+//            String fieldsString = gson.toJson(fields);
+//            JsonObject fieldsObject = JsonParser.parseString(fieldsString).getAsJsonObject();
+//            getRecord.putAll(fieldsObject.asMap());
+//        } else if (tokens != null) {
+//            String tokensString = gson.toJson(tokens);
+//            JsonObject tokensObject = JsonParser.parseString(tokensString).getAsJsonObject();
+//            getRecord.putAll(tokensObject.asMap());
+//        }
+//        return getRecord;
+//    }
+//
     private static synchronized HashMap<String, Object> getFormattedUpdateRecord(V1UpdateRecordResponse record) {
         HashMap<String, Object> updateTokens = new HashMap<>();
         Object tokens = record.getTokens();
@@ -114,7 +115,7 @@ public final class VaultController extends VaultClient {
     public InsertResponse insert(InsertRequest insertRequest) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.INSERT_TRIGGERED.getLog());
         V1InsertRecordResponse bulkInsertResult = null;
-        ApiResponse<V1BatchOperationResponse> batchInsertResult = null;
+        V1BatchOperationResponse batchInsertResult = null;
         ArrayList<HashMap<String, Object>> insertedFields = new ArrayList<>();
         ArrayList<HashMap<String, Object>> errorFields = new ArrayList<>();
         Boolean continueOnError = insertRequest.getContinueOnError();
@@ -124,19 +125,22 @@ public final class VaultController extends VaultClient {
             setBearerToken();
             if (continueOnError) {
                 RecordServiceBatchOperationBody insertBody = super.getBatchInsertRequestBody(insertRequest);
-                batchInsertResult = super.getRecordsApi().recordServiceBatchOperationWithHttpInfo(super.getVaultConfig().getVaultId(), insertBody);
+                batchInsertResult = super.getRecordsApi().recordServiceBatchOperation(super.getVaultConfig().getVaultId(), insertBody);
                 LogUtil.printInfoLog(InfoLogs.INSERT_REQUEST_RESOLVED.getLog());
-                Map<String, List<String>> responseHeaders = batchInsertResult.getHeaders();
-                String requestId = responseHeaders.get(Constants.REQUEST_ID_HEADER_KEY).get(0);
-                List<Object> records = batchInsertResult.getData().getResponses();
-                for (int index = 0; index < records.size(); index++) {
-                    Object record = records.get(index);
-                    HashMap<String, Object> insertRecord = getFormattedBatchInsertRecord(record, index);
-                    if (insertRecord.containsKey("skyflowId")) {
-                        insertedFields.add(insertRecord);
-                    } else {
-                        insertRecord.put("requestId", requestId);
-                        errorFields.add(insertRecord);
+                Optional<List<Map<String, Object>>> records = batchInsertResult.getResponses();
+
+                if (records.isPresent()) {
+                    List<Map<String, Object>> recordList = records.get();
+
+                    for (int index = 0; index < recordList.size(); index++) {
+                        Map<String, Object> record = recordList.get(index);
+                        HashMap<String, Object> insertRecord = getFormattedBatchInsertRecord(record, index);
+
+                        if (insertRecord.containsKey("skyflowId")) {
+                            insertedFields.add(insertRecord);
+                        } else {
+                            errorFields.add(insertRecord);
+                        }
                     }
                 }
             } else {
@@ -144,17 +148,17 @@ public final class VaultController extends VaultClient {
                 bulkInsertResult = super.getRecordsApi().recordServiceInsertRecord(
                         super.getVaultConfig().getVaultId(), insertRequest.getTable(), insertBody);
                 LogUtil.printInfoLog(InfoLogs.INSERT_REQUEST_RESOLVED.getLog());
-                List<V1RecordMetaProperties> records = bulkInsertResult.getRecords();
-                if (records != null) {
-                    for (V1RecordMetaProperties record : records) {
+                Optional<List<V1RecordMetaProperties>> records = bulkInsertResult.getRecords();
+                if (records.isPresent()) {
+                    for (V1RecordMetaProperties record : records.get()) {
                         HashMap<String, Object> insertRecord = getFormattedBulkInsertRecord(record);
                         insertedFields.add(insertRecord);
                     }
                 }
             }
-        } catch (ApiException e) {
+        } catch (ApiClientApiException e) {
             LogUtil.printErrorLog(ErrorLogs.INSERT_RECORDS_REJECTED.getLog());
-            throw new SkyflowException(e.getCode(), e, e.getResponseHeaders(), e.getResponseBody());
+            throw e;
         }
         LogUtil.printInfoLog(InfoLogs.INSERT_SUCCESS.getLog());
         return new InsertResponse(insertedFields, errorFields);
@@ -162,7 +166,7 @@ public final class VaultController extends VaultClient {
 
     public DetokenizeResponse detokenize(DetokenizeRequest detokenizeRequest) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.DETOKENIZE_TRIGGERED.getLog());
-        ApiResponse<V1DetokenizeResponse> result = null;
+        V1DetokenizeResponse result = null;
         ArrayList<DetokenizeRecordResponse> detokenizedFields = new ArrayList<>();
         ArrayList<DetokenizeRecordResponse> errorRecords = new ArrayList<>();
         try {
@@ -170,16 +174,18 @@ public final class VaultController extends VaultClient {
             Validations.validateDetokenizeRequest(detokenizeRequest);
             setBearerToken();
             V1DetokenizePayload payload = super.getDetokenizePayload(detokenizeRequest);
-            result = super.getTokensApi().recordServiceDetokenizeWithHttpInfo(super.getVaultConfig().getVaultId(), payload);
+            result = super.getTokensApi().recordServiceDetokenize(super.getVaultConfig().getVaultId(), payload);
             LogUtil.printInfoLog(InfoLogs.DETOKENIZE_REQUEST_RESOLVED.getLog());
-            Map<String, List<String>> responseHeaders = result.getHeaders();
-            String requestId = responseHeaders.get(Constants.REQUEST_ID_HEADER_KEY).get(0);
-            List<V1DetokenizeRecordResponse> records = result.getData().getRecords();
+//            Map<String, List<String>> responseHeaders = result.getHeaders();
+//            String requestId = responseHeaders.get(Constants.REQUEST_ID_HEADER_KEY).get(0);
+            Optional<List<V1DetokenizeRecordResponse>> records = result.getRecords();
 
-            if (records != null) {
-                for (V1DetokenizeRecordResponse record : records) {
-                    if (record.getError() != null) {
-                        DetokenizeRecordResponse recordResponse = new DetokenizeRecordResponse(record, requestId);
+            if (records.isPresent()) {
+                List<V1DetokenizeRecordResponse> recordList = records.get();
+
+                for (V1DetokenizeRecordResponse record : recordList) {
+                    if (record.getError().isPresent()) {
+                        DetokenizeRecordResponse recordResponse = new DetokenizeRecordResponse(record, "requestId");
                         errorRecords.add(recordResponse);
                     } else {
                         DetokenizeRecordResponse recordResponse = new DetokenizeRecordResponse(record);
@@ -187,9 +193,10 @@ public final class VaultController extends VaultClient {
                     }
                 }
             }
-        } catch (ApiException e) {
+        } catch (ApiClientApiException e) {
             LogUtil.printErrorLog(ErrorLogs.DETOKENIZE_REQUEST_REJECTED.getLog());
-            throw new SkyflowException(e.getCode(), e, e.getResponseHeaders(), e.getResponseBody());
+//            throw new SkyflowException(e.getCode(), e, e.getResponseHeaders(), e.getResponseBody());
+            throw e;
         }
 
         if (!errorRecords.isEmpty()) {
@@ -200,44 +207,44 @@ public final class VaultController extends VaultClient {
         return new DetokenizeResponse(detokenizedFields, errorRecords);
     }
 
-    public GetResponse get(GetRequest getRequest) throws SkyflowException {
-        LogUtil.printInfoLog(InfoLogs.GET_TRIGGERED.getLog());
-        V1BulkGetRecordResponse result = null;
-        ArrayList<HashMap<String, Object>> data = new ArrayList<>();
-        ArrayList<HashMap<String, Object>> errors = new ArrayList<>();
-        try {
-            LogUtil.printInfoLog(InfoLogs.VALIDATE_GET_REQUEST.getLog());
-            Validations.validateGetRequest(getRequest);
-            setBearerToken();
-            RedactionType redactionType = getRequest.getRedactionType();
-            result = super.getRecordsApi().recordServiceBulkGetRecord(
-                    super.getVaultConfig().getVaultId(),
-                    getRequest.getTable(),
-                    getRequest.getIds(),
-                    redactionType != null ? redactionType.toString() : null,
-                    getRequest.getReturnTokens(),
-                    getRequest.getFields(),
-                    getRequest.getOffset(),
-                    getRequest.getLimit(),
-                    getRequest.getDownloadURL(),
-                    getRequest.getColumnName(),
-                    getRequest.getColumnValues(),
-                    getRequest.getOrderBy()
-            );
-            LogUtil.printInfoLog(InfoLogs.GET_REQUEST_RESOLVED.getLog());
-            List<V1FieldRecords> records = result.getRecords();
-            if (records != null) {
-                for (V1FieldRecords record : records) {
-                    data.add(getFormattedGetRecord(record));
-                }
-            }
-        } catch (ApiException e) {
-            LogUtil.printErrorLog(ErrorLogs.GET_REQUEST_REJECTED.getLog());
-            throw new SkyflowException(e.getCode(), e, e.getResponseHeaders(), e.getResponseBody());
-        }
-        LogUtil.printInfoLog(InfoLogs.GET_SUCCESS.getLog());
-        return new GetResponse(data, errors);
-    }
+//    public GetResponse get(GetRequest getRequest) throws SkyflowException {
+//        LogUtil.printInfoLog(InfoLogs.GET_TRIGGERED.getLog());
+//        V1BulkGetRecordResponse result = null;
+//        ArrayList<HashMap<String, Object>> data = new ArrayList<>();
+//        ArrayList<HashMap<String, Object>> errors = new ArrayList<>();
+//        try {
+//            LogUtil.printInfoLog(InfoLogs.VALIDATE_GET_REQUEST.getLog());
+//            Validations.validateGetRequest(getRequest);
+//            setBearerToken();
+//            RedactionType redactionType = getRequest.getRedactionType();
+//            result = super.getRecordsApi().recordServiceBulkGetRecord(
+//                    super.getVaultConfig().getVaultId(),
+//                    getRequest.getTable(),
+//                    getRequest.getIds(),
+//                    redactionType != null ? redactionType.toString() : null,
+//                    getRequest.getReturnTokens(),
+//                    getRequest.getFields(),
+//                    getRequest.getOffset(),
+//                    getRequest.getLimit(),
+//                    getRequest.getDownloadURL(),
+//                    getRequest.getColumnName(),
+//                    getRequest.getColumnValues(),
+//                    getRequest.getOrderBy()
+//            );
+//            LogUtil.printInfoLog(InfoLogs.GET_REQUEST_RESOLVED.getLog());
+//            List<V1FieldRecords> records = result.getRecords();
+//            if (records != null) {
+//                for (V1FieldRecords record : records) {
+//                    data.add(getFormattedGetRecord(record));
+//                }
+//            }
+//        } catch (ApiException e) {
+//            LogUtil.printErrorLog(ErrorLogs.GET_REQUEST_REJECTED.getLog());
+//            throw new SkyflowException(e.getCode(), e, e.getResponseHeaders(), e.getResponseBody());
+//        }
+//        LogUtil.printInfoLog(InfoLogs.GET_SUCCESS.getLog());
+//        return new GetResponse(data, errors);
+//    }
 
     public UpdateResponse update(UpdateRequest updateRequest) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.UPDATE_TRIGGERED.getLog());
@@ -256,11 +263,12 @@ public final class VaultController extends VaultClient {
                     updateBody
             );
             LogUtil.printInfoLog(InfoLogs.UPDATE_REQUEST_RESOLVED.getLog());
-            skyflowId = result.getSkyflowId();
+            skyflowId = String.valueOf(result.getSkyflowId());
             tokensMap = getFormattedUpdateRecord(result);
-        } catch (ApiException e) {
+        } catch (ApiClientApiException e) {
             LogUtil.printErrorLog(ErrorLogs.UPDATE_REQUEST_REJECTED.getLog());
-            throw new SkyflowException(e.getCode(), e, e.getResponseHeaders(), e.getResponseBody());
+//            throw new SkyflowException(e.getCode(), e, e.getResponseHeaders(), e.getResponseBody());
+            throw e;
         }
         LogUtil.printInfoLog(InfoLogs.UPDATE_SUCCESS.getLog());
         return new UpdateResponse(skyflowId, tokensMap);
@@ -273,19 +281,19 @@ public final class VaultController extends VaultClient {
             LogUtil.printInfoLog(InfoLogs.VALIDATING_DELETE_REQUEST.getLog());
             Validations.validateDeleteRequest(deleteRequest);
             setBearerToken();
-            RecordServiceBulkDeleteRecordBody deleteBody = new RecordServiceBulkDeleteRecordBody();
-            for (String id : deleteRequest.getIds()) {
-                deleteBody.addSkyflowIdsItem(id);
-            }
+            RecordServiceBulkDeleteRecordBody deleteBody = RecordServiceBulkDeleteRecordBody.builder().skyflowIds(deleteRequest.getIds())
+                                                                    .build();
+
             result = super.getRecordsApi().recordServiceBulkDeleteRecord(
                     super.getVaultConfig().getVaultId(), deleteRequest.getTable(), deleteBody);
             LogUtil.printInfoLog(InfoLogs.DELETE_REQUEST_RESOLVED.getLog());
-        } catch (ApiException e) {
+        } catch (ApiClientApiException e) {
             LogUtil.printErrorLog(ErrorLogs.DELETE_REQUEST_REJECTED.getLog());
-            throw new SkyflowException(e.getCode(), e, e.getResponseHeaders(), e.getResponseBody());
+//            throw new SkyflowException(e.getCode(), e, e.getResponseHeaders(), e.getResponseBody());
+            throw e;
         }
         LogUtil.printInfoLog(InfoLogs.DELETE_SUCCESS.getLog());
-        return new DeleteResponse((ArrayList<String>) result.getRecordIDResponse());
+        return new DeleteResponse(result.getRecordIdResponse());
     }
 
     public Object uploadFile(Object uploadFileRequest) {
@@ -301,16 +309,18 @@ public final class VaultController extends VaultClient {
             Validations.validateQueryRequest(queryRequest);
             setBearerToken();
             result = super.getQueryApi().queryServiceExecuteQuery(
-                    super.getVaultConfig().getVaultId(), new QueryServiceExecuteQueryBody().query(queryRequest.getQuery()));
+                    super.getVaultConfig().getVaultId(), QueryServiceExecuteQueryBody.builder().query(queryRequest.getQuery()).build());
             LogUtil.printInfoLog(InfoLogs.QUERY_REQUEST_RESOLVED.getLog());
-            if (result.getRecords() != null) {
-                for (V1FieldRecords record : result.getRecords()) {
+            if (result.getRecords().isPresent()) {
+                List<V1FieldRecords> records = result.getRecords().get(); // Extract the List from Optional
+                for (V1FieldRecords record : records) {
                     fields.add(getFormattedQueryRecord(record));
                 }
             }
-        } catch (ApiException e) {
+        } catch (ApiClientApiException e) {
             LogUtil.printErrorLog(ErrorLogs.QUERY_REQUEST_REJECTED.getLog());
-            throw new SkyflowException(e.getCode(), e, e.getResponseHeaders(), e.getResponseBody());
+//            throw new SkyflowException(e.getCode(), e, e.getResponseHeaders(), e.getResponseBody());
+            throw  e;
         }
         LogUtil.printInfoLog(InfoLogs.QUERY_SUCCESS.getLog());
         return new QueryResponse(fields);
@@ -327,39 +337,20 @@ public final class VaultController extends VaultClient {
             V1TokenizePayload payload = super.getTokenizePayload(tokenizeRequest);
             result = super.getTokensApi().recordServiceTokenize(super.getVaultConfig().getVaultId(), payload);
             LogUtil.printInfoLog(InfoLogs.TOKENIZE_REQUEST_RESOLVED.getLog());
-            if (result != null && result.getRecords().size() > 0) {
-                for (V1TokenizeRecordResponse response : result.getRecords()) {
-                    if (response.getToken() != null) {
-                        list.add(response.getToken());
+            if (result != null && result.getRecords().isPresent() && !result.getRecords().get().isEmpty()) {
+                for (V1TokenizeRecordResponse response : result.getRecords().get()) {
+                    if (response.getToken().isPresent()) {
+                        list.add(response.getToken().get());
                     }
                 }
             }
-        } catch (ApiException e) {
+        } catch (ApiClientApiException e) {
             LogUtil.printErrorLog(ErrorLogs.TOKENIZE_REQUEST_REJECTED.getLog());
-            throw new SkyflowException(e.getCode(), e, e.getResponseHeaders(), e.getResponseBody());
+//            throw new SkyflowException(e.getCode(), e, e.getResponseHeaders(), e.getResponseBody());
+            throw e;
         }
         LogUtil.printInfoLog(InfoLogs.TOKENIZE_SUCCESS.getLog());
         return new TokenizeResponse(list);
     }
 
-    public BinLookupController lookUpBin() {
-        if (this.binLookupController == null) {
-            this.binLookupController = new BinLookupController(super.getApiClient());
-        }
-        return this.binLookupController;
-    }
-
-    public AuditController audit() {
-        if (this.auditController == null) {
-            this.auditController = new AuditController(super.getApiClient());
-        }
-        return this.auditController;
-    }
-
-    public DetectController detect() {
-        if (this.detectController == null) {
-            this.detectController = new DetectController(super.getApiClient());
-        }
-        return this.detectController;
-    }
 }
