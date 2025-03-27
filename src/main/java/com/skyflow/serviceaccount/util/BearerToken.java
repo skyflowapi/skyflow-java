@@ -32,8 +32,6 @@ import java.util.Objects;
 
 public class BearerToken {
     private static final ApiClientBuilder apiClientBuilder = new ApiClientBuilder();
-    private static ApiClient apiClient;
-    private static AuthenticationClient authenticationApi;
     private final File credentialsFile;
     private final String credentialsString;
     private final String ctx;
@@ -128,8 +126,8 @@ public class BearerToken {
 
             String basePath = Utils.getBaseURL(tokenURI.getAsString());
             apiClientBuilder.url(basePath);
-            apiClient = apiClientBuilder.token("token").build();
-            authenticationApi = apiClient.authentication();
+            ApiClient apiClient = apiClientBuilder.token("token").build();
+            AuthenticationClient authenticationApi = apiClient.authentication();
 
             V1GetAuthTokenRequest._FinalStage authTokenBuilder = V1GetAuthTokenRequest.builder().grantType(Constants.GRANT_TYPE).assertion(signedUserJWT);
 

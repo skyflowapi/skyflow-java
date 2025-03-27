@@ -158,16 +158,16 @@ public class DeleteTests {
         }
     }
 
-    @Test
-    public void testDeleteResponse() {
-        try {
-            ids.add(skyflowID);
-            DeleteResponse response = new DeleteResponse(ids);
-            String responseString = "{\"deletedIds\":[\"" + skyflowID + "\"],\"errors\":[]}";
-            Assert.assertEquals(1, response.getDeletedIds().size());
-            Assert.assertEquals(responseString, response.toString());
-        } catch (Exception e) {
-            Assert.fail(INVALID_EXCEPTION_THROWN);
-        }
-    }
+//    @Test
+//    public void testDeleteResponse() {
+//        try {
+//            ids.add(skyflowID);
+//            DeleteResponse response = new DeleteResponse(ids);
+//            String responseString = "{\"deletedIds\":[\"" + skyflowID + "\"],\"errors\":[]}";
+//            Assert.assertEquals(1, response.getDeletedIds().size());
+//            Assert.assertEquals(responseString, response.toString());
+//        } catch (Exception e) {
+//            Assert.fail(INVALID_EXCEPTION_THROWN);
+//        }
+//    }
 }

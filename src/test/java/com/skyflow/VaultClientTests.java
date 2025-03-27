@@ -4,11 +4,13 @@ import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.Env;
 import com.skyflow.enums.TokenMode;
+import com.skyflow.generated.rest.resources.records.RecordsClient;
 import com.skyflow.generated.rest.resources.records.requests.RecordServiceBatchOperationBody;
 import com.skyflow.generated.rest.resources.records.requests.RecordServiceInsertRecordBody;
 import com.skyflow.generated.rest.resources.records.requests.RecordServiceUpdateRecordBody;
 import com.skyflow.generated.rest.resources.tokens.requests.V1DetokenizePayload;
 import com.skyflow.generated.rest.resources.tokens.requests.V1TokenizePayload;
+import com.skyflow.generated.rest.types.V1Byot;
 import com.skyflow.vault.data.InsertRequest;
 import com.skyflow.vault.data.UpdateRequest;
 import com.skyflow.vault.tokens.ColumnValue;
@@ -70,9 +72,26 @@ public class VaultClientTests {
     @Test
     public void testVaultClientGetRecordsAPI() {
         try {
-            Assert.assertNotNull(vaultClient.getRecordsApi());
+            Dotenv dotenv = Dotenv.load();
+            String bearerToken = dotenv.get("TEST_REUSABLE_TOKEN");
+            if (bearerToken == null) {
+                Assert.fail("TEST_REUSABLE_TOKEN not set in environment variables");
+            }
+
+            Credentials credentials = new Credentials();
+            credentials.setCredentialsString("{\"bearer_token\": \"" + bearerToken + "\"}");
+            vaultConfig.setCredentials(credentials);
+            vaultClient.updateVaultConfig();
+            vaultClient.setBearerToken();
+
+            Assert.assertNotNull("ApiClient should not be null after setting the bearer token", vaultClient.getRecordsApi());
+
+            RecordsClient recordsClient = vaultClient.getRecordsApi();
+            Assert.assertNotNull("RecordsClient should not be null", recordsClient);
         } catch (Exception e) {
-            Assert.fail(INVALID_EXCEPTION_THROWN);
+
+            e.printStackTrace();
+            Assert.fail("Should not have thrown any exception: " + e.getMessage());
         }
     }
 
@@ -150,7 +169,7 @@ public class VaultClientTests {
                     .build();
             RecordServiceInsertRecordBody body1 = vaultClient.getBulkInsertRequestBody(insertRequest1);
             Assert.assertTrue(body1.getTokenization().get());
-            Assert.assertEquals("ENABLE", body1.getByot());
+            Assert.assertEquals(V1Byot.ENABLE, body1.getByot().get());
             Assert.assertEquals(2, body1.getRecords().get().size());
 
             InsertRequest insertRequest2 = InsertRequest.builder()

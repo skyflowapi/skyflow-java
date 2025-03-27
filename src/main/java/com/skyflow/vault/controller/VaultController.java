@@ -25,15 +25,9 @@ import java.util.*;
 
 public final class VaultController extends VaultClient {
     private static final Gson gson = new GsonBuilder().serializeNulls().create();
-    private DetectController detectController;
-    private AuditController auditController;
-    private BinLookupController binLookupController;
 
     public VaultController(VaultConfig vaultConfig, Credentials credentials) {
         super(vaultConfig, credentials);
-        this.auditController = null;
-        this.binLookupController = null;
-        this.detectController = null;
     }
 
     private static synchronized HashMap<String, Object> getFormattedBatchInsertRecord(Object record, int requestIndex) {
