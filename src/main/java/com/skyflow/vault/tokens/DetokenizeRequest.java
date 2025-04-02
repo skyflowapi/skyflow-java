@@ -1,7 +1,5 @@
 package com.skyflow.vault.tokens;
 
-import com.skyflow.enums.RedactionType;
-
 import java.util.ArrayList;
 
 public class DetokenizeRequest {
@@ -15,40 +13,40 @@ public class DetokenizeRequest {
         return new DetokenizeRequestBuilder();
     }
 
-    public ArrayList<String> getTokens() {
-        return this.builder.tokens;
-    }
-
-    public RedactionType getRedactionType() {
-        return this.builder.redactionType;
+    public ArrayList<DetokenizeData> getDetokenizeData() {
+        return this.builder.detokenizeData;
     }
 
     public Boolean getContinueOnError() {
         return this.builder.continueOnError;
     }
 
+    public Boolean getDownloadURL() {
+        return this.builder.downloadURL;
+    }
+
     public static final class DetokenizeRequestBuilder {
-        private ArrayList<String> tokens;
-        private RedactionType redactionType;
+        private ArrayList<DetokenizeData> detokenizeData;
         private Boolean continueOnError;
+        private Boolean downloadURL;
 
         private DetokenizeRequestBuilder() {
-            this.redactionType = RedactionType.PLAIN_TEXT;
             this.continueOnError = false;
+            this.downloadURL = false;
         }
 
-        public DetokenizeRequestBuilder tokens(ArrayList<String> tokens) {
-            this.tokens = tokens;
-            return this;
-        }
-
-        public DetokenizeRequestBuilder redactionType(RedactionType redactionType) {
-            this.redactionType = redactionType == null ? RedactionType.PLAIN_TEXT : redactionType;
+        public DetokenizeRequestBuilder detokenizeData(ArrayList<DetokenizeData> detokenizeData) {
+            this.detokenizeData = detokenizeData;
             return this;
         }
 
         public DetokenizeRequestBuilder continueOnError(Boolean continueOnError) {
             this.continueOnError = continueOnError != null && continueOnError;
+            return this;
+        }
+
+        public DetokenizeRequestBuilder downloadURL(Boolean downloadURL) {
+            this.downloadURL = downloadURL;
             return this;
         }
 

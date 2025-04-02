@@ -18,6 +18,7 @@ import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.vault.connection.InvokeConnectionRequest;
 import com.skyflow.vault.data.*;
 import com.skyflow.vault.tokens.ColumnValue;
+import com.skyflow.vault.tokens.DetokenizeData;
 import com.skyflow.vault.tokens.DetokenizeRequest;
 import com.skyflow.vault.tokens.TokenizeRequest;
 
@@ -212,26 +213,26 @@ public class Validations {
     }
 
     public static void validateDetokenizeRequest(DetokenizeRequest detokenizeRequest) throws SkyflowException {
-        ArrayList<String> tokens = detokenizeRequest.getTokens();
-        if (tokens == null) {
+        ArrayList<DetokenizeData> detokenizeData = detokenizeRequest.getDetokenizeData();
+        if (detokenizeData == null) {
             LogUtil.printErrorLog(Utils.parameterizedString(
-                    ErrorLogs.TOKENS_REQUIRED.getLog(), InterfaceName.DETOKENIZE.getName()
+                    ErrorLogs.DETOKENIZE_DATA_REQUIRED.getLog(), InterfaceName.DETOKENIZE.getName()
             ));
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidDataTokens.getMessage());
-        } else if (tokens.isEmpty()) {
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidDetokenizeData.getMessage());
+        } else if (detokenizeData.isEmpty()) {
             LogUtil.printErrorLog(Utils.parameterizedString(
-                    ErrorLogs.EMPTY_TOKENS.getLog(), InterfaceName.DETOKENIZE.getName()
+                    ErrorLogs.EMPTY_DETOKENIZE_DATA.getLog(), InterfaceName.DETOKENIZE.getName()
             ));
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyDataTokens.getMessage());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyDetokenizeData.getMessage());
         } else {
-            for (int index = 0; index < tokens.size(); index++) {
-                String token = tokens.get(index);
+            for (int index = 0; index < detokenizeData.size(); index++) {
+                String token = detokenizeData.get(index).getToken();
                 if (token == null || token.trim().isEmpty()) {
                     LogUtil.printErrorLog(Utils.parameterizedString(
-                            ErrorLogs.EMPTY_OR_NULL_TOKEN_IN_TOKENS.getLog(),
+                            ErrorLogs.EMPTY_OR_NULL_TOKEN_IN_DETOKENIZE_DATA.getLog(),
                             InterfaceName.DETOKENIZE.getName(), Integer.toString(index)
                     ));
-                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyTokenInDataTokens.getMessage());
+                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyTokenInDetokenizeData.getMessage());
                 }
             }
         }
