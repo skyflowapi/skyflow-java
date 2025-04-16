@@ -3,27 +3,27 @@ package com.skyflow.errors;
 import com.skyflow.utils.Constants;
 
 public enum ErrorMessage {
-    // client initialization
+    // Client initialization
     VaultIdAlreadyInConfigList("%s0 Validation error. VaultId is present in an existing config. Specify a new vaultId in config."),
     VaultIdNotInConfigList("%s0 Validation error. VaultId is missing from the config. Specify the vaultIds from configs."),
     ConnectionIdAlreadyInConfigList("%s0 Validation error. ConnectionId is present in an existing config. Specify a connectionId in config."),
     ConnectionIdNotInConfigList("%s0 Validation error. ConnectionId is missing from the config. Specify the connectionIds from configs."),
     EmptyCredentials("%s0 Validation error. Invalid credentials. Credentials must not be empty."),
 
-    // vault config
+    // Vault config
     InvalidVaultId("%s0 Initialization failed. Invalid vault ID. Specify a valid vault ID."),
     EmptyVaultId("%s0 Initialization failed. Invalid vault ID. Vault ID must not be empty."),
     InvalidClusterId("%s0 Initialization failed. Invalid cluster ID. Specify cluster ID."),
     EmptyClusterId("%s0 Initialization failed. Invalid cluster ID. Specify a valid cluster ID."),
 
-    // connection config
+    // Connection config
     InvalidConnectionId("%s0 Initialization failed. Invalid connection ID. Specify a valid connection ID."),
     EmptyConnectionId("%s0 Initialization failed. Invalid connection ID. Connection ID must not be empty."),
     InvalidConnectionUrl("%s0 Initialization failed. Invalid connection URL. Specify a valid connection URL."),
     EmptyConnectionUrl("%s0 Initialization failed. Invalid connection URL. Connection URL must not be empty."),
     InvalidConnectionUrlFormat("%s0 Initialization failed. Connection URL is not a valid URL. Specify a valid connection URL."),
 
-    // credentials
+    // Credentials
     MultipleTokenGenerationMeansPassed("%s0 Initialization failed. Invalid credentials. Specify only one from 'path', 'credentialsString', 'token' or 'apiKey'."),
     NoTokenGenerationMeansPassed("%s0 Initialization failed. Invalid credentials. Specify any one from 'path', 'credentialsString', 'token' or 'apiKey'."),
     EmptyCredentialFilePath("%s0 Initialization failed. Invalid credentials. Credentials file path must not be empty."),
@@ -35,7 +35,7 @@ public enum ErrorMessage {
     EmptyRoleInRoles("%s0 Initialization failed. Invalid role. Specify a valid role."),
     EmptyContext("%s0 Initialization failed. Invalid context. Specify a valid context."),
 
-    // bearer token generation
+    // Bearer token generation
     FileNotFound("%s0 Initialization failed. Credential file not found at %s1. Verify the file path."),
     FileInvalidJson("%s0 Initialization failed. File at %s1 is not in valid JSON format. Verify the file contents."),
     CredentialsStringInvalidJson("%s0 Initialization failed. Credentials string is not in valid JSON format. Verify the credentials string contents."),
@@ -52,7 +52,7 @@ public enum ErrorMessage {
     MissingAccessToken("%s0 Validation error. Access token not present in the response from bearer token generation. Verify your credentials."),
     MissingTokenType("%s0 Validation error. Token type not present in the response from bearer token generation. Verify your credentials."),
 
-    // insert
+    // Insert
     TableKeyError("%s0 Validation error. 'table' key is missing from the payload. Specify a 'table' key."),
     EmptyTable("%s0 Validation error. 'table' can't be empty. Specify a table."),
     ValuesKeyError("%s0 Validation error. 'values' key is missing from the payload. Specify a 'values' key."),
@@ -72,12 +72,12 @@ public enum ErrorMessage {
     BatchInsertPartialSuccess("%s0 Insert operation completed with partial success."),
     BatchInsertFailure("%s0 Insert operation failed."),
 
-    // detokenize
+    // Detokenize
     InvalidDetokenizeData("%s0 Validation error. Invalid detokenize data. Specify valid detokenize data."),
     EmptyDetokenizeData("%s0 Validation error. Invalid data tokens. Specify at least one data token."),
     EmptyTokenInDetokenizeData("%s0 Validation error. Invalid data tokens. Specify a valid data token."),
 
-    // get interface
+    // Get
     IdsKeyError("%s0 Validation error. 'ids' key is missing from the payload. Specify an 'ids' key."),
     EmptyIds("%s0 Validation error. 'ids' can't be empty. Specify at least one id."),
     EmptyIdInIds("%s0 Validation error. Invalid id in 'ids'. Specify a valid id."),
@@ -99,22 +99,22 @@ public enum ErrorMessage {
     TokenKeyError("%s0 Validation error. 'token' key is missing from the payload. Specify a 'token' key."),
     PartialSuccess("%s0 Validation error. Check 'SkyflowError.data' for details."),
 
-    // update
+    // Update
     DataKeyError("%s0 Validation error. 'data' key is missing from the payload. Specify a 'data' key."),
     EmptyData("%s0 Validation error. 'data' can't be empty. Specify data."),
     SkyflowIdKeyError("%s0 Validation error. 'skyflow_id' is missing from the data payload. Specify a 'skyflow_id'."),
     InvalidSkyflowIdType("%s0 Validation error. Invalid type for 'skyflow_id' in data payload. Specify 'skyflow_id' as a string."),
     EmptySkyflowId("%s0 Validation error. 'skyflow_id' can't be empty. Specify a skyflow id."),
 
-    // query
+    // Query
     QueryKeyError("%s0 Validation error. 'query' key is missing from the payload. Specify a 'query' key."),
     EmptyQuery("%s0 Validation error. 'query' can't be empty. Specify a query"),
 
-    // tokenize
+    // Tokenize
     ColumnValuesKeyErrorTokenize("%s0 Validation error. 'columnValues' key is missing from the payload. Specify a 'columnValues' key."),
     EmptyColumnGroupInColumnValue("%s0 Validation error. Invalid column group in column value. Specify a valid column group."),
 
-    // connection
+    // Connection
     InvalidRequestHeaders("%s0 Validation error. Request headers aren't valid. Specify valid request headers."),
     EmptyRequestHeaders("%s0 Validation error. Request headers are empty. Specify valid request headers."),
     InvalidPathParams("%s0 Validation error. Path parameters aren't valid. Specify valid path parameters."),
@@ -124,6 +124,8 @@ public enum ErrorMessage {
     InvalidRequestBody("%s0 Validation error. Invalid request body. Specify the request body as an object."),
     EmptyRequestBody("%s0 Validation error. Request body can't be empty. Specify a valid request body."),
 
+    // Generic
+    ErrorOccurred("%s0 API error. Error occurred.")
     ;
     private final String message;
 
