@@ -1,66 +1,54 @@
-/*
-	Copyright (c) 2022 Skyflow, Inc. 
-*/
-package com.example;
+package com.skyflow;
 
-import com.skyflow.entities.InsertOptions;
-import com.skyflow.entities.ResponseToken;
-import com.skyflow.entities.SkyflowConfiguration;
-import com.skyflow.entities.TokenProvider;
-import com.skyflow.errors.SkyflowException;
-import com.skyflow.serviceaccount.util.Token;
-import com.skyflow.vault.Skyflow;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
+import com.skyflow.api.ApiClient;
+import com.skyflow.api.resources.flowservice.requests.V1InsertRequest;
+import com.skyflow.api.types.V1InsertRecordData;
+import com.skyflow.api.types.V1InsertResponse;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
 
-public class InsertExample {
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
+public class InsertSample {
     public static void main(String[] args) {
+        // Initialize HTTP client with Bearer token authentication
+        OkHttpClient authClient = new OkHttpClient.Builder()
+                .addInterceptor(chain -> {
+                    Request original = chain.request();
+                    Request requestWithAuth = original.newBuilder()
+                            .header("Authorization", "Bearer " + "<BEARER_TOKEN>")
+                            .build();
+                    return chain.proceed(requestWithAuth);
+                })
+                .build();
+        
+        // Create Skyflow API client with vault URL and auth client
+        ApiClient client = ApiClient.builder().url("<VAULT_URL>").httpClient(authClient).build();
 
-        try {
-            SkyflowConfiguration config = new SkyflowConfiguration("<your_vaultID>",
-                    "<your_vaultURL>", new DemoTokenProvider());
-            Skyflow skyflowClient = Skyflow.init(config);
-            JSONObject records = new JSONObject();
-            JSONArray recordsArray = new JSONArray();
+        // Prepare data for insertion
+        List<V1InsertRecordData> list = new ArrayList<>();
+        Map<String, Object> map = new HashMap<>();
+        
+        // Add record fields to be inserted
+        map.put("<COLUMN_NAME_1>", "<COLUMN_VALUE_1>");
+        map.put("<COLUMN_NAME_2>", "<COLUMN_VALUE_1>");
+        
+        // Create record data object and add to list
+        V1InsertRecordData data = V1InsertRecordData.builder().data(map).build();
+        list.add(data);
+        
+        // Build insert request with vault ID, table name and records
+        V1InsertRequest req = V1InsertRequest.builder()
+            .vaultId("<VAULT_ID>")
+            .tableName("<TABLE_NAME>")
+            .records(list)
+            .build();
 
-            JSONObject record = new JSONObject();
-            record.put("table", "<your_table_name>");
-
-            JSONObject fields = new JSONObject();
-            fields.put("<your_field_name>", "<your_field_value>");
-            record.put("fields", fields);
-            recordsArray.add(record);
-            records.put("records", recordsArray);
-
-            InsertOptions insertOptions = new InsertOptions();
-            JSONObject res = skyflowClient.insert(records, insertOptions);
-
-            System.out.println(res);
-        } catch (SkyflowException e) {
-            e.printStackTrace();
-        }
-
-    }
-
-    static class DemoTokenProvider implements TokenProvider {
-
-        private String bearerToken = null;
-
-        @Override
-        public String getBearerToken() throws Exception {
-            ResponseToken response = null;
-            try {
-                String filePath = "<YOUR_CREDENTIALS_FILE_PATH>";
-                if(Token.isExpired(bearerToken)) {
-                    response = Token.generateBearerToken(filePath);
-                    bearerToken = response.getAccessToken();
-                }
-            } catch (SkyflowException e) {
-                e.printStackTrace();
-            }
-
-            return bearerToken;
-        }
+        // Execute insert operation and print response
+        V1InsertResponse res = client.flowservice().insert(req);
+        System.out.println(res.toString());
     }
 }

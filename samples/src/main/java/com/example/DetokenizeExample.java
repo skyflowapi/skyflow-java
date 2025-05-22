@@ -1,71 +1,61 @@
-/*
-	Copyright (c) 2022 Skyflow, Inc. 
-*/
-package com.example;
+package com.skyflow;
 
-import com.skyflow.entities.RedactionType;
-import com.skyflow.entities.ResponseToken;
-import com.skyflow.entities.SkyflowConfiguration;
-import com.skyflow.entities.TokenProvider;
-import com.skyflow.errors.SkyflowException;
-import com.skyflow.serviceaccount.util.Token;
-import com.skyflow.vault.Skyflow;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
+// Required imports for Skyflow API and HTTP client functionality
+import java.util.ArrayList;
+import java.util.List;
 
+import com.skyflow.api.ApiClient;
+import com.skyflow.api.resources.flowservice.requests.V1DetokenizeRequest;
+import com.skyflow.api.types.V1DetokenizeResponse;
+import com.skyflow.api.types.V1TokenGroupRedactions;
 
-public class DetokenizeExample {
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
 
+/**
+ * Example demonstrating detokenization operations using Skyflow API
+ */
+public class DetokenizeSample {
     public static void main(String[] args) {
+        // Initialize HTTP client with Bearer token authentication for API requests
+        // This client will automatically add the Bearer token to all requests
+        OkHttpClient authClient = new OkHttpClient.Builder()
+                .addInterceptor(chain -> {
+                    Request original = chain.request();
+                    Request requestWithAuth = original.newBuilder()
+                            .header("Authorization", "Bearer " + "<BEARER_TOKEN>")
+                            .build();
+                    return chain.proceed(requestWithAuth);
+                })
+                .build();
+        
+        // Create Skyflow API client with vault URL and auth client
+        ApiClient client = ApiClient.builder().url("<VAULT_URL>").httpClient(authClient).build();
 
-        try {
-            SkyflowConfiguration config = new SkyflowConfiguration(
-                "<your_vaultID>",
-                "<your_vaultURL>", 
-                new DemoTokenProvider()
-            );
-            Skyflow skyflowClient = Skyflow.init(config);
-            JSONObject records = new JSONObject();
-            JSONArray recordsArray = new JSONArray();
+        // Create a list to store tokens that need to be detokenized
+        List<String> tokens  = new ArrayList<>();
+        tokens.add("<TOKEN>");
 
-            JSONObject record1 = new JSONObject();
-            record1.put("token", "<your_token>");
-            record1.put("redaction", RedactionType.MASKED.toString());
+        // Configure redaction settings for token groups
+        List<V1TokenGroupRedactions> red = new ArrayList<>();
+        // Create redaction configuration for specific token group
+        V1TokenGroupRedactions r = V1TokenGroupRedactions.builder()
+            .redaction("<REDACTION_TYPE>")
+            .tokenGroupName("<TOKEN_GROUP_NAME>")
+            .build();
+        red.add(r);
 
-            JSONObject record2 = new JSONObject();
-            record2.put("token", "<your_token>"); // default Redaction "PLAIN_TEXT" will be applied for record2
+        // Build the detokenize request with vault ID, tokens and redaction settings
+        V1DetokenizeRequest req = V1DetokenizeRequest.builder()
+            .vaultId("<VAULT_ID>")
+            .tokens(tokens)
+            .tokenGroupRedactions(red)
+            .build();
 
-            recordsArray.add(record1);
-            recordsArray.add(record2);
-            records.put("records", recordsArray);
+        // Execute the detokenize operation and get the response
+        V1DetokenizeResponse res = client.flowservice().detokenize(req);
 
-            JSONObject response = skyflowClient.detokenize(records);
-            System.out.println(response);
-        } catch (SkyflowException e) {
-            e.printStackTrace();
-            System.out.println(e.getData());
-        }
-
-    }
-
-    static class DemoTokenProvider implements TokenProvider {
-
-        private String bearerToken = null;
-
-        @Override
-        public String getBearerToken() throws Exception {
-            ResponseToken response = null;
-            try {
-                String filePath = "<YOUR_CREDENTIALS_FILE_PATH>";
-                if(Token.isExpired(bearerToken)) {
-                    response = Token.generateBearerToken(filePath);
-                    bearerToken = response.getAccessToken();
-                }
-            } catch (SkyflowException e) {
-                e.printStackTrace();
-            }
-
-            return bearerToken;
-        }
+        // Print the operation result
+        System.out.println("response is" + res);
     }
 }
