@@ -14,7 +14,9 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.skyflow.generated.rest.core.ObjectMappers;
 import com.skyflow.generated.rest.resources.records.types.RecordServiceBulkGetRecordRequestOrderBy;
 import com.skyflow.generated.rest.resources.records.types.RecordServiceBulkGetRecordRequestRedaction;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -22,13 +24,15 @@ import java.util.Optional;
 @JsonInclude(JsonInclude.Include.NON_ABSENT)
 @JsonDeserialize(builder = RecordServiceBulkGetRecordRequest.Builder.class)
 public final class RecordServiceBulkGetRecordRequest {
-    private final Optional<String> skyflowIds;
+    private final Optional<List<String>> skyflowIds;
+
+    private final Optional<List<String>> fields;
+
+    private final Optional<List<String>> columnValues;
 
     private final Optional<RecordServiceBulkGetRecordRequestRedaction> redaction;
 
     private final Optional<Boolean> tokenization;
-
-    private final Optional<String> fields;
 
     private final Optional<String> offset;
 
@@ -38,33 +42,31 @@ public final class RecordServiceBulkGetRecordRequest {
 
     private final Optional<String> columnName;
 
-    private final Optional<String> columnValues;
-
     private final Optional<RecordServiceBulkGetRecordRequestOrderBy> orderBy;
 
     private final Map<String, Object> additionalProperties;
 
     private RecordServiceBulkGetRecordRequest(
-            Optional<String> skyflowIds,
+            Optional<List<String>> skyflowIds,
+            Optional<List<String>> fields,
+            Optional<List<String>> columnValues,
             Optional<RecordServiceBulkGetRecordRequestRedaction> redaction,
             Optional<Boolean> tokenization,
-            Optional<String> fields,
             Optional<String> offset,
             Optional<String> limit,
             Optional<Boolean> downloadUrl,
             Optional<String> columnName,
-            Optional<String> columnValues,
             Optional<RecordServiceBulkGetRecordRequestOrderBy> orderBy,
             Map<String, Object> additionalProperties) {
         this.skyflowIds = skyflowIds;
+        this.fields = fields;
+        this.columnValues = columnValues;
         this.redaction = redaction;
         this.tokenization = tokenization;
-        this.fields = fields;
         this.offset = offset;
         this.limit = limit;
         this.downloadUrl = downloadUrl;
         this.columnName = columnName;
-        this.columnValues = columnValues;
         this.orderBy = orderBy;
         this.additionalProperties = additionalProperties;
     }
@@ -73,8 +75,24 @@ public final class RecordServiceBulkGetRecordRequest {
      * @return <code>skyflow_id</code> values of the records to return, with one value per <code>skyflow_ids</code> URL parameter. For example, <code>?skyflow_ids=abc&amp;skyflow_ids=123</code>.&lt;br /&gt;&lt;br /&gt;If not specified, returns the first 25 records in the table.
      */
     @JsonProperty("skyflow_ids")
-    public Optional<String> getSkyflowIds() {
+    public Optional<List<String>> getSkyflowIds() {
         return skyflowIds;
+    }
+
+    /**
+     * @return Fields to return for the record, with one value per <code>fields</code> URL parameter. For example, <code>?fields=abc&amp;fields=123</code>.&lt;br /&gt;&lt;br /&gt;If not specified, returns all fields.
+     */
+    @JsonProperty("fields")
+    public Optional<List<String>> getFields() {
+        return fields;
+    }
+
+    /**
+     * @return Column values of the records to return, with one value per <code>column_values</code> URL parameter. For example, <code>?column_values=abc&amp;column_values=123</code>.&lt;br /&gt;&lt;br /&gt;<code>column_name</code> is mandatory when providing <code>column_values</code>. If you use column name or column value, you cannot use <code>skyflow_ids</code>. Passing either of these parameters with <code>skyflow_ids</code> returns an error.
+     */
+    @JsonProperty("column_values")
+    public Optional<List<String>> getColumnValues() {
+        return columnValues;
     }
 
     /**
@@ -91,14 +109,6 @@ public final class RecordServiceBulkGetRecordRequest {
     @JsonProperty("tokenization")
     public Optional<Boolean> getTokenization() {
         return tokenization;
-    }
-
-    /**
-     * @return Fields to return for the record, with one value per <code>fields</code> URL parameter. For example, <code>?fields=abc&amp;fields=123</code>.&lt;br /&gt;&lt;br /&gt;If not specified, returns all fields.
-     */
-    @JsonProperty("fields")
-    public Optional<String> getFields() {
-        return fields;
     }
 
     /**
@@ -134,14 +144,6 @@ public final class RecordServiceBulkGetRecordRequest {
     }
 
     /**
-     * @return Column values of the records to return, with one value per <code>column_values</code> URL parameter. For example, <code>?column_values=abc&amp;column_values=123</code>.&lt;br /&gt;&lt;br /&gt;<code>column_name</code> is mandatory when providing <code>column_values</code>. If you use column name or column value, you cannot use <code>skyflow_ids</code>. Passing either of these parameters with <code>skyflow_ids</code> returns an error.
-     */
-    @JsonProperty("column_values")
-    public Optional<String> getColumnValues() {
-        return columnValues;
-    }
-
-    /**
      * @return Order to return records, based on <code>skyflow_id</code> values. To disable, set to <code>NONE</code>.
      */
     @JsonProperty("order_by")
@@ -162,14 +164,14 @@ public final class RecordServiceBulkGetRecordRequest {
 
     private boolean equalTo(RecordServiceBulkGetRecordRequest other) {
         return skyflowIds.equals(other.skyflowIds)
+                && fields.equals(other.fields)
+                && columnValues.equals(other.columnValues)
                 && redaction.equals(other.redaction)
                 && tokenization.equals(other.tokenization)
-                && fields.equals(other.fields)
                 && offset.equals(other.offset)
                 && limit.equals(other.limit)
                 && downloadUrl.equals(other.downloadUrl)
                 && columnName.equals(other.columnName)
-                && columnValues.equals(other.columnValues)
                 && orderBy.equals(other.orderBy);
     }
 
@@ -177,14 +179,14 @@ public final class RecordServiceBulkGetRecordRequest {
     public int hashCode() {
         return Objects.hash(
                 this.skyflowIds,
+                this.fields,
+                this.columnValues,
                 this.redaction,
                 this.tokenization,
-                this.fields,
                 this.offset,
                 this.limit,
                 this.downloadUrl,
                 this.columnName,
-                this.columnValues,
                 this.orderBy);
     }
 
@@ -199,13 +201,15 @@ public final class RecordServiceBulkGetRecordRequest {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static final class Builder {
-        private Optional<String> skyflowIds = Optional.empty();
+        private Optional<List<String>> skyflowIds = Optional.empty();
+
+        private Optional<List<String>> fields = Optional.empty();
+
+        private Optional<List<String>> columnValues = Optional.empty();
 
         private Optional<RecordServiceBulkGetRecordRequestRedaction> redaction = Optional.empty();
 
         private Optional<Boolean> tokenization = Optional.empty();
-
-        private Optional<String> fields = Optional.empty();
 
         private Optional<String> offset = Optional.empty();
 
@@ -214,8 +218,6 @@ public final class RecordServiceBulkGetRecordRequest {
         private Optional<Boolean> downloadUrl = Optional.empty();
 
         private Optional<String> columnName = Optional.empty();
-
-        private Optional<String> columnValues = Optional.empty();
 
         private Optional<RecordServiceBulkGetRecordRequestOrderBy> orderBy = Optional.empty();
 
@@ -226,26 +228,63 @@ public final class RecordServiceBulkGetRecordRequest {
 
         public Builder from(RecordServiceBulkGetRecordRequest other) {
             skyflowIds(other.getSkyflowIds());
+            fields(other.getFields());
+            columnValues(other.getColumnValues());
             redaction(other.getRedaction());
             tokenization(other.getTokenization());
-            fields(other.getFields());
             offset(other.getOffset());
             limit(other.getLimit());
             downloadUrl(other.getDownloadUrl());
             columnName(other.getColumnName());
-            columnValues(other.getColumnValues());
             orderBy(other.getOrderBy());
             return this;
         }
 
         @JsonSetter(value = "skyflow_ids", nulls = Nulls.SKIP)
-        public Builder skyflowIds(Optional<String> skyflowIds) {
+        public Builder skyflowIds(Optional<List<String>> skyflowIds) {
             this.skyflowIds = skyflowIds;
             return this;
         }
 
-        public Builder skyflowIds(String skyflowIds) {
+        public Builder skyflowIds(List<String> skyflowIds) {
             this.skyflowIds = Optional.ofNullable(skyflowIds);
+            return this;
+        }
+
+        public Builder skyflowIds(String skyflowIds) {
+            this.skyflowIds = Optional.of(Collections.singletonList(skyflowIds));
+            return this;
+        }
+
+        @JsonSetter(value = "fields", nulls = Nulls.SKIP)
+        public Builder fields(Optional<List<String>> fields) {
+            this.fields = fields;
+            return this;
+        }
+
+        public Builder fields(List<String> fields) {
+            this.fields = Optional.ofNullable(fields);
+            return this;
+        }
+
+        public Builder fields(String fields) {
+            this.fields = Optional.of(Collections.singletonList(fields));
+            return this;
+        }
+
+        @JsonSetter(value = "column_values", nulls = Nulls.SKIP)
+        public Builder columnValues(Optional<List<String>> columnValues) {
+            this.columnValues = columnValues;
+            return this;
+        }
+
+        public Builder columnValues(List<String> columnValues) {
+            this.columnValues = Optional.ofNullable(columnValues);
+            return this;
+        }
+
+        public Builder columnValues(String columnValues) {
+            this.columnValues = Optional.of(Collections.singletonList(columnValues));
             return this;
         }
 
@@ -268,17 +307,6 @@ public final class RecordServiceBulkGetRecordRequest {
 
         public Builder tokenization(Boolean tokenization) {
             this.tokenization = Optional.ofNullable(tokenization);
-            return this;
-        }
-
-        @JsonSetter(value = "fields", nulls = Nulls.SKIP)
-        public Builder fields(Optional<String> fields) {
-            this.fields = fields;
-            return this;
-        }
-
-        public Builder fields(String fields) {
-            this.fields = Optional.ofNullable(fields);
             return this;
         }
 
@@ -326,17 +354,6 @@ public final class RecordServiceBulkGetRecordRequest {
             return this;
         }
 
-        @JsonSetter(value = "column_values", nulls = Nulls.SKIP)
-        public Builder columnValues(Optional<String> columnValues) {
-            this.columnValues = columnValues;
-            return this;
-        }
-
-        public Builder columnValues(String columnValues) {
-            this.columnValues = Optional.ofNullable(columnValues);
-            return this;
-        }
-
         @JsonSetter(value = "order_by", nulls = Nulls.SKIP)
         public Builder orderBy(Optional<RecordServiceBulkGetRecordRequestOrderBy> orderBy) {
             this.orderBy = orderBy;
@@ -351,14 +368,14 @@ public final class RecordServiceBulkGetRecordRequest {
         public RecordServiceBulkGetRecordRequest build() {
             return new RecordServiceBulkGetRecordRequest(
                     skyflowIds,
+                    fields,
+                    columnValues,
                     redaction,
                     tokenization,
-                    fields,
                     offset,
                     limit,
                     downloadUrl,
                     columnName,
-                    columnValues,
                     orderBy,
                     additionalProperties);
         }
