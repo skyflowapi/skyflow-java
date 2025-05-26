@@ -12,6 +12,7 @@ import com.skyflow.generated.rest.resources.records.RecordsClient;
 import com.skyflow.generated.rest.resources.records.requests.RecordServiceBatchOperationBody;
 import com.skyflow.generated.rest.resources.records.requests.RecordServiceInsertRecordBody;
 import com.skyflow.generated.rest.resources.records.requests.RecordServiceUpdateRecordBody;
+import com.skyflow.generated.rest.resources.strings.StringsClient;
 import com.skyflow.generated.rest.resources.tokens.TokensClient;
 import com.skyflow.generated.rest.resources.tokens.requests.V1DetokenizePayload;
 import com.skyflow.generated.rest.resources.tokens.requests.V1TokenizePayload;
@@ -59,6 +60,10 @@ public class VaultClient {
 
     protected TokensClient getTokensApi() {
         return this.apiClient.tokens();
+    }
+
+    protected StringsClient getDetectTextApi() {
+        return this.apiClient.strings();
     }
 
     protected QueryClient getQueryApi() {

@@ -68,6 +68,9 @@ public enum InfoLogs {
     TOKENIZE_REQUEST_RESOLVED("Tokenize request resolved."),
     TOKENIZE_SUCCESS("Data tokenized."),
 
+    // detect
+    DEIDENTIFY_TEXT_TRIGGERED("DeIdentify text method triggered."),
+
     // Invoke connection interface
     INVOKE_CONNECTION_TRIGGERED("Invoke connection method triggered."),
     VALIDATING_INVOKE_CONNECTION_REQUEST("Validating invoke connection request."),

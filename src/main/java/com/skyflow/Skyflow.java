@@ -1,5 +1,7 @@
 package com.skyflow;
 
+import java.util.LinkedHashMap;
+
 import com.skyflow.config.ConnectionConfig;
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
@@ -14,9 +16,8 @@ import com.skyflow.utils.Utils;
 import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.utils.validations.Validations;
 import com.skyflow.vault.controller.ConnectionController;
+import com.skyflow.vault.controller.DetectController;
 import com.skyflow.vault.controller.VaultController;
-
-import java.util.LinkedHashMap;
 
 public final class Skyflow {
     private final SkyflowClientBuilder builder;
@@ -110,9 +111,14 @@ public final class Skyflow {
         return this.builder.connectionsMap.get(connectionId);
     }
 
+    public DetectController detect(String vaultId) {
+        return this.builder.detectClientsMap.get(vaultId);
+    }
+
     public static final class SkyflowClientBuilder {
         private final LinkedHashMap<String, ConnectionController> connectionsMap;
         private final LinkedHashMap<String, VaultController> vaultClientsMap;
+        private final LinkedHashMap<String, DetectController> detectClientsMap;
         private final LinkedHashMap<String, VaultConfig> vaultConfigMap;
         private final LinkedHashMap<String, ConnectionConfig> connectionConfigMap;
         private Credentials skyflowCredentials;
@@ -120,6 +126,7 @@ public final class Skyflow {
 
         public SkyflowClientBuilder() {
             this.vaultClientsMap = new LinkedHashMap<>();
+            this.detectClientsMap = new LinkedHashMap<>();
             this.vaultConfigMap = new LinkedHashMap<>();
             this.connectionsMap = new LinkedHashMap<>();
             this.connectionConfigMap = new LinkedHashMap<>();
@@ -139,6 +146,7 @@ public final class Skyflow {
             } else {
                 this.vaultConfigMap.put(vaultConfig.getVaultId(), vaultConfig);
                 this.vaultClientsMap.put(vaultConfig.getVaultId(), new VaultController(vaultConfig, this.skyflowCredentials));
+                this.detectClientsMap.put(vaultConfig.getVaultId(), new DetectController(vaultConfig, this.skyflowCredentials));
                 LogUtil.printInfoLog(Utils.parameterizedString(
                         InfoLogs.VAULT_CONTROLLER_INITIALIZED.getLog(), vaultConfig.getVaultId()));
             }

@@ -9,6 +9,7 @@ public enum InterfaceName {
     QUERY("query"),
     TOKENIZE("tokenize"),
     FILE_UPLOAD("file upload"),
+    DETECT("detect"),
     INVOKE_CONNECTION("invoke connection");
 
     private final String interfaceName;
