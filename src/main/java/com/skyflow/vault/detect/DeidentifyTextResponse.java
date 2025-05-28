@@ -5,13 +5,13 @@ import com.google.gson.Gson;
 
 import java.util.List;
 
-public class DeIdentifyTextResponse {
+public class DeidentifyTextResponse {
     private final String processedText;
     private final List<EntityInfo> entities;
     private final int wordCount;
     private final int charCount;
 
-    public DeIdentifyTextResponse(String processedText, List<EntityInfo> entities, int wordCount, int charCount) {
+    public DeidentifyTextResponse(String processedText, List<EntityInfo> entities, int wordCount, int charCount) {
         this.processedText = processedText;
         this.entities = entities;
         this.wordCount = wordCount;

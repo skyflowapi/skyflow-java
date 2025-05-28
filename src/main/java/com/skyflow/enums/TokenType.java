@@ -15,8 +15,13 @@ public enum TokenType {
         return tokenType;
     }
 
+    public String getDefault() {
+        return ENTITY_UNIQUE_COUNTER.getTokenType();
+    }
+
     @Override
     public String toString() {
         return tokenType;
     }
 }
+

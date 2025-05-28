@@ -2,14 +2,13 @@ package com.skyflow.vault.detect;
 
 
 import com.skyflow.enums.DetectEntities;
-import com.skyflow.generated.rest.types.Transformations;
 
 import java.util.List;
 
-public class DeIdentifyTextRequest {
+public class DeidentifyTextRequest {
     private final DeidentifyTextRequestBuilder builder;
 
-    private DeIdentifyTextRequest(DeidentifyTextRequestBuilder builder) {
+    private DeidentifyTextRequest(DeidentifyTextRequestBuilder builder) {
         this.builder = builder;
     }
 
@@ -82,8 +81,8 @@ public class DeIdentifyTextRequest {
             return this;
         }
 
-        public DeIdentifyTextRequest build() {
-            return new DeIdentifyTextRequest(this);
+        public DeidentifyTextRequest build() {
+            return new DeidentifyTextRequest(this);
         }
     }
 }

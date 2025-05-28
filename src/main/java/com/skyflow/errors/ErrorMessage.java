@@ -124,6 +124,11 @@ public enum ErrorMessage {
     InvalidRequestBody("%s0 Validation error. Invalid request body. Specify the request body as an object."),
     EmptyRequestBody("%s0 Validation error. Request body can't be empty. Specify a valid request body."),
 
+    // detect
+    InvalidNullTextInDeIdentify("%s0 Validation error. The text field is required and must not be null. Specify a valid text."),
+    InvalidEmptyTextInDeIdentify("%s0 Validation error. The text field is required string and must not be empty string. Specify a valid text."),
+    InvalidNullTextInReIdentify("%s0 Validation error. The text field is required string and must not be null. Specify a valid text."),
+    InvalidEmptyTextInReIdentify("%s0 Validation error. The text field is required string and must not be empty string. Specify a valid text."),
     ;
     private final String message;
 

@@ -2,6 +2,7 @@ package com.skyflow;
 
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
+import com.skyflow.enums.DetectEntities;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
@@ -13,10 +14,14 @@ import com.skyflow.generated.rest.resources.records.requests.RecordServiceBatchO
 import com.skyflow.generated.rest.resources.records.requests.RecordServiceInsertRecordBody;
 import com.skyflow.generated.rest.resources.records.requests.RecordServiceUpdateRecordBody;
 import com.skyflow.generated.rest.resources.strings.StringsClient;
+import com.skyflow.generated.rest.resources.strings.requests.DeidentifyStringRequest;
+import com.skyflow.generated.rest.resources.strings.requests.ReidentifyStringRequest;
+import com.skyflow.generated.rest.resources.strings.types.ReidentifyStringRequestFormat;
 import com.skyflow.generated.rest.resources.tokens.TokensClient;
 import com.skyflow.generated.rest.resources.tokens.requests.V1DetokenizePayload;
 import com.skyflow.generated.rest.resources.tokens.requests.V1TokenizePayload;
 import com.skyflow.generated.rest.types.*;
+import com.skyflow.generated.rest.types.Transformations;
 import com.skyflow.logs.InfoLogs;
 import com.skyflow.serviceaccount.util.Token;
 import com.skyflow.utils.Constants;
@@ -25,6 +30,7 @@ import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.utils.validations.Validations;
 import com.skyflow.vault.data.InsertRequest;
 import com.skyflow.vault.data.UpdateRequest;
+import com.skyflow.vault.detect.*;
 import com.skyflow.vault.tokens.ColumnValue;
 import com.skyflow.vault.tokens.DetokenizeData;
 import com.skyflow.vault.tokens.DetokenizeRequest;
@@ -32,9 +38,9 @@ import com.skyflow.vault.tokens.TokenizeRequest;
 import io.github.cdimascio.dotenv.Dotenv;
 import io.github.cdimascio.dotenv.DotenvException;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
+
 
 public class VaultClient {
     private final VaultConfig vaultConfig;
@@ -212,6 +218,168 @@ public class VaultClient {
         }
         this.apiClientBuilder.token(token);
         this.apiClient = this.apiClientBuilder.build();
+    }
+
+    protected DeidentifyTextResponse getDeIdentifyTextResponse(DeidentifyStringResponse deidentifyStringResponse) {
+        List<EntityInfo> entities = deidentifyStringResponse.getEntities() != null
+                ? deidentifyStringResponse.getEntities().stream()
+                .map(this::convertDetectedEntityToEntityInfo)
+                .collect(Collectors.toList())
+                : null;
+
+        return new DeidentifyTextResponse(
+                deidentifyStringResponse.getProcessedText(),
+                entities,
+                deidentifyStringResponse.getWordCount(),
+                deidentifyStringResponse.getCharacterCount()
+        );
+    }
+
+    protected DeidentifyStringRequest getDeidentifyStringRequest(DeidentifyTextRequest deIdentifyTextRequest, String vaultId) throws SkyflowException {
+        List<DetectEntities> entities = deIdentifyTextRequest.getEntities();
+
+        List<EntityType> mappedEntityTypes = null;
+        if (entities != null) {
+            mappedEntityTypes = deIdentifyTextRequest.getEntities().stream()
+                    .map(detectEntity -> EntityType.valueOf(detectEntity.name()))
+                    .collect(Collectors.toList());
+        }
+
+        TokenFormat tokenFormat = deIdentifyTextRequest.getTokenFormat();
+
+        Optional<List<EntityType>> vaultToken = Optional.empty();
+        Optional<List<EntityType>> entityTypes = Optional.empty();
+        Optional<List<EntityType>> entityUniqueCounter = Optional.empty();
+        Optional<List<String>> allowRegex = Optional.ofNullable(deIdentifyTextRequest.getAllowRegexList());
+        Optional<List<String>> restrictRegex = Optional.ofNullable(deIdentifyTextRequest.getRestrictRegexList());
+        Optional<Transformations> transformations = Optional.ofNullable(getTransformations(deIdentifyTextRequest.getTransformations()));
+
+        if (tokenFormat != null) {
+            if (tokenFormat.getVaultToken() != null && !tokenFormat.getVaultToken().isEmpty()) {
+                vaultToken = Optional.of(tokenFormat.getVaultToken().stream()
+                        .map(detectEntity -> EntityType.valueOf(detectEntity.name()))
+                        .collect(Collectors.toList()));
+            }
+
+            if (tokenFormat.getEntityOnly() != null && !tokenFormat.getEntityOnly().isEmpty()) {
+                entityTypes = Optional.of(tokenFormat.getEntityOnly().stream()
+                        .map(detectEntity -> EntityType.valueOf(detectEntity.name()))
+                        .collect(Collectors.toList()));
+            }
+
+            if (tokenFormat.getEntityUniqueCounter() != null && !tokenFormat.getEntityUniqueCounter().isEmpty()) {
+                entityUniqueCounter = Optional.of(tokenFormat.getEntityUniqueCounter().stream()
+                        .map(detectEntity -> EntityType.valueOf(detectEntity.name()))
+                        .collect(Collectors.toList()));
+            }
+        }
+
+        TokenType tokenType = TokenType.builder()
+                .vaultToken(vaultToken)
+                .entityOnly(entityTypes)
+                .entityUnqCounter(entityUniqueCounter)
+                .build();
+
+
+        return DeidentifyStringRequest.builder()
+                .vaultId(vaultId)
+                .text(deIdentifyTextRequest.getText())
+                .entityTypes(mappedEntityTypes)
+                .tokenType(tokenType)
+                .allowRegex(allowRegex)
+                .restrictRegex(restrictRegex)
+                .transformations(transformations)
+                .build();
+    }
+
+    protected ReidentifyStringRequest getReidentifyStringRequest(ReidentifyTextRequest reidentifyTextRequest, String vaultId) throws SkyflowException {
+        List<EntityType> maskEntities = null;
+        List<EntityType> redactedEntities = null;
+        List<EntityType> plaintextEntities = null;
+
+        if (reidentifyTextRequest.getMaskedEntities() != null) {
+            maskEntities = reidentifyTextRequest.getMaskedEntities().stream()
+                    .map(detectEntity -> EntityType.valueOf(detectEntity.name()))
+                    .collect(Collectors.toList());
+        }
+
+        if (reidentifyTextRequest.getPlainTextEntities() != null) {
+            plaintextEntities = reidentifyTextRequest.getPlainTextEntities().stream()
+                    .map(detectEntity -> EntityType.valueOf(detectEntity.name()))
+                    .collect(Collectors.toList());
+        }
+
+        if (reidentifyTextRequest.getRedactedEntities() != null) {
+            redactedEntities = reidentifyTextRequest.getRedactedEntities().stream()
+                    .map(detectEntity -> EntityType.valueOf(detectEntity.name()))
+                    .collect(Collectors.toList());
+        }
+
+        ReidentifyStringRequestFormat reidentifyStringRequestFormat = ReidentifyStringRequestFormat.builder()
+                .masked(maskEntities)
+                .plaintext(plaintextEntities)
+                .redacted(redactedEntities)
+                .build();
+
+
+        return ReidentifyStringRequest.builder()
+                .text(reidentifyTextRequest.getText())
+                .vaultId(vaultId)
+                .format(reidentifyStringRequestFormat)
+                .build();
+    }
+
+
+    private EntityInfo convertDetectedEntityToEntityInfo(DetectedEntity detectedEntity) {
+        TextIndex textIndex = new TextIndex(
+                detectedEntity.getLocation().get().getStartIndex().orElse(0),
+                detectedEntity.getLocation().get().getEndIndex().orElse(0)
+        );
+        TextIndex processedIndex = new TextIndex(
+                detectedEntity.getLocation().get().getStartIndexProcessed().orElse(0),
+                detectedEntity.getLocation().get().getEndIndexProcessed().orElse(0)
+        );
+
+        Map<String, Float> entityScores = detectedEntity.getEntityScores()
+                .map(doubleMap -> doubleMap.entrySet().stream()
+                        .collect(Collectors.toMap(
+                                Map.Entry::getKey,
+                                entry -> entry.getValue().floatValue()
+                        )))
+                .orElse(Collections.emptyMap());
+
+
+        return new EntityInfo(
+                detectedEntity.getToken().orElse(""),
+                detectedEntity.getValue().orElse(""),
+                textIndex,
+                processedIndex,
+                detectedEntity.getEntityType().orElse(""),
+                entityScores);
+    }
+
+
+    private Transformations getTransformations(com.skyflow.vault.detect.Transformations transformations) {
+        if (transformations == null || transformations.getShiftDates() == null) {
+            return null;
+        }
+
+        List<TransformationsShiftDatesEntityTypesItem> entityTypes = null;
+        if (!transformations.getShiftDates().getEntities().isEmpty()) {
+            entityTypes = transformations.getShiftDates().getEntities().stream()
+                    .map(entity -> TransformationsShiftDatesEntityTypesItem.valueOf(entity.name()))
+                    .collect(Collectors.toList());
+        } else {
+            entityTypes = Collections.emptyList();
+        }
+
+        return Transformations.builder()
+                .shiftDates(TransformationsShiftDates.builder()
+                        .maxDays(transformations.getShiftDates().getMax())
+                        .minDays(transformations.getShiftDates().getMin())
+                        .entityTypes(entityTypes)
+                        .build())
+                .build();
     }
 
     private void setApiKey() {

@@ -17,6 +17,8 @@ import com.skyflow.utils.Utils;
 import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.vault.connection.InvokeConnectionRequest;
 import com.skyflow.vault.data.*;
+import com.skyflow.vault.detect.DeidentifyTextRequest;
+import com.skyflow.vault.detect.ReidentifyTextRequest;
 import com.skyflow.vault.tokens.ColumnValue;
 import com.skyflow.vault.tokens.DetokenizeData;
 import com.skyflow.vault.tokens.DetokenizeRequest;
@@ -682,6 +684,41 @@ public class Validations {
                             ErrorMessage.EmptyColumnGroupInColumnValue.getMessage());
                 }
             }
+        }
+    }
+
+    public static void validateDeidentifyTextRequest(DeidentifyTextRequest deidentifyTextRequest) throws SkyflowException {
+        // Validate required fields
+        String deidentifyText = deidentifyTextRequest.getText();
+        if (deidentifyText == null) {
+            LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.INVALID_NULL_TEXT_IN_DEIDENTIFY.getLog(), InterfaceName.DETECT.getName()
+            ));
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidNullTextInDeIdentify.getMessage());
+        }
+
+        if (deidentifyText.trim().isEmpty()) {
+            LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.INVALID_EMPTY_TEXT_IN_DEIDENTIFY.getLog(), InterfaceName.DETECT.getName()
+            ));
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidEmptyTextInDeIdentify.getMessage());
+        }
+    }
+
+    public static void validateReidentifyTextRequest(ReidentifyTextRequest reidentifyTextRequest) throws SkyflowException {
+        // Validate required fields
+        String reidentifyText = reidentifyTextRequest.getText();
+        if (reidentifyText == null) {
+            LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.INVALID_NULL_TEXT_IN_REIDENTIFY.getLog(), InterfaceName.DETECT.getName()
+            ));
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidNullTextInReIdentify.getMessage());
+        }
+        if (reidentifyText.trim().isEmpty()) {
+            LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.INVALID_EMPTY_TEXT_IN_REIDENTIFY.getLog(), InterfaceName.DETECT.getName()
+            ));
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidEmptyTextInReIdentify.getMessage());
         }
     }
 

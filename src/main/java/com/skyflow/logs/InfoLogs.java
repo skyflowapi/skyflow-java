@@ -7,6 +7,7 @@ public enum InfoLogs {
     VALIDATING_CONNECTION_CONFIG("Validating connection config."),
     UNABLE_TO_GENERATE_SDK_METRIC("Unable to generate %s1 metric."),
     VAULT_CONTROLLER_INITIALIZED("Initialized vault controller with vault ID %s1."),
+    DETECT_CONTROLLER_INITIALIZED("Initialized detect controller with vault ID %s1."),
     CONNECTION_CONTROLLER_INITIALIZED("Initialized connection controller with connection ID %s1."),
     LOGGER_SETUP_DONE("Set up logger."),
     CURRENT_LOG_LEVEL("Current log level is %s1."),
@@ -68,13 +69,19 @@ public enum InfoLogs {
     TOKENIZE_REQUEST_RESOLVED("Tokenize request resolved."),
     TOKENIZE_SUCCESS("Data tokenized."),
 
-    // detect
-    DEIDENTIFY_TEXT_TRIGGERED("DeIdentify text method triggered."),
 
     // Invoke connection interface
     INVOKE_CONNECTION_TRIGGERED("Invoke connection method triggered."),
     VALIDATING_INVOKE_CONNECTION_REQUEST("Validating invoke connection request."),
-    INVOKE_CONNECTION_REQUEST_RESOLVED("Invoke connection request resolved.");
+    INVOKE_CONNECTION_REQUEST_RESOLVED("Invoke connection request resolved."),
+
+    // detect
+    DEIDENTIFY_TEXT_TRIGGERED("DeIdentify text method triggered."),
+    DEIDENTIFY_TEXT_REQUEST_RESOLVED("DeIdentify text request resolved."),
+    REIDENTIFY_TEXT_TRIGGERED("ReIdentify text method triggered."),
+    REIDENTIFY_TEXT_REQUEST_RESOLVED("ReIdentify text request resolved."),
+    ;
+
 
     private final String log;
 

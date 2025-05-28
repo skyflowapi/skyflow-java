@@ -108,6 +108,16 @@ public enum ErrorLogs {
     EMPTY_REQUEST_BODY("Invalid %s1 request. Request body can not be empty."),
     INVALID_REQUEST_BODY("Invalid %s1 request. Request body can not be empty."),
     INVOKE_CONNECTION_REQUEST_REJECTED("Invoke connection request resulted in failure."),
+
+
+    // detect interface
+    INVALID_NULL_TEXT_IN_DEIDENTIFY("Invalid %s1 request. The text field is required and must not be null. Specify a valid text."),
+    INVALID_EMPTY_TEXT_IN_DEIDENTIFY("Invalid %s1 request. The text field is required and must not be empty text. Specify a valid text."),
+    DEIDENTIFY_TEXT_REQUEST_REJECTED("DeIdentify text request resulted in failure."),
+    INVALID_NULL_TEXT_IN_REIDENTIFY("Invalid %s1 request. The text field is required string and must not be null. Specify a valid text."),
+    INVALID_EMPTY_TEXT_IN_REIDENTIFY("Invalid %s1 request. The text field is required string and must not be empty string. Specify a valid text."),
+    REIDENTIFY_TEXT_REQUEST_REJECTED("ReIdentify text request resulted in failure."),
+
     ;
 
     private final String log;
