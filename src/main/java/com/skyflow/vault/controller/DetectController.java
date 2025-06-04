@@ -46,7 +46,9 @@ public final class DetectController extends VaultClient {
             LogUtil.printInfoLog(InfoLogs.DEIDENTIFY_TEXT_REQUEST_RESOLVED.getLog());
         } catch (ApiClientApiException ex) {
             LogUtil.printErrorLog(ErrorLogs.DEIDENTIFY_TEXT_REQUEST_REJECTED.getLog());
-            throw ex;
+            throw new SkyflowException(ex.statusCode(), ex, ex.headers(), ex.body().toString());
+        } catch (Exception e) {
+            throw new SkyflowException(e.getMessage(), e);
         }
         return deidentifyTextResponse;
     }
@@ -70,7 +72,9 @@ public final class DetectController extends VaultClient {
             LogUtil.printInfoLog(InfoLogs.REIDENTIFY_TEXT_REQUEST_RESOLVED.getLog());
         } catch (ApiClientApiException ex) {
             LogUtil.printErrorLog(ErrorLogs.REIDENTIFY_TEXT_REQUEST_REJECTED.getLog());
-            throw ex;
+            throw new SkyflowException(ex.statusCode(), ex, ex.headers(), ex.body().toString());
+        } catch (Exception e) {
+            throw new SkyflowException(e.getMessage(), e);
         }
         return reidentifyTextResponse;
     }

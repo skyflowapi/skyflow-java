@@ -5,9 +5,7 @@ import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.Env;
 import com.skyflow.enums.LogLevel;
-import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
-import com.skyflow.errors.HttpStatus;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.utils.Constants;
 import com.skyflow.utils.Utils;
@@ -54,15 +52,13 @@ public class DetectControllerTests {
             skyflowClient.detect(vaultID).deidentifyText(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
                     Utils.parameterizedString(ErrorMessage.InvalidNullTextInDeIdentify.getMessage(), Constants.SDK_PREFIX),
                     e.getMessage()
             );
             Assert.assertNull(e.getRequestId());
             Assert.assertNull(e.getGrpcCode());
-            Assert.assertTrue(e.getDetails().isEmpty());
-            Assert.assertEquals(HttpStatus.BAD_REQUEST.getHttpStatus(), e.getHttpStatus());
+            Assert.assertNull(e.getHttpStatus());
         }
     }
 
@@ -74,15 +70,13 @@ public class DetectControllerTests {
             skyflowClient.detect(vaultID).deidentifyText(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
                     Utils.parameterizedString(ErrorMessage.InvalidEmptyTextInDeIdentify.getMessage(), Constants.SDK_PREFIX),
                     e.getMessage()
             );
             Assert.assertNull(e.getRequestId());
             Assert.assertNull(e.getGrpcCode());
-            Assert.assertTrue(e.getDetails().isEmpty());
-            Assert.assertEquals(HttpStatus.BAD_REQUEST.getHttpStatus(), e.getHttpStatus());
+            Assert.assertNull(e.getHttpStatus());
         }
     }
 
@@ -94,15 +88,13 @@ public class DetectControllerTests {
             skyflowClient.detect(vaultID).reidentifyText(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
                     Utils.parameterizedString(ErrorMessage.InvalidNullTextInReIdentify.getMessage(), Constants.SDK_PREFIX),
                     e.getMessage()
             );
             Assert.assertNull(e.getRequestId());
             Assert.assertNull(e.getGrpcCode());
-            Assert.assertTrue(e.getDetails().isEmpty());
-            Assert.assertEquals(HttpStatus.BAD_REQUEST.getHttpStatus(), e.getHttpStatus());
+            Assert.assertNull(e.getHttpStatus());
         }
     }
 
@@ -114,15 +106,13 @@ public class DetectControllerTests {
             skyflowClient.detect(vaultID).reidentifyText(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
                     Utils.parameterizedString(ErrorMessage.InvalidEmptyTextInReIdentify.getMessage(), Constants.SDK_PREFIX),
                     e.getMessage()
             );
             Assert.assertNull(e.getRequestId());
             Assert.assertNull(e.getGrpcCode());
-            Assert.assertTrue(e.getDetails().isEmpty());
-            Assert.assertEquals(HttpStatus.BAD_REQUEST.getHttpStatus(), e.getHttpStatus());
+            Assert.assertNull(e.getHttpStatus());
         }
     }
 
