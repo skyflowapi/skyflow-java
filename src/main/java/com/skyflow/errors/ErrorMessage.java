@@ -129,6 +129,18 @@ public enum ErrorMessage {
     InvalidEmptyTextInDeIdentify("%s0 Validation error. The text field is required string and must not be empty string. Specify a valid text."),
     InvalidNullTextInReIdentify("%s0 Validation error. The text field is required string and must not be null. Specify a valid text."),
     InvalidEmptyTextInReIdentify("%s0 Validation error. The text field is required string and must not be empty string. Specify a valid text."),
+
+    //Detect Files
+    InvalidNullFileInDeIdentifyFile("%s0 Validation error. The file field is required and must not be null. Specify a valid file object."),
+    FileNotFoundToDeidentify("%s0 Validation error. The file to deidentify was not found at the specified path. Verify the file path and try again."),
+    FileNotReadableToDeidentify("%s0 Validation error. The file to deidentify is not readable. Check the file permissions and try again."),
+    InvalidPixelDensityToDeidentifyFile("%s0 Validation error. Should be a positive integer. Specify a valid pixel density."),
+    InvalidMaxResolution("%s0 Validation error. Should be a positive integer. Specify a valid max resolution."),
+    OutputDirectoryNotFound("%s0 Validation error. The output directory for deidentified files was not found at the specified path. Verify the output directory path and try again."),
+    InvalidPermission("%s0 Validation error. The output directory for deidentified files is not writable. Check the directory permissions and try again."),
+    InvalidWaitTime("%s0 Validation error. The wait time for deidentify file operation should be a positive integer. Specify a valid wait time."),
+    WaitTimeExceedsLimit("%s0 Validation error. The wait time for deidentify file operation exceeds the maximum limit of 64 seconds. Specify a wait time less than or equal to 60 seconds."),
+    InvalidOrEmptyRunId("%s0 Validation error. The run ID is invalid or empty. Specify a valid run ID."),
     ;
     private final String message;
 

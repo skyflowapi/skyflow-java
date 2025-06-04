@@ -117,7 +117,8 @@ public enum ErrorLogs {
     INVALID_NULL_TEXT_IN_REIDENTIFY("Invalid %s1 request. The text field is required string and must not be null. Specify a valid text."),
     INVALID_EMPTY_TEXT_IN_REIDENTIFY("Invalid %s1 request. The text field is required string and must not be empty string. Specify a valid text."),
     REIDENTIFY_TEXT_REQUEST_REJECTED("ReIdentify text request resulted in failure."),
-
+    DEIDENTIFY_FILE_REQUEST_REJECTED("DeIdentify file request resulted in failure."),
+    GET_DETECT_RUN_REQUEST_REJECTED("Get detect run request resulted in failure."),
     ;
 
     private final String log;
