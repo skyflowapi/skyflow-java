@@ -70,7 +70,7 @@ public final class DetectController extends VaultClient {
             ReidentifyStringResponse reidentifyStringResponse = super.getDetectTextApi().reidentifyString(request);
 
             // Parse the response to ReidentifyTextResponse
-            reidentifyTextResponse = new ReidentifyTextResponse(reidentifyStringResponse.getAdditionalProperties().get("text").toString());
+            reidentifyTextResponse = new ReidentifyTextResponse(reidentifyStringResponse.getText().orElse(null));
             LogUtil.printInfoLog(InfoLogs.REIDENTIFY_TEXT_REQUEST_RESOLVED.getLog());
         } catch (ApiClientApiException ex) {
             LogUtil.printErrorLog(ErrorLogs.REIDENTIFY_TEXT_REQUEST_REJECTED.getLog());
