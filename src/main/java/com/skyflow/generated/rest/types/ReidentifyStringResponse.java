@@ -20,21 +20,21 @@ import java.util.Optional;
 @JsonInclude(JsonInclude.Include.NON_ABSENT)
 @JsonDeserialize(builder = ReidentifyStringResponse.Builder.class)
 public final class ReidentifyStringResponse {
-    private final Optional<String> processedText;
+    private final Optional<String> text;
 
     private final Map<String, Object> additionalProperties;
 
-    private ReidentifyStringResponse(Optional<String> processedText, Map<String, Object> additionalProperties) {
-        this.processedText = processedText;
+    private ReidentifyStringResponse(Optional<String> text, Map<String, Object> additionalProperties) {
+        this.text = text;
         this.additionalProperties = additionalProperties;
     }
 
     /**
      * @return Re-identified text.
      */
-    @JsonProperty("processed_text")
-    public Optional<String> getProcessedText() {
-        return processedText;
+    @JsonProperty("text")
+    public Optional<String> getText() {
+        return text;
     }
 
     @java.lang.Override
@@ -49,12 +49,12 @@ public final class ReidentifyStringResponse {
     }
 
     private boolean equalTo(ReidentifyStringResponse other) {
-        return processedText.equals(other.processedText);
+        return text.equals(other.text);
     }
 
     @java.lang.Override
     public int hashCode() {
-        return Objects.hash(this.processedText);
+        return Objects.hash(this.text);
     }
 
     @java.lang.Override
@@ -68,7 +68,7 @@ public final class ReidentifyStringResponse {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static final class Builder {
-        private Optional<String> processedText = Optional.empty();
+        private Optional<String> text = Optional.empty();
 
         @JsonAnySetter
         private Map<String, Object> additionalProperties = new HashMap<>();
@@ -76,23 +76,23 @@ public final class ReidentifyStringResponse {
         private Builder() {}
 
         public Builder from(ReidentifyStringResponse other) {
-            processedText(other.getProcessedText());
+            text(other.getText());
             return this;
         }
 
-        @JsonSetter(value = "processed_text", nulls = Nulls.SKIP)
-        public Builder processedText(Optional<String> processedText) {
-            this.processedText = processedText;
+        @JsonSetter(value = "text", nulls = Nulls.SKIP)
+        public Builder text(Optional<String> text) {
+            this.text = text;
             return this;
         }
 
-        public Builder processedText(String processedText) {
-            this.processedText = Optional.ofNullable(processedText);
+        public Builder text(String text) {
+            this.text = Optional.ofNullable(text);
             return this;
         }
 
         public ReidentifyStringResponse build() {
-            return new ReidentifyStringResponse(processedText, additionalProperties);
+            return new ReidentifyStringResponse(text, additionalProperties);
         }
     }
 }
