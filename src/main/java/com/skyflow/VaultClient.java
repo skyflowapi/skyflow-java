@@ -573,10 +573,16 @@ public class VaultClient {
                 .dataFormat(DeidentifyImageRequestFileDataFormat.valueOf(format.toUpperCase()))
                 .build();
 
+        Optional<DeidentifyImageRequestMaskingMethod> maskingMethod = Optional.empty();
+        if (request.getMaskingMethod() != null) {
+            maskingMethod = Optional.of(DeidentifyImageRequestMaskingMethod.valueOf(request.getMaskingMethod().name()));
+        }
+
         return DeidentifyImageRequest.builder()
                 .vaultId(vaultId)
                 .file(file)
                 .entityTypes(mappedEntityTypes)
+                .maskingMethod(maskingMethod)
                 .tokenType(tokenType)
                 .allowRegex(allowRegex)
                 .restrictRegex(restrictRegex)

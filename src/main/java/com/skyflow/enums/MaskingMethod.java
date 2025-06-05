@@ -1,7 +1,7 @@
 package com.skyflow.enums;
 
 public enum MaskingMethod {
-    BLACKOUT("blackout"),
+    BLACKBOX("blackbox"),
     BLUR("blur");
 
     private final String maskingMethod;
