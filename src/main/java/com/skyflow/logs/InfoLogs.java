@@ -76,10 +76,14 @@ public enum InfoLogs {
     INVOKE_CONNECTION_REQUEST_RESOLVED("Invoke connection request resolved."),
 
     // detect
+    VALIDATE_DEIDENTIFY_TEXT_REQUEST("Validating deidentify text request."),
+    DEIDENTIFY_TEXT_SUCCESS("Text data de-identified."),
     DEIDENTIFY_TEXT_TRIGGERED("DeIdentify text method triggered."),
     DEIDENTIFY_TEXT_REQUEST_RESOLVED("DeIdentify text request resolved."),
+    VALIDATE_REIDENTIFY_TEXT_REQUEST("Validating reidentify text request."),
     REIDENTIFY_TEXT_TRIGGERED("ReIdentify text method triggered."),
     REIDENTIFY_TEXT_REQUEST_RESOLVED("ReIdentify text request resolved."),
+    REIDENTIFY_TEXT_SUCCESS("Text data re-identified."),
     ;
 
 

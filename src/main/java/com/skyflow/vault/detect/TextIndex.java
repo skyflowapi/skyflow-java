@@ -1,6 +1,9 @@
 package com.skyflow.vault.detect;
 
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
 public class TextIndex {
     private final int start;
     private final int end;
@@ -20,9 +23,7 @@ public class TextIndex {
 
     @Override
     public String toString() {
-        return "TextIndex{" +
-                "start=" + start +
-                ", end=" + end +
-                '}';
+        Gson gson = new GsonBuilder().serializeNulls().create();
+        return gson.toJson(this);
     }
 }

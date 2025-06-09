@@ -31,6 +31,7 @@ public final class DetectController extends VaultClient {
         DeidentifyTextResponse deidentifyTextResponse = null;
         try {
             // Validate the request
+            LogUtil.printInfoLog(InfoLogs.VALIDATE_DEIDENTIFY_TEXT_REQUEST.getLog());
             Validations.validateDeidentifyTextRequest(deidentifyTextRequest);
             setBearerToken();
 
@@ -48,8 +49,10 @@ public final class DetectController extends VaultClient {
             LogUtil.printErrorLog(ErrorLogs.DEIDENTIFY_TEXT_REQUEST_REJECTED.getLog());
             throw new SkyflowException(ex.statusCode(), ex, ex.headers(), ex.body().toString());
         } catch (Exception e) {
+            LogUtil.printErrorLog(ErrorLogs.DEIDENTIFY_TEXT_REQUEST_REJECTED.getLog());
             throw new SkyflowException(e.getMessage(), e);
         }
+        LogUtil.printInfoLog(InfoLogs.DEIDENTIFY_TEXT_SUCCESS.getLog());
         return deidentifyTextResponse;
     }
 
@@ -58,6 +61,7 @@ public final class DetectController extends VaultClient {
         ReidentifyTextResponse reidentifyTextResponse = null;
         try {
             // Validate the request
+            LogUtil.printInfoLog(InfoLogs.VALIDATE_REIDENTIFY_TEXT_REQUEST.getLog());
             Validations.validateReidentifyTextRequest(reidentifyTextRequest);
             setBearerToken();
             // Parse the request to ReidentifyTextRequest
@@ -74,8 +78,10 @@ public final class DetectController extends VaultClient {
             LogUtil.printErrorLog(ErrorLogs.REIDENTIFY_TEXT_REQUEST_REJECTED.getLog());
             throw new SkyflowException(ex.statusCode(), ex, ex.headers(), ex.body().toString());
         } catch (Exception e) {
+            LogUtil.printErrorLog(ErrorLogs.REIDENTIFY_TEXT_REQUEST_REJECTED.getLog());
             throw new SkyflowException(e.getMessage(), e);
         }
+        LogUtil.printInfoLog(InfoLogs.REIDENTIFY_TEXT_SUCCESS.getLog());
         return reidentifyTextResponse;
     }
 }
