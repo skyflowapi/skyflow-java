@@ -4,16 +4,21 @@
 package com.skyflow.generated.rest.errors;
 
 import com.skyflow.generated.rest.core.ApiClientApiException;
-import java.util.Map;
+import okhttp3.Response;
 
 public final class UnauthorizedError extends ApiClientApiException {
     /**
      * The body of the response that triggered the exception.
      */
-    private final Map<String, Object> body;
+    private final Object body;
 
-    public UnauthorizedError(Map<String, Object> body) {
+    public UnauthorizedError(Object body) {
         super("UnauthorizedError", 401, body);
+        this.body = body;
+    }
+
+    public UnauthorizedError(Object body, Response rawResponse) {
+        super("UnauthorizedError", 401, body, rawResponse);
         this.body = body;
     }
 
@@ -21,7 +26,7 @@ public final class UnauthorizedError extends ApiClientApiException {
      * @return the body
      */
     @java.lang.Override
-    public Map<String, Object> body() {
+    public Object body() {
         return this.body;
     }
 }

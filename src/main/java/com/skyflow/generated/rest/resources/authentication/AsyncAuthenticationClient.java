@@ -3,45 +3,34 @@
  */
 package com.skyflow.generated.rest.resources.authentication;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.skyflow.generated.rest.core.ApiClientApiException;
-import com.skyflow.generated.rest.core.ApiClientException;
 import com.skyflow.generated.rest.core.ClientOptions;
-import com.skyflow.generated.rest.core.MediaTypes;
-import com.skyflow.generated.rest.core.ObjectMappers;
 import com.skyflow.generated.rest.core.RequestOptions;
-import com.skyflow.generated.rest.errors.BadRequestError;
-import com.skyflow.generated.rest.errors.NotFoundError;
-import com.skyflow.generated.rest.errors.UnauthorizedError;
 import com.skyflow.generated.rest.resources.authentication.requests.V1GetAuthTokenRequest;
 import com.skyflow.generated.rest.types.V1GetAuthTokenResponse;
-import java.io.IOException;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.Headers;
-import okhttp3.HttpUrl;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
-import org.jetbrains.annotations.NotNull;
 
 public class AsyncAuthenticationClient {
     protected final ClientOptions clientOptions;
 
+    private final AsyncRawAuthenticationClient rawClient;
+
     public AsyncAuthenticationClient(ClientOptions clientOptions) {
         this.clientOptions = clientOptions;
+        this.rawClient = new AsyncRawAuthenticationClient(clientOptions);
+    }
+
+    /**
+     * Get responses with HTTP metadata like headers
+     */
+    public AsyncRawAuthenticationClient withRawResponse() {
+        return this.rawClient;
     }
 
     /**
      * <p>&lt;p&gt;Generates a Bearer Token to authenticate with Skyflow. This method doesn't require the &lt;code&gt;Authorization&lt;/code&gt; header.&lt;/p&gt;&lt;p&gt;&lt;b&gt;Note:&lt;/b&gt; For recommended ways to authenticate, see &lt;a href='/api-authentication/'&gt;API authentication&lt;/a&gt;.&lt;/p&gt;</p>
      */
     public CompletableFuture<V1GetAuthTokenResponse> authenticationServiceGetAuthToken(V1GetAuthTokenRequest request) {
-        return authenticationServiceGetAuthToken(request, null);
+        return this.rawClient.authenticationServiceGetAuthToken(request).thenApply(response -> response.body());
     }
 
     /**
@@ -49,72 +38,8 @@ public class AsyncAuthenticationClient {
      */
     public CompletableFuture<V1GetAuthTokenResponse> authenticationServiceGetAuthToken(
             V1GetAuthTokenRequest request, RequestOptions requestOptions) {
-        HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
-                .newBuilder()
-                .addPathSegments("v1/auth/sa/oauth/token")
-                .build();
-        RequestBody body;
-        try {
-            body = RequestBody.create(
-                    ObjectMappers.JSON_MAPPER.writeValueAsBytes(request), MediaTypes.APPLICATION_JSON);
-        } catch (JsonProcessingException e) {
-            throw new ApiClientException("Failed to serialize request", e);
-        }
-        Request okhttpRequest = new Request.Builder()
-                .url(httpUrl)
-                .method("POST", body)
-                .headers(Headers.of(clientOptions.headers(requestOptions)))
-                .addHeader("Content-Type", "application/json")
-                .addHeader("Accept", "application/json")
-                .build();
-        OkHttpClient client = clientOptions.httpClient();
-        if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
-            client = clientOptions.httpClientWithTimeout(requestOptions);
-        }
-        CompletableFuture<V1GetAuthTokenResponse> future = new CompletableFuture<>();
-        client.newCall(okhttpRequest).enqueue(new Callback() {
-            @Override
-            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                try (ResponseBody responseBody = response.body()) {
-                    if (response.isSuccessful()) {
-                        future.complete(ObjectMappers.JSON_MAPPER.readValue(
-                                responseBody.string(), V1GetAuthTokenResponse.class));
-                        return;
-                    }
-                    String responseBodyString = responseBody != null ? responseBody.string() : "{}";
-                    try {
-                        switch (response.code()) {
-                            case 400:
-                                future.completeExceptionally(new BadRequestError(ObjectMappers.JSON_MAPPER.readValue(
-                                        responseBodyString, new TypeReference<Map<String, Object>>() {})));
-                                return;
-                            case 401:
-                                future.completeExceptionally(new UnauthorizedError(ObjectMappers.JSON_MAPPER.readValue(
-                                        responseBodyString, new TypeReference<Map<String, Object>>() {})));
-                                return;
-                            case 404:
-                                future.completeExceptionally(new NotFoundError(ObjectMappers.JSON_MAPPER.readValue(
-                                        responseBodyString, new TypeReference<Map<String, Object>>() {})));
-                                return;
-                        }
-                    } catch (JsonProcessingException ignored) {
-                        // unable to map error response, throwing generic error
-                    }
-                    future.completeExceptionally(new ApiClientApiException(
-                            "Error with status code " + response.code(),
-                            response.code(),
-                            ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class)));
-                    return;
-                } catch (IOException e) {
-                    future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
-                }
-            }
-
-            @Override
-            public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
-            }
-        });
-        return future;
+        return this.rawClient
+                .authenticationServiceGetAuthToken(request, requestOptions)
+                .thenApply(response -> response.body());
     }
 }

@@ -8,8 +8,11 @@ import com.skyflow.generated.rest.core.Suppliers;
 import com.skyflow.generated.rest.resources.audit.AuditClient;
 import com.skyflow.generated.rest.resources.authentication.AuthenticationClient;
 import com.skyflow.generated.rest.resources.binlookup.BinLookupClient;
+import com.skyflow.generated.rest.resources.deprecated.DeprecatedClient;
+import com.skyflow.generated.rest.resources.files.FilesClient;
 import com.skyflow.generated.rest.resources.query.QueryClient;
 import com.skyflow.generated.rest.resources.records.RecordsClient;
+import com.skyflow.generated.rest.resources.strings.StringsClient;
 import com.skyflow.generated.rest.resources.tokens.TokensClient;
 import java.util.function.Supplier;
 
@@ -28,6 +31,12 @@ public class ApiClient {
 
     protected final Supplier<AuthenticationClient> authenticationClient;
 
+    protected final Supplier<DeprecatedClient> deprecatedClient;
+
+    protected final Supplier<StringsClient> stringsClient;
+
+    protected final Supplier<FilesClient> filesClient;
+
     public ApiClient(ClientOptions clientOptions) {
         this.clientOptions = clientOptions;
         this.auditClient = Suppliers.memoize(() -> new AuditClient(clientOptions));
@@ -36,6 +45,9 @@ public class ApiClient {
         this.tokensClient = Suppliers.memoize(() -> new TokensClient(clientOptions));
         this.queryClient = Suppliers.memoize(() -> new QueryClient(clientOptions));
         this.authenticationClient = Suppliers.memoize(() -> new AuthenticationClient(clientOptions));
+        this.deprecatedClient = Suppliers.memoize(() -> new DeprecatedClient(clientOptions));
+        this.stringsClient = Suppliers.memoize(() -> new StringsClient(clientOptions));
+        this.filesClient = Suppliers.memoize(() -> new FilesClient(clientOptions));
     }
 
     public AuditClient audit() {
@@ -60,6 +72,18 @@ public class ApiClient {
 
     public AuthenticationClient authentication() {
         return this.authenticationClient.get();
+    }
+
+    public DeprecatedClient deprecated() {
+        return this.deprecatedClient.get();
+    }
+
+    public StringsClient strings() {
+        return this.stringsClient.get();
+    }
+
+    public FilesClient files() {
+        return this.filesClient.get();
     }
 
     public static ApiClientBuilder builder() {

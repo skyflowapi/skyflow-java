@@ -13,7 +13,9 @@ import com.fasterxml.jackson.annotation.Nulls;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.skyflow.generated.rest.core.ObjectMappers;
 import com.skyflow.generated.rest.resources.records.types.RecordServiceGetRecordRequestRedaction;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -21,27 +23,35 @@ import java.util.Optional;
 @JsonInclude(JsonInclude.Include.NON_ABSENT)
 @JsonDeserialize(builder = RecordServiceGetRecordRequest.Builder.class)
 public final class RecordServiceGetRecordRequest {
+    private final Optional<List<String>> fields;
+
     private final Optional<RecordServiceGetRecordRequestRedaction> redaction;
 
     private final Optional<Boolean> tokenization;
-
-    private final Optional<String> fields;
 
     private final Optional<Boolean> downloadUrl;
 
     private final Map<String, Object> additionalProperties;
 
     private RecordServiceGetRecordRequest(
+            Optional<List<String>> fields,
             Optional<RecordServiceGetRecordRequestRedaction> redaction,
             Optional<Boolean> tokenization,
-            Optional<String> fields,
             Optional<Boolean> downloadUrl,
             Map<String, Object> additionalProperties) {
+        this.fields = fields;
         this.redaction = redaction;
         this.tokenization = tokenization;
-        this.fields = fields;
         this.downloadUrl = downloadUrl;
         this.additionalProperties = additionalProperties;
+    }
+
+    /**
+     * @return Fields to return for the record, with one value per <code>fields</code> URL parameter. For example, <code>?fields=abc&amp;fields=123</code>.&lt;br /&gt;&lt;br /&gt;If not specified, returns all fields.
+     */
+    @JsonProperty("fields")
+    public Optional<List<String>> getFields() {
+        return fields;
     }
 
     /**
@@ -58,14 +68,6 @@ public final class RecordServiceGetRecordRequest {
     @JsonProperty("tokenization")
     public Optional<Boolean> getTokenization() {
         return tokenization;
-    }
-
-    /**
-     * @return Fields to return for the record, with one value per <code>fields</code> URL parameter. For example, <code>?fields=abc&amp;fields=123</code>.&lt;br /&gt;&lt;br /&gt;If not specified, returns all fields.
-     */
-    @JsonProperty("fields")
-    public Optional<String> getFields() {
-        return fields;
     }
 
     /**
@@ -88,15 +90,15 @@ public final class RecordServiceGetRecordRequest {
     }
 
     private boolean equalTo(RecordServiceGetRecordRequest other) {
-        return redaction.equals(other.redaction)
+        return fields.equals(other.fields)
+                && redaction.equals(other.redaction)
                 && tokenization.equals(other.tokenization)
-                && fields.equals(other.fields)
                 && downloadUrl.equals(other.downloadUrl);
     }
 
     @java.lang.Override
     public int hashCode() {
-        return Objects.hash(this.redaction, this.tokenization, this.fields, this.downloadUrl);
+        return Objects.hash(this.fields, this.redaction, this.tokenization, this.downloadUrl);
     }
 
     @java.lang.Override
@@ -110,11 +112,11 @@ public final class RecordServiceGetRecordRequest {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static final class Builder {
+        private Optional<List<String>> fields = Optional.empty();
+
         private Optional<RecordServiceGetRecordRequestRedaction> redaction = Optional.empty();
 
         private Optional<Boolean> tokenization = Optional.empty();
-
-        private Optional<String> fields = Optional.empty();
 
         private Optional<Boolean> downloadUrl = Optional.empty();
 
@@ -124,10 +126,26 @@ public final class RecordServiceGetRecordRequest {
         private Builder() {}
 
         public Builder from(RecordServiceGetRecordRequest other) {
+            fields(other.getFields());
             redaction(other.getRedaction());
             tokenization(other.getTokenization());
-            fields(other.getFields());
             downloadUrl(other.getDownloadUrl());
+            return this;
+        }
+
+        @JsonSetter(value = "fields", nulls = Nulls.SKIP)
+        public Builder fields(Optional<List<String>> fields) {
+            this.fields = fields;
+            return this;
+        }
+
+        public Builder fields(List<String> fields) {
+            this.fields = Optional.ofNullable(fields);
+            return this;
+        }
+
+        public Builder fields(String fields) {
+            this.fields = Optional.of(Collections.singletonList(fields));
             return this;
         }
 
@@ -153,17 +171,6 @@ public final class RecordServiceGetRecordRequest {
             return this;
         }
 
-        @JsonSetter(value = "fields", nulls = Nulls.SKIP)
-        public Builder fields(Optional<String> fields) {
-            this.fields = fields;
-            return this;
-        }
-
-        public Builder fields(String fields) {
-            this.fields = Optional.ofNullable(fields);
-            return this;
-        }
-
         @JsonSetter(value = "downloadURL", nulls = Nulls.SKIP)
         public Builder downloadUrl(Optional<Boolean> downloadUrl) {
             this.downloadUrl = downloadUrl;
@@ -177,7 +184,7 @@ public final class RecordServiceGetRecordRequest {
 
         public RecordServiceGetRecordRequest build() {
             return new RecordServiceGetRecordRequest(
-                    redaction, tokenization, fields, downloadUrl, additionalProperties);
+                    fields, redaction, tokenization, downloadUrl, additionalProperties);
         }
     }
 }

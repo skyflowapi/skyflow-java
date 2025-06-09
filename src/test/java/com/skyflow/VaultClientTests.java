@@ -2,6 +2,7 @@ package com.skyflow;
 
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
+import com.skyflow.enums.DetectEntities;
 import com.skyflow.enums.Env;
 import com.skyflow.enums.TokenMode;
 import com.skyflow.generated.rest.resources.records.RecordsClient;
@@ -10,9 +11,13 @@ import com.skyflow.generated.rest.resources.records.requests.RecordServiceInsert
 import com.skyflow.generated.rest.resources.records.requests.RecordServiceUpdateRecordBody;
 import com.skyflow.generated.rest.resources.tokens.requests.V1DetokenizePayload;
 import com.skyflow.generated.rest.resources.tokens.requests.V1TokenizePayload;
+import com.skyflow.generated.rest.types.DeidentifyStringResponse;
+import com.skyflow.generated.rest.types.DetectedEntity;
+import com.skyflow.generated.rest.types.EntityLocation;
 import com.skyflow.generated.rest.types.V1Byot;
 import com.skyflow.vault.data.InsertRequest;
 import com.skyflow.vault.data.UpdateRequest;
+import com.skyflow.vault.detect.*;
 import com.skyflow.vault.tokens.ColumnValue;
 import com.skyflow.vault.tokens.DetokenizeData;
 import com.skyflow.vault.tokens.DetokenizeRequest;
@@ -326,5 +331,91 @@ public class VaultClientTests {
         } catch (Exception e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
         }
+    }
+
+    @Test
+    public void testGetDeIdentifyTextResponse() {
+        List<DetectedEntity> entities = new ArrayList<>();
+        EntityLocation location = EntityLocation.builder()
+                .startIndex(2)
+                .endIndex(10)
+                .startIndexProcessed(3)
+                .endIndexProcessed(8)
+                .build();
+
+        DetectedEntity detectedEntity = DetectedEntity.builder()
+                .token("token123")
+                .value("value123")
+                .location(location)
+                .build();
+        entities.add(detectedEntity);
+
+        DeidentifyStringResponse response = DeidentifyStringResponse.builder()
+                .processedText("processed text")
+                .wordCount(2)
+                .characterCount(13)
+                .entities(entities)
+                .build();
+
+
+        DeidentifyTextResponse result = vaultClient.getDeIdentifyTextResponse(response);
+
+        Assert.assertNotNull(result);
+        Assert.assertEquals("processed text", result.getProcessedText());
+        Assert.assertEquals(2, result.getWordCount());
+        Assert.assertEquals(13, result.getCharCount());
+        Assert.assertNotNull(result.getEntities());
+        Assert.assertEquals(1, result.getEntities().size());
+        Assert.assertEquals("token123", result.getEntities().get(0).getToken());
+        Assert.assertEquals("value123", result.getEntities().get(0).getValue());
+        Assert.assertEquals(2, result.getEntities().get(0).getTextIndex().getStart());
+        Assert.assertEquals(10, result.getEntities().get(0).getTextIndex().getEnd());
+        Assert.assertEquals(3, result.getEntities().get(0).getProcessedIndex().getStart());
+        Assert.assertEquals(8, result.getEntities().get(0).getProcessedIndex().getEnd());
+    }
+
+    @Test
+    public void testGetDeidentifyStringRequest() {
+
+        List<DetectEntities> detectEntitiesList = new ArrayList<>();
+        detectEntitiesList.add(DetectEntities.NAME);
+
+        List<DetectEntities> vaultTokenList = new ArrayList<>();
+        vaultTokenList.add(DetectEntities.SSN);
+
+
+        List<DetectEntities> entityOnlyList = new ArrayList<>();
+        entityOnlyList.add(DetectEntities.DOB);
+
+        List<DetectEntities> entityUniqueCounterList = new ArrayList<>();
+        entityUniqueCounterList.add(DetectEntities.NAME);
+
+
+        List<String> restrictRegexList = new ArrayList<>();
+        restrictRegexList.add("([0-9]{3}-[0-9]{2}-[0-9]{4})");
+
+        TokenFormat tokenFormat = TokenFormat.builder()
+                .vaultToken(vaultTokenList)
+                .entityOnly(entityOnlyList)
+                .entityUniqueCounter(entityUniqueCounterList)
+                .build();
+
+
+        List<DetectEntities> detectEntitiesTransformationList = new ArrayList<>();
+        detectEntitiesTransformationList.add(DetectEntities.DOB);
+        detectEntitiesTransformationList.add(DetectEntities.DATE);
+
+        DateTransformation dateTransformation = new DateTransformation(20, 5, detectEntitiesTransformationList);
+        Transformations transformations = new Transformations(dateTransformation);
+
+
+        DeidentifyTextRequest req = DeidentifyTextRequest.builder()
+                .text("Sensitive data to deidentify, like Name: Joy SSN 123-45-6789 and DOB 01-01-2000.")
+                .entities(detectEntitiesList)
+                .restrictRegexList(restrictRegexList)
+                .tokenFormat(tokenFormat)
+                .transformations(transformations)
+                .build();
+
     }
 }
