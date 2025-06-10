@@ -218,8 +218,8 @@ public class VaultClient {
         prioritiseCredentials();
         Validations.validateCredentials(this.finalCredentials);
         if (this.finalCredentials.getApiKey() != null) {
-            setApiKey();
-            return;
+//            setApiKey();
+            token=this.finalCredentials.getApiKey();
         } else if (Token.isExpired(token)) {
             LogUtil.printInfoLog(InfoLogs.BEARER_TOKEN_EXPIRED.getLog());
             token = Utils.generateBearerToken(this.finalCredentials);
@@ -784,7 +784,7 @@ public class VaultClient {
         } else {
             LogUtil.printInfoLog(InfoLogs.REUSE_API_KEY.getLog());
         }
-        this.apiClientBuilder.token(token);
+//        this.apiClientBuilder.token(token);
     }
 
     private void updateVaultURL() {
