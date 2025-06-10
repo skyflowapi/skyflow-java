@@ -436,7 +436,7 @@ public class VaultClientTests {
         TokenFormat tokenFormat = TokenFormat.builder().vaultToken(Collections.singletonList(entity)).build();
         Boolean outputProcessedImage = true;
         Boolean outputOcrText = true;
-        MaskingMethod maskingMethod = MaskingMethod.BLACKOUT;
+        MaskingMethod maskingMethod = MaskingMethod.BLACKBOX;
         Double pixelDensity = 300.0;
         Double maxResolution = 1024.0;
         Boolean outputProcessedAudio = false;
