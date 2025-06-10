@@ -40,10 +40,7 @@ jobs:
           echo SKYFLOW_CREDENTIALS=${{ secrets.SKYFLOW_CREDENTIALS }} >> .env
           echo TEST_EXPIRED_TOKEN=${{ secrets.TEST_EXPIRED_TOKEN }} >> .env
           echo TEST_REUSABLE_TOKEN=${{ secrets.TEST_REUSABLE_TOKEN }} >> .env
-          echo VAULT_CLIENT_SKYFLOW_CREDENTIALS=${{ secrets.VAULT_CLIENT_SKYFLOW_CREDENTIALS }} >> .env
-
-          echo "Checking VAULT_CLIENT_SKYFLOW_CREDENTIALS value:"
-          echo "${{ secrets.VAULT_CLIENT_SKYFLOW_CREDENTIALS }}" | grep -o '^.\{4\}.*.\{4\}$'
+          echo "VAULT_CLIENT_SKYFLOW_CREDENTIALS='${{ secrets.VAULT_CLIENT_SKYFLOW_CREDENTIALS }}'" >> .env
 
       - name: Build & Run tests with Maven
         run: mvn -B package -f pom.xml
