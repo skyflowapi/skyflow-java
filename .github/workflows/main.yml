@@ -23,7 +23,7 @@ jobs:
           json: ${{ secrets.TEST_CREDENTIALS_FILE_STRING }}
 
       - name: Build & Run tests with Maven
-        run: mvn -B package -DTEST_VAULT_ID=${{ secrets.TEST_VAULT_ID }} -DTEST_VAULT_URL=${{ secrets.TEST_VAULT_URL }} -DTEST_SKYFLOW_ID=${{ secrets.TEST_SKYFLOW_ID }} -DTEST_TOKEN=${{ secrets.TEST_TOKEN }} -DTEST_CREDENTIALS=${{ secrets.TEST_CREDENTIALS_FILE_STRING }} -DTEST_EXPIRED_TOKEN=${{ secrets.TEST_EXPIRED_TOKEN }} -DTEST_REUSABLE_TOKEN=${{ secrets.TEST_REUSABLE_TOKEN }} -f pom.xml
+        run: mvn -B package -DTEST_VAULT_ID=${{ secrets.TEST_VAULT_ID }} -DTEST_VAULT_URL=${{ secrets.TEST_VAULT_URL }} -DTEST_SKYFLOW_ID=${{ secrets.TEST_SKYFLOW_ID }} -DTEST_TOKEN=${{ secrets.TEST_TOKEN }} -DTEST_CREDENTIALS=${{ secrets.TEST_CREDENTIALS_FILE_STRING }} -DTEST_EXPIRED_TOKEN=${{ secrets.TEST_EXPIRED_TOKEN }} -DTEST_REUSABLE_TOKEN=${{ secrets.TEST_REUSABLE_TOKEN }} -DVAULT_CLIENT_SKYFLOW_CREDENTIALS=${{ secrets.VAULT_CLIENT_SKYFLOW_CREDENTIALS }} -f pom.xml
 
       - name: Codecov
         uses: codecov/codecov-action@v2.1.0

@@ -119,6 +119,14 @@ public enum ErrorLogs {
     REIDENTIFY_TEXT_REQUEST_REJECTED("ReIdentify text request resulted in failure."),
     DEIDENTIFY_FILE_REQUEST_REJECTED("DeIdentify file request resulted in failure."),
     GET_DETECT_RUN_REQUEST_REJECTED("Get detect run request resulted in failure."),
+    INVALID_NULL_FILE_IN_DEIDENTIFY_FILE("Invalid %s1 request. The file field is required and must not be null. Specify a valid file."),
+    FILE_NOT_FOUND_TO_DEIDENTIFY("Invalid %s1 request. The file field is required and must not be empty. Specify a valid file."),
+    FILE_NOT_READABLE_TO_DEIDENTIFY("Invalid %s1 request. The file is not readable. Please check the file permissions or path."),
+    INVALID_PIXEL_DENSITY_TO_DEIDENTIFY_FILE("Invalid %s1 request. Pixel density must be a positive integer greater than 0. Specify a valid pixel density."),
+    INVALID_MAX_RESOLUTION("Invalid %s1 request. Max resolution must be a positive integer greater than 0. Specify a valid max resolution."),
+    INVALID_BLEEP_TO_DEIDENTIFY_AUDIO("Invalid %s1 request. Specify a valid bleep as AudioBleep"),
+    OUTPUT_DIRECTORY_NOT_FOUND("Invalid %s1 request. The output directory does not exist. Please specify a valid output directory."),
+    INVALID_PERMISSIONS_FOR_OUTPUT_DIRECTORY("Invalid %s1 request. The output directory is not writable. Please check the permissions or specify a valid output directory."),
     ;
 
     private final String log;

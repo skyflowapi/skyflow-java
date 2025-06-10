@@ -704,7 +704,55 @@ public class VaultClient {
                 .build();
     }
 
-    // Helper method to build TokenType
+    protected com.skyflow.generated.rest.resources.files.requests.DeidentifyFileRequest getDeidentifyGenericFileRequest(
+            DeidentifyFileRequest request, String vaultId, String base64Content, String fileExtension) {
+
+        List<EntityType> mappedEntityTypes = getEntityTypes(request.getEntities());
+
+        TokenFormat tokenFormat = request.getTokenFormat();
+
+        Optional<List<EntityType>> entityTypes = Optional.empty();
+        Optional<List<EntityType>> entityUniqueCounter = Optional.empty();
+        Optional<List<String>> allowRegex = Optional.ofNullable(request.getAllowRegexList());
+        Optional<List<String>> restrictRegex = Optional.ofNullable(request.getRestrictRegexList());
+        Optional<Transformations> transformations = Optional.ofNullable(getTransformations(request.getTransformations()));
+
+        if (tokenFormat != null) {
+            if (tokenFormat.getEntityOnly() != null && !tokenFormat.getEntityOnly().isEmpty()) {
+                entityTypes = Optional.of(tokenFormat.getEntityOnly().stream()
+                        .map(detectEntity -> EntityType.valueOf(detectEntity.name()))
+                        .collect(Collectors.toList()));
+            }
+
+            if (tokenFormat.getEntityUniqueCounter() != null && !tokenFormat.getEntityUniqueCounter().isEmpty()) {
+                entityUniqueCounter = Optional.of(tokenFormat.getEntityUniqueCounter().stream()
+                        .map(detectEntity -> EntityType.valueOf(detectEntity.name()))
+                        .collect(Collectors.toList()));
+            }
+        }
+
+        TokenTypeWithoutVault tokenType = TokenTypeWithoutVault.builder()
+                .entityOnly(entityTypes)
+                .entityUnqCounter(entityUniqueCounter)
+                .build();
+
+        DeidentifyFileRequestFile file =
+                DeidentifyFileRequestFile.builder()
+                        .base64(base64Content)
+                        .dataFormat(fileExtension != null ? DeidentifyFileRequestFileDataFormat.valueOf(fileExtension.toUpperCase()) : null)
+                        .build();
+
+        return com.skyflow.generated.rest.resources.files.requests.DeidentifyFileRequest.builder()
+                .vaultId(vaultId)
+                .file(file)
+                .entityTypes(mappedEntityTypes)
+                .tokenType(tokenType)
+                .allowRegex(allowRegex)
+                .restrictRegex(restrictRegex)
+                .transformations(transformations)
+                .build();
+    }
+
     private TokenTypeWithoutVault buildTokenType(TokenFormat tokenFormat,
                                                  Optional<List<EntityType>> entityTypes,
                                                  Optional<List<EntityType>> entityUniqueCounter) {

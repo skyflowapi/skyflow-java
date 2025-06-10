@@ -53,11 +53,11 @@ public class DeidentifyFileRequest {
         return this.builder.maskingMethod;
     }
 
-    public Double getPixelDensity() {
+    public Number getPixelDensity() {
         return this.builder.pixelDensity;
     }
 
-    public Double getMaxResolution() {
+    public Number getMaxResolution() {
         return this.builder.maxResolution;
     }
 
@@ -91,8 +91,8 @@ public class DeidentifyFileRequest {
         private Boolean outputProcessedImage;
         private Boolean outputOcrText;
         private MaskingMethod maskingMethod;
-        private Double pixelDensity;
-        private Double maxResolution;
+        private Number pixelDensity;
+        private Number maxResolution;
         private Boolean outputProcessedAudio;
         private DetectOutputTranscriptions outputTranscription;
         private AudioBleep bleep;
@@ -151,12 +151,12 @@ public class DeidentifyFileRequest {
             return this;
         }
 
-        public DeidentifyFileRequestBuilder pixelDensity(Double pixelDensity) {
+        public DeidentifyFileRequestBuilder pixelDensity(Number pixelDensity) {
             this.pixelDensity = pixelDensity;
             return this;
         }
 
-        public DeidentifyFileRequestBuilder maxResolution(Double maxResolution) {
+        public DeidentifyFileRequestBuilder maxResolution(Number maxResolution) {
             this.maxResolution = maxResolution;
             return this;
         }

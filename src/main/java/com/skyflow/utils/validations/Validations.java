@@ -795,42 +795,63 @@ public class Validations {
 
     public static void validateDeidentifyFileRequest(DeidentifyFileRequest request) throws SkyflowException {
         if (request == null) {
-            throw new SkyflowException(ErrorMessage.EmptyRequestBody.getMessage());
+            LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.EMPTY_REQUEST_BODY.getLog(), InterfaceName.DETECT.getName()
+            ));
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyRequestBody.getMessage());
         }
 
         File file = request.getFile();
         if (file == null) {
-            throw new SkyflowException(ErrorMessage.InvalidNullFileInDeIdentifyFile.getMessage());
+            LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.INVALID_NULL_FILE_IN_DEIDENTIFY_FILE.getLog(), InterfaceName.DETECT.getName()
+            ));
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidNullFileInDeIdentifyFile.getMessage());
         }
         if (!file.exists() || !file.isFile()) {
-            throw new SkyflowException(ErrorMessage.FileNotFoundToDeidentify.getMessage());
+            LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.FILE_NOT_FOUND_TO_DEIDENTIFY.getLog(), InterfaceName.DETECT.getName()
+            ));
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.FileNotFoundToDeidentify.getMessage());
         }
         if (!file.canRead()) {
-            throw new SkyflowException(ErrorMessage.FileNotReadableToDeidentify.getMessage());
+            LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.FILE_NOT_READABLE_TO_DEIDENTIFY.getLog(), InterfaceName.DETECT.getName()
+            ));
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.FileNotReadableToDeidentify.getMessage());
         }
 
 
         // Validate pixelDensity and maxResolution
-        if (request.getPixelDensity() != null && request.getPixelDensity() <= 0) {
-            throw new SkyflowException(ErrorMessage.InvalidPixelDensityToDeidentifyFile.getMessage());
+        if (request.getPixelDensity() != null && request.getPixelDensity().doubleValue() <= 0) {
+            LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.INVALID_PIXEL_DENSITY_TO_DEIDENTIFY_FILE.getLog(), InterfaceName.DETECT.getName()
+            ));
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidPixelDensityToDeidentifyFile.getMessage());
         }
-        if (request.getMaxResolution() != null && request.getMaxResolution() <= 0) {
-            throw new SkyflowException(ErrorMessage.InvalidMaxResolution.getMessage());
+        if (request.getMaxResolution() != null && request.getMaxResolution().doubleValue() <= 0) {
+            LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.INVALID_MAX_RESOLUTION.getLog(), InterfaceName.DETECT.getName()
+            ));
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidMaxResolution.getMessage());
         }
 
         // Validate AudioBleep
         if (request.getBleep() != null) {
             if (request.getBleep().getFrequency() == null || request.getBleep().getFrequency() <= 0) {
-                throw new SkyflowException(ErrorMessage.InvalidRequestBody.getMessage());
+                LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.INVALID_BLEEP_TO_DEIDENTIFY_AUDIO.getLog(), InterfaceName.DETECT.getName()
+                ));
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidRequestBody.getMessage());
             }
             if (request.getBleep().getGain() == null || request.getBleep().getGain() < 0) {
-                throw new SkyflowException(ErrorMessage.InvalidRequestBody.getMessage());
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidRequestBody.getMessage());
             }
             if (request.getBleep().getStartPadding() == null || request.getBleep().getStartPadding() < 0) {
-                throw new SkyflowException(ErrorMessage.InvalidRequestBody.getMessage());
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidRequestBody.getMessage());
             }
             if (request.getBleep().getStopPadding() == null || request.getBleep().getStopPadding() < 0) {
-                throw new SkyflowException(ErrorMessage.InvalidRequestBody.getMessage());
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidRequestBody.getMessage());
             }
         }
 
@@ -838,19 +859,25 @@ public class Validations {
         if (request.getOutputDirectory() != null) {
             File outDir = new File(request.getOutputDirectory());
             if (!outDir.exists() || !outDir.isDirectory()) {
-                throw new SkyflowException(ErrorMessage.OutputDirectoryNotFound.getMessage());
+                LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.OUTPUT_DIRECTORY_NOT_FOUND.getLog(), InterfaceName.DETECT.getName()
+                ));
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.OutputDirectoryNotFound.getMessage());
             }
             if (!outDir.canWrite()) {
-                throw new SkyflowException(ErrorMessage.InvalidPermission.getMessage()); 
+                LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.INVALID_PERMISSIONS_FOR_OUTPUT_DIRECTORY.getLog(), InterfaceName.DETECT.getName()
+                ));
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidPermission.getMessage());
             }
         }
 
         // Validate waitTime if provided
         if (request.getWaitTime() != null && request.getWaitTime() <= 0) {
-            throw new SkyflowException(ErrorMessage.InvalidWaitTime.getMessage());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidWaitTime.getMessage());
         }
         if(request.getWaitTime() > 64) {
-            throw new SkyflowException(ErrorMessage.WaitTimeExceedsLimit.getMessage());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.WaitTimeExceedsLimit.getMessage());
         }
     }
 

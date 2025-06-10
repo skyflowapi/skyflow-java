@@ -141,6 +141,9 @@ public enum ErrorMessage {
     InvalidWaitTime("%s0 Validation error. The wait time for deidentify file operation should be a positive integer. Specify a valid wait time."),
     WaitTimeExceedsLimit("%s0 Validation error. The wait time for deidentify file operation exceeds the maximum limit of 64 seconds. Specify a wait time less than or equal to 60 seconds."),
     InvalidOrEmptyRunId("%s0 Validation error. The run ID is invalid or empty. Specify a valid run ID."),
+    FailedToEncodeFile("%s0 Validation error. Failed to encode the file. Ensure the file is in a supported format and try again."),
+    PollingForResultsFailed("%s0 API error. Polling for results failed. Unable to retrieve the deidentified file"),
+    FailedtoSaveProcessedFile("%s0 Validation error. Failed to save the processed file. Ensure the output directory is valid and writable."),
     ;
     private final String message;
 

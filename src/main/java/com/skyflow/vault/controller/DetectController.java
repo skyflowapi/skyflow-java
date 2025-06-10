@@ -3,6 +3,8 @@ package com.skyflow.vault.controller;
 import com.skyflow.VaultClient;
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
+import com.skyflow.errors.ErrorCode;
+import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.generated.rest.core.ApiClientApiException;
 import com.skyflow.generated.rest.resources.files.requests.*;
@@ -80,6 +82,7 @@ public final class DetectController extends VaultClient {
     }
 
     public DeidentifyFileResponse deidentifyFile(DeidentifyFileRequest request) throws SkyflowException {
+        DeidentifyFileResponse response;
         LogUtil.printInfoLog(InfoLogs.DEIDENTIFY_FILE_TRIGGERED.getLog());
         try {
             LogUtil.printInfoLog(InfoLogs.VALIDATE_DEIDENTIFY_FILE_REQUEST.getLog());
@@ -91,11 +94,21 @@ public final class DetectController extends VaultClient {
             File file = request.getFile();
             String fileName = file.getName();
             String fileExtension = getFileExtension(fileName);
-            String base64Content = encodeFileToBase64(file);
+            String base64Content;
+
+            try {
+                base64Content = encodeFileToBase64(file);
+            } catch (IOException ioe) {
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.FailedToEncodeFile.getMessage());
+            }
 
 
             com.skyflow.generated.rest.types.DeidentifyFileResponse apiResponse = processFileByType(fileExtension, base64Content, request, vaultId);
-            DeidentifyFileResponse response = pollForResults(apiResponse.getRunId(), request.getWaitTime());
+            try {
+                response = pollForResults(apiResponse.getRunId(), request.getWaitTime());
+            } catch (Exception ex) {
+                throw new SkyflowException(ErrorCode.SERVER_ERROR.getCode(), ErrorMessage.PollingForResultsFailed.getMessage());
+}
 
             if ("SUCCESS".equalsIgnoreCase(response.getStatus())) {
                 String base64File = response.getFile();
@@ -109,17 +122,19 @@ public final class DetectController extends VaultClient {
                     } else {
                         outputFile = new File(outputFileName);
                     }
-                    java.nio.file.Files.write(outputFile.toPath(), decodedBytes);
+                    try {
+                        java.nio.file.Files.write(outputFile.toPath(), decodedBytes);
+                    } catch (IOException ioe) {
+                        throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.FailedtoSaveProcessedFile.getMessage());
+                    }
 
                 }
             }
-            return response;
         } catch (ApiClientApiException e) {
             LogUtil.printErrorLog(ErrorLogs.DEIDENTIFY_FILE_REQUEST_REJECTED.getLog());
             throw new SkyflowException(e.statusCode(), e, e.headers(), e.body().toString());
-        } catch (Exception e) {
-            throw new RuntimeException(e);
         }
+        return response;
     }
 
     private String getFileExtension(String fileName) {
@@ -271,8 +286,7 @@ public final class DetectController extends VaultClient {
                 DeidentifyPdfRequest pdfRequest =
                         super.getDeidentifyPdfRequest(request, vaultId, base64Content);
 
-                com.skyflow.generated.rest.types.DeidentifyFileResponse result2 = super.getDetectFileAPi().deidentifyPdf(pdfRequest);
-                return result2;
+                return super.getDetectFileAPi().deidentifyPdf(pdfRequest);
 
             case "jpg":
             case "jpeg":
@@ -310,8 +324,9 @@ public final class DetectController extends VaultClient {
                 return super.getDetectFileAPi().deidentifyStructuredText(structuredTextRequest);
 
             default:
-                textFileRequest = super.getDeidentifyTextFileRequest(request, vaultId, base64Content);
-                return super.getDetectFileAPi().deidentifyText(textFileRequest);
+                com.skyflow.generated.rest.resources.files.requests.DeidentifyFileRequest genericFileRequest =
+                        super.getDeidentifyGenericFileRequest(request, vaultId, base64Content, fileExtension);
+                return super.getDetectFileAPi().deidentifyFile(genericFileRequest);
         }
     }
 
