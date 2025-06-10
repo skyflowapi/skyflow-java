@@ -290,6 +290,7 @@ public class VaultClientTests {
             Dotenv dotenv = Dotenv.load();
             Credentials credentials = new Credentials();
             credentials.setCredentialsString(dotenv.get("VAULT_CLIENT_SKYFLOW_CREDENTIALS"));
+            System.out.println(dotenv.get("VAULT_CLIENT_SKYFLOW_CREDENTIALS"));
             vaultConfig.setCredentials(credentials);
             vaultClient = new VaultClient(vaultConfig, credentials);
             vaultClient.setBearerToken();
