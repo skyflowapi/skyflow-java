@@ -80,12 +80,9 @@ public class VaultClientTests {
     @Test
     public void testVaultClientGetRecordsAPI() {
         try {
-//            Dotenv dotenv = Dotenv.load();
-//            Credentials credentials = new Credentials();
-//            credentials.setCredentialsString(dotenv.get("VAULT_CLIENT_SKYFLOW_CREDENTIALS"));
-//            vaultConfig.setCredentials(credentials);
+            Dotenv dotenv = Dotenv.load();
             Credentials credentials = new Credentials();
-            credentials.setApiKey("sky-ab123-abcd1234cdef1234abcd4321cdef4321"); // Use a non-null dummy API key
+            credentials.setCredentialsString(dotenv.get("VAULT_CLIENT_SKYFLOW_CREDENTIALS"));
             vaultConfig.setCredentials(credentials);
             vaultClient = new VaultClient(vaultConfig, credentials);
             vaultClient.setBearerToken();
@@ -106,9 +103,6 @@ public class VaultClientTests {
             Credentials credentials = new Credentials();
             credentials.setCredentialsString(dotenv.get("VAULT_CLIENT_SKYFLOW_CREDENTIALS"));
             vaultConfig.setCredentials(credentials);
-//            Credentials credentials = new Credentials();
-//            credentials.setApiKey("sky-ab123-abcd1234cdef1234abcd4321cdef4321"); // Use a non-null dummy API key
-//            vaultConfig.setCredentials(credentials);
             vaultClient = new VaultClient(vaultConfig, credentials);
             vaultClient.setBearerToken();
             TokensClient tokensClient = vaultClient.getTokensApi();
@@ -122,13 +116,9 @@ public class VaultClientTests {
     @Test
     public void testVaultClientGetQueryAPI() {
         try {
-//            Dotenv dotenv = Dotenv.load();
-//            Credentials credentials = new Credentials();
-//            credentials.setCredentialsString(dotenv.get("VAULT_CLIENT_SKYFLOW_CREDENTIALS"));
-//            vaultConfig.setCredentials(credentials);
-
+            Dotenv dotenv = Dotenv.load();
             Credentials credentials = new Credentials();
-            credentials.setApiKey("sky-ab123-abcd1234cdef1234abcd4321cdef4321"); // Use a non-null dummy API key
+            credentials.setCredentialsString(dotenv.get("VAULT_CLIENT_SKYFLOW_CREDENTIALS"));
             vaultConfig.setCredentials(credentials);
 
             vaultClient = new VaultClient(vaultConfig, credentials);
@@ -298,8 +288,9 @@ public class VaultClientTests {
     @Test
     public void testSetBearerToken() {
         try {
+            Dotenv dotenv = Dotenv.load();
             Credentials credentials = new Credentials();
-            credentials.setApiKey("sky-ab123-abcd1234cdef1234abcd4321cdef4321"); // Use a non-null dummy API key
+            credentials.setCredentialsString(dotenv.get("VAULT_CLIENT_SKYFLOW_CREDENTIALS"));
             vaultConfig.setCredentials(credentials);
             vaultClient = new VaultClient(vaultConfig, credentials);
             vaultClient.setBearerToken();
