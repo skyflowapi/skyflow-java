@@ -2,6 +2,7 @@ package com.skyflow.vault.detect;
 
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import java.util.List;
 
@@ -36,7 +37,7 @@ public class DeidentifyTextResponse {
 
     @Override
     public String toString() {
-        Gson gson = new Gson();
+        Gson gson = new GsonBuilder().serializeNulls().create();
         return gson.toJson(this);
     }
 

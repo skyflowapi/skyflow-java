@@ -1,6 +1,9 @@
 package com.skyflow.vault.detect;
 
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
 public class ReidentifyTextResponse {
     private final String processedText;
 
@@ -14,8 +17,7 @@ public class ReidentifyTextResponse {
 
     @Override
     public String toString() {
-        return "ReidentifyTextResponse{" +
-                "processedText='" + processedText + '\'' +
-                '}';
+        Gson gson = new GsonBuilder().serializeNulls().create();
+        return gson.toJson(this);
     }
 }
