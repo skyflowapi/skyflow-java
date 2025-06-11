@@ -185,12 +185,12 @@ public class Validations {
                 LogUtil.printErrorLog(ErrorLogs.EMPTY_API_KEY_VALUE.getLog());
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyApikey.getMessage());
             } else {
-//                Pattern pattern = Pattern.compile(Constants.API_KEY_REGEX);
-//                Matcher matcher = pattern.matcher(apiKey);
-//                if (!matcher.matches()) {
-//                    LogUtil.printErrorLog(ErrorLogs.INVALID_API_KEY.getLog());
-//                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidApikey.getMessage());
-//                }
+               Pattern pattern = Pattern.compile(Constants.API_KEY_REGEX);
+               Matcher matcher = pattern.matcher(apiKey);
+               if (!matcher.matches()) {
+                   LogUtil.printErrorLog(ErrorLogs.INVALID_API_KEY.getLog());
+                   throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidApikey.getMessage());
+               }
             }
         } else if (roles != null) {
             if (roles.isEmpty()) {
