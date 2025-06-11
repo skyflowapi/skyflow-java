@@ -6,6 +6,7 @@ import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.generated.rest.core.ApiClientApiException;
+import com.skyflow.generated.rest.core.ApiClientHttpResponse;
 import com.skyflow.generated.rest.resources.query.requests.QueryServiceExecuteQueryBody;
 import com.skyflow.generated.rest.resources.records.requests.RecordServiceBatchOperationBody;
 import com.skyflow.generated.rest.resources.records.requests.RecordServiceBulkDeleteRecordBody;
@@ -16,6 +17,7 @@ import com.skyflow.generated.rest.resources.tokens.requests.V1TokenizePayload;
 import com.skyflow.generated.rest.types.*;
 import com.skyflow.logs.ErrorLogs;
 import com.skyflow.logs.InfoLogs;
+import com.skyflow.utils.Constants;
 import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.utils.validations.Validations;
 import com.skyflow.vault.data.*;
@@ -109,7 +111,7 @@ public final class VaultController extends VaultClient {
     public InsertResponse insert(InsertRequest insertRequest) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.INSERT_TRIGGERED.getLog());
         V1InsertRecordResponse bulkInsertResult = null;
-        V1BatchOperationResponse batchInsertResult = null;
+        ApiClientHttpResponse<V1BatchOperationResponse> batchInsertResult = null;
         ArrayList<HashMap<String, Object>> insertedFields = new ArrayList<>();
         ArrayList<HashMap<String, Object>> errorFields = new ArrayList<>();
         Boolean continueOnError = insertRequest.getContinueOnError();
@@ -119,9 +121,9 @@ public final class VaultController extends VaultClient {
             setBearerToken();
             if (continueOnError) {
                 RecordServiceBatchOperationBody insertBody = super.getBatchInsertRequestBody(insertRequest);
-                batchInsertResult = super.getRecordsApi().recordServiceBatchOperation(super.getVaultConfig().getVaultId(), insertBody);
+                batchInsertResult = super.getRecordsApi().withRawResponse().recordServiceBatchOperation(super.getVaultConfig().getVaultId(), insertBody);
                 LogUtil.printInfoLog(InfoLogs.INSERT_REQUEST_RESOLVED.getLog());
-                Optional<List<Map<String, Object>>> records = batchInsertResult.getResponses();
+                Optional<List<Map<String, Object>>> records = batchInsertResult.body().getResponses();
 
                 if (records.isPresent()) {
                     List<Map<String, Object>> recordList = records.get();
@@ -133,6 +135,7 @@ public final class VaultController extends VaultClient {
                         if (insertRecord.containsKey("skyflowId")) {
                             insertedFields.add(insertRecord);
                         } else {
+                            insertRecord.put("requestId", batchInsertResult.headers().get("x-request-id").get(0));
                             errorFields.add(insertRecord);
                         }
                     }
@@ -152,7 +155,7 @@ public final class VaultController extends VaultClient {
             }
         } catch (ApiClientApiException e) {
             LogUtil.printErrorLog(ErrorLogs.INSERT_RECORDS_REJECTED.getLog());
-            throw e;
+            throw new SkyflowException(e.statusCode(), e, e.headers(), e.body().toString());
         }
         LogUtil.printInfoLog(InfoLogs.INSERT_SUCCESS.getLog());
         return new InsertResponse(insertedFields, errorFields);
@@ -160,7 +163,7 @@ public final class VaultController extends VaultClient {
 
     public DetokenizeResponse detokenize(DetokenizeRequest detokenizeRequest) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.DETOKENIZE_TRIGGERED.getLog());
-        V1DetokenizeResponse result = null;
+        ApiClientHttpResponse<V1DetokenizeResponse> result = null;
         ArrayList<DetokenizeRecordResponse> detokenizedFields = new ArrayList<>();
         ArrayList<DetokenizeRecordResponse> errorRecords = new ArrayList<>();
         try {
@@ -168,18 +171,18 @@ public final class VaultController extends VaultClient {
             Validations.validateDetokenizeRequest(detokenizeRequest);
             setBearerToken();
             V1DetokenizePayload payload = super.getDetokenizePayload(detokenizeRequest);
-            result = super.getTokensApi().recordServiceDetokenize(super.getVaultConfig().getVaultId(), payload);
+            result = super.getTokensApi().withRawResponse().recordServiceDetokenize(super.getVaultConfig().getVaultId(), payload);
             LogUtil.printInfoLog(InfoLogs.DETOKENIZE_REQUEST_RESOLVED.getLog());
-//            Map<String, List<String>> responseHeaders = result.getHeaders();
-//            String requestId = responseHeaders.get(Constants.REQUEST_ID_HEADER_KEY).get(0);
-            Optional<List<V1DetokenizeRecordResponse>> records = result.getRecords();
+            Map<String, List<String>> responseHeaders = result.headers();
+            String requestId = responseHeaders.get(Constants.REQUEST_ID_HEADER_KEY).get(0);
+            Optional<List<V1DetokenizeRecordResponse>> records = result.body().getRecords();
 
             if (records.isPresent()) {
                 List<V1DetokenizeRecordResponse> recordList = records.get();
 
                 for (V1DetokenizeRecordResponse record : recordList) {
                     if (record.getError().isPresent()) {
-                        DetokenizeRecordResponse recordResponse = new DetokenizeRecordResponse(record, "requestId");
+                        DetokenizeRecordResponse recordResponse = new DetokenizeRecordResponse(record, requestId);
                         errorRecords.add(recordResponse);
                     } else {
                         DetokenizeRecordResponse recordResponse = new DetokenizeRecordResponse(record);
@@ -189,8 +192,7 @@ public final class VaultController extends VaultClient {
             }
         } catch (ApiClientApiException e) {
             LogUtil.printErrorLog(ErrorLogs.DETOKENIZE_REQUEST_REJECTED.getLog());
-//            throw new SkyflowException(e.getCode(), e, e.getResponseHeaders(), e.getResponseBody());
-            throw e;
+            throw new SkyflowException(e.statusCode(), e, e.headers(), e.body().toString());
         }
 
         if (!errorRecords.isEmpty()) {
@@ -261,8 +263,7 @@ public final class VaultController extends VaultClient {
             tokensMap = getFormattedUpdateRecord(result);
         } catch (ApiClientApiException e) {
             LogUtil.printErrorLog(ErrorLogs.UPDATE_REQUEST_REJECTED.getLog());
-//            throw new SkyflowException(e.getCode(), e, e.getResponseHeaders(), e.getResponseBody());
-            throw e;
+            throw new SkyflowException(e.statusCode(), e, e.headers(), e.body().toString());
         }
         LogUtil.printInfoLog(InfoLogs.UPDATE_SUCCESS.getLog());
         return new UpdateResponse(skyflowId, tokensMap);
@@ -283,8 +284,7 @@ public final class VaultController extends VaultClient {
             LogUtil.printInfoLog(InfoLogs.DELETE_REQUEST_RESOLVED.getLog());
         } catch (ApiClientApiException e) {
             LogUtil.printErrorLog(ErrorLogs.DELETE_REQUEST_REJECTED.getLog());
-//            throw new SkyflowException(e.getCode(), e, e.getResponseHeaders(), e.getResponseBody());
-            throw e;
+            throw new SkyflowException(e.statusCode(), e, e.headers(), e.body().toString());
         }
         LogUtil.printInfoLog(InfoLogs.DELETE_SUCCESS.getLog());
         return new DeleteResponse(result.getRecordIdResponse());
@@ -313,8 +313,7 @@ public final class VaultController extends VaultClient {
             }
         } catch (ApiClientApiException e) {
             LogUtil.printErrorLog(ErrorLogs.QUERY_REQUEST_REJECTED.getLog());
-//            throw new SkyflowException(e.getCode(), e, e.getResponseHeaders(), e.getResponseBody());
-            throw  e;
+            throw new SkyflowException(e.statusCode(), e, e.headers(), e.body().toString());
         }
         LogUtil.printInfoLog(InfoLogs.QUERY_SUCCESS.getLog());
         return new QueryResponse(fields);
@@ -340,9 +339,7 @@ public final class VaultController extends VaultClient {
             }
         } catch (ApiClientApiException e) {
             LogUtil.printErrorLog(ErrorLogs.TOKENIZE_REQUEST_REJECTED.getLog());
-//            throw new SkyflowException(e.getCode(), e, e.getResponseHeaders(), e.getResponseBody());
-            throw e;
-        }
+            throw new SkyflowException(e.statusCode(), e, e.headers(), e.body().toString());        }
         LogUtil.printInfoLog(InfoLogs.TOKENIZE_SUCCESS.getLog());
         return new TokenizeResponse(list);
     }

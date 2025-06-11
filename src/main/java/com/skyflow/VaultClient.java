@@ -3,11 +3,15 @@ package com.skyflow;
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.DetectEntities;
+import com.skyflow.enums.DetectOutputTranscriptions;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.generated.rest.ApiClient;
 import com.skyflow.generated.rest.ApiClientBuilder;
+import com.skyflow.generated.rest.resources.files.FilesClient;
+import com.skyflow.generated.rest.resources.files.requests.*;
+import com.skyflow.generated.rest.resources.files.types.*;
 import com.skyflow.generated.rest.resources.query.QueryClient;
 import com.skyflow.generated.rest.resources.records.RecordsClient;
 import com.skyflow.generated.rest.resources.records.requests.RecordServiceBatchOperationBody;
@@ -31,6 +35,8 @@ import com.skyflow.utils.validations.Validations;
 import com.skyflow.vault.data.InsertRequest;
 import com.skyflow.vault.data.UpdateRequest;
 import com.skyflow.vault.detect.*;
+import com.skyflow.vault.detect.DeidentifyFileRequest;
+import com.skyflow.vault.detect.DeidentifyTextRequest;
 import com.skyflow.vault.tokens.ColumnValue;
 import com.skyflow.vault.tokens.DetokenizeData;
 import com.skyflow.vault.tokens.DetokenizeRequest;
@@ -70,6 +76,10 @@ public class VaultClient {
 
     protected StringsClient getDetectTextApi() {
         return this.apiClient.strings();
+    }
+
+    protected FilesClient getDetectFileAPi(){
+        return this.apiClient.files();
     }
 
     protected QueryClient getQueryApi() {
@@ -208,8 +218,8 @@ public class VaultClient {
         prioritiseCredentials();
         Validations.validateCredentials(this.finalCredentials);
         if (this.finalCredentials.getApiKey() != null) {
-            setApiKey();
-            return;
+            LogUtil.printInfoLog(InfoLogs.REUSE_API_KEY.getLog());
+            token=this.finalCredentials.getApiKey();
         } else if (Token.isExpired(token)) {
             LogUtil.printInfoLog(InfoLogs.BEARER_TOKEN_EXPIRED.getLog());
             token = Utils.generateBearerToken(this.finalCredentials);
@@ -382,13 +392,389 @@ public class VaultClient {
                 .build();
     }
 
-    private void setApiKey() {
-        if (apiKey == null) {
-            apiKey = this.finalCredentials.getApiKey();
-        } else {
-            LogUtil.printInfoLog(InfoLogs.REUSE_API_KEY.getLog());
+    private List<EntityType> getEntityTypes(List<DetectEntities> entities){
+        List<EntityType> mappedEntityTypes = null;
+        if (entities != null) {
+            mappedEntityTypes = entities.stream()
+                    .map(detectEntity -> EntityType.valueOf(detectEntity.name()))
+                    .collect(Collectors.toList());
         }
-        this.apiClientBuilder.token(token);
+
+        return mappedEntityTypes;
+    }
+
+    protected com.skyflow.generated.rest.resources.files.requests.DeidentifyTextRequest getDeidentifyTextFileRequest(DeidentifyFileRequest request, String vaultId, String base64Content){
+        List<EntityType> mappedEntityTypes = getEntityTypes(request.getEntities());
+
+        TokenFormat tokenFormat = request.getTokenFormat();
+
+        Optional<List<EntityType>> entityTypes = Optional.empty();
+        Optional<List<EntityType>> entityUniqueCounter = Optional.empty();
+        Optional<List<String>> allowRegex = Optional.ofNullable(request.getAllowRegexList());
+        Optional<List<String>> restrictRegex = Optional.ofNullable(request.getRestrictRegexList());
+        Optional<Transformations> transformations = Optional.ofNullable(getTransformations(request.getTransformations()));
+
+        if (tokenFormat != null) {
+
+            if (tokenFormat.getEntityOnly() != null && !tokenFormat.getEntityOnly().isEmpty()) {
+                entityTypes = Optional.of(tokenFormat.getEntityOnly().stream()
+                        .map(detectEntity -> EntityType.valueOf(detectEntity.name()))
+                        .collect(Collectors.toList()));
+            }
+
+            if (tokenFormat.getEntityUniqueCounter() != null && !tokenFormat.getEntityUniqueCounter().isEmpty()) {
+                entityUniqueCounter = Optional.of(tokenFormat.getEntityUniqueCounter().stream()
+                        .map(detectEntity -> EntityType.valueOf(detectEntity.name()))
+                        .collect(Collectors.toList()));
+            }
+        }
+
+        TokenTypeWithoutVault tokenType = TokenTypeWithoutVault.builder()
+                .entityOnly(entityTypes)
+                .entityUnqCounter(entityUniqueCounter)
+                .build();
+
+        DeidentifyTextRequestFile file = DeidentifyTextRequestFile.builder()
+                .base64(base64Content)
+                .build();
+
+        // Build the final request
+        com.skyflow.generated.rest.resources.files.requests.DeidentifyTextRequest req =
+                com.skyflow.generated.rest.resources.files.requests.DeidentifyTextRequest.builder()
+                        .vaultId(vaultId)
+                        .file(file)
+                        .entityTypes(mappedEntityTypes)
+                        .tokenType(tokenType)
+                        .allowRegex(allowRegex)
+                        .restrictRegex(restrictRegex)
+                        .transformations(transformations)
+                        .build();
+
+        return req;
+    }
+
+
+    protected DeidentifyAudioRequest getDeidentifyAudioRequest(DeidentifyFileRequest request, String vaultId, String base64Content, String dataFormat){
+        List<EntityType> mappedEntityTypes = getEntityTypes(request.getEntities());
+
+        TokenFormat tokenFormat = request.getTokenFormat();
+
+        Optional<List<EntityType>> entityTypes = Optional.empty();
+        Optional<List<EntityType>> entityUniqueCounter = Optional.empty();
+        Optional<List<String>> allowRegex = Optional.ofNullable(request.getAllowRegexList());
+        Optional<List<String>> restrictRegex = Optional.ofNullable(request.getRestrictRegexList());
+        Optional<Transformations> transformations = Optional.ofNullable(getTransformations(request.getTransformations()));
+
+        if (tokenFormat != null) {
+
+            if (tokenFormat.getEntityOnly() != null && !tokenFormat.getEntityOnly().isEmpty()) {
+                entityTypes = Optional.of(tokenFormat.getEntityOnly().stream()
+                        .map(detectEntity -> EntityType.valueOf(detectEntity.name()))
+                        .collect(Collectors.toList()));
+            }
+
+            if (tokenFormat.getEntityUniqueCounter() != null && !tokenFormat.getEntityUniqueCounter().isEmpty()) {
+                entityUniqueCounter = Optional.of(tokenFormat.getEntityUniqueCounter().stream()
+                        .map(detectEntity -> EntityType.valueOf(detectEntity.name()))
+                        .collect(Collectors.toList()));
+            }
+        }
+
+        TokenTypeWithoutVault tokenType = TokenTypeWithoutVault.builder()
+                .entityOnly(entityTypes)
+                .entityUnqCounter(entityUniqueCounter)
+                .build();
+
+        DeidentifyAudioRequestFile deidentifyAudioRequestFile = DeidentifyAudioRequestFile.builder().base64(base64Content).dataFormat(DeidentifyAudioRequestFileDataFormat.valueOf(dataFormat)).build();
+        DetectOutputTranscriptions transcription = request.getOutputTranscription();
+        DeidentifyAudioRequestOutputTranscription outputTranscriptionType = null;
+        if (transcription != null) {
+            outputTranscriptionType = DeidentifyAudioRequestOutputTranscription.valueOf(transcription.name());
+        }
+
+        return  DeidentifyAudioRequest.builder()
+                .vaultId(vaultId)
+                .file(deidentifyAudioRequestFile)
+                .allowRegex(allowRegex)
+                .restrictRegex(restrictRegex)
+                .entityTypes(mappedEntityTypes)
+                .bleepFrequency(request.getBleep().getFrequency())
+                .bleepGain(request.getBleep().getGain())
+                .bleepStartPadding(request.getBleep().getStartPadding())
+                .bleepStopPadding(request.getBleep().getStopPadding())
+                .outputProcessedAudio(request.getOutputProcessedAudio())
+                .outputTranscription(outputTranscriptionType)
+                .tokenType(tokenType)
+                .transformations(transformations)
+                .build();
+    }
+
+    // Add to VaultClient.java class
+    protected DeidentifyPdfRequest getDeidentifyPdfRequest(DeidentifyFileRequest request, String vaultId, String base64Content) {
+        List<EntityType> mappedEntityTypes = getEntityTypes(request.getEntities());
+
+        TokenFormat tokenFormat = request.getTokenFormat();
+        Optional<List<EntityType>> entityTypes = Optional.empty();
+        Optional<List<EntityType>> entityUniqueCounter = Optional.empty();
+        Optional<List<String>> allowRegex = Optional.ofNullable(request.getAllowRegexList());
+        Optional<List<String>> restrictRegex = Optional.ofNullable(request.getRestrictRegexList());
+        Optional<Transformations> transformations = Optional.ofNullable(getTransformations(request.getTransformations()));
+
+        if (tokenFormat != null) {
+            if (tokenFormat.getEntityOnly() != null && !tokenFormat.getEntityOnly().isEmpty()) {
+                entityTypes = Optional.of(tokenFormat.getEntityOnly().stream()
+                        .map(detectEntity -> EntityType.valueOf(detectEntity.name()))
+                        .collect(Collectors.toList()));
+            }
+
+            if (tokenFormat.getEntityUniqueCounter() != null && !tokenFormat.getEntityUniqueCounter().isEmpty()) {
+                entityUniqueCounter = Optional.of(tokenFormat.getEntityUniqueCounter().stream()
+                        .map(detectEntity -> EntityType.valueOf(detectEntity.name()))
+                        .collect(Collectors.toList()));
+            }
+        }
+
+        TokenTypeWithoutVault tokenType = TokenTypeWithoutVault.builder()
+                .entityOnly(entityTypes)
+                .entityUnqCounter(entityUniqueCounter)
+                .build();
+
+        DeidentifyPdfRequestFile file = DeidentifyPdfRequestFile.builder()
+                .base64(base64Content)
+                .build();
+
+        return DeidentifyPdfRequest.builder()
+                .vaultId(vaultId)
+                .file(file)
+                .density(request.getPixelDensity() != null ? request.getPixelDensity().intValue() : null)
+                .maxResolution(request.getMaxResolution() != null ? request.getMaxResolution().intValue() : null)
+                .entityTypes(mappedEntityTypes)
+                .tokenType(tokenType)
+                .allowRegex(allowRegex)
+                .restrictRegex(restrictRegex)
+                .transformations(transformations)
+                .build();
+    }
+
+    protected DeidentifyImageRequest getDeidentifyImageRequest(DeidentifyFileRequest request, String vaultId, String base64Content, String format) {
+        List<EntityType> mappedEntityTypes = getEntityTypes(request.getEntities());
+
+        TokenFormat tokenFormat = request.getTokenFormat();
+        Optional<List<EntityType>> entityTypes = Optional.empty();
+        Optional<List<EntityType>> entityUniqueCounter = Optional.empty();
+        Optional<List<String>> allowRegex = Optional.ofNullable(request.getAllowRegexList());
+        Optional<List<String>> restrictRegex = Optional.ofNullable(request.getRestrictRegexList());
+        Optional<Transformations> transformations = Optional.ofNullable(getTransformations(request.getTransformations()));
+
+        TokenTypeWithoutVault tokenType = buildTokenType(tokenFormat, entityTypes, entityUniqueCounter);
+
+        DeidentifyImageRequestFile file = DeidentifyImageRequestFile.builder()
+                .base64(base64Content)
+                .dataFormat(DeidentifyImageRequestFileDataFormat.valueOf(format.toUpperCase()))
+                .build();
+
+        Optional<DeidentifyImageRequestMaskingMethod> maskingMethod = Optional.empty();
+        if (request.getMaskingMethod() != null) {
+            maskingMethod = Optional.of(DeidentifyImageRequestMaskingMethod.valueOf(request.getMaskingMethod().name()));
+        }
+
+        return DeidentifyImageRequest.builder()
+                .vaultId(vaultId)
+                .file(file)
+                .entityTypes(mappedEntityTypes)
+                .maskingMethod(maskingMethod)
+                .tokenType(tokenType)
+                .allowRegex(allowRegex)
+                .restrictRegex(restrictRegex)
+                .transformations(transformations)
+                .outputProcessedImage(request.getOutputProcessedImage())
+                .outputOcrText(request.getOutputOcrText())
+                .build();
+    }
+
+    protected DeidentifyPresentationRequest getDeidentifyPresentationRequest(DeidentifyFileRequest request, String vaultId, String base64Content, String format) {
+        List<EntityType> mappedEntityTypes = getEntityTypes(request.getEntities());
+        TokenFormat tokenFormat = request.getTokenFormat();
+
+        Optional<List<EntityType>> entityTypes = Optional.empty();
+        Optional<List<EntityType>> entityUniqueCounter = Optional.empty();
+        Optional<List<String>> allowRegex = Optional.ofNullable(request.getAllowRegexList());
+        Optional<List<String>> restrictRegex = Optional.ofNullable(request.getRestrictRegexList());
+        Optional<Transformations> transformations = Optional.ofNullable(getTransformations(request.getTransformations()));
+
+        TokenTypeWithoutVault tokenType = buildTokenType(tokenFormat, entityTypes, entityUniqueCounter);
+
+        DeidentifyPresentationRequestFile file = DeidentifyPresentationRequestFile.builder()
+                .base64(base64Content)
+                .dataFormat(DeidentifyPresentationRequestFileDataFormat.valueOf(format.toUpperCase()))
+                .build();
+
+        return DeidentifyPresentationRequest.builder()
+                .vaultId(vaultId)
+                .file(file)
+                .entityTypes(mappedEntityTypes)
+                .tokenType(tokenType)
+                .allowRegex(allowRegex)
+                .restrictRegex(restrictRegex)
+                .transformations(transformations)
+                .build();
+    }
+
+    protected DeidentifySpreadsheetRequest getDeidentifySpreadsheetRequest(DeidentifyFileRequest request, String vaultId, String base64Content, String format) {
+        List<EntityType> mappedEntityTypes = getEntityTypes(request.getEntities());
+        TokenFormat tokenFormat = request.getTokenFormat();
+
+        Optional<List<EntityType>> entityTypes = Optional.empty();
+        Optional<List<EntityType>> entityUniqueCounter = Optional.empty();
+        Optional<List<String>> allowRegex = Optional.ofNullable(request.getAllowRegexList());
+        Optional<List<String>> restrictRegex = Optional.ofNullable(request.getRestrictRegexList());
+        Optional<Transformations> transformations = Optional.ofNullable(getTransformations(request.getTransformations()));
+
+        TokenTypeWithoutVault tokenType = buildTokenType(tokenFormat, entityTypes, entityUniqueCounter);
+
+        DeidentifySpreadsheetRequestFile file = DeidentifySpreadsheetRequestFile.builder()
+                .base64(base64Content)
+                .dataFormat(DeidentifySpreadsheetRequestFileDataFormat.valueOf(format.toUpperCase()))
+                .build();
+
+        return DeidentifySpreadsheetRequest.builder()
+                .vaultId(vaultId)
+                .file(file)
+                .entityTypes(mappedEntityTypes)
+                .tokenType(tokenType)
+                .allowRegex(allowRegex)
+                .restrictRegex(restrictRegex)
+                .transformations(transformations)
+                .build();
+    }
+
+    protected DeidentifyStructuredTextRequest getDeidentifyStructuredTextRequest(DeidentifyFileRequest request, String vaultId, String base64Content, String format) {
+        List<EntityType> mappedEntityTypes = getEntityTypes(request.getEntities());
+        TokenFormat tokenFormat = request.getTokenFormat();
+
+        Optional<List<EntityType>> entityTypes = Optional.empty();
+        Optional<List<EntityType>> entityUniqueCounter = Optional.empty();
+        Optional<List<String>> allowRegex = Optional.ofNullable(request.getAllowRegexList());
+        Optional<List<String>> restrictRegex = Optional.ofNullable(request.getRestrictRegexList());
+        Optional<Transformations> transformations = Optional.ofNullable(getTransformations(request.getTransformations()));
+
+        TokenTypeWithoutVault tokenType = buildTokenType(tokenFormat, entityTypes, entityUniqueCounter);
+
+        DeidentifyStructuredTextRequestFile file = DeidentifyStructuredTextRequestFile.builder()
+                .base64(base64Content)
+                .dataFormat(DeidentifyStructuredTextRequestFileDataFormat.valueOf(format.toUpperCase()))
+                .build();
+
+        return DeidentifyStructuredTextRequest.builder()
+                .vaultId(vaultId)
+                .file(file)
+                .entityTypes(mappedEntityTypes)
+                .tokenType(tokenType)
+                .allowRegex(allowRegex)
+                .restrictRegex(restrictRegex)
+                .transformations(transformations)
+                .build();
+    }
+
+    protected DeidentifyDocumentRequest getDeidentifyDocumentRequest(DeidentifyFileRequest request, String vaultId, String base64Content, String format) {
+        List<EntityType> mappedEntityTypes = getEntityTypes(request.getEntities());
+        TokenFormat tokenFormat = request.getTokenFormat();
+
+        Optional<List<EntityType>> entityTypes = Optional.empty();
+        Optional<List<EntityType>> entityUniqueCounter = Optional.empty();
+        Optional<List<String>> allowRegex = Optional.ofNullable(request.getAllowRegexList());
+        Optional<List<String>> restrictRegex = Optional.ofNullable(request.getRestrictRegexList());
+        Optional<Transformations> transformations = Optional.ofNullable(getTransformations(request.getTransformations()));
+
+        TokenTypeWithoutVault tokenType = buildTokenType(tokenFormat, entityTypes, entityUniqueCounter);
+
+        DeidentifyDocumentRequestFile file = DeidentifyDocumentRequestFile.builder()
+                .base64(base64Content)
+                .dataFormat(DeidentifyDocumentRequestFileDataFormat.valueOf(format.toUpperCase()))
+                .build();
+
+        return DeidentifyDocumentRequest.builder()
+                .vaultId(vaultId)
+                .file(file)
+                .entityTypes(mappedEntityTypes)
+                .tokenType(tokenType)
+                .allowRegex(allowRegex)
+                .restrictRegex(restrictRegex)
+                .transformations(transformations)
+                .build();
+    }
+
+    protected com.skyflow.generated.rest.resources.files.requests.DeidentifyFileRequest getDeidentifyGenericFileRequest(
+            DeidentifyFileRequest request, String vaultId, String base64Content, String fileExtension) {
+
+        List<EntityType> mappedEntityTypes = getEntityTypes(request.getEntities());
+
+        TokenFormat tokenFormat = request.getTokenFormat();
+
+        Optional<List<EntityType>> entityTypes = Optional.empty();
+        Optional<List<EntityType>> entityUniqueCounter = Optional.empty();
+        Optional<List<String>> allowRegex = Optional.ofNullable(request.getAllowRegexList());
+        Optional<List<String>> restrictRegex = Optional.ofNullable(request.getRestrictRegexList());
+        Optional<Transformations> transformations = Optional.ofNullable(getTransformations(request.getTransformations()));
+
+        if (tokenFormat != null) {
+            if (tokenFormat.getEntityOnly() != null && !tokenFormat.getEntityOnly().isEmpty()) {
+                entityTypes = Optional.of(tokenFormat.getEntityOnly().stream()
+                        .map(detectEntity -> EntityType.valueOf(detectEntity.name()))
+                        .collect(Collectors.toList()));
+            }
+
+            if (tokenFormat.getEntityUniqueCounter() != null && !tokenFormat.getEntityUniqueCounter().isEmpty()) {
+                entityUniqueCounter = Optional.of(tokenFormat.getEntityUniqueCounter().stream()
+                        .map(detectEntity -> EntityType.valueOf(detectEntity.name()))
+                        .collect(Collectors.toList()));
+            }
+        }
+
+        TokenTypeWithoutVault tokenType = TokenTypeWithoutVault.builder()
+                .entityOnly(entityTypes)
+                .entityUnqCounter(entityUniqueCounter)
+                .build();
+
+        DeidentifyFileRequestFile file =
+                DeidentifyFileRequestFile.builder()
+                        .base64(base64Content)
+                        .dataFormat(fileExtension != null ? DeidentifyFileRequestFileDataFormat.valueOf(fileExtension.toUpperCase()) : null)
+                        .build();
+
+        return com.skyflow.generated.rest.resources.files.requests.DeidentifyFileRequest.builder()
+                .vaultId(vaultId)
+                .file(file)
+                .entityTypes(mappedEntityTypes)
+                .tokenType(tokenType)
+                .allowRegex(allowRegex)
+                .restrictRegex(restrictRegex)
+                .transformations(transformations)
+                .build();
+    }
+
+    private TokenTypeWithoutVault buildTokenType(TokenFormat tokenFormat,
+                                                 Optional<List<EntityType>> entityTypes,
+                                                 Optional<List<EntityType>> entityUniqueCounter) {
+
+        if (tokenFormat != null) {
+            if (tokenFormat.getEntityOnly() != null && !tokenFormat.getEntityOnly().isEmpty()) {
+                entityTypes = Optional.of(tokenFormat.getEntityOnly().stream()
+                        .map(detectEntity -> EntityType.valueOf(detectEntity.name()))
+                        .collect(Collectors.toList()));
+            }
+
+            if (tokenFormat.getEntityUniqueCounter() != null && !tokenFormat.getEntityUniqueCounter().isEmpty()) {
+                entityUniqueCounter = Optional.of(tokenFormat.getEntityUniqueCounter().stream()
+                        .map(detectEntity -> EntityType.valueOf(detectEntity.name()))
+                        .collect(Collectors.toList()));
+            }
+        }
+
+        return TokenTypeWithoutVault.builder()
+                .entityOnly(entityTypes)
+                .entityUnqCounter(entityUniqueCounter)
+                .build();
     }
 
     private void updateVaultURL() {

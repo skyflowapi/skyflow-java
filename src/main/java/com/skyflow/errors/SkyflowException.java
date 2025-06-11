@@ -41,18 +41,37 @@ public class SkyflowException extends Exception {
         super(cause);
         this.httpCode = httpCode;
         setRequestId(responseHeaders);
-        setResponseBody(responseBody, responseHeaders);
+        // Determine if responseBody is a JSON string with "error" key or a plain string
+        if (isJsonWithErrorObject(responseBody)) {
+            setResponseBodyFromJson(responseBody, responseHeaders);
+        } else {
+            this.message = responseBody;
+            this.details = new JsonArray();
+        }
     }
 
-    private void setResponseBody(String responseBody, Map<String, List<String>> responseHeaders) {
+    // Helper to check if responseBody is a JSON string with "error" key
+    private boolean isJsonWithErrorObject(String responseBody) {
+        try {
+            if (responseBody == null) return false;
+            JsonObject obj = JsonParser.parseString(responseBody).getAsJsonObject();
+            return obj.has("error");
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    // Handles new error structure: {error={grpc_code=3, http_code=400, message=..., http_status=..., details=[]}}
+    private void setResponseBodyFromJson(String responseBody, Map<String, List<String>> responseHeaders) {
         try {
             if (responseBody != null) {
                 this.responseBody = JsonParser.parseString(responseBody).getAsJsonObject();
-                if (this.responseBody.get("error") != null) {
-                    setGrpcCode();
-                    setHttpStatus();
-                    setMessage();
-                    setDetails(responseHeaders);
+                if (this.responseBody.has("error")) {
+                    JsonObject errorObj = this.responseBody.getAsJsonObject("error");
+                    setGrpcCode(errorObj);
+                    setHttpStatus(errorObj);
+                    setMessage(errorObj);
+                    setDetails(errorObj, responseHeaders);
                 }
             }
         } catch (JsonSyntaxException e) {
@@ -71,25 +90,63 @@ public class SkyflowException extends Exception {
         }
     }
 
+    // For legacy error structure
     private void setMessage() {
         JsonElement messageElement = ((JsonObject) responseBody.get("error")).get("message");
         this.message = messageElement == null ? null : messageElement.getAsString();
     }
 
+    // For new error structure
+    private void setMessage(JsonObject errorObj) {
+        JsonElement messageElement = errorObj.get("message");
+        this.message = messageElement == null ? null : messageElement.getAsString();
+    }
+
+    // For legacy error structure
     private void setGrpcCode() {
         JsonElement grpcElement = ((JsonObject) responseBody.get("error")).get("grpc_code");
         this.grpcCode = grpcElement == null ? null : grpcElement.getAsInt();
     }
 
+    // For new error structure
+    private void setGrpcCode(JsonObject errorObj) {
+        JsonElement grpcElement = errorObj.get("grpc_code");
+        this.grpcCode = grpcElement == null ? null : grpcElement.getAsInt();
+    }
+
+    // For legacy error structure
     private void setHttpStatus() {
         JsonElement statusElement = ((JsonObject) responseBody.get("error")).get("http_status");
         this.httpStatus = statusElement == null ? null : statusElement.getAsString();
     }
 
+    // For new error structure
+    private void setHttpStatus(JsonObject errorObj) {
+        JsonElement statusElement = errorObj.get("http_status");
+        this.httpStatus = statusElement == null ? null : statusElement.getAsString();
+    }
+
+    // For legacy error structure
     private void setDetails(Map<String, List<String>> responseHeaders) {
         JsonElement detailsElement = ((JsonObject) responseBody.get("error")).get("details");
         List<String> errorFromClientHeader = responseHeaders.get("error-from-client");
         if (detailsElement != null) {
+            this.details = detailsElement.getAsJsonArray();
+        }
+        if (errorFromClientHeader != null) {
+            this.details = this.details == null ? new JsonArray() : this.details;
+            String errorFromClient = errorFromClientHeader.get(0);
+            JsonObject detailObject = new JsonObject();
+            detailObject.addProperty("errorFromClient", errorFromClient);
+            this.details.add(detailObject);
+        }
+    }
+
+    // For new error structure
+    private void setDetails(JsonObject errorObj, Map<String, List<String>> responseHeaders) {
+        JsonElement detailsElement = errorObj.get("details");
+        List<String> errorFromClientHeader = responseHeaders.get("error-from-client");
+        if (detailsElement != null && detailsElement.isJsonArray()) {
             this.details = detailsElement.getAsJsonArray();
         }
         if (errorFromClientHeader != null) {

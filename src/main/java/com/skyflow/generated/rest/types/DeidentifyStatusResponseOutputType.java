@@ -6,9 +6,11 @@ package com.skyflow.generated.rest.types;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum DeidentifyStatusResponseOutputType {
-    BASE_64("base64"),
+    BASE_64("BASE64"),
 
-    EFS_PATH("efs_path");
+    EFS_PATH("EFS_PATH"),
+
+    UNKNOWN("UNKNOWN");
 
     private final String value;
 

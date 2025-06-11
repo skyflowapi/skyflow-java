@@ -83,6 +83,12 @@ public enum InfoLogs {
     VALIDATE_REIDENTIFY_TEXT_REQUEST("Validating reidentify text request."),
     REIDENTIFY_TEXT_TRIGGERED("ReIdentify text method triggered."),
     REIDENTIFY_TEXT_REQUEST_RESOLVED("ReIdentify text request resolved."),
+    DEIDENTIFY_FILE_TRIGGERED("DeIdentify file method triggered."),
+    VALIDATE_DEIDENTIFY_FILE_REQUEST("Validating deidentify file request."),
+    DEIDENTIFY_FILE_REQUEST_RESOLVED("DeIdentify file request resolved."),
+    DEIDENTIFY_FILE_SUCCESS("File deidentified successfully."),
+    GET_DETECT_RUN_TRIGGERED("Get detect run method triggered."),
+    VALIDATE_GET_DETECT_RUN_REQUEST("Validating get detect run request."),
     REIDENTIFY_TEXT_SUCCESS("Text data re-identified."),
     ;
 

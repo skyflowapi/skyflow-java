@@ -6,7 +6,7 @@ package com.skyflow.generated.rest.resources.files.types;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum DeidentifyImageRequestMaskingMethod {
-    BLACKOUT("blackout"),
+    BLACKBOX("blackbox"),
 
     BLUR("blur");
 

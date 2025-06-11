@@ -6,11 +6,11 @@ package com.skyflow.generated.rest.types;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum DeidentifyStatusResponseStatus {
-    FAILED("failed"),
+    FAILED("FAILED"),
 
-    IN_PROGRESS("in_progress"),
+    IN_PROGRESS("IN_PROGRESS"),
 
-    SUCCESS("success");
+    SUCCESS("SUCCESS");
 
     private final String value;
 

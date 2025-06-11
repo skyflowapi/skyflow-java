@@ -17,13 +17,13 @@ import com.skyflow.utils.Utils;
 import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.vault.connection.InvokeConnectionRequest;
 import com.skyflow.vault.data.*;
-import com.skyflow.vault.detect.DeidentifyTextRequest;
-import com.skyflow.vault.detect.ReidentifyTextRequest;
+import com.skyflow.vault.detect.*;
 import com.skyflow.vault.tokens.ColumnValue;
 import com.skyflow.vault.tokens.DetokenizeData;
 import com.skyflow.vault.tokens.DetokenizeRequest;
 import com.skyflow.vault.tokens.TokenizeRequest;
 
+import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -185,12 +185,12 @@ public class Validations {
                 LogUtil.printErrorLog(ErrorLogs.EMPTY_API_KEY_VALUE.getLog());
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyApikey.getMessage());
             } else {
-                Pattern pattern = Pattern.compile(Constants.API_KEY_REGEX);
-                Matcher matcher = pattern.matcher(apiKey);
-                if (!matcher.matches()) {
-                    LogUtil.printErrorLog(ErrorLogs.INVALID_API_KEY.getLog());
-                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidApikey.getMessage());
-                }
+//                Pattern pattern = Pattern.compile(Constants.API_KEY_REGEX);
+//                Matcher matcher = pattern.matcher(apiKey);
+//                if (!matcher.matches()) {
+//                    LogUtil.printErrorLog(ErrorLogs.INVALID_API_KEY.getLog());
+//                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidApikey.getMessage());
+//                }
             }
         } else if (roles != null) {
             if (roles.isEmpty()) {
@@ -790,6 +790,105 @@ public class Validations {
                     throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyValueInTokens.getMessage());
                 }
             }
+        }
+    }
+
+    public static void validateDeidentifyFileRequest(DeidentifyFileRequest request) throws SkyflowException {
+        if (request == null) {
+            LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.EMPTY_REQUEST_BODY.getLog(), InterfaceName.DETECT.getName()
+            ));
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyRequestBody.getMessage());
+        }
+
+        File file = request.getFile();
+        if (file == null) {
+            LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.INVALID_NULL_FILE_IN_DEIDENTIFY_FILE.getLog(), InterfaceName.DETECT.getName()
+            ));
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidNullFileInDeIdentifyFile.getMessage());
+        }
+        if (!file.exists() || !file.isFile()) {
+            LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.FILE_NOT_FOUND_TO_DEIDENTIFY.getLog(), InterfaceName.DETECT.getName()
+            ));
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.FileNotFoundToDeidentify.getMessage());
+        }
+        if (!file.canRead()) {
+            LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.FILE_NOT_READABLE_TO_DEIDENTIFY.getLog(), InterfaceName.DETECT.getName()
+            ));
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.FileNotReadableToDeidentify.getMessage());
+        }
+
+
+        // Validate pixelDensity and maxResolution
+        if (request.getPixelDensity() != null && request.getPixelDensity().doubleValue() <= 0) {
+            LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.INVALID_PIXEL_DENSITY_TO_DEIDENTIFY_FILE.getLog(), InterfaceName.DETECT.getName()
+            ));
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidPixelDensityToDeidentifyFile.getMessage());
+        }
+        if (request.getMaxResolution() != null && request.getMaxResolution().doubleValue() <= 0) {
+            LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.INVALID_MAX_RESOLUTION.getLog(), InterfaceName.DETECT.getName()
+            ));
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidMaxResolution.getMessage());
+        }
+
+        // Validate AudioBleep
+        if (request.getBleep() != null) {
+            if (request.getBleep().getFrequency() == null || request.getBleep().getFrequency() <= 0) {
+                LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.INVALID_BLEEP_TO_DEIDENTIFY_AUDIO.getLog(), InterfaceName.DETECT.getName()
+                ));
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidRequestBody.getMessage());
+            }
+            if (request.getBleep().getGain() == null || request.getBleep().getGain() < 0) {
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidRequestBody.getMessage());
+            }
+            if (request.getBleep().getStartPadding() == null || request.getBleep().getStartPadding() < 0) {
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidRequestBody.getMessage());
+            }
+            if (request.getBleep().getStopPadding() == null || request.getBleep().getStopPadding() < 0) {
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidRequestBody.getMessage());
+            }
+        }
+
+        // Validate outputDirectory if provided
+        if (request.getOutputDirectory() != null) {
+            File outDir = new File(request.getOutputDirectory());
+            if (!outDir.exists() || !outDir.isDirectory()) {
+                LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.OUTPUT_DIRECTORY_NOT_FOUND.getLog(), InterfaceName.DETECT.getName()
+                ));
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.OutputDirectoryNotFound.getMessage());
+            }
+            if (!outDir.canWrite()) {
+                LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.INVALID_PERMISSIONS_FOR_OUTPUT_DIRECTORY.getLog(), InterfaceName.DETECT.getName()
+                ));
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidPermission.getMessage());
+            }
+        }
+
+        // Validate waitTime if provided
+        if (request.getWaitTime() != null && request.getWaitTime() <= 0) {
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidWaitTime.getMessage());
+        }
+        if(request.getWaitTime() > 64) {
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.WaitTimeExceedsLimit.getMessage());
+        }
+    }
+
+    public static void validateGetDetectRunRequest(GetDetectRunRequest request) throws SkyflowException {
+        if (request == null) {
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyRequestBody.getMessage());
+        }
+
+        String runId = request.getRunId();
+        if (runId == null || runId.trim().isEmpty()) {
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidOrEmptyRunId.getMessage());
         }
     }
 }
