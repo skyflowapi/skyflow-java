@@ -1766,13 +1766,15 @@ Skyflow Detect enables you to deidentify and reidentify sensitive data in text a
 ## Deidentify Text
 To deidentify text, use the `deidentifyText` method. The `DeidentifyTextRequest` class creates a deidentify text request, which includes the text to be deidentified. Additionally, you can provide optional parameters using the `DeidentifyTextOptions` class.
 
+### Construct an deidentify text request
+
 ```java
-import com.skyflow.vault.detect.DateTransformation;
 import com.skyflow.enums.DetectEntities;
+import com.skyflow.vault.detect.DateTransformation;
 import com.skyflow.vault.detect.DeidentifyTextRequest;
-import com.skyflow.vault.detect.DeidentifyTextResponse;
-import com.skyflow.vault.detect.Transformations;
 import com.skyflow.vault.detect.TokenFormat;
+import com.skyflow.vault.detect.Transformations;
+import com.skyflow.vault.detect.DeidentifyTextResponse;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -1780,71 +1782,85 @@ import java.util.List;
 /**
  * This example demonstrate to build deidentify text request.
  */
-        // Initialise the Skyflow client by configuring the credentials & vault config.
+public class DeidentifyTextSchema {
 
-        // List of entities to detect
+    public static void main(String[] args) {
+
+        // Step 1: Initialise the Skyflow client by configuring the credentials & vault config.
+
+        // Step 2: Configure the options for deidentify text
+        
+        // Replace with the entity you want to detect
         List<DetectEntities> detectEntitiesList = new ArrayList<>();
         detectEntitiesList.add(DetectEntities.SSN);
-        detectEntitiesList.add(DetectEntities.CREDIT_CARD);
 
-        // List of entities to detect with vault token
+        // Replace with the entity you want to detect with vault token
         List<DetectEntities> vaultTokenList = new ArrayList<>();
-        vaultTokenList.add(DetectEntities.SSN);
         vaultTokenList.add(DetectEntities.CREDIT_CARD);
 
-        // List<DetectEntities> entityOnlyList = new ArrayList<>();
-        // entityOnlyList.add(DetectEntities.SSN);
+        // Replace with the entity you want to detect with entity only
+        List<DetectEntities> entityOnlyList = new ArrayList<>();
+        entityOnlyList.add(DetectEntities.SSN);
 
-        // List<DetectEntities> entityUniqueCounterList = new ArrayList<>();
-        // entityUniqueCounterList.add(DetectEntities.SSN);
+        // Replace with the entity you want to detect with entity unique counter
+        List<DetectEntities> entityUniqueCounterList = new ArrayList<>();
+        entityUniqueCounterList.add(DetectEntities.SSN);
 
-        // List<String> allowRegexList = new ArrayList<>();
-        // allowRegexList.add("<YOUR_ALLOW_REGEX_LIST>");
+        // Replace with the regex patterns you want to allow during deidentification
+        List<String> allowRegexList = new ArrayList<>();
+        allowRegexList.add("<YOUR_ALLOW_REGEX_LIST>");
 
-        // List<String> restrictRegexList = new ArrayList<>();
-        // restrictRegexList.add("YOUR_RESTRICT_REGEX_LIST");
+        // Replace with the regex patterns you want to restrict during deidentification
+        List<String> restrictRegexList = new ArrayList<>();
+        restrictRegexList.add("YOUR_RESTRICT_REGEX_LIST");
 
-        //  Configure Token Format 
+        // Configure Token Format
         TokenFormat tokenFormat = TokenFormat.builder()
                 .vaultToken(vaultTokenList)
-                // .entityOnly(entityOnlyList)
-                // .entityUniqueCounter(entityUniqueCounterList)
+                .entityOnly(entityOnlyList)
+                .entityUniqueCounter(entityUniqueCounterList)
                 .build();
 
         // Configure Transformation
         List<DetectEntities> detectEntitiesTransformationList = new ArrayList<>();
-        detectEntitiesTransformationList.add(DetectEntities.DOB);
-        detectEntitiesTransformationList.add(DetectEntities.DATE);
+        detectEntitiesTransformationList.add(DetectEntities.DOB); // Replace with the entity you want to transform
 
         DateTransformation dateTransformation = new DateTransformation(20, 5, detectEntitiesTransformationList);
         Transformations transformations = new Transformations(dateTransformation);
 
-         // Create a deidentify text request for the vault
-            DeidentifyTextRequest deidentifyTextRequest = DeidentifyTextRequest.builder()
-                    .text("My SSN is 123-45-6789 and my card is 4111 1111 1111 1111.")
-                    .entities(detectEntitiesList)
-                    //     .allowRegexList(allowRegexList)
-                    //     .restrictRegexList(restrictRegexList)
-                    .tokenFormat(tokenFormat)
-                    .transformations(transformations)
-                    .build();
+        // Step 3: Create a deidentify text request for the vault
+        DeidentifyTextRequest deidentifyTextRequest = DeidentifyTextRequest.builder()
+                .text("<SENSITIVE_TEXT>") // Replace with the text you want to deidentify
+                .entities(detectEntitiesList)
+                .allowRegexList(allowRegexList)
+                .restrictRegexList(restrictRegexList)
+                .tokenFormat(tokenFormat)
+                .transformations(transformations)
+                .build();
 
-        // Invoking deidentifyText method
+        // Step 4: Use the Skyflow client to perform the deidentifyText operation
+        // Replace <VAULT_ID> with your actual vault ID
         DeidentifyTextResponse deidentifyTextResponse = skyflowClient.detect("<VAULT_ID>").deidentifyText(deidentifyTextRequest);
 
-            System.out.println("Deidentify text Response: " + deidentifyTextResponse);
+        // Step 5: Print the response
+        System.out.println("Deidentify text Response: " + deidentifyTextResponse);
+    }
+}
+
 ```
 
-## An example of deidentify text:
+## An [example](https://github.com/skyflowapi/skyflow-java/blob/SK-2074-detect-support-readme-and-sample/samples/src/main/java/com/example/detect/DeidentifyTextExample.java) of deidentify text:
 ```java
 import java.util.ArrayList;
 import java.util.List;
 
 import com.skyflow.enums.DetectEntities;
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.detect.DateTransformation;
 import com.skyflow.vault.detect.DeidentifyTextRequest;
 import com.skyflow.vault.detect.DeidentifyTextResponse;
 import com.skyflow.vault.detect.TokenFormat;
+import com.skyflow.vault.detect.Transformations;
 
 /**
  * Skyflow Deidentify Text Example
@@ -1864,27 +1880,24 @@ public class DeidentifyTextExample {
 
         // Step 2: Configuring the different options for deidentify
 
-        // List of entities to detect
+        // Replace with the entity you want to detect
         List<DetectEntities> detectEntitiesList = new ArrayList<>();
         detectEntitiesList.add(DetectEntities.SSN);
         detectEntitiesList.add(DetectEntities.CREDIT_CARD);
 
-        // List of entities to detect with vault token
+        // Replace with the entity you want to detect with vault token
         List<DetectEntities> vaultTokenList = new ArrayList<>();
         vaultTokenList.add(DetectEntities.SSN);
         vaultTokenList.add(DetectEntities.CREDIT_CARD);
 
-        // Configure Token Format 
+        // Configure Token Format
         TokenFormat tokenFormat = TokenFormat.builder()
                 .vaultToken(vaultTokenList)
-                // .entityOnly(entityOnlyList)
-                // .entityUniqueCounter(entityUniqueCounterList)
                 .build();
 
-        // Configure Transformation
+        // Configure Transformation for deidentified entities
         List<DetectEntities> detectEntitiesTransformationList = new ArrayList<>();
-        detectEntitiesTransformationList.add(DetectEntities.DOB);
-        detectEntitiesTransformationList.add(DetectEntities.DATE);
+        detectEntitiesTransformationList.add(DetectEntities.DOB); // Replace with the entity you want to transform
 
         DateTransformation dateTransformation = new DateTransformation(20, 5, detectEntitiesTransformationList);
         Transformations transformations = new Transformations(dateTransformation);
@@ -1893,13 +1906,13 @@ public class DeidentifyTextExample {
         try {
             // Create a deidentify text request for the vault
             DeidentifyTextRequest deidentifyTextRequest = DeidentifyTextRequest.builder()
-                    .text("My SSN is 123-45-6789 and my card is 4111 1111 1111 1111.")
+                    .text("My SSN is 123-45-6789 and my card is 4111 1111 1111 1111.") // Replace with your deidentify text
                     .entities(detectEntitiesList)
                     .tokenFormat(tokenFormat)
                     .transformations(transformations)
                     .build();
-
-            DeidentifyTextResponse deidentifyTextResponse = skyflowClient.detect("<VAULT_ID>").deidentifyText(deidentifyTextRequest);
+            // Replace `9f27764a10f7946fe56b3258e117` with the acutal vault id
+            DeidentifyTextResponse deidentifyTextResponse = skyflowClient.detect("9f27764a10f7946fe56b3258e117").deidentifyText(deidentifyTextRequest);
 
             System.out.println("Deidentify text Response: " + deidentifyTextResponse);
         } catch (SkyflowException e) {
@@ -1956,47 +1969,50 @@ Sample Response:
 ## Reidentify Text
 To reidentify text, use the `reidentifyText` method. The `ReidentifyTextRequest` class creates a reidentify text request, which includes the redacted or deidentified text to be reidentified. Additionally, you can provide optional parameters using the ReidentifyTextOptions class to control how specific entities are returned (as redacted, masked, or plain text).
 
+### Construct an reidentify text request
+
 ```java
 import com.skyflow.enums.DetectEntities;
-import com.skyflow.errors.SkyflowException;
 import com.skyflow.vault.detect.ReidentifyTextRequest;
 import com.skyflow.vault.detect.ReidentifyTextResponse;
 
 import java.util.ArrayList;
 import java.util.List;
 
-      // Initialise the Skyflow client by configuring the credentials & vault config.
+/**
+ * This example demonstrates how to build a reidentify text request.
+ */
+public class ReidentifyTextSchema {
+    public static void main(String[] args) {
+        // Step 1: Initialise the Skyflow client by configuring the credentials & vault config.
 
-      // Configuring the different options for reidentify
+        // Step 2: Configuring the different options for reidentify
         List<DetectEntities> maskedEntity = new ArrayList<>();
         maskedEntity.add(DetectEntities.CREDIT_CARD); // Replace with the entity you want to mask
 
         List<DetectEntities> plainTextEntity = new ArrayList<>();
         plainTextEntity.add(DetectEntities.SSN); // Replace with the entity you want to keep in plain text
 
-        List<DetectEntities> redactedEntity = new ArrayList<>();
-        redactedEntity.add("<YOUR_ENTITY_1>"); // Replace with the entity you want to redact
+        // List<DetectEntities> redactedEntity = new ArrayList<>();
+        // redactedEntity.add(DetectEntities.SSN); // Replace with the entity you want to redact
 
-        // De-identify text on the vault
-        try {
-            // Create a reidentify text request with the configured entities
-            ReidentifyTextRequest reidentifyTextRequest = ReidentifyTextRequest.builder()
-                    .text("My SSN is [SSN_IWdexZe] and my card is [CREDIT_CARD_rUzMjdQ].") // Replace with your deidentify text
-                    .maskedEntities(maskedEntity)
-                    .redactedEntities(redactedEntity)
-                    .plainTextEntities(plainTextEntity)
-                    .build();
 
-            // Handle the response from the reidentify text request
-            ReidentifyTextResponse reidentifyTextResponse = skyflowClient.detect("<VAULT_ID>").reidentifyText(reidentifyTextRequest);
-            System.out.println("Reidentify text Response: " + reidentifyTextResponse);
-        } catch (SkyflowException e) {
-            System.err.println("Error occurred during reidentify: ");
-            e.printStackTrace();
-        }
+        // Step 3: Create a reidentify text request with the configured entities
+        ReidentifyTextRequest reidentifyTextRequest = ReidentifyTextRequest.builder()
+                .text("My SSN is [SSN_IWdexZe] and my card is [CREDIT_CARD_rUzMjdQ].") // Replace with your deidentify text
+                .maskedEntities(maskedEntity)
+//                .redactedEntities(redactedEntity)
+                .plainTextEntities(plainTextEntity)
+                .build();
+
+        // Step 4: Invoke reidentify text on the vault
+        ReidentifyTextResponse reidentifyTextResponse = skyflowClient.detect("<VAULT_ID>").reidentifyText(reidentifyTextRequest);
+        System.out.println("Reidentify text Response: " + reidentifyTextResponse);
+    }
+}
 ```
 
-## An example of Reidentify text
+## An [example](https://github.com/skyflowapi/skyflow-java/blob/SK-2074-detect-support-readme-and-sample/samples/src/main/java/com/example/detect/ReidentifyTextExample.java) of Reidentify text
 
 ```java
 import com.skyflow.enums.DetectEntities;
@@ -2029,20 +2045,17 @@ public class ReidentifyTextExample {
         List<DetectEntities> plainTextEntity = new ArrayList<>();
         plainTextEntity.add(DetectEntities.SSN); // Replace with the entity you want to keep in plain text
 
-        // List<DetectEntities> redactedEntity = new ArrayList<>();
-        // redactedEntity.add("<YOUR_ENTITY_1>"); // Replace with the entity you want to redact
-
         try {
             // Step 3: Create a reidentify text request with the configured options
             ReidentifyTextRequest reidentifyTextRequest = ReidentifyTextRequest.builder()
                     .text("My SSN is [SSN_IWdexZe] and my card is [CREDIT_CARD_rUzMjdQ].") // Replace with your deidentify text
                     .maskedEntities(maskedEntity)
-                    // .redactedEntities(redactedEntity)
                     .plainTextEntities(plainTextEntity)
                     .build();
 
-           // Step 4: Invoke Reidentify text on the vault
-            ReidentifyTextResponse reidentifyTextResponse = skyflowClient.detect("<VAULT_ID>").reidentifyText(reidentifyTextRequest);
+            // Step 4: Invoke Reidentify text on the vault
+            // Replace `9f27764a10f7946fe56b3258e117` with the acutal vault id
+            ReidentifyTextResponse reidentifyTextResponse = skyflowClient.detect("9f27764a10f7946fe56b3258e117").reidentifyText(reidentifyTextRequest);
 
             // Handle the response from the reidentify text request
             System.out.println("Reidentify text Response: " + reidentifyTextResponse);
@@ -2065,66 +2078,86 @@ Sample Response:
 ## Deidentify file
 To deidentify files, use the `deidentifyFile` method. The `DeidentifyFileRequest` class creates a deidentify file request, which includes the file to be deidentified (such as images, PDFs, audio, documents, spreadsheets, or presentations). Additionally, you can provide optional parameters using the DeidentifyFileOptions class to control how entities are detected and deidentified, as well as how the output is generated for different file types.
 
+### Construct an deidentify file request
+
 ```java
-  // Initialise the Skyflow client by configuring the credentials & vault config.
-  
-  // Create a deidentify file request with various options
+import com.skyflow.config.Credentials;
+import com.skyflow.config.VaultConfig;
+import com.skyflow.enums.Env;
+import com.skyflow.enums.LogLevel;
+import com.skyflow.enums.MaskingMethod;
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.detect.DeidentifyFileRequest;
+import com.skyflow.vault.detect.DeidentifyFileResponse;
 
-  // Create file object 
-  File file = new File("<FILE_PATH"); // Replace with the path to the file you want to deidentify
+import java.io.File;
 
-  // Output configuration
-  String outputDirectory = "<OUTPUT_DIRECTORY>"; // Replace with the desired output directory to save the deidentified file
+/**
+ * This example demonstrates how to build a deidentify file request.
+ */
 
-  // Entities to detect
-  // List<DetectEntities> detectEntities = new ArrayList<>();
-  // detectEntities.add(DetectEntities.IP_ADDRESS); // Replace with the entities you want to detect
+public class DeidentifyFileSchema {
 
-  // Image-specific options
-  // Boolean outputProcessedImage = true; // Include processed image in output
-  // Boolean outputOcrText = true; // Include OCR text in output
-  MaskingMethod maskingMethod = MaskingMethod.BLACKBOX; // Masking method for images
+    public static void main(String[] args) {
+        // Step 1: Initialise the Skyflow client by configuring the credentials & vault config.
 
-  // PDF-specific options
-  // Integer pixelDensity = 15; //  Pixel density for PDF processing
-  // Integer maxResolution = 2000; // Max resolution for PDF
+        // Step 2: Create a deidentify file request with all options
 
-  // Audio-specific options
-  // Boolean outputProcessedAudio = true; // Include processed audio
-  // DetectOutputTranscriptions outputTanscription = DetectOutputTranscriptions.PLAINTEXT_TRANSCRIPTION;  // Transcription type
+        // Create file object
+        File file = new File("<FILE_PATH"); // Replace with the path to the file you want to deidentify
 
-  // Audio bleep configuration
-  // AudioBleep audioBleep = AudioBleep.builder()
-  //         .frequency(5D) // Pitch in Hz
-  //         .startPadding(7D) // Padding at start (seconds)
-  //         .stopPadding(8D) // Padding at end (seconds)
-  //         .build();
+        // Output configuration
+        String outputDirectory = "<OUTPUT_DIRECTORY>"; // Replace with the desired output directory to save the deidentified file
 
-  Integer waitTime = 20; // Max wait time for response (max 64 seconds)
+        // Entities to detect
+        // List<DetectEntities> detectEntities = new ArrayList<>();
+        // detectEntities.add(DetectEntities.IP_ADDRESS); // Replace with the entities you want to detect
+
+        // Image-specific options
+        // Boolean outputProcessedImage = true; // Include processed image in output
+        // Boolean outputOcrText = true; // Include OCR text in output
+        MaskingMethod maskingMethod = MaskingMethod.BLACKBOX; // Masking method for images
+
+        // PDF-specific options
+        // Integer pixelDensity = 15; //  Pixel density for PDF processing
+        // Integer maxResolution = 2000; // Max resolution for PDF
+
+        // Audio-specific options
+        // Boolean outputProcessedAudio = true; // Include processed audio
+        // DetectOutputTranscriptions outputTanscription = DetectOutputTranscriptions.PLAINTEXT_TRANSCRIPTION;  // Transcription type
+
+        // Audio bleep configuration
+        // AudioBleep audioBleep = AudioBleep.builder()
+        //         .frequency(5D) // Pitch in Hz
+        //         .startPadding(7D) // Padding at start (seconds)
+        //         .stopPadding(8D) // Padding at end (seconds)
+        //         .build();
+
+        Integer waitTime = 20; // Max wait time for response (max 64 seconds)
+
+        DeidentifyFileRequest deidentifyFileRequest = DeidentifyFileRequest.builder()
+                .file(file)
+                .waitTime(waitTime)
+                .entities(detectEntities)
+                .outputDirectory(outputDirectory)
+                .maskingMethod(maskingMethod)
+                // .outputProcessedImage(outputProcessedImage)
+                // .outputOcrText(outputOcrText)
+                // .pixelDensity(pixelDensity)
+                // .maxResolution(maxResolution)
+                // .outputProcessedAudio(outputProcessedAudio)
+                // .outputTranscription(outputTanscription)
+                // .bleep(audioBleep)
+                .build();
 
 
-  DeidentifyFileRequest deidentifyFileRequest = DeidentifyFileRequest
-  .builder()
-  .file(file)
-  .waitTime(waitTime)
-  // .entities(detectEntities)
-  .outputDirectory(outputDirectory)
-  .maskingMethod(maskingMethod)
-  // .outputProcessedImage(outputProcessedImage)
-  // .outputOcrText(outputOcrText)
-  // .pixelDensity(pixelDensity)
-  // .maxResolution(maxResolution)
-  // .outputProcessedAudio(outputProcessedAudio)
-  // .outputTranscription(outputTanscription)
-  // .bleep(audioBleep)
-  .build();
-
-
-  DeidentifyFileResponse deidentifyFileResponse = skyflowClient.detect("<VAULT_ID>").deidentifyFile(deidentifyFileRequest);
-  System.out.println("Deidentify file response: " + deidentifyFileResponse.toString());
+        DeidentifyFileResponse deidentifyFileResponse = skyflowClient.detect("<VAULT_ID>").deidentifyFile(deidentifyFileRequest);
+        System.out.println("Deidentify file response: " + deidentifyFileResponse.toString());
+    }
+} 
 ```
 
-## An example of Deidentify file
+## An [example](https://github.com/skyflowapi/skyflow-java/blob/SK-2074-detect-support-readme-and-sample/samples/src/main/java/com/example/detect/DeidentifyFileExample.java) of Deidentify file
 
 ```java
 import java.io.File;
@@ -2154,10 +2187,10 @@ public class DeidentifyFileExample {
         try {
             // Step 2: Create a deidentify file request with all options
             // Create file object 
-            File file = new File("<FILE_PATH"); // Replace with the path to the file you want to deidentify
+            File file = new File("sensitive-folder/personal-info.txt"); // Replace with the path to the file you want to deidentify
 
             // Output configuration
-            String outputDirectory = "<OUTPUT_DIRECTORY>"; // Replace with the desired output directory to save the deidentified file
+            String outputDirectory = "deidenfied-file/"; // Replace with the desired output directory to save the deidentified file
 
             // Entities to detect
             // List<DetectEntities> detectEntities = new ArrayList<>();
@@ -2166,42 +2199,20 @@ public class DeidentifyFileExample {
             // Image-specific options
             // Boolean outputProcessedImage = true; // Include processed image in output
             // Boolean outputOcrText = true; // Include OCR text in output
-            MaskingMethod maskingMethod = MaskingMethod.BLACKBOX; // Masking method for images
-
-            // PDF-specific options
-            // Integer pixelDensity = 15; //  Pixel density for PDF processing
-            // Integer maxResolution = 2000; // Max resolution for PDF
-
-            // Audio-specific options
-            // Boolean outputProcessedAudio = true; // Include processed audio
-            // DetectOutputTranscriptions outputTanscription = DetectOutputTranscriptions.PLAINTEXT_TRANSCRIPTION;  // Transcription type
-
-            // Audio bleep configuration
-            // AudioBleep audioBleep = AudioBleep.builder()
-            //         .frequency(5D) // Pitch in Hz
-            //         .startPadding(7D) // Padding at start (seconds)
-            //         .stopPadding(8D) // Padding at end (seconds)
-            //         .build();
+            MaskingMethod maskingMethod = MaskingMethod.BLACKBOX; // Masking method for images         
 
             Integer waitTime = 20; // Max wait time for response (max 64 seconds)
 
             DeidentifyFileRequest deidentifyFileRequest = DeidentifyFileRequest.builder()
                     .file(file)
                     .waitTime(waitTime)
-                    // .entities(detectEntities)
                     .outputDirectory(outputDirectory)
                     .maskingMethod(maskingMethod)
-                    // .outputProcessedImage(outputProcessedImage)
-                    // .outputOcrText(outputOcrText)
-                    // .pixelDensity(pixelDensity)
-                    // .maxResolution(maxResolution)
-                    // .outputProcessedAudio(outputProcessedAudio)
-                    // .outputTranscription(outputTanscription)
-                    // .bleep(audioBleep)
                     .build();
 
             // Step 3: Invoking deidentifyFile 
-            DeidentifyFileResponse deidentifyFileResponse = skyflowClient.detect("<VAULT_ID>").deidentifyFile(deidentifyFileRequest);
+            // Replace `9f27764a10f7946fe56b3258e117` with the acutal vault id
+            DeidentifyFileResponse deidentifyFileResponse = skyflowClient.detect("9f27764a10f7946fe56b3258e117").deidentifyFile(deidentifyFileRequest);
             System.out.println("Deidentify file response: " + deidentifyFileResponse.toString());
         } catch (SkyflowException e) {
             System.err.println("Error occurred during deidentify file: ");
@@ -2274,24 +2285,42 @@ To retrieve the results of a previously started file `deidentification operation
 The `GetDetectRunRequest` class is initialized with the `runId` returned from a prior deidentifyFile call.
 This method allows you to fetch the final results of the file processing operation once they are available.
 
+### Construct an get run request
 
 ```java
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.vault.detect.DeidentifyFileResponse;
 import com.skyflow.vault.detect.GetDetectRunRequest;
 
-  // Step 4: Create a get detect run request
-  GetDetectRunRequest getDetectRunRequest = GetDetectRunRequest.builder()
-  .runId("<RUN_ID_FROM_DEIDENTIFY_FILE>") // Replace with the runId from deidentifyFile call
-  .build();
-  
-  // Step 5: Call getDetectRun to poll for file processing results
-  DeidentifyFileResponse deidentifyFileResponse = skyflowClient.detect("<VAULT_ID>").getDetectRun(getDetectRunRequest);
-  System.out.println("Get Detect Run Response: " + deidentifyFileResponse);
+/**
+ * Skyflow Get Detect Run Example
+ */
+
+public class GetDetectRunSchema {
+
+    public static void main(String[] args) {
+        try {
+            // Step 1: Initialise the Skyflow client by configuring the credentials & vault config.
+
+            // Step 2: Create a get detect run request
+            GetDetectRunRequest getDetectRunRequest = GetDetectRunRequest.builder()
+                    .runId("<RUN_ID_FROM_DEIDENTIFY_FILE>") // Replace with the runId from deidentifyFile call
+                    .build();
+
+            // Step 3: Call getDetectRun to poll for file processing results
+            // Replace <VAULT_ID> with your actual vault ID
+            DeidentifyFileResponse deidentifyFileResponse = skyflowClient.detect("<VAULT_ID>").getDetectRun(getDetectRunRequest);
+            System.out.println("Get Detect Run Response: " + deidentifyFileResponse);
+        } catch (SkyflowException e) {
+            System.err.println("Error occurred during get detect run: ");
+            e.printStackTrace();
+        }
+    }
+}
 
 ```
 
-## An example of get run
+## An [example](https://github.com/skyflowapi/skyflow-java/blob/SK-2074-detect-support-readme-and-sample/samples/src/main/java/com/example/detect/GetDetectRunExample.java) of get run
 ```java
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
@@ -2322,7 +2351,8 @@ public class GetDetectRunExample {
                     .build();
 
             // Step 3: Call getDetectRun to poll for file processing results
-            DeidentifyFileResponse deidentifyFileResponse = skyflowClient.detect("<VAULT_ID>").getDetectRun(getDetectRunRequest);
+            // Replace `9f27764a10f7946fe56b3258e117` with the acutal vault id
+            DeidentifyFileResponse deidentifyFileResponse = skyflowClient.detect("9f27764a10f7946fe56b3258e117").getDetectRun(getDetectRunRequest);
             System.out.println("Get Detect Run Response: " + deidentifyFileResponse);
         } catch (SkyflowException e) {
             System.err.println("Error occurred during get detect run: ");

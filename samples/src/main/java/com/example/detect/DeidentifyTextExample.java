@@ -58,38 +58,42 @@ public class DeidentifyTextExample {
                 .build();
 
         // Step 6: Configuring the different options for deidentify
-        // List of entities to detect
+        // Replace with the entity you want to detect
         List<DetectEntities> detectEntitiesList = new ArrayList<>();
         detectEntitiesList.add(DetectEntities.SSN);
         detectEntitiesList.add(DetectEntities.CREDIT_CARD);
 
-        // List of entities to detect with vault token
+        // Replace with the entity you want to detect with vault token
         List<DetectEntities> vaultTokenList = new ArrayList<>();
         vaultTokenList.add(DetectEntities.SSN);
         vaultTokenList.add(DetectEntities.CREDIT_CARD);
 
+        // Replace with the entity you want to detect with entity only
         // List<DetectEntities> entityOnlyList = new ArrayList<>();
         // entityOnlyList.add(DetectEntities.SSN);
 
+        // Replace with the entity you want to detect with entity unique counter
         // List<DetectEntities> entityUniqueCounterList = new ArrayList<>();
         // entityUniqueCounterList.add(DetectEntities.SSN);
 
+        // Replace with the regex patterns you want to allow during deidentification
         // List<String> allowRegexList = new ArrayList<>();
         // allowRegexList.add("<YOUR_ALLOW_REGEX_LIST>");
 
+        // Replace with the regex patterns you want to restrict during deidentification
         // List<String> restrictRegexList = new ArrayList<>();
         // restrictRegexList.add("YOUR_RESTRICT_REGEX_LIST");
 
-        //  Configure Token Format 
+        //  Configure Token Format
         TokenFormat tokenFormat = TokenFormat.builder()
                 .vaultToken(vaultTokenList)
                 // .entityOnly(entityOnlyList)
                 // .entityUniqueCounter(entityUniqueCounterList)
                 .build();
 
-        // Configure Transformation
+        // Configure Transformation for deidentified entities
         // List<DetectEntities> detectEntitiesTransformationList = new ArrayList<>();
-        // detectEntitiesTransformationList.add(DetectEntities.DOB);
+        // detectEntitiesTransformationList.add(DetectEntities.DOB); // Replace with the entity you want to transform
         // detectEntitiesTransformationList.add(DetectEntities.DATE);
 
         // DateTransformation dateTransformation = new DateTransformation(20, 5, detectEntitiesTransformationList);
@@ -99,7 +103,7 @@ public class DeidentifyTextExample {
         try {
             // Create a deidentify text request for the first vault
             DeidentifyTextRequest deidentifyTextRequest = DeidentifyTextRequest.builder()
-                    .text("My SSN is 123-45-6789 and my card is 4111 1111 1111 1111.")
+                    .text("My SSN is 123-45-6789 and my card is 4111 1111 1111 1111.") // Replace with the text you want to deidentify
                     .entities(detectEntitiesList)
                     //     .allowRegexList(allowRegexList)
                     //     .restrictRegexList(restrictRegexList)
@@ -119,7 +123,7 @@ public class DeidentifyTextExample {
         try {
             // Create a deidentify text request for the second vault
             DeidentifyTextRequest deidentifyTextRequest2 = DeidentifyTextRequest.builder()
-                    .text("My SSN is 123-45-6789 and my card is 4111 1111 1111 1111.")
+                    .text("My SSN is 123-45-6789 and my card is 4111 1111 1111 1111.") // Replace with the text you want to deidentify
                     .entities(detectEntitiesList)
                     //     .allowRegexList(allowRegexList)
                     //     .restrictRegexList(restrictRegexList)
