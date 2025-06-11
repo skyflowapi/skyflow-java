@@ -43,9 +43,6 @@ on:
       test-reusable-token:
         required: true
 
-      vault-client-creds:
-        required: true
-
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -119,7 +116,6 @@ jobs:
           echo SKYFLOW_CREDENTIALS=${{ secrets.skyflow-credentials }} >> .env
           echo TEST_EXPIRED_TOKEN=${{ secrets.test-expired-token }} >> .env
           echo TEST_REUSABLE_TOKEN=${{ secrets.test-reusable-token }} >> .env
-          echo VAULT_CLIENT_SKYFLOW_CREDENTIALS=${{ secrets.vault-client-creds }} >> .env
 
       - name: Create credentials json
         id: create-json

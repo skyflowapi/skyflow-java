@@ -25,4 +25,3 @@ jobs:
       skyflow-credentials: ${{ secrets.SKYFLOW_CREDENTIALS }} >> .env
       test-expired-token: ${{ secrets.TEST_EXPIRED_TOKEN }} >> .env
       test-reusable-token: ${{ secrets.TEST_REUSABLE_TOKEN }} >> .env
-      vault-client-creds: ${{ secrets.VAULT_CLIENT_SKYFLOW_CREDENTIALS }} >> .env

@@ -40,7 +40,6 @@ jobs:
           echo SKYFLOW_CREDENTIALS=${{ secrets.SKYFLOW_CREDENTIALS }} >> .env
           echo TEST_EXPIRED_TOKEN=${{ secrets.TEST_EXPIRED_TOKEN }} >> .env
           echo TEST_REUSABLE_TOKEN=${{ secrets.TEST_REUSABLE_TOKEN }} >> .env
-          echo VAULT_CLIENT_SKYFLOW_CREDENTIALS=${{ secrets.VAULT_CLIENT_SKYFLOW_CREDENTIALS }} >> .env
 
       - name: Build & Run tests with Maven
         run: mvn -B package -f pom.xml

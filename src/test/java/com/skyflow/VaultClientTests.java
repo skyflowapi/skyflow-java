@@ -80,9 +80,8 @@ public class VaultClientTests {
     @Test
     public void testVaultClientGetRecordsAPI() {
         try {
-            Dotenv dotenv = Dotenv.load();
             Credentials credentials = new Credentials();
-            credentials.setCredentialsString(dotenv.get("VAULT_CLIENT_SKYFLOW_CREDENTIALS"));
+            credentials.setApiKey("sky-ab123-abcd1234cdef1234abcd4321cdef4321");
             vaultConfig.setCredentials(credentials);
             vaultClient = new VaultClient(vaultConfig, credentials);
             vaultClient.setBearerToken();
@@ -99,9 +98,8 @@ public class VaultClientTests {
     @Test
     public void testVaultClientGetTokensAPI() {
         try {
-            Dotenv dotenv = Dotenv.load();
             Credentials credentials = new Credentials();
-            credentials.setCredentialsString(dotenv.get("VAULT_CLIENT_SKYFLOW_CREDENTIALS"));
+            credentials.setApiKey("sky-ab123-abcd1234cdef1234abcd4321cdef4321");
             vaultConfig.setCredentials(credentials);
             vaultClient = new VaultClient(vaultConfig, credentials);
             vaultClient.setBearerToken();
@@ -116,9 +114,8 @@ public class VaultClientTests {
     @Test
     public void testVaultClientGetQueryAPI() {
         try {
-            Dotenv dotenv = Dotenv.load();
             Credentials credentials = new Credentials();
-            credentials.setCredentialsString(dotenv.get("VAULT_CLIENT_SKYFLOW_CREDENTIALS"));
+            credentials.setApiKey("sky-ab123-abcd1234cdef1234abcd4321cdef4321");
             vaultConfig.setCredentials(credentials);
 
             vaultClient = new VaultClient(vaultConfig, credentials);
@@ -288,9 +285,8 @@ public class VaultClientTests {
     @Test
     public void testSetBearerToken() {
         try {
-            Dotenv dotenv = Dotenv.load();
             Credentials credentials = new Credentials();
-            credentials.setCredentialsString(dotenv.get("VAULT_CLIENT_SKYFLOW_CREDENTIALS"));
+            credentials.setApiKey("sky-ab123-abcd1234cdef1234abcd4321cdef4321");
             vaultConfig.setCredentials(credentials);
             vaultClient = new VaultClient(vaultConfig, credentials);
             vaultClient.setBearerToken();
