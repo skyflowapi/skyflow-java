@@ -18,6 +18,9 @@ public class GetDetectRunRequest {
     public static final class GetDetectRunRequestBuilder {
         private String runId;
 
+        private GetDetectRunRequestBuilder() {
+        }
+
         public GetDetectRunRequestBuilder runId(String runId) {
             this.runId = runId;
             return this;

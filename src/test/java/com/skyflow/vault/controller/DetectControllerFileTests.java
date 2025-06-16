@@ -12,6 +12,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.util.ArrayList;
 
 public class DetectControllerFileTests {
@@ -232,6 +233,96 @@ public class DetectControllerFileTests {
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (Exception e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), 400);
+        }
+    }
+
+    @Test
+    public void testInvalidBleepGain() throws Exception {
+        File file = File.createTempFile("test", ".txt");
+        try {
+            AudioBleep bleep = AudioBleep.builder().frequency(440.0).gain(-1.0).startPadding(0.1).stopPadding(0.1).build();
+            DeidentifyFileRequest request = DeidentifyFileRequest.builder()
+                    .file(file)
+                    .bleep(bleep)
+                    .build();
+            detectController.deidentifyFile(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (Exception e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), 400);
+        }
+        file.delete();
+    }
+
+    @Test
+    public void testInvalidBleepStartPadding() throws Exception {
+        File file = File.createTempFile("test", ".txt");
+        try {
+            AudioBleep bleep = AudioBleep.builder().frequency(440.0).gain(0.5).startPadding(-0.1).stopPadding(0.1).build();
+            DeidentifyFileRequest request = DeidentifyFileRequest.builder()
+                    .file(file)
+                    .bleep(bleep)
+                    .build();
+            detectController.deidentifyFile(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (Exception e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), 400);
+        }
+        file.delete();
+    }
+
+    @Test
+    public void testInvalidBleepStopPadding() throws Exception {
+        File file = File.createTempFile("test", ".txt");
+        try {
+            AudioBleep bleep = AudioBleep.builder().frequency(440.0).gain(0.5).startPadding(0.1).stopPadding(-0.1).build();
+            DeidentifyFileRequest request = DeidentifyFileRequest.builder()
+                    .file(file)
+                    .bleep(bleep)
+                    .build();
+            detectController.deidentifyFile(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (Exception e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), 400);
+        }
+        file.delete();
+    }
+
+    @Test
+    public void testOutputDirectoryNotDirectory() throws Exception {
+        File file = File.createTempFile("test", ".txt");
+        File notADir = File.createTempFile("notadir", ".txt");
+        try {
+            DeidentifyFileRequest request = DeidentifyFileRequest.builder()
+                    .file(file)
+                    .outputDirectory(notADir.getAbsolutePath())
+                    .build();
+            detectController.deidentifyFile(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (Exception e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), 400);
+        }
+        file.delete();
+        notADir.delete();
+    }
+
+    @Test
+    public void testOutputDirectoryNotWritable() throws Exception {
+        File file = File.createTempFile("test", ".txt");
+        File dir = Files.createTempDirectory("notwritabledir").toFile();
+        dir.setWritable(false);
+        try {
+            DeidentifyFileRequest request = DeidentifyFileRequest.builder()
+                    .file(file)
+                    .outputDirectory(dir.getAbsolutePath())
+                    .build();
+            detectController.deidentifyFile(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (Exception e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), 400);
+        } finally {
+            dir.setWritable(true);
+            file.delete();
+            dir.delete();
         }
     }
 }

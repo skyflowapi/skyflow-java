@@ -61,7 +61,6 @@ public class SkyflowException extends Exception {
         }
     }
 
-    // Handles new error structure: {error={grpc_code=3, http_code=400, message=..., http_status=..., details=[]}}
     private void setResponseBodyFromJson(String responseBody, Map<String, List<String>> responseHeaders) {
         try {
             if (responseBody != null) {
