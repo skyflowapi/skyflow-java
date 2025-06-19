@@ -125,10 +125,8 @@ public enum ErrorMessage {
     EmptyRequestBody("%s0 Validation error. Request body can't be empty. Specify a valid request body."),
 
     // detect
-    InvalidNullTextInDeIdentify("%s0 Validation error. The text field is required and must not be null. Specify a valid text."),
-    InvalidEmptyTextInDeIdentify("%s0 Validation error. The text field is required string and must not be empty string. Specify a valid text."),
-    InvalidNullTextInReIdentify("%s0 Validation error. The text field is required string and must not be null. Specify a valid text."),
-    InvalidEmptyTextInReIdentify("%s0 Validation error. The text field is required string and must not be empty string. Specify a valid text."),
+    InvalidTextInDeIdentify("%s0 Validation error. The text field is required and must be a non-empty string. Specify a valid text."),
+    InvalidTextInReIdentify("%s0 Validation error. The text field is required and must be a non-empty string. Specify a valid text."),
 
     //Detect Files
     InvalidNullFileInDeIdentifyFile("%s0 Validation error. The file field is required and must not be null. Specify a valid file object."),

@@ -11,8 +11,7 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.skyflow.errors.ErrorMessage.InvalidEmptyTextInReIdentify;
-import static com.skyflow.errors.ErrorMessage.InvalidNullTextInReIdentify;
+import static com.skyflow.errors.ErrorMessage.InvalidTextInReIdentify;
 
 public class ReidentifyTextTests {
 
@@ -75,7 +74,7 @@ public class ReidentifyTextTests {
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(InvalidNullTextInReIdentify.getMessage(), e.getMessage());
+            Assert.assertEquals(InvalidTextInReIdentify.getMessage(), e.getMessage());
         }
     }
 
@@ -89,7 +88,7 @@ public class ReidentifyTextTests {
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(InvalidEmptyTextInReIdentify.getMessage(), e.getMessage());
+            Assert.assertEquals(InvalidTextInReIdentify.getMessage(), e.getMessage());
         }
     }
 

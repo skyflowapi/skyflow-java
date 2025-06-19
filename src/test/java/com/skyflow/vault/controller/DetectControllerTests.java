@@ -6,6 +6,7 @@ import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.Env;
 import com.skyflow.enums.LogLevel;
 import com.skyflow.errors.ErrorMessage;
+import com.skyflow.errors.HttpStatus;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.utils.Constants;
 import com.skyflow.utils.Utils;
@@ -53,12 +54,12 @@ public class DetectControllerTests {
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(
-                    Utils.parameterizedString(ErrorMessage.InvalidNullTextInDeIdentify.getMessage(), Constants.SDK_PREFIX),
+                    Utils.parameterizedString(ErrorMessage.InvalidTextInDeIdentify.getMessage(), Constants.SDK_PREFIX),
                     e.getMessage()
             );
             Assert.assertNull(e.getRequestId());
             Assert.assertNull(e.getGrpcCode());
-            Assert.assertNull(e.getHttpStatus());
+            Assert.assertEquals(HttpStatus.BAD_REQUEST.getHttpStatus(), e.getHttpStatus());
         }
     }
 
@@ -71,12 +72,12 @@ public class DetectControllerTests {
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(
-                    Utils.parameterizedString(ErrorMessage.InvalidEmptyTextInDeIdentify.getMessage(), Constants.SDK_PREFIX),
+                    Utils.parameterizedString(ErrorMessage.InvalidTextInDeIdentify.getMessage(), Constants.SDK_PREFIX),
                     e.getMessage()
             );
             Assert.assertNull(e.getRequestId());
             Assert.assertNull(e.getGrpcCode());
-            Assert.assertNull(e.getHttpStatus());
+            Assert.assertEquals(HttpStatus.BAD_REQUEST.getHttpStatus(), e.getHttpStatus());
         }
     }
 
@@ -89,12 +90,12 @@ public class DetectControllerTests {
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(
-                    Utils.parameterizedString(ErrorMessage.InvalidNullTextInReIdentify.getMessage(), Constants.SDK_PREFIX),
+                    Utils.parameterizedString(ErrorMessage.InvalidTextInReIdentify.getMessage(), Constants.SDK_PREFIX),
                     e.getMessage()
             );
             Assert.assertNull(e.getRequestId());
             Assert.assertNull(e.getGrpcCode());
-            Assert.assertNull(e.getHttpStatus());
+            Assert.assertEquals(HttpStatus.BAD_REQUEST.getHttpStatus(), e.getHttpStatus());
         }
     }
 
@@ -107,12 +108,12 @@ public class DetectControllerTests {
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(
-                    Utils.parameterizedString(ErrorMessage.InvalidEmptyTextInReIdentify.getMessage(), Constants.SDK_PREFIX),
+                    Utils.parameterizedString(ErrorMessage.InvalidTextInReIdentify.getMessage(), Constants.SDK_PREFIX),
                     e.getMessage()
             );
             Assert.assertNull(e.getRequestId());
             Assert.assertNull(e.getGrpcCode());
-            Assert.assertNull(e.getHttpStatus());
+            Assert.assertEquals(HttpStatus.BAD_REQUEST.getHttpStatus(), e.getHttpStatus());
         }
     }
 

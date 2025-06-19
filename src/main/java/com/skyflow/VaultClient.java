@@ -350,11 +350,11 @@ public class VaultClient {
                 detectedEntity.getLocation().get().getEndIndexProcessed().orElse(0)
         );
 
-        Map<String, Float> entityScores = detectedEntity.getEntityScores()
+        Map<String, Double> entityScores = detectedEntity.getEntityScores()
                 .map(doubleMap -> doubleMap.entrySet().stream()
                         .collect(Collectors.toMap(
                                 Map.Entry::getKey,
-                                entry -> entry.getValue().floatValue()
+                                Map.Entry::getValue
                         )))
                 .orElse(Collections.emptyMap());
 

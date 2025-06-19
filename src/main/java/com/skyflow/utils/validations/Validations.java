@@ -690,35 +690,22 @@ public class Validations {
     public static void validateDeidentifyTextRequest(DeidentifyTextRequest deidentifyTextRequest) throws SkyflowException {
         // Validate required fields
         String deidentifyText = deidentifyTextRequest.getText();
-        if (deidentifyText == null) {
+        if (deidentifyText == null || deidentifyText.trim().isEmpty()) {
             LogUtil.printErrorLog(Utils.parameterizedString(
-                    ErrorLogs.INVALID_NULL_TEXT_IN_DEIDENTIFY.getLog(), InterfaceName.DETECT.getName()
+                    ErrorLogs.INVALID_TEXT_IN_DEIDENTIFY.getLog(), InterfaceName.DETECT.getName()
             ));
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidNullTextInDeIdentify.getMessage());
-        }
-
-        if (deidentifyText.trim().isEmpty()) {
-            LogUtil.printErrorLog(Utils.parameterizedString(
-                    ErrorLogs.INVALID_EMPTY_TEXT_IN_DEIDENTIFY.getLog(), InterfaceName.DETECT.getName()
-            ));
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidEmptyTextInDeIdentify.getMessage());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidTextInDeIdentify.getMessage());
         }
     }
 
     public static void validateReidentifyTextRequest(ReidentifyTextRequest reidentifyTextRequest) throws SkyflowException {
         // Validate required fields
         String reidentifyText = reidentifyTextRequest.getText();
-        if (reidentifyText == null) {
+        if (reidentifyText == null || reidentifyText.trim().isEmpty()) {
             LogUtil.printErrorLog(Utils.parameterizedString(
-                    ErrorLogs.INVALID_NULL_TEXT_IN_REIDENTIFY.getLog(), InterfaceName.DETECT.getName()
+                    ErrorLogs.INVALID_TEXT_IN_REIDENTIFY.getLog(), InterfaceName.DETECT.getName()
             ));
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidNullTextInReIdentify.getMessage());
-        }
-        if (reidentifyText.trim().isEmpty()) {
-            LogUtil.printErrorLog(Utils.parameterizedString(
-                    ErrorLogs.INVALID_EMPTY_TEXT_IN_REIDENTIFY.getLog(), InterfaceName.DETECT.getName()
-            ));
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidEmptyTextInReIdentify.getMessage());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidTextInReIdentify.getMessage());
         }
     }
 

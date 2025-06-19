@@ -41,23 +41,72 @@ public class SkyflowException extends Exception {
         super(cause);
         this.httpCode = httpCode;
         setRequestId(responseHeaders);
-        // Determine if responseBody is a JSON string with "error" key or a plain string
-        if (isJsonWithErrorObject(responseBody)) {
-            setResponseBodyFromJson(responseBody, responseHeaders);
+        String errorObject = parseJsonStringWithErrorObject(responseBody);
+        if (!errorObject.isEmpty()) {
+            setResponseBodyFromJson(errorObject, responseHeaders);
         } else {
-            this.message = responseBody;
+            this.message = errorObject;
             this.details = new JsonArray();
         }
     }
 
-    // Helper to check if responseBody is a JSON string with "error" key
-    private boolean isJsonWithErrorObject(String responseBody) {
+    private String parseJsonStringWithErrorObject(String responseBody) {
         try {
-            if (responseBody == null) return false;
-            JsonObject obj = JsonParser.parseString(responseBody).getAsJsonObject();
-            return obj.has("error");
-        } catch (Exception e) {
-            return false;
+            if (responseBody == null || responseBody.trim().isEmpty()) return "";
+
+            // If already valid JSON, parsing it directly
+            try {
+                JsonObject obj = JsonParser.parseString(responseBody).getAsJsonObject();
+                // If it's valid JSON and has error object, return as is
+                if (obj.has("error")) {
+                    return responseBody;
+                }
+                return "";
+            } catch (JsonSyntaxException e) {
+                // If not valid JSON, continue with Java object parsing
+            }
+
+            // Handle Java object notation
+            if (!responseBody.contains("error={")) {
+                return "";
+            }
+
+            // Handle Java object string representation
+            StringBuilder json = new StringBuilder("{");
+            if (responseBody.contains("error={")) {
+                String content = responseBody.substring(1, responseBody.length() - 1);
+                if (content.startsWith("error={")) {
+                    json.append("\"error\":{");
+                    String errorContent = content.substring(7, content.length() - 1);
+
+                    // Process key-value pairs
+                    String[] pairs = errorContent.split(", ");
+                    for (int i = 0; i < pairs.length; i++) {
+                        String[] keyValue = pairs[i].split("=", 2);
+                        json.append("\"").append(keyValue[0]).append("\":");
+
+                        if (keyValue[1].equals("[]")) {
+                            json.append("[]");
+                        } else if (keyValue[1].matches("\\d+")) {
+                            json.append(keyValue[1]);
+                        } else {
+                            json.append("\"").append(keyValue[1].replace("\"", "\\\"")).append("\"");
+                        }
+
+                        if (i < pairs.length - 1) {
+                            json.append(",");
+                        }
+                    }
+                    json.append("}");
+                }
+            }
+            json.append("}");
+
+            String validJson = json.toString();
+            JsonObject obj = JsonParser.parseString(validJson).getAsJsonObject();
+            return obj.has("error") && obj.get("error").isJsonObject() ? validJson : "";
+        } catch (JsonSyntaxException e) {
+            throw new RuntimeException(e);
         }
     }
 

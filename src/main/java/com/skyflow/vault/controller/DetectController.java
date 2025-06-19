@@ -54,9 +54,6 @@ public final class DetectController extends VaultClient {
         } catch (ApiClientApiException ex) {
             LogUtil.printErrorLog(ErrorLogs.DEIDENTIFY_TEXT_REQUEST_REJECTED.getLog());
             throw new SkyflowException(ex.statusCode(), ex, ex.headers(), ex.body().toString());
-        } catch (Exception e) {
-            LogUtil.printErrorLog(ErrorLogs.DEIDENTIFY_TEXT_REQUEST_REJECTED.getLog());
-            throw new SkyflowException(e.getMessage(), e);
         }
         LogUtil.printInfoLog(InfoLogs.DEIDENTIFY_TEXT_SUCCESS.getLog());
         return deidentifyTextResponse;
@@ -83,9 +80,6 @@ public final class DetectController extends VaultClient {
         } catch (ApiClientApiException ex) {
             LogUtil.printErrorLog(ErrorLogs.REIDENTIFY_TEXT_REQUEST_REJECTED.getLog());
             throw new SkyflowException(ex.statusCode(), ex, ex.headers(), ex.body().toString());
-        } catch (Exception e) {
-            LogUtil.printErrorLog(ErrorLogs.REIDENTIFY_TEXT_REQUEST_REJECTED.getLog());
-            throw new SkyflowException(e.getMessage(), e);
         }
         LogUtil.printInfoLog(InfoLogs.REIDENTIFY_TEXT_SUCCESS.getLog());
         return reidentifyTextResponse;
@@ -118,7 +112,7 @@ public final class DetectController extends VaultClient {
                 response = pollForResults(apiResponse.getRunId(), request.getWaitTime());
             } catch (Exception ex) {
                 throw new SkyflowException(ErrorCode.SERVER_ERROR.getCode(), ErrorMessage.PollingForResultsFailed.getMessage());
-}
+            }
 
             if ("SUCCESS".equalsIgnoreCase(response.getStatus())) {
                 String base64File = response.getFile();
@@ -165,8 +159,8 @@ public final class DetectController extends VaultClient {
         while (true) {
             try {
                 GetRunRequest getRunRequest = GetRunRequest.builder()
-                    .vaultId(super.getVaultConfig().getVaultId())
-                    .build();
+                        .vaultId(super.getVaultConfig().getVaultId())
+                        .build();
                 response = super.getDetectFileAPi()
                         .getRun(runId, getRunRequest);
 
@@ -218,7 +212,7 @@ public final class DetectController extends VaultClient {
 
 
     private static synchronized DeidentifyFileResponse parseDeidentifyFileResponse(DeidentifyStatusResponse response,
-                                                               String runId, String status) {
+                                                                                   String runId, String status) {
         DeidentifyFileOutput firstOutput = getFirstOutput(response);
 
         Object wordCharObj = response.getAdditionalProperties().get("word_character_count");
@@ -267,11 +261,11 @@ public final class DetectController extends VaultClient {
         DeidentifyFileOutput deidentifyFileOutput = outputs != null && !outputs.isEmpty() ? outputs.get(1) : null;
 
         if (deidentifyFileOutput != null) {
-                entities.add(new FileEntityInfo(
-                        deidentifyFileOutput.getProcessedFile().orElse(null),
-                        deidentifyFileOutput.getProcessedFileType().orElse(null),
-                        deidentifyFileOutput.getProcessedFileExtension().orElse(null)
-                ));
+            entities.add(new FileEntityInfo(
+                    deidentifyFileOutput.getProcessedFile().orElse(null),
+                    deidentifyFileOutput.getProcessedFileType().orElse(null),
+                    deidentifyFileOutput.getProcessedFileExtension().orElse(null)
+            ));
         }
 
         return entities;
@@ -280,7 +274,7 @@ public final class DetectController extends VaultClient {
 
     private com.skyflow.generated.rest.types.DeidentifyFileResponse processFileByType(String fileExtension, String base64Content,
                                                                                       DeidentifyFileRequest request, String vaultId) {
-        switch(fileExtension.toLowerCase()) {
+        switch (fileExtension.toLowerCase()) {
             case "txt":
                 com.skyflow.generated.rest.resources.files.requests.DeidentifyTextRequest textFileRequest =
                         super.getDeidentifyTextFileRequest(request, vaultId, base64Content);
