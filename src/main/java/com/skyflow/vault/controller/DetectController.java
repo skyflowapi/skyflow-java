@@ -181,7 +181,7 @@ public final class DetectController extends VaultClient {
                                 null,  // entities
                                 runId, // runId
                                 "IN_PROGRESS", // status
-                                null   // errors
+                                new ArrayList<>() // errors
                         );
                     }
 
@@ -200,7 +200,7 @@ public final class DetectController extends VaultClient {
 
                 } else if (status == DeidentifyStatusResponseStatus.SUCCESS ||
                         status == DeidentifyStatusResponseStatus.FAILED) {
-                    return parseDeidentifyFileResponse(response, runId, status.toString().toLowerCase());
+                    return parseDeidentifyFileResponse(response, runId, status.toString());
                 }
             } catch (ApiClientApiException e) {
                 LogUtil.printErrorLog(ErrorLogs.GET_DETECT_RUN_REQUEST_REJECTED.getLog());
@@ -245,7 +245,7 @@ public final class DetectController extends VaultClient {
                 getEntities(response),
                 runId,
                 status,
-                null
+                new ArrayList<>()
         );
     }
 
@@ -351,7 +351,7 @@ public final class DetectController extends VaultClient {
             com.skyflow.generated.rest.types.DeidentifyStatusResponse apiResponse =
                     super.getDetectFileAPi().getRun(runId, getRunRequest);
 
-            return parseDeidentifyFileResponse(apiResponse, runId, apiResponse.getStatus().toString().toLowerCase());
+            return parseDeidentifyFileResponse(apiResponse, runId, apiResponse.getStatus().toString());
         } catch (ApiClientApiException e) {
             LogUtil.printErrorLog(ErrorLogs.GET_DETECT_RUN_REQUEST_REJECTED.getLog());
             throw new SkyflowException(e.statusCode(), e, e.headers(), e.body().toString());
