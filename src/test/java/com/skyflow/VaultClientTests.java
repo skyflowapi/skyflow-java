@@ -639,7 +639,7 @@ public class VaultClientTests {
     }
 
     @Test
-    public void testGetDeidentifyAudioRequest() {
+    public void testGetDeidentifyAudioRequest() throws SkyflowException {
         File file = new File("test.mp3");
         List<DetectEntities> entities = Arrays.asList(DetectEntities.NAME);
         TokenFormat tokenFormat = TokenFormat.builder().entityOnly(entities).build();
@@ -651,18 +651,18 @@ public class VaultClientTests {
                 .tokenFormat(tokenFormat)
                 .bleep(bleep)
                 .outputProcessedAudio(true)
-                .outputTranscription(DetectOutputTranscriptions.TRANSCRIPTION)
+                .outputTranscription(DetectOutputTranscriptions.PLAINTEXT_TRANSCRIPTION)
                 .build();
 
         String vaultId = "vault123";
         String base64Content = "base64string";
-        String dataFormat = "MP_3";
+        String dataFormat = "mp3";
 
         DeidentifyAudioRequest audioRequest = vaultClient.getDeidentifyAudioRequest(request, vaultId, base64Content, dataFormat);
 
         Assert.assertEquals(vaultId, audioRequest.getVaultId());
         Assert.assertEquals(base64Content, audioRequest.getFile().getBase64());
-        Assert.assertEquals(dataFormat, audioRequest.getFile().getDataFormat().name());
+        Assert.assertEquals(dataFormat, audioRequest.getFile().getDataFormat().toString());
     }
 
     @Test

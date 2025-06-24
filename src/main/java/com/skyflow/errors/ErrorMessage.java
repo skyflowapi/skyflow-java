@@ -142,6 +142,7 @@ public enum ErrorMessage {
     FailedToEncodeFile("%s0 Validation error. Failed to encode the file. Ensure the file is in a supported format and try again."),
     PollingForResultsFailed("%s0 API error. Polling for results failed. Unable to retrieve the deidentified file"),
     FailedtoSaveProcessedFile("%s0 Validation error. Failed to save the processed file. Ensure the output directory is valid and writable."),
+    InvalidAudioFileType("%s0 Validation error. The file type is not supported. Specify a valid file type mp3 or wav."),
     ;
     private final String message;
 

@@ -273,7 +273,7 @@ public final class DetectController extends VaultClient {
 
 
     private com.skyflow.generated.rest.types.DeidentifyFileResponse processFileByType(String fileExtension, String base64Content,
-                                                                                      DeidentifyFileRequest request, String vaultId) {
+                                                                                      DeidentifyFileRequest request, String vaultId) throws SkyflowException {
         switch (fileExtension.toLowerCase()) {
             case "txt":
                 com.skyflow.generated.rest.resources.files.requests.DeidentifyTextRequest textFileRequest =

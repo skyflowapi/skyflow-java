@@ -454,7 +454,7 @@ public class VaultClient {
     }
 
 
-    protected DeidentifyAudioRequest getDeidentifyAudioRequest(DeidentifyFileRequest request, String vaultId, String base64Content, String dataFormat){
+    protected DeidentifyAudioRequest getDeidentifyAudioRequest(DeidentifyFileRequest request, String vaultId, String base64Content, String dataFormat) throws SkyflowException {
         List<EntityType> mappedEntityTypes = getEntityTypes(request.getEntities());
 
         TokenFormat tokenFormat = request.getTokenFormat();
@@ -485,14 +485,14 @@ public class VaultClient {
                 .entityUnqCounter(entityUniqueCounter)
                 .build();
 
-        DeidentifyAudioRequestFile deidentifyAudioRequestFile = DeidentifyAudioRequestFile.builder().base64(base64Content).dataFormat(DeidentifyAudioRequestFileDataFormat.valueOf(dataFormat)).build();
+        DeidentifyAudioRequestFile deidentifyAudioRequestFile = DeidentifyAudioRequestFile.builder().base64(base64Content).dataFormat(mapAudioDataFormat(dataFormat)).build();
         DetectOutputTranscriptions transcription = request.getOutputTranscription();
         DeidentifyAudioRequestOutputTranscription outputTranscriptionType = null;
         if (transcription != null) {
             outputTranscriptionType = DeidentifyAudioRequestOutputTranscription.valueOf(transcription.name());
         }
 
-        return  DeidentifyAudioRequest.builder()
+        return DeidentifyAudioRequest.builder()
                 .vaultId(vaultId)
                 .file(deidentifyAudioRequestFile)
                 .allowRegex(allowRegex)
@@ -775,6 +775,17 @@ public class VaultClient {
                 .entityOnly(entityTypes)
                 .entityUnqCounter(entityUniqueCounter)
                 .build();
+    }
+
+    private DeidentifyAudioRequestFileDataFormat mapAudioDataFormat(String dataFormat) throws SkyflowException {
+        switch (dataFormat) {
+            case "mp3":
+                return DeidentifyAudioRequestFileDataFormat.MP_3;
+            case "wav":
+                return DeidentifyAudioRequestFileDataFormat.WAV;
+            default:
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidAudioFileType.getMessage());
+        }
     }
 
     private void updateVaultURL() {

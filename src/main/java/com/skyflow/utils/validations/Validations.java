@@ -831,7 +831,7 @@ public class Validations {
                 ));
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidRequestBody.getMessage());
             }
-            if (request.getBleep().getGain() == null || request.getBleep().getGain() < 0) {
+            if (request.getBleep().getGain() == null) {
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidRequestBody.getMessage());
             }
             if (request.getBleep().getStartPadding() == null || request.getBleep().getStartPadding() < 0) {
