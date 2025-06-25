@@ -427,6 +427,7 @@ public class VaultClientTests {
     @Test
     public void testDeidentifyFileRequestBuilderAndGetters() {
         File file = new File("testfile.txt");
+        FileInput fileInput = FileInput.builder().file(file).build();
         DetectEntities entity = DetectEntities.NAME;
         String allowRegex = "^[A-Za-z]+$";
         String restrictRegex = "\\d+";
@@ -443,7 +444,7 @@ public class VaultClientTests {
         Integer waitTime = 10;
 
         DeidentifyFileRequest request = DeidentifyFileRequest.builder()
-                .file(file)
+                .file(fileInput)
                 .entities(Arrays.asList(entity))
                 .allowRegexList(Collections.singletonList(allowRegex))
                 .restrictRegexList(Collections.singletonList(restrictRegex))
@@ -460,7 +461,7 @@ public class VaultClientTests {
                 .waitTime(waitTime)
                 .build();
 
-        Assert.assertEquals(file, request.getFile());
+        Assert.assertEquals(file, request.getFileInput().getFile());
         Assert.assertEquals(1, request.getEntities().size());
         Assert.assertEquals(allowRegex, request.getAllowRegexList().get(0));
         Assert.assertEquals(restrictRegex, request.getRestrictRegexList().get(0));
@@ -480,7 +481,6 @@ public class VaultClientTests {
     @Test
     public void testDeidentifyFileRequestBuilderDefaults() {
         DeidentifyFileRequest request = DeidentifyFileRequest.builder().build();
-        Assert.assertNull(request.getFile());
         Assert.assertNull(request.getEntities());
         Assert.assertNull(request.getAllowRegexList());
         Assert.assertNull(request.getRestrictRegexList());
@@ -501,11 +501,12 @@ public class VaultClientTests {
     @Test
     public void testGetDeidentifyImageRequest() {
         File file = new File("test.jpg");
+        FileInput fileInput = FileInput.builder().file(file).build();
         List<DetectEntities> entities = Arrays.asList(DetectEntities.NAME, DetectEntities.DOB);
         TokenFormat tokenFormat = TokenFormat.builder().entityOnly(entities).build();
 
         DeidentifyFileRequest request = DeidentifyFileRequest.builder()
-                .file(file)
+                .file(fileInput)
                 .entities(entities)
                 .tokenFormat(tokenFormat)
                 .outputProcessedImage(true)
@@ -526,11 +527,12 @@ public class VaultClientTests {
     @Test
     public void testGetDeidentifyPresentationRequest() {
         File file = new File("test.pptx");
+        FileInput fileInput = FileInput.builder().file(file).build();
         List<DetectEntities> entities = Arrays.asList(DetectEntities.NAME);
         TokenFormat tokenFormat = TokenFormat.builder().entityOnly(entities).build();
 
         DeidentifyFileRequest request = DeidentifyFileRequest.builder()
-                .file(file)
+                .file(fileInput)
                 .entities(entities)
                 .tokenFormat(tokenFormat)
                 .build();
@@ -549,11 +551,12 @@ public class VaultClientTests {
     @Test
     public void testGetDeidentifySpreadsheetRequest() {
         File file = new File("test.csv");
+        FileInput fileInput = FileInput.builder().file(file).build();
         List<DetectEntities> entities = Arrays.asList(DetectEntities.NAME);
         TokenFormat tokenFormat = TokenFormat.builder().entityOnly(entities).build();
 
         DeidentifyFileRequest request = DeidentifyFileRequest.builder()
-                .file(file)
+                .file(fileInput)
                 .entities(entities)
                 .tokenFormat(tokenFormat)
                 .build();
@@ -572,11 +575,12 @@ public class VaultClientTests {
     @Test
     public void testGetDeidentifyStructuredTextRequest() {
         File file = new File("test.json");
+        FileInput fileInput = FileInput.builder().file(file).build();
         List<DetectEntities> entities = Arrays.asList(DetectEntities.NAME);
         TokenFormat tokenFormat = TokenFormat.builder().entityOnly(entities).build();
 
         DeidentifyFileRequest request = DeidentifyFileRequest.builder()
-                .file(file)
+                .file(fileInput)
                 .entities(entities)
                 .tokenFormat(tokenFormat)
                 .build();
@@ -595,11 +599,12 @@ public class VaultClientTests {
     @Test
     public void testGetDeidentifyDocumentRequest() {
         File file = new File("test.docx");
+        FileInput fileInput = FileInput.builder().file(file).build();
         List<DetectEntities> entities = Arrays.asList(DetectEntities.NAME);
         TokenFormat tokenFormat = TokenFormat.builder().entityOnly(entities).build();
 
         DeidentifyFileRequest request = DeidentifyFileRequest.builder()
-                .file(file)
+                .file(fileInput)
                 .entities(entities)
                 .tokenFormat(tokenFormat)
                 .build();
@@ -618,11 +623,12 @@ public class VaultClientTests {
     @Test
     public void testGetDeidentifyPdfRequest() {
         File file = new File("test.pdf");
+        FileInput fileInput = FileInput.builder().file(file).build();
         List<DetectEntities> entities = Arrays.asList(DetectEntities.NAME);
         TokenFormat tokenFormat = TokenFormat.builder().entityOnly(entities).build();
 
         DeidentifyFileRequest request = DeidentifyFileRequest.builder()
-                .file(file)
+                .file(fileInput)
                 .entities(entities)
                 .tokenFormat(tokenFormat)
                 .pixelDensity(200)
@@ -641,12 +647,13 @@ public class VaultClientTests {
     @Test
     public void testGetDeidentifyAudioRequest() throws SkyflowException {
         File file = new File("test.mp3");
+        FileInput fileInput = FileInput.builder().file(file).build();
         List<DetectEntities> entities = Arrays.asList(DetectEntities.NAME);
         TokenFormat tokenFormat = TokenFormat.builder().entityOnly(entities).build();
         AudioBleep bleep = AudioBleep.builder().frequency(1000.0).gain(10.0).startPadding(1.0).stopPadding(1.0).build();
 
         DeidentifyFileRequest request = DeidentifyFileRequest.builder()
-                .file(file)
+                .file(fileInput)
                 .entities(entities)
                 .tokenFormat(tokenFormat)
                 .bleep(bleep)
@@ -668,11 +675,12 @@ public class VaultClientTests {
     @Test
     public void testGetDeidentifyTextFileRequest() {
         File file = new File("test.txt");
+        FileInput fileInput = FileInput.builder().file(file).build();
         List<DetectEntities> entities = Arrays.asList(DetectEntities.NAME, DetectEntities.DOB);
         TokenFormat tokenFormat = TokenFormat.builder().entityOnly(entities).build();
 
         DeidentifyFileRequest request = DeidentifyFileRequest.builder()
-                .file(file)
+                .file(fileInput)
                 .entities(entities)
                 .tokenFormat(tokenFormat)
                 .build();

@@ -82,6 +82,9 @@ public final class RecordServiceBulkDeleteRecordBody {
             return this;
         }
 
+        /**
+         * <p><code>skyflow_id</code> values of the records to delete. If <code>*</code> is specified, this operation deletes all records in the table.</p>
+         */
         @JsonSetter(value = "skyflow_ids", nulls = Nulls.SKIP)
         public Builder skyflowIds(Optional<List<String>> skyflowIds) {
             this.skyflowIds = skyflowIds;

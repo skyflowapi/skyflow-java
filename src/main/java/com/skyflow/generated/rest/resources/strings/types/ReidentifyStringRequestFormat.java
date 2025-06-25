@@ -114,6 +114,9 @@ public final class ReidentifyStringRequestFormat {
             return this;
         }
 
+        /**
+         * <p>Entity types to fully redact.</p>
+         */
         @JsonSetter(value = "redacted", nulls = Nulls.SKIP)
         public Builder redacted(Optional<List<EntityType>> redacted) {
             this.redacted = redacted;
@@ -125,6 +128,9 @@ public final class ReidentifyStringRequestFormat {
             return this;
         }
 
+        /**
+         * <p>Entity types to mask.</p>
+         */
         @JsonSetter(value = "masked", nulls = Nulls.SKIP)
         public Builder masked(Optional<List<EntityType>> masked) {
             this.masked = masked;
@@ -136,6 +142,9 @@ public final class ReidentifyStringRequestFormat {
             return this;
         }
 
+        /**
+         * <p>Entity types to return in plaintext.</p>
+         */
         @JsonSetter(value = "plaintext", nulls = Nulls.SKIP)
         public Builder plaintext(Optional<List<EntityType>> plaintext) {
             this.plaintext = plaintext;

@@ -139,6 +139,9 @@ public final class TokenType {
             return this;
         }
 
+        /**
+         * <p>Entity types to replace with vault tokens.</p>
+         */
         @JsonSetter(value = "vault_token", nulls = Nulls.SKIP)
         public Builder vaultToken(Optional<List<EntityType>> vaultToken) {
             this.vaultToken = vaultToken;
@@ -150,6 +153,9 @@ public final class TokenType {
             return this;
         }
 
+        /**
+         * <p>Entity types to replace with entity tokens with unique counters.</p>
+         */
         @JsonSetter(value = "entity_unq_counter", nulls = Nulls.SKIP)
         public Builder entityUnqCounter(Optional<List<EntityType>> entityUnqCounter) {
             this.entityUnqCounter = entityUnqCounter;
@@ -161,6 +167,9 @@ public final class TokenType {
             return this;
         }
 
+        /**
+         * <p>Entity types to replace with entity tokens.</p>
+         */
         @JsonSetter(value = "entity_only", nulls = Nulls.SKIP)
         public Builder entityOnly(Optional<List<EntityType>> entityOnly) {
             this.entityOnly = entityOnly;

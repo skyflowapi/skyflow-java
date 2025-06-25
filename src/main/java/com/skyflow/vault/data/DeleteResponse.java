@@ -1,21 +1,19 @@
 package com.skyflow.vault.data;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 import java.util.List;
-import java.util.Optional;
 
 public class DeleteResponse {
-    private final Optional<List<String>> deletedIds;
+    private final List<String> deletedIds;
 
-    public DeleteResponse(Optional<List<String>> deletedIds) {
+    public DeleteResponse(List<String> deletedIds) {
         this.deletedIds = deletedIds;
     }
 
-    public Optional<List<String>> getDeletedIds() {
+    public List<String> getDeletedIds() {
         return deletedIds;
     }
 
@@ -23,7 +21,7 @@ public class DeleteResponse {
     public String toString() {
         Gson gson = new Gson();
         JsonObject responseObject = JsonParser.parseString(gson.toJson(this)).getAsJsonObject();
-        responseObject.add("errors", new JsonArray());
+        responseObject.add("errors", null);
         return responseObject.toString();
     }
 }

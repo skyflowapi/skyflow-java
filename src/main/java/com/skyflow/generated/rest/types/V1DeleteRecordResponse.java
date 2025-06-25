@@ -95,6 +95,9 @@ public final class V1DeleteRecordResponse {
             return this;
         }
 
+        /**
+         * <p>ID of the deleted record.</p>
+         */
         @JsonSetter(value = "skyflow_id", nulls = Nulls.SKIP)
         public Builder skyflowId(Optional<String> skyflowId) {
             this.skyflowId = skyflowId;
@@ -106,6 +109,9 @@ public final class V1DeleteRecordResponse {
             return this;
         }
 
+        /**
+         * <p>If <code>true</code>, the record was deleted.</p>
+         */
         @JsonSetter(value = "deleted", nulls = Nulls.SKIP)
         public Builder deleted(Optional<Boolean> deleted) {
             this.deleted = deleted;

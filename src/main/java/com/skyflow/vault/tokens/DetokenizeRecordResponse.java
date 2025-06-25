@@ -15,17 +15,22 @@ public class DetokenizeRecordResponse {
     }
 
     public DetokenizeRecordResponse(V1DetokenizeRecordResponse record, String requestId) {
-        this.token = String.valueOf(record.getToken());
-        this.value = record.getValue().orElse(null);
+        this.token = record.getToken().orElse(null);
+
+        this.value = record.getValue()
+                .filter(val -> val != null && !val.toString().isEmpty())
+                .orElse(null);
 
         this.type = record.getValueType()
                 .map(Enum::toString)
-                .filter(value -> !value.equals("NONE"))
+                .filter(val -> !"NONE".equals(val))
                 .orElse(null);
 
-        this.error = String.valueOf(record.getError());
+        this.error = record.getError().orElse(null);
+
         this.requestId = requestId;
     }
+
 
     public String getError() {
         return error;

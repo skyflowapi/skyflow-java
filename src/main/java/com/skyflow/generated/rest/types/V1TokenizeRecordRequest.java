@@ -95,6 +95,9 @@ public final class V1TokenizeRecordRequest {
             return this;
         }
 
+        /**
+         * <p>Existing value to return a token for.</p>
+         */
         @JsonSetter(value = "value", nulls = Nulls.SKIP)
         public Builder value(Optional<String> value) {
             this.value = value;
@@ -106,6 +109,9 @@ public final class V1TokenizeRecordRequest {
             return this;
         }
 
+        /**
+         * <p>Name of the column group that the value belongs to.</p>
+         */
         @JsonSetter(value = "columnGroup", nulls = Nulls.SKIP)
         public Builder columnGroup(Optional<String> columnGroup) {
             this.columnGroup = columnGroup;

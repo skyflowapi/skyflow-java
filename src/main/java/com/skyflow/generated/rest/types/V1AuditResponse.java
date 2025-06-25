@@ -95,6 +95,9 @@ public final class V1AuditResponse {
             return this;
         }
 
+        /**
+         * <p>Events matching the query.</p>
+         */
         @JsonSetter(value = "event", nulls = Nulls.SKIP)
         public Builder event(Optional<List<V1AuditResponseEvent>> event) {
             this.event = event;

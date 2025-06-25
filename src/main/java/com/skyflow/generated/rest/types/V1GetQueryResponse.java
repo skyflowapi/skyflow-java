@@ -81,6 +81,9 @@ public final class V1GetQueryResponse {
             return this;
         }
 
+        /**
+         * <p>Records returned by the query.</p>
+         */
         @JsonSetter(value = "records", nulls = Nulls.SKIP)
         public Builder records(Optional<List<V1FieldRecords>> records) {
             this.records = records;

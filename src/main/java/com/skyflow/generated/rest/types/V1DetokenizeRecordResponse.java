@@ -127,6 +127,9 @@ public final class V1DetokenizeRecordResponse {
             return this;
         }
 
+        /**
+         * <p>Token of the record.</p>
+         */
         @JsonSetter(value = "token", nulls = Nulls.SKIP)
         public Builder token(Optional<String> token) {
             this.token = token;
@@ -149,6 +152,9 @@ public final class V1DetokenizeRecordResponse {
             return this;
         }
 
+        /**
+         * <p>Data corresponding to the token.</p>
+         */
         @JsonSetter(value = "value", nulls = Nulls.SKIP)
         public Builder value(Optional<String> value) {
             this.value = value;
@@ -160,6 +166,9 @@ public final class V1DetokenizeRecordResponse {
             return this;
         }
 
+        /**
+         * <p>Error if token isn't found.</p>
+         */
         @JsonSetter(value = "error", nulls = Nulls.SKIP)
         public Builder error(Optional<String> error) {
             this.error = error;

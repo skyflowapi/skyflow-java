@@ -219,6 +219,9 @@ public final class V1AuditResponseEventRequest {
             return this;
         }
 
+        /**
+         * <p>API name.</p>
+         */
         @JsonSetter(value = "apiName", nulls = Nulls.SKIP)
         public Builder apiName(Optional<String> apiName) {
             this.apiName = apiName;
@@ -230,6 +233,9 @@ public final class V1AuditResponseEventRequest {
             return this;
         }
 
+        /**
+         * <p>The workspaceID (if any) of the request.</p>
+         */
         @JsonSetter(value = "workspaceID", nulls = Nulls.SKIP)
         public Builder workspaceId(Optional<String> workspaceId) {
             this.workspaceId = workspaceId;
@@ -241,6 +247,9 @@ public final class V1AuditResponseEventRequest {
             return this;
         }
 
+        /**
+         * <p>The vaultID (if any) of the request.</p>
+         */
         @JsonSetter(value = "vaultID", nulls = Nulls.SKIP)
         public Builder vaultId(Optional<String> vaultId) {
             this.vaultId = vaultId;
@@ -252,6 +261,9 @@ public final class V1AuditResponseEventRequest {
             return this;
         }
 
+        /**
+         * <p>Tags associated with the event. To provide better search capabilities. Like login.</p>
+         */
         @JsonSetter(value = "tags", nulls = Nulls.SKIP)
         public Builder tags(Optional<List<String>> tags) {
             this.tags = tags;
@@ -263,6 +275,9 @@ public final class V1AuditResponseEventRequest {
             return this;
         }
 
+        /**
+         * <p>time when this request is generated, use extention method to set it.</p>
+         */
         @JsonSetter(value = "timestamp", nulls = Nulls.SKIP)
         public Builder timestamp(Optional<String> timestamp) {
             this.timestamp = timestamp;

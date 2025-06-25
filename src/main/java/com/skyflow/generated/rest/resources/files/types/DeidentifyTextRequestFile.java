@@ -74,6 +74,9 @@ public final class DeidentifyTextRequestFile {
     }
 
     public interface Base64Stage {
+        /**
+         * Base64-encoded data of the file to de-identify.
+         */
         _FinalStage base64(@NotNull String base64);
 
         Builder from(DeidentifyTextRequestFile other);
@@ -99,7 +102,7 @@ public final class DeidentifyTextRequestFile {
         }
 
         /**
-         * <p>Base64-encoded data of the file to de-identify.</p>
+         * Base64-encoded data of the file to de-identify.<p>Base64-encoded data of the file to de-identify.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
         @java.lang.Override

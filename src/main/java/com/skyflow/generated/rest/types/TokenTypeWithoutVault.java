@@ -123,6 +123,9 @@ public final class TokenTypeWithoutVault {
             return this;
         }
 
+        /**
+         * <p>Entity types to replace with entity tokens with unique counters.</p>
+         */
         @JsonSetter(value = "entity_unq_counter", nulls = Nulls.SKIP)
         public Builder entityUnqCounter(Optional<List<EntityType>> entityUnqCounter) {
             this.entityUnqCounter = entityUnqCounter;
@@ -134,6 +137,9 @@ public final class TokenTypeWithoutVault {
             return this;
         }
 
+        /**
+         * <p>Entity types to replace with entity tokens.</p>
+         */
         @JsonSetter(value = "entity_only", nulls = Nulls.SKIP)
         public Builder entityOnly(Optional<List<EntityType>> entityOnly) {
             this.entityOnly = entityOnly;

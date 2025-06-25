@@ -127,6 +127,9 @@ public final class V1AuditEventResponse {
             return this;
         }
 
+        /**
+         * <p>The status of the overall operation.</p>
+         */
         @JsonSetter(value = "code", nulls = Nulls.SKIP)
         public Builder code(Optional<Integer> code) {
             this.code = code;
@@ -138,6 +141,9 @@ public final class V1AuditEventResponse {
             return this;
         }
 
+        /**
+         * <p>The status message for the overall operation.</p>
+         */
         @JsonSetter(value = "message", nulls = Nulls.SKIP)
         public Builder message(Optional<String> message) {
             this.message = message;
@@ -160,6 +166,9 @@ public final class V1AuditEventResponse {
             return this;
         }
 
+        /**
+         * <p>time when this response is generated,  use extention method to set it.</p>
+         */
         @JsonSetter(value = "timestamp", nulls = Nulls.SKIP)
         public Builder timestamp(Optional<String> timestamp) {
             this.timestamp = timestamp;

@@ -526,6 +526,9 @@ public final class AuditServiceListAuditEventsRequest {
     }
 
     public interface FilterOpsAccountIdStage {
+        /**
+         * Resources with the specified account ID.
+         */
         _FinalStage filterOpsAccountId(@NotNull String filterOpsAccountId);
 
         Builder from(AuditServiceListAuditEventsRequest other);
@@ -534,139 +537,235 @@ public final class AuditServiceListAuditEventsRequest {
     public interface _FinalStage {
         AuditServiceListAuditEventsRequest build();
 
+        /**
+         * <p>ID for the audit event.</p>
+         */
         _FinalStage filterOpsContextChangeId(Optional<String> filterOpsContextChangeId);
 
         _FinalStage filterOpsContextChangeId(String filterOpsContextChangeId);
 
+        /**
+         * <p>ID for the request that caused the event.</p>
+         */
         _FinalStage filterOpsContextRequestId(Optional<String> filterOpsContextRequestId);
 
         _FinalStage filterOpsContextRequestId(String filterOpsContextRequestId);
 
+        /**
+         * <p>ID for the request set by the service that received the request.</p>
+         */
         _FinalStage filterOpsContextTraceId(Optional<String> filterOpsContextTraceId);
 
         _FinalStage filterOpsContextTraceId(String filterOpsContextTraceId);
 
+        /**
+         * <p>ID for the session in which the request was sent.</p>
+         */
         _FinalStage filterOpsContextSessionId(Optional<String> filterOpsContextSessionId);
 
         _FinalStage filterOpsContextSessionId(String filterOpsContextSessionId);
 
+        /**
+         * <p>Member who sent the request. Depending on <code>actorType</code>, this may be a user ID or a service account ID.</p>
+         */
         _FinalStage filterOpsContextActor(Optional<String> filterOpsContextActor);
 
         _FinalStage filterOpsContextActor(String filterOpsContextActor);
 
+        /**
+         * <p>Type of member who sent the request.</p>
+         */
         _FinalStage filterOpsContextActorType(
                 Optional<AuditServiceListAuditEventsRequestFilterOpsContextActorType> filterOpsContextActorType);
 
         _FinalStage filterOpsContextActorType(
                 AuditServiceListAuditEventsRequestFilterOpsContextActorType filterOpsContextActorType);
 
+        /**
+         * <p>Type of access for the request.</p>
+         */
         _FinalStage filterOpsContextAccessType(
                 Optional<AuditServiceListAuditEventsRequestFilterOpsContextAccessType> filterOpsContextAccessType);
 
         _FinalStage filterOpsContextAccessType(
                 AuditServiceListAuditEventsRequestFilterOpsContextAccessType filterOpsContextAccessType);
 
+        /**
+         * <p>IP Address of the client that made the request.</p>
+         */
         _FinalStage filterOpsContextIpAddress(Optional<String> filterOpsContextIpAddress);
 
         _FinalStage filterOpsContextIpAddress(String filterOpsContextIpAddress);
 
+        /**
+         * <p>HTTP Origin request header (including scheme, hostname, and port) of the request.</p>
+         */
         _FinalStage filterOpsContextOrigin(Optional<String> filterOpsContextOrigin);
 
         _FinalStage filterOpsContextOrigin(String filterOpsContextOrigin);
 
+        /**
+         * <p>Authentication mode the <code>actor</code> used.</p>
+         */
         _FinalStage filterOpsContextAuthMode(
                 Optional<AuditServiceListAuditEventsRequestFilterOpsContextAuthMode> filterOpsContextAuthMode);
 
         _FinalStage filterOpsContextAuthMode(
                 AuditServiceListAuditEventsRequestFilterOpsContextAuthMode filterOpsContextAuthMode);
 
+        /**
+         * <p>ID of the JWT token.</p>
+         */
         _FinalStage filterOpsContextJwtId(Optional<String> filterOpsContextJwtId);
 
         _FinalStage filterOpsContextJwtId(String filterOpsContextJwtId);
 
+        /**
+         * <p>Embedded User Context.</p>
+         */
         _FinalStage filterOpsContextBearerTokenContextId(Optional<String> filterOpsContextBearerTokenContextId);
 
         _FinalStage filterOpsContextBearerTokenContextId(String filterOpsContextBearerTokenContextId);
 
+        /**
+         * <p>Resources with the specified parent account ID.</p>
+         */
         _FinalStage filterOpsParentAccountId(Optional<String> filterOpsParentAccountId);
 
         _FinalStage filterOpsParentAccountId(String filterOpsParentAccountId);
 
+        /**
+         * <p>Resources with the specified workspace ID.</p>
+         */
         _FinalStage filterOpsWorkspaceId(Optional<String> filterOpsWorkspaceId);
 
         _FinalStage filterOpsWorkspaceId(String filterOpsWorkspaceId);
 
+        /**
+         * <p>Resources with the specified vault ID.</p>
+         */
         _FinalStage filterOpsVaultId(Optional<String> filterOpsVaultId);
 
         _FinalStage filterOpsVaultId(String filterOpsVaultId);
 
+        /**
+         * <p>Resources with a specified ID. If a resource matches at least one ID, the associated event is returned. Format is a comma-separated list of &quot;&lt;resourceType&gt;/&lt;resourceID&gt;&quot;. For example, &quot;VAULT/12345, USER/67890&quot;.</p>
+         */
         _FinalStage filterOpsResourceIDs(Optional<String> filterOpsResourceIDs);
 
         _FinalStage filterOpsResourceIDs(String filterOpsResourceIDs);
 
+        /**
+         * <p>Events with the specified action type.</p>
+         */
         _FinalStage filterOpsActionType(
                 Optional<AuditServiceListAuditEventsRequestFilterOpsActionType> filterOpsActionType);
 
         _FinalStage filterOpsActionType(AuditServiceListAuditEventsRequestFilterOpsActionType filterOpsActionType);
 
+        /**
+         * <p>Resources with the specified type.</p>
+         */
         _FinalStage filterOpsResourceType(
                 Optional<AuditServiceListAuditEventsRequestFilterOpsResourceType> filterOpsResourceType);
 
         _FinalStage filterOpsResourceType(
                 AuditServiceListAuditEventsRequestFilterOpsResourceType filterOpsResourceType);
 
+        /**
+         * <p>Events with associated tags. If an event matches at least one tag, the event is returned. Comma-separated list. For example, &quot;login, get&quot;.</p>
+         */
         _FinalStage filterOpsTags(Optional<String> filterOpsTags);
 
         _FinalStage filterOpsTags(String filterOpsTags);
 
+        /**
+         * <p>HTTP response code of the request.</p>
+         */
         _FinalStage filterOpsResponseCode(Optional<Integer> filterOpsResponseCode);
 
         _FinalStage filterOpsResponseCode(Integer filterOpsResponseCode);
 
+        /**
+         * <p>Start timestamp for the query, in SQL format.</p>
+         */
         _FinalStage filterOpsStartTime(Optional<String> filterOpsStartTime);
 
         _FinalStage filterOpsStartTime(String filterOpsStartTime);
 
+        /**
+         * <p>End timestamp for the query, in SQL format.</p>
+         */
         _FinalStage filterOpsEndTime(Optional<String> filterOpsEndTime);
 
         _FinalStage filterOpsEndTime(String filterOpsEndTime);
 
+        /**
+         * <p>Name of the API called in the request.</p>
+         */
         _FinalStage filterOpsApiName(Optional<String> filterOpsApiName);
 
         _FinalStage filterOpsApiName(String filterOpsApiName);
 
+        /**
+         * <p>Response message of the request.</p>
+         */
         _FinalStage filterOpsResponseMessage(Optional<String> filterOpsResponseMessage);
 
         _FinalStage filterOpsResponseMessage(String filterOpsResponseMessage);
 
+        /**
+         * <p>HTTP method of the request.</p>
+         */
         _FinalStage filterOpsHttpMethod(Optional<String> filterOpsHttpMethod);
 
         _FinalStage filterOpsHttpMethod(String filterOpsHttpMethod);
 
+        /**
+         * <p>HTTP URI of the request.</p>
+         */
         _FinalStage filterOpsHttpUri(Optional<String> filterOpsHttpUri);
 
         _FinalStage filterOpsHttpUri(String filterOpsHttpUri);
 
+        /**
+         * <p>Fully-qualified field by which to sort results. Field names should be in camel case (for example, &quot;capitalization.camelCase&quot;).</p>
+         */
         _FinalStage sortOpsSortBy(Optional<String> sortOpsSortBy);
 
         _FinalStage sortOpsSortBy(String sortOpsSortBy);
 
+        /**
+         * <p>Ascending or descending ordering of results.</p>
+         */
         _FinalStage sortOpsOrderBy(Optional<AuditServiceListAuditEventsRequestSortOpsOrderBy> sortOpsOrderBy);
 
         _FinalStage sortOpsOrderBy(AuditServiceListAuditEventsRequestSortOpsOrderBy sortOpsOrderBy);
 
+        /**
+         * <p>Timestamp provided in the previous audit response's <code>nextOps</code> attribute. An alternate way to manage response pagination. Can't be used with <code>sortOps</code> or <code>offset</code>. For the first request in a series of audit requests, leave blank.</p>
+         */
         _FinalStage afterOpsTimestamp(Optional<String> afterOpsTimestamp);
 
         _FinalStage afterOpsTimestamp(String afterOpsTimestamp);
 
+        /**
+         * <p>Change ID provided in the previous audit response's <code>nextOps</code> attribute. An alternate way to manage response pagination. Can't be used with <code>sortOps</code> or <code>offset</code>. For the first request in a series of audit requests, leave blank.</p>
+         */
         _FinalStage afterOpsChangeId(Optional<String> afterOpsChangeId);
 
         _FinalStage afterOpsChangeId(String afterOpsChangeId);
 
+        /**
+         * <p>Number of results to return.</p>
+         */
         _FinalStage limit(Optional<Long> limit);
 
         _FinalStage limit(Long limit);
 
+        /**
+         * <p>Record position at which to start returning results.</p>
+         */
         _FinalStage offset(Optional<Long> offset);
 
         _FinalStage offset(Long offset);
@@ -788,7 +887,7 @@ public final class AuditServiceListAuditEventsRequest {
         }
 
         /**
-         * <p>Resources with the specified account ID.</p>
+         * Resources with the specified account ID.<p>Resources with the specified account ID.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
         @java.lang.Override
@@ -808,6 +907,9 @@ public final class AuditServiceListAuditEventsRequest {
             return this;
         }
 
+        /**
+         * <p>Record position at which to start returning results.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "offset", nulls = Nulls.SKIP)
         public _FinalStage offset(Optional<Long> offset) {
@@ -825,6 +927,9 @@ public final class AuditServiceListAuditEventsRequest {
             return this;
         }
 
+        /**
+         * <p>Number of results to return.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "limit", nulls = Nulls.SKIP)
         public _FinalStage limit(Optional<Long> limit) {
@@ -842,6 +947,9 @@ public final class AuditServiceListAuditEventsRequest {
             return this;
         }
 
+        /**
+         * <p>Change ID provided in the previous audit response's <code>nextOps</code> attribute. An alternate way to manage response pagination. Can't be used with <code>sortOps</code> or <code>offset</code>. For the first request in a series of audit requests, leave blank.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "afterOps.changeID", nulls = Nulls.SKIP)
         public _FinalStage afterOpsChangeId(Optional<String> afterOpsChangeId) {
@@ -859,6 +967,9 @@ public final class AuditServiceListAuditEventsRequest {
             return this;
         }
 
+        /**
+         * <p>Timestamp provided in the previous audit response's <code>nextOps</code> attribute. An alternate way to manage response pagination. Can't be used with <code>sortOps</code> or <code>offset</code>. For the first request in a series of audit requests, leave blank.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "afterOps.timestamp", nulls = Nulls.SKIP)
         public _FinalStage afterOpsTimestamp(Optional<String> afterOpsTimestamp) {
@@ -876,6 +987,9 @@ public final class AuditServiceListAuditEventsRequest {
             return this;
         }
 
+        /**
+         * <p>Ascending or descending ordering of results.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "sortOps.orderBy", nulls = Nulls.SKIP)
         public _FinalStage sortOpsOrderBy(Optional<AuditServiceListAuditEventsRequestSortOpsOrderBy> sortOpsOrderBy) {
@@ -893,6 +1007,9 @@ public final class AuditServiceListAuditEventsRequest {
             return this;
         }
 
+        /**
+         * <p>Fully-qualified field by which to sort results. Field names should be in camel case (for example, &quot;capitalization.camelCase&quot;).</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "sortOps.sortBy", nulls = Nulls.SKIP)
         public _FinalStage sortOpsSortBy(Optional<String> sortOpsSortBy) {
@@ -910,6 +1027,9 @@ public final class AuditServiceListAuditEventsRequest {
             return this;
         }
 
+        /**
+         * <p>HTTP URI of the request.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "filterOps.httpURI", nulls = Nulls.SKIP)
         public _FinalStage filterOpsHttpUri(Optional<String> filterOpsHttpUri) {
@@ -927,6 +1047,9 @@ public final class AuditServiceListAuditEventsRequest {
             return this;
         }
 
+        /**
+         * <p>HTTP method of the request.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "filterOps.httpMethod", nulls = Nulls.SKIP)
         public _FinalStage filterOpsHttpMethod(Optional<String> filterOpsHttpMethod) {
@@ -944,6 +1067,9 @@ public final class AuditServiceListAuditEventsRequest {
             return this;
         }
 
+        /**
+         * <p>Response message of the request.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "filterOps.responseMessage", nulls = Nulls.SKIP)
         public _FinalStage filterOpsResponseMessage(Optional<String> filterOpsResponseMessage) {
@@ -961,6 +1087,9 @@ public final class AuditServiceListAuditEventsRequest {
             return this;
         }
 
+        /**
+         * <p>Name of the API called in the request.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "filterOps.apiName", nulls = Nulls.SKIP)
         public _FinalStage filterOpsApiName(Optional<String> filterOpsApiName) {
@@ -978,6 +1107,9 @@ public final class AuditServiceListAuditEventsRequest {
             return this;
         }
 
+        /**
+         * <p>End timestamp for the query, in SQL format.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "filterOps.endTime", nulls = Nulls.SKIP)
         public _FinalStage filterOpsEndTime(Optional<String> filterOpsEndTime) {
@@ -995,6 +1127,9 @@ public final class AuditServiceListAuditEventsRequest {
             return this;
         }
 
+        /**
+         * <p>Start timestamp for the query, in SQL format.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "filterOps.startTime", nulls = Nulls.SKIP)
         public _FinalStage filterOpsStartTime(Optional<String> filterOpsStartTime) {
@@ -1012,6 +1147,9 @@ public final class AuditServiceListAuditEventsRequest {
             return this;
         }
 
+        /**
+         * <p>HTTP response code of the request.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "filterOps.responseCode", nulls = Nulls.SKIP)
         public _FinalStage filterOpsResponseCode(Optional<Integer> filterOpsResponseCode) {
@@ -1029,6 +1167,9 @@ public final class AuditServiceListAuditEventsRequest {
             return this;
         }
 
+        /**
+         * <p>Events with associated tags. If an event matches at least one tag, the event is returned. Comma-separated list. For example, &quot;login, get&quot;.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "filterOps.tags", nulls = Nulls.SKIP)
         public _FinalStage filterOpsTags(Optional<String> filterOpsTags) {
@@ -1047,6 +1188,9 @@ public final class AuditServiceListAuditEventsRequest {
             return this;
         }
 
+        /**
+         * <p>Resources with the specified type.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "filterOps.resourceType", nulls = Nulls.SKIP)
         public _FinalStage filterOpsResourceType(
@@ -1066,6 +1210,9 @@ public final class AuditServiceListAuditEventsRequest {
             return this;
         }
 
+        /**
+         * <p>Events with the specified action type.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "filterOps.actionType", nulls = Nulls.SKIP)
         public _FinalStage filterOpsActionType(
@@ -1084,6 +1231,9 @@ public final class AuditServiceListAuditEventsRequest {
             return this;
         }
 
+        /**
+         * <p>Resources with a specified ID. If a resource matches at least one ID, the associated event is returned. Format is a comma-separated list of &quot;&lt;resourceType&gt;/&lt;resourceID&gt;&quot;. For example, &quot;VAULT/12345, USER/67890&quot;.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "filterOps.resourceIDs", nulls = Nulls.SKIP)
         public _FinalStage filterOpsResourceIDs(Optional<String> filterOpsResourceIDs) {
@@ -1101,6 +1251,9 @@ public final class AuditServiceListAuditEventsRequest {
             return this;
         }
 
+        /**
+         * <p>Resources with the specified vault ID.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "filterOps.vaultID", nulls = Nulls.SKIP)
         public _FinalStage filterOpsVaultId(Optional<String> filterOpsVaultId) {
@@ -1118,6 +1271,9 @@ public final class AuditServiceListAuditEventsRequest {
             return this;
         }
 
+        /**
+         * <p>Resources with the specified workspace ID.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "filterOps.workspaceID", nulls = Nulls.SKIP)
         public _FinalStage filterOpsWorkspaceId(Optional<String> filterOpsWorkspaceId) {
@@ -1135,6 +1291,9 @@ public final class AuditServiceListAuditEventsRequest {
             return this;
         }
 
+        /**
+         * <p>Resources with the specified parent account ID.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "filterOps.parentAccountID", nulls = Nulls.SKIP)
         public _FinalStage filterOpsParentAccountId(Optional<String> filterOpsParentAccountId) {
@@ -1152,6 +1311,9 @@ public final class AuditServiceListAuditEventsRequest {
             return this;
         }
 
+        /**
+         * <p>Embedded User Context.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "filterOps.context.bearerTokenContextID", nulls = Nulls.SKIP)
         public _FinalStage filterOpsContextBearerTokenContextId(Optional<String> filterOpsContextBearerTokenContextId) {
@@ -1169,6 +1331,9 @@ public final class AuditServiceListAuditEventsRequest {
             return this;
         }
 
+        /**
+         * <p>ID of the JWT token.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "filterOps.context.jwtID", nulls = Nulls.SKIP)
         public _FinalStage filterOpsContextJwtId(Optional<String> filterOpsContextJwtId) {
@@ -1187,6 +1352,9 @@ public final class AuditServiceListAuditEventsRequest {
             return this;
         }
 
+        /**
+         * <p>Authentication mode the <code>actor</code> used.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "filterOps.context.authMode", nulls = Nulls.SKIP)
         public _FinalStage filterOpsContextAuthMode(
@@ -1205,6 +1373,9 @@ public final class AuditServiceListAuditEventsRequest {
             return this;
         }
 
+        /**
+         * <p>HTTP Origin request header (including scheme, hostname, and port) of the request.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "filterOps.context.origin", nulls = Nulls.SKIP)
         public _FinalStage filterOpsContextOrigin(Optional<String> filterOpsContextOrigin) {
@@ -1222,6 +1393,9 @@ public final class AuditServiceListAuditEventsRequest {
             return this;
         }
 
+        /**
+         * <p>IP Address of the client that made the request.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "filterOps.context.ipAddress", nulls = Nulls.SKIP)
         public _FinalStage filterOpsContextIpAddress(Optional<String> filterOpsContextIpAddress) {
@@ -1240,6 +1414,9 @@ public final class AuditServiceListAuditEventsRequest {
             return this;
         }
 
+        /**
+         * <p>Type of access for the request.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "filterOps.context.accessType", nulls = Nulls.SKIP)
         public _FinalStage filterOpsContextAccessType(
@@ -1259,6 +1436,9 @@ public final class AuditServiceListAuditEventsRequest {
             return this;
         }
 
+        /**
+         * <p>Type of member who sent the request.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "filterOps.context.actorType", nulls = Nulls.SKIP)
         public _FinalStage filterOpsContextActorType(
@@ -1277,6 +1457,9 @@ public final class AuditServiceListAuditEventsRequest {
             return this;
         }
 
+        /**
+         * <p>Member who sent the request. Depending on <code>actorType</code>, this may be a user ID or a service account ID.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "filterOps.context.actor", nulls = Nulls.SKIP)
         public _FinalStage filterOpsContextActor(Optional<String> filterOpsContextActor) {
@@ -1294,6 +1477,9 @@ public final class AuditServiceListAuditEventsRequest {
             return this;
         }
 
+        /**
+         * <p>ID for the session in which the request was sent.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "filterOps.context.sessionID", nulls = Nulls.SKIP)
         public _FinalStage filterOpsContextSessionId(Optional<String> filterOpsContextSessionId) {
@@ -1311,6 +1497,9 @@ public final class AuditServiceListAuditEventsRequest {
             return this;
         }
 
+        /**
+         * <p>ID for the request set by the service that received the request.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "filterOps.context.traceID", nulls = Nulls.SKIP)
         public _FinalStage filterOpsContextTraceId(Optional<String> filterOpsContextTraceId) {
@@ -1328,6 +1517,9 @@ public final class AuditServiceListAuditEventsRequest {
             return this;
         }
 
+        /**
+         * <p>ID for the request that caused the event.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "filterOps.context.requestID", nulls = Nulls.SKIP)
         public _FinalStage filterOpsContextRequestId(Optional<String> filterOpsContextRequestId) {
@@ -1345,6 +1537,9 @@ public final class AuditServiceListAuditEventsRequest {
             return this;
         }
 
+        /**
+         * <p>ID for the audit event.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "filterOps.context.changeID", nulls = Nulls.SKIP)
         public _FinalStage filterOpsContextChangeId(Optional<String> filterOpsContextChangeId) {

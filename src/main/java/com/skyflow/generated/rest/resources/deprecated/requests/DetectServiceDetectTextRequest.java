@@ -207,22 +207,34 @@ public final class DetectServiceDetectTextRequest {
     }
 
     public interface TextStage {
+        /**
+         * Data to deidentify.
+         */
         VaultIdStage text(@NotNull String text);
 
         Builder from(DetectServiceDetectTextRequest other);
     }
 
     public interface VaultIdStage {
+        /**
+         * ID of the vault.
+         */
         _FinalStage vaultId(@NotNull String vaultId);
     }
 
     public interface _FinalStage {
         DetectServiceDetectTextRequest build();
 
+        /**
+         * <p>Will give a handle to delete the tokens generated during a specific interaction.</p>
+         */
         _FinalStage sessionId(Optional<String> sessionId);
 
         _FinalStage sessionId(String sessionId);
 
+        /**
+         * <p>Entities to detect and deidentify.</p>
+         */
         _FinalStage restrictEntityTypes(Optional<List<DetectDataEntities>> restrictEntityTypes);
 
         _FinalStage restrictEntityTypes(List<DetectDataEntities> restrictEntityTypes);
@@ -231,14 +243,23 @@ public final class DetectServiceDetectTextRequest {
 
         _FinalStage deidentifyTokenFormat(DetectRequestDeidentifyOption deidentifyTokenFormat);
 
+        /**
+         * <p>Regular expressions to ignore when detecting entities.</p>
+         */
         _FinalStage allowRegex(Optional<List<String>> allowRegex);
 
         _FinalStage allowRegex(List<String> allowRegex);
 
+        /**
+         * <p>Regular expressions to always restrict. Strings matching these regular expressions are replaced with 'RESTRICTED'.</p>
+         */
         _FinalStage restrictRegex(Optional<List<String>> restrictRegex);
 
         _FinalStage restrictRegex(List<String> restrictRegex);
 
+        /**
+         * <p>If <code>true</code>, returns the details for the detected entities.</p>
+         */
         _FinalStage returnEntities(Optional<Boolean> returnEntities);
 
         _FinalStage returnEntities(Boolean returnEntities);
@@ -251,6 +272,9 @@ public final class DetectServiceDetectTextRequest {
 
         _FinalStage advancedOptions(V1AdvancedOptions advancedOptions);
 
+        /**
+         * <p>Indicates whether entities should be stored in the vault.</p>
+         */
         _FinalStage storeEntities(Optional<Boolean> storeEntities);
 
         _FinalStage storeEntities(Boolean storeEntities);
@@ -302,7 +326,7 @@ public final class DetectServiceDetectTextRequest {
         }
 
         /**
-         * <p>Data to deidentify.</p>
+         * Data to deidentify.<p>Data to deidentify.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
         @java.lang.Override
@@ -313,7 +337,7 @@ public final class DetectServiceDetectTextRequest {
         }
 
         /**
-         * <p>ID of the vault.</p>
+         * ID of the vault.<p>ID of the vault.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
         @java.lang.Override
@@ -333,6 +357,9 @@ public final class DetectServiceDetectTextRequest {
             return this;
         }
 
+        /**
+         * <p>Indicates whether entities should be stored in the vault.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "store_entities", nulls = Nulls.SKIP)
         public _FinalStage storeEntities(Optional<Boolean> storeEntities) {
@@ -376,6 +403,9 @@ public final class DetectServiceDetectTextRequest {
             return this;
         }
 
+        /**
+         * <p>If <code>true</code>, returns the details for the detected entities.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "return_entities", nulls = Nulls.SKIP)
         public _FinalStage returnEntities(Optional<Boolean> returnEntities) {
@@ -393,6 +423,9 @@ public final class DetectServiceDetectTextRequest {
             return this;
         }
 
+        /**
+         * <p>Regular expressions to always restrict. Strings matching these regular expressions are replaced with 'RESTRICTED'.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "restrict_regex", nulls = Nulls.SKIP)
         public _FinalStage restrictRegex(Optional<List<String>> restrictRegex) {
@@ -410,6 +443,9 @@ public final class DetectServiceDetectTextRequest {
             return this;
         }
 
+        /**
+         * <p>Regular expressions to ignore when detecting entities.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "allow_regex", nulls = Nulls.SKIP)
         public _FinalStage allowRegex(Optional<List<String>> allowRegex) {
@@ -440,6 +476,9 @@ public final class DetectServiceDetectTextRequest {
             return this;
         }
 
+        /**
+         * <p>Entities to detect and deidentify.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "restrict_entity_types", nulls = Nulls.SKIP)
         public _FinalStage restrictEntityTypes(Optional<List<DetectDataEntities>> restrictEntityTypes) {
@@ -457,6 +496,9 @@ public final class DetectServiceDetectTextRequest {
             return this;
         }
 
+        /**
+         * <p>Will give a handle to delete the tokens generated during a specific interaction.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "session_id", nulls = Nulls.SKIP)
         public _FinalStage sessionId(Optional<String> sessionId) {

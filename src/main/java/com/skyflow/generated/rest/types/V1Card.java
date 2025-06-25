@@ -219,6 +219,9 @@ public final class V1Card {
             return this;
         }
 
+        /**
+         * <p>BIN of the card.</p>
+         */
         @JsonSetter(value = "BIN", nulls = Nulls.SKIP)
         public Builder bin(Optional<String> bin) {
             this.bin = bin;
@@ -230,6 +233,9 @@ public final class V1Card {
             return this;
         }
 
+        /**
+         * <p>Name of the card issuer bank.</p>
+         */
         @JsonSetter(value = "issuer_name", nulls = Nulls.SKIP)
         public Builder issuerName(Optional<String> issuerName) {
             this.issuerName = issuerName;
@@ -241,6 +247,9 @@ public final class V1Card {
             return this;
         }
 
+        /**
+         * <p>Country code of the card.</p>
+         */
         @JsonSetter(value = "country_code", nulls = Nulls.SKIP)
         public Builder countryCode(Optional<String> countryCode) {
             this.countryCode = countryCode;
@@ -252,6 +261,9 @@ public final class V1Card {
             return this;
         }
 
+        /**
+         * <p>Currency of the card.</p>
+         */
         @JsonSetter(value = "currency", nulls = Nulls.SKIP)
         public Builder currency(Optional<String> currency) {
             this.currency = currency;
@@ -263,6 +275,9 @@ public final class V1Card {
             return this;
         }
 
+        /**
+         * <p>Type of the card.</p>
+         */
         @JsonSetter(value = "card_type", nulls = Nulls.SKIP)
         public Builder cardType(Optional<String> cardType) {
             this.cardType = cardType;
@@ -274,6 +289,9 @@ public final class V1Card {
             return this;
         }
 
+        /**
+         * <p>Category of the card.</p>
+         */
         @JsonSetter(value = "card_category", nulls = Nulls.SKIP)
         public Builder cardCategory(Optional<String> cardCategory) {
             this.cardCategory = cardCategory;
@@ -285,6 +303,9 @@ public final class V1Card {
             return this;
         }
 
+        /**
+         * <p>Scheme of the card.</p>
+         */
         @JsonSetter(value = "card_scheme", nulls = Nulls.SKIP)
         public Builder cardScheme(Optional<String> cardScheme) {
             this.cardScheme = cardScheme;
@@ -296,6 +317,9 @@ public final class V1Card {
             return this;
         }
 
+        /**
+         * <p>Last four digits of the card number.</p>
+         */
         @JsonSetter(value = "card_last_four_digits", nulls = Nulls.SKIP)
         public Builder cardLastFourDigits(Optional<String> cardLastFourDigits) {
             this.cardLastFourDigits = cardLastFourDigits;
@@ -307,6 +331,9 @@ public final class V1Card {
             return this;
         }
 
+        /**
+         * <p>Expiry date of the card.</p>
+         */
         @JsonSetter(value = "card_expiry", nulls = Nulls.SKIP)
         public Builder cardExpiry(Optional<String> cardExpiry) {
             this.cardExpiry = cardExpiry;

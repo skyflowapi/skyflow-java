@@ -114,6 +114,9 @@ public final class RecordServiceBatchOperationBody {
             return this;
         }
 
+        /**
+         * <p>Record operations to perform.</p>
+         */
         @JsonSetter(value = "records", nulls = Nulls.SKIP)
         public Builder records(Optional<List<V1BatchRecord>> records) {
             this.records = records;
@@ -125,6 +128,9 @@ public final class RecordServiceBatchOperationBody {
             return this;
         }
 
+        /**
+         * <p>Continue performing operations on partial errors.</p>
+         */
         @JsonSetter(value = "continueOnError", nulls = Nulls.SKIP)
         public Builder continueOnError(Optional<Boolean> continueOnError) {
             this.continueOnError = continueOnError;

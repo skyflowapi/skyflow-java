@@ -80,6 +80,9 @@ public final class V1TokenizeRecordResponse {
             return this;
         }
 
+        /**
+         * <p>Token corresponding to a value.</p>
+         */
         @JsonSetter(value = "token", nulls = Nulls.SKIP)
         public Builder token(Optional<String> token) {
             this.token = token;

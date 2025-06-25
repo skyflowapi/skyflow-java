@@ -147,6 +147,9 @@ public final class DeidentifyStringRequest {
     }
 
     public interface TextStage {
+        /**
+         * String to de-identify.
+         */
         _FinalStage text(@NotNull String text);
     }
 
@@ -215,7 +218,7 @@ public final class DeidentifyStringRequest {
         }
 
         /**
-         * <p>String to de-identify.</p>
+         * String to de-identify.<p>String to de-identify.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
         @java.lang.Override

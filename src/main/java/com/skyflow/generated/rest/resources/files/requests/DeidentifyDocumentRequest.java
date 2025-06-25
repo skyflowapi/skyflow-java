@@ -148,6 +148,9 @@ public final class DeidentifyDocumentRequest {
     }
 
     public interface FileStage {
+        /**
+         * File to de-identify. Files are specified as Base64-encoded data.
+         */
         _FinalStage file(@NotNull DeidentifyDocumentRequestFile file);
     }
 
@@ -216,7 +219,7 @@ public final class DeidentifyDocumentRequest {
         }
 
         /**
-         * <p>File to de-identify. Files are specified as Base64-encoded data.</p>
+         * File to de-identify. Files are specified as Base64-encoded data.<p>File to de-identify. Files are specified as Base64-encoded data.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
         @java.lang.Override

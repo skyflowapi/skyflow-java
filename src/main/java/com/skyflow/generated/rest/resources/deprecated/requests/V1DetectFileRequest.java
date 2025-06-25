@@ -253,6 +253,9 @@ public final class V1DetectFileRequest {
     }
 
     public interface FileStage {
+        /**
+         * Path of the file or base64-encoded data that has to be processed.
+         */
         DataFormatStage file(@NotNull String file);
 
         Builder from(V1DetectFileRequest other);
@@ -267,28 +270,46 @@ public final class V1DetectFileRequest {
     }
 
     public interface VaultIdStage {
+        /**
+         * ID of the vault.
+         */
         _FinalStage vaultId(@NotNull String vaultId);
     }
 
     public interface _FinalStage {
         V1DetectFileRequest build();
 
+        /**
+         * <p>Will give a handle to delete the tokens generated during a specific interaction.</p>
+         */
         _FinalStage sessionId(Optional<String> sessionId);
 
         _FinalStage sessionId(String sessionId);
 
+        /**
+         * <p>Entities to detect and deidentify.</p>
+         */
         _FinalStage restrictEntityTypes(Optional<List<DetectDataEntities>> restrictEntityTypes);
 
         _FinalStage restrictEntityTypes(List<DetectDataEntities> restrictEntityTypes);
 
+        /**
+         * <p>Regular expressions to ignore when detecting entities.</p>
+         */
         _FinalStage allowRegex(Optional<List<String>> allowRegex);
 
         _FinalStage allowRegex(List<String> allowRegex);
 
+        /**
+         * <p>Regular expressions to always restrict. Strings matching these regular expressions are replaced with 'RESTRICTED'.</p>
+         */
         _FinalStage restrictRegex(Optional<List<String>> restrictRegex);
 
         _FinalStage restrictRegex(List<String> restrictRegex);
 
+        /**
+         * <p>If <code>true</code>, returns the details for the detected entities.</p>
+         */
         _FinalStage returnEntities(Optional<Boolean> returnEntities);
 
         _FinalStage returnEntities(Boolean returnEntities);
@@ -376,7 +397,7 @@ public final class V1DetectFileRequest {
         }
 
         /**
-         * <p>Path of the file or base64-encoded data that has to be processed.</p>
+         * Path of the file or base64-encoded data that has to be processed.<p>Path of the file or base64-encoded data that has to be processed.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
         @java.lang.Override
@@ -401,7 +422,7 @@ public final class V1DetectFileRequest {
         }
 
         /**
-         * <p>ID of the vault.</p>
+         * ID of the vault.<p>ID of the vault.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
         @java.lang.Override
@@ -499,6 +520,9 @@ public final class V1DetectFileRequest {
             return this;
         }
 
+        /**
+         * <p>If <code>true</code>, returns the details for the detected entities.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "return_entities", nulls = Nulls.SKIP)
         public _FinalStage returnEntities(Optional<Boolean> returnEntities) {
@@ -516,6 +540,9 @@ public final class V1DetectFileRequest {
             return this;
         }
 
+        /**
+         * <p>Regular expressions to always restrict. Strings matching these regular expressions are replaced with 'RESTRICTED'.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "restrict_regex", nulls = Nulls.SKIP)
         public _FinalStage restrictRegex(Optional<List<String>> restrictRegex) {
@@ -533,6 +560,9 @@ public final class V1DetectFileRequest {
             return this;
         }
 
+        /**
+         * <p>Regular expressions to ignore when detecting entities.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "allow_regex", nulls = Nulls.SKIP)
         public _FinalStage allowRegex(Optional<List<String>> allowRegex) {
@@ -550,6 +580,9 @@ public final class V1DetectFileRequest {
             return this;
         }
 
+        /**
+         * <p>Entities to detect and deidentify.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "restrict_entity_types", nulls = Nulls.SKIP)
         public _FinalStage restrictEntityTypes(Optional<List<DetectDataEntities>> restrictEntityTypes) {
@@ -567,6 +600,9 @@ public final class V1DetectFileRequest {
             return this;
         }
 
+        /**
+         * <p>Will give a handle to delete the tokens generated during a specific interaction.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "session_id", nulls = Nulls.SKIP)
         public _FinalStage sessionId(Optional<String> sessionId) {

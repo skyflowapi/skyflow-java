@@ -7,7 +7,6 @@ import com.skyflow.generated.rest.core.ClientOptions;
 import com.skyflow.generated.rest.core.RequestOptions;
 import com.skyflow.generated.rest.resources.audit.requests.AuditServiceListAuditEventsRequest;
 import com.skyflow.generated.rest.types.V1AuditResponse;
-
 import java.util.concurrent.CompletableFuture;
 
 public class AsyncAuditClient {

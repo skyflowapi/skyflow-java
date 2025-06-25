@@ -94,6 +94,9 @@ public final class V1DetokenizeRecordRequest {
             return this;
         }
 
+        /**
+         * <p>Token that identifies the record to detokenize.</p>
+         */
         @JsonSetter(value = "token", nulls = Nulls.SKIP)
         public Builder token(Optional<String> token) {
             this.token = token;

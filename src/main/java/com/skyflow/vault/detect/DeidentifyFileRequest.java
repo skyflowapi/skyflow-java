@@ -3,7 +3,6 @@ package com.skyflow.vault.detect;
 import com.skyflow.enums.DetectEntities;
 import com.skyflow.enums.DetectOutputTranscriptions;
 import com.skyflow.enums.MaskingMethod;
-import java.io.File;
 import java.util.List;
 
 public class DeidentifyFileRequest {
@@ -17,8 +16,8 @@ public class DeidentifyFileRequest {
         return new DeidentifyFileRequestBuilder();
     }
 
-    public File getFile() {
-        return this.builder.file;
+    public FileInput getFileInput() {
+        return this.builder.fileInput;
     }
 
     public List<DetectEntities> getEntities() {
@@ -82,7 +81,6 @@ public class DeidentifyFileRequest {
     }
 
     public static final class DeidentifyFileRequestBuilder {
-        private File file;
         private List<DetectEntities> entities;
         private List<String> allowRegexList;
         private List<String> restrictRegexList;
@@ -96,6 +94,7 @@ public class DeidentifyFileRequest {
         private Boolean outputProcessedAudio;
         private DetectOutputTranscriptions outputTranscription;
         private AudioBleep bleep;
+        private FileInput fileInput;
         private String outputDirectory;
         private Integer waitTime;
 
@@ -106,8 +105,8 @@ public class DeidentifyFileRequest {
             this.outputProcessedAudio = false;
         }
 
-        public DeidentifyFileRequestBuilder file(File file) {
-            this.file = file;
+        public DeidentifyFileRequestBuilder file(FileInput fileInput) {
+            this.fileInput = fileInput;
             return this;
         }
 

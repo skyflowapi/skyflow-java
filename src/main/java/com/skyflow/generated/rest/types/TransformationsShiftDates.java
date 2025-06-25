@@ -113,6 +113,9 @@ public final class TransformationsShiftDates {
             return this;
         }
 
+        /**
+         * <p>Maximum number of days to shift the date by.</p>
+         */
         @JsonSetter(value = "max_days", nulls = Nulls.SKIP)
         public Builder maxDays(Optional<Integer> maxDays) {
             this.maxDays = maxDays;
@@ -124,6 +127,9 @@ public final class TransformationsShiftDates {
             return this;
         }
 
+        /**
+         * <p>Minimum number of days to shift the date by.</p>
+         */
         @JsonSetter(value = "min_days", nulls = Nulls.SKIP)
         public Builder minDays(Optional<Integer> minDays) {
             this.minDays = minDays;
@@ -135,6 +141,9 @@ public final class TransformationsShiftDates {
             return this;
         }
 
+        /**
+         * <p>Entity types to shift dates for.</p>
+         */
         @JsonSetter(value = "entity_types", nulls = Nulls.SKIP)
         public Builder entityTypes(Optional<List<TransformationsShiftDatesEntityTypesItem>> entityTypes) {
             this.entityTypes = entityTypes;

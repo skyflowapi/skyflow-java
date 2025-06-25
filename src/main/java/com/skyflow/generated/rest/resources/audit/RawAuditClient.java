@@ -84,14 +84,14 @@ public class RawAuditClient {
             QueryStringMapper.addQueryParameter(
                     httpUrl,
                     "filterOps.context.actorType",
-                    request.getFilterOpsContextActorType().get().toString(),
+                    request.getFilterOpsContextActorType().get(),
                     false);
         }
         if (request.getFilterOpsContextAccessType().isPresent()) {
             QueryStringMapper.addQueryParameter(
                     httpUrl,
                     "filterOps.context.accessType",
-                    request.getFilterOpsContextAccessType().get().toString(),
+                    request.getFilterOpsContextAccessType().get(),
                     false);
         }
         if (request.getFilterOpsContextIpAddress().isPresent()) {
@@ -112,7 +112,7 @@ public class RawAuditClient {
             QueryStringMapper.addQueryParameter(
                     httpUrl,
                     "filterOps.context.authMode",
-                    request.getFilterOpsContextAuthMode().get().toString(),
+                    request.getFilterOpsContextAuthMode().get(),
                     false);
         }
         if (request.getFilterOpsContextJwtId().isPresent()) {
@@ -159,14 +159,14 @@ public class RawAuditClient {
             QueryStringMapper.addQueryParameter(
                     httpUrl,
                     "filterOps.actionType",
-                    request.getFilterOpsActionType().get().toString(),
+                    request.getFilterOpsActionType().get(),
                     false);
         }
         if (request.getFilterOpsResourceType().isPresent()) {
             QueryStringMapper.addQueryParameter(
                     httpUrl,
                     "filterOps.resourceType",
-                    request.getFilterOpsResourceType().get().toString(),
+                    request.getFilterOpsResourceType().get(),
                     false);
         }
         if (request.getFilterOpsTags().isPresent()) {
@@ -177,7 +177,7 @@ public class RawAuditClient {
             QueryStringMapper.addQueryParameter(
                     httpUrl,
                     "filterOps.responseCode",
-                    request.getFilterOpsResponseCode().get().toString(),
+                    request.getFilterOpsResponseCode().get(),
                     false);
         }
         if (request.getFilterOpsStartTime().isPresent()) {
@@ -219,10 +219,7 @@ public class RawAuditClient {
         }
         if (request.getSortOpsOrderBy().isPresent()) {
             QueryStringMapper.addQueryParameter(
-                    httpUrl,
-                    "sortOps.orderBy",
-                    request.getSortOpsOrderBy().get().toString(),
-                    false);
+                    httpUrl, "sortOps.orderBy", request.getSortOpsOrderBy().get(), false);
         }
         if (request.getAfterOpsTimestamp().isPresent()) {
             QueryStringMapper.addQueryParameter(
@@ -237,17 +234,16 @@ public class RawAuditClient {
         }
         if (request.getLimit().isPresent()) {
             QueryStringMapper.addQueryParameter(
-                    httpUrl, "limit", request.getLimit().get().toString(), false);
+                    httpUrl, "limit", request.getLimit().get(), false);
         }
         if (request.getOffset().isPresent()) {
             QueryStringMapper.addQueryParameter(
-                    httpUrl, "offset", request.getOffset().get().toString(), false);
+                    httpUrl, "offset", request.getOffset().get(), false);
         }
         Request.Builder _requestBuilder = new Request.Builder()
                 .url(httpUrl.build())
                 .method("GET", null)
                 .headers(Headers.of(clientOptions.headers(requestOptions)))
-                .addHeader("Content-Type", "application/json")
                 .addHeader("Accept", "application/json");
         Request okhttpRequest = _requestBuilder.build();
         OkHttpClient client = clientOptions.httpClient();

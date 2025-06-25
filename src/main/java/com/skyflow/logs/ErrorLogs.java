@@ -125,6 +125,7 @@ public enum ErrorLogs {
     INVALID_BLEEP_TO_DEIDENTIFY_AUDIO("Invalid %s1 request. Specify a valid bleep as AudioBleep"),
     OUTPUT_DIRECTORY_NOT_FOUND("Invalid %s1 request. The output directory does not exist. Please specify a valid output directory."),
     INVALID_PERMISSIONS_FOR_OUTPUT_DIRECTORY("Invalid %s1 request. The output directory is not writable. Please check the permissions or specify a valid output directory."),
+    EMPTY_FILE_AND_FILE_PATH_IN_DEIDENTIFY_FILE("Invalid %s1 request. The file and file path fields are both empty. Specify a valid file object or file path."),
     ;
 
     private final String log;

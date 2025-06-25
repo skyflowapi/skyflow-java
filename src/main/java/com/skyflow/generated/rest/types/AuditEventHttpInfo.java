@@ -95,6 +95,9 @@ public final class AuditEventHttpInfo {
             return this;
         }
 
+        /**
+         * <p>The http URI that is used.</p>
+         */
         @JsonSetter(value = "URI", nulls = Nulls.SKIP)
         public Builder uri(Optional<String> uri) {
             this.uri = uri;
@@ -106,6 +109,9 @@ public final class AuditEventHttpInfo {
             return this;
         }
 
+        /**
+         * <p>http method used.</p>
+         */
         @JsonSetter(value = "method", nulls = Nulls.SKIP)
         public Builder method(Optional<String> method) {
             this.method = method;

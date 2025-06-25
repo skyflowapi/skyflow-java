@@ -97,6 +97,9 @@ public final class V1RecordMetaProperties {
             return this;
         }
 
+        /**
+         * <p>ID of the inserted record.</p>
+         */
         @JsonSetter(value = "skyflow_id", nulls = Nulls.SKIP)
         public Builder skyflowId(Optional<String> skyflowId) {
             this.skyflowId = skyflowId;
@@ -108,6 +111,9 @@ public final class V1RecordMetaProperties {
             return this;
         }
 
+        /**
+         * <p>Tokens for the record.</p>
+         */
         @JsonSetter(value = "tokens", nulls = Nulls.SKIP)
         public Builder tokens(Optional<Map<String, Object>> tokens) {
             this.tokens = tokens;

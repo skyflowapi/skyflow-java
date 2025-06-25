@@ -80,6 +80,9 @@ public final class Transformations {
             return this;
         }
 
+        /**
+         * <p>Shift dates by a specified number of days.</p>
+         */
         @JsonSetter(value = "shift_dates", nulls = Nulls.SKIP)
         public Builder shiftDates(Optional<TransformationsShiftDates> shiftDates) {
             this.shiftDates = shiftDates;

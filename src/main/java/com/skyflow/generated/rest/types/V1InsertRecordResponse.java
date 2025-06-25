@@ -82,6 +82,9 @@ public final class V1InsertRecordResponse {
             return this;
         }
 
+        /**
+         * <p>Identifiers for the inserted records.</p>
+         */
         @JsonSetter(value = "records", nulls = Nulls.SKIP)
         public Builder records(Optional<List<V1RecordMetaProperties>> records) {
             this.records = records;

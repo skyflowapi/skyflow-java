@@ -75,6 +75,9 @@ public final class AdvancedOptionsVaultSchema {
     }
 
     public interface TableNameStage {
+        /**
+         * Table name of the vault.
+         */
         MappingStage tableName(@NotNull String tableName);
 
         Builder from(AdvancedOptionsVaultSchema other);
@@ -107,7 +110,7 @@ public final class AdvancedOptionsVaultSchema {
         }
 
         /**
-         * <p>Table name of the vault.</p>
+         * Table name of the vault.<p>Table name of the vault.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
         @java.lang.Override

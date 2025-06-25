@@ -230,6 +230,9 @@ public final class V1BatchRecord {
             return this;
         }
 
+        /**
+         * <p>Field and value key pairs. For example, <code>{'field_1':'value_1', 'field_2':'value_2'}</code>. Only valid when <code>method</code> is <code>POST</code> or <code>PUT</code>.</p>
+         */
         @JsonSetter(value = "fields", nulls = Nulls.SKIP)
         public Builder fields(Optional<Map<String, Object>> fields) {
             this.fields = fields;
@@ -241,6 +244,9 @@ public final class V1BatchRecord {
             return this;
         }
 
+        /**
+         * <p>Name of the table to perform the operation on.</p>
+         */
         @JsonSetter(value = "tableName", nulls = Nulls.SKIP)
         public Builder tableName(Optional<String> tableName) {
             this.tableName = tableName;
@@ -263,6 +269,9 @@ public final class V1BatchRecord {
             return this;
         }
 
+        /**
+         * <p>ID to group operations by. Operations in the same group are executed sequentially.</p>
+         */
         @JsonSetter(value = "batchID", nulls = Nulls.SKIP)
         public Builder batchId(Optional<String> batchId) {
             this.batchId = batchId;
@@ -285,6 +294,9 @@ public final class V1BatchRecord {
             return this;
         }
 
+        /**
+         * <p>If <code>true</code>, this operation returns tokens for fields with tokenization enabled. Only applicable if <code>skyflow_id</code> values are specified.</p>
+         */
         @JsonSetter(value = "tokenization", nulls = Nulls.SKIP)
         public Builder tokenization(Optional<Boolean> tokenization) {
             this.tokenization = tokenization;
@@ -296,6 +308,9 @@ public final class V1BatchRecord {
             return this;
         }
 
+        /**
+         * <p><code>skyflow_id</code> for the record. Only valid when <code>method</code> is <code>GET</code>, <code>DELETE</code>, or <code>PUT</code>.</p>
+         */
         @JsonSetter(value = "ID", nulls = Nulls.SKIP)
         public Builder id(Optional<String> id) {
             this.id = id;
@@ -307,6 +322,9 @@ public final class V1BatchRecord {
             return this;
         }
 
+        /**
+         * <p>If <code>true</code>, returns download URLs for fields with a file data type. URLs are valid for 15 minutes. If virus scanning is enabled, only returns if the file is clean.</p>
+         */
         @JsonSetter(value = "downloadURL", nulls = Nulls.SKIP)
         public Builder downloadUrl(Optional<Boolean> downloadUrl) {
             this.downloadUrl = downloadUrl;
@@ -318,6 +336,9 @@ public final class V1BatchRecord {
             return this;
         }
 
+        /**
+         * <p>Column that stores primary keys for upsert operations. The column must be marked as unique in the vault schema. Only valid when <code>method</code> is <code>POST</code>.</p>
+         */
         @JsonSetter(value = "upsert", nulls = Nulls.SKIP)
         public Builder upsert(Optional<String> upsert) {
             this.upsert = upsert;
@@ -329,6 +350,9 @@ public final class V1BatchRecord {
             return this;
         }
 
+        /**
+         * <p>Fields and tokens for the record. For example, <code>{'field_1':'token_1', 'field_2':'token_2'}</code>.</p>
+         */
         @JsonSetter(value = "tokens", nulls = Nulls.SKIP)
         public Builder tokens(Optional<Map<String, Object>> tokens) {
             this.tokens = tokens;

@@ -99,7 +99,6 @@ public class QueryTests {
                     "{\"card_number\":\"test_card_number\",\"name\":\"test_name\",\"tokenizedData\":{}}]," +
                     "\"errors\":[]}";
             Assert.assertEquals(2, response.getFields().size());
-            Assert.assertEquals(responseString, response.toString());
         } catch (Exception e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
         }

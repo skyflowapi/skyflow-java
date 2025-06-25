@@ -109,6 +109,9 @@ public final class V1VaultSchemaConfig {
             return this;
         }
 
+        /**
+         * <p>ID of the vault that stores card details.</p>
+         */
         @JsonSetter(value = "id", nulls = Nulls.SKIP)
         public Builder id(Optional<String> id) {
             this.id = id;
@@ -120,6 +123,9 @@ public final class V1VaultSchemaConfig {
             return this;
         }
 
+        /**
+         * <p>Name of the table that stores card details.</p>
+         */
         @JsonSetter(value = "table_name", nulls = Nulls.SKIP)
         public Builder tableName(Optional<String> tableName) {
             this.tableName = tableName;

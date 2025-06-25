@@ -233,32 +233,53 @@ public final class DeidentifyAudioRequest {
     }
 
     public interface FileStage {
+        /**
+         * File to de-identify. Files are specified as Base64-encoded data.
+         */
         _FinalStage file(@NotNull DeidentifyAudioRequestFile file);
     }
 
     public interface _FinalStage {
         DeidentifyAudioRequest build();
 
+        /**
+         * <p>If <code>true</code>, includes processed audio file in the response.</p>
+         */
         _FinalStage outputProcessedAudio(Optional<Boolean> outputProcessedAudio);
 
         _FinalStage outputProcessedAudio(Boolean outputProcessedAudio);
 
+        /**
+         * <p>Type of transcription to output.</p>
+         */
         _FinalStage outputTranscription(Optional<DeidentifyAudioRequestOutputTranscription> outputTranscription);
 
         _FinalStage outputTranscription(DeidentifyAudioRequestOutputTranscription outputTranscription);
 
+        /**
+         * <p>Relative loudness of the bleep in dB. Positive values increase its loudness, and negative values decrease it.</p>
+         */
         _FinalStage bleepGain(Optional<Double> bleepGain);
 
         _FinalStage bleepGain(Double bleepGain);
 
+        /**
+         * <p>The pitch of the bleep sound, in Hz. The higher the number, the higher the pitch.</p>
+         */
         _FinalStage bleepFrequency(Optional<Double> bleepFrequency);
 
         _FinalStage bleepFrequency(Double bleepFrequency);
 
+        /**
+         * <p>Padding added to the beginning of a bleep, in seconds.</p>
+         */
         _FinalStage bleepStartPadding(Optional<Double> bleepStartPadding);
 
         _FinalStage bleepStartPadding(Double bleepStartPadding);
 
+        /**
+         * <p>Padding added to the end of a bleep, in seconds.</p>
+         */
         _FinalStage bleepStopPadding(Optional<Double> bleepStopPadding);
 
         _FinalStage bleepStopPadding(Double bleepStopPadding);
@@ -343,7 +364,7 @@ public final class DeidentifyAudioRequest {
         }
 
         /**
-         * <p>File to de-identify. Files are specified as Base64-encoded data.</p>
+         * File to de-identify. Files are specified as Base64-encoded data.<p>File to de-identify. Files are specified as Base64-encoded data.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
         @java.lang.Override
@@ -428,6 +449,9 @@ public final class DeidentifyAudioRequest {
             return this;
         }
 
+        /**
+         * <p>Padding added to the end of a bleep, in seconds.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "bleep_stop_padding", nulls = Nulls.SKIP)
         public _FinalStage bleepStopPadding(Optional<Double> bleepStopPadding) {
@@ -445,6 +469,9 @@ public final class DeidentifyAudioRequest {
             return this;
         }
 
+        /**
+         * <p>Padding added to the beginning of a bleep, in seconds.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "bleep_start_padding", nulls = Nulls.SKIP)
         public _FinalStage bleepStartPadding(Optional<Double> bleepStartPadding) {
@@ -462,6 +489,9 @@ public final class DeidentifyAudioRequest {
             return this;
         }
 
+        /**
+         * <p>The pitch of the bleep sound, in Hz. The higher the number, the higher the pitch.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "bleep_frequency", nulls = Nulls.SKIP)
         public _FinalStage bleepFrequency(Optional<Double> bleepFrequency) {
@@ -479,6 +509,9 @@ public final class DeidentifyAudioRequest {
             return this;
         }
 
+        /**
+         * <p>Relative loudness of the bleep in dB. Positive values increase its loudness, and negative values decrease it.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "bleep_gain", nulls = Nulls.SKIP)
         public _FinalStage bleepGain(Optional<Double> bleepGain) {
@@ -496,6 +529,9 @@ public final class DeidentifyAudioRequest {
             return this;
         }
 
+        /**
+         * <p>Type of transcription to output.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "output_transcription", nulls = Nulls.SKIP)
         public _FinalStage outputTranscription(
@@ -514,6 +550,9 @@ public final class DeidentifyAudioRequest {
             return this;
         }
 
+        /**
+         * <p>If <code>true</code>, includes processed audio file in the response.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "output_processed_audio", nulls = Nulls.SKIP)
         public _FinalStage outputProcessedAudio(Optional<Boolean> outputProcessedAudio) {

@@ -110,22 +110,34 @@ public final class DeidentifyStringResponse {
     }
 
     public interface ProcessedTextStage {
+        /**
+         * De-identified text.
+         */
         WordCountStage processedText(@NotNull String processedText);
 
         Builder from(DeidentifyStringResponse other);
     }
 
     public interface WordCountStage {
+        /**
+         * Number of words from the input text.
+         */
         CharacterCountStage wordCount(int wordCount);
     }
 
     public interface CharacterCountStage {
+        /**
+         * Number of characters from the input text.
+         */
         _FinalStage characterCount(int characterCount);
     }
 
     public interface _FinalStage {
         DeidentifyStringResponse build();
 
+        /**
+         * <p>Detected entities.</p>
+         */
         _FinalStage entities(List<DetectedEntity> entities);
 
         _FinalStage addEntities(DetectedEntity entities);
@@ -158,7 +170,7 @@ public final class DeidentifyStringResponse {
         }
 
         /**
-         * <p>De-identified text.</p>
+         * De-identified text.<p>De-identified text.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
         @java.lang.Override
@@ -169,7 +181,7 @@ public final class DeidentifyStringResponse {
         }
 
         /**
-         * <p>Number of words from the input text.</p>
+         * Number of words from the input text.<p>Number of words from the input text.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
         @java.lang.Override
@@ -180,7 +192,7 @@ public final class DeidentifyStringResponse {
         }
 
         /**
-         * <p>Number of characters from the input text.</p>
+         * Number of characters from the input text.<p>Number of characters from the input text.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
         @java.lang.Override
@@ -210,6 +222,9 @@ public final class DeidentifyStringResponse {
             return this;
         }
 
+        /**
+         * <p>Detected entities.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "entities", nulls = Nulls.SKIP)
         public _FinalStage entities(List<DetectedEntity> entities) {

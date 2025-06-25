@@ -114,6 +114,9 @@ public final class V1VaultFieldMapping {
             return this;
         }
 
+        /**
+         * <p>Name of the column that stores the card number.</p>
+         */
         @JsonSetter(value = "card_number", nulls = Nulls.SKIP)
         public Builder cardNumber(Optional<String> cardNumber) {
             this.cardNumber = cardNumber;
@@ -125,6 +128,9 @@ public final class V1VaultFieldMapping {
             return this;
         }
 
+        /**
+         * <p>Name of the column that stores the card number suffix.</p>
+         */
         @JsonSetter(value = "card_last_four_digits", nulls = Nulls.SKIP)
         public Builder cardLastFourDigits(Optional<String> cardLastFourDigits) {
             this.cardLastFourDigits = cardLastFourDigits;
@@ -136,6 +142,9 @@ public final class V1VaultFieldMapping {
             return this;
         }
 
+        /**
+         * <p>Name of the column that stores the expiry date.</p>
+         */
         @JsonSetter(value = "card_expiry", nulls = Nulls.SKIP)
         public Builder cardExpiry(Optional<String> cardExpiry) {
             this.cardExpiry = cardExpiry;

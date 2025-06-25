@@ -80,6 +80,9 @@ public final class V1DetectFileResponse {
             return this;
         }
 
+        /**
+         * <p>Status URL for the deidentification request.</p>
+         */
         @JsonSetter(value = "status_url", nulls = Nulls.SKIP)
         public Builder statusUrl(Optional<String> statusUrl) {
             this.statusUrl = statusUrl;

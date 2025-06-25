@@ -95,6 +95,9 @@ public final class V1AuditAfterOptions {
             return this;
         }
 
+        /**
+         * <p>Timestamp provided in the previous audit response's <code>nextOps</code> attribute. An alternate way to manage response pagination. Can't be used with <code>sortOps</code> or <code>offset</code>. For the first request in a series of audit requests, leave blank.</p>
+         */
         @JsonSetter(value = "timestamp", nulls = Nulls.SKIP)
         public Builder timestamp(Optional<String> timestamp) {
             this.timestamp = timestamp;
@@ -106,6 +109,9 @@ public final class V1AuditAfterOptions {
             return this;
         }
 
+        /**
+         * <p>Change ID provided in the previous audit response's <code>nextOps</code> attribute. An alternate way to manage response pagination. Can't be used with <code>sortOps</code> or <code>offset</code>. For the first request in a series of audit requests, leave blank.</p>
+         */
         @JsonSetter(value = "changeID", nulls = Nulls.SKIP)
         public Builder changeId(Optional<String> changeId) {
             this.changeId = changeId;

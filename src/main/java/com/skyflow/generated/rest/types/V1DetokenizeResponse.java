@@ -82,6 +82,9 @@ public final class V1DetokenizeResponse {
             return this;
         }
 
+        /**
+         * <p>Records corresponding to the specified tokens.</p>
+         */
         @JsonSetter(value = "records", nulls = Nulls.SKIP)
         public Builder records(Optional<List<V1DetokenizeRecordResponse>> records) {
             this.records = records;

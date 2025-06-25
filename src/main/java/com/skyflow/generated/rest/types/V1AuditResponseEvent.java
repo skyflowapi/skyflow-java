@@ -188,6 +188,9 @@ public final class V1AuditResponseEvent {
             return this;
         }
 
+        /**
+         * <p>Parent account ID of the account that made the request, if any.</p>
+         */
         @JsonSetter(value = "parentAccountID", nulls = Nulls.SKIP)
         public Builder parentAccountId(Optional<String> parentAccountId) {
             this.parentAccountId = parentAccountId;
@@ -199,6 +202,9 @@ public final class V1AuditResponseEvent {
             return this;
         }
 
+        /**
+         * <p>ID of the account that made the request.</p>
+         */
         @JsonSetter(value = "accountID", nulls = Nulls.SKIP)
         public Builder accountId(Optional<String> accountId) {
             this.accountId = accountId;
@@ -210,6 +216,9 @@ public final class V1AuditResponseEvent {
             return this;
         }
 
+        /**
+         * <p>IDs for resources involved in the event. Presented in <code>{resourceType}/{resourceID}</code> format. For example, <code>VAULT/cd1d815aa09b4cbfbb803bd20349f202</code>.</p>
+         */
         @JsonSetter(value = "resourceIDs", nulls = Nulls.SKIP)
         public Builder resourceIDs(Optional<List<String>> resourceIDs) {
             this.resourceIDs = resourceIDs;

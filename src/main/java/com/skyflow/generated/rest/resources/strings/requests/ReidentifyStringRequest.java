@@ -95,18 +95,27 @@ public final class ReidentifyStringRequest {
     }
 
     public interface TextStage {
+        /**
+         * String to re-identify.
+         */
         VaultIdStage text(@NotNull String text);
 
         Builder from(ReidentifyStringRequest other);
     }
 
     public interface VaultIdStage {
+        /**
+         * ID of the vault where the entities are stored.
+         */
         _FinalStage vaultId(@NotNull String vaultId);
     }
 
     public interface _FinalStage {
         ReidentifyStringRequest build();
 
+        /**
+         * <p>Mapping of perferred data formatting options to entity types. Returned values are dependent on the configuration of the vault storing the data and the permissions of the user or account making the request.</p>
+         */
         _FinalStage format(Optional<ReidentifyStringRequestFormat> format);
 
         _FinalStage format(ReidentifyStringRequestFormat format);
@@ -134,7 +143,7 @@ public final class ReidentifyStringRequest {
         }
 
         /**
-         * <p>String to re-identify.</p>
+         * String to re-identify.<p>String to re-identify.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
         @java.lang.Override
@@ -145,7 +154,7 @@ public final class ReidentifyStringRequest {
         }
 
         /**
-         * <p>ID of the vault where the entities are stored.</p>
+         * ID of the vault where the entities are stored.<p>ID of the vault where the entities are stored.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
         @java.lang.Override
@@ -165,6 +174,9 @@ public final class ReidentifyStringRequest {
             return this;
         }
 
+        /**
+         * <p>Mapping of perferred data formatting options to entity types. Returned values are dependent on the configuration of the vault storing the data and the permissions of the user or account making the request.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "format", nulls = Nulls.SKIP)
         public _FinalStage format(Optional<ReidentifyStringRequestFormat> format) {

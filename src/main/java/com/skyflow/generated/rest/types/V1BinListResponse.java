@@ -81,6 +81,9 @@ public final class V1BinListResponse {
             return this;
         }
 
+        /**
+         * <p>Card metadata associated with the specified BIN.</p>
+         */
         @JsonSetter(value = "cards_data", nulls = Nulls.SKIP)
         public Builder cardsData(Optional<List<V1Card>> cardsData) {
             this.cardsData = cardsData;

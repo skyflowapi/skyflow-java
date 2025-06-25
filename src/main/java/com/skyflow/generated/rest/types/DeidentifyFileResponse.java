@@ -66,6 +66,9 @@ public final class DeidentifyFileResponse {
     }
 
     public interface RunIdStage {
+        /**
+         * Status URL for the detect run.
+         */
         _FinalStage runId(@NotNull String runId);
 
         Builder from(DeidentifyFileResponse other);
@@ -91,7 +94,7 @@ public final class DeidentifyFileResponse {
         }
 
         /**
-         * <p>Status URL for the detect run.</p>
+         * Status URL for the detect run.<p>Status URL for the detect run.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
         @java.lang.Override

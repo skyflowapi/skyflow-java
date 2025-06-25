@@ -146,6 +146,9 @@ public final class RecordServiceInsertRecordBody {
             return this;
         }
 
+        /**
+         * <p>Record values and tokens.</p>
+         */
         @JsonSetter(value = "records", nulls = Nulls.SKIP)
         public Builder records(Optional<List<V1FieldRecords>> records) {
             this.records = records;
@@ -157,6 +160,9 @@ public final class RecordServiceInsertRecordBody {
             return this;
         }
 
+        /**
+         * <p>If <code>true</code>, this operation returns tokens for fields with tokenization enabled.</p>
+         */
         @JsonSetter(value = "tokenization", nulls = Nulls.SKIP)
         public Builder tokenization(Optional<Boolean> tokenization) {
             this.tokenization = tokenization;
@@ -168,6 +174,9 @@ public final class RecordServiceInsertRecordBody {
             return this;
         }
 
+        /**
+         * <p>Name of a unique column in the table. Uses upsert operations to check if a record exists based on the unique column's value. If a matching record exists, the record updates with the values you provide. If a matching record doesn't exist, the upsert operation inserts a new record.&lt;br /&gt;&lt;br /&gt;When you upsert a field, include the entire contents you want the field to store. For JSON fields, include all nested fields and values. If a nested field isn't included, it's removed.</p>
+         */
         @JsonSetter(value = "upsert", nulls = Nulls.SKIP)
         public Builder upsert(Optional<String> upsert) {
             this.upsert = upsert;
@@ -179,6 +188,9 @@ public final class RecordServiceInsertRecordBody {
             return this;
         }
 
+        /**
+         * <p>If <code>true</code>, this operation mandates that all the records have the same fields. This parameter does not work with upsert.</p>
+         */
         @JsonSetter(value = "homogeneous", nulls = Nulls.SKIP)
         public Builder homogeneous(Optional<Boolean> homogeneous) {
             this.homogeneous = homogeneous;

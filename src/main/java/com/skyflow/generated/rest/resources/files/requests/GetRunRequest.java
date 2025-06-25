@@ -66,6 +66,9 @@ public final class GetRunRequest {
     }
 
     public interface VaultIdStage {
+        /**
+         * ID of the vault.
+         */
         _FinalStage vaultId(@NotNull String vaultId);
 
         Builder from(GetRunRequest other);
@@ -91,7 +94,7 @@ public final class GetRunRequest {
         }
 
         /**
-         * <p>ID of the vault.</p>
+         * ID of the vault.<p>ID of the vault.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
         @java.lang.Override

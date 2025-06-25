@@ -176,16 +176,25 @@ public final class DeidentifyPdfRequest {
     }
 
     public interface FileStage {
+        /**
+         * File to de-identify. Files are specified as Base64-encoded data.
+         */
         _FinalStage file(@NotNull DeidentifyPdfRequestFile file);
     }
 
     public interface _FinalStage {
         DeidentifyPdfRequest build();
 
+        /**
+         * <p>Pixel density at which to process the PDF file.</p>
+         */
         _FinalStage density(Optional<Integer> density);
 
         _FinalStage density(Integer density);
 
+        /**
+         * <p>Max resolution at which to process the PDF file.</p>
+         */
         _FinalStage maxResolution(Optional<Integer> maxResolution);
 
         _FinalStage maxResolution(Integer maxResolution);
@@ -258,7 +267,7 @@ public final class DeidentifyPdfRequest {
         }
 
         /**
-         * <p>File to de-identify. Files are specified as Base64-encoded data.</p>
+         * File to de-identify. Files are specified as Base64-encoded data.<p>File to de-identify. Files are specified as Base64-encoded data.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
         @java.lang.Override
@@ -343,6 +352,9 @@ public final class DeidentifyPdfRequest {
             return this;
         }
 
+        /**
+         * <p>Max resolution at which to process the PDF file.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "max_resolution", nulls = Nulls.SKIP)
         public _FinalStage maxResolution(Optional<Integer> maxResolution) {
@@ -360,6 +372,9 @@ public final class DeidentifyPdfRequest {
             return this;
         }
 
+        /**
+         * <p>Pixel density at which to process the PDF file.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "density", nulls = Nulls.SKIP)
         public _FinalStage density(Optional<Integer> density) {

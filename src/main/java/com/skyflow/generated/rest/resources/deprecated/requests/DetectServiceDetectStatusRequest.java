@@ -80,6 +80,9 @@ public final class DetectServiceDetectStatusRequest {
             return this;
         }
 
+        /**
+         * <p>ID of the vault.</p>
+         */
         @JsonSetter(value = "vault_id", nulls = Nulls.SKIP)
         public Builder vaultId(Optional<String> vaultId) {
             this.vaultId = vaultId;

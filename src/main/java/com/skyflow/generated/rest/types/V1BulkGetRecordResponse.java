@@ -81,6 +81,9 @@ public final class V1BulkGetRecordResponse {
             return this;
         }
 
+        /**
+         * <p>The specified records.</p>
+         */
         @JsonSetter(value = "records", nulls = Nulls.SKIP)
         public Builder records(Optional<List<V1FieldRecords>> records) {
             this.records = records;

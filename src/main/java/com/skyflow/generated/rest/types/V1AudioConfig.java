@@ -119,6 +119,9 @@ public final class V1AudioConfig {
             return this;
         }
 
+        /**
+         * <p>If <code>true</code>, includes processed audio file in the response.</p>
+         */
         @JsonSetter(value = "output_processed_audio", nulls = Nulls.SKIP)
         public Builder outputProcessedAudio(Optional<Boolean> outputProcessedAudio) {
             this.outputProcessedAudio = outputProcessedAudio;

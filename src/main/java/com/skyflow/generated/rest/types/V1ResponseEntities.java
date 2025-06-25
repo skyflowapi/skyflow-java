@@ -143,6 +143,9 @@ public final class V1ResponseEntities {
             return this;
         }
 
+        /**
+         * <p>Processed text of the entity.</p>
+         */
         @JsonSetter(value = "processed_text", nulls = Nulls.SKIP)
         public Builder processedText(Optional<String> processedText) {
             this.processedText = processedText;
@@ -154,6 +157,9 @@ public final class V1ResponseEntities {
             return this;
         }
 
+        /**
+         * <p>Original text of the entity.</p>
+         */
         @JsonSetter(value = "original_text", nulls = Nulls.SKIP)
         public Builder originalText(Optional<String> originalText) {
             this.originalText = originalText;
@@ -176,6 +182,9 @@ public final class V1ResponseEntities {
             return this;
         }
 
+        /**
+         * <p>Highest rated label.</p>
+         */
         @JsonSetter(value = "best_label", nulls = Nulls.SKIP)
         public Builder bestLabel(Optional<String> bestLabel) {
             this.bestLabel = bestLabel;
@@ -187,6 +196,9 @@ public final class V1ResponseEntities {
             return this;
         }
 
+        /**
+         * <p>Labels and their scores.</p>
+         */
         @JsonSetter(value = "labels", nulls = Nulls.SKIP)
         public Builder labels(Optional<Map<String, Object>> labels) {
             this.labels = labels;

@@ -80,6 +80,9 @@ public final class ReidentifyStringResponse {
             return this;
         }
 
+        /**
+         * <p>Re-identified text.</p>
+         */
         @JsonSetter(value = "text", nulls = Nulls.SKIP)
         public Builder text(Optional<String> text) {
             this.text = text;

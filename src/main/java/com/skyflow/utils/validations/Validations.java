@@ -788,20 +788,31 @@ public class Validations {
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyRequestBody.getMessage());
         }
 
-        File file = request.getFile();
-        if (file == null) {
+        File file = request.getFileInput().getFile();
+        String filePath = request.getFileInput().getFilePath();
+
+        if (file == null && filePath == null) {
             LogUtil.printErrorLog(Utils.parameterizedString(
-                    ErrorLogs.INVALID_NULL_FILE_IN_DEIDENTIFY_FILE.getLog(), InterfaceName.DETECT.getName()
+                    ErrorLogs.EMPTY_FILE_AND_FILE_PATH_IN_DEIDENTIFY_FILE.getLog(), InterfaceName.DETECT.getName()
             ));
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidNullFileInDeIdentifyFile.getMessage());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyFileAndFilePathInDeIdentifyFile.getMessage());
         }
-        if (!file.exists() || !file.isFile()) {
+
+        if (filePath != null && file != null) {
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.BothFileAndFilePathProvided.getMessage());
+        }
+
+        if (filePath != null && filePath.trim().isEmpty()){
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidFilePath.getMessage());
+        }
+
+        if (file != null && (!file.exists() || !file.isFile())) {
             LogUtil.printErrorLog(Utils.parameterizedString(
                     ErrorLogs.FILE_NOT_FOUND_TO_DEIDENTIFY.getLog(), InterfaceName.DETECT.getName()
             ));
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.FileNotFoundToDeidentify.getMessage());
         }
-        if (!file.canRead()) {
+        if (file != null && !file.canRead()) {
             LogUtil.printErrorLog(Utils.parameterizedString(
                     ErrorLogs.FILE_NOT_READABLE_TO_DEIDENTIFY.getLog(), InterfaceName.DETECT.getName()
             ));

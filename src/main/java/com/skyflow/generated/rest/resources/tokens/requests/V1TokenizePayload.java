@@ -83,6 +83,9 @@ public final class V1TokenizePayload {
             return this;
         }
 
+        /**
+         * <p>Tokenization details.</p>
+         */
         @JsonSetter(value = "tokenizationParameters", nulls = Nulls.SKIP)
         public Builder tokenizationParameters(Optional<List<V1TokenizeRecordRequest>> tokenizationParameters) {
             this.tokenizationParameters = tokenizationParameters;

@@ -95,6 +95,9 @@ public final class V1PdfOptions {
             return this;
         }
 
+        /**
+         * <p>Pixel density at which to process the PDF file.</p>
+         */
         @JsonSetter(value = "density", nulls = Nulls.SKIP)
         public Builder density(Optional<Integer> density) {
             this.density = density;
@@ -106,6 +109,9 @@ public final class V1PdfOptions {
             return this;
         }
 
+        /**
+         * <p>Max resolution at which to process the PDF file.</p>
+         */
         @JsonSetter(value = "max_resolution", nulls = Nulls.SKIP)
         public Builder maxResolution(Optional<Integer> maxResolution) {
             this.maxResolution = maxResolution;

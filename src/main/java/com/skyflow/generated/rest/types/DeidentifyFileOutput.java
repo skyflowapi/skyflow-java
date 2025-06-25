@@ -114,6 +114,9 @@ public final class DeidentifyFileOutput {
             return this;
         }
 
+        /**
+         * <p>URL or base64-encoded data of the output.</p>
+         */
         @JsonSetter(value = "processed_file", nulls = Nulls.SKIP)
         public Builder processedFile(Optional<String> processedFile) {
             this.processedFile = processedFile;
@@ -125,6 +128,9 @@ public final class DeidentifyFileOutput {
             return this;
         }
 
+        /**
+         * <p>Type of the processed file.</p>
+         */
         @JsonSetter(value = "processed_file_type", nulls = Nulls.SKIP)
         public Builder processedFileType(Optional<DeidentifyFileOutputProcessedFileType> processedFileType) {
             this.processedFileType = processedFileType;
@@ -136,6 +142,9 @@ public final class DeidentifyFileOutput {
             return this;
         }
 
+        /**
+         * <p>Extension of the processed file.</p>
+         */
         @JsonSetter(value = "processed_file_extension", nulls = Nulls.SKIP)
         public Builder processedFileExtension(Optional<String> processedFileExtension) {
             this.processedFileExtension = processedFileExtension;

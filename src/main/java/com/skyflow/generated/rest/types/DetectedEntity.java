@@ -143,6 +143,9 @@ public final class DetectedEntity {
             return this;
         }
 
+        /**
+         * <p>Processed text of the entity.</p>
+         */
         @JsonSetter(value = "token", nulls = Nulls.SKIP)
         public Builder token(Optional<String> token) {
             this.token = token;
@@ -154,6 +157,9 @@ public final class DetectedEntity {
             return this;
         }
 
+        /**
+         * <p>Original text of the entity.</p>
+         */
         @JsonSetter(value = "value", nulls = Nulls.SKIP)
         public Builder value(Optional<String> value) {
             this.value = value;
@@ -176,6 +182,9 @@ public final class DetectedEntity {
             return this;
         }
 
+        /**
+         * <p>Highest-rated label.</p>
+         */
         @JsonSetter(value = "entity_type", nulls = Nulls.SKIP)
         public Builder entityType(Optional<String> entityType) {
             this.entityType = entityType;
@@ -187,6 +196,9 @@ public final class DetectedEntity {
             return this;
         }
 
+        /**
+         * <p>entity_scores and their scores.</p>
+         */
         @JsonSetter(value = "entity_scores", nulls = Nulls.SKIP)
         public Builder entityScores(Optional<Map<String, Double>> entityScores) {
             this.entityScores = entityScores;

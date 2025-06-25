@@ -98,6 +98,9 @@ public final class V1BatchOperationResponse {
             return this;
         }
 
+        /**
+         * <p>ID of the vault.</p>
+         */
         @JsonSetter(value = "vaultID", nulls = Nulls.SKIP)
         public Builder vaultId(Optional<String> vaultId) {
             this.vaultId = vaultId;
@@ -109,6 +112,9 @@ public final class V1BatchOperationResponse {
             return this;
         }
 
+        /**
+         * <p>Responses in the same order as in the request. Responses have the same payload structure as their corresponding APIs: &lt;br/&gt;&lt;ul&gt;&lt;li&gt;<code>POST</code> returns an Insert Records response.&lt;/li&gt;&lt;li&gt;<code>PUT</code> returns an Update Record response.&lt;/li&gt;&lt;li&gt;<code>GET</code> returns a Get Record response.&lt;/li&gt;&lt;li&gt;<code>DELETE</code> returns a Delete Record response.&lt;/li&gt;&lt;/ul&gt;</p>
+         */
         @JsonSetter(value = "responses", nulls = Nulls.SKIP)
         public Builder responses(Optional<List<Map<String, Object>>> responses) {
             this.responses = responses;

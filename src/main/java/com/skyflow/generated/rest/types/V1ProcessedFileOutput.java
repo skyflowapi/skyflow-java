@@ -119,6 +119,9 @@ public final class V1ProcessedFileOutput {
             return this;
         }
 
+        /**
+         * <p>URL or base64-encoded data of the output.</p>
+         */
         @JsonSetter(value = "processed_file", nulls = Nulls.SKIP)
         public Builder processedFile(Optional<String> processedFile) {
             this.processedFile = processedFile;

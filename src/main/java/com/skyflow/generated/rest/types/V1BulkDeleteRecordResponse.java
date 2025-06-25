@@ -82,6 +82,9 @@ public final class V1BulkDeleteRecordResponse {
             return this;
         }
 
+        /**
+         * <p>IDs for the deleted records, or <code>*</code> if all records were deleted.</p>
+         */
         @JsonSetter(value = "RecordIDResponse", nulls = Nulls.SKIP)
         public Builder recordIdResponse(Optional<List<String>> recordIdResponse) {
             this.recordIdResponse = recordIdResponse;

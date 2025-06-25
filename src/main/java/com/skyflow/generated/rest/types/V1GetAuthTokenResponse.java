@@ -95,6 +95,9 @@ public final class V1GetAuthTokenResponse {
             return this;
         }
 
+        /**
+         * <p>AccessToken.</p>
+         */
         @JsonSetter(value = "accessToken", nulls = Nulls.SKIP)
         public Builder accessToken(Optional<String> accessToken) {
             this.accessToken = accessToken;
@@ -106,6 +109,9 @@ public final class V1GetAuthTokenResponse {
             return this;
         }
 
+        /**
+         * <p>TokenType : Bearer.</p>
+         */
         @JsonSetter(value = "tokenType", nulls = Nulls.SKIP)
         public Builder tokenType(Optional<String> tokenType) {
             this.tokenType = tokenType;

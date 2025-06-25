@@ -82,6 +82,9 @@ public final class V1TokenizeResponse {
             return this;
         }
 
+        /**
+         * <p>Tokens corresponding to the specified values.</p>
+         */
         @JsonSetter(value = "records", nulls = Nulls.SKIP)
         public Builder records(Optional<List<V1TokenizeRecordResponse>> records) {
             this.records = records;

@@ -80,12 +80,18 @@ public final class DeidentifySpreadsheetRequestFile {
     }
 
     public interface Base64Stage {
+        /**
+         * Base64-encoded data of the file to de-identify.
+         */
         DataFormatStage base64(@NotNull String base64);
 
         Builder from(DeidentifySpreadsheetRequestFile other);
     }
 
     public interface DataFormatStage {
+        /**
+         * Data format of the file.
+         */
         _FinalStage dataFormat(@NotNull DeidentifySpreadsheetRequestFileDataFormat dataFormat);
     }
 
@@ -112,7 +118,7 @@ public final class DeidentifySpreadsheetRequestFile {
         }
 
         /**
-         * <p>Base64-encoded data of the file to de-identify.</p>
+         * Base64-encoded data of the file to de-identify.<p>Base64-encoded data of the file to de-identify.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
         @java.lang.Override
@@ -123,7 +129,7 @@ public final class DeidentifySpreadsheetRequestFile {
         }
 
         /**
-         * <p>Data format of the file.</p>
+         * Data format of the file.<p>Data format of the file.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
         @java.lang.Override

@@ -199,48 +199,78 @@ public final class DeidentifyStatusResponse {
     }
 
     public interface StatusStage {
+        /**
+         * Status of the detect run.
+         */
         OutputTypeStage status(@NotNull DeidentifyStatusResponseStatus status);
 
         Builder from(DeidentifyStatusResponse other);
     }
 
     public interface OutputTypeStage {
+        /**
+         * How the output file is specified.
+         */
         MessageStage outputType(@NotNull DeidentifyStatusResponseOutputType outputType);
     }
 
     public interface MessageStage {
+        /**
+         * Status details about the detect run.
+         */
         _FinalStage message(@NotNull String message);
     }
 
     public interface _FinalStage {
         DeidentifyStatusResponse build();
 
+        /**
+         * <p>How the input file was specified.</p>
+         */
         _FinalStage output(List<DeidentifyFileOutput> output);
 
         _FinalStage addOutput(DeidentifyFileOutput output);
 
         _FinalStage addAllOutput(List<DeidentifyFileOutput> output);
 
+        /**
+         * <p>Number of words in the processed text.</p>
+         */
         _FinalStage wordCount(Optional<Integer> wordCount);
 
         _FinalStage wordCount(Integer wordCount);
 
+        /**
+         * <p>Number of characters in the processed text.</p>
+         */
         _FinalStage characterCount(Optional<Integer> characterCount);
 
         _FinalStage characterCount(Integer characterCount);
 
+        /**
+         * <p>Size of the processed text in kilobytes (KB).</p>
+         */
         _FinalStage size(Optional<Integer> size);
 
         _FinalStage size(Integer size);
 
+        /**
+         * <p>Duration of the processed audio in seconds.</p>
+         */
         _FinalStage duration(Optional<Integer> duration);
 
         _FinalStage duration(Integer duration);
 
+        /**
+         * <p>Number of pages in the processed PDF.</p>
+         */
         _FinalStage pages(Optional<Integer> pages);
 
         _FinalStage pages(Integer pages);
 
+        /**
+         * <p>Number of slides in the processed presentation.</p>
+         */
         _FinalStage slides(Optional<Integer> slides);
 
         _FinalStage slides(Integer slides);
@@ -289,7 +319,7 @@ public final class DeidentifyStatusResponse {
         }
 
         /**
-         * <p>Status of the detect run.</p>
+         * Status of the detect run.<p>Status of the detect run.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
         @java.lang.Override
@@ -300,7 +330,7 @@ public final class DeidentifyStatusResponse {
         }
 
         /**
-         * <p>How the output file is specified.</p>
+         * How the output file is specified.<p>How the output file is specified.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
         @java.lang.Override
@@ -311,7 +341,7 @@ public final class DeidentifyStatusResponse {
         }
 
         /**
-         * <p>Status details about the detect run.</p>
+         * Status details about the detect run.<p>Status details about the detect run.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
         @java.lang.Override
@@ -331,6 +361,9 @@ public final class DeidentifyStatusResponse {
             return this;
         }
 
+        /**
+         * <p>Number of slides in the processed presentation.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "slides", nulls = Nulls.SKIP)
         public _FinalStage slides(Optional<Integer> slides) {
@@ -348,6 +381,9 @@ public final class DeidentifyStatusResponse {
             return this;
         }
 
+        /**
+         * <p>Number of pages in the processed PDF.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "pages", nulls = Nulls.SKIP)
         public _FinalStage pages(Optional<Integer> pages) {
@@ -365,6 +401,9 @@ public final class DeidentifyStatusResponse {
             return this;
         }
 
+        /**
+         * <p>Duration of the processed audio in seconds.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "duration", nulls = Nulls.SKIP)
         public _FinalStage duration(Optional<Integer> duration) {
@@ -382,6 +421,9 @@ public final class DeidentifyStatusResponse {
             return this;
         }
 
+        /**
+         * <p>Size of the processed text in kilobytes (KB).</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "size", nulls = Nulls.SKIP)
         public _FinalStage size(Optional<Integer> size) {
@@ -399,6 +441,9 @@ public final class DeidentifyStatusResponse {
             return this;
         }
 
+        /**
+         * <p>Number of characters in the processed text.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "character_count", nulls = Nulls.SKIP)
         public _FinalStage characterCount(Optional<Integer> characterCount) {
@@ -416,6 +461,9 @@ public final class DeidentifyStatusResponse {
             return this;
         }
 
+        /**
+         * <p>Number of words in the processed text.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "word_count", nulls = Nulls.SKIP)
         public _FinalStage wordCount(Optional<Integer> wordCount) {
@@ -443,6 +491,9 @@ public final class DeidentifyStatusResponse {
             return this;
         }
 
+        /**
+         * <p>How the input file was specified.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "output", nulls = Nulls.SKIP)
         public _FinalStage output(List<DeidentifyFileOutput> output) {

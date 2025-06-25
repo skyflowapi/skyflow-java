@@ -240,6 +240,9 @@ public final class RecordServiceBulkGetRecordRequest {
             return this;
         }
 
+        /**
+         * <p><code>skyflow_id</code> values of the records to return, with one value per <code>skyflow_ids</code> URL parameter. For example, <code>?skyflow_ids=abc&amp;skyflow_ids=123</code>.&lt;br /&gt;&lt;br /&gt;If not specified, returns the first 25 records in the table.</p>
+         */
         @JsonSetter(value = "skyflow_ids", nulls = Nulls.SKIP)
         public Builder skyflowIds(Optional<List<String>> skyflowIds) {
             this.skyflowIds = skyflowIds;
@@ -256,6 +259,9 @@ public final class RecordServiceBulkGetRecordRequest {
             return this;
         }
 
+        /**
+         * <p>Fields to return for the record, with one value per <code>fields</code> URL parameter. For example, <code>?fields=abc&amp;fields=123</code>.&lt;br /&gt;&lt;br /&gt;If not specified, returns all fields.</p>
+         */
         @JsonSetter(value = "fields", nulls = Nulls.SKIP)
         public Builder fields(Optional<List<String>> fields) {
             this.fields = fields;
@@ -272,6 +278,9 @@ public final class RecordServiceBulkGetRecordRequest {
             return this;
         }
 
+        /**
+         * <p>Column values of the records to return, with one value per <code>column_values</code> URL parameter. For example, <code>?column_values=abc&amp;column_values=123</code>.&lt;br /&gt;&lt;br /&gt;<code>column_name</code> is mandatory when providing <code>column_values</code>. If you use column name or column value, you cannot use <code>skyflow_ids</code>. Passing either of these parameters with <code>skyflow_ids</code> returns an error.</p>
+         */
         @JsonSetter(value = "column_values", nulls = Nulls.SKIP)
         public Builder columnValues(Optional<List<String>> columnValues) {
             this.columnValues = columnValues;
@@ -288,6 +297,9 @@ public final class RecordServiceBulkGetRecordRequest {
             return this;
         }
 
+        /**
+         * <p>Redaction level to enforce for the returned records. Subject to policies assigned to the API caller.</p>
+         */
         @JsonSetter(value = "redaction", nulls = Nulls.SKIP)
         public Builder redaction(Optional<RecordServiceBulkGetRecordRequestRedaction> redaction) {
             this.redaction = redaction;
@@ -299,6 +311,9 @@ public final class RecordServiceBulkGetRecordRequest {
             return this;
         }
 
+        /**
+         * <p>If <code>true</code>, this operation returns tokens for fields with tokenization enabled. Only applicable if <code>skyflow_id</code> values are specified.</p>
+         */
         @JsonSetter(value = "tokenization", nulls = Nulls.SKIP)
         public Builder tokenization(Optional<Boolean> tokenization) {
             this.tokenization = tokenization;
@@ -310,6 +325,9 @@ public final class RecordServiceBulkGetRecordRequest {
             return this;
         }
 
+        /**
+         * <p>Record position at which to start receiving data.</p>
+         */
         @JsonSetter(value = "offset", nulls = Nulls.SKIP)
         public Builder offset(Optional<String> offset) {
             this.offset = offset;
@@ -321,6 +339,9 @@ public final class RecordServiceBulkGetRecordRequest {
             return this;
         }
 
+        /**
+         * <p>Number of record to return. Maximum 25.</p>
+         */
         @JsonSetter(value = "limit", nulls = Nulls.SKIP)
         public Builder limit(Optional<String> limit) {
             this.limit = limit;
@@ -332,6 +353,9 @@ public final class RecordServiceBulkGetRecordRequest {
             return this;
         }
 
+        /**
+         * <p>If <code>true</code>, returns download URLs for fields with a file data type. URLs are valid for 15 minutes. If virus scanning is enabled, only returns if the file is clean.</p>
+         */
         @JsonSetter(value = "downloadURL", nulls = Nulls.SKIP)
         public Builder downloadUrl(Optional<Boolean> downloadUrl) {
             this.downloadUrl = downloadUrl;
@@ -343,6 +367,9 @@ public final class RecordServiceBulkGetRecordRequest {
             return this;
         }
 
+        /**
+         * <p>Name of the column. It must be configured as unique in the schema. If you provide both column name or column value, you cannot use <code>skyflow_ids</code>. Passing either of these parameters with <code>skyflow_ids</code> returns an error.</p>
+         */
         @JsonSetter(value = "column_name", nulls = Nulls.SKIP)
         public Builder columnName(Optional<String> columnName) {
             this.columnName = columnName;
@@ -354,6 +381,9 @@ public final class RecordServiceBulkGetRecordRequest {
             return this;
         }
 
+        /**
+         * <p>Order to return records, based on <code>skyflow_id</code> values. To disable, set to <code>NONE</code>.</p>
+         */
         @JsonSetter(value = "order_by", nulls = Nulls.SKIP)
         public Builder orderBy(Optional<RecordServiceBulkGetRecordRequestOrderBy> orderBy) {
             this.orderBy = orderBy;

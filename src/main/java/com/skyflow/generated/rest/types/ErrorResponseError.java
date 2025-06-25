@@ -117,16 +117,25 @@ public final class ErrorResponseError {
     }
 
     public interface GrpcCodeStage {
+        /**
+         * gRPC status codes. See https://grpc.io/docs/guides/status-codes.
+         */
         HttpCodeStage grpcCode(int grpcCode);
 
         Builder from(ErrorResponseError other);
     }
 
     public interface HttpCodeStage {
+        /**
+         * HTTP status codes. See https://developer.mozilla.org/en-US/docs/Web/HTTP/Status.
+         */
         HttpStatusStage httpCode(int httpCode);
     }
 
     public interface HttpStatusStage {
+        /**
+         * HTTP status message.
+         */
         MessageStage httpStatus(@NotNull String httpStatus);
     }
 
@@ -171,7 +180,7 @@ public final class ErrorResponseError {
         }
 
         /**
-         * <p>gRPC status codes. See https://grpc.io/docs/guides/status-codes.</p>
+         * gRPC status codes. See https://grpc.io/docs/guides/status-codes.<p>gRPC status codes. See https://grpc.io/docs/guides/status-codes.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
         @java.lang.Override
@@ -182,7 +191,7 @@ public final class ErrorResponseError {
         }
 
         /**
-         * <p>HTTP status codes. See https://developer.mozilla.org/en-US/docs/Web/HTTP/Status.</p>
+         * HTTP status codes. See https://developer.mozilla.org/en-US/docs/Web/HTTP/Status.<p>HTTP status codes. See https://developer.mozilla.org/en-US/docs/Web/HTTP/Status.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
         @java.lang.Override
@@ -193,7 +202,7 @@ public final class ErrorResponseError {
         }
 
         /**
-         * <p>HTTP status message.</p>
+         * HTTP status message.<p>HTTP status message.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
         @java.lang.Override

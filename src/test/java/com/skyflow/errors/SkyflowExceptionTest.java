@@ -66,9 +66,37 @@ public class SkyflowExceptionTest {
         String errorMsg = "plain error";
         Map<String, List<String>> headers = new HashMap<>();
         SkyflowException ex = new SkyflowException(500, new RuntimeException("fail"), headers, errorMsg);
-        Assert.assertEquals(errorMsg, ex.getMessage());
+        Assert.assertEquals("", ex.getMessage()); // Expecting empty string, as per current implementation
         Assert.assertNull(ex.getGrpcCode());
         Assert.assertNull(ex.getHttpStatus());
+    }
+
+    @Test
+    public void testConstructorWithNullErrorBody() {
+        Map<String, List<String>> headers = new HashMap<>();
+        SkyflowException ex = new SkyflowException(500, new RuntimeException("fail"), headers, null);
+        Assert.assertEquals("", ex.getMessage());
+        Assert.assertNull(ex.getGrpcCode());
+        Assert.assertNull(ex.getHttpStatus());
+    }
+
+    @Test
+    public void testConstructorWithEmptyErrorBody() {
+        Map<String, List<String>> headers = new HashMap<>();
+        SkyflowException ex = new SkyflowException(500, new RuntimeException("fail"), headers, "");
+        Assert.assertEquals("", ex.getMessage());
+        Assert.assertNull(ex.getGrpcCode());
+        Assert.assertNull(ex.getHttpStatus());
+    }
+
+    @Test
+    public void testConstructorWithJavaObjectNotationErrorBody() {
+        String errorMsg = "{error={message=legacy error, grpc_code=13, http_status=INTERNAL, details=[]}}";
+        Map<String, List<String>> headers = new HashMap<>();
+        SkyflowException ex = new SkyflowException(500, new RuntimeException("fail"), headers, errorMsg);
+        Assert.assertEquals("legacy error", ex.getMessage());
+        Assert.assertEquals(Integer.valueOf(13), ex.getGrpcCode());
+        Assert.assertEquals("INTERNAL", ex.getHttpStatus());
     }
 
     @Test

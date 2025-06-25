@@ -152,11 +152,11 @@ public class RawRecordsClient {
                 .addPathSegment(objectName);
         if (request.getRedaction().isPresent()) {
             QueryStringMapper.addQueryParameter(
-                    httpUrl, "redaction", request.getRedaction().get().toString(), false);
+                    httpUrl, "redaction", request.getRedaction().get(), false);
         }
         if (request.getTokenization().isPresent()) {
             QueryStringMapper.addQueryParameter(
-                    httpUrl, "tokenization", request.getTokenization().get().toString(), false);
+                    httpUrl, "tokenization", request.getTokenization().get(), false);
         }
         if (request.getOffset().isPresent()) {
             QueryStringMapper.addQueryParameter(
@@ -168,7 +168,7 @@ public class RawRecordsClient {
         }
         if (request.getDownloadUrl().isPresent()) {
             QueryStringMapper.addQueryParameter(
-                    httpUrl, "downloadURL", request.getDownloadUrl().get().toString(), false);
+                    httpUrl, "downloadURL", request.getDownloadUrl().get(), false);
         }
         if (request.getColumnName().isPresent()) {
             QueryStringMapper.addQueryParameter(
@@ -176,25 +176,24 @@ public class RawRecordsClient {
         }
         if (request.getOrderBy().isPresent()) {
             QueryStringMapper.addQueryParameter(
-                    httpUrl, "order_by", request.getOrderBy().get().toString(), false);
+                    httpUrl, "order_by", request.getOrderBy().get(), false);
         }
         if (request.getSkyflowIds().isPresent()) {
             QueryStringMapper.addQueryParameter(
-                    httpUrl, "skyflow_ids", request.getSkyflowIds().get().toString(), false);
+                    httpUrl, "skyflow_ids", request.getSkyflowIds().get(), true);
         }
         if (request.getFields().isPresent()) {
             QueryStringMapper.addQueryParameter(
-                    httpUrl, "fields", request.getFields().get().toString(), false);
+                    httpUrl, "fields", request.getFields().get(), true);
         }
         if (request.getColumnValues().isPresent()) {
             QueryStringMapper.addQueryParameter(
-                    httpUrl, "column_values", request.getColumnValues().get().toString(), false);
+                    httpUrl, "column_values", request.getColumnValues().get(), true);
         }
         Request.Builder _requestBuilder = new Request.Builder()
                 .url(httpUrl.build())
                 .method("GET", null)
                 .headers(Headers.of(clientOptions.headers(requestOptions)))
-                .addHeader("Content-Type", "application/json")
                 .addHeader("Accept", "application/json");
         Request okhttpRequest = _requestBuilder.build();
         OkHttpClient client = clientOptions.httpClient();
@@ -406,25 +405,24 @@ public class RawRecordsClient {
                 .addPathSegment(id);
         if (request.getRedaction().isPresent()) {
             QueryStringMapper.addQueryParameter(
-                    httpUrl, "redaction", request.getRedaction().get().toString(), false);
+                    httpUrl, "redaction", request.getRedaction().get(), false);
         }
         if (request.getTokenization().isPresent()) {
             QueryStringMapper.addQueryParameter(
-                    httpUrl, "tokenization", request.getTokenization().get().toString(), false);
+                    httpUrl, "tokenization", request.getTokenization().get(), false);
         }
         if (request.getDownloadUrl().isPresent()) {
             QueryStringMapper.addQueryParameter(
-                    httpUrl, "downloadURL", request.getDownloadUrl().get().toString(), false);
+                    httpUrl, "downloadURL", request.getDownloadUrl().get(), false);
         }
         if (request.getFields().isPresent()) {
             QueryStringMapper.addQueryParameter(
-                    httpUrl, "fields", request.getFields().get().toString(), false);
+                    httpUrl, "fields", request.getFields().get(), true);
         }
         Request.Builder _requestBuilder = new Request.Builder()
                 .url(httpUrl.build())
                 .method("GET", null)
                 .headers(Headers.of(clientOptions.headers(requestOptions)))
-                .addHeader("Content-Type", "application/json")
                 .addHeader("Accept", "application/json");
         Request okhttpRequest = _requestBuilder.build();
         OkHttpClient client = clientOptions.httpClient();
@@ -557,7 +555,6 @@ public class RawRecordsClient {
                 .url(httpUrl)
                 .method("DELETE", null)
                 .headers(Headers.of(clientOptions.headers(requestOptions)))
-                .addHeader("Content-Type", "application/json")
                 .addHeader("Accept", "application/json")
                 .build();
         OkHttpClient client = clientOptions.httpClient();
@@ -643,7 +640,7 @@ public class RawRecordsClient {
                 body.addFormDataPart(
                         "fileColumnName",
                         fileColumnName.get().getName(),
-                        RequestBody.create(fileColumnNameMimeTypeMediaType, fileColumnName.get()));
+                        RequestBody.create(fileColumnName.get(), fileColumnNameMimeTypeMediaType));
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -710,7 +707,6 @@ public class RawRecordsClient {
                 .url(httpUrl)
                 .method("DELETE", null)
                 .headers(Headers.of(clientOptions.headers(requestOptions)))
-                .addHeader("Content-Type", "application/json")
                 .addHeader("Accept", "application/json")
                 .build();
         OkHttpClient client = clientOptions.httpClient();
@@ -770,7 +766,6 @@ public class RawRecordsClient {
                 .url(httpUrl)
                 .method("GET", null)
                 .headers(Headers.of(clientOptions.headers(requestOptions)))
-                .addHeader("Content-Type", "application/json")
                 .addHeader("Accept", "application/json")
                 .build();
         OkHttpClient client = clientOptions.httpClient();

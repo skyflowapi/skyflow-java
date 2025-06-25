@@ -111,6 +111,9 @@ public final class V1AdvancedOptions {
             return this;
         }
 
+        /**
+         * <p>No. of days by which original date has to be shifted to.</p>
+         */
         @JsonSetter(value = "date_shift", nulls = Nulls.SKIP)
         public Builder dateShift(Optional<Integer> dateShift) {
             this.dateShift = dateShift;
@@ -122,6 +125,9 @@ public final class V1AdvancedOptions {
             return this;
         }
 
+        /**
+         * <p>Custom client specific logic.</p>
+         */
         @JsonSetter(value = "custom_client", nulls = Nulls.SKIP)
         public Builder customClient(Optional<Boolean> customClient) {
             this.customClient = customClient;

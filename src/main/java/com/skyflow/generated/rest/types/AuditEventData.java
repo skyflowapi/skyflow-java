@@ -80,6 +80,9 @@ public final class AuditEventData {
             return this;
         }
 
+        /**
+         * <p>The entire body of the data requested or the query fired.</p>
+         */
         @JsonSetter(value = "content", nulls = Nulls.SKIP)
         public Builder content(Optional<String> content) {
             this.content = content;

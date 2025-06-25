@@ -261,6 +261,9 @@ public final class AuditEventContext {
             return this;
         }
 
+        /**
+         * <p>ID for the audit event.</p>
+         */
         @JsonSetter(value = "changeID", nulls = Nulls.SKIP)
         public Builder changeId(Optional<String> changeId) {
             this.changeId = changeId;
@@ -272,6 +275,9 @@ public final class AuditEventContext {
             return this;
         }
 
+        /**
+         * <p>ID for the request that caused the event.</p>
+         */
         @JsonSetter(value = "requestID", nulls = Nulls.SKIP)
         public Builder requestId(Optional<String> requestId) {
             this.requestId = requestId;
@@ -283,6 +289,9 @@ public final class AuditEventContext {
             return this;
         }
 
+        /**
+         * <p>ID for the request set by the service that received the request.</p>
+         */
         @JsonSetter(value = "traceID", nulls = Nulls.SKIP)
         public Builder traceId(Optional<String> traceId) {
             this.traceId = traceId;
@@ -294,6 +303,9 @@ public final class AuditEventContext {
             return this;
         }
 
+        /**
+         * <p>ID for the session in which the request was sent.</p>
+         */
         @JsonSetter(value = "sessionID", nulls = Nulls.SKIP)
         public Builder sessionId(Optional<String> sessionId) {
             this.sessionId = sessionId;
@@ -305,6 +317,9 @@ public final class AuditEventContext {
             return this;
         }
 
+        /**
+         * <p>Member who sent the request. Depending on <code>actorType</code>, this may be a user ID or a service account ID.</p>
+         */
         @JsonSetter(value = "actor", nulls = Nulls.SKIP)
         public Builder actor(Optional<String> actor) {
             this.actor = actor;
@@ -338,6 +353,9 @@ public final class AuditEventContext {
             return this;
         }
 
+        /**
+         * <p>IP Address of the client that made the request.</p>
+         */
         @JsonSetter(value = "ipAddress", nulls = Nulls.SKIP)
         public Builder ipAddress(Optional<String> ipAddress) {
             this.ipAddress = ipAddress;
@@ -349,6 +367,9 @@ public final class AuditEventContext {
             return this;
         }
 
+        /**
+         * <p>HTTP Origin request header (including scheme, hostname, and port) of the request.</p>
+         */
         @JsonSetter(value = "origin", nulls = Nulls.SKIP)
         public Builder origin(Optional<String> origin) {
             this.origin = origin;
@@ -371,6 +392,9 @@ public final class AuditEventContext {
             return this;
         }
 
+        /**
+         * <p>ID of the JWT token.</p>
+         */
         @JsonSetter(value = "jwtID", nulls = Nulls.SKIP)
         public Builder jwtId(Optional<String> jwtId) {
             this.jwtId = jwtId;
@@ -382,6 +406,9 @@ public final class AuditEventContext {
             return this;
         }
 
+        /**
+         * <p>Embedded User Context.</p>
+         */
         @JsonSetter(value = "bearerTokenContextID", nulls = Nulls.SKIP)
         public Builder bearerTokenContextId(Optional<String> bearerTokenContextId) {
             this.bearerTokenContextId = bearerTokenContextId;

@@ -121,6 +121,9 @@ public final class V1DetectStatusResponse {
             return this;
         }
 
+        /**
+         * <p>How the input file was specified.</p>
+         */
         @JsonSetter(value = "output", nulls = Nulls.SKIP)
         public Builder output(Optional<List<V1ProcessedFileOutput>> output) {
             this.output = output;
@@ -132,6 +135,9 @@ public final class V1DetectStatusResponse {
             return this;
         }
 
+        /**
+         * <p>Status details about the deidentification request.</p>
+         */
         @JsonSetter(value = "message", nulls = Nulls.SKIP)
         public Builder message(Optional<String> message) {
             this.message = message;

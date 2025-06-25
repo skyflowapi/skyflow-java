@@ -151,6 +151,9 @@ public final class V1AudioOptions {
             return this;
         }
 
+        /**
+         * <p>Padding added to the beginning of a bleep, in seconds.</p>
+         */
         @JsonSetter(value = "bleep_start_padding", nulls = Nulls.SKIP)
         public Builder bleepStartPadding(Optional<Float> bleepStartPadding) {
             this.bleepStartPadding = bleepStartPadding;
@@ -162,6 +165,9 @@ public final class V1AudioOptions {
             return this;
         }
 
+        /**
+         * <p>Padding added to the end of a bleep, in seconds.</p>
+         */
         @JsonSetter(value = "bleep_end_padding", nulls = Nulls.SKIP)
         public Builder bleepEndPadding(Optional<Float> bleepEndPadding) {
             this.bleepEndPadding = bleepEndPadding;
@@ -173,6 +179,9 @@ public final class V1AudioOptions {
             return this;
         }
 
+        /**
+         * <p>Specifies how the distortion will be made. Providing a number more than 0 will result in a higher tone and a coefficient less than 0 will result in a lower tone.</p>
+         */
         @JsonSetter(value = "distortion_steps", nulls = Nulls.SKIP)
         public Builder distortionSteps(Optional<Integer> distortionSteps) {
             this.distortionSteps = distortionSteps;
@@ -184,6 +193,9 @@ public final class V1AudioOptions {
             return this;
         }
 
+        /**
+         * <p>This parameter configures the frequency of the sine wave used for the bleep sound in an audio segment.</p>
+         */
         @JsonSetter(value = "bleep_frequency", nulls = Nulls.SKIP)
         public Builder bleepFrequency(Optional<Integer> bleepFrequency) {
             this.bleepFrequency = bleepFrequency;
@@ -195,6 +207,9 @@ public final class V1AudioOptions {
             return this;
         }
 
+        /**
+         * <p>It controls the relative loudness of the bleep,positive values increase its loudness, and negative values decrease it.</p>
+         */
         @JsonSetter(value = "bleep_gain", nulls = Nulls.SKIP)
         public Builder bleepGain(Optional<Integer> bleepGain) {
             this.bleepGain = bleepGain;

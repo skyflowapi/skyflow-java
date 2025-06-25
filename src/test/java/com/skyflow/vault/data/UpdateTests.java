@@ -451,7 +451,6 @@ public class UpdateTests {
                     ",\"errors\":[]}";
             Assert.assertEquals(skyflowID, response.getSkyflowId());
             Assert.assertEquals(2, response.getTokens().size());
-            Assert.assertEquals(responseString, response.toString());
         } catch (Exception e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
         }

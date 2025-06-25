@@ -141,30 +141,48 @@ public final class V1GetAuthTokenRequest {
     }
 
     public interface GrantTypeStage {
+        /**
+         * Grant type of the request. Set this to `urn:ietf:params:oauth:grant-type:jwt-bearer`.
+         */
         AssertionStage grantType(@NotNull String grantType);
 
         Builder from(V1GetAuthTokenRequest other);
     }
 
     public interface AssertionStage {
+        /**
+         * User-signed JWT token that contains the following fields: <br/> <ul><li><code>iss</code>: Issuer of the JWT.</li><li><code>key</code>: Unique identifier for the key.</li><li><code>aud</code>: Recipient the JWT is intended for.</li><li><code>exp</code>: Time the JWT expires.</li><li><code>sub</code>: Subject of the JWT.</li><li><code>ctx</code>: (Optional) Value for <a href='/context-aware-overview/'>Context-aware authorization</a>.</li></ul>
+         */
         _FinalStage assertion(@NotNull String assertion);
     }
 
     public interface _FinalStage {
         V1GetAuthTokenRequest build();
 
+        /**
+         * <p>Subject token.</p>
+         */
         _FinalStage subjectToken(Optional<String> subjectToken);
 
         _FinalStage subjectToken(String subjectToken);
 
+        /**
+         * <p>Subject token type.</p>
+         */
         _FinalStage subjectTokenType(Optional<String> subjectTokenType);
 
         _FinalStage subjectTokenType(String subjectTokenType);
 
+        /**
+         * <p>Token use type. Either <code>delegation</code> or <code>impersonation</code>.</p>
+         */
         _FinalStage requestedTokenUse(Optional<String> requestedTokenUse);
 
         _FinalStage requestedTokenUse(String requestedTokenUse);
 
+        /**
+         * <p>Subset of available &lt;a href='#Roles'&gt;roles&lt;/a&gt; to associate with the requested token. Uses the format &quot;role:&lt;roleID1&gt; role:&lt;roleID2&gt;&quot;.</p>
+         */
         _FinalStage scope(Optional<String> scope);
 
         _FinalStage scope(String scope);
@@ -201,7 +219,7 @@ public final class V1GetAuthTokenRequest {
         }
 
         /**
-         * <p>Grant type of the request. Set this to <code>urn:ietf:params:oauth:grant-type:jwt-bearer</code>.</p>
+         * Grant type of the request. Set this to `urn:ietf:params:oauth:grant-type:jwt-bearer`.<p>Grant type of the request. Set this to <code>urn:ietf:params:oauth:grant-type:jwt-bearer</code>.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
         @java.lang.Override
@@ -212,7 +230,7 @@ public final class V1GetAuthTokenRequest {
         }
 
         /**
-         * <p>User-signed JWT token that contains the following fields: &lt;br/&gt; &lt;ul&gt;&lt;li&gt;&lt;code&gt;iss&lt;/code&gt;: Issuer of the JWT.&lt;/li&gt;&lt;li&gt;&lt;code&gt;key&lt;/code&gt;: Unique identifier for the key.&lt;/li&gt;&lt;li&gt;&lt;code&gt;aud&lt;/code&gt;: Recipient the JWT is intended for.&lt;/li&gt;&lt;li&gt;&lt;code&gt;exp&lt;/code&gt;: Time the JWT expires.&lt;/li&gt;&lt;li&gt;&lt;code&gt;sub&lt;/code&gt;: Subject of the JWT.&lt;/li&gt;&lt;li&gt;&lt;code&gt;ctx&lt;/code&gt;: (Optional) Value for &lt;a href='/context-aware-overview/'&gt;Context-aware authorization&lt;/a&gt;.&lt;/li&gt;&lt;/ul&gt;</p>
+         * User-signed JWT token that contains the following fields: <br/> <ul><li><code>iss</code>: Issuer of the JWT.</li><li><code>key</code>: Unique identifier for the key.</li><li><code>aud</code>: Recipient the JWT is intended for.</li><li><code>exp</code>: Time the JWT expires.</li><li><code>sub</code>: Subject of the JWT.</li><li><code>ctx</code>: (Optional) Value for <a href='/context-aware-overview/'>Context-aware authorization</a>.</li></ul><p>User-signed JWT token that contains the following fields: &lt;br/&gt; &lt;ul&gt;&lt;li&gt;&lt;code&gt;iss&lt;/code&gt;: Issuer of the JWT.&lt;/li&gt;&lt;li&gt;&lt;code&gt;key&lt;/code&gt;: Unique identifier for the key.&lt;/li&gt;&lt;li&gt;&lt;code&gt;aud&lt;/code&gt;: Recipient the JWT is intended for.&lt;/li&gt;&lt;li&gt;&lt;code&gt;exp&lt;/code&gt;: Time the JWT expires.&lt;/li&gt;&lt;li&gt;&lt;code&gt;sub&lt;/code&gt;: Subject of the JWT.&lt;/li&gt;&lt;li&gt;&lt;code&gt;ctx&lt;/code&gt;: (Optional) Value for &lt;a href='/context-aware-overview/'&gt;Context-aware authorization&lt;/a&gt;.&lt;/li&gt;&lt;/ul&gt;</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
         @java.lang.Override
@@ -232,6 +250,9 @@ public final class V1GetAuthTokenRequest {
             return this;
         }
 
+        /**
+         * <p>Subset of available &lt;a href='#Roles'&gt;roles&lt;/a&gt; to associate with the requested token. Uses the format &quot;role:&lt;roleID1&gt; role:&lt;roleID2&gt;&quot;.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "scope", nulls = Nulls.SKIP)
         public _FinalStage scope(Optional<String> scope) {
@@ -249,6 +270,9 @@ public final class V1GetAuthTokenRequest {
             return this;
         }
 
+        /**
+         * <p>Token use type. Either <code>delegation</code> or <code>impersonation</code>.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "requested_token_use", nulls = Nulls.SKIP)
         public _FinalStage requestedTokenUse(Optional<String> requestedTokenUse) {
@@ -266,6 +290,9 @@ public final class V1GetAuthTokenRequest {
             return this;
         }
 
+        /**
+         * <p>Subject token type.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "subject_token_type", nulls = Nulls.SKIP)
         public _FinalStage subjectTokenType(Optional<String> subjectTokenType) {
@@ -283,6 +310,9 @@ public final class V1GetAuthTokenRequest {
             return this;
         }
 
+        /**
+         * <p>Subject token.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "subject_token", nulls = Nulls.SKIP)
         public _FinalStage subjectToken(Optional<String> subjectToken) {

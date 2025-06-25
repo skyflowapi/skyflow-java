@@ -129,6 +129,9 @@ public final class V1BinListRequest {
             return this;
         }
 
+        /**
+         * <p>Fields to return. If not specified, all fields are returned.</p>
+         */
         @JsonSetter(value = "fields", nulls = Nulls.SKIP)
         public Builder fields(Optional<List<String>> fields) {
             this.fields = fields;
@@ -140,6 +143,9 @@ public final class V1BinListRequest {
             return this;
         }
 
+        /**
+         * <p>BIN of the card.</p>
+         */
         @JsonSetter(value = "BIN", nulls = Nulls.SKIP)
         public Builder bin(Optional<String> bin) {
             this.bin = bin;
@@ -162,6 +168,9 @@ public final class V1BinListRequest {
             return this;
         }
 
+        /**
+         * <p>&lt;code&gt;skyflow_id&lt;/code&gt; of the record.</p>
+         */
         @JsonSetter(value = "skyflow_id", nulls = Nulls.SKIP)
         public Builder skyflowId(Optional<String> skyflowId) {
             this.skyflowId = skyflowId;

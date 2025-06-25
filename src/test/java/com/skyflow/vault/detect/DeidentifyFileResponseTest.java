@@ -4,6 +4,7 @@ import com.skyflow.generated.rest.types.DeidentifyFileOutputProcessedFileType;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.Collections;
 
@@ -11,7 +12,8 @@ public class DeidentifyFileResponseTest {
 
     @Test
     public void testAllGettersAndToString() {
-        String file = "output.pdf";
+        File fileObject = new File("test-path.txt");
+        String file = "test-path.txt";
         String type = "pdf";
         String extension = ".pdf";
         Integer wordCount = 100;
@@ -27,11 +29,10 @@ public class DeidentifyFileResponseTest {
         java.util.List<String> errors = Arrays.asList("error1", "error2");
 
         DeidentifyFileResponse response = new DeidentifyFileResponse(
-                file, type, extension, wordCount, charCount, sizeInKb,
+                fileObject, file, type, extension, wordCount, charCount, sizeInKb,
                 durationInSeconds, pageCount, slideCount, entities, runId, status, errors
         );
 
-        Assert.assertEquals(file, response.getFile());
         Assert.assertEquals(type, response.getType());
         Assert.assertEquals(extension, response.getExtension());
         Assert.assertEquals(wordCount, response.getWordCount());

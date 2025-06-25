@@ -191,20 +191,32 @@ public final class DeidentifyImageRequest {
     }
 
     public interface FileStage {
+        /**
+         * File to de-identify. Files are specified as Base64-encoded data.
+         */
         _FinalStage file(@NotNull DeidentifyImageRequestFile file);
     }
 
     public interface _FinalStage {
         DeidentifyImageRequest build();
 
+        /**
+         * <p>If <code>true</code>, includes processed image in the output.</p>
+         */
         _FinalStage outputProcessedImage(Optional<Boolean> outputProcessedImage);
 
         _FinalStage outputProcessedImage(Boolean outputProcessedImage);
 
+        /**
+         * <p>If <code>true</code>, includes OCR text output in the response.</p>
+         */
         _FinalStage outputOcrText(Optional<Boolean> outputOcrText);
 
         _FinalStage outputOcrText(Boolean outputOcrText);
 
+        /**
+         * <p>Method to mask the entities in the image.</p>
+         */
         _FinalStage maskingMethod(Optional<DeidentifyImageRequestMaskingMethod> maskingMethod);
 
         _FinalStage maskingMethod(DeidentifyImageRequestMaskingMethod maskingMethod);
@@ -280,7 +292,7 @@ public final class DeidentifyImageRequest {
         }
 
         /**
-         * <p>File to de-identify. Files are specified as Base64-encoded data.</p>
+         * File to de-identify. Files are specified as Base64-encoded data.<p>File to de-identify. Files are specified as Base64-encoded data.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
         @java.lang.Override
@@ -365,6 +377,9 @@ public final class DeidentifyImageRequest {
             return this;
         }
 
+        /**
+         * <p>Method to mask the entities in the image.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "masking_method", nulls = Nulls.SKIP)
         public _FinalStage maskingMethod(Optional<DeidentifyImageRequestMaskingMethod> maskingMethod) {
@@ -382,6 +397,9 @@ public final class DeidentifyImageRequest {
             return this;
         }
 
+        /**
+         * <p>If <code>true</code>, includes OCR text output in the response.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "output_ocr_text", nulls = Nulls.SKIP)
         public _FinalStage outputOcrText(Optional<Boolean> outputOcrText) {
@@ -399,6 +417,9 @@ public final class DeidentifyImageRequest {
             return this;
         }
 
+        /**
+         * <p>If <code>true</code>, includes processed image in the output.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "output_processed_image", nulls = Nulls.SKIP)
         public _FinalStage outputProcessedImage(Optional<Boolean> outputProcessedImage) {

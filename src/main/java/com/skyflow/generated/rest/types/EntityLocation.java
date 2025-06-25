@@ -130,6 +130,9 @@ public final class EntityLocation {
             return this;
         }
 
+        /**
+         * <p>Index of the first character of the string in the original text.</p>
+         */
         @JsonSetter(value = "start_index", nulls = Nulls.SKIP)
         public Builder startIndex(Optional<Integer> startIndex) {
             this.startIndex = startIndex;
@@ -141,6 +144,9 @@ public final class EntityLocation {
             return this;
         }
 
+        /**
+         * <p>Index of the last character of the string in the original text.</p>
+         */
         @JsonSetter(value = "end_index", nulls = Nulls.SKIP)
         public Builder endIndex(Optional<Integer> endIndex) {
             this.endIndex = endIndex;
@@ -152,6 +158,9 @@ public final class EntityLocation {
             return this;
         }
 
+        /**
+         * <p>Index of the first character of the string in the processed text.</p>
+         */
         @JsonSetter(value = "start_index_processed", nulls = Nulls.SKIP)
         public Builder startIndexProcessed(Optional<Integer> startIndexProcessed) {
             this.startIndexProcessed = startIndexProcessed;
@@ -163,6 +172,9 @@ public final class EntityLocation {
             return this;
         }
 
+        /**
+         * <p>Index of the last character of the string in the processed text.</p>
+         */
         @JsonSetter(value = "end_index_processed", nulls = Nulls.SKIP)
         public Builder endIndexProcessed(Optional<Integer> endIndexProcessed) {
             this.endIndexProcessed = endIndexProcessed;

@@ -97,18 +97,27 @@ public final class AdvancedOptionsColumnMapping {
     }
 
     public interface SessionIdStage {
+        /**
+         * Table name of the vault.
+         */
         DefaultStage sessionId(@NotNull String sessionId);
 
         Builder from(AdvancedOptionsColumnMapping other);
     }
 
     public interface DefaultStage {
+        /**
+         * Name of column to store data in when no explicit mapping exists.
+         */
         _FinalStage default_(@NotNull String default_);
     }
 
     public interface _FinalStage {
         AdvancedOptionsColumnMapping build();
 
+        /**
+         * <p>Column mapping for different entities.</p>
+         */
         _FinalStage entityColumnMap(Optional<List<AdvancedOptionsEntityColumnMap>> entityColumnMap);
 
         _FinalStage entityColumnMap(List<AdvancedOptionsEntityColumnMap> entityColumnMap);
@@ -136,7 +145,7 @@ public final class AdvancedOptionsColumnMapping {
         }
 
         /**
-         * <p>Table name of the vault.</p>
+         * Table name of the vault.<p>Table name of the vault.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
         @java.lang.Override
@@ -147,7 +156,7 @@ public final class AdvancedOptionsColumnMapping {
         }
 
         /**
-         * <p>Name of column to store data in when no explicit mapping exists.</p>
+         * Name of column to store data in when no explicit mapping exists.<p>Name of column to store data in when no explicit mapping exists.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
         @java.lang.Override
@@ -167,6 +176,9 @@ public final class AdvancedOptionsColumnMapping {
             return this;
         }
 
+        /**
+         * <p>Column mapping for different entities.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "entity_column_map", nulls = Nulls.SKIP)
         public _FinalStage entityColumnMap(Optional<List<AdvancedOptionsEntityColumnMap>> entityColumnMap) {

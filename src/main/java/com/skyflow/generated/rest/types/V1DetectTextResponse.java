@@ -98,6 +98,9 @@ public final class V1DetectTextResponse {
             return this;
         }
 
+        /**
+         * <p>Deidentified text. If the input was a file, text that was extracted or transcribed from the file and deidentified.</p>
+         */
         @JsonSetter(value = "processed_text", nulls = Nulls.SKIP)
         public Builder processedText(Optional<String> processedText) {
             this.processedText = processedText;
@@ -109,6 +112,9 @@ public final class V1DetectTextResponse {
             return this;
         }
 
+        /**
+         * <p>Detected entities.</p>
+         */
         @JsonSetter(value = "entities", nulls = Nulls.SKIP)
         public Builder entities(Optional<List<V1ResponseEntities>> entities) {
             this.entities = entities;

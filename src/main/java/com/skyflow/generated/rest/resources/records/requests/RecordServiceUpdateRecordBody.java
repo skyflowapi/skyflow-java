@@ -119,6 +119,9 @@ public final class RecordServiceUpdateRecordBody {
             return this;
         }
 
+        /**
+         * <p>If <code>true</code>, this operation returns tokens for fields with tokenization enabled.</p>
+         */
         @JsonSetter(value = "tokenization", nulls = Nulls.SKIP)
         public Builder tokenization(Optional<Boolean> tokenization) {
             this.tokenization = tokenization;

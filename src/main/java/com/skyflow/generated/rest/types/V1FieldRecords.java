@@ -97,6 +97,9 @@ public final class V1FieldRecords {
             return this;
         }
 
+        /**
+         * <p>Fields and values for the record. For example, <code>{'field_1':'value_1', 'field_2':'value_2'}</code>.</p>
+         */
         @JsonSetter(value = "fields", nulls = Nulls.SKIP)
         public Builder fields(Optional<Map<String, Object>> fields) {
             this.fields = fields;
@@ -108,6 +111,9 @@ public final class V1FieldRecords {
             return this;
         }
 
+        /**
+         * <p>Fields and tokens for the record. For example, <code>{'field_1':'token_1', 'field_2':'token_2'}</code>.</p>
+         */
         @JsonSetter(value = "tokens", nulls = Nulls.SKIP)
         public Builder tokens(Optional<Map<String, Object>> tokens) {
             this.tokens = tokens;

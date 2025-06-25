@@ -95,7 +95,12 @@ public final class DetectController extends VaultClient {
 
             String vaultId = super.getVaultConfig().getVaultId();
 
-            File file = request.getFile();
+            File file;
+            if (request.getFileInput().getFilePath() != null) {
+                file = new File(request.getFileInput().getFilePath());
+            } else {
+                file = request.getFileInput().getFile();
+            }
             String fileName = file.getName();
             String fileExtension = getFileExtension(fileName);
             String base64Content;
@@ -115,7 +120,7 @@ public final class DetectController extends VaultClient {
             }
 
             if ("SUCCESS".equalsIgnoreCase(response.getStatus())) {
-                String base64File = response.getFile();
+                String base64File = response.getFileBase64();
                 if (base64File != null) {
                     byte[] decodedBytes = Base64.getDecoder().decode(base64File);
                     String outputDir = request.getOutputDirectory();
@@ -170,6 +175,7 @@ public final class DetectController extends VaultClient {
                     if (currentWaitTime >= maxWaitTime) {
                         return new DeidentifyFileResponse(
                                 null,  // file
+                                null, // file base64
                                 null,  // type
                                 null,  // extension
                                 null,  // wordCount
@@ -181,7 +187,7 @@ public final class DetectController extends VaultClient {
                                 null,  // entities
                                 runId, // runId
                                 "IN_PROGRESS", // status
-                                new ArrayList<>() // errors
+                                null // errors
                         );
                     }
 
@@ -212,7 +218,7 @@ public final class DetectController extends VaultClient {
 
 
     private static synchronized DeidentifyFileResponse parseDeidentifyFileResponse(DeidentifyStatusResponse response,
-                                                                                   String runId, String status) {
+                                                                                   String runId, String status) throws SkyflowException {
         DeidentifyFileOutput firstOutput = getFirstOutput(response);
 
         Object wordCharObj = response.getAdditionalProperties().get("word_character_count");
@@ -231,8 +237,25 @@ public final class DetectController extends VaultClient {
             }
         }
 
+        File processedFileObject = null;
+        Optional<String> processedFileBase64 = firstOutput != null ? firstOutput.getProcessedFile() : Optional.empty();
+        Optional<String> processedFileExtension = firstOutput != null ? firstOutput.getProcessedFileExtension() : Optional.empty();
+
+        if (processedFileBase64.isPresent() && processedFileExtension.isPresent()) {
+            try {
+                byte[] decodedBytes = Base64.getDecoder().decode(processedFileBase64.get());
+                String suffix = "." + processedFileExtension.get();
+                processedFileObject = File.createTempFile("deidentified", suffix);
+                processedFileObject.deleteOnExit();
+
+                Files.write(processedFileObject.toPath(), decodedBytes);
+            } catch (IOException ioe) {
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.FailedToEncodeFile.getMessage());
+            }
+        }
 
         return new DeidentifyFileResponse(
+                processedFileObject,
                 firstOutput.getProcessedFile().orElse(null),
                 firstOutput.getProcessedFileType().get().toString(),
                 firstOutput.getProcessedFileExtension().get(),
@@ -245,7 +268,7 @@ public final class DetectController extends VaultClient {
                 getEntities(response),
                 runId,
                 status,
-                new ArrayList<>()
+                null
         );
     }
 

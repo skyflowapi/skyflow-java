@@ -97,6 +97,9 @@ public final class V1ImageOptions {
             return this;
         }
 
+        /**
+         * <p>If <code>true</code>, includes processed image in the output.</p>
+         */
         @JsonSetter(value = "output_processed_image", nulls = Nulls.SKIP)
         public Builder outputProcessedImage(Optional<Boolean> outputProcessedImage) {
             this.outputProcessedImage = outputProcessedImage;
@@ -108,6 +111,9 @@ public final class V1ImageOptions {
             return this;
         }
 
+        /**
+         * <p>If <code>true</code>, includes OCR text output in the response.</p>
+         */
         @JsonSetter(value = "output_ocr_text", nulls = Nulls.SKIP)
         public Builder outputOcrText(Optional<Boolean> outputOcrText) {
             this.outputOcrText = outputOcrText;

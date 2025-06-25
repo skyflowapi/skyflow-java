@@ -116,6 +116,9 @@ public final class V1DetokenizePayload {
             return this;
         }
 
+        /**
+         * <p>Detokenization details.</p>
+         */
         @JsonSetter(value = "detokenizationParameters", nulls = Nulls.SKIP)
         public Builder detokenizationParameters(Optional<List<V1DetokenizeRecordRequest>> detokenizationParameters) {
             this.detokenizationParameters = detokenizationParameters;
@@ -127,6 +130,9 @@ public final class V1DetokenizePayload {
             return this;
         }
 
+        /**
+         * <p>If <code>true</code>, returns download URLs for fields with a file data type. URLs are valid for 15 minutes. If virus scanning is enabled, only returns if the file is clean.</p>
+         */
         @JsonSetter(value = "downloadURL", nulls = Nulls.SKIP)
         public Builder downloadUrl(Optional<Boolean> downloadUrl) {
             this.downloadUrl = downloadUrl;
@@ -138,6 +144,9 @@ public final class V1DetokenizePayload {
             return this;
         }
 
+        /**
+         * <p>If <code>true</code>, the detokenization request continues even if an error occurs.</p>
+         */
         @JsonSetter(value = "continueOnError", nulls = Nulls.SKIP)
         public Builder continueOnError(Optional<Boolean> continueOnError) {
             this.continueOnError = continueOnError;

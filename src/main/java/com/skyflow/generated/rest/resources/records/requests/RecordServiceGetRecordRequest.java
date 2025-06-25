@@ -133,6 +133,9 @@ public final class RecordServiceGetRecordRequest {
             return this;
         }
 
+        /**
+         * <p>Fields to return for the record, with one value per <code>fields</code> URL parameter. For example, <code>?fields=abc&amp;fields=123</code>.&lt;br /&gt;&lt;br /&gt;If not specified, returns all fields.</p>
+         */
         @JsonSetter(value = "fields", nulls = Nulls.SKIP)
         public Builder fields(Optional<List<String>> fields) {
             this.fields = fields;
@@ -149,6 +152,9 @@ public final class RecordServiceGetRecordRequest {
             return this;
         }
 
+        /**
+         * <p>Redaction level to enforce for the returned record. Subject to policies assigned to the API caller.</p>
+         */
         @JsonSetter(value = "redaction", nulls = Nulls.SKIP)
         public Builder redaction(Optional<RecordServiceGetRecordRequestRedaction> redaction) {
             this.redaction = redaction;
@@ -160,6 +166,9 @@ public final class RecordServiceGetRecordRequest {
             return this;
         }
 
+        /**
+         * <p>If <code>true</code>, this operation returns tokens for fields with tokenization enabled. Only applicable if <code>skyflow_id</code> values are specified.</p>
+         */
         @JsonSetter(value = "tokenization", nulls = Nulls.SKIP)
         public Builder tokenization(Optional<Boolean> tokenization) {
             this.tokenization = tokenization;
@@ -171,6 +180,9 @@ public final class RecordServiceGetRecordRequest {
             return this;
         }
 
+        /**
+         * <p>If <code>true</code>, returns download URLs for fields with a file data type. URLs are valid for 15 minutes. If virus scanning is enabled, only returns if the file is clean.</p>
+         */
         @JsonSetter(value = "downloadURL", nulls = Nulls.SKIP)
         public Builder downloadUrl(Optional<Boolean> downloadUrl) {
             this.downloadUrl = downloadUrl;

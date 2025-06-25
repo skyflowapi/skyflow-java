@@ -8,12 +8,14 @@ import org.junit.Test;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Collections;
 
 public class DeidentifyFileRequestTest {
 
     @Test
     public void testBuilderAndGetters() {
         File file = new File("test.txt");
+        FileInput fileInput = FileInput.builder().file(file).build();
         DetectEntities entity = DetectEntities.DOB;
         MaskingMethod maskingMethod = MaskingMethod.BLACKBOX;
         DetectOutputTranscriptions transcription = DetectOutputTranscriptions.TRANSCRIPTION;
@@ -21,7 +23,7 @@ public class DeidentifyFileRequestTest {
         int waitTime = 42;
 
         DeidentifyFileRequest request = DeidentifyFileRequest.builder()
-                .file(file)
+                .file(fileInput)
                 .entities(Arrays.asList(entity))
                 .allowRegexList(Arrays.asList("a.*"))
                 .restrictRegexList(Arrays.asList("b.*"))
@@ -34,7 +36,6 @@ public class DeidentifyFileRequestTest {
                 .waitTime(waitTime)
                 .build();
 
-        Assert.assertEquals(file, request.getFile());
         Assert.assertEquals(entity, request.getEntities().get(0));
         Assert.assertEquals("a.*", request.getAllowRegexList().get(0));
         Assert.assertEquals("b.*", request.getRestrictRegexList().get(0));
@@ -55,5 +56,44 @@ public class DeidentifyFileRequestTest {
         Assert.assertFalse(request.getOutputProcessedAudio());
         Assert.assertNull(request.getOutputDirectory());
         Assert.assertNull(request.getWaitTime());
+    }
+
+    @Test
+    public void testBuilderWithFilePath() {
+        String filePath = "/tmp/test.txt";
+        FileInput fileInput = FileInput.builder().filePath(filePath).build();
+        DeidentifyFileRequest request = DeidentifyFileRequest.builder()
+                .file(fileInput)
+                .entities(Collections.singletonList(DetectEntities.DOB))
+                .build();
+
+        Assert.assertEquals(filePath, request.getFileInput().getFilePath());
+        Assert.assertNull(request.getFileInput().getFile());
+    }
+
+    @Test
+    public void testBuilderWithFileAndFilePath() {
+        File file = new File("test.txt");
+        String filePath = "/tmp/test.txt";
+        FileInput fileInput = FileInput.builder().file(file).filePath(filePath).build();
+        DeidentifyFileRequest request = DeidentifyFileRequest.builder()
+                .file(fileInput)
+                .entities(Collections.singletonList(DetectEntities.DOB))
+                .build();
+
+        Assert.assertEquals(file, request.getFileInput().getFile());
+        Assert.assertEquals(filePath, request.getFileInput().getFilePath());
+    }
+
+    @Test
+    public void testBuilderWithNullFileAndFilePath() {
+        FileInput fileInput = FileInput.builder().build();
+        DeidentifyFileRequest request = DeidentifyFileRequest.builder()
+                .file(fileInput)
+                .entities(Collections.singletonList(DetectEntities.DOB))
+                .build();
+
+        Assert.assertNull(request.getFileInput().getFile());
+        Assert.assertNull(request.getFileInput().getFilePath());
     }
 }

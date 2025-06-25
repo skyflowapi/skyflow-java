@@ -105,6 +105,9 @@ public final class AdvancedOptionsEntityColumnMap {
             return this;
         }
 
+        /**
+         * <p>Column name where the entity has to be stored.</p>
+         */
         @JsonSetter(value = "column_name", nulls = Nulls.SKIP)
         public Builder columnName(Optional<String> columnName) {
             this.columnName = columnName;
