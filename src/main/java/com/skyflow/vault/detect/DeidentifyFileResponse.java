@@ -43,6 +43,9 @@ public class DeidentifyFileResponse {
         this.errors = errors;
     }
 
+    public DeidentifyFileResponse(String runId, String status) {
+        this(null, null, null, null, null, null, null, null, null, null, null, runId, status, null);
+    }
 
     public File getFile() {
         return file;

@@ -56,9 +56,9 @@ public class SkyflowException extends Exception {
 
             // If already valid JSON, parsing it directly
             try {
-                JsonObject obj = JsonParser.parseString(responseBody).getAsJsonObject();
+                JsonObject responseBodyObject = JsonParser.parseString(responseBody).getAsJsonObject();
                 // If it's valid JSON and has error object, return as is
-                if (obj.has("error")) {
+                if (responseBodyObject.has("error")) {
                     return responseBody;
                 }
                 return "";
@@ -138,59 +138,22 @@ public class SkyflowException extends Exception {
         }
     }
 
-    // For legacy error structure
-    private void setMessage() {
-        JsonElement messageElement = ((JsonObject) responseBody.get("error")).get("message");
-        this.message = messageElement == null ? null : messageElement.getAsString();
-    }
 
-    // For new error structure
     private void setMessage(JsonObject errorObj) {
         JsonElement messageElement = errorObj.get("message");
         this.message = messageElement == null ? null : messageElement.getAsString();
     }
 
-    // For legacy error structure
-    private void setGrpcCode() {
-        JsonElement grpcElement = ((JsonObject) responseBody.get("error")).get("grpc_code");
-        this.grpcCode = grpcElement == null ? null : grpcElement.getAsInt();
-    }
-
-    // For new error structure
     private void setGrpcCode(JsonObject errorObj) {
         JsonElement grpcElement = errorObj.get("grpc_code");
         this.grpcCode = grpcElement == null ? null : grpcElement.getAsInt();
     }
 
-    // For legacy error structure
-    private void setHttpStatus() {
-        JsonElement statusElement = ((JsonObject) responseBody.get("error")).get("http_status");
-        this.httpStatus = statusElement == null ? null : statusElement.getAsString();
-    }
-
-    // For new error structure
     private void setHttpStatus(JsonObject errorObj) {
         JsonElement statusElement = errorObj.get("http_status");
         this.httpStatus = statusElement == null ? null : statusElement.getAsString();
     }
 
-    // For legacy error structure
-    private void setDetails(Map<String, List<String>> responseHeaders) {
-        JsonElement detailsElement = ((JsonObject) responseBody.get("error")).get("details");
-        List<String> errorFromClientHeader = responseHeaders.get("error-from-client");
-        if (detailsElement != null) {
-            this.details = detailsElement.getAsJsonArray();
-        }
-        if (errorFromClientHeader != null) {
-            this.details = this.details == null ? new JsonArray() : this.details;
-            String errorFromClient = errorFromClientHeader.get(0);
-            JsonObject detailObject = new JsonObject();
-            detailObject.addProperty("errorFromClient", errorFromClient);
-            this.details.add(detailObject);
-        }
-    }
-
-    // For new error structure
     private void setDetails(JsonObject errorObj, Map<String, List<String>> responseHeaders) {
         JsonElement detailsElement = errorObj.get("details");
         List<String> errorFromClientHeader = responseHeaders.get("error-from-client");

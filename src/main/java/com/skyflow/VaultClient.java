@@ -194,14 +194,9 @@ public class VaultClient {
         for (ColumnValue columnValue : request.getColumnValues()) {
             V1TokenizeRecordRequest.Builder recordBuilder = V1TokenizeRecordRequest.builder();
             String value = columnValue.getValue();
-            if (value != null) {
-                recordBuilder.value(value);
-            }
+            recordBuilder.value(value);
             String columnGroup = columnValue.getColumnGroup();
-            if (columnGroup != null) {
-                recordBuilder.columnGroup(columnGroup);
-            }
-
+            recordBuilder.columnGroup(columnGroup);
             tokenizationParameters.add(recordBuilder.build());
         }
 
@@ -509,7 +504,6 @@ public class VaultClient {
                 .build();
     }
 
-    // Add to VaultClient.java class
     protected DeidentifyPdfRequest getDeidentifyPdfRequest(DeidentifyFileRequest request, String vaultId, String base64Content) {
         List<EntityType> mappedEntityTypes = getEntityTypes(request.getEntities());
 

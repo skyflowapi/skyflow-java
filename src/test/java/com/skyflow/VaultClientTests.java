@@ -5,11 +5,16 @@ import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.*;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.generated.rest.resources.files.FilesClient;
 import com.skyflow.generated.rest.resources.files.requests.*;
+import com.skyflow.generated.rest.resources.query.QueryClient;
 import com.skyflow.generated.rest.resources.records.RecordsClient;
 import com.skyflow.generated.rest.resources.records.requests.RecordServiceBatchOperationBody;
 import com.skyflow.generated.rest.resources.records.requests.RecordServiceInsertRecordBody;
 import com.skyflow.generated.rest.resources.records.requests.RecordServiceUpdateRecordBody;
+import com.skyflow.generated.rest.resources.strings.StringsClient;
+import com.skyflow.generated.rest.resources.strings.requests.DeidentifyStringRequest;
+import com.skyflow.generated.rest.resources.strings.requests.ReidentifyStringRequest;
 import com.skyflow.generated.rest.resources.tokens.TokensClient;
 import com.skyflow.generated.rest.resources.tokens.requests.V1DetokenizePayload;
 import com.skyflow.generated.rest.resources.tokens.requests.V1TokenizePayload;
@@ -96,6 +101,42 @@ public class VaultClientTests {
     }
 
     @Test
+    public void testVaultClientDetectAPI() {
+        try {
+            Credentials credentials = new Credentials();
+            credentials.setApiKey("sky-ab123-abcd1234cdef1234abcd4321cdef4321");
+            vaultConfig.setCredentials(credentials);
+            vaultClient = new VaultClient(vaultConfig, credentials);
+            vaultClient.setBearerToken();
+
+            FilesClient filesClient = vaultClient.getDetectFileAPi();
+            Assert.assertNotNull("FilesClient should not be null", filesClient);
+        } catch (Exception e) {
+
+            e.printStackTrace();
+            Assert.fail("Should not have thrown any exception: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void testVaultClientDetectTextAPI() {
+        try {
+            Credentials credentials = new Credentials();
+            credentials.setApiKey("sky-ab123-abcd1234cdef1234abcd4321cdef4321");
+            vaultConfig.setCredentials(credentials);
+            vaultClient = new VaultClient(vaultConfig, credentials);
+            vaultClient.setBearerToken();
+
+            StringsClient stringsClient = vaultClient.getDetectTextApi();
+            Assert.assertNotNull("StringsClient should not be null", stringsClient);
+        } catch (Exception e) {
+
+            e.printStackTrace();
+            Assert.fail("Should not have thrown any exception: " + e.getMessage());
+        }
+    }
+
+    @Test
     public void testVaultClientGetTokensAPI() {
         try {
             Credentials credentials = new Credentials();
@@ -110,7 +151,6 @@ public class VaultClientTests {
         }
     }
 
-
     @Test
     public void testVaultClientGetQueryAPI() {
         try {
@@ -120,6 +160,8 @@ public class VaultClientTests {
 
             vaultClient = new VaultClient(vaultConfig, credentials);
             vaultClient.setBearerToken();
+            QueryClient queryClient = vaultClient.getQueryApi();
+            Assert.assertNotNull("QueryClient should not be null", queryClient);
         } catch (Exception e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
         }
@@ -693,5 +735,230 @@ public class VaultClientTests {
 
         Assert.assertEquals(vaultId, textRequest.getVaultId());
         Assert.assertEquals(base64Content, textRequest.getFile().getBase64());
+    }
+
+    @Test
+    public void testGetDeidentifyStringRequest_AllTokenFormatFields() throws Exception {
+        List<DetectEntities> entities = Arrays.asList(DetectEntities.DOB);
+        List<DetectEntities> vaultToken = Collections.singletonList(DetectEntities.SSN);
+        List<DetectEntities> entityOnly = Collections.singletonList(DetectEntities.DOB);
+        List<DetectEntities> entityUniqueCounter = Collections.singletonList(DetectEntities.NAME);
+
+        TokenFormat tokenFormat = TokenFormat.builder()
+                .vaultToken(vaultToken)
+                .entityOnly(entityOnly)
+                .entityUniqueCounter(entityUniqueCounter)
+                .build();
+
+        List<String> allowRegex = Collections.singletonList("a.*");
+        List<String> restrictRegex = Collections.singletonList("b.*");
+
+        DateTransformation dateTransformation = new DateTransformation(10, 5, entities);
+        Transformations transformations = new Transformations(dateTransformation);
+
+        DeidentifyTextRequest req = DeidentifyTextRequest.builder()
+                .text("Sensitive data")
+                .entities(entities)
+                .allowRegexList(allowRegex)
+                .restrictRegexList(restrictRegex)
+                .tokenFormat(tokenFormat)
+                .transformations(transformations)
+                .build();
+
+        DeidentifyStringRequest result = vaultClient.getDeidentifyStringRequest(req, "vaultId");
+        Assert.assertNotNull(result);
+        Assert.assertEquals("vaultId", result.getVaultId());
+        Assert.assertEquals("Sensitive data", result.getText());
+        Assert.assertTrue(result.getAllowRegex().isPresent());
+        Assert.assertTrue(result.getRestrictRegex().isPresent());
+        Assert.assertTrue(result.getTransformations().isPresent());
+    }
+
+    @Test
+    public void testGetDeidentifyStringRequest_NullTokenFormatAndEntities() throws Exception {
+        DeidentifyTextRequest req = DeidentifyTextRequest.builder()
+                .text("No entities or tokenFormat")
+                .build();
+
+        DeidentifyStringRequest result = vaultClient.getDeidentifyStringRequest(req, "vaultId");
+        Assert.assertNotNull(result);
+        Assert.assertEquals("vaultId", result.getVaultId());
+        Assert.assertEquals("No entities or tokenFormat", result.getText());
+    }
+
+    @Test
+    public void testGetReidentifyStringRequest_AllFields() throws Exception {
+        List<DetectEntities> masked = Arrays.asList(DetectEntities.NAME, DetectEntities.DOB);
+        List<DetectEntities> plaintext = Collections.singletonList(DetectEntities.SSN);
+        List<DetectEntities> redacted = Collections.singletonList(DetectEntities.DATE);
+
+        ReidentifyTextRequest req = ReidentifyTextRequest.builder()
+                .text("Sensitive data")
+                .maskedEntities(masked)
+                .plainTextEntities(plaintext)
+                .redactedEntities(redacted)
+                .build();
+
+        ReidentifyStringRequest result = vaultClient.getReidentifyStringRequest(req, "vaultId");
+        Assert.assertNotNull(result);
+        Assert.assertEquals("vaultId", result.getVaultId());
+        Assert.assertEquals("Sensitive data", result.getText());
+        Assert.assertNotNull(result.getFormat());
+    }
+
+    @Test
+    public void testGetReidentifyStringRequest_NullFields() throws Exception {
+        ReidentifyTextRequest req = ReidentifyTextRequest.builder()
+                .text("No entities")
+                .build();
+
+        ReidentifyStringRequest result = vaultClient.getReidentifyStringRequest(req, "vaultId");
+        Assert.assertNotNull(result);
+        Assert.assertEquals("vaultId", result.getVaultId());
+        Assert.assertEquals("No entities", result.getText());
+        Assert.assertNotNull(result.getFormat());
+    }
+
+    @Test
+    public void testGetTransformations_NullInput() throws Exception {
+        // Should return null if input is null
+        java.lang.reflect.Method method = VaultClient.class.getDeclaredMethod("getTransformations", Transformations.class);
+        method.setAccessible(true);
+        Object result = method.invoke(vaultClient, new Object[]{null});
+        Assert.assertNull(result);
+    }
+
+    @Test
+    public void testGetTransformations_NullShiftDates() throws Exception {
+        Transformations transformations = new Transformations(null);
+        java.lang.reflect.Method method = VaultClient.class.getDeclaredMethod("getTransformations", Transformations.class);
+        method.setAccessible(true);
+        Object result = method.invoke(vaultClient, transformations);
+        Assert.assertNull(result);
+    }
+
+    @Test
+    public void testGetTransformations_EmptyEntities() throws Exception {
+        DateTransformation dateTransformation = new DateTransformation(10, 5, new ArrayList<>());
+        Transformations transformations = new Transformations(dateTransformation);
+        java.lang.reflect.Method method = VaultClient.class.getDeclaredMethod("getTransformations", Transformations.class);
+        method.setAccessible(true);
+        Object result = method.invoke(vaultClient, transformations);
+        Assert.assertNotNull(result);
+        // Should have empty entityTypes list
+        com.skyflow.generated.rest.types.Transformations restTransform = (com.skyflow.generated.rest.types.Transformations) result;
+        Assert.assertTrue(restTransform.getShiftDates().get().getEntityTypes().get().isEmpty());
+    }
+
+    @Test
+    public void testGetTransformations_WithEntities() throws Exception {
+        List<DetectEntities> entities = Arrays.asList(DetectEntities.DOB, DetectEntities.DATE);
+        DateTransformation dateTransformation = new DateTransformation(20, 5, entities);
+        Transformations transformations = new Transformations(dateTransformation);
+        java.lang.reflect.Method method = VaultClient.class.getDeclaredMethod("getTransformations", Transformations.class);
+        method.setAccessible(true);
+        Object result = method.invoke(vaultClient, transformations);
+        Assert.assertNotNull(result);
+        com.skyflow.generated.rest.types.Transformations restTransform = (com.skyflow.generated.rest.types.Transformations) result;
+        Assert.assertEquals(2, restTransform.getShiftDates().get().getEntityTypes().get().size());
+    }
+
+    @Test
+    public void testGetDeidentifyGenericFileRequest_AllFields() {
+        File file = new File("test.custom");
+        FileInput fileInput = FileInput.builder().file(file).build();
+        List<DetectEntities> entities = Arrays.asList(DetectEntities.NAME, DetectEntities.DOB);
+        TokenFormat tokenFormat = TokenFormat.builder().entityOnly(entities).build();
+
+        DeidentifyFileRequest request = DeidentifyFileRequest.builder()
+                .file(fileInput)
+                .entities(entities)
+                .tokenFormat(tokenFormat)
+                .allowRegexList(Arrays.asList("a.*"))
+                .restrictRegexList(Arrays.asList("b.*"))
+                .build();
+
+        String vaultId = "vault123";
+        String base64Content = "base64string";
+        String fileExtension = "txt";
+
+        com.skyflow.generated.rest.resources.files.requests.DeidentifyFileRequest genericRequest =
+                vaultClient.getDeidentifyGenericFileRequest(request, vaultId, base64Content, fileExtension);
+
+        Assert.assertEquals(vaultId, genericRequest.getVaultId());
+        Assert.assertEquals(base64Content, genericRequest.getFile().getBase64());
+        Assert.assertNotNull(genericRequest.getEntityTypes());
+        Assert.assertNotNull(genericRequest.getTokenType());
+        Assert.assertTrue(genericRequest.getAllowRegex().isPresent());
+        Assert.assertTrue(genericRequest.getRestrictRegex().isPresent());
+    }
+
+    @Test
+    public void testMapAudioDataFormat_mp3() throws Exception {
+        java.lang.reflect.Method method = VaultClient.class.getDeclaredMethod("mapAudioDataFormat", String.class);
+        method.setAccessible(true);
+        Object result = method.invoke(vaultClient, "mp3");
+        Assert.assertEquals(com.skyflow.generated.rest.resources.files.types.DeidentifyAudioRequestFileDataFormat.MP_3, result);
+    }
+
+    @Test
+    public void testMapAudioDataFormat_wav() throws Exception {
+        java.lang.reflect.Method method = VaultClient.class.getDeclaredMethod("mapAudioDataFormat", String.class);
+        method.setAccessible(true);
+        Object result = method.invoke(vaultClient, "wav");
+        Assert.assertEquals(com.skyflow.generated.rest.resources.files.types.DeidentifyAudioRequestFileDataFormat.WAV, result);
+    }
+
+    @Test
+    public void testMapAudioDataFormat_invalid() throws Exception {
+        java.lang.reflect.Method method = VaultClient.class.getDeclaredMethod("mapAudioDataFormat", String.class);
+        method.setAccessible(true);
+        try {
+            method.invoke(vaultClient, "ogg");
+            Assert.fail("Should throw SkyflowException for invalid audio type");
+        } catch (Exception e) {
+            Throwable cause = e.getCause();
+            Assert.assertTrue(cause instanceof SkyflowException);
+        }
+    }
+
+    @Test
+    public void testPrioritiseCredentials_VaultConfigCredentials() throws Exception {
+        Credentials creds = new Credentials();
+        creds.setApiKey("test_api_key");
+        vaultConfig.setCredentials(creds);
+
+        java.lang.reflect.Method method = VaultClient.class.getDeclaredMethod("prioritiseCredentials");
+        method.setAccessible(true);
+        method.invoke(vaultClient);
+
+        Assert.assertEquals(creds, getPrivateField(vaultClient, "finalCredentials"));
+    }
+
+    @Test
+    public void testPrioritiseCredentials_CommonCredentials() throws Exception {
+        vaultConfig.setCredentials(null);
+        Credentials creds = new Credentials();
+        creds.setApiKey("common_api_key");
+        setPrivateField(vaultClient, "commonCredentials", creds);
+
+        java.lang.reflect.Method method = VaultClient.class.getDeclaredMethod("prioritiseCredentials");
+        method.setAccessible(true);
+        method.invoke(vaultClient);
+
+        Assert.assertEquals(creds, getPrivateField(vaultClient, "finalCredentials"));
+    }
+
+    // Helper methods for reflection field access
+    private Object getPrivateField(Object obj, String fieldName) throws Exception {
+        java.lang.reflect.Field field = obj.getClass().getDeclaredField(fieldName);
+        field.setAccessible(true);
+        return field.get(obj);
+    }
+
+    private void setPrivateField(Object obj, String fieldName, Object value) throws Exception {
+        java.lang.reflect.Field field = obj.getClass().getDeclaredField(fieldName);
+        field.setAccessible(true);
+        field.set(obj, value);
     }
 }

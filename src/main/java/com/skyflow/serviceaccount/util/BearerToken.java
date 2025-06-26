@@ -1,9 +1,6 @@
 package com.skyflow.serviceaccount.util;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.google.gson.JsonSyntaxException;
+import com.google.gson.*;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
@@ -31,6 +28,7 @@ import java.util.Date;
 import java.util.Objects;
 
 public class BearerToken {
+    private static final Gson gson = new GsonBuilder().serializeNulls().create();
     private static final ApiClientBuilder apiClientBuilder = new ApiClientBuilder();
     private final File credentialsFile;
     private final String credentialsString;
@@ -140,9 +138,9 @@ public class BearerToken {
             LogUtil.printErrorLog(ErrorLogs.INVALID_TOKEN_URI.getLog());
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidTokenUri.getMessage());
         } catch (ApiClientApiException e) {
+            String bodyString = gson.toJson(e.body());
             LogUtil.printErrorLog(ErrorLogs.BEARER_TOKEN_REJECTED.getLog());
-//            throw new SkyflowException(e.getCode(), e, e.getResponseHeaders(), e.getResponseBody());
-            throw e;
+            throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
         }
     }
 

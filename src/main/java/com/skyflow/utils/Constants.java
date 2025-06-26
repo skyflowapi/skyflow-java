@@ -25,4 +25,7 @@ public final class Constants {
     public static final String SDK_AUTH_HEADER_KEY = "x-skyflow-authorization";
     public static final String SDK_METRICS_HEADER_KEY = "sky-metadata";
     public static final String REQUEST_ID_HEADER_KEY = "x-request-id";
+    public static final String DEIDENTIFY_FILE_IN_PROGRESS_STATUS = "IN_PROGRESS";
+    public static final String DEIDENTIFY_FILE_SUCCESS_STATUS = "SUCCESS";
+    public static final String PROCESSED_FILE_NAME_PREFIX = "processed-";
 }

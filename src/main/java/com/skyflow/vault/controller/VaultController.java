@@ -22,7 +22,6 @@ import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.utils.validations.Validations;
 import com.skyflow.vault.data.*;
 import com.skyflow.vault.tokens.*;
-
 import java.util.*;
 
 public final class VaultController extends VaultClient {
@@ -70,7 +69,6 @@ public final class VaultController extends VaultClient {
         return insertRecord;
     }
 
-
     private static synchronized HashMap<String, Object> getFormattedGetRecord(V1FieldRecords record) {
         HashMap<String, Object> getRecord = new HashMap<>();
 
@@ -82,10 +80,8 @@ public final class VaultController extends VaultClient {
         } else if (tokensOpt.isPresent()) {
             getRecord.putAll(tokensOpt.get());
         }
-
         return getRecord;
     }
-
 
     private static synchronized HashMap<String, Object> getFormattedUpdateRecord(V1UpdateRecordResponse record) {
         HashMap<String, Object> updateTokens = new HashMap<>();
@@ -96,7 +92,6 @@ public final class VaultController extends VaultClient {
 
         return updateTokens;
     }
-
 
     private static synchronized HashMap<String, Object> getFormattedQueryRecord(V1FieldRecords record) {
         HashMap<String, Object> queryRecord = new HashMap<>();
@@ -155,8 +150,9 @@ public final class VaultController extends VaultClient {
                 }
             }
         } catch (ApiClientApiException e) {
+            String bodyString = gson.toJson(e.body());
             LogUtil.printErrorLog(ErrorLogs.INSERT_RECORDS_REJECTED.getLog());
-            throw new SkyflowException(e.statusCode(), e, e.headers(), e.body().toString());
+            throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
         }
         LogUtil.printInfoLog(InfoLogs.INSERT_SUCCESS.getLog());
         if (insertedFields.isEmpty()) {
@@ -198,8 +194,9 @@ public final class VaultController extends VaultClient {
                 }
             }
         } catch (ApiClientApiException e) {
+            String bodyString = gson.toJson(e.body());
             LogUtil.printErrorLog(ErrorLogs.DETOKENIZE_REQUEST_REJECTED.getLog());
-            throw new SkyflowException(e.statusCode(), e, e.headers(), e.body().toString());
+            throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
         }
 
         if (!errorRecords.isEmpty()) {
@@ -252,8 +249,9 @@ public final class VaultController extends VaultClient {
                 }
             }
         } catch (ApiClientApiException e) {
+            String bodyString = gson.toJson(e.body());
             LogUtil.printErrorLog(ErrorLogs.GET_REQUEST_REJECTED.getLog());
-            throw new SkyflowException(e.statusCode(), e, e.headers(), e.body().toString());
+            throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
         }
         LogUtil.printInfoLog(InfoLogs.GET_SUCCESS.getLog());
         return new GetResponse(data, null);
@@ -279,8 +277,9 @@ public final class VaultController extends VaultClient {
             skyflowId = String.valueOf(result.getSkyflowId());
             tokensMap = getFormattedUpdateRecord(result);
         } catch (ApiClientApiException e) {
+            String bodyString = gson.toJson(e.body());
             LogUtil.printErrorLog(ErrorLogs.UPDATE_REQUEST_REJECTED.getLog());
-            throw new SkyflowException(e.statusCode(), e, e.headers(), e.body().toString());
+            throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
         }
         LogUtil.printInfoLog(InfoLogs.UPDATE_SUCCESS.getLog());
         return new UpdateResponse(skyflowId, tokensMap);
@@ -294,14 +293,15 @@ public final class VaultController extends VaultClient {
             Validations.validateDeleteRequest(deleteRequest);
             setBearerToken();
             RecordServiceBulkDeleteRecordBody deleteBody = RecordServiceBulkDeleteRecordBody.builder().skyflowIds(deleteRequest.getIds())
-                                                                    .build();
+                    .build();
 
             result = super.getRecordsApi().recordServiceBulkDeleteRecord(
                     super.getVaultConfig().getVaultId(), deleteRequest.getTable(), deleteBody);
             LogUtil.printInfoLog(InfoLogs.DELETE_REQUEST_RESOLVED.getLog());
         } catch (ApiClientApiException e) {
+            String bodyString = gson.toJson(e.body());
             LogUtil.printErrorLog(ErrorLogs.DELETE_REQUEST_REJECTED.getLog());
-            throw new SkyflowException(e.statusCode(), e, e.headers(), e.body().toString());
+            throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
         }
         LogUtil.printInfoLog(InfoLogs.DELETE_SUCCESS.getLog());
         return new DeleteResponse(result.getRecordIdResponse().get());
@@ -325,8 +325,9 @@ public final class VaultController extends VaultClient {
                 }
             }
         } catch (ApiClientApiException e) {
+            String bodyString = gson.toJson(e.body());
             LogUtil.printErrorLog(ErrorLogs.QUERY_REQUEST_REJECTED.getLog());
-            throw new SkyflowException(e.statusCode(), e, e.headers(), e.body().toString());
+            throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
         }
         LogUtil.printInfoLog(InfoLogs.QUERY_SUCCESS.getLog());
         return new QueryResponse(fields);
@@ -351,8 +352,10 @@ public final class VaultController extends VaultClient {
                 }
             }
         } catch (ApiClientApiException e) {
+            String bodyString = gson.toJson(e.body());
             LogUtil.printErrorLog(ErrorLogs.TOKENIZE_REQUEST_REJECTED.getLog());
-            throw new SkyflowException(e.statusCode(), e, e.headers(), e.body().toString());        }
+            throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
+        }
         LogUtil.printInfoLog(InfoLogs.TOKENIZE_SUCCESS.getLog());
         return new TokenizeResponse(list);
     }
