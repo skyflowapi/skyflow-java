@@ -125,7 +125,8 @@ jobs:
           json: ${{ secrets.TEST_CREDENTIALS_FILE_STRING }}
 
       - name: Publish package
-        run: mvn --batch-mode deploy -P ${{ inputs.profile }} -Dmaven.compiler.skip=true
+        run: mvn --batch-mode deploy -P ${{ inputs.profile }} -Dmaven.compiler.skip=true -Dmaven.javadoc.skip=true
+
         env:
           SERVER_USERNAME: ${{ secrets.server-username }}
           SERVER_PASSWORD: ${{ secrets.server-password  }}
