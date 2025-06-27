@@ -81,21 +81,21 @@ public class VaultControllerTests {
         }
     }
 
-//    @Test
-//    public void testInvalidRequestInGetMethod() {
-//        try {
-//            GetRequest request = GetRequest.builder().build();
-//            skyflowClient = Skyflow.builder().setLogLevel(LogLevel.DEBUG).addVaultConfig(vaultConfig).build();
-//            skyflowClient.vault().get(request);
-//            Assert.fail(EXCEPTION_NOT_THROWN);
-//        } catch (SkyflowException e) {
-//            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-//            Assert.assertEquals(
-//                    Utils.parameterizedString(ErrorMessage.TableKeyError.getMessage(), Constants.SDK_PREFIX),
-//                    e.getMessage()
-//            );
-//        }
-//    }
+    @Test
+    public void testInvalidRequestInGetMethod() {
+        try {
+            GetRequest request = GetRequest.builder().build();
+            skyflowClient = Skyflow.builder().setLogLevel(LogLevel.DEBUG).addVaultConfig(vaultConfig).build();
+            skyflowClient.vault().get(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(
+                    Utils.parameterizedString(ErrorMessage.TableKeyError.getMessage(), Constants.SDK_PREFIX),
+                    e.getMessage()
+            );
+        }
+    }
 
     @Test
     public void testInvalidRequestInUpdateMethod() {

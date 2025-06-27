@@ -5,10 +5,10 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 public class TextIndex {
-    private final int start;
-    private final int end;
+    private final Integer start;
+    private final Integer end;
 
-    public TextIndex(int start, int end) {
+    public TextIndex(Integer start, Integer end) {
         this.start = start;
         this.end = end;
     }

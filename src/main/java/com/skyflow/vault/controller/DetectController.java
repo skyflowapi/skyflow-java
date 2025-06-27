@@ -4,6 +4,7 @@ import com.google.gson.*;
 import com.skyflow.VaultClient;
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
+import com.skyflow.enums.DeidentifyFileStatus;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
@@ -124,7 +125,7 @@ public final class DetectController extends VaultClient {
                 throw new SkyflowException(ErrorCode.SERVER_ERROR.getCode(), ErrorMessage.PollingForResultsFailed.getMessage());
             }
 
-            if (Constants.DEIDENTIFY_FILE_SUCCESS_STATUS.equalsIgnoreCase(response.getStatus())) {
+            if (DeidentifyFileStatus.SUCCESS.value().equalsIgnoreCase(response.getStatus())) {
                 String base64File = response.getFileBase64();
                 if (base64File != null) {
                     byte[] decodedBytes = Base64.getDecoder().decode(base64File);
@@ -177,9 +178,9 @@ public final class DetectController extends VaultClient {
 
                 DeidentifyStatusResponseStatus status = response.getStatus();
 
-                if (Constants.DEIDENTIFY_FILE_IN_PROGRESS_STATUS.equalsIgnoreCase(String.valueOf(status))) {
+                if (DeidentifyFileStatus.IN_PROGRESS.value().equalsIgnoreCase(String.valueOf(status))) {
                     if (currentWaitTime >= maxWaitTime) {
-                        return new DeidentifyFileResponse(runId, Constants.DEIDENTIFY_FILE_IN_PROGRESS_STATUS);
+                        return new DeidentifyFileResponse(runId, DeidentifyFileStatus.IN_PROGRESS.value());
                     }
 
                     int nextWaitTime = currentWaitTime * 2;

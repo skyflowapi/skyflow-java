@@ -41,7 +41,6 @@ import java.util.*;
 
 public class VaultClientTests {
     private static final String INVALID_EXCEPTION_THROWN = "Should not have thrown any exception";
-    private static final String EXCEPTION_NOT_THROWN = "Should have thrown an exception";
     private static VaultClient vaultClient;
     private static String vaultID = null;
     private static String clusterID = null;
@@ -49,7 +48,7 @@ public class VaultClientTests {
     private static String table = null;
     private static String value = null;
     private static String columnGroup = null;
-    private static String apiKey = null;
+    private static String apiKey = "sky-ab123-abcd1234cdef1234abcd4321cdef4321";
     private static ArrayList<DetokenizeData> detokenizeData = null;
     private static ArrayList<HashMap<String, Object>> insertValues = null;
     private static ArrayList<HashMap<String, Object>> insertTokens = null;
@@ -58,7 +57,7 @@ public class VaultClientTests {
     private static VaultConfig vaultConfig;
 
     @BeforeClass
-    public static void setup() {
+    public static void setup() throws SkyflowException {
         vaultID = "vault123";
         clusterID = "cluster123";
         token = "test_token";
@@ -72,80 +71,56 @@ public class VaultClientTests {
         valueMap = new HashMap<>();
         tokenMap = new HashMap<>();
 
-        Credentials credentials = new Credentials();
-        credentials.setApiKey(apiKey);
-
         vaultConfig = new VaultConfig();
         vaultConfig.setVaultId(vaultID);
         vaultConfig.setClusterId(clusterID);
         vaultConfig.setEnv(Env.PROD);
+
+        Credentials credentials = new Credentials();
+        credentials.setApiKey("sky-ab123-abcd1234cdef1234abcd4321cdef4321");
+        vaultConfig.setCredentials(credentials);
         vaultClient = new VaultClient(vaultConfig, credentials);
+        vaultClient.setBearerToken();
     }
 
     @Test
     public void testVaultClientGetRecordsAPI() {
         try {
-            Credentials credentials = new Credentials();
-            credentials.setApiKey("sky-ab123-abcd1234cdef1234abcd4321cdef4321");
-            vaultConfig.setCredentials(credentials);
-            vaultClient = new VaultClient(vaultConfig, credentials);
-            vaultClient.setBearerToken();
-
             RecordsClient recordsClient = vaultClient.getRecordsApi();
-            Assert.assertNotNull("RecordsClient should not be null", recordsClient);
+            Assert.assertNotNull(recordsClient);
         } catch (Exception e) {
-
             e.printStackTrace();
-            Assert.fail("Should not have thrown any exception: " + e.getMessage());
+            Assert.fail(INVALID_EXCEPTION_THROWN + e.getMessage());
         }
     }
 
     @Test
     public void testVaultClientDetectAPI() {
         try {
-            Credentials credentials = new Credentials();
-            credentials.setApiKey("sky-ab123-abcd1234cdef1234abcd4321cdef4321");
-            vaultConfig.setCredentials(credentials);
-            vaultClient = new VaultClient(vaultConfig, credentials);
-            vaultClient.setBearerToken();
-
             FilesClient filesClient = vaultClient.getDetectFileAPi();
-            Assert.assertNotNull("FilesClient should not be null", filesClient);
+            Assert.assertNotNull(filesClient);
         } catch (Exception e) {
-
             e.printStackTrace();
-            Assert.fail("Should not have thrown any exception: " + e.getMessage());
+            Assert.fail(INVALID_EXCEPTION_THROWN + e.getMessage());
         }
     }
 
     @Test
     public void testVaultClientDetectTextAPI() {
         try {
-            Credentials credentials = new Credentials();
-            credentials.setApiKey("sky-ab123-abcd1234cdef1234abcd4321cdef4321");
-            vaultConfig.setCredentials(credentials);
-            vaultClient = new VaultClient(vaultConfig, credentials);
-            vaultClient.setBearerToken();
-
             StringsClient stringsClient = vaultClient.getDetectTextApi();
-            Assert.assertNotNull("StringsClient should not be null", stringsClient);
+            Assert.assertNotNull(stringsClient);
         } catch (Exception e) {
-
             e.printStackTrace();
-            Assert.fail("Should not have thrown any exception: " + e.getMessage());
+            Assert.fail(INVALID_EXCEPTION_THROWN + e.getMessage());
         }
     }
 
     @Test
     public void testVaultClientGetTokensAPI() {
         try {
-            Credentials credentials = new Credentials();
-            credentials.setApiKey("sky-ab123-abcd1234cdef1234abcd4321cdef4321");
-            vaultConfig.setCredentials(credentials);
-            vaultClient = new VaultClient(vaultConfig, credentials);
-            vaultClient.setBearerToken();
             TokensClient tokensClient = vaultClient.getTokensApi();
-            Assert.assertNotNull("TokensClient should not be null", tokensClient);
+            Assert.assertNotNull(tokensClient);
         } catch (Exception e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
         }
@@ -154,14 +129,8 @@ public class VaultClientTests {
     @Test
     public void testVaultClientGetQueryAPI() {
         try {
-            Credentials credentials = new Credentials();
-            credentials.setApiKey("sky-ab123-abcd1234cdef1234abcd4321cdef4321");
-            vaultConfig.setCredentials(credentials);
-
-            vaultClient = new VaultClient(vaultConfig, credentials);
-            vaultClient.setBearerToken();
             QueryClient queryClient = vaultClient.getQueryApi();
-            Assert.assertNotNull("QueryClient should not be null", queryClient);
+            Assert.assertNotNull(queryClient);
         } catch (Exception e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
         }
