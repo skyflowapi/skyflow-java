@@ -44,6 +44,7 @@ The Skyflow Java SDK is designed to help with integrating Skyflow into a Java ba
   - [Generate bearer tokens with context](#generate-bearer-tokens-with-context)
   - [Generate scoped bearer tokens](#generate-scoped-bearer-tokens)
   - [Generate signed data tokens](#generate-signed-data-tokens)
+  - [Bearer token expiry edge case](#bearer-token-expiry-edge-case)
 - [Logging](#logging)
 - [Reporting a Vulnerability](#reporting-a-vulnerability)
 
@@ -2147,7 +2148,7 @@ Notes:
 - If both a file path and a string are provided, the last method used takes precedence.
 - To generate multiple bearer tokens concurrently using threads, refer to the following [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/serviceaccount/BearerTokenGenerationUsingThreadsExample.java).
 
-## Signed Data Tokens Generation
+## Generate Signed Data Tokens
 
 Skyflow generates data tokens when sensitive data is inserted into the vault. These data tokens can be digitally signed
 with the private key of the service account credentials, which adds an additional layer of protection. Signed tokens can
@@ -2224,6 +2225,106 @@ Notes:
 - If both a file path and a string are passed to the `setCredentials` method, the most recently specified input takes precedence.
 - The `time-to-live` (TTL) value should be specified in seconds.
 - By default, the TTL value is set to 60 seconds.
+
+## Bearer token expiry edge case
+When you use bearer tokens for authentication and API requests in SDKs, there's the potential for a token to expire after the token is verified as valid but before the actual API call is made, causing the request to fail unexpectedly due to the token's expiration. An error from this edge case would look something like this:
+
+```txt
+message: Authentication failed. Bearer token is expired. Use a valid bearer token. See https://docs.skyflow.com/api-authentication/
+```
+
+If you encounter this kind of error, retry the request. During the retry, the SDK detects that the previous bearer token has expired and generates a new one for the current and subsequent requests.
+
+#### [Example](https://github.com/skyflowapi/skyflow-java/blob/v2/samples/src/main/java/com/example/serviceaccount/BearerTokenExpiryExample.java):
+
+```java
+package com.example.serviceaccount;
+
+import com.skyflow.Skyflow;
+import com.skyflow.config.Credentials;
+import com.skyflow.config.VaultConfig;
+import com.skyflow.enums.Env;
+import com.skyflow.enums.LogLevel;
+import com.skyflow.enums.RedactionType;
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.tokens.DetokenizeRequest;
+import com.skyflow.vault.tokens.DetokenizeResponse;
+import io.github.cdimascio.dotenv.Dotenv;
+import java.util.ArrayList;
+
+/**
+ * This example demonstrates how to configure and use the Skyflow SDK
+ * to detokenize sensitive data stored in a Skyflow vault.
+ * It includes setting up credentials, configuring the vault, and
+ * making a detokenization request. The code also implements a retry
+ * mechanism to handle unauthorized access errors (HTTP 401).
+ */
+public class DetokenizeExample {
+    public static void main(String[] args) {
+        try {
+            // Setting up credentials for accessing the Skyflow vault
+            Credentials vaultCredentials = new Credentials();
+            vaultCredentials.setCredentialsString("<YOUR_CREDENTIALS_STRING>");
+
+            // Configuring the Skyflow vault with necessary details
+            VaultConfig vaultConfig = new VaultConfig();
+            vaultConfig.setVaultId("<YOUR_VAULT_ID>"); // Vault ID
+            vaultConfig.setClusterId("<YOUR_CLUSTER_ID>"); // Cluster ID
+            vaultConfig.setEnv(Env.PROD); // Environment (e.g., DEV, PROD)
+            vaultConfig.setCredentials(vaultCredentials); // Setting credentials
+
+            // Creating a Skyflow client instance with the configured vault
+            Skyflow skyflowClient = Skyflow.builder()
+                    .setLogLevel(LogLevel.ERROR) // Setting log level to ERROR
+                    .addVaultConfig(vaultConfig) // Adding vault configuration
+                    .build();
+
+            // Attempting to detokenize data using the Skyflow client
+            try {
+                detokenizeData(skyflowClient);
+            } catch (SkyflowException e) {
+                // Retry detokenization if the error is due to unauthorized access (HTTP 401)
+                if (e.getHttpCode() == 401) {
+                    detokenizeData(skyflowClient);
+                } else {
+                    // Rethrow the exception for other error codes
+                    throw e;
+                }
+            }
+        } catch (SkyflowException e) {
+            // Handling any exceptions that occur during the process
+            System.out.println("An error occurred: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Method to detokenize data using the Skyflow client.
+     * It sends a detokenization request with a list of tokens and prints the response.
+     *
+     * @param skyflowClient The Skyflow client instance used for detokenization.
+     * @throws SkyflowException If an error occurs during the detokenization process.
+     */
+    public static void detokenizeData(Skyflow skyflowClient) throws SkyflowException {
+        // Creating a list of tokens to be detokenized
+        ArrayList<String> tokenList = new ArrayList<>();
+        tokenList.add("<YOUR_TOKEN_VALUE_1>"); // First token
+        tokenList.add("<YOUR_TOKEN_VALUE_2>"); // Second token
+
+        // Building a detokenization request with the token list and configuration
+        DetokenizeRequest detokenizeRequest = DetokenizeRequest.builder()
+                .tokens(tokenList) // Adding tokens to the request
+                .continueOnError(false) // Stop on error
+                .redactionType(RedactionType.PLAIN_TEXT) // Redaction type (e.g., PLAIN_TEXT)
+                .build();
+
+        // Sending the detokenization request and receiving the response
+        DetokenizeResponse detokenizeResponse = skyflowClient.vault().detokenize(detokenizeRequest);
+
+        // Printing the detokenized response
+        System.out.println(detokenizeResponse);
+    }
+}
+```
 
 # Logging
 

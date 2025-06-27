@@ -1,6 +1,10 @@
 package com.skyflow.errors;
 
-import com.google.gson.*;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.skyflow.utils.Constants;
 
 import java.util.List;
 import java.util.Map;
@@ -39,24 +43,25 @@ public class SkyflowException extends Exception {
 
     public SkyflowException(int httpCode, Throwable cause, Map<String, List<String>> responseHeaders, String responseBody) {
         super(cause);
-        this.httpCode = httpCode;
-        setRequestId(responseHeaders);
-        setResponseBody(responseBody, responseHeaders);
+        this.httpCode = httpCode > 0 ? httpCode : 400;
+        try {
+            setRequestId(responseHeaders);
+            setResponseBody(responseBody, responseHeaders);
+        } catch (Exception e) {
+            this.httpStatus = HttpStatus.BAD_REQUEST.getHttpStatus();
+            String fullMessage = responseBody != null ? responseBody :
+                    (cause.getLocalizedMessage() != null ? cause.getMessage() : ErrorMessage.ErrorOccurred.getMessage());
+            this.message = fullMessage.split("HTTP response code:")[0].trim();
+        }
     }
 
     private void setResponseBody(String responseBody, Map<String, List<String>> responseHeaders) {
-        try {
-            if (responseBody != null) {
-                this.responseBody = JsonParser.parseString(responseBody).getAsJsonObject();
-                if (this.responseBody.get("error") != null) {
-                    setGrpcCode();
-                    setHttpStatus();
-                    setMessage();
-                    setDetails(responseHeaders);
-                }
-            }
-        } catch (JsonSyntaxException e) {
-            throw new RuntimeException(e);
+        this.responseBody = JsonParser.parseString(responseBody).getAsJsonObject();
+        if (this.responseBody.get("error") != null) {
+            setGrpcCode();
+            setHttpStatus();
+            setMessage();
+            setDetails(responseHeaders);
         }
     }
 
@@ -65,10 +70,8 @@ public class SkyflowException extends Exception {
     }
 
     private void setRequestId(Map<String, List<String>> responseHeaders) {
-        if (responseHeaders != null) {
-            List<String> ids = responseHeaders.get("x-request-id");
-            this.requestId = ids == null ? null : ids.get(0);
-        }
+        List<String> ids = responseHeaders.get(Constants.REQUEST_ID_HEADER_KEY);
+        this.requestId = ids == null ? null : ids.get(0);
     }
 
     private void setMessage() {
@@ -86,9 +89,17 @@ public class SkyflowException extends Exception {
         this.httpStatus = statusElement == null ? null : statusElement.getAsString();
     }
 
+    public int getHttpCode() {
+        return httpCode;
+    }
+
+    public JsonArray getDetails() {
+        return details;
+    }
+
     private void setDetails(Map<String, List<String>> responseHeaders) {
         JsonElement detailsElement = ((JsonObject) responseBody.get("error")).get("details");
-        List<String> errorFromClientHeader = responseHeaders.get("error-from-client");
+        List<String> errorFromClientHeader = responseHeaders.get(Constants.ERROR_FROM_CLIENT_HEADER_KEY);
         if (detailsElement != null) {
             this.details = detailsElement.getAsJsonArray();
         }
@@ -99,14 +110,6 @@ public class SkyflowException extends Exception {
             detailObject.addProperty("errorFromClient", errorFromClient);
             this.details.add(detailObject);
         }
-    }
-
-    public int getHttpCode() {
-        return httpCode;
-    }
-
-    public JsonArray getDetails() {
-        return details;
     }
 
     public Integer getGrpcCode() {
