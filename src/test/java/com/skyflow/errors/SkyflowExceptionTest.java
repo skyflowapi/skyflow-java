@@ -1,11 +1,12 @@
 package com.skyflow.errors;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class SkyflowExceptionTest {
 
@@ -61,42 +62,14 @@ public class SkyflowExceptionTest {
         Assert.assertTrue(ex.getDetails().size() > 0);
     }
 
-    @Test
-    public void testConstructorWithNonJsonErrorBody() {
-        String errorMsg = "plain error";
-        Map<String, List<String>> headers = new HashMap<>();
-        SkyflowException ex = new SkyflowException(500, new RuntimeException("fail"), headers, errorMsg);
-        Assert.assertEquals("", ex.getMessage()); // Expecting empty string, as per current implementation
-        Assert.assertNull(ex.getGrpcCode());
-        Assert.assertNull(ex.getHttpStatus());
-    }
 
     @Test
     public void testConstructorWithNullErrorBody() {
         Map<String, List<String>> headers = new HashMap<>();
         SkyflowException ex = new SkyflowException(500, new RuntimeException("fail"), headers, null);
-        Assert.assertEquals("", ex.getMessage());
+        Assert.assertNull(ex.getMessage());
         Assert.assertNull(ex.getGrpcCode());
         Assert.assertNull(ex.getHttpStatus());
-    }
-
-    @Test
-    public void testConstructorWithEmptyErrorBody() {
-        Map<String, List<String>> headers = new HashMap<>();
-        SkyflowException ex = new SkyflowException(500, new RuntimeException("fail"), headers, "");
-        Assert.assertEquals("", ex.getMessage());
-        Assert.assertNull(ex.getGrpcCode());
-        Assert.assertNull(ex.getHttpStatus());
-    }
-
-    @Test
-    public void testConstructorWithJavaObjectNotationErrorBody() {
-        String errorMsg = "{error={message=legacy error, grpc_code=13, http_status=INTERNAL, details=[]}}";
-        Map<String, List<String>> headers = new HashMap<>();
-        SkyflowException ex = new SkyflowException(500, new RuntimeException("fail"), headers, errorMsg);
-        Assert.assertEquals("legacy error", ex.getMessage());
-        Assert.assertEquals(Integer.valueOf(13), ex.getGrpcCode());
-        Assert.assertEquals("INTERNAL", ex.getHttpStatus());
     }
 
     @Test
@@ -108,5 +81,18 @@ public class SkyflowExceptionTest {
         Assert.assertNull(ex.getDetails());
         Assert.assertNull(ex.getGrpcCode());
         Assert.assertNull(ex.getHttpStatus());
+    }
+
+    @Test
+    public void testSetDetailsWithErrorFromClientHeader() {
+        String json = "{\"error\":{\"message\":\"test error\",\"grpc_code\":13,\"details\":[]}}";
+        Map<String, List<String>> headers = new HashMap<>();
+        headers.put("error-from-client", Collections.singletonList("client error"));
+
+        SkyflowException ex = new SkyflowException(500, new RuntimeException("fail"), headers, json);
+
+        Assert.assertNotNull(ex.getDetails());
+        Assert.assertEquals(1, ex.getDetails().size());
+        Assert.assertEquals("client error", ex.getDetails().get(0).getAsJsonObject().get("errorFromClient").getAsString());
     }
 }

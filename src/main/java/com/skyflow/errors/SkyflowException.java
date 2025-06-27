@@ -41,85 +41,18 @@ public class SkyflowException extends Exception {
         super(cause);
         this.httpCode = httpCode;
         setRequestId(responseHeaders);
-        String errorObject = parseJsonStringWithErrorObject(responseBody);
-        if (!errorObject.isEmpty()) {
-            setResponseBodyFromJson(errorObject, responseHeaders);
-        } else {
-            this.message = errorObject;
-            this.details = new JsonArray();
-        }
+        setResponseBody(responseBody, responseHeaders);
     }
 
-    private String parseJsonStringWithErrorObject(String responseBody) {
-        try {
-            if (responseBody == null || responseBody.trim().isEmpty()) return "";
-
-            // If already valid JSON, parsing it directly
-            try {
-                JsonObject responseBodyObject = JsonParser.parseString(responseBody).getAsJsonObject();
-                // If it's valid JSON and has error object, return as is
-                if (responseBodyObject.has("error")) {
-                    return responseBody;
-                }
-                return "";
-            } catch (JsonSyntaxException e) {
-                // If not valid JSON, continue with Java object parsing
-            }
-
-            // Handle Java object notation
-            if (!responseBody.contains("error={")) {
-                return "";
-            }
-
-            // Handle Java object string representation
-            StringBuilder json = new StringBuilder("{");
-            if (responseBody.contains("error={")) {
-                String content = responseBody.substring(1, responseBody.length() - 1);
-                if (content.startsWith("error={")) {
-                    json.append("\"error\":{");
-                    String errorContent = content.substring(7, content.length() - 1);
-
-                    // Process key-value pairs
-                    String[] pairs = errorContent.split(", ");
-                    for (int i = 0; i < pairs.length; i++) {
-                        String[] keyValue = pairs[i].split("=", 2);
-                        json.append("\"").append(keyValue[0]).append("\":");
-
-                        if (keyValue[1].equals("[]")) {
-                            json.append("[]");
-                        } else if (keyValue[1].matches("\\d+")) {
-                            json.append(keyValue[1]);
-                        } else {
-                            json.append("\"").append(keyValue[1].replace("\"", "\\\"")).append("\"");
-                        }
-
-                        if (i < pairs.length - 1) {
-                            json.append(",");
-                        }
-                    }
-                    json.append("}");
-                }
-            }
-            json.append("}");
-
-            String validJson = json.toString();
-            JsonObject obj = JsonParser.parseString(validJson).getAsJsonObject();
-            return obj.has("error") && obj.get("error").isJsonObject() ? validJson : "";
-        } catch (JsonSyntaxException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private void setResponseBodyFromJson(String responseBody, Map<String, List<String>> responseHeaders) {
+    private void setResponseBody(String responseBody, Map<String, List<String>> responseHeaders) {
         try {
             if (responseBody != null) {
                 this.responseBody = JsonParser.parseString(responseBody).getAsJsonObject();
-                if (this.responseBody.has("error")) {
-                    JsonObject errorObj = this.responseBody.getAsJsonObject("error");
-                    setGrpcCode(errorObj);
-                    setHttpStatus(errorObj);
-                    setMessage(errorObj);
-                    setDetails(errorObj, responseHeaders);
+                if (this.responseBody.get("error") != null) {
+                    setGrpcCode();
+                    setHttpStatus();
+                    setMessage();
+                    setDetails(responseHeaders);
                 }
             }
         } catch (JsonSyntaxException e) {
@@ -138,26 +71,25 @@ public class SkyflowException extends Exception {
         }
     }
 
-
-    private void setMessage(JsonObject errorObj) {
-        JsonElement messageElement = errorObj.get("message");
+    private void setMessage() {
+        JsonElement messageElement = ((JsonObject) responseBody.get("error")).get("message");
         this.message = messageElement == null ? null : messageElement.getAsString();
     }
 
-    private void setGrpcCode(JsonObject errorObj) {
-        JsonElement grpcElement = errorObj.get("grpc_code");
+    private void setGrpcCode() {
+        JsonElement grpcElement = ((JsonObject) responseBody.get("error")).get("grpc_code");
         this.grpcCode = grpcElement == null ? null : grpcElement.getAsInt();
     }
 
-    private void setHttpStatus(JsonObject errorObj) {
-        JsonElement statusElement = errorObj.get("http_status");
+    private void setHttpStatus() {
+        JsonElement statusElement = ((JsonObject) responseBody.get("error")).get("http_status");
         this.httpStatus = statusElement == null ? null : statusElement.getAsString();
     }
 
-    private void setDetails(JsonObject errorObj, Map<String, List<String>> responseHeaders) {
-        JsonElement detailsElement = errorObj.get("details");
+    private void setDetails(Map<String, List<String>> responseHeaders) {
+        JsonElement detailsElement = ((JsonObject) responseBody.get("error")).get("details");
         List<String> errorFromClientHeader = responseHeaders.get("error-from-client");
-        if (detailsElement != null && detailsElement.isJsonArray()) {
+        if (detailsElement != null) {
             this.details = detailsElement.getAsJsonArray();
         }
         if (errorFromClientHeader != null) {
