@@ -359,5 +359,4 @@ public final class VaultController extends VaultClient {
         LogUtil.printInfoLog(InfoLogs.TOKENIZE_SUCCESS.getLog());
         return new TokenizeResponse(list);
     }
-
 }
