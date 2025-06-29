@@ -27,9 +27,10 @@ public class DeidentifyFileResponseTest {
         String runId = "run-123";
         String status = "SUCCESS";
         java.util.List<String> errors = Arrays.asList("error1", "error2");
+        FileInfo fileInfo = new FileInfo(fileObject);
 
         DeidentifyFileResponse response = new DeidentifyFileResponse(
-                fileObject, file, type, extension, wordCount, charCount, sizeInKb,
+                fileInfo, file, type, extension, wordCount, charCount, sizeInKb,
                 durationInSeconds, pageCount, slideCount, entities, runId, status, errors
         );
 

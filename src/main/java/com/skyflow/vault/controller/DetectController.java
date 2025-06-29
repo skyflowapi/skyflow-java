@@ -231,6 +231,7 @@ public final class DetectController extends VaultClient {
         }
 
         File processedFileObject = null;
+        FileInfo fileInfo = null;
         Optional<String> processedFileBase64 = firstOutput != null ? firstOutput.getProcessedFile() : Optional.empty();
         Optional<String> processedFileExtension = firstOutput != null ? firstOutput.getProcessedFileExtension() : Optional.empty();
 
@@ -238,17 +239,18 @@ public final class DetectController extends VaultClient {
             try {
                 byte[] decodedBytes = Base64.getDecoder().decode(processedFileBase64.get());
                 String suffix = "." + processedFileExtension.get();
-                processedFileObject = File.createTempFile("deidentified", suffix);
-                processedFileObject.deleteOnExit();
-
+                String fileName = Constants.DEIDENTIFIED_FILE_PREFIX + suffix;
+                processedFileObject = new File(System.getProperty("java.io.tmpdir"), fileName);
                 Files.write(processedFileObject.toPath(), decodedBytes);
+                 fileInfo = new FileInfo(processedFileObject);
+                processedFileObject.deleteOnExit();
             } catch (IOException ioe) {
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.FailedToEncodeFile.getMessage());
             }
         }
 
         return new DeidentifyFileResponse(
-                processedFileObject,
+                fileInfo,
                 firstOutput.getProcessedFile().orElse(null),
                 firstOutput.getProcessedFileType().get().toString(),
                 firstOutput.getProcessedFileExtension().get(),

@@ -7,7 +7,7 @@ import java.io.File;
 import java.util.List;
 
 public class DeidentifyFileResponse {
-    private final File file;
+    private final FileInfo file;
     private final String fileBase64;
     private final String type;
     private final String extension;
@@ -23,7 +23,7 @@ public class DeidentifyFileResponse {
     private final List<String> errors;
 
 
-    public DeidentifyFileResponse(File file, String fileBase64, String type, String extension,
+    public DeidentifyFileResponse(FileInfo file, String fileBase64, String type, String extension,
                                   Integer wordCount, Integer charCount, Double sizeInKb,
                                   Double durationInSeconds, Integer pageCount, Integer slideCount,
                                   List<FileEntityInfo> entities, String runId, String status, List<String> errors) {
@@ -47,7 +47,7 @@ public class DeidentifyFileResponse {
         this(null, null, null, null, null, null, null, null, null, null, null, runId, status, null);
     }
 
-    public File getFile() {
+    public FileInfo getFile() {
         return file;
     }
 
