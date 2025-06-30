@@ -22,7 +22,6 @@ import com.skyflow.vault.detect.*;
 import com.skyflow.vault.detect.DeidentifyFileRequest;
 import com.skyflow.vault.detect.DeidentifyFileResponse;
 import com.skyflow.vault.detect.DeidentifyTextRequest;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;

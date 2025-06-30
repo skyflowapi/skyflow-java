@@ -170,10 +170,7 @@
                 <version>3.2.0</version>
                 <configuration>
                     <excludePackageNames>
-                        :com.skyflow.generated.rest
-                        :com.skyflow.generated.rest.api
-                        :com.skyflow.generated.rest.auth
-                        :com.skyflow.generated.rest.models
+                        com.skyflow.generated.rest,com.skyflow.generated.rest.api,com.skyflow.generated.rest.auth,com.skyflow.generated.rest.models,com.skyflow.generated.rest.core
                     </excludePackageNames>
                 </configuration>
                 <executions>
