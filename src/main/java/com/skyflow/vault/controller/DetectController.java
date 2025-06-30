@@ -209,7 +209,6 @@ public final class DetectController extends VaultClient {
 
     }
 
-
     private static synchronized DeidentifyFileResponse parseDeidentifyFileResponse(DeidentifyStatusResponse response,
                                                                                    String runId, String status) throws SkyflowException {
         DeidentifyFileOutput firstOutput = getFirstOutput(response);
