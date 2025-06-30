@@ -4,8 +4,8 @@ import com.skyflow.enums.RedactionType;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
-import com.skyflow.generated.rest.models.DetokenizeRecordResponseValueType;
-import com.skyflow.generated.rest.models.V1DetokenizeRecordResponse;
+import com.skyflow.generated.rest.types.DetokenizeRecordResponseValueType;
+import com.skyflow.generated.rest.types.V1DetokenizeRecordResponse;
 import com.skyflow.utils.Constants;
 import com.skyflow.utils.Utils;
 import com.skyflow.utils.validations.Validations;
@@ -147,16 +147,19 @@ public class DetokenizeTests {
     @Test
     public void testDetokenizeResponse() {
         try {
-            V1DetokenizeRecordResponse record1 = new V1DetokenizeRecordResponse();
-            record1.setToken("1234-5678-9012-3456");
-            record1.setValue("4111111111111111");
-            record1.setValueType(DetokenizeRecordResponseValueType.STRING);
+            V1DetokenizeRecordResponse record1 = V1DetokenizeRecordResponse.builder()
+                    .token("1234-5678-9012-3456")
+                    .value("4111111111111111")
+                    .valueType(DetokenizeRecordResponseValueType.STRING)
+                    .build();
             DetokenizeRecordResponse field = new DetokenizeRecordResponse(record1);
 
-            V1DetokenizeRecordResponse record2 = new V1DetokenizeRecordResponse();
-            record2.setToken("3456-7890-1234-5678");
-            record2.setValue("");
-            record2.setError("Invalid token");
+            V1DetokenizeRecordResponse record2 = V1DetokenizeRecordResponse.builder()
+                    .token("3456-7890-1234-5678")
+                    .value("")
+                    .error("Invalid token")
+                    .build();
+
             DetokenizeRecordResponse error = new DetokenizeRecordResponse(record2, requestId);
 
             ArrayList<DetokenizeRecordResponse> fields = new ArrayList<>();

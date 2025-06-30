@@ -34,7 +34,7 @@ public class UpdateResponse {
         }
         JsonObject finalResponseObject = new JsonObject();
         finalResponseObject.add("updatedField", responseObject);
-        finalResponseObject.add("errors", new JsonArray());
+        finalResponseObject.add("errors", null);
         return finalResponseObject.toString();
     }
 }

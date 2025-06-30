@@ -40,7 +40,7 @@ jobs:
           echo TEST_REUSABLE_TOKEN=${{ secrets.TEST_REUSABLE_TOKEN }} >> .env
 
       - name: Build & Run tests with Maven
-        run: mvn -B package -f pom.xml
+        run: mvn -B package -f pom.xml -Dmaven.javadoc.skip=true
 
       - name: Codecov
         uses: codecov/codecov-action@v2.1.0
