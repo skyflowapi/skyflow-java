@@ -14,6 +14,7 @@ import com.skyflow.utils.Utils;
 import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.utils.validations.Validations;
 import com.skyflow.vault.controller.ConnectionController;
+import com.skyflow.vault.controller.DetectController;
 import com.skyflow.vault.controller.VaultController;
 
 import java.util.LinkedHashMap;
@@ -101,18 +102,49 @@ public final class Skyflow {
         return controller;
     }
 
-    public ConnectionController connection() {
-        String connectionId = (String) this.builder.connectionsMap.keySet().toArray()[0];
+
+    public ConnectionController connection() throws SkyflowException {
+        Object[] array = this.builder.connectionsMap.keySet().toArray();
+        if (array.length < 1) {
+            LogUtil.printErrorLog(ErrorLogs.CONNECTION_CONFIG_DOES_NOT_EXIST.getLog());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.ConnectionIdNotInConfigList.getMessage());
+        }
+        String connectionId = (String) array[0];
         return this.connection(connectionId);
     }
 
-    public ConnectionController connection(String connectionId) {
-        return this.builder.connectionsMap.get(connectionId);
+    public ConnectionController connection(String connectionId) throws SkyflowException {
+        ConnectionController controller = this.builder.connectionsMap.get(connectionId);
+        if (controller == null) {
+            LogUtil.printErrorLog(ErrorLogs.CONNECTION_CONFIG_DOES_NOT_EXIST.getLog());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.ConnectionIdNotInConfigList.getMessage());
+        }
+        return controller;
+    }
+
+    public DetectController detect() throws SkyflowException {
+        Object[] array = this.builder.detectClientsMap.keySet().toArray();
+        if (array.length < 1) {
+            LogUtil.printErrorLog(ErrorLogs.VAULT_CONFIG_DOES_NOT_EXIST.getLog());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.VaultIdNotInConfigList.getMessage());
+        }
+        String detectId = (String) array[0];
+        return this.detect(detectId);
+    }
+
+    public DetectController detect(String vaultId) throws SkyflowException {
+        DetectController controller = this.builder.detectClientsMap.get(vaultId);
+        if (controller == null) {
+            LogUtil.printErrorLog(ErrorLogs.VAULT_CONFIG_DOES_NOT_EXIST.getLog());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.VaultIdNotInConfigList.getMessage());
+        }
+        return controller;
     }
 
     public static final class SkyflowClientBuilder {
         private final LinkedHashMap<String, ConnectionController> connectionsMap;
         private final LinkedHashMap<String, VaultController> vaultClientsMap;
+        private final LinkedHashMap<String, DetectController> detectClientsMap;
         private final LinkedHashMap<String, VaultConfig> vaultConfigMap;
         private final LinkedHashMap<String, ConnectionConfig> connectionConfigMap;
         private Credentials skyflowCredentials;
@@ -120,6 +152,7 @@ public final class Skyflow {
 
         public SkyflowClientBuilder() {
             this.vaultClientsMap = new LinkedHashMap<>();
+            this.detectClientsMap = new LinkedHashMap<>();
             this.vaultConfigMap = new LinkedHashMap<>();
             this.connectionsMap = new LinkedHashMap<>();
             this.connectionConfigMap = new LinkedHashMap<>();
@@ -139,8 +172,11 @@ public final class Skyflow {
             } else {
                 this.vaultConfigMap.put(vaultConfig.getVaultId(), vaultConfig);
                 this.vaultClientsMap.put(vaultConfig.getVaultId(), new VaultController(vaultConfig, this.skyflowCredentials));
+                this.detectClientsMap.put(vaultConfig.getVaultId(), new DetectController(vaultConfig, this.skyflowCredentials));
                 LogUtil.printInfoLog(Utils.parameterizedString(
                         InfoLogs.VAULT_CONTROLLER_INITIALIZED.getLog(), vaultConfig.getVaultId()));
+                LogUtil.printInfoLog(Utils.parameterizedString(
+                        InfoLogs.DETECT_CONTROLLER_INITIALIZED.getLog(), vaultConfig.getVaultId()));
             }
             return this;
         }
@@ -225,6 +261,9 @@ public final class Skyflow {
             this.skyflowCredentials = credentials;
             for (VaultController vault : this.vaultClientsMap.values()) {
                 vault.setCommonCredentials(this.skyflowCredentials);
+            }
+            for (DetectController detect : this.detectClientsMap.values()) {
+                detect.setCommonCredentials(this.skyflowCredentials);
             }
             for (ConnectionController connection : this.connectionsMap.values()) {
                 connection.setCommonCredentials(this.skyflowCredentials);

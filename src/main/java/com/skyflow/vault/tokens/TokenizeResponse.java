@@ -27,7 +27,7 @@ public class TokenizeResponse {
             newTokensArray.add(jsonObject);
         }
         responseObject.add("tokens", newTokensArray);
-        responseObject.add("errors", new JsonArray());
+        responseObject.add("errors", null);
         return responseObject.toString();
     }
 }

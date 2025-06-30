@@ -1,20 +1,21 @@
 package com.skyflow.enums;
 
-import com.skyflow.generated.rest.models.RedactionEnumREDACTION;
+
+import com.skyflow.generated.rest.types.RedactionEnumRedaction;
 
 public enum RedactionType {
-    PLAIN_TEXT(RedactionEnumREDACTION.PLAIN_TEXT),
-    MASKED(RedactionEnumREDACTION.MASKED),
-    DEFAULT(RedactionEnumREDACTION.DEFAULT),
-    REDACTED(RedactionEnumREDACTION.REDACTED);
+    PLAIN_TEXT(RedactionEnumRedaction.PLAIN_TEXT),
+    MASKED(RedactionEnumRedaction.MASKED),
+    DEFAULT(RedactionEnumRedaction.DEFAULT),
+    REDACTED(RedactionEnumRedaction.REDACTED);
 
-    private final RedactionEnumREDACTION redaction;
+    private final RedactionEnumRedaction redaction;
 
-    RedactionType(RedactionEnumREDACTION redaction) {
+    RedactionType(RedactionEnumRedaction redaction) {
         this.redaction = redaction;
     }
 
-    public RedactionEnumREDACTION getRedaction() {
+    public RedactionEnumRedaction getRedaction() {
         return redaction;
     }
 

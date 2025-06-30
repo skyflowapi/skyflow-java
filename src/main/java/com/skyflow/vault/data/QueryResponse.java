@@ -25,7 +25,7 @@ public class QueryResponse {
         for (JsonElement fieldElement : fieldsArray) {
             fieldElement.getAsJsonObject().add("tokenizedData", new JsonObject());
         }
-        responseObject.add("errors", new JsonArray());
+        responseObject.add("errors", null);
         responseObject.remove("tokenizedData");
         return responseObject.toString();
     }

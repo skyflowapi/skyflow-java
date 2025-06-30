@@ -124,6 +124,29 @@ public enum ErrorMessage {
     InvalidRequestBody("%s0 Validation error. Invalid request body. Specify the request body as an object."),
     EmptyRequestBody("%s0 Validation error. Request body can't be empty. Specify a valid request body."),
 
+    // detect
+    InvalidTextInDeIdentify("%s0 Validation error. The text field is required and must be a non-empty string. Specify a valid text."),
+    InvalidTextInReIdentify("%s0 Validation error. The text field is required and must be a non-empty string. Specify a valid text."),
+
+    //Detect Files
+    InvalidNullFileInDeIdentifyFile("%s0 Validation error. The file field is required and must not be null. Specify a valid file object."),
+    InvalidFilePath("%s0 Validation error. The file path is invalid. Specify a valid file path."),
+    BothFileAndFilePathProvided("%s0 Validation error. Both file and filePath are provided. Specify either file object or filePath, not both."),
+    FileNotFoundToDeidentify("%s0 Validation error. The file to deidentify was not found at the specified path. Verify the file path and try again."),
+    FileNotReadableToDeidentify("%s0 Validation error. The file to deidentify is not readable. Check the file permissions and try again."),
+    InvalidPixelDensityToDeidentifyFile("%s0 Validation error. Should be a positive integer. Specify a valid pixel density."),
+    InvalidMaxResolution("%s0 Validation error. Should be a positive integer. Specify a valid max resolution."),
+    OutputDirectoryNotFound("%s0 Validation error. The output directory for deidentified files was not found at the specified path. Verify the output directory path and try again."),
+    InvalidPermission("%s0 Validation error. The output directory for deidentified files is not writable. Check the directory permissions and try again."),
+    InvalidWaitTime("%s0 Validation error. The wait time for deidentify file operation should be a positive integer. Specify a valid wait time."),
+    WaitTimeExceedsLimit("%s0 Validation error. The wait time for deidentify file operation exceeds the maximum limit of 64 seconds. Specify a wait time less than or equal to 60 seconds."),
+    InvalidOrEmptyRunId("%s0 Validation error. The run ID is invalid or empty. Specify a valid run ID."),
+    FailedToEncodeFile("%s0 Validation error. Failed to encode the file. Ensure the file is in a supported format and try again."),
+    FailedToDecodeFileFromResponse("%s0  Failed to decode the file from the response. Ensure the response is valid and try again."),
+    EmptyFileAndFilePathInDeIdentifyFile("%s0 Validation error. Both file and filePath are empty. Specify either file object or filePath, not both."),
+    PollingForResultsFailed("%s0 API error. Polling for results failed. Unable to retrieve the deidentified file"),
+    FailedtoSaveProcessedFile("%s0 Validation error. Failed to save the processed file. Ensure the output directory is valid and writable."),
+    InvalidAudioFileType("%s0 Validation error. The file type is not supported. Specify a valid file type mp3 or wav."),
     // Generic
     ErrorOccurred("%s0 API error. Error occurred.")
     ;

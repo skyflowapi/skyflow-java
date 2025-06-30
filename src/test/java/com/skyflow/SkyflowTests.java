@@ -440,4 +440,130 @@ public class SkyflowTests {
         }
     }
 
+    @Test
+    public void testVaultMethodWithNoConfig() {
+        try {
+            Skyflow skyflowClient = Skyflow.builder().build();
+            skyflowClient.vault();
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(ErrorMessage.VaultIdNotInConfigList.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testVaultMethodWithValidConfig() {
+        try {
+            VaultConfig config = new VaultConfig();
+            config.setVaultId(vaultID);
+            config.setClusterId(clusterID);
+            config.setEnv(Env.SANDBOX);
+            Skyflow skyflowClient = Skyflow.builder().addVaultConfig(config).build();
+            Assert.assertNotNull(skyflowClient.vault());
+            Assert.assertNotNull(skyflowClient.vault(vaultID));
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testVaultMethodWithInvalidVaultId() {
+        try {
+            VaultConfig config = new VaultConfig();
+            config.setVaultId(vaultID);
+            config.setClusterId(clusterID);
+            config.setEnv(Env.SANDBOX);
+            Skyflow skyflowClient = Skyflow.builder().addVaultConfig(config).build();
+            skyflowClient.vault("invalid_vault_id");
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(ErrorMessage.VaultIdNotInConfigList.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testConnectionMethodWithNoConfig() {
+        try {
+            Skyflow skyflowClient = Skyflow.builder().build();
+            skyflowClient.connection();
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(ErrorMessage.ConnectionIdNotInConfigList.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testConnectionMethodWithValidConfig() {
+        try {
+            ConnectionConfig config = new ConnectionConfig();
+            config.setConnectionId(connectionID);
+            config.setConnectionUrl(connectionURL);
+            Skyflow skyflowClient = Skyflow.builder().addConnectionConfig(config).build();
+            Assert.assertNotNull(skyflowClient.connection());
+            Assert.assertNotNull(skyflowClient.connection(connectionID));
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testConnectionMethodWithInvalidConnectionId() {
+        try {
+            ConnectionConfig config = new ConnectionConfig();
+            config.setConnectionId(connectionID);
+            config.setConnectionUrl(connectionURL);
+            Skyflow skyflowClient = Skyflow.builder().addConnectionConfig(config).build();
+            skyflowClient.connection("invalid_connection_id");
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(ErrorMessage.ConnectionIdNotInConfigList.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testDetectMethodWithNoConfig() {
+        try {
+            Skyflow skyflowClient = Skyflow.builder().build();
+            skyflowClient.detect();
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(ErrorMessage.VaultIdNotInConfigList.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testDetectMethodWithValidConfig() {
+        try {
+            VaultConfig config = new VaultConfig();
+            config.setVaultId(vaultID);
+            config.setClusterId(clusterID);
+            config.setEnv(Env.SANDBOX);
+            Skyflow skyflowClient = Skyflow.builder().addVaultConfig(config).build();
+            Assert.assertNotNull(skyflowClient.detect());
+            Assert.assertNotNull(skyflowClient.detect(vaultID));
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testDetectMethodWithInvalidVaultId() {
+        try {
+            VaultConfig config = new VaultConfig();
+            config.setVaultId(vaultID);
+            config.setClusterId(clusterID);
+            config.setEnv(Env.SANDBOX);
+            Skyflow skyflowClient = Skyflow.builder().addVaultConfig(config).build();
+            skyflowClient.detect("invalid_vault_id");
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(ErrorMessage.VaultIdNotInConfigList.getMessage(), e.getMessage());
+        }
+    }
 }

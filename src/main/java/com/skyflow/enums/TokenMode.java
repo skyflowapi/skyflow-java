@@ -1,24 +1,24 @@
 package com.skyflow.enums;
 
-import com.skyflow.generated.rest.models.V1BYOT;
+import com.skyflow.generated.rest.types.V1Byot;
 
 public enum TokenMode {
-    DISABLE(V1BYOT.DISABLE),
-    ENABLE(V1BYOT.ENABLE),
-    ENABLE_STRICT(V1BYOT.ENABLE_STRICT);
+    DISABLE(V1Byot.DISABLE),
+    ENABLE(V1Byot.ENABLE),
+    ENABLE_STRICT(V1Byot.ENABLE_STRICT);
 
-    private final V1BYOT byot;
+    private final V1Byot byot;
 
-    TokenMode(V1BYOT byot) {
+    TokenMode(V1Byot byot) {
         this.byot = byot;
     }
 
-    public V1BYOT getBYOT() {
+    public V1Byot getBYOT() {
         return byot;
     }
 
     @Override
     public String toString() {
-        return String.valueOf(byot);
+        return byot.toString();
     }
 }
