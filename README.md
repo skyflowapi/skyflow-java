@@ -1850,7 +1850,7 @@ public class DeidentifyTextSchema {
 
 ```
 
-## An [example](https://github.com/skyflowapi/skyflow-java/blob/SK-2074-detect-support-readme-and-sample/samples/src/main/java/com/example/detect/DeidentifyTextExample.java) of deidentify text:
+## An [example](https://github.com/skyflowapi/skyflow-java/blob/beta-release/25.6.2/samples/src/main/java/com/example/detect/DeidentifyTextExample.java) of deidentify text:
 ```java
 import java.util.ArrayList;
 import java.util.List;
@@ -2013,7 +2013,7 @@ public class ReidentifyTextSchema {
 }
 ```
 
-## An [example](https://github.com/skyflowapi/skyflow-java/blob/SK-2074-detect-support-readme-and-sample/samples/src/main/java/com/example/detect/ReidentifyTextExample.java) of Reidentify text
+## An [example](https://github.com/skyflowapi/skyflow-java/blob/beta-release/25.6.2/samples/src/main/java/com/example/detect/ReidentifyTextExample.java) of Reidentify text
 
 ```java
 import com.skyflow.enums.DetectEntities;
@@ -2163,7 +2163,7 @@ public class DeidentifyFileSchema {
 } 
 ```
 
-## An [example](https://github.com/skyflowapi/skyflow-java/blob/SK-2074-detect-support-readme-and-sample/samples/src/main/java/com/example/detect/DeidentifyFileExample.java) of Deidentify file
+## An [example](https://github.com/skyflowapi/skyflow-java/blob/beta-release/25.6.2/samples/src/main/java/com/example/detect/DeidentifyFileExample.java) of Deidentify file
 
 ```java
 import java.io.File;
@@ -2284,18 +2284,20 @@ Sample response:
 Sample response (when the API takes more than 64 seconds):
 ```json
 {
-  "entities": undefined,
-  "file": undefined,
-  "type": undefined,
-  "extension": undefined,
-  "wordCount": undefined,
-  "charCount": undefined,
-  "sizeInKb": undefined,
-  "durationInSeconds": undefined,
-  "pageCount": undefined,
-  "slideCount": undefined,
-  "runId": "1ad6dc12-8405-46cf-1c13-db1123f9f4c5",
-  "status": 'IN_PROGRESS'
+  "file": null,
+  "fileBase64": null,
+  "type": null,
+  "extension": null,
+  "wordCount": null,
+  "charCount": null,
+  "sizeInKb": null,
+  "durationInSeconds": null,
+  "pageCount": null,
+  "slideCount": null,
+  "entities": null,
+  "runId": "1273a8c6-c498-4293-a9d6-389864cd3a44",
+  "status": "IN_PROGRESS",
+  "errors": null
 }
 ```
 
@@ -2339,7 +2341,7 @@ public class GetDetectRunSchema {
 
 ```
 
-## An [example](https://github.com/skyflowapi/skyflow-java/blob/SK-2074-detect-support-readme-and-sample/samples/src/main/java/com/example/detect/GetDetectRunExample.java) of get run
+## An [example](https://github.com/skyflowapi/skyflow-java/blob/beta-release/25.6.2/samples/src/main/java/com/example/detect/GetDetectRunExample.java) of get run
 ```java
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
