@@ -2110,6 +2110,7 @@ public class DeidentifyFileSchema {
         // Create file input using the file object
         FileInput fileInput = FileInput.builder()
                 .file(file)
+                // .filePath("<FILE_PATH>") // Alternatively, you can use .filePath()
                 .build();
 
         // Output configuration
@@ -2200,6 +2201,7 @@ public class DeidentifyFileExample {
             // Create file input using the file object
             FileInput fileInput = FileInput.builder()
                     .file(file)
+                    // .filePath("<FILE_PATH>") // Alternatively, you can use .filePath()
                     .build();
 
             // Output configuration
