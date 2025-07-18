@@ -114,6 +114,21 @@ public enum ErrorMessage {
     ColumnValuesKeyErrorTokenize("%s0 Validation error. 'columnValues' key is missing from the payload. Specify a 'columnValues' key."),
     EmptyColumnGroupInColumnValue("%s0 Validation error. Invalid column group in column value. Specify a valid column group."),
 
+    // Upload file
+    InvalidFileUploadRequest("%s0 Validation error. Invalid file upload request. Specify a valid file upload request."),
+    TableNameKeyError("%s0 Validation error. 'tableName' key is missing from the payload. Specify a 'tableName' key."),
+    EmptyTableName("%s0 Validation error. 'tableName' can't be empty. Specify a table name."),
+    SkyflowIdKeyErrorInFileUpload("%s0 Validation error. 'skyflowId' key is missing from the payload. Specify a 'skyflowId' key."),
+    EmptySkyflowIdInFileUpload("%s0 Validation error. 'skyflowId' can't be empty. Specify a skyflow id."),
+    ColumnNameKeyErrorInFileUpload("%s0 Validation error. 'columnName' can't be empty. Specify a 'columnName' key."),
+    EmptyColumnNameInFileUpload("%s0 Validation error. 'columnName' can't be empty. Specify a column name."),
+    MissingFileSourceInFileUpload("%s0 Validation error. Provide exactly one of filePath, base64, or fileObject."),
+    MultipleFileSourcesInFileUpload("%s0 Validation error. Provide exactly one of filePath, base64, or fileObject."),
+    EmptyFilePathInFileUpload("%s0 Validation error. File path cannot be empty in file upload request. Specify a valid file path."),
+    MissingFileNameForBase64("%s0 Validation error. File name is required when providing a base64 string"),
+    InvalidFileObjectInFileUpload("%s0 Validation error. Invalid file object in file upload request. Specify a valid file object."),
+    InvalidBase64InFileUpload("%s0 Validation error. Invalid base64 string in file upload request. Specify a valid base64 string."),
+
     // Connection
     InvalidRequestHeaders("%s0 Validation error. Request headers aren't valid. Specify valid request headers."),
     EmptyRequestHeaders("%s0 Validation error. Request headers are empty. Specify valid request headers."),
@@ -148,8 +163,7 @@ public enum ErrorMessage {
     FailedtoSaveProcessedFile("%s0 Validation error. Failed to save the processed file. Ensure the output directory is valid and writable."),
     InvalidAudioFileType("%s0 Validation error. The file type is not supported. Specify a valid file type mp3 or wav."),
     // Generic
-    ErrorOccurred("%s0 API error. Error occurred.")
-    ;
+    ErrorOccurred("%s0 API error. Error occurred.");
     private final String message;
 
     ErrorMessage(String message) {

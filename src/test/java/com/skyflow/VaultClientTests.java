@@ -4,6 +4,7 @@ import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.*;
 import com.skyflow.errors.ErrorCode;
+import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.generated.rest.resources.files.FilesClient;
 import com.skyflow.generated.rest.resources.files.requests.*;
@@ -22,11 +23,14 @@ import com.skyflow.generated.rest.types.DeidentifyStringResponse;
 import com.skyflow.generated.rest.types.DetectedEntity;
 import com.skyflow.generated.rest.types.EntityLocation;
 import com.skyflow.generated.rest.types.V1Byot;
+import com.skyflow.utils.Constants;
+import com.skyflow.utils.Utils;
+import com.skyflow.vault.data.FileUploadRequest;
 import com.skyflow.vault.data.InsertRequest;
 import com.skyflow.vault.data.UpdateRequest;
-import com.skyflow.vault.detect.*;
 import com.skyflow.vault.detect.DeidentifyFileRequest;
 import com.skyflow.vault.detect.DeidentifyTextRequest;
+import com.skyflow.vault.detect.*;
 import com.skyflow.vault.tokens.ColumnValue;
 import com.skyflow.vault.tokens.DetokenizeData;
 import com.skyflow.vault.tokens.DetokenizeRequest;
@@ -289,6 +293,97 @@ public class VaultClientTests {
             V1TokenizePayload payload = vaultClient.getTokenizePayload(tokenizeRequest);
             Assert.assertEquals(1, payload.getTokenizationParameters().get().size());
         } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testGetUploadFileColumnNameWithInvalidBase64String() {
+        try {
+            String invalidbase64String = "invalidBase64String!";
+            String columnName = "columnName";
+            String skyflowId = "skyflowId";
+            String fileName = "fileName.txt";
+            FileUploadRequest request = FileUploadRequest.builder()
+                    .tableName(table)
+                    .columnName(columnName)
+                    .skyflowId(skyflowId)
+                    .base64(invalidbase64String)
+                    .fileName(fileName)
+                    .build();
+            vaultClient.getUploadFileColumnName(request);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(
+                    Utils.parameterizedString(ErrorMessage.InvalidBase64InFileUpload.getMessage(), Constants.SDK_PREFIX),
+                    e.getMessage()
+            );
+        } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testGetUploadFileColumnNameWithValidBase64String() {
+        try {
+            String invalidbase64String = "YmFzZTY0RW5jb2RlZFN0cmluZw==";
+            String columnName = "columnName";
+            String skyflowId = "skyflowId";
+            String fileName = "fileName.txt";
+            FileUploadRequest request = FileUploadRequest.builder()
+                    .tableName(table)
+                    .columnName(columnName)
+                    .skyflowId(skyflowId)
+                    .base64(invalidbase64String)
+                    .fileName(fileName)
+                    .build();
+            vaultClient.getUploadFileColumnName(request);
+        } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testGetUploadFileColumnNameWithInvalidFilePath() {
+        try {
+            String invalidFilePath = "invalid/file/path/file.txt";
+            String columnName = "columnName";
+            String skyflowId = "skyflowId";
+            FileUploadRequest request = FileUploadRequest.builder()
+                    .tableName(table)
+                    .columnName(columnName)
+                    .skyflowId(skyflowId)
+                    .filePath(invalidFilePath)
+                    .build();
+            vaultClient.getUploadFileColumnName(request);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(
+                    Utils.parameterizedString(ErrorMessage.InvalidFilePath.getMessage(), Constants.SDK_PREFIX),
+                    e.getMessage()
+            );
+        } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testGetUploadFileColumnNameWithValidFile() {
+        try {
+            String columnName = "columnName";
+            String skyflowId = "skyflowId";
+            String filePath = "src/test/resources/notJson.txt";
+            FileUploadRequest request = FileUploadRequest.builder()
+                    .tableName(table)
+                    .columnName(columnName)
+                    .skyflowId(skyflowId)
+                    .fileObject(new File(filePath))
+                    .build();
+            vaultClient.getUploadFileColumnName(request);
+            Assert.assertTrue(request.getFileObject().exists());
+            Assert.assertEquals("notJson.txt", request.getFileObject().getName());
+        } catch (Exception e) {
+            System.out.println(e);
             Assert.fail(INVALID_EXCEPTION_THROWN);
         }
     }

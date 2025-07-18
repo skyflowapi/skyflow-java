@@ -22,6 +22,8 @@ import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.utils.validations.Validations;
 import com.skyflow.vault.data.*;
 import com.skyflow.vault.tokens.*;
+
+import java.io.File;
 import java.util.*;
 
 public final class VaultController extends VaultClient {
@@ -358,5 +360,29 @@ public final class VaultController extends VaultClient {
         }
         LogUtil.printInfoLog(InfoLogs.TOKENIZE_SUCCESS.getLog());
         return new TokenizeResponse(list);
+    }
+
+    public FileUploadResponse uploadFile(FileUploadRequest request) throws SkyflowException {
+        LogUtil.printInfoLog(InfoLogs.FILE_UPLOAD_TRIGGERED.getLog());
+        V1UpdateRecordResponse result = null;
+        try {
+            LogUtil.printInfoLog(InfoLogs.VALIDATE_FILE_UPLOAD_REQUEST.getLog());
+            Validations.validateFileUploadRequest(request);
+            setBearerToken();
+            File fileColumnName = super.getUploadFileColumnName(request);
+            result = super.getRecordsApi().fileServiceUploadFile(
+                    super.getVaultConfig().getVaultId(),
+                    request.getTableName(),
+                    request.getSkyflowId(),
+                    Optional.ofNullable(fileColumnName)
+            );
+            LogUtil.printInfoLog(InfoLogs.FILE_UPLOAD_REQUEST_RESOLVED.getLog());
+        } catch (ApiClientApiException e) {
+            String bodyString = gson.toJson(e.body());
+            LogUtil.printErrorLog(ErrorLogs.FILE_UPLOAD_REQUEST_REJECTED.getLog());
+            throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
+        }
+        LogUtil.printInfoLog(InfoLogs.FILE_UPLOAD_SUCCESS.getLog());
+        return new FileUploadResponse(result.getSkyflowId().isPresent() ? result.getSkyflowId().get() : null);
     }
 }
