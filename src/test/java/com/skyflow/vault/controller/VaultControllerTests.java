@@ -165,4 +165,24 @@ public class VaultControllerTests {
         }
     }
 
+    @Test
+    public void testInvalidRequestInUploadFileMethod() {
+        try {
+            FileUploadRequest request = FileUploadRequest.builder().build();
+            skyflowClient = Skyflow.builder().setLogLevel(LogLevel.DEBUG).addVaultConfig(vaultConfig).build();
+            skyflowClient.vault().uploadFile(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(
+                    Utils.parameterizedString(ErrorMessage.TableNameKeyError.getMessage(), Constants.SDK_PREFIX),
+                    e.getMessage()
+            );
+            Assert.assertNull(e.getRequestId());
+            Assert.assertNull(e.getGrpcCode());
+            Assert.assertTrue(e.getDetails().isEmpty());
+            Assert.assertEquals(HttpStatus.BAD_REQUEST.getHttpStatus(), e.getHttpStatus());
+        }
+    }
+
 }

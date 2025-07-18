@@ -96,7 +96,17 @@ public enum ErrorLogs {
     EMPTY_OR_NULL_COLUMN_GROUP_IN_COLUMN_VALUES("Invalid %s1 request. Column group can not be null or empty in column values at index %s2."),
     TOKENIZE_REQUEST_REJECTED("Tokenize request resulted in failure."),
     DELETE_REQUEST_REJECTED("Delete request resulted in failure."),
+    FILE_UPLOAD_REQUEST_REJECTED("File upload request resulted in failure."),
 
+    INVALID_FILE_UPLOAD_REQUEST("Invalid %s1 request. Invalid file upload request. Specify a valid file upload request."),
+    COLUMN_NAME_IS_REQUIRED_IN_FILE_UPLOAD("Invalid %s1 request. Column name is required."),
+    INVALID_FILE_SOURCES_IN_FILE_UPLOAD("Invalid %s1 request. Exactly one of 'filePath', 'base64', or 'fileObject' is required."),
+    MISSING_FILE_PATH_IN_FILE_UPLOAD("Invalid %s1 request. File path cannot be empty in file upload request. Specify a valid file path as string."),
+    MISSING_FILE_NAME_FOR_BASE64("Invalid %s1 request. File name is required when providing a base64 string"),
+    INVALID_FILE_OBJECT_IN_FILE_UPLOAD("Invalid %s1 request. Invalid file object in file upload request. Specify a valid file object."),
+    INVALID_FILE_PATH_IN_FILE_UPLOAD("Invalid %s1 request. Invalid file path in file upload request. Specify a valid file path."),
+    INVALID_BASE64_IN_FILE_UPLOAD("Invalid %s1 request. Invalid base64 string in file upload request. Specify a valid base64 string."),
+    
     // invoke connection interface
     INVOKE_CONNECTION_INVALID_CONNECTION_URL("Invalid %s1 request. Connection URL is not a valid URL."),
     EMPTY_REQUEST_HEADERS("Invalid %s1 request. Request headers can not be empty."),
