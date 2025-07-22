@@ -75,17 +75,20 @@ public class SkyflowException extends Exception {
     }
 
     private void setMessage() {
-        JsonElement messageElement = ((JsonObject) responseBody.get("error")).get("message");
+        JsonObject errorObj = ((JsonObject) responseBody.get("error"));
+        JsonElement messageElement = errorObj.has("message") ? errorObj.get("message") : null;
         this.message = messageElement == null ? null : messageElement.getAsString();
     }
 
     private void setGrpcCode() {
-        JsonElement grpcElement = ((JsonObject) responseBody.get("error")).get("grpc_code");
+        JsonObject errorObj = ((JsonObject) responseBody.get("error"));
+        JsonElement grpcElement = errorObj.has("grpc_code") ? errorObj.get("grpc_code") : errorObj.has("grpcCode") ? errorObj.get("grpcCode") : null;
         this.grpcCode = grpcElement == null ? null : grpcElement.getAsInt();
     }
 
     private void setHttpStatus() {
-        JsonElement statusElement = ((JsonObject) responseBody.get("error")).get("http_status");
+        JsonObject errorObj = ((JsonObject) responseBody.get("error"));
+        JsonElement statusElement = errorObj.has("http_status") ? errorObj.get("http_status") : errorObj.has("httpStatus") ? errorObj.get("httpStatus") : null;
         this.httpStatus = statusElement == null ? null : statusElement.getAsString();
     }
 
@@ -98,11 +101,38 @@ public class SkyflowException extends Exception {
     }
 
     private void setDetails(Map<String, List<String>> responseHeaders) {
-        JsonElement detailsElement = ((JsonObject) responseBody.get("error")).get("details");
+        JsonObject errorObj = ((JsonObject) responseBody.get("error"));
+        JsonElement detailsElement = errorObj.has("details") ? errorObj.get("details") : null;
         List<String> errorFromClientHeader = responseHeaders.get(Constants.ERROR_FROM_CLIENT_HEADER_KEY);
+
         if (detailsElement != null) {
-            this.details = detailsElement.getAsJsonArray();
+            if (detailsElement.isJsonArray()) {
+                this.details = detailsElement.getAsJsonArray();
+                if (this.details.isEmpty()) this.details = new JsonArray();
+            } else if (detailsElement.isJsonObject()) {
+                JsonObject obj = detailsElement.getAsJsonObject();
+                boolean allEmpty = true;
+                for (String key : obj.keySet()) {
+                    if (obj.get(key).isJsonArray() && !obj.get(key).getAsJsonArray().isEmpty()) {
+                        allEmpty = false;
+                        break;
+                    } else if (!obj.get(key).isJsonArray() && !obj.get(key).isJsonNull()) {
+                        allEmpty = false;
+                        break;
+                    }
+                }
+                if (obj.isEmpty() || allEmpty) {
+                    this.details = new JsonArray();
+                } else {
+                    JsonArray arr = new JsonArray();
+                    arr.add(obj);
+                    this.details = arr;
+                }
+            }
+        } else {
+            this.details = new JsonArray();
         }
+
         if (errorFromClientHeader != null) {
             this.details = this.details == null ? new JsonArray() : this.details;
             String errorFromClient = errorFromClientHeader.get(0);

@@ -8,7 +8,7 @@ public class DetokenizeData {
 
     public DetokenizeData(String token) {
         this.token = token;
-        this.redactionType = RedactionType.PLAIN_TEXT;
+        this.redactionType = RedactionType.MASKED;
     }
 
     public DetokenizeData(String token, RedactionType redactionType) {
