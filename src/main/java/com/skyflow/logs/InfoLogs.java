@@ -7,6 +7,7 @@ public enum InfoLogs {
     VALIDATING_CONNECTION_CONFIG("Validating connection config."),
     UNABLE_TO_GENERATE_SDK_METRIC("Unable to generate %s1 metric."),
     VAULT_CONTROLLER_INITIALIZED("Initialized vault controller with vault ID %s1."),
+    DETECT_CONTROLLER_INITIALIZED("Initialized detect controller with vault ID %s1."),
     CONNECTION_CONTROLLER_INITIALIZED("Initialized connection controller with connection ID %s1."),
     LOGGER_SETUP_DONE("Set up logger."),
     CURRENT_LOG_LEVEL("Current log level is %s1."),
@@ -68,10 +69,29 @@ public enum InfoLogs {
     TOKENIZE_REQUEST_RESOLVED("Tokenize request resolved."),
     TOKENIZE_SUCCESS("Data tokenized."),
 
+
     // Invoke connection interface
     INVOKE_CONNECTION_TRIGGERED("Invoke connection method triggered."),
     VALIDATING_INVOKE_CONNECTION_REQUEST("Validating invoke connection request."),
-    INVOKE_CONNECTION_REQUEST_RESOLVED("Invoke connection request resolved.");
+    INVOKE_CONNECTION_REQUEST_RESOLVED("Invoke connection request resolved."),
+
+    // detect
+    VALIDATE_DEIDENTIFY_TEXT_REQUEST("Validating deidentify text request."),
+    DEIDENTIFY_TEXT_SUCCESS("Text data de-identified."),
+    DEIDENTIFY_TEXT_TRIGGERED("DeIdentify text method triggered."),
+    DEIDENTIFY_TEXT_REQUEST_RESOLVED("DeIdentify text request resolved."),
+    VALIDATE_REIDENTIFY_TEXT_REQUEST("Validating reidentify text request."),
+    REIDENTIFY_TEXT_TRIGGERED("ReIdentify text method triggered."),
+    REIDENTIFY_TEXT_REQUEST_RESOLVED("ReIdentify text request resolved."),
+    DEIDENTIFY_FILE_TRIGGERED("DeIdentify file method triggered."),
+    VALIDATE_DEIDENTIFY_FILE_REQUEST("Validating deidentify file request."),
+    DEIDENTIFY_FILE_REQUEST_RESOLVED("DeIdentify file request resolved."),
+    DEIDENTIFY_FILE_SUCCESS("File deidentified successfully."),
+    GET_DETECT_RUN_TRIGGERED("Get detect run method triggered."),
+    VALIDATE_GET_DETECT_RUN_REQUEST("Validating get detect run request."),
+    REIDENTIFY_TEXT_SUCCESS("Text data re-identified."),
+    ;
+
 
     private final String log;
 
