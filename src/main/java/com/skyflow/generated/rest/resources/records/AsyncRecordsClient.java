@@ -240,9 +240,19 @@ public class AsyncRecordsClient {
      * Uploads a file to the specified record.
      */
     public CompletableFuture<V1UpdateRecordResponse> fileServiceUploadFile(
-            String vaultId, String objectName, String id, Optional<File> fileColumnName) {
+            String vaultId, String objectName, String id, Optional<File> file) {
         return this.rawClient
-                .fileServiceUploadFile(vaultId, objectName, id, fileColumnName)
+                .fileServiceUploadFile(vaultId, objectName, id, file)
+                .thenApply(response -> response.body());
+    }
+
+    /**
+     * Uploads a file to the specified record.
+     */
+    public CompletableFuture<V1UpdateRecordResponse> fileServiceUploadFile(
+            String vaultId, String objectName, String id, Optional<File> file, FileServiceUploadFileRequest request) {
+        return this.rawClient
+                .fileServiceUploadFile(vaultId, objectName, id, file, request)
                 .thenApply(response -> response.body());
     }
 
@@ -253,25 +263,11 @@ public class AsyncRecordsClient {
             String vaultId,
             String objectName,
             String id,
-            Optional<File> fileColumnName,
-            FileServiceUploadFileRequest request) {
-        return this.rawClient
-                .fileServiceUploadFile(vaultId, objectName, id, fileColumnName, request)
-                .thenApply(response -> response.body());
-    }
-
-    /**
-     * Uploads a file to the specified record.
-     */
-    public CompletableFuture<V1UpdateRecordResponse> fileServiceUploadFile(
-            String vaultId,
-            String objectName,
-            String id,
-            Optional<File> fileColumnName,
+            Optional<File> file,
             FileServiceUploadFileRequest request,
             RequestOptions requestOptions) {
         return this.rawClient
-                .fileServiceUploadFile(vaultId, objectName, id, fileColumnName, request, requestOptions)
+                .fileServiceUploadFile(vaultId, objectName, id, file, request, requestOptions)
                 .thenApply(response -> response.body());
     }
 

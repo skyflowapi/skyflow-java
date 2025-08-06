@@ -31,6 +31,8 @@ public final class DeidentifyAudioRequest {
 
     private final DeidentifyAudioRequestFile file;
 
+    private final Optional<String> configurationId;
+
     private final Optional<Boolean> outputProcessedAudio;
 
     private final Optional<DeidentifyAudioRequestOutputTranscription> outputTranscription;
@@ -58,6 +60,7 @@ public final class DeidentifyAudioRequest {
     private DeidentifyAudioRequest(
             String vaultId,
             DeidentifyAudioRequestFile file,
+            Optional<String> configurationId,
             Optional<Boolean> outputProcessedAudio,
             Optional<DeidentifyAudioRequestOutputTranscription> outputTranscription,
             Optional<Double> bleepGain,
@@ -72,6 +75,7 @@ public final class DeidentifyAudioRequest {
             Map<String, Object> additionalProperties) {
         this.vaultId = vaultId;
         this.file = file;
+        this.configurationId = configurationId;
         this.outputProcessedAudio = outputProcessedAudio;
         this.outputTranscription = outputTranscription;
         this.bleepGain = bleepGain;
@@ -97,6 +101,11 @@ public final class DeidentifyAudioRequest {
     @JsonProperty("file")
     public DeidentifyAudioRequestFile getFile() {
         return file;
+    }
+
+    @JsonProperty("configuration_id")
+    public Optional<String> getConfigurationId() {
+        return configurationId;
     }
 
     /**
@@ -186,6 +195,7 @@ public final class DeidentifyAudioRequest {
     private boolean equalTo(DeidentifyAudioRequest other) {
         return vaultId.equals(other.vaultId)
                 && file.equals(other.file)
+                && configurationId.equals(other.configurationId)
                 && outputProcessedAudio.equals(other.outputProcessedAudio)
                 && outputTranscription.equals(other.outputTranscription)
                 && bleepGain.equals(other.bleepGain)
@@ -204,6 +214,7 @@ public final class DeidentifyAudioRequest {
         return Objects.hash(
                 this.vaultId,
                 this.file,
+                this.configurationId,
                 this.outputProcessedAudio,
                 this.outputTranscription,
                 this.bleepGain,
@@ -241,6 +252,10 @@ public final class DeidentifyAudioRequest {
 
     public interface _FinalStage {
         DeidentifyAudioRequest build();
+
+        _FinalStage configurationId(Optional<String> configurationId);
+
+        _FinalStage configurationId(String configurationId);
 
         /**
          * <p>If <code>true</code>, includes processed audio file in the response.</p>
@@ -333,6 +348,8 @@ public final class DeidentifyAudioRequest {
 
         private Optional<Boolean> outputProcessedAudio = Optional.empty();
 
+        private Optional<String> configurationId = Optional.empty();
+
         @JsonAnySetter
         private Map<String, Object> additionalProperties = new HashMap<>();
 
@@ -342,6 +359,7 @@ public final class DeidentifyAudioRequest {
         public Builder from(DeidentifyAudioRequest other) {
             vaultId(other.getVaultId());
             file(other.getFile());
+            configurationId(other.getConfigurationId());
             outputProcessedAudio(other.getOutputProcessedAudio());
             outputTranscription(other.getOutputTranscription());
             bleepGain(other.getBleepGain());
@@ -561,10 +579,24 @@ public final class DeidentifyAudioRequest {
         }
 
         @java.lang.Override
+        public _FinalStage configurationId(String configurationId) {
+            this.configurationId = Optional.ofNullable(configurationId);
+            return this;
+        }
+
+        @java.lang.Override
+        @JsonSetter(value = "configuration_id", nulls = Nulls.SKIP)
+        public _FinalStage configurationId(Optional<String> configurationId) {
+            this.configurationId = configurationId;
+            return this;
+        }
+
+        @java.lang.Override
         public DeidentifyAudioRequest build() {
             return new DeidentifyAudioRequest(
                     vaultId,
                     file,
+                    configurationId,
                     outputProcessedAudio,
                     outputTranscription,
                     bleepGain,

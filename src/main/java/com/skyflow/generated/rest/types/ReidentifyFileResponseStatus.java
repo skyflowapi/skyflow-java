@@ -5,16 +5,16 @@ package com.skyflow.generated.rest.types;
 
 import com.fasterxml.jackson.annotation.JsonValue;
 
-public enum DetectRequestDeidentifyOption {
-    UNKNOWN("UNKNOWN"),
+public enum ReidentifyFileResponseStatus {
+    FAILED("failed"),
 
-    ENTITY_UNQ_COUNTER("ENTITY_UNQ_COUNTER"),
+    IN_PROGRESS("in_progress"),
 
-    ENTITY_ONLY("ENTITY_ONLY");
+    SUCCESS("success");
 
     private final String value;
 
-    DetectRequestDeidentifyOption(String value) {
+    ReidentifyFileResponseStatus(String value) {
         this.value = value;
     }
 

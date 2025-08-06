@@ -30,6 +30,8 @@ public final class DeidentifyFileRequest {
 
     private final DeidentifyFileRequestFile file;
 
+    private final Optional<String> configurationId;
+
     private final Optional<List<EntityType>> entityTypes;
 
     private final Optional<TokenTypeWithoutVault> tokenType;
@@ -45,6 +47,7 @@ public final class DeidentifyFileRequest {
     private DeidentifyFileRequest(
             String vaultId,
             DeidentifyFileRequestFile file,
+            Optional<String> configurationId,
             Optional<List<EntityType>> entityTypes,
             Optional<TokenTypeWithoutVault> tokenType,
             Optional<List<String>> allowRegex,
@@ -53,6 +56,7 @@ public final class DeidentifyFileRequest {
             Map<String, Object> additionalProperties) {
         this.vaultId = vaultId;
         this.file = file;
+        this.configurationId = configurationId;
         this.entityTypes = entityTypes;
         this.tokenType = tokenType;
         this.allowRegex = allowRegex;
@@ -72,6 +76,11 @@ public final class DeidentifyFileRequest {
     @JsonProperty("file")
     public DeidentifyFileRequestFile getFile() {
         return file;
+    }
+
+    @JsonProperty("configuration_id")
+    public Optional<String> getConfigurationId() {
+        return configurationId;
     }
 
     @JsonProperty("entity_types")
@@ -113,6 +122,7 @@ public final class DeidentifyFileRequest {
     private boolean equalTo(DeidentifyFileRequest other) {
         return vaultId.equals(other.vaultId)
                 && file.equals(other.file)
+                && configurationId.equals(other.configurationId)
                 && entityTypes.equals(other.entityTypes)
                 && tokenType.equals(other.tokenType)
                 && allowRegex.equals(other.allowRegex)
@@ -125,6 +135,7 @@ public final class DeidentifyFileRequest {
         return Objects.hash(
                 this.vaultId,
                 this.file,
+                this.configurationId,
                 this.entityTypes,
                 this.tokenType,
                 this.allowRegex,
@@ -156,6 +167,10 @@ public final class DeidentifyFileRequest {
 
     public interface _FinalStage {
         DeidentifyFileRequest build();
+
+        _FinalStage configurationId(Optional<String> configurationId);
+
+        _FinalStage configurationId(String configurationId);
 
         _FinalStage entityTypes(Optional<List<EntityType>> entityTypes);
 
@@ -194,6 +209,8 @@ public final class DeidentifyFileRequest {
 
         private Optional<List<EntityType>> entityTypes = Optional.empty();
 
+        private Optional<String> configurationId = Optional.empty();
+
         @JsonAnySetter
         private Map<String, Object> additionalProperties = new HashMap<>();
 
@@ -203,6 +220,7 @@ public final class DeidentifyFileRequest {
         public Builder from(DeidentifyFileRequest other) {
             vaultId(other.getVaultId());
             file(other.getFile());
+            configurationId(other.getConfigurationId());
             entityTypes(other.getEntityTypes());
             tokenType(other.getTokenType());
             allowRegex(other.getAllowRegex());
@@ -295,10 +313,24 @@ public final class DeidentifyFileRequest {
         }
 
         @java.lang.Override
+        public _FinalStage configurationId(String configurationId) {
+            this.configurationId = Optional.ofNullable(configurationId);
+            return this;
+        }
+
+        @java.lang.Override
+        @JsonSetter(value = "configuration_id", nulls = Nulls.SKIP)
+        public _FinalStage configurationId(Optional<String> configurationId) {
+            this.configurationId = configurationId;
+            return this;
+        }
+
+        @java.lang.Override
         public DeidentifyFileRequest build() {
             return new DeidentifyFileRequest(
                     vaultId,
                     file,
+                    configurationId,
                     entityTypes,
                     tokenType,
                     allowRegex,
