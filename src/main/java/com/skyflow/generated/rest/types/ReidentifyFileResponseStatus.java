@@ -6,11 +6,9 @@ package com.skyflow.generated.rest.types;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum ReidentifyFileResponseStatus {
-    FAILED("failed"),
-
-    IN_PROGRESS("in_progress"),
-
-    SUCCESS("success");
+    FAILED("FAILED"),
+    IN_PROGRESS("IN_PROGRESS"),
+    SUCCESS("SUCCESS");
 
     private final String value;
 
