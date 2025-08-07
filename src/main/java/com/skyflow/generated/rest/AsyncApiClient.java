@@ -3,18 +3,19 @@
  */
 package com.skyflow.generated.rest;
 
+import java.util.function.Supplier;
+
 import com.skyflow.generated.rest.core.ClientOptions;
 import com.skyflow.generated.rest.core.Suppliers;
 import com.skyflow.generated.rest.resources.audit.AsyncAuditClient;
 import com.skyflow.generated.rest.resources.authentication.AsyncAuthenticationClient;
 import com.skyflow.generated.rest.resources.binlookup.AsyncBinLookupClient;
-import com.skyflow.generated.rest.resources.deprecated.AsyncDeprecatedClient;
 import com.skyflow.generated.rest.resources.files.AsyncFilesClient;
+import com.skyflow.generated.rest.resources.guardrails.AsyncGuardrailsClient;
 import com.skyflow.generated.rest.resources.query.AsyncQueryClient;
 import com.skyflow.generated.rest.resources.records.AsyncRecordsClient;
 import com.skyflow.generated.rest.resources.strings.AsyncStringsClient;
 import com.skyflow.generated.rest.resources.tokens.AsyncTokensClient;
-import java.util.function.Supplier;
 
 public class AsyncApiClient {
     protected final ClientOptions clientOptions;
@@ -31,7 +32,7 @@ public class AsyncApiClient {
 
     protected final Supplier<AsyncAuthenticationClient> authenticationClient;
 
-    protected final Supplier<AsyncDeprecatedClient> deprecatedClient;
+    protected final Supplier<AsyncGuardrailsClient> guardrailsClient;
 
     protected final Supplier<AsyncStringsClient> stringsClient;
 
@@ -45,7 +46,7 @@ public class AsyncApiClient {
         this.tokensClient = Suppliers.memoize(() -> new AsyncTokensClient(clientOptions));
         this.queryClient = Suppliers.memoize(() -> new AsyncQueryClient(clientOptions));
         this.authenticationClient = Suppliers.memoize(() -> new AsyncAuthenticationClient(clientOptions));
-        this.deprecatedClient = Suppliers.memoize(() -> new AsyncDeprecatedClient(clientOptions));
+        this.guardrailsClient = Suppliers.memoize(() -> new AsyncGuardrailsClient(clientOptions));
         this.stringsClient = Suppliers.memoize(() -> new AsyncStringsClient(clientOptions));
         this.filesClient = Suppliers.memoize(() -> new AsyncFilesClient(clientOptions));
     }
@@ -74,8 +75,8 @@ public class AsyncApiClient {
         return this.authenticationClient.get();
     }
 
-    public AsyncDeprecatedClient deprecated() {
-        return this.deprecatedClient.get();
+    public AsyncGuardrailsClient guardrails() {
+        return this.guardrailsClient.get();
     }
 
     public AsyncStringsClient strings() {

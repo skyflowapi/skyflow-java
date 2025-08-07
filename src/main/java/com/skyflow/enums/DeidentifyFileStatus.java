@@ -2,6 +2,7 @@ package com.skyflow.enums;
 
 public enum DeidentifyFileStatus {
     IN_PROGRESS("IN_PROGRESS"),
+    FAILED("FAILED"),
     SUCCESS("SUCCESS");
 
     private final String value;

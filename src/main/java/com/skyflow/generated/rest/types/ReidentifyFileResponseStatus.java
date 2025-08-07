@@ -5,18 +5,14 @@ package com.skyflow.generated.rest.types;
 
 import com.fasterxml.jackson.annotation.JsonValue;
 
-public enum V1DetectStatusResponseStatus {
-    UNKNOWN("UNKNOWN"),
-
+public enum ReidentifyFileResponseStatus {
     FAILED("FAILED"),
-
-    SUCCESS("SUCCESS"),
-
-    IN_PROGRESS("IN_PROGRESS");
+    IN_PROGRESS("IN_PROGRESS"),
+    SUCCESS("SUCCESS");
 
     private final String value;
 
-    V1DetectStatusResponseStatus(String value) {
+    ReidentifyFileResponseStatus(String value) {
         this.value = value;
     }
 

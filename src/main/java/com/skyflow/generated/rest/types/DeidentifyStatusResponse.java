@@ -27,7 +27,7 @@ public final class DeidentifyStatusResponse {
 
     private final List<DeidentifyFileOutput> output;
 
-    private final DeidentifyStatusResponseOutputType outputType;
+    private final Optional<DeidentifyStatusResponseOutputType> outputType;
 
     private final String message;
 
@@ -48,7 +48,7 @@ public final class DeidentifyStatusResponse {
     private DeidentifyStatusResponse(
             DeidentifyStatusResponseStatus status,
             List<DeidentifyFileOutput> output,
-            DeidentifyStatusResponseOutputType outputType,
+            Optional<DeidentifyStatusResponseOutputType> outputType,
             String message,
             Optional<Integer> wordCount,
             Optional<Integer> characterCount,
@@ -90,7 +90,7 @@ public final class DeidentifyStatusResponse {
      * @return How the output file is specified.
      */
     @JsonProperty("output_type")
-    public DeidentifyStatusResponseOutputType getOutputType() {
+    public Optional<DeidentifyStatusResponseOutputType> getOutputType() {
         return outputType;
     }
 
@@ -202,16 +202,9 @@ public final class DeidentifyStatusResponse {
         /**
          * Status of the detect run.
          */
-        OutputTypeStage status(@NotNull DeidentifyStatusResponseStatus status);
+        MessageStage status(@NotNull DeidentifyStatusResponseStatus status);
 
         Builder from(DeidentifyStatusResponse other);
-    }
-
-    public interface OutputTypeStage {
-        /**
-         * How the output file is specified.
-         */
-        MessageStage outputType(@NotNull DeidentifyStatusResponseOutputType outputType);
     }
 
     public interface MessageStage {
@@ -232,6 +225,13 @@ public final class DeidentifyStatusResponse {
         _FinalStage addOutput(DeidentifyFileOutput output);
 
         _FinalStage addAllOutput(List<DeidentifyFileOutput> output);
+
+        /**
+         * <p>How the output file is specified.</p>
+         */
+        _FinalStage outputType(Optional<DeidentifyStatusResponseOutputType> outputType);
+
+        _FinalStage outputType(DeidentifyStatusResponseOutputType outputType);
 
         /**
          * <p>Number of words in the processed text.</p>
@@ -277,10 +277,8 @@ public final class DeidentifyStatusResponse {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static final class Builder implements StatusStage, OutputTypeStage, MessageStage, _FinalStage {
+    public static final class Builder implements StatusStage, MessageStage, _FinalStage {
         private DeidentifyStatusResponseStatus status;
-
-        private DeidentifyStatusResponseOutputType outputType;
 
         private String message;
 
@@ -295,6 +293,8 @@ public final class DeidentifyStatusResponse {
         private Optional<Integer> characterCount = Optional.empty();
 
         private Optional<Integer> wordCount = Optional.empty();
+
+        private Optional<DeidentifyStatusResponseOutputType> outputType = Optional.empty();
 
         private List<DeidentifyFileOutput> output = new ArrayList<>();
 
@@ -324,19 +324,8 @@ public final class DeidentifyStatusResponse {
          */
         @java.lang.Override
         @JsonSetter("status")
-        public OutputTypeStage status(@NotNull DeidentifyStatusResponseStatus status) {
+        public MessageStage status(@NotNull DeidentifyStatusResponseStatus status) {
             this.status = Objects.requireNonNull(status, "status must not be null");
-            return this;
-        }
-
-        /**
-         * How the output file is specified.<p>How the output file is specified.</p>
-         * @return Reference to {@code this} so that method calls can be chained together.
-         */
-        @java.lang.Override
-        @JsonSetter("output_type")
-        public MessageStage outputType(@NotNull DeidentifyStatusResponseOutputType outputType) {
-            this.outputType = Objects.requireNonNull(outputType, "outputType must not be null");
             return this;
         }
 
@@ -468,6 +457,26 @@ public final class DeidentifyStatusResponse {
         @JsonSetter(value = "word_count", nulls = Nulls.SKIP)
         public _FinalStage wordCount(Optional<Integer> wordCount) {
             this.wordCount = wordCount;
+            return this;
+        }
+
+        /**
+         * <p>How the output file is specified.</p>
+         * @return Reference to {@code this} so that method calls can be chained together.
+         */
+        @java.lang.Override
+        public _FinalStage outputType(DeidentifyStatusResponseOutputType outputType) {
+            this.outputType = Optional.ofNullable(outputType);
+            return this;
+        }
+
+        /**
+         * <p>How the output file is specified.</p>
+         */
+        @java.lang.Override
+        @JsonSetter(value = "output_type", nulls = Nulls.SKIP)
+        public _FinalStage outputType(Optional<DeidentifyStatusResponseOutputType> outputType) {
+            this.outputType = outputType;
             return this;
         }
 

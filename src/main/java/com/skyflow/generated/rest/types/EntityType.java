@@ -28,6 +28,8 @@ public enum EntityType {
 
     DATE("date"),
 
+    DAY("day"),
+
     DATE_INTERVAL("date_interval"),
 
     DOB("dob"),
@@ -40,6 +42,8 @@ public enum EntityType {
 
     DURATION("duration"),
 
+    EFFECT("effect"),
+
     EMAIL_ADDRESS("email_address"),
 
     EVENT("event"),
@@ -48,7 +52,7 @@ public enum EntityType {
 
     FINANCIAL_METRIC("financial_metric"),
 
-    GENDER_SEXUALITY("gender_sexuality"),
+    GENDER("gender"),
 
     HEALTHCARE_NUMBER("healthcare_number"),
 
@@ -82,6 +86,8 @@ public enum EntityType {
 
     MONEY("money"),
 
+    MONTH("month"),
+
     NAME("name"),
 
     NAME_FAMILY("name_family"),
@@ -96,6 +102,8 @@ public enum EntityType {
 
     ORGANIZATION("organization"),
 
+    ORGANIZATION_ID("organization_id"),
+
     ORGANIZATION_MEDICAL_FACILITY("organization_medical_facility"),
 
     ORIGIN("origin"),
@@ -106,6 +114,8 @@ public enum EntityType {
 
     PHONE_NUMBER("phone_number"),
 
+    PROJECT("project"),
+
     PHYSICAL_ATTRIBUTE("physical_attribute"),
 
     POLITICAL_AFFILIATION("political_affiliation"),
@@ -115,6 +125,8 @@ public enum EntityType {
     RELIGION("religion"),
 
     ROUTING_NUMBER("routing_number"),
+
+    SEXUALITY("sexuality"),
 
     SSN("ssn"),
 
@@ -129,6 +141,8 @@ public enum EntityType {
     USERNAME("username"),
 
     VEHICLE_ID("vehicle_id"),
+
+    YEAR("year"),
 
     ZODIAC_SIGN("zodiac_sign");
 

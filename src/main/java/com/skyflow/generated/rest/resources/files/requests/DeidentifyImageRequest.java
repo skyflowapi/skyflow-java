@@ -31,6 +31,8 @@ public final class DeidentifyImageRequest {
 
     private final DeidentifyImageRequestFile file;
 
+    private final Optional<String> configurationId;
+
     private final Optional<Boolean> outputProcessedImage;
 
     private final Optional<Boolean> outputOcrText;
@@ -52,6 +54,7 @@ public final class DeidentifyImageRequest {
     private DeidentifyImageRequest(
             String vaultId,
             DeidentifyImageRequestFile file,
+            Optional<String> configurationId,
             Optional<Boolean> outputProcessedImage,
             Optional<Boolean> outputOcrText,
             Optional<DeidentifyImageRequestMaskingMethod> maskingMethod,
@@ -63,6 +66,7 @@ public final class DeidentifyImageRequest {
             Map<String, Object> additionalProperties) {
         this.vaultId = vaultId;
         this.file = file;
+        this.configurationId = configurationId;
         this.outputProcessedImage = outputProcessedImage;
         this.outputOcrText = outputOcrText;
         this.maskingMethod = maskingMethod;
@@ -85,6 +89,11 @@ public final class DeidentifyImageRequest {
     @JsonProperty("file")
     public DeidentifyImageRequestFile getFile() {
         return file;
+    }
+
+    @JsonProperty("configuration_id")
+    public Optional<String> getConfigurationId() {
+        return configurationId;
     }
 
     /**
@@ -150,6 +159,7 @@ public final class DeidentifyImageRequest {
     private boolean equalTo(DeidentifyImageRequest other) {
         return vaultId.equals(other.vaultId)
                 && file.equals(other.file)
+                && configurationId.equals(other.configurationId)
                 && outputProcessedImage.equals(other.outputProcessedImage)
                 && outputOcrText.equals(other.outputOcrText)
                 && maskingMethod.equals(other.maskingMethod)
@@ -165,6 +175,7 @@ public final class DeidentifyImageRequest {
         return Objects.hash(
                 this.vaultId,
                 this.file,
+                this.configurationId,
                 this.outputProcessedImage,
                 this.outputOcrText,
                 this.maskingMethod,
@@ -199,6 +210,10 @@ public final class DeidentifyImageRequest {
 
     public interface _FinalStage {
         DeidentifyImageRequest build();
+
+        _FinalStage configurationId(Optional<String> configurationId);
+
+        _FinalStage configurationId(String configurationId);
 
         /**
          * <p>If <code>true</code>, includes processed image in the output.</p>
@@ -264,6 +279,8 @@ public final class DeidentifyImageRequest {
 
         private Optional<Boolean> outputProcessedImage = Optional.empty();
 
+        private Optional<String> configurationId = Optional.empty();
+
         @JsonAnySetter
         private Map<String, Object> additionalProperties = new HashMap<>();
 
@@ -273,6 +290,7 @@ public final class DeidentifyImageRequest {
         public Builder from(DeidentifyImageRequest other) {
             vaultId(other.getVaultId());
             file(other.getFile());
+            configurationId(other.getConfigurationId());
             outputProcessedImage(other.getOutputProcessedImage());
             outputOcrText(other.getOutputOcrText());
             maskingMethod(other.getMaskingMethod());
@@ -428,10 +446,24 @@ public final class DeidentifyImageRequest {
         }
 
         @java.lang.Override
+        public _FinalStage configurationId(String configurationId) {
+            this.configurationId = Optional.ofNullable(configurationId);
+            return this;
+        }
+
+        @java.lang.Override
+        @JsonSetter(value = "configuration_id", nulls = Nulls.SKIP)
+        public _FinalStage configurationId(Optional<String> configurationId) {
+            this.configurationId = configurationId;
+            return this;
+        }
+
+        @java.lang.Override
         public DeidentifyImageRequest build() {
             return new DeidentifyImageRequest(
                     vaultId,
                     file,
+                    configurationId,
                     outputProcessedImage,
                     outputOcrText,
                     maskingMethod,

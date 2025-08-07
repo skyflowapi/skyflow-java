@@ -8,9 +8,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 public enum DeidentifyStatusResponseOutputType {
     BASE_64("BASE64"),
 
-    EFS_PATH("EFS_PATH"),
-
-    UNKNOWN("UNKNOWN");
+    EFS_PATH("EFS_PATH");
 
     private final String value;
 
