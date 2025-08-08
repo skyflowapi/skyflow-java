@@ -1,15 +1,15 @@
 package com.skyflow.v2;
 
 import com.skyflow.common.serviceaccount.util.Token;
-import com.skyflow.v2.config.ConnectionConfig;
-import com.skyflow.v2.config.Credentials;
-import com.skyflow.v2.errors.ErrorCode;
-import com.skyflow.v2.errors.ErrorMessage;
-import com.skyflow.v2.errors.SkyflowException;
-import com.skyflow.v2.logs.InfoLogs;
+import com.skyflow.common.config.ConnectionConfig;
+import com.skyflow.common.config.Credentials;
+import com.skyflow.common.errors.ErrorCode;
+import com.skyflow.common.errors.ErrorMessage;
+import com.skyflow.common.errors.SkyflowException;
+import com.skyflow.common.logs.InfoLogs;
 import com.skyflow.v2.utils.Constants;
 import com.skyflow.v2.utils.Utils;
-import com.skyflow.v2.utils.logger.LogUtil;
+import com.skyflow.common.logger.LogUtil;
 import com.skyflow.v2.utils.validations.Validations;
 import io.github.cdimascio.dotenv.Dotenv;
 import io.github.cdimascio.dotenv.DotenvException;

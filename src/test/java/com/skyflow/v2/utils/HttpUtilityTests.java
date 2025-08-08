@@ -1,7 +1,7 @@
 package com.skyflow.v2.utils;
 
 import com.google.gson.JsonObject;
-import com.skyflow.v2.errors.SkyflowException;
+import com.skyflow.common.errors.SkyflowException;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;

@@ -1,17 +1,17 @@
 package com.skyflow.v2;
 
-import com.skyflow.v2.config.ConnectionConfig;
-import com.skyflow.v2.config.Credentials;
-import com.skyflow.v2.config.VaultConfig;
-import com.skyflow.v2.enums.Env;
-import com.skyflow.v2.enums.LogLevel;
-import com.skyflow.v2.errors.ErrorCode;
-import com.skyflow.v2.errors.ErrorMessage;
-import com.skyflow.v2.errors.SkyflowException;
-import com.skyflow.v2.logs.ErrorLogs;
-import com.skyflow.v2.logs.InfoLogs;
+import com.skyflow.common.config.ConnectionConfig;
+import com.skyflow.common.config.Credentials;
+import com.skyflow.common.config.VaultConfig;
+import com.skyflow.common.enums.Env;
+import com.skyflow.common.enums.LogLevel;
+import com.skyflow.common.errors.ErrorCode;
+import com.skyflow.common.errors.ErrorMessage;
+import com.skyflow.common.errors.SkyflowException;
+import com.skyflow.common.logs.ErrorLogs;
+import com.skyflow.common.logs.InfoLogs;
 import com.skyflow.v2.utils.Utils;
-import com.skyflow.v2.utils.logger.LogUtil;
+import com.skyflow.common.logger.LogUtil;
 import com.skyflow.v2.utils.validations.Validations;
 import com.skyflow.v2.vault.controller.ConnectionController;
 import com.skyflow.v2.vault.controller.DetectController;
@@ -116,7 +116,7 @@ public final class Skyflow {
     public ConnectionController connection(String connectionId) throws SkyflowException {
         ConnectionController controller = this.builder.connectionsMap.get(connectionId);
         if (controller == null) {
-            LogUtil.printErrorLog(ErrorLogs.CONNECTION_CONFIG_DOES_NOT_EXIST.getLog());
+            com.skyflow.common.logger.LogUtil.printErrorLog(ErrorLogs.CONNECTION_CONFIG_DOES_NOT_EXIST.getLog());
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.ConnectionIdNotInConfigList.getMessage());
         }
         return controller;

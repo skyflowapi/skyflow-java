@@ -1,8 +1,8 @@
 package com.skyflow.v2.vault.detect;
 
 import com.skyflow.v2.enums.DetectEntities;
-import com.skyflow.v2.errors.ErrorCode;
-import com.skyflow.v2.errors.SkyflowException;
+import com.skyflow.common.errors.ErrorCode;
+import com.skyflow.common.errors.SkyflowException;
 import com.skyflow.v2.utils.validations.Validations;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -11,7 +11,7 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.skyflow.v2.errors.ErrorMessage.InvalidTextInDeIdentify;
+import static com.skyflow.common.errors.ErrorMessage.InvalidTextInDeIdentify;
 
 public class DeidentifyTextTests {
 

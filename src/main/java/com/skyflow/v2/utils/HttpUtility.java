@@ -2,7 +2,7 @@ package com.skyflow.v2.utils;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.skyflow.v2.errors.SkyflowException;
+import com.skyflow.common.errors.SkyflowException;
 
 import java.io.*;
 import java.net.HttpURLConnection;

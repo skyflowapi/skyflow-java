@@ -3,7 +3,7 @@
  */
 package com.skyflow.v2.generated.rest.errors;
 
-import com.skyflow.v2.generated.rest.core.ApiClientApiException;
+import com.skyflow.common.generated.core.ApiClientApiException;
 import okhttp3.Response;
 
 public final class UnauthorizedError extends ApiClientApiException {

@@ -1,7 +1,7 @@
 package com.skyflow.common.serviceaccount.util;
 
 import com.google.gson.Gson;
-import com.skyflow.v2.utils.Constants;
+import com.skyflow.common.utils.Constants;
 
 public class SignedDataTokenResponse {
     private static final String prefix = Constants.SIGNED_DATA_TOKEN_PREFIX;

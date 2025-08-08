@@ -1,5 +1,6 @@
 package com.skyflow.v2.errors;
 
+import com.skyflow.common.errors.SkyflowException;
 import org.junit.Assert;
 import org.junit.Test;
 

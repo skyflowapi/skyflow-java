@@ -3,12 +3,12 @@ package com.skyflow.common.serviceaccount.util;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
-import com.skyflow.v2.errors.ErrorCode;
-import com.skyflow.v2.errors.ErrorMessage;
-import com.skyflow.v2.errors.SkyflowException;
-import com.skyflow.v2.logs.ErrorLogs;
-import com.skyflow.v2.logs.InfoLogs;
-import com.skyflow.v2.utils.logger.LogUtil;
+import com.skyflow.common.errors.ErrorCode;
+import com.skyflow.common.errors.ErrorMessage;
+import com.skyflow.common.errors.SkyflowException;
+import com.skyflow.common.logs.ErrorLogs;
+import com.skyflow.common.logs.InfoLogs;
+import com.skyflow.common.logger.LogUtil;
 import org.apache.commons.codec.binary.Base64;
 
 import java.nio.charset.StandardCharsets;

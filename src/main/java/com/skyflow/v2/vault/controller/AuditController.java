@@ -1,6 +1,6 @@
 package com.skyflow.v2.vault.controller;
 
-import com.skyflow.v2.generated.rest.ApiClient;
+import com.skyflow.common.generated.ApiClient;
 import com.skyflow.v2.vault.audit.ListEventRequest;
 import com.skyflow.v2.vault.audit.ListEventResponse;
 
