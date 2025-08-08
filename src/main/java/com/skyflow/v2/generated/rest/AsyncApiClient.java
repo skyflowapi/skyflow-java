@@ -6,7 +6,7 @@ package com.skyflow.v2.generated.rest;
 import com.skyflow.v2.generated.rest.core.ClientOptions;
 import com.skyflow.v2.generated.rest.core.Suppliers;
 import com.skyflow.v2.generated.rest.resources.audit.AsyncAuditClient;
-import com.skyflow.v2.generated.rest.resources.authentication.AsyncAuthenticationClient;
+import com.skyflow.common.generated.authentication.AsyncAuthenticationClient;
 import com.skyflow.v2.generated.rest.resources.binlookup.AsyncBinLookupClient;
 import com.skyflow.v2.generated.rest.resources.deprecated.AsyncDeprecatedClient;
 import com.skyflow.v2.generated.rest.resources.files.AsyncFilesClient;

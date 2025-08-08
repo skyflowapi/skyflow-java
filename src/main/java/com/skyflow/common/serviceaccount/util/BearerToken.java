@@ -1,20 +1,20 @@
 package com.skyflow.common.serviceaccount.util;
 
 import com.google.gson.*;
-import com.skyflow.v2.errors.ErrorCode;
-import com.skyflow.v2.errors.ErrorMessage;
-import com.skyflow.v2.errors.SkyflowException;
-import com.skyflow.v2.generated.rest.ApiClient;
-import com.skyflow.v2.generated.rest.ApiClientBuilder;
-import com.skyflow.v2.generated.rest.core.ApiClientApiException;
-import com.skyflow.v2.generated.rest.resources.authentication.AuthenticationClient;
-import com.skyflow.v2.generated.rest.resources.authentication.requests.V1GetAuthTokenRequest;
-import com.skyflow.v2.generated.rest.types.V1GetAuthTokenResponse;
-import com.skyflow.v2.logs.ErrorLogs;
-import com.skyflow.v2.logs.InfoLogs;
-import com.skyflow.v2.utils.Constants;
-import com.skyflow.v2.utils.Utils;
-import com.skyflow.v2.utils.logger.LogUtil;
+import com.skyflow.common.errors.ErrorCode;
+import com.skyflow.common.errors.ErrorMessage;
+import com.skyflow.common.errors.SkyflowException;
+import com.skyflow.common.generated.ApiClient;
+import com.skyflow.common.generated.ApiClientBuilder;
+import com.skyflow.common.generated.core.ApiClientApiException;
+import com.skyflow.common.generated.authentication.AuthenticationClient;
+import com.skyflow.common.generated.authentication.requests.V1GetAuthTokenRequest;
+import com.skyflow.common.generated.types.V1GetAuthTokenResponse;
+import com.skyflow.common.logs.ErrorLogs;
+import com.skyflow.common.logs.InfoLogs;
+import com.skyflow.common.utils.Constants;
+import com.skyflow.common.utils.CommonUtils;
+import com.skyflow.common.logger.LogUtil;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 
@@ -62,11 +62,11 @@ public class BearerToken {
             return getBearerTokenFromCredentials(serviceAccountCredentials, context, roles);
         } catch (JsonSyntaxException e) {
             LogUtil.printErrorLog(ErrorLogs.INVALID_CREDENTIALS_FILE_FORMAT.getLog());
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), Utils.parameterizedString(
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), CommonUtils.parameterizedString(
                     ErrorMessage.FileInvalidJson.getMessage(), credentialsFile.getPath()));
         } catch (FileNotFoundException e) {
             LogUtil.printErrorLog(ErrorLogs.CREDENTIALS_FILE_NOT_FOUND.getLog());
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), Utils.parameterizedString(
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), CommonUtils.parameterizedString(
                     ErrorMessage.FileNotFound.getMessage(), credentialsFile.getPath()));
         }
     }
@@ -117,12 +117,12 @@ public class BearerToken {
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.MissingTokenUri.getMessage());
             }
 
-            PrivateKey pvtKey = Utils.getPrivateKeyFromPem(privateKey.getAsString());
+            PrivateKey pvtKey = CommonUtils.getPrivateKeyFromPem(privateKey.getAsString());
             String signedUserJWT = getSignedToken(
                     clientID.getAsString(), keyID.getAsString(), tokenURI.getAsString(), pvtKey, context
             );
 
-            String basePath = Utils.getBaseURL(tokenURI.getAsString());
+            String basePath = CommonUtils.getBaseURL(tokenURI.getAsString());
             apiClientBuilder.url(basePath);
             ApiClient apiClient = apiClientBuilder.token("token").build();
             AuthenticationClient authenticationApi = apiClient.authentication();

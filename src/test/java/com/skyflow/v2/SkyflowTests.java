@@ -1,13 +1,13 @@
 package com.skyflow.v2;
 
 import com.skyflow.v2.config.ConnectionConfig;
-import com.skyflow.v2.config.Credentials;
-import com.skyflow.v2.config.VaultConfig;
-import com.skyflow.v2.enums.Env;
-import com.skyflow.v2.enums.LogLevel;
-import com.skyflow.v2.errors.ErrorCode;
-import com.skyflow.v2.errors.ErrorMessage;
-import com.skyflow.v2.errors.SkyflowException;
+import com.skyflow.common.config.Credentials;
+import com.skyflow.common.config.VaultConfig;
+import com.skyflow.common.enums.Env;
+import com.skyflow.common.enums.LogLevel;
+import com.skyflow.common.errors.ErrorCode;
+import com.skyflow.common.errors.ErrorMessage;
+import com.skyflow.common.errors.SkyflowException;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;

@@ -4,7 +4,7 @@
 package com.skyflow.v2.generated.rest.resources.deprecated;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.skyflow.v2.generated.rest.core.ApiClientApiException;
+import com.skyflow.common.generated.core.ApiClientApiException;
 import com.skyflow.v2.generated.rest.core.ApiClientException;
 import com.skyflow.v2.generated.rest.core.ApiClientHttpResponse;
 import com.skyflow.v2.generated.rest.core.ClientOptions;

@@ -1,13 +1,13 @@
 package com.skyflow.v2.vault.controller;
 
 import com.skyflow.v2.Skyflow;
-import com.skyflow.v2.config.Credentials;
-import com.skyflow.v2.config.VaultConfig;
-import com.skyflow.v2.enums.Env;
-import com.skyflow.v2.enums.LogLevel;
-import com.skyflow.v2.errors.ErrorMessage;
-import com.skyflow.v2.errors.HttpStatus;
-import com.skyflow.v2.errors.SkyflowException;
+import com.skyflow.common.config.Credentials;
+import com.skyflow.common.config.VaultConfig;
+import com.skyflow.common.enums.Env;
+import com.skyflow.common.enums.LogLevel;
+import com.skyflow.common.errors.ErrorMessage;
+import com.skyflow.common.errors.HttpStatus;
+import com.skyflow.common.errors.SkyflowException;
 import com.skyflow.v2.utils.Constants;
 import com.skyflow.v2.utils.Utils;
 import com.skyflow.v2.vault.detect.DeidentifyTextRequest;

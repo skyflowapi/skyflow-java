@@ -1,12 +1,12 @@
 package com.skyflow.v2.vault.tokens;
 
 import com.skyflow.v2.Skyflow;
-import com.skyflow.v2.config.Credentials;
-import com.skyflow.v2.config.VaultConfig;
-import com.skyflow.v2.enums.Env;
-import com.skyflow.v2.errors.ErrorCode;
-import com.skyflow.v2.errors.ErrorMessage;
-import com.skyflow.v2.errors.SkyflowException;
+import com.skyflow.common.config.Credentials;
+import com.skyflow.common.config.VaultConfig;
+import com.skyflow.common.enums.Env;
+import com.skyflow.common.errors.ErrorCode;
+import com.skyflow.common.errors.ErrorMessage;
+import com.skyflow.common.errors.SkyflowException;
 import com.skyflow.v2.utils.validations.Validations;
 import org.junit.Assert;
 import org.junit.Before;

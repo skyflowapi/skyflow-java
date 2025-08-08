@@ -1,5 +1,7 @@
 package com.skyflow.v2.config;
 
+import com.skyflow.common.config.Credentials;
+
 public class ConnectionConfig {
     private String connectionId;
     private String connectionUrl;

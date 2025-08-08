@@ -1,15 +1,15 @@
 package com.skyflow.v2;
 
 import com.skyflow.common.serviceaccount.util.Token;
-import com.skyflow.v2.config.Credentials;
-import com.skyflow.v2.config.VaultConfig;
+import com.skyflow.common.config.Credentials;
+import com.skyflow.common.config.VaultConfig;
 import com.skyflow.v2.enums.DetectEntities;
 import com.skyflow.v2.enums.DetectOutputTranscriptions;
-import com.skyflow.v2.errors.ErrorCode;
-import com.skyflow.v2.errors.ErrorMessage;
-import com.skyflow.v2.errors.SkyflowException;
-import com.skyflow.v2.generated.rest.ApiClient;
-import com.skyflow.v2.generated.rest.ApiClientBuilder;
+import com.skyflow.common.errors.ErrorCode;
+import com.skyflow.common.errors.ErrorMessage;
+import com.skyflow.common.errors.SkyflowException;
+import com.skyflow.common.generated.ApiClient;
+import com.skyflow.common.generated.ApiClientBuilder;
 import com.skyflow.v2.generated.rest.resources.files.FilesClient;
 import com.skyflow.v2.generated.rest.resources.files.requests.*;
 import com.skyflow.v2.generated.rest.resources.files.types.*;
@@ -27,10 +27,10 @@ import com.skyflow.v2.generated.rest.resources.tokens.requests.V1DetokenizePaylo
 import com.skyflow.v2.generated.rest.resources.tokens.requests.V1TokenizePayload;
 import com.skyflow.v2.generated.rest.types.*;
 import com.skyflow.v2.generated.rest.types.Transformations;
-import com.skyflow.v2.logs.InfoLogs;
+import com.skyflow.common.logs.InfoLogs;
 import com.skyflow.v2.utils.Constants;
 import com.skyflow.v2.utils.Utils;
-import com.skyflow.v2.utils.logger.LogUtil;
+import com.skyflow.common.logger.LogUtil;
 import com.skyflow.v2.utils.validations.Validations;
 import com.skyflow.v2.vault.data.InsertRequest;
 import com.skyflow.v2.vault.data.UpdateRequest;

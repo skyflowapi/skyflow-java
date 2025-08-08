@@ -1,9 +1,9 @@
 package com.skyflow.v2.vault.tokens;
 
 import com.skyflow.v2.enums.RedactionType;
-import com.skyflow.v2.errors.ErrorCode;
-import com.skyflow.v2.errors.ErrorMessage;
-import com.skyflow.v2.errors.SkyflowException;
+import com.skyflow.common.errors.ErrorCode;
+import com.skyflow.common.errors.ErrorMessage;
+import com.skyflow.common.errors.SkyflowException;
 import com.skyflow.v2.generated.rest.types.DetokenizeRecordResponseValueType;
 import com.skyflow.v2.generated.rest.types.V1DetokenizeRecordResponse;
 import com.skyflow.v2.utils.Constants;

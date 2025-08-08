@@ -4,13 +4,13 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
-import com.skyflow.v2.errors.ErrorCode;
-import com.skyflow.v2.errors.ErrorMessage;
-import com.skyflow.v2.errors.SkyflowException;
-import com.skyflow.v2.logs.ErrorLogs;
-import com.skyflow.v2.logs.InfoLogs;
-import com.skyflow.v2.utils.Utils;
-import com.skyflow.v2.utils.logger.LogUtil;
+import com.skyflow.common.errors.ErrorCode;
+import com.skyflow.common.errors.ErrorMessage;
+import com.skyflow.common.errors.SkyflowException;
+import com.skyflow.common.logs.ErrorLogs;
+import com.skyflow.common.logs.InfoLogs;
+import com.skyflow.common.utils.CommonUtils;
+import com.skyflow.common.logger.LogUtil;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 
@@ -59,11 +59,11 @@ public class SignedDataTokens {
             responseToken = generateSignedTokensFromCredentials(serviceAccountCredentials, dataTokens, timeToLive, context);
         } catch (JsonSyntaxException e) {
             LogUtil.printErrorLog(ErrorLogs.INVALID_CREDENTIALS_FILE_FORMAT.getLog());
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), Utils.parameterizedString(
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), CommonUtils.parameterizedString(
                     ErrorMessage.FileInvalidJson.getMessage(), credentialsFile.getPath()));
         } catch (FileNotFoundException e) {
             LogUtil.printErrorLog(ErrorLogs.CREDENTIALS_FILE_NOT_FOUND.getLog());
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), Utils.parameterizedString(
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), CommonUtils.parameterizedString(
                     ErrorMessage.FileNotFound.getMessage(), credentialsFile.getPath()));
         }
         return responseToken;
@@ -111,7 +111,7 @@ public class SignedDataTokens {
                 LogUtil.printErrorLog(ErrorLogs.KEY_ID_IS_REQUIRED.getLog());
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.MissingKeyId.getMessage());
             }
-            PrivateKey pvtKey = Utils.getPrivateKeyFromPem(privateKey.getAsString());
+            PrivateKey pvtKey = CommonUtils.getPrivateKeyFromPem(privateKey.getAsString());
             signedDataTokens = getSignedToken(
                     clientID.getAsString(), keyID.getAsString(), pvtKey, dataTokens, timeToLive, context);
         } catch (RuntimeException e) {

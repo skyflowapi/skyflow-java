@@ -1,10 +1,11 @@
 package com.skyflow.v2;
 
-import com.skyflow.v2.config.Credentials;
-import com.skyflow.v2.config.VaultConfig;
+import com.skyflow.common.config.Credentials;
+import com.skyflow.common.config.VaultConfig;
+import com.skyflow.common.enums.Env;
 import com.skyflow.v2.enums.*;
-import com.skyflow.v2.errors.ErrorCode;
-import com.skyflow.v2.errors.SkyflowException;
+import com.skyflow.common.errors.ErrorCode;
+import com.skyflow.common.errors.SkyflowException;
 import com.skyflow.v2.generated.rest.resources.files.FilesClient;
 import com.skyflow.v2.generated.rest.resources.files.requests.*;
 import com.skyflow.v2.generated.rest.resources.query.QueryClient;

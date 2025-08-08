@@ -1,12 +1,13 @@
 package com.skyflow.v2.vault.controller;
 
 import com.google.gson.*;
+import com.skyflow.common.config.Credentials;
+import com.skyflow.common.config.VaultConfig;
+import com.skyflow.common.logger.LogUtil;
 import com.skyflow.v2.VaultClient;
-import com.skyflow.v2.config.Credentials;
-import com.skyflow.v2.config.VaultConfig;
 import com.skyflow.v2.enums.RedactionType;
-import com.skyflow.v2.errors.SkyflowException;
-import com.skyflow.v2.generated.rest.core.ApiClientApiException;
+import com.skyflow.common.errors.SkyflowException;
+import com.skyflow.common.generated.core.ApiClientApiException;
 import com.skyflow.v2.generated.rest.core.ApiClientHttpResponse;
 import com.skyflow.v2.generated.rest.resources.query.requests.QueryServiceExecuteQueryBody;
 import com.skyflow.v2.generated.rest.resources.records.requests.*;
@@ -15,13 +16,13 @@ import com.skyflow.v2.generated.rest.resources.records.types.RecordServiceBulkGe
 import com.skyflow.v2.generated.rest.resources.tokens.requests.V1DetokenizePayload;
 import com.skyflow.v2.generated.rest.resources.tokens.requests.V1TokenizePayload;
 import com.skyflow.v2.generated.rest.types.*;
-import com.skyflow.v2.logs.ErrorLogs;
-import com.skyflow.v2.logs.InfoLogs;
+import com.skyflow.common.logs.ErrorLogs;
+import com.skyflow.common.logs.InfoLogs;
 import com.skyflow.v2.utils.Constants;
-import com.skyflow.v2.utils.logger.LogUtil;
 import com.skyflow.v2.utils.validations.Validations;
 import com.skyflow.v2.vault.data.*;
 import com.skyflow.v2.vault.tokens.*;
+
 import java.util.*;
 
 public final class VaultController extends VaultClient {

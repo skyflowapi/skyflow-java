@@ -1,10 +1,11 @@
 package com.skyflow.v2.vault.controller;
 
-import com.skyflow.v2.config.Credentials;
-import com.skyflow.v2.config.VaultConfig;
-import com.skyflow.v2.errors.ErrorCode;
-import com.skyflow.v2.errors.ErrorMessage;
-import com.skyflow.v2.errors.SkyflowException;
+import com.skyflow.common.config.Credentials;
+import com.skyflow.common.config.VaultConfig;
+import com.skyflow.common.enums.Env;
+import com.skyflow.common.errors.ErrorCode;
+import com.skyflow.common.errors.ErrorMessage;
+import com.skyflow.common.errors.SkyflowException;
 import com.skyflow.v2.vault.detect.AudioBleep;
 import com.skyflow.v2.vault.detect.DeidentifyFileRequest;
 import com.skyflow.v2.vault.detect.FileInput;
@@ -35,7 +36,7 @@ public class DetectControllerFileTests {
         vaultConfig = new VaultConfig();
         vaultConfig.setVaultId(vaultID);
         vaultConfig.setClusterId(clusterID);
-        vaultConfig.setEnv(com.skyflow.v2.enums.Env.DEV);
+        vaultConfig.setEnv(Env.DEV);
         vaultConfig.setCredentials(credentials);
 
         detectController = new DetectController(vaultConfig, credentials);

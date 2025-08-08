@@ -1,7 +1,7 @@
 package com.skyflow.v2.serviceaccount.util;
 
 import com.skyflow.v2.Skyflow;
-import com.skyflow.v2.enums.LogLevel;
+import com.skyflow.common.enums.LogLevel;
 import io.github.cdimascio.dotenv.Dotenv;
 import org.junit.Assert;
 import org.junit.BeforeClass;
