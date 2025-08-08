@@ -1,6 +1,6 @@
 package com.skyflow.v2;
 
-import com.skyflow.common.config.ConnectionConfig;
+import com.skyflow.v2.config.ConnectionConfig;
 import com.skyflow.common.config.Credentials;
 import com.skyflow.common.config.VaultConfig;
 import com.skyflow.common.enums.Env;

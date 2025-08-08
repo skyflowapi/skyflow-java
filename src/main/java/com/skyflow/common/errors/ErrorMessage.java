@@ -1,6 +1,6 @@
 package com.skyflow.common.errors;
 
-import com.skyflow.v2.utils.Constants;
+import com.skyflow.common.utils.SdkVersion;
 
 public enum ErrorMessage {
     // Client initialization
@@ -154,7 +154,7 @@ public enum ErrorMessage {
 
 
     ErrorMessage(String message) {
-        this.message = message.replace("%s0", Constants.SDK_PREFIX);
+        this.message = message.replace("%s0", SdkVersion.getSdkPrefix());
     }
 
     public String getMessage() {

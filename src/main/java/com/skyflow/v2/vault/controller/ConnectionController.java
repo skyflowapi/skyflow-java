@@ -5,7 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.skyflow.v2.ConnectionClient;
-import com.skyflow.common.config.ConnectionConfig;
+import com.skyflow.v2.config.ConnectionConfig;
 import com.skyflow.common.config.Credentials;
 import com.skyflow.v2.enums.RequestMethod;
 import com.skyflow.common.errors.ErrorCode;

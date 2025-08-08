@@ -11,6 +11,8 @@ import com.skyflow.common.logs.ErrorLogs;
 import com.skyflow.common.logs.InfoLogs;
 import com.skyflow.common.utils.CommonUtils;
 import com.skyflow.common.logger.LogUtil;
+import com.skyflow.common.utils.Constants;
+import com.skyflow.common.utils.SdkVersion;
 import com.skyflow.common.utils.Validations;
 import com.skyflow.vaultLH.vault.controller.VaultController;
 
@@ -25,6 +27,7 @@ public final class Skyflow {
     }
 
     public static SkyflowClientBuilder builder() {
+        SdkVersion.setSdkPrefix(Constants.SDK_PREFIX_V3);
         return new SkyflowClientBuilder();
     }
 

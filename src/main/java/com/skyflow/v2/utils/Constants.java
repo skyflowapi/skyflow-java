@@ -5,6 +5,7 @@ public final class Constants extends com.skyflow.common.utils.Constants {
     public static final String ENV_CREDENTIALS_KEY_NAME = "SKYFLOW_CREDENTIALS";
     public static final String SDK_NAME = "Skyflow Java SDK ";
     public static final String SDK_VERSION = "v2";
+
     public static final String SDK_PREFIX = SDK_NAME + SDK_VERSION;
     public static final String SDK_METRIC_NAME_VERSION = "sdk_name_version";
     public static final String SDK_METRIC_NAME_VERSION_PREFIX = "skyflow-java@";

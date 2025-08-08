@@ -1,7 +1,7 @@
 package com.skyflow.v2.utils;
 
 import com.google.gson.JsonObject;
-import com.skyflow.common.config.ConnectionConfig;
+import com.skyflow.v2.config.ConnectionConfig;
 import com.skyflow.common.logger.LogUtil;
 import com.skyflow.common.logs.InfoLogs;
 import com.skyflow.common.utils.CommonUtils;

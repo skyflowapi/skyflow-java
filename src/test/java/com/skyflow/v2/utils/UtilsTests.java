@@ -1,7 +1,7 @@
 package com.skyflow.v2.utils;
 
 import com.google.gson.JsonObject;
-import com.skyflow.common.config.ConnectionConfig;
+import com.skyflow.v2.config.ConnectionConfig;
 import com.skyflow.common.config.Credentials;
 import com.skyflow.common.enums.Env;
 import com.skyflow.v2.enums.RequestMethod;

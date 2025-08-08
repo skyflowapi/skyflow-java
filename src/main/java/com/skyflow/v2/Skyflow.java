@@ -1,6 +1,7 @@
 package com.skyflow.v2;
 
-import com.skyflow.common.config.ConnectionConfig;
+import com.skyflow.common.utils.SdkVersion;
+import com.skyflow.v2.config.ConnectionConfig;
 import com.skyflow.common.config.Credentials;
 import com.skyflow.common.config.VaultConfig;
 import com.skyflow.common.enums.Env;
@@ -10,6 +11,7 @@ import com.skyflow.common.errors.ErrorMessage;
 import com.skyflow.common.errors.SkyflowException;
 import com.skyflow.common.logs.ErrorLogs;
 import com.skyflow.common.logs.InfoLogs;
+import com.skyflow.v2.utils.Constants;
 import com.skyflow.v2.utils.Utils;
 import com.skyflow.common.logger.LogUtil;
 import com.skyflow.v2.utils.validations.Validations;
@@ -28,6 +30,7 @@ public final class Skyflow {
     }
 
     public static SkyflowClientBuilder builder() {
+        SdkVersion.setSdkPrefix(Constants.SDK_PREFIX);
         return new SkyflowClientBuilder();
     }
 

@@ -2,13 +2,13 @@ package com.skyflow.common.logger;
 
 import com.skyflow.common.enums.LogLevel;
 import com.skyflow.common.logs.InfoLogs;
-import com.skyflow.v2.utils.Constants;
+import com.skyflow.common.utils.SdkVersion;
 
 import java.util.logging.*;
 
 public final class LogUtil {
     private static final Logger LOGGER = Logger.getLogger(LogUtil.class.getName());
-    private static final String SDK_LOG_PREFIX = "[" + Constants.SDK_PREFIX + "] ";
+    private static final String SDK_LOG_PREFIX = "[" + SdkVersion.getSdkPrefix() + "] ";
     private static boolean IS_LOGGER_SETUP_DONE = false;
 
     synchronized public static void setupLogger(LogLevel logLevel) {

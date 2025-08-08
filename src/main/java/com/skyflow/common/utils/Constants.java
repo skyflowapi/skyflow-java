@@ -6,7 +6,12 @@ public class Constants {
     public static final String GRANT_TYPE = "urn:ietf:params:oauth:grant-type:jwt-bearer";
     public static final String SECURE_PROTOCOL = "https://";
     public static final String SIGNED_DATA_TOKEN_PREFIX = "signed_token_";
+    public static final String SDK_VERSION_V3 = "v3";
+    public static final String SDK_NAME = "Skyflow Java SDK ";
+    public static final String SDK_VERSION = "v2";
 
+    public static final String SDK_PREFIX = SDK_NAME + SDK_VERSION;
+    public static final String SDK_PREFIX_V3 = SDK_NAME + SDK_VERSION_V3;
     public static final String API_KEY_REGEX = "^sky-[a-zA-Z0-9]{5}-[a-fA-F0-9]{32}$";
     public static final String DEV_DOMAIN = ".vault.skyflowapis.dev";
     public static final String STAGE_DOMAIN = ".vault.skyflowapis.tech";

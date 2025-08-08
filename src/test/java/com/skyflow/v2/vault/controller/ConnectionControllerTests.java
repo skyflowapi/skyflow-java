@@ -1,7 +1,7 @@
 package com.skyflow.v2.vault.controller;
 
 import com.skyflow.v2.Skyflow;
-import com.skyflow.common.config.ConnectionConfig;
+import com.skyflow.v2.config.ConnectionConfig;
 import com.skyflow.common.config.Credentials;
 import com.skyflow.common.enums.LogLevel;
 import com.skyflow.common.errors.ErrorCode;

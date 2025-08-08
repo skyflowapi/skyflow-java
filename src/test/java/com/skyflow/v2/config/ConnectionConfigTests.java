@@ -1,6 +1,5 @@
 package com.skyflow.v2.config;
 
-import com.skyflow.common.config.ConnectionConfig;
 import com.skyflow.common.config.Credentials;
 import com.skyflow.common.errors.ErrorCode;
 import com.skyflow.common.errors.ErrorMessage;

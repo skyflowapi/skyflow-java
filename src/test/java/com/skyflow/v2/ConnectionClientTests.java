@@ -1,6 +1,6 @@
 package com.skyflow.v2;
 
-import com.skyflow.common.config.ConnectionConfig;
+import com.skyflow.v2.config.ConnectionConfig;
 import com.skyflow.common.config.Credentials;
 import io.github.cdimascio.dotenv.Dotenv;
 import org.junit.Assert;

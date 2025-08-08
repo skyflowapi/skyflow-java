@@ -2,9 +2,7 @@ package com.skyflow.v2.utils.validations;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import com.skyflow.common.config.ConnectionConfig;
-import com.skyflow.common.config.Credentials;
-import com.skyflow.common.config.VaultConfig;
+import com.skyflow.v2.config.ConnectionConfig;
 import com.skyflow.v2.enums.InterfaceName;
 import com.skyflow.v2.enums.RedactionType;
 import com.skyflow.v2.enums.TokenMode;
@@ -12,7 +10,6 @@ import com.skyflow.common.errors.ErrorCode;
 import com.skyflow.common.errors.ErrorMessage;
 import com.skyflow.common.errors.SkyflowException;
 import com.skyflow.common.logs.ErrorLogs;
-import com.skyflow.v2.utils.Constants;
 import com.skyflow.v2.utils.Utils;
 import com.skyflow.common.logger.LogUtil;
 import com.skyflow.v2.vault.connection.InvokeConnectionRequest;
@@ -29,8 +26,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class Validations extends com.skyflow.common.utils.Validations {
     private Validations() {
