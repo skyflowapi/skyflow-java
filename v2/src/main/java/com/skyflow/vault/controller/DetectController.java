@@ -139,7 +139,7 @@ public final class DetectController extends VaultClient {
                     try {
                         Files.write(outputFile.toPath(), decodedBytes);
                     } catch (IOException ioe) {
-                        throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.FailedtoSaveProcessedFile.getMessage());
+                        throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.FailedToSaveProcessedFile.getMessage());
                     }
 
                 }

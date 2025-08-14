@@ -72,8 +72,6 @@ public final class ConnectionController extends ConnectionClient {
         } catch (IOException e) {
             LogUtil.printErrorLog(ErrorLogs.INVOKE_CONNECTION_REQUEST_REJECTED.getLog());
             throw new SkyflowException(e.getMessage(), e);
-        } catch (com.skyflow.common.errors.SkyflowException e) {
-            throw new RuntimeException(e);
         }
         return connectionResponse;
     }

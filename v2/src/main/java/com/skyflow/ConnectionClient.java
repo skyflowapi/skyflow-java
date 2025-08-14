@@ -1,6 +1,6 @@
 package com.skyflow;
 
-import com.skyflow.common.serviceaccount.util.Token;
+import com.skyflow.serviceaccount.util.Token;
 import com.skyflow.config.ConnectionConfig;
 import com.skyflow.config.Credentials;
 import com.skyflow.errors.ErrorCode;
@@ -40,7 +40,7 @@ public class ConnectionClient {
         prioritiseCredentials();
     }
 
-    protected void setBearerToken() throws SkyflowException, com.skyflow.common.errors.SkyflowException {
+    protected void setBearerToken() throws SkyflowException, com.skyflow.errors.SkyflowException {
         prioritiseCredentials();
         Validations.validateCredentials(this.finalCredentials);
         if (this.finalCredentials.getApiKey() != null) {
