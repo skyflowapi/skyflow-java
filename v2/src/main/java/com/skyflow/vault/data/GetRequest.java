@@ -5,10 +5,11 @@ import com.skyflow.utils.Constants;
 
 import java.util.ArrayList;
 
-public class GetRequest {
+public class GetRequest extends BaseGetRequest {
     private final GetRequestBuilder builder;
 
     private GetRequest(GetRequestBuilder builder) {
+        super(builder);
         this.builder = builder;
     }
 
@@ -16,75 +17,28 @@ public class GetRequest {
         return new GetRequestBuilder();
     }
 
-    public String getTable() {
-        return this.builder.table;
-    }
-
-    public ArrayList<String> getIds() {
-        return this.builder.ids;
-    }
-
     public RedactionType getRedactionType() {
         return this.builder.redactionType;
     }
 
-    public Boolean getReturnTokens() {
-        return this.builder.returnTokens;
-    }
-
-    public ArrayList<String> getFields() {
-        return this.builder.fields;
-    }
-
-    public String getOffset() {
-        return this.builder.offset;
-    }
-
-    public String getLimit() {
-        return this.builder.limit;
-    }
-
-    public Boolean getDownloadURL() {
-        return this.builder.downloadURL;
-    }
-
-    public String getColumnName() {
-        return this.builder.columnName;
-    }
-
-    public ArrayList<String> getColumnValues() {
-        return this.builder.columnValues;
-    }
-
-    public String getOrderBy() {
-        return this.builder.orderBy;
-    }
-
-    public static final class GetRequestBuilder {
-        private String table;
-        private ArrayList<String> ids;
+    public static final class GetRequestBuilder extends BaseGetRequestBuilder {
         private RedactionType redactionType;
-        private Boolean returnTokens;
-        private ArrayList<String> fields;
-        private String offset;
-        private String limit;
-        private Boolean downloadURL;
-        private String columnName;
-        private ArrayList<String> columnValues;
-        private String orderBy;
 
         private GetRequestBuilder() {
+            super();
             this.downloadURL = true;
             this.orderBy = Constants.ORDER_ASCENDING;
         }
 
+        @Override
         public GetRequestBuilder table(String table) {
-            this.table = table;
+            super.table(table);
             return this;
         }
 
+        @Override
         public GetRequestBuilder ids(ArrayList<String> ids) {
-            this.ids = ids;
+            super.ids(ids);
             return this;
         }
 
@@ -93,43 +47,51 @@ public class GetRequest {
             return this;
         }
 
+        @Override
         public GetRequestBuilder returnTokens(Boolean returnTokens) {
-            this.returnTokens = returnTokens;
+            super.returnTokens(returnTokens);
             return this;
         }
 
+        @Override
         public GetRequestBuilder fields(ArrayList<String> fields) {
-            this.fields = fields;
+            super.fields(fields);
             return this;
         }
 
+        @Override
         public GetRequestBuilder offset(String offset) {
-            this.offset = offset;
+            super.offset(offset);
             return this;
         }
 
+        @Override
         public GetRequestBuilder limit(String limit) {
-            this.limit = limit;
+            super.limit(limit);
             return this;
         }
 
+        @Override
         public GetRequestBuilder downloadURL(Boolean downloadURL) {
-            this.downloadURL = downloadURL == null || downloadURL;
+            super.downloadURL(downloadURL);
             return this;
         }
 
+        @Override
         public GetRequestBuilder columnName(String columnName) {
-            this.columnName = columnName;
+            super.columnName(columnName);
             return this;
         }
 
+        @Override
         public GetRequestBuilder columnValues(ArrayList<String> columnValues) {
-            this.columnValues = columnValues;
+            super.columnValues(columnValues);
             return this;
         }
 
+        @Override
         public GetRequestBuilder orderBy(String orderBy) {
-            this.orderBy = orderBy == null ? Constants.ORDER_ASCENDING : orderBy;
+            super.orderBy(orderBy);
             return this;
         }
 

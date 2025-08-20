@@ -5,35 +5,16 @@ import com.skyflow.enums.TokenMode;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class InsertRequest {
+public class InsertRequest extends BaseInsertRequest {
     private final InsertRequestBuilder builder;
 
     private InsertRequest(InsertRequestBuilder builder) {
+        super(builder);
         this.builder = builder;
     }
 
     public static InsertRequestBuilder builder() {
         return new InsertRequestBuilder();
-    }
-
-    public String getTable() {
-        return this.builder.table;
-    }
-
-    public ArrayList<HashMap<String, Object>> getValues() {
-        return this.builder.values;
-    }
-
-    public ArrayList<HashMap<String, Object>> getTokens() {
-        return this.builder.tokens;
-    }
-
-    public Boolean getReturnTokens() {
-        return this.builder.returnTokens;
-    }
-
-    public String getUpsert() {
-        return this.builder.upsert;
     }
 
     public Boolean getHomogeneous() {
@@ -48,44 +29,44 @@ public class InsertRequest {
         return this.builder.tokenMode;
     }
 
-    public static final class InsertRequestBuilder {
-        private String table;
-        private ArrayList<HashMap<String, Object>> values;
-        private ArrayList<HashMap<String, Object>> tokens;
-        private Boolean returnTokens;
-        private String upsert;
+    public static final class InsertRequestBuilder extends BaseInsertRequestBuilder {
         private Boolean homogeneous;
         private Boolean continueOnError;
         private TokenMode tokenMode;
 
         private InsertRequestBuilder() {
-            this.returnTokens = false;
+            super();
             this.continueOnError = false;
             this.tokenMode = TokenMode.DISABLE;
         }
 
+        @Override
         public InsertRequestBuilder table(String table) {
-            this.table = table;
+            super.table(table);
             return this;
         }
 
+        @Override
         public InsertRequestBuilder values(ArrayList<HashMap<String, Object>> values) {
-            this.values = values;
+            super.values(values);
             return this;
         }
 
+        @Override
         public InsertRequestBuilder tokens(ArrayList<HashMap<String, Object>> tokens) {
-            this.tokens = tokens;
+            super.tokens(tokens);
             return this;
         }
 
+        @Override
         public InsertRequestBuilder returnTokens(Boolean returnTokens) {
-            this.returnTokens = returnTokens != null && returnTokens;
+            super.returnTokens(returnTokens);
             return this;
         }
 
+        @Override
         public InsertRequestBuilder upsert(String upsert) {
-            this.upsert = upsert;
+            super.upsert(upsert);
             return this;
         }
 

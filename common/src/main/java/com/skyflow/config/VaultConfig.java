@@ -2,7 +2,9 @@ package com.skyflow.config;
 
 import com.skyflow.enums.Env;
 
-public class VaultConfig {
+import java.io.Serializable;
+
+public class VaultConfig implements Serializable {
     private String vaultId;
     private String clusterId;
     private Env env;

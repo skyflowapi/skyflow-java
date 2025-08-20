@@ -19,10 +19,11 @@ import com.skyflow.vault.controller.VaultController;
 
 import java.util.LinkedHashMap;
 
-public final class Skyflow {
+public final class Skyflow extends BaseSkyflow {
     private final SkyflowClientBuilder builder;
 
     private Skyflow(SkyflowClientBuilder builder) {
+        super(builder);
         this.builder = builder;
         LogUtil.printInfoLog(InfoLogs.CLIENT_INITIALIZED.getLog());
     }
@@ -79,10 +80,6 @@ public final class Skyflow {
         return this;
     }
 
-    public LogLevel getLogLevel() {
-        return this.builder.logLevel;
-    }
-
     public VaultController vault() throws SkyflowException {
         Object[] array = this.builder.vaultClientsMap.keySet().toArray();
         if (array.length < 1) {
@@ -101,7 +98,6 @@ public final class Skyflow {
         }
         return controller;
     }
-
 
     public ConnectionController connection() throws SkyflowException {
         Object[] array = this.builder.connectionsMap.keySet().toArray();
@@ -141,23 +137,21 @@ public final class Skyflow {
         return controller;
     }
 
-    public static final class SkyflowClientBuilder {
+    public static final class SkyflowClientBuilder extends BaseSkyflowClientBuilder {
         private final LinkedHashMap<String, ConnectionController> connectionsMap;
         private final LinkedHashMap<String, VaultController> vaultClientsMap;
         private final LinkedHashMap<String, DetectController> detectClientsMap;
-        private final LinkedHashMap<String, VaultConfig> vaultConfigMap;
+        //        private final LinkedHashMap<String, VaultConfig> vaultConfigMap;
         private final LinkedHashMap<String, ConnectionConfig> connectionConfigMap;
-        private Credentials skyflowCredentials;
-        private LogLevel logLevel;
+//        private Credentials skyflowCredentials;
+//        private LogLevel logLevel;
 
         public SkyflowClientBuilder() {
+            super();
             this.vaultClientsMap = new LinkedHashMap<>();
             this.detectClientsMap = new LinkedHashMap<>();
-            this.vaultConfigMap = new LinkedHashMap<>();
             this.connectionsMap = new LinkedHashMap<>();
             this.connectionConfigMap = new LinkedHashMap<>();
-            this.skyflowCredentials = null;
-            this.logLevel = LogLevel.ERROR;
         }
 
         public SkyflowClientBuilder addVaultConfig(VaultConfig vaultConfig) throws SkyflowException {
@@ -170,9 +164,11 @@ public final class Skyflow {
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(),
                         ErrorMessage.VaultIdAlreadyInConfigList.getMessage());
             } else {
-                this.vaultConfigMap.put(vaultConfig.getVaultId(), vaultConfig);
-                this.vaultClientsMap.put(vaultConfig.getVaultId(), new VaultController(vaultConfig, this.skyflowCredentials));
-                this.detectClientsMap.put(vaultConfig.getVaultId(), new DetectController(vaultConfig, this.skyflowCredentials));
+                VaultConfig vaultConfigDeepCopy = Utils.deepCopy(vaultConfig);
+                assert vaultConfigDeepCopy != null;
+                this.vaultConfigMap.put(vaultConfigDeepCopy.getVaultId(), vaultConfigDeepCopy);
+                this.vaultClientsMap.put(vaultConfigDeepCopy.getVaultId(), new VaultController(vaultConfigDeepCopy, this.skyflowCredentials));
+                this.detectClientsMap.put(vaultConfigDeepCopy.getVaultId(), new DetectController(vaultConfigDeepCopy, this.skyflowCredentials));
                 LogUtil.printInfoLog(Utils.parameterizedString(
                         InfoLogs.VAULT_CONTROLLER_INITIALIZED.getLog(), vaultConfig.getVaultId()));
                 LogUtil.printInfoLog(Utils.parameterizedString(
@@ -184,8 +180,10 @@ public final class Skyflow {
         public SkyflowClientBuilder updateVaultConfig(VaultConfig vaultConfig) throws SkyflowException {
             LogUtil.printInfoLog(InfoLogs.VALIDATING_VAULT_CONFIG.getLog());
             Validations.validateVaultConfig(vaultConfig);
-            if (this.vaultClientsMap.containsKey(vaultConfig.getVaultId())) {
-                VaultConfig updatedConfig = findAndUpdateVaultConfig(vaultConfig);
+            VaultConfig vaultConfigDeepCopy = Utils.deepCopy(vaultConfig);
+            assert vaultConfigDeepCopy != null;
+            if (this.vaultClientsMap.containsKey(vaultConfigDeepCopy.getVaultId())) {
+                VaultConfig updatedConfig = findAndUpdateVaultConfig(vaultConfigDeepCopy);
                 this.vaultClientsMap.get(updatedConfig.getVaultId()).updateVaultConfig();
             } else {
                 LogUtil.printErrorLog(Utils.parameterizedString(
@@ -271,12 +269,9 @@ public final class Skyflow {
             return this;
         }
 
+        @Override
         public SkyflowClientBuilder setLogLevel(LogLevel logLevel) {
-            this.logLevel = logLevel == null ? LogLevel.ERROR : logLevel;
-            LogUtil.setupLogger(this.logLevel);
-            LogUtil.printInfoLog(Utils.parameterizedString(
-                    InfoLogs.CURRENT_LOG_LEVEL.getLog(), String.valueOf(logLevel)
-            ));
+            super.setLogLevel(logLevel);
             return this;
         }
 
