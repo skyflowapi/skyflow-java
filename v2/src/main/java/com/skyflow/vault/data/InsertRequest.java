@@ -64,9 +64,8 @@ public class InsertRequest extends BaseInsertRequest {
             return this;
         }
 
-        @Override
         public InsertRequestBuilder upsert(String upsert) {
-            super.upsert(upsert);
+            this.upsert = upsert;
             return this;
         }
 
