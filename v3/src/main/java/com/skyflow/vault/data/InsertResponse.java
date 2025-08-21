@@ -5,7 +5,7 @@ import java.util.List;
 public class InsertResponse {
     private Summary summary;
     private List<Success> success;
-    private List<Error> errors;
+    private List<ErrorRecord> errors;
 
     public Summary getSummary() {
         return summary;
