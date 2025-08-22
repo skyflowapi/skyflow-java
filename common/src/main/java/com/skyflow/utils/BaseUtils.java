@@ -10,7 +10,7 @@ import com.skyflow.serviceaccount.util.BearerToken;
 import com.skyflow.utils.logger.LogUtil;
 import org.apache.commons.codec.binary.Base64;
 
-import java.io.*;
+import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.KeyFactory;
@@ -112,26 +112,4 @@ public class BaseUtils {
         return privateKey;
     }
 
-    public static <T extends Serializable> T deepCopy(T obj) {
-        try {
-            // Serialize the object to a byte array
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            ObjectOutputStream oos = new ObjectOutputStream(bos);
-            oos.writeObject(obj);
-            oos.close();
-            bos.close();
-
-            // Deserialize the byte array back to a new object
-            ByteArrayInputStream bis = new ByteArrayInputStream(bos.toByteArray());
-            ObjectInputStream ois = new ObjectInputStream(bis);
-            T copiedObj = (T) ois.readObject();
-            ois.close();
-            bis.close();
-
-            return copiedObj;
-        } catch (IOException | ClassNotFoundException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
 }

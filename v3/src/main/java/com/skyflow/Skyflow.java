@@ -8,7 +8,6 @@ import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.logs.ErrorLogs;
 import com.skyflow.logs.InfoLogs;
-import com.skyflow.logs.WarningLogs;
 import com.skyflow.utils.Utils;
 import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.utils.validations.Validations;
@@ -54,30 +53,36 @@ public final class Skyflow extends BaseSkyflow {
         public SkyflowClientBuilder addVaultConfig(VaultConfig vaultConfig) throws SkyflowException {
             LogUtil.printInfoLog(InfoLogs.VALIDATING_VAULT_CONFIG.getLog());
             Validations.validateVaultConfig(vaultConfig);
-            if (this.vaultClientsMap.containsKey(vaultConfig.getVaultId())) {
+            VaultConfig vaultConfigCopy;
+            try {
+                vaultConfigCopy = (VaultConfig) vaultConfig.clone();
+            } catch (CloneNotSupportedException e) {
+                throw new RuntimeException(e);
+            }
+            if (!this.vaultClientsMap.isEmpty()) {
                 LogUtil.printErrorLog(Utils.parameterizedString(
-                        ErrorLogs.VAULT_CONFIG_EXISTS.getLog(), vaultConfig.getVaultId()
+                        ErrorLogs.VAULT_CONFIG_EXISTS.getLog(), vaultConfigCopy.getVaultId()
                 ));
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(),
                         ErrorMessage.VaultIdAlreadyInConfigList.getMessage());
             } else {
-                LogUtil.printWarningLog(WarningLogs.OVERRIDING_EXISTING_VAULT_CONFIG.getLog());
-                VaultConfig vaultConfigDeepCopy = Utils.deepCopy(vaultConfig);
-                this.vaultConfigMap.clear(); // clear existing config
-                assert vaultConfigDeepCopy != null;
-                this.vaultConfigMap.put(vaultConfigDeepCopy.getVaultId(), vaultConfigDeepCopy); // add new config in map
-
-                this.vaultClientsMap.clear(); // clear existing vault controller
-                this.vaultClientsMap.put(vaultConfigDeepCopy.getVaultId(), new VaultController(vaultConfigDeepCopy, this.skyflowCredentials)); // add new controller with new config
+                this.vaultConfigMap.put(vaultConfigCopy.getVaultId(), vaultConfigCopy); // add new config in map
+                this.vaultClientsMap.put(vaultConfigCopy.getVaultId(), new VaultController(vaultConfigCopy, this.skyflowCredentials)); // add new controller with new config
                 LogUtil.printInfoLog(Utils.parameterizedString(
-                        InfoLogs.VAULT_CONTROLLER_INITIALIZED.getLog(), vaultConfig.getVaultId()));
+                        InfoLogs.VAULT_CONTROLLER_INITIALIZED.getLog(), vaultConfigCopy.getVaultId()));
             }
             return this;
         }
 
         public SkyflowClientBuilder addSkyflowCredentials(Credentials credentials) throws SkyflowException {
             Validations.validateCredentials(credentials);
-            this.skyflowCredentials = credentials;
+            Credentials credentialsCopy;
+            try {
+                credentialsCopy = (Credentials) credentials.clone();
+            } catch (CloneNotSupportedException e) {
+                throw new RuntimeException(e);
+            }
+            this.skyflowCredentials = credentialsCopy;
             for (VaultController vault : this.vaultClientsMap.values()) {
                 vault.setCommonCredentials(this.skyflowCredentials);
             }

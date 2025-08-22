@@ -2,7 +2,7 @@ package com.skyflow.config;
 
 import java.util.ArrayList;
 
-public class Credentials {
+public class Credentials implements Cloneable {
     private String path;
     private ArrayList<String> roles;
     private String context;
@@ -62,5 +62,14 @@ public class Credentials {
 
     public void setApiKey(String apiKey) {
         this.apiKey = apiKey;
+    }
+
+    @Override
+    public Object clone() throws CloneNotSupportedException {
+        Credentials cloned = (Credentials) super.clone();
+        if (this.roles != null) {
+            cloned.roles = new ArrayList<>(this.roles);
+        }
+        return cloned;
     }
 }
