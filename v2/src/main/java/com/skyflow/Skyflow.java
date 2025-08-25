@@ -10,6 +10,8 @@ import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.logs.ErrorLogs;
 import com.skyflow.logs.InfoLogs;
+import com.skyflow.utils.Constants;
+import com.skyflow.utils.SdkVersion;
 import com.skyflow.utils.Utils;
 import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.utils.validations.Validations;
@@ -29,6 +31,7 @@ public final class Skyflow extends BaseSkyflow {
     }
 
     public static SkyflowClientBuilder builder() {
+        SdkVersion.setSdkPrefix(Constants.SDK_PREFIX);
         return new SkyflowClientBuilder();
     }
 

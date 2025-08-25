@@ -49,11 +49,6 @@ public class VaultClient {
         prioritiseCredentials();
     }
 
-    protected void updateVaultConfig() throws SkyflowException {
-        updateVaultURL();
-        prioritiseCredentials();
-    }
-
     protected void setBearerToken() throws SkyflowException {
         prioritiseCredentials();
         Validations.validateCredentials(this.finalCredentials);

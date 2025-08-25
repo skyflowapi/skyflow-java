@@ -22,6 +22,8 @@ import com.skyflow.generated.rest.types.DeidentifyStringResponse;
 import com.skyflow.generated.rest.types.DetectedEntity;
 import com.skyflow.generated.rest.types.EntityLocation;
 import com.skyflow.generated.rest.types.V1Byot;
+import com.skyflow.utils.Constants;
+import com.skyflow.utils.SdkVersion;
 import com.skyflow.vault.data.InsertRequest;
 import com.skyflow.vault.data.UpdateRequest;
 import com.skyflow.vault.detect.*;
@@ -81,6 +83,7 @@ public class VaultClientTests {
         vaultConfig.setCredentials(credentials);
         vaultClient = new VaultClient(vaultConfig, credentials);
         vaultClient.setBearerToken();
+        SdkVersion.setSdkPrefix(Constants.SDK_PREFIX);
     }
 
     @Test
