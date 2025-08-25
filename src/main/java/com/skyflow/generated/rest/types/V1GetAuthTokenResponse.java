@@ -49,7 +49,7 @@ public final class V1GetAuthTokenResponse {
         return tokenType;
     }
 
-    @java.lang.Override
+    @Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof V1GetAuthTokenResponse && equalTo((V1GetAuthTokenResponse) other);
@@ -64,12 +64,12 @@ public final class V1GetAuthTokenResponse {
         return accessToken.equals(other.accessToken) && tokenType.equals(other.tokenType);
     }
 
-    @java.lang.Override
+    @Override
     public int hashCode() {
         return Objects.hash(this.accessToken, this.tokenType);
     }
 
-    @java.lang.Override
+    @Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }

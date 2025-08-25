@@ -63,7 +63,7 @@ public class GetRequest {
     public static final class GetRequestBuilder {
         private String table;
         private ArrayList<String> ids;
-        private RedactionType redactionType;
+        private RedactionType redactionType = RedactionType.DEFAULT;
         private Boolean returnTokens;
         private ArrayList<String> fields;
         private String offset;

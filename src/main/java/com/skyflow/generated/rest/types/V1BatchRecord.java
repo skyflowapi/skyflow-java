@@ -141,7 +141,7 @@ public final class V1BatchRecord {
         return tokens;
     }
 
-    @java.lang.Override
+    @Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof V1BatchRecord && equalTo((V1BatchRecord) other);
@@ -165,7 +165,7 @@ public final class V1BatchRecord {
                 && tokens.equals(other.tokens);
     }
 
-    @java.lang.Override
+    @Override
     public int hashCode() {
         return Objects.hash(
                 this.fields,
@@ -180,7 +180,7 @@ public final class V1BatchRecord {
                 this.tokens);
     }
 
-    @java.lang.Override
+    @Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }

@@ -37,7 +37,7 @@ public final class QueryServiceExecuteQueryBody {
         return query;
     }
 
-    @java.lang.Override
+    @Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof QueryServiceExecuteQueryBody && equalTo((QueryServiceExecuteQueryBody) other);
@@ -52,12 +52,12 @@ public final class QueryServiceExecuteQueryBody {
         return query.equals(other.query);
     }
 
-    @java.lang.Override
+    @Override
     public int hashCode() {
         return Objects.hash(this.query);
     }
 
-    @java.lang.Override
+    @Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }

@@ -788,6 +788,11 @@ public class Validations {
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyRequestBody.getMessage());
         }
 
+        TokenFormat tokenFormat = request.getTokenFormat();
+        if (tokenFormat != null && !tokenFormat.getVaultToken().isEmpty()) {
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.VaultTokenFormatIsNotAllowedForFiles.getMessage());
+        }
+
         File file = request.getFileInput().getFile();
         String filePath = request.getFileInput().getFilePath();
 

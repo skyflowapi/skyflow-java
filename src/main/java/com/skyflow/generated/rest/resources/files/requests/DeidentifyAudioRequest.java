@@ -31,6 +31,8 @@ public final class DeidentifyAudioRequest {
 
     private final DeidentifyAudioRequestFile file;
 
+    private final Optional<String> configurationId;
+
     private final Optional<Boolean> outputProcessedAudio;
 
     private final Optional<DeidentifyAudioRequestOutputTranscription> outputTranscription;
@@ -58,6 +60,7 @@ public final class DeidentifyAudioRequest {
     private DeidentifyAudioRequest(
             String vaultId,
             DeidentifyAudioRequestFile file,
+            Optional<String> configurationId,
             Optional<Boolean> outputProcessedAudio,
             Optional<DeidentifyAudioRequestOutputTranscription> outputTranscription,
             Optional<Double> bleepGain,
@@ -72,6 +75,7 @@ public final class DeidentifyAudioRequest {
             Map<String, Object> additionalProperties) {
         this.vaultId = vaultId;
         this.file = file;
+        this.configurationId = configurationId;
         this.outputProcessedAudio = outputProcessedAudio;
         this.outputTranscription = outputTranscription;
         this.bleepGain = bleepGain;
@@ -97,6 +101,11 @@ public final class DeidentifyAudioRequest {
     @JsonProperty("file")
     public DeidentifyAudioRequestFile getFile() {
         return file;
+    }
+
+    @JsonProperty("configuration_id")
+    public Optional<String> getConfigurationId() {
+        return configurationId;
     }
 
     /**
@@ -172,7 +181,7 @@ public final class DeidentifyAudioRequest {
         return transformations;
     }
 
-    @java.lang.Override
+    @Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof DeidentifyAudioRequest && equalTo((DeidentifyAudioRequest) other);
@@ -186,6 +195,7 @@ public final class DeidentifyAudioRequest {
     private boolean equalTo(DeidentifyAudioRequest other) {
         return vaultId.equals(other.vaultId)
                 && file.equals(other.file)
+                && configurationId.equals(other.configurationId)
                 && outputProcessedAudio.equals(other.outputProcessedAudio)
                 && outputTranscription.equals(other.outputTranscription)
                 && bleepGain.equals(other.bleepGain)
@@ -199,11 +209,12 @@ public final class DeidentifyAudioRequest {
                 && transformations.equals(other.transformations);
     }
 
-    @java.lang.Override
+    @Override
     public int hashCode() {
         return Objects.hash(
                 this.vaultId,
                 this.file,
+                this.configurationId,
                 this.outputProcessedAudio,
                 this.outputTranscription,
                 this.bleepGain,
@@ -217,7 +228,7 @@ public final class DeidentifyAudioRequest {
                 this.transformations);
     }
 
-    @java.lang.Override
+    @Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }
@@ -241,6 +252,10 @@ public final class DeidentifyAudioRequest {
 
     public interface _FinalStage {
         DeidentifyAudioRequest build();
+
+        _FinalStage configurationId(Optional<String> configurationId);
+
+        _FinalStage configurationId(String configurationId);
 
         /**
          * <p>If <code>true</code>, includes processed audio file in the response.</p>
@@ -333,15 +348,18 @@ public final class DeidentifyAudioRequest {
 
         private Optional<Boolean> outputProcessedAudio = Optional.empty();
 
+        private Optional<String> configurationId = Optional.empty();
+
         @JsonAnySetter
         private Map<String, Object> additionalProperties = new HashMap<>();
 
         private Builder() {}
 
-        @java.lang.Override
+        @Override
         public Builder from(DeidentifyAudioRequest other) {
             vaultId(other.getVaultId());
             file(other.getFile());
+            configurationId(other.getConfigurationId());
             outputProcessedAudio(other.getOutputProcessedAudio());
             outputTranscription(other.getOutputTranscription());
             bleepGain(other.getBleepGain());
@@ -356,7 +374,7 @@ public final class DeidentifyAudioRequest {
             return this;
         }
 
-        @java.lang.Override
+        @Override
         @JsonSetter("vault_id")
         public FileStage vaultId(@NotNull String vaultId) {
             this.vaultId = Objects.requireNonNull(vaultId, "vaultId must not be null");
@@ -367,72 +385,72 @@ public final class DeidentifyAudioRequest {
          * File to de-identify. Files are specified as Base64-encoded data.<p>File to de-identify. Files are specified as Base64-encoded data.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @java.lang.Override
+        @Override
         @JsonSetter("file")
         public _FinalStage file(@NotNull DeidentifyAudioRequestFile file) {
             this.file = Objects.requireNonNull(file, "file must not be null");
             return this;
         }
 
-        @java.lang.Override
+        @Override
         public _FinalStage transformations(Transformations transformations) {
             this.transformations = Optional.ofNullable(transformations);
             return this;
         }
 
-        @java.lang.Override
+        @Override
         @JsonSetter(value = "transformations", nulls = Nulls.SKIP)
         public _FinalStage transformations(Optional<Transformations> transformations) {
             this.transformations = transformations;
             return this;
         }
 
-        @java.lang.Override
+        @Override
         public _FinalStage restrictRegex(List<String> restrictRegex) {
             this.restrictRegex = Optional.ofNullable(restrictRegex);
             return this;
         }
 
-        @java.lang.Override
+        @Override
         @JsonSetter(value = "restrict_regex", nulls = Nulls.SKIP)
         public _FinalStage restrictRegex(Optional<List<String>> restrictRegex) {
             this.restrictRegex = restrictRegex;
             return this;
         }
 
-        @java.lang.Override
+        @Override
         public _FinalStage allowRegex(List<String> allowRegex) {
             this.allowRegex = Optional.ofNullable(allowRegex);
             return this;
         }
 
-        @java.lang.Override
+        @Override
         @JsonSetter(value = "allow_regex", nulls = Nulls.SKIP)
         public _FinalStage allowRegex(Optional<List<String>> allowRegex) {
             this.allowRegex = allowRegex;
             return this;
         }
 
-        @java.lang.Override
+        @Override
         public _FinalStage tokenType(TokenTypeWithoutVault tokenType) {
             this.tokenType = Optional.ofNullable(tokenType);
             return this;
         }
 
-        @java.lang.Override
+        @Override
         @JsonSetter(value = "token_type", nulls = Nulls.SKIP)
         public _FinalStage tokenType(Optional<TokenTypeWithoutVault> tokenType) {
             this.tokenType = tokenType;
             return this;
         }
 
-        @java.lang.Override
+        @Override
         public _FinalStage entityTypes(List<EntityType> entityTypes) {
             this.entityTypes = Optional.ofNullable(entityTypes);
             return this;
         }
 
-        @java.lang.Override
+        @Override
         @JsonSetter(value = "entity_types", nulls = Nulls.SKIP)
         public _FinalStage entityTypes(Optional<List<EntityType>> entityTypes) {
             this.entityTypes = entityTypes;
@@ -443,7 +461,7 @@ public final class DeidentifyAudioRequest {
          * <p>Padding added to the end of a bleep, in seconds.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @java.lang.Override
+        @Override
         public _FinalStage bleepStopPadding(Double bleepStopPadding) {
             this.bleepStopPadding = Optional.ofNullable(bleepStopPadding);
             return this;
@@ -452,7 +470,7 @@ public final class DeidentifyAudioRequest {
         /**
          * <p>Padding added to the end of a bleep, in seconds.</p>
          */
-        @java.lang.Override
+        @Override
         @JsonSetter(value = "bleep_stop_padding", nulls = Nulls.SKIP)
         public _FinalStage bleepStopPadding(Optional<Double> bleepStopPadding) {
             this.bleepStopPadding = bleepStopPadding;
@@ -463,7 +481,7 @@ public final class DeidentifyAudioRequest {
          * <p>Padding added to the beginning of a bleep, in seconds.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @java.lang.Override
+        @Override
         public _FinalStage bleepStartPadding(Double bleepStartPadding) {
             this.bleepStartPadding = Optional.ofNullable(bleepStartPadding);
             return this;
@@ -472,7 +490,7 @@ public final class DeidentifyAudioRequest {
         /**
          * <p>Padding added to the beginning of a bleep, in seconds.</p>
          */
-        @java.lang.Override
+        @Override
         @JsonSetter(value = "bleep_start_padding", nulls = Nulls.SKIP)
         public _FinalStage bleepStartPadding(Optional<Double> bleepStartPadding) {
             this.bleepStartPadding = bleepStartPadding;
@@ -483,7 +501,7 @@ public final class DeidentifyAudioRequest {
          * <p>The pitch of the bleep sound, in Hz. The higher the number, the higher the pitch.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @java.lang.Override
+        @Override
         public _FinalStage bleepFrequency(Double bleepFrequency) {
             this.bleepFrequency = Optional.ofNullable(bleepFrequency);
             return this;
@@ -492,7 +510,7 @@ public final class DeidentifyAudioRequest {
         /**
          * <p>The pitch of the bleep sound, in Hz. The higher the number, the higher the pitch.</p>
          */
-        @java.lang.Override
+        @Override
         @JsonSetter(value = "bleep_frequency", nulls = Nulls.SKIP)
         public _FinalStage bleepFrequency(Optional<Double> bleepFrequency) {
             this.bleepFrequency = bleepFrequency;
@@ -503,7 +521,7 @@ public final class DeidentifyAudioRequest {
          * <p>Relative loudness of the bleep in dB. Positive values increase its loudness, and negative values decrease it.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @java.lang.Override
+        @Override
         public _FinalStage bleepGain(Double bleepGain) {
             this.bleepGain = Optional.ofNullable(bleepGain);
             return this;
@@ -512,7 +530,7 @@ public final class DeidentifyAudioRequest {
         /**
          * <p>Relative loudness of the bleep in dB. Positive values increase its loudness, and negative values decrease it.</p>
          */
-        @java.lang.Override
+        @Override
         @JsonSetter(value = "bleep_gain", nulls = Nulls.SKIP)
         public _FinalStage bleepGain(Optional<Double> bleepGain) {
             this.bleepGain = bleepGain;
@@ -523,7 +541,7 @@ public final class DeidentifyAudioRequest {
          * <p>Type of transcription to output.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @java.lang.Override
+        @Override
         public _FinalStage outputTranscription(DeidentifyAudioRequestOutputTranscription outputTranscription) {
             this.outputTranscription = Optional.ofNullable(outputTranscription);
             return this;
@@ -532,7 +550,7 @@ public final class DeidentifyAudioRequest {
         /**
          * <p>Type of transcription to output.</p>
          */
-        @java.lang.Override
+        @Override
         @JsonSetter(value = "output_transcription", nulls = Nulls.SKIP)
         public _FinalStage outputTranscription(
                 Optional<DeidentifyAudioRequestOutputTranscription> outputTranscription) {
@@ -544,7 +562,7 @@ public final class DeidentifyAudioRequest {
          * <p>If <code>true</code>, includes processed audio file in the response.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @java.lang.Override
+        @Override
         public _FinalStage outputProcessedAudio(Boolean outputProcessedAudio) {
             this.outputProcessedAudio = Optional.ofNullable(outputProcessedAudio);
             return this;
@@ -553,18 +571,32 @@ public final class DeidentifyAudioRequest {
         /**
          * <p>If <code>true</code>, includes processed audio file in the response.</p>
          */
-        @java.lang.Override
+        @Override
         @JsonSetter(value = "output_processed_audio", nulls = Nulls.SKIP)
         public _FinalStage outputProcessedAudio(Optional<Boolean> outputProcessedAudio) {
             this.outputProcessedAudio = outputProcessedAudio;
             return this;
         }
 
-        @java.lang.Override
+        @Override
+        public _FinalStage configurationId(String configurationId) {
+            this.configurationId = Optional.ofNullable(configurationId);
+            return this;
+        }
+
+        @Override
+        @JsonSetter(value = "configuration_id", nulls = Nulls.SKIP)
+        public _FinalStage configurationId(Optional<String> configurationId) {
+            this.configurationId = configurationId;
+            return this;
+        }
+
+        @Override
         public DeidentifyAudioRequest build() {
             return new DeidentifyAudioRequest(
                     vaultId,
                     file,
+                    configurationId,
                     outputProcessedAudio,
                     outputTranscription,
                     bleepGain,

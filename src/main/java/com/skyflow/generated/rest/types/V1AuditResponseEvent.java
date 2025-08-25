@@ -91,7 +91,7 @@ public final class V1AuditResponseEvent {
         return resourceIDs;
     }
 
-    @java.lang.Override
+    @Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof V1AuditResponseEvent && equalTo((V1AuditResponseEvent) other);
@@ -111,13 +111,13 @@ public final class V1AuditResponseEvent {
                 && resourceIDs.equals(other.resourceIDs);
     }
 
-    @java.lang.Override
+    @Override
     public int hashCode() {
         return Objects.hash(
                 this.context, this.request, this.response, this.parentAccountId, this.accountId, this.resourceIDs);
     }
 
-    @java.lang.Override
+    @Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }

@@ -44,7 +44,7 @@ public final class DeidentifyPdfRequestFile {
         return "pdf";
     }
 
-    @java.lang.Override
+    @Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof DeidentifyPdfRequestFile && equalTo((DeidentifyPdfRequestFile) other);
@@ -59,12 +59,12 @@ public final class DeidentifyPdfRequestFile {
         return base64.equals(other.base64);
     }
 
-    @java.lang.Override
+    @Override
     public int hashCode() {
         return Objects.hash(this.base64);
     }
 
-    @java.lang.Override
+    @Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }
@@ -95,7 +95,7 @@ public final class DeidentifyPdfRequestFile {
 
         private Builder() {}
 
-        @java.lang.Override
+        @Override
         public Builder from(DeidentifyPdfRequestFile other) {
             base64(other.getBase64());
             return this;
@@ -105,14 +105,14 @@ public final class DeidentifyPdfRequestFile {
          * Base64-encoded data of the file to de-identify.<p>Base64-encoded data of the file to de-identify.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @java.lang.Override
+        @Override
         @JsonSetter("base64")
         public _FinalStage base64(@NotNull String base64) {
             this.base64 = Objects.requireNonNull(base64, "base64 must not be null");
             return this;
         }
 
-        @java.lang.Override
+        @Override
         public DeidentifyPdfRequestFile build() {
             return new DeidentifyPdfRequestFile(base64, additionalProperties);
         }

@@ -10,7 +10,9 @@ public enum DeidentifyStatusResponseStatus {
 
     IN_PROGRESS("IN_PROGRESS"),
 
-    SUCCESS("SUCCESS");
+    SUCCESS("SUCCESS"),
+
+    UNKNOWN("UNKNOWN");
 
     private final String value;
 
@@ -19,7 +21,7 @@ public enum DeidentifyStatusResponseStatus {
     }
 
     @JsonValue
-    @java.lang.Override
+    @Override
     public String toString() {
         return this.value;
     }

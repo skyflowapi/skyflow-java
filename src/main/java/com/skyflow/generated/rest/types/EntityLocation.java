@@ -75,7 +75,7 @@ public final class EntityLocation {
         return endIndexProcessed;
     }
 
-    @java.lang.Override
+    @Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof EntityLocation && equalTo((EntityLocation) other);
@@ -93,12 +93,12 @@ public final class EntityLocation {
                 && endIndexProcessed.equals(other.endIndexProcessed);
     }
 
-    @java.lang.Override
+    @Override
     public int hashCode() {
         return Objects.hash(this.startIndex, this.endIndex, this.startIndexProcessed, this.endIndexProcessed);
     }
 
-    @java.lang.Override
+    @Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }

@@ -72,7 +72,7 @@ public final class V1DetokenizeRecordResponse {
         return error;
     }
 
-    @java.lang.Override
+    @Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof V1DetokenizeRecordResponse && equalTo((V1DetokenizeRecordResponse) other);
@@ -90,12 +90,12 @@ public final class V1DetokenizeRecordResponse {
                 && error.equals(other.error);
     }
 
-    @java.lang.Override
+    @Override
     public int hashCode() {
         return Objects.hash(this.token, this.valueType, this.value, this.error);
     }
 
-    @java.lang.Override
+    @Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }

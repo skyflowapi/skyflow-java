@@ -136,7 +136,7 @@ public class DetokenizeTests {
                 detokenizeData(detokenizeData).continueOnError(null).build();
         try {
             Validations.validateDetokenizeRequest(request);
-            Assert.assertEquals(RedactionType.PLAIN_TEXT, request.getDetokenizeData().get(0).getRedactionType());
+            Assert.assertEquals(RedactionType.DEFAULT, request.getDetokenizeData().get(0).getRedactionType());
             Assert.assertFalse(request.getContinueOnError());
             Assert.assertFalse(request.getDownloadURL());
         } catch (SkyflowException e) {
