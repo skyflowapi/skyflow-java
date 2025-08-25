@@ -134,7 +134,7 @@ public final class DetectController extends VaultClient {
                 if (base64File != null) {
                     byte[] decodedBytes = Base64.getDecoder().decode(base64File);
                     String outputDir = request.getOutputDirectory();
-                    String outputFileName = Constants.PROCESSED_FILE_NAME_PREFIX + fileName;
+                    String outputFileName = Constants.PROCESSED_FILE_NAME_PREFIX + fileName.substring(0, fileName.lastIndexOf('.')) + "."+response.getExtension();
                     File outputFile;
                     if (outputDir != null && !outputDir.isEmpty()) {
                         outputFile = new File(outputDir, outputFileName);
