@@ -2,12 +2,17 @@ package com.skyflow;
 
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
+import com.skyflow.enums.UpdateType;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.generated.rest.ApiClient;
 import com.skyflow.generated.rest.ApiClientBuilder;
 import com.skyflow.generated.rest.resources.recordservice.RecordserviceClient;
+import com.skyflow.generated.rest.resources.recordservice.requests.InsertRequest;
+import com.skyflow.generated.rest.types.EnumUpdateType;
+import com.skyflow.generated.rest.types.InsertRecordData;
+import com.skyflow.generated.rest.types.Upsert;
 import com.skyflow.logs.InfoLogs;
 import com.skyflow.serviceaccount.util.Token;
 import com.skyflow.utils.Constants;
@@ -16,6 +21,15 @@ import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.utils.validations.Validations;
 import io.github.cdimascio.dotenv.Dotenv;
 import io.github.cdimascio.dotenv.DotenvException;
+import okhttp3.Dispatcher;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 
 public class VaultClient {
@@ -66,11 +80,14 @@ public class VaultClient {
         } else {
             LogUtil.printInfoLog(InfoLogs.REUSE_BEARER_TOKEN.getLog());
         }
+        updateExecutorInHTTP(); // update executor
+        // token need to add in http client
         this.apiClient = this.apiClientBuilder.build();
+
     }
 
     private void updateVaultURL() {
-        String vaultURL = Utils.getVaultURL(this.vaultConfig.getClusterId(), this.vaultConfig.getEnv());
+        String vaultURL = Utils.getV3VaultURL(this.vaultConfig.getClusterId(), this.vaultConfig.getEnv());
         this.apiClientBuilder.url(vaultURL);
     }
 
@@ -103,4 +120,47 @@ public class VaultClient {
             throw new RuntimeException(e);
         }
     }
+
+    protected void updateExecutorInHTTP() {
+        OkHttpClient httpClient = new OkHttpClient.Builder()
+                .addInterceptor(chain -> {
+                    Request original = chain.request();
+                    Request requestWithAuth = original.newBuilder()
+                            .header("Authorization", "Bearer " + this.vaultConfig.getCredentials().getToken())
+                            .build();
+                    return chain.proceed(requestWithAuth);
+                })
+                .build();
+        apiClientBuilder.httpClient(httpClient);
+    }
+    protected InsertRequest getBUlkInsertRequestBody(com.skyflow.vault.data.InsertRequest request, VaultConfig config) throws SkyflowException {
+        List<HashMap<String, Object>> values = request.getValues();
+        List<InsertRecordData> insertRecordDataList = new ArrayList<>();
+        for (HashMap<String, Object> value : values) {
+            InsertRecordData data = InsertRecordData.builder().data(value).build();
+            insertRecordDataList.add(data);
+        }
+        InsertRequest.Builder builder = InsertRequest.builder()
+                .vaultId(config.getVaultId())
+                .records(insertRecordDataList)
+                .tableName(request.getTable());
+        if(request.getUpsert() != null && !request.getUpsert().isEmpty()){
+            if (request.getUpsertType() != null) {
+                EnumUpdateType updateType = null;
+                if(request.getUpsertType() == UpdateType.REPLACE){
+                    updateType = EnumUpdateType.REPLACE;
+                } else if (request.getUpsertType() == UpdateType.REPLACE) {
+                    updateType = EnumUpdateType.UPDATE;
+                }
+                Upsert upsert = Upsert.builder().uniqueColumns(request.getUpsert()).updateType(updateType).build();
+                builder.upsert(upsert);
+            } else {
+                Upsert upsert = Upsert.builder().uniqueColumns(request.getUpsert()).build();
+                builder.upsert(upsert);
+            }
+        }
+        return builder.build();
+
+    }
+
 }

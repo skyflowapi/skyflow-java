@@ -1,5 +1,7 @@
 package com.skyflow.vault.data;
 
+import com.google.gson.Gson;
+
 public class Summary {
     private int total_records;
     private int total_inserted;
@@ -27,5 +29,11 @@ public class Summary {
 
     public void setTotalFailed(int total_failed) {
         this.total_failed = total_failed;
+    }
+
+    @Override
+    public String toString() {
+        Gson gson = new Gson();
+        return gson.toJson(this);
     }
 }

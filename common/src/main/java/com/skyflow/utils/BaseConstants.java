@@ -7,10 +7,13 @@ public class BaseConstants {
     public static final String ORDER_ASCENDING = "ASCENDING";
     public static final String ENV_CREDENTIALS_KEY_NAME = "SKYFLOW_CREDENTIALS";
     public static final String SECURE_PROTOCOL = "https://";
-    public static final String DEV_DOMAIN = ".vault.skyflowapis.dev";
-    public static final String STAGE_DOMAIN = ".vault.skyflowapis.tech";
-    public static final String SANDBOX_DOMAIN = ".vault.skyflowapis-preview.com";
-    public static final String PROD_DOMAIN = ".vault.skyflowapis.com";
+    
+    public static final String V2_VAULT_DOMAIN = ".vault.";
+    public static final String V3_VAULT_DOMAIN = ".skyvault.";
+    public static final String DEV_DOMAIN = "skyflowapis.dev";
+    public static final String STAGE_DOMAIN = "skyflowapis.tech";
+    public static final String SANDBOX_DOMAIN = "skyflowapis-preview.com";
+    public static final String PROD_DOMAIN = "skyflowapis.com";
     public static final String PKCS8_PRIVATE_HEADER = "-----BEGIN PRIVATE KEY-----";
     public static final String PKCS8_PRIVATE_FOOTER = "-----END PRIVATE KEY-----";
     public static final String GRANT_TYPE = "urn:ietf:params:oauth:grant-type:jwt-bearer";

@@ -1,18 +1,20 @@
 package com.skyflow.vault.data;
+import com.google.gson.Gson;
+
 import java.util.List;
 import java.util.Map;
 
 public class Success {
-    private String index;
+    private int index;
     private String skyflow_id;
     private Map<String, List<Token>> tokens;
-    private Map<String, String> data;
+    private Map<String, Object> data;
 
-    public String getIndex() {
+    public int getIndex() {
         return index;
     }
 
-    public void setIndex(String index) {
+    public void setIndex(int index) {
         this.index = index;
     }
 
@@ -32,11 +34,16 @@ public class Success {
         this.tokens = tokens;
     }
 
-    public Map<String, String> getData() {
+    public Map<String, Object> getData() {
         return data;
     }
 
-    public void setData(Map<String, String> data) {
+    public void setData(Map<String, Object> data) {
         this.data = data;
+    }
+    @Override
+    public String toString() {
+        Gson gson = new Gson();
+        return gson.toJson(this);
     }
 }

@@ -1,14 +1,17 @@
 package com.skyflow.vault.data;
 
+import com.google.gson.Gson;
+
 public class ErrorRecord {
-    private String index;
+    private int index;
     private String error;
 
-    public String getIndex() {
+    private int code;
+    public int getIndex() {
         return index;
     }
 
-    public void setIndex(String index) {
+    public void setIndex(int index) {
         this.index = index;
     }
 
@@ -18,5 +21,16 @@ public class ErrorRecord {
 
     public void setError(String error) {
         this.error = error;
+    }
+    public int getCode() {
+        return code;
+    }
+    public void setCode(int code) {
+        this.code = code;
+    }
+    @Override
+    public String toString() {
+        Gson gson = new Gson();
+        return gson.toJson(this);
     }
 }

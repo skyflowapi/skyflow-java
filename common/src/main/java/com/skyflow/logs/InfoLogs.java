@@ -90,6 +90,8 @@ public enum InfoLogs {
     GET_DETECT_RUN_TRIGGERED("Get detect run method triggered."),
     VALIDATE_GET_DETECT_RUN_REQUEST("Validating get detect run request."),
     REIDENTIFY_TEXT_SUCCESS("Text data re-identified."),
+
+    PROCESSING_BATCHES("Processing batch")
     ;
 
 

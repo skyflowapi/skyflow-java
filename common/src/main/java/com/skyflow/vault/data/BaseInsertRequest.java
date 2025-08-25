@@ -18,27 +18,19 @@ public class BaseInsertRequest {
         return this.builder.values;
     }
 
-    public ArrayList<HashMap<String, Object>> getTokens() {
-        return this.builder.tokens;
-    }
-
-    public Boolean getReturnTokens() {
-        return this.builder.returnTokens;
-    }
-
-//    public String getUpsert() {
-//        return this.builder.upsert;
+//    public Boolean getReturnTokens() {
+//        return this.builder.returnTokens;
 //    }
 
     static class BaseInsertRequestBuilder {
         protected String table;
         protected ArrayList<HashMap<String, Object>> values;
-        protected ArrayList<HashMap<String, Object>> tokens;
-        protected Boolean returnTokens;
+//        protected ArrayList<HashMap<String, Object>> tokens;
+//        protected Boolean returnTokens;
         protected String upsert;
 
         protected BaseInsertRequestBuilder() {
-            this.returnTokens = false;
+//            this.returnTokens = false;
         }
 
         public BaseInsertRequestBuilder table(String table) {
@@ -51,18 +43,8 @@ public class BaseInsertRequest {
             return this;
         }
 
-        public BaseInsertRequestBuilder tokens(ArrayList<HashMap<String, Object>> tokens) {
-            this.tokens = tokens;
-            return this;
-        }
-
-        public BaseInsertRequestBuilder returnTokens(Boolean returnTokens) {
-            this.returnTokens = returnTokens != null && returnTokens;
-            return this;
-        }
-
-//        public BaseInsertRequestBuilder upsert(String upsert) {
-//            this.upsert = upsert;
+//        public BaseInsertRequestBuilder returnTokens(Boolean returnTokens) {
+//            this.returnTokens = returnTokens != null && returnTokens;
 //            return this;
 //        }
     }

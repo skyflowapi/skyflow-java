@@ -61,7 +61,7 @@ public class UtilsTests {
             map.put(Env.PROD, "https://test_cluster_id.vault.skyflowapis.com");
 
             for (Env env : map.keySet()) {
-                String vaultURL = Utils.getVaultURL(clusterId, env);
+                String vaultURL = Utils.getV2VaultURL(clusterId, env);
                 Assert.assertEquals(map.get(env), vaultURL);
             }
         } catch (Exception e) {

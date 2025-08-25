@@ -61,16 +61,12 @@ public final class Skyflow extends BaseSkyflow {
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(),
                         ErrorMessage.VaultIdAlreadyInConfigList.getMessage());
             } else {
-                LogUtil.printWarningLog(WarningLogs.OVERRIDING_EXISTING_VAULT_CONFIG.getLog());
-                VaultConfig vaultConfigDeepCopy = Utils.deepCopy(vaultConfig);
-                this.vaultConfigMap.clear(); // clear existing config
-                assert vaultConfigDeepCopy != null;
-                this.vaultConfigMap.put(vaultConfigDeepCopy.getVaultId(), vaultConfigDeepCopy); // add new config in map
-
-                this.vaultClientsMap.clear(); // clear existing vault controller
-                this.vaultClientsMap.put(vaultConfigDeepCopy.getVaultId(), new VaultController(vaultConfigDeepCopy, this.skyflowCredentials)); // add new controller with new config
+                this.vaultConfigMap.put(vaultConfig.getVaultId(), vaultConfig);
+                this.vaultClientsMap.put(vaultConfig.getVaultId(), new VaultController(vaultConfig, this.skyflowCredentials));
                 LogUtil.printInfoLog(Utils.parameterizedString(
                         InfoLogs.VAULT_CONTROLLER_INITIALIZED.getLog(), vaultConfig.getVaultId()));
+                LogUtil.printInfoLog(Utils.parameterizedString(
+                        InfoLogs.DETECT_CONTROLLER_INITIALIZED.getLog(), vaultConfig.getVaultId()));
             }
             return this;
         }

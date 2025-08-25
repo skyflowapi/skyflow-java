@@ -1,5 +1,7 @@
 package com.skyflow.vault.data;
 
+import com.skyflow.enums.UpdateType;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -22,18 +24,18 @@ public class InsertRequest extends BaseInsertRequest {
     public List<String> getUpsert() {
         return this.builder.upsert;
     }
-    public String getUpsertType() {
+    public UpdateType getUpsertType() {
         return this.builder.upsertType;
     }
-    public Boolean getReturnTokens() {
-        return this.builder.returnTokens;
-    }
+//    public Boolean getReturnTokens() {
+//        return this.builder.returnTokens;
+//    }
 
     public static final class InsertRequestBuilder extends BaseInsertRequestBuilder {
         private Boolean returnData;
         private List<String> upsert;
 
-        private String upsertType;
+        private UpdateType upsertType;
 
         private InsertRequestBuilder() {
             super();
@@ -56,15 +58,15 @@ public class InsertRequest extends BaseInsertRequest {
             this.upsert = upsert;
             return this;
         }
-        public InsertRequestBuilder upsertType(String upsertType) {
+        public InsertRequestBuilder upsertType(UpdateType upsertType) {
             this.upsertType = upsertType;
             return this;
         }
-        @Override
-        public InsertRequestBuilder returnTokens(Boolean returnTokens) {
-            super.returnTokens(returnTokens);
-            return this;
-        }
+//        @Override
+//        public InsertRequestBuilder returnTokens(Boolean returnTokens) {
+//            super.returnTokens(returnTokens);
+//            return this;
+//        }
 
         public InsertRequestBuilder returnData(Boolean returnData) {
             this.returnData = returnData;
