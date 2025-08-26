@@ -1,7 +1,9 @@
 package com.skyflow.logs;
 
 public enum WarningLogs {
-    OVERRIDING_EXISTING_VAULT_CONFIG("New vault config identified. Overriding existing vault config");
+    INVALID_BATCH_SIZE_PROVIDED("Invalid value for batch size provided, switching to default value."),
+    INVALID_CONCURRENCY_LIMIT_PROVIDED("Invalid value for concurrency limit provided, switching to default value."),
+    ;
 
     private final String log;
 

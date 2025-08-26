@@ -11,17 +11,19 @@ import com.skyflow.generated.rest.types.InsertRecordData;
 import com.skyflow.generated.rest.types.InsertResponse;
 import com.skyflow.logs.ErrorLogs;
 import com.skyflow.logs.InfoLogs;
+import com.skyflow.logs.WarningLogs;
+import com.skyflow.utils.Constants;
 import com.skyflow.utils.Utils;
 import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.utils.validations.Validations;
 import com.skyflow.vault.data.ErrorRecord;
 import com.skyflow.vault.data.InsertRequest;
 import com.skyflow.vault.data.Success;
-import com.skyflow.vault.data.Summary;
+import io.github.cdimascio.dotenv.Dotenv;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -32,81 +34,72 @@ import static com.skyflow.utils.Utils.handleBatchException;
 
 public final class VaultController extends VaultClient {
     private static final Gson gson = new GsonBuilder().serializeNulls().create();
+    private int batchSize;
+    private int concurrencyLimit;
 
     public VaultController(VaultConfig vaultConfig, Credentials credentials) {
         super(vaultConfig, credentials);
+        this.batchSize = Constants.BATCH_SIZE;
+        this.concurrencyLimit = Constants.CONCURRENCY_LIMIT;
     }
 
-    // add methods for v3 SDK
     public com.skyflow.vault.data.InsertResponse bulkInsert(InsertRequest insertRequest) throws SkyflowException {
         com.skyflow.vault.data.InsertResponse response;
         LogUtil.printInfoLog(InfoLogs.INSERT_TRIGGERED.getLog());
         try {
-            // validation
             LogUtil.printInfoLog(InfoLogs.VALIDATE_INSERT_REQUEST.getLog());
             Validations.validateInsertRequest(insertRequest);
-            int batchSize = 50;
-            int concurrencyLimit = 10;
             setBearerToken();
-            // calculate batch concurrency
+            configureConcurrencyAndBatchSize(insertRequest.getValues().size());
+            com.skyflow.generated.rest.resources.recordservice.requests.InsertRequest request = super.getBulkInsertRequestBody(insertRequest, super.getVaultConfig());
 
-            // req
-            com.skyflow.generated.rest.resources.recordservice.requests.InsertRequest request = super.getBUlkInsertRequestBody(insertRequest, super.getVaultConfig());
-
-            response = this.processSync(batchSize, concurrencyLimit, request);
+            response = this.processSync(request, insertRequest.getValues());
+            return response;
         } catch (ApiClientApiException e) {
             String bodyString = gson.toJson(e.body());
             LogUtil.printErrorLog(ErrorLogs.INSERT_RECORDS_REJECTED.getLog());
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
-        } catch (ExecutionException | InterruptedException e){
+        } catch (ExecutionException | InterruptedException e) {
             LogUtil.printErrorLog(ErrorLogs.INSERT_RECORDS_REJECTED.getLog());
             throw new SkyflowException(e.getMessage());
         }
-        Summary summary = new Summary();
-        summary.setTotalRecords(insertRequest.getValues().size());
-        if (response.getSuccess() != null) {
-            summary.setTotalInserted(response.getSuccess().size());
-        } else {
-            summary.setTotalInserted(0);
-        }
-        if (response.getErrors() != null) {
-            summary.setTotalFailed(response.getErrors().size());
-        } else {
-            summary.setTotalFailed(0);
-        }
-        response.setSummary(summary);
-        return response;
+//        Summary summary = new Summary();
+//        summary.setTotalRecords(insertRequest.getValues().size());
+//        if (response.getSuccessRecords() != null) {
+//            summary.setTotalInserted(response.getSuccessRecords().size());
+//        } else {
+//            summary.setTotalInserted(0);
+//        }
+//        if (response.getErrorRecords() != null) {
+//            summary.setTotalFailed(response.getErrorRecords().size());
+//        } else {
+//            summary.setTotalFailed(0);
+//        }
+//        response.setSummary(summary);
+//        return response;
     }
 
     public CompletableFuture<com.skyflow.vault.data.InsertResponse> bulkInsertAsync(InsertRequest insertRequest) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.INSERT_TRIGGERED.getLog());
         try {
-            // validation
             LogUtil.printInfoLog(InfoLogs.VALIDATE_INSERT_REQUEST.getLog());
             Validations.validateInsertRequest(insertRequest);
-            int batchSize = 50;
-            int concurrencyLimit = 10;
             setBearerToken();
-            // calculate batch concurrency
-
-            // req
-            com.skyflow.generated.rest.resources.recordservice.requests.InsertRequest request = super.getBUlkInsertRequestBody(insertRequest, super.getVaultConfig());
+            configureConcurrencyAndBatchSize(insertRequest.getValues().size());
+            com.skyflow.generated.rest.resources.recordservice.requests.InsertRequest request = super.getBulkInsertRequestBody(insertRequest, super.getVaultConfig());
 
             List<ErrorRecord> errorRecords = new ArrayList<>();
-
-            List<CompletableFuture<com.skyflow.vault.data.InsertResponse>> futures = this.insertBatchFutures(
-                    batchSize, concurrencyLimit, request, errorRecords
-            );
+            List<CompletableFuture<com.skyflow.vault.data.InsertResponse>> futures = this.insertBatchFutures(request, errorRecords);
 
             return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
                     .thenApply(v -> {
-                        List<Success> successRecords1 = new ArrayList<>();
+                        List<Success> successRecords = new ArrayList<>();
 
                         for (CompletableFuture<com.skyflow.vault.data.InsertResponse> future : futures) {
                             com.skyflow.vault.data.InsertResponse futureResponse = future.join();
                             if (futureResponse != null) {
                                 if (futureResponse.getSuccess() != null) {
-                                    successRecords1.addAll(futureResponse.getSuccess());
+                                    successRecords.addAll(futureResponse.getSuccess());
                                 }
                                 if (futureResponse.getErrors() != null) {
                                     errorRecords.addAll(futureResponse.getErrors());
@@ -114,19 +107,19 @@ public final class VaultController extends VaultClient {
                             }
                         }
 
-                        com.skyflow.vault.data.InsertResponse response1 = new com.skyflow.vault.data.InsertResponse();
-                        Summary summary = new Summary();
-                        if (!successRecords1.isEmpty()) {
-                            response1.setSuccess(successRecords1);
-                            summary.setTotalInserted(successRecords1.size());
-                        }
-                        if (!errorRecords.isEmpty()) {
-                            response1.setErrors(errorRecords);
-                            summary.setTotalFailed(errorRecords.size());
-                        }
-                        summary.setTotalRecords(insertRequest.getValues().size());
-                        response1.setSummary(summary);
-                        return response1;
+                        return new com.skyflow.vault.data.InsertResponse(successRecords, errorRecords, insertRequest.getValues());
+//                        Summary summary = new Summary();
+//                        if (!successRecords.isEmpty()) {
+//                            response.setSuccessRecords(successRecords);
+//                            summary.setTotalInserted(successRecords.size());
+//                        }
+//                        if (!errorRecords.isEmpty()) {
+//                            response.setErrorRecords(errorRecords);
+//                            summary.setTotalFailed(errorRecords.size());
+//                        }
+//                        summary.setTotalRecords(insertRequest.getValues().size());
+//                        response.setSummary(summary);
+//                        return response;
                     });
         } catch (ApiClientApiException e) {
             String bodyString = gson.toJson(e.body());
@@ -136,44 +129,43 @@ public final class VaultController extends VaultClient {
     }
 
     private com.skyflow.vault.data.InsertResponse processSync(
-            int batchSize, int concurrencyLimit, com.skyflow.generated.rest.resources.recordservice.requests.InsertRequest insertRequest
+            com.skyflow.generated.rest.resources.recordservice.requests.InsertRequest insertRequest,
+            ArrayList<HashMap<String, Object>> originalPayload
     ) throws ExecutionException, InterruptedException {
         LogUtil.printInfoLog(InfoLogs.PROCESSING_BATCHES.getLog());
         List<ErrorRecord> errorRecords = new ArrayList<>();
         List<Success> successRecords = new ArrayList<>();
 
-            List<CompletableFuture<com.skyflow.vault.data.InsertResponse>> futures = this.insertBatchFutures(
-                    batchSize, concurrencyLimit, insertRequest, errorRecords
-            );
+        List<CompletableFuture<com.skyflow.vault.data.InsertResponse>> futures = this.insertBatchFutures(insertRequest, errorRecords);
 
-            CompletableFuture<Void> allFutures = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
-            allFutures.join();
+        CompletableFuture<Void> allFutures = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
+        allFutures.join();
 
-            for (CompletableFuture<com.skyflow.vault.data.InsertResponse> future : futures) {
-                com.skyflow.vault.data.InsertResponse futureResponse = future.get();
-                if (futureResponse != null) {
-                    if (futureResponse.getSuccess() != null) {
-                        successRecords.addAll(futureResponse.getSuccess());
-                    }
-                    if (futureResponse.getErrors() != null) {
-                        errorRecords.addAll(futureResponse.getErrors());
-                    }
+        for (CompletableFuture<com.skyflow.vault.data.InsertResponse> future : futures) {
+            com.skyflow.vault.data.InsertResponse futureResponse = future.get();
+            if (futureResponse != null) {
+                if (futureResponse.getSuccess() != null) {
+                    successRecords.addAll(futureResponse.getSuccess());
+                }
+                if (futureResponse.getErrors() != null) {
+                    errorRecords.addAll(futureResponse.getErrors());
                 }
             }
-        com.skyflow.vault.data.InsertResponse response = new com.skyflow.vault.data.InsertResponse();
-        if (!errorRecords.isEmpty()) {
-            response.setErrors(errorRecords);
         }
-        if (!successRecords.isEmpty()) {
-            response.setSuccess(successRecords);
-        }
+        com.skyflow.vault.data.InsertResponse response = new com.skyflow.vault.data.InsertResponse(successRecords, errorRecords, originalPayload);
+//        if (!errorRecords.isEmpty()) {
+//            response.setErrorRecords(errorRecords);
+//        }
+//        if (!successRecords.isEmpty()) {
+//            response.setSuccessRecords(successRecords);
+//        }
         LogUtil.printInfoLog(InfoLogs.INSERT_REQUEST_RESOLVED.getLog());
         return response;
     }
 
 
     private List<CompletableFuture<com.skyflow.vault.data.InsertResponse>> insertBatchFutures(
-            int batchSize, int concurrencyLimit, com.skyflow.generated.rest.resources.recordservice.requests.InsertRequest insertRequest, List<ErrorRecord> errorRecords
+            com.skyflow.generated.rest.resources.recordservice.requests.InsertRequest insertRequest, List<ErrorRecord> errorRecords
     ) {
         List<InsertRecordData> records = insertRequest.getRecords().get();
 
@@ -182,9 +174,9 @@ public final class VaultController extends VaultClient {
         List<CompletableFuture<com.skyflow.vault.data.InsertResponse>> futures = new ArrayList<>();
 
         try {
-            for (int i = 0; i < batches.size(); i++) {
-                List<InsertRecordData> batch = batches.get(i);
-                int batchNumber = i;
+            for (int batchIndex = 0; batchIndex < batches.size(); batchIndex++) {
+                List<InsertRecordData> batch = batches.get(batchIndex);
+                int batchNumber = batchIndex;
                 CompletableFuture<com.skyflow.vault.data.InsertResponse> future = CompletableFuture
                         .supplyAsync(() -> insertBatch(batch, insertRequest.getTableName().get()), executor)
                         .exceptionally(ex -> {
@@ -201,12 +193,53 @@ public final class VaultController extends VaultClient {
         return futures;
     }
 
-    private InsertResponse insertBatch(List<InsertRecordData> batch, String tableName){
+    private InsertResponse insertBatch(List<InsertRecordData> batch, String tableName) {
         com.skyflow.generated.rest.resources.recordservice.requests.InsertRequest req = com.skyflow.generated.rest.resources.recordservice.requests.InsertRequest.builder()
                 .vaultId(this.getVaultConfig().getVaultId())
                 .tableName(tableName)
                 .records(batch)
                 .build();
         return this.getRecordsApi().insert(req);
+    }
+
+    private void configureConcurrencyAndBatchSize(int totalRequests) {
+        Dotenv dotenv = Dotenv.load();
+        String userProvidedBatchSize = dotenv.get("BATCH_SIZE");
+        String userProvidedConcurrencyLimit = dotenv.get("CONCURRENCY_LIMIT");
+
+        if (userProvidedBatchSize != null) {
+            try {
+                int batchSize = Integer.parseInt(userProvidedBatchSize);
+                if (batchSize > 0) {
+                    this.batchSize = batchSize;
+                } else {
+                    LogUtil.printWarningLog(WarningLogs.INVALID_BATCH_SIZE_PROVIDED.getLog());
+                    this.batchSize = Constants.BATCH_SIZE;
+                }
+            } catch (NumberFormatException e) {
+                LogUtil.printWarningLog(WarningLogs.INVALID_BATCH_SIZE_PROVIDED.getLog());
+                this.batchSize = Constants.BATCH_SIZE;
+            }
+        }
+
+        // Max no of threads required to run all batches concurrently at once
+        int maxConcurrencyNeeded = (totalRequests + this.batchSize - 1) / this.batchSize;
+
+        if (userProvidedConcurrencyLimit != null) {
+            try {
+                int concurrencyLimit = Integer.parseInt(userProvidedConcurrencyLimit);
+                if (concurrencyLimit > 0) {
+                    this.concurrencyLimit = Math.min(concurrencyLimit, maxConcurrencyNeeded);
+                } else {
+                    LogUtil.printWarningLog(WarningLogs.INVALID_CONCURRENCY_LIMIT_PROVIDED.getLog());
+                    this.concurrencyLimit = Math.min(Constants.CONCURRENCY_LIMIT, maxConcurrencyNeeded);
+                }
+            } catch (NumberFormatException e) {
+                LogUtil.printWarningLog(WarningLogs.INVALID_CONCURRENCY_LIMIT_PROVIDED.getLog());
+                this.concurrencyLimit = Math.min(Constants.CONCURRENCY_LIMIT, maxConcurrencyNeeded);
+            }
+        } else {
+            this.concurrencyLimit = Math.min(Constants.CONCURRENCY_LIMIT, maxConcurrencyNeeded);
+        }
     }
 }
