@@ -9,6 +9,7 @@ import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.HttpStatus;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.utils.Constants;
+import com.skyflow.utils.SdkVersion;
 import com.skyflow.utils.Utils;
 import com.skyflow.vault.detect.DeidentifyTextRequest;
 import com.skyflow.vault.detect.ReidentifyTextRequest;
@@ -42,6 +43,7 @@ public class DetectControllerTests {
                 .setLogLevel(LogLevel.DEBUG)
                 .addVaultConfig(vaultConfig)
                 .build();
+        SdkVersion.setSdkPrefix(Constants.SDK_PREFIX);
     }
 
 

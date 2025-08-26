@@ -11,6 +11,7 @@ import com.skyflow.errors.HttpStatus;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.generated.rest.ApiClient;
 import com.skyflow.utils.Constants;
+import com.skyflow.utils.SdkVersion;
 import com.skyflow.utils.Utils;
 import com.skyflow.vault.data.*;
 import com.skyflow.vault.tokens.DetokenizeRequest;
@@ -47,7 +48,7 @@ public class VaultControllerTests {
                 .setLogLevel(LogLevel.DEBUG)
                 .addVaultConfig(vaultConfig)
                 .build();
-
+        SdkVersion.setSdkPrefix(Constants.SDK_PREFIX);
     }
 
     @Test

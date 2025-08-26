@@ -7,6 +7,8 @@ import com.skyflow.enums.LogLevel;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.utils.Constants;
+import com.skyflow.utils.SdkVersion;
 import com.skyflow.vault.connection.InvokeConnectionRequest;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -34,6 +36,7 @@ public class ConnectionControllerTests {
         connectionConfig.setConnectionId(connectionID);
         connectionConfig.setConnectionUrl(connectionURL);
         connectionConfig.setCredentials(credentials);
+        SdkVersion.setSdkPrefix(Constants.SDK_PREFIX);
     }
 
     @Test

@@ -49,6 +49,7 @@ public class UtilsTests {
         pathParams = new HashMap<>();
         queryParams = new HashMap<>();
         requestHeaders = new HashMap<>();
+        SdkVersion.setSdkPrefix(Constants.SDK_PREFIX);
     }
 
     @Test
@@ -181,8 +182,9 @@ public class UtilsTests {
             System.clearProperty("os.version");
             System.clearProperty("java.version");
 
+            String sdkVersion = Constants.SDK_VERSION;
             JsonObject metrics = Utils.getMetrics();
-            Assert.assertEquals("skyflow-java@v2", metrics.get(Constants.SDK_METRIC_NAME_VERSION).getAsString());
+            Assert.assertEquals("skyflow-java@" + sdkVersion, metrics.get(Constants.SDK_METRIC_NAME_VERSION).getAsString());
             Assert.assertEquals("Java@", metrics.get(Constants.SDK_METRIC_RUNTIME_DETAILS).getAsString());
             Assert.assertTrue(metrics.get(Constants.SDK_METRIC_CLIENT_DEVICE_MODEL).getAsString().isEmpty());
             Assert.assertTrue(metrics.get(Constants.SDK_METRIC_CLIENT_OS_DETAILS).getAsString().isEmpty());

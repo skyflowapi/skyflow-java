@@ -2,9 +2,7 @@ package com.skyflow.config;
 
 import com.skyflow.enums.Env;
 
-import java.io.Serializable;
-
-public class VaultConfig implements Serializable {
+public class VaultConfig implements Cloneable {
     private String vaultId;
     private String clusterId;
     private Env env;
@@ -47,5 +45,14 @@ public class VaultConfig implements Serializable {
 
     public void setCredentials(Credentials credentials) {
         this.credentials = credentials;
+    }
+
+    @Override
+    public Object clone() throws CloneNotSupportedException {
+        VaultConfig cloned = (VaultConfig) super.clone();
+        if (this.credentials != null) {
+            cloned.credentials = (Credentials) this.credentials.clone();
+        }
+        return cloned;
     }
 }

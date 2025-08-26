@@ -5,6 +5,8 @@ import com.skyflow.config.VaultConfig;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.utils.Constants;
+import com.skyflow.utils.SdkVersion;
 import com.skyflow.vault.detect.AudioBleep;
 import com.skyflow.vault.detect.DeidentifyFileRequest;
 import com.skyflow.vault.detect.FileInput;
@@ -39,6 +41,7 @@ public class DetectControllerFileTests {
         vaultConfig.setCredentials(credentials);
 
         detectController = new DetectController(vaultConfig, credentials);
+        SdkVersion.setSdkPrefix(Constants.SDK_PREFIX);
     }
     
     @Test

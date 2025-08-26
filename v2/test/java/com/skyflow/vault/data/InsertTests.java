@@ -9,6 +9,7 @@ import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.utils.Constants;
+import com.skyflow.utils.SdkVersion;
 import com.skyflow.utils.Utils;
 import com.skyflow.utils.validations.Validations;
 import org.junit.Assert;
@@ -54,6 +55,7 @@ public class InsertTests {
         valueMap = new HashMap<>();
         tokenMap = new HashMap<>();
         upsert = "upsert_column";
+        SdkVersion.setSdkPrefix(Constants.SDK_PREFIX);
     }
 
     @Before
