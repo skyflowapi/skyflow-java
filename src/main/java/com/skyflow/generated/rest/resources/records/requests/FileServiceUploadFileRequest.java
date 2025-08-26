@@ -7,24 +7,40 @@ import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.annotation.Nulls;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.skyflow.generated.rest.core.ObjectMappers;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 
 @JsonInclude(JsonInclude.Include.NON_ABSENT)
 @JsonDeserialize(builder = FileServiceUploadFileRequest.Builder.class)
 public final class FileServiceUploadFileRequest {
+    private final Optional<String> columnName;
+
     private final Map<String, Object> additionalProperties;
 
-    private FileServiceUploadFileRequest(Map<String, Object> additionalProperties) {
+    private FileServiceUploadFileRequest(Optional<String> columnName, Map<String, Object> additionalProperties) {
+        this.columnName = columnName;
         this.additionalProperties = additionalProperties;
     }
 
-    @java.lang.Override
+    /**
+     * @return Name of the column to store the file in. The column must have a file data type.
+     */
+    @JsonProperty("columnName")
+    public Optional<String> getColumnName() {
+        return columnName;
+    }
+
+    @Override
     public boolean equals(Object other) {
         if (this == other) return true;
-        return other instanceof FileServiceUploadFileRequest;
+        return other instanceof FileServiceUploadFileRequest && equalTo((FileServiceUploadFileRequest) other);
     }
 
     @JsonAnyGetter
@@ -32,7 +48,16 @@ public final class FileServiceUploadFileRequest {
         return this.additionalProperties;
     }
 
-    @java.lang.Override
+    private boolean equalTo(FileServiceUploadFileRequest other) {
+        return columnName.equals(other.columnName);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(this.columnName);
+    }
+
+    @Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }
@@ -43,17 +68,34 @@ public final class FileServiceUploadFileRequest {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static final class Builder {
+        private Optional<String> columnName = Optional.empty();
+
         @JsonAnySetter
         private Map<String, Object> additionalProperties = new HashMap<>();
 
         private Builder() {}
 
         public Builder from(FileServiceUploadFileRequest other) {
+            columnName(other.getColumnName());
+            return this;
+        }
+
+        /**
+         * <p>Name of the column to store the file in. The column must have a file data type.</p>
+         */
+        @JsonSetter(value = "columnName", nulls = Nulls.SKIP)
+        public Builder columnName(Optional<String> columnName) {
+            this.columnName = columnName;
+            return this;
+        }
+
+        public Builder columnName(String columnName) {
+            this.columnName = Optional.ofNullable(columnName);
             return this;
         }
 
         public FileServiceUploadFileRequest build() {
-            return new FileServiceUploadFileRequest(additionalProperties);
+            return new FileServiceUploadFileRequest(columnName, additionalProperties);
         }
     }
 }

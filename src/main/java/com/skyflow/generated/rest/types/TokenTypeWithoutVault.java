@@ -61,7 +61,7 @@ public final class TokenTypeWithoutVault {
         return entityOnly;
     }
 
-    @java.lang.Override
+    @Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof TokenTypeWithoutVault && equalTo((TokenTypeWithoutVault) other);
@@ -78,12 +78,12 @@ public final class TokenTypeWithoutVault {
                 && entityOnly.equals(other.entityOnly);
     }
 
-    @java.lang.Override
+    @Override
     public int hashCode() {
         return Objects.hash(this.default_, this.entityUnqCounter, this.entityOnly);
     }
 
-    @java.lang.Override
+    @Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }

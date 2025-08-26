@@ -63,7 +63,7 @@ public final class DeidentifyFileOutput {
         return processedFileExtension;
     }
 
-    @java.lang.Override
+    @Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof DeidentifyFileOutput && equalTo((DeidentifyFileOutput) other);
@@ -80,12 +80,12 @@ public final class DeidentifyFileOutput {
                 && processedFileExtension.equals(other.processedFileExtension);
     }
 
-    @java.lang.Override
+    @Override
     public int hashCode() {
         return Objects.hash(this.processedFile, this.processedFileType, this.processedFileExtension);
     }
 
-    @java.lang.Override
+    @Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }

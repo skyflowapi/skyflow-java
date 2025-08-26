@@ -512,7 +512,6 @@ public class VaultClient {
         Optional<List<EntityType>> entityUniqueCounter = Optional.empty();
         Optional<List<String>> allowRegex = Optional.ofNullable(request.getAllowRegexList());
         Optional<List<String>> restrictRegex = Optional.ofNullable(request.getRestrictRegexList());
-        Optional<Transformations> transformations = Optional.ofNullable(getTransformations(request.getTransformations()));
 
         if (tokenFormat != null) {
             if (tokenFormat.getEntityOnly() != null && !tokenFormat.getEntityOnly().isEmpty()) {
@@ -540,13 +539,12 @@ public class VaultClient {
         return DeidentifyPdfRequest.builder()
                 .vaultId(vaultId)
                 .file(file)
-                .density(request.getPixelDensity() != null ? request.getPixelDensity().intValue() : null)
-                .maxResolution(request.getMaxResolution() != null ? request.getMaxResolution().intValue() : null)
+                .density(Double.valueOf(request.getPixelDensity() != null ? request.getPixelDensity().intValue() : null))
+                .maxResolution(Double.valueOf(request.getMaxResolution() != null ? request.getMaxResolution().intValue() : null))
                 .entityTypes(mappedEntityTypes)
                 .tokenType(tokenType)
                 .allowRegex(allowRegex)
                 .restrictRegex(restrictRegex)
-                .transformations(transformations)
                 .build();
     }
 
@@ -558,7 +556,6 @@ public class VaultClient {
         Optional<List<EntityType>> entityUniqueCounter = Optional.empty();
         Optional<List<String>> allowRegex = Optional.ofNullable(request.getAllowRegexList());
         Optional<List<String>> restrictRegex = Optional.ofNullable(request.getRestrictRegexList());
-        Optional<Transformations> transformations = Optional.ofNullable(getTransformations(request.getTransformations()));
 
         TokenTypeWithoutVault tokenType = buildTokenType(tokenFormat, entityTypes, entityUniqueCounter);
 
@@ -580,7 +577,6 @@ public class VaultClient {
                 .tokenType(tokenType)
                 .allowRegex(allowRegex)
                 .restrictRegex(restrictRegex)
-                .transformations(transformations)
                 .outputProcessedImage(request.getOutputProcessedImage())
                 .outputOcrText(request.getOutputOcrText())
                 .build();
@@ -594,7 +590,6 @@ public class VaultClient {
         Optional<List<EntityType>> entityUniqueCounter = Optional.empty();
         Optional<List<String>> allowRegex = Optional.ofNullable(request.getAllowRegexList());
         Optional<List<String>> restrictRegex = Optional.ofNullable(request.getRestrictRegexList());
-        Optional<Transformations> transformations = Optional.ofNullable(getTransformations(request.getTransformations()));
 
         TokenTypeWithoutVault tokenType = buildTokenType(tokenFormat, entityTypes, entityUniqueCounter);
 
@@ -610,7 +605,6 @@ public class VaultClient {
                 .tokenType(tokenType)
                 .allowRegex(allowRegex)
                 .restrictRegex(restrictRegex)
-                .transformations(transformations)
                 .build();
     }
 
@@ -622,7 +616,6 @@ public class VaultClient {
         Optional<List<EntityType>> entityUniqueCounter = Optional.empty();
         Optional<List<String>> allowRegex = Optional.ofNullable(request.getAllowRegexList());
         Optional<List<String>> restrictRegex = Optional.ofNullable(request.getRestrictRegexList());
-        Optional<Transformations> transformations = Optional.ofNullable(getTransformations(request.getTransformations()));
 
         TokenTypeWithoutVault tokenType = buildTokenType(tokenFormat, entityTypes, entityUniqueCounter);
 
@@ -638,7 +631,6 @@ public class VaultClient {
                 .tokenType(tokenType)
                 .allowRegex(allowRegex)
                 .restrictRegex(restrictRegex)
-                .transformations(transformations)
                 .build();
     }
 
@@ -678,7 +670,6 @@ public class VaultClient {
         Optional<List<EntityType>> entityUniqueCounter = Optional.empty();
         Optional<List<String>> allowRegex = Optional.ofNullable(request.getAllowRegexList());
         Optional<List<String>> restrictRegex = Optional.ofNullable(request.getRestrictRegexList());
-        Optional<Transformations> transformations = Optional.ofNullable(getTransformations(request.getTransformations()));
 
         TokenTypeWithoutVault tokenType = buildTokenType(tokenFormat, entityTypes, entityUniqueCounter);
 
@@ -694,7 +685,6 @@ public class VaultClient {
                 .tokenType(tokenType)
                 .allowRegex(allowRegex)
                 .restrictRegex(restrictRegex)
-                .transformations(transformations)
                 .build();
     }
 

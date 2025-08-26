@@ -8,8 +8,8 @@ import com.skyflow.generated.rest.core.Suppliers;
 import com.skyflow.generated.rest.resources.audit.AuditClient;
 import com.skyflow.generated.rest.resources.authentication.AuthenticationClient;
 import com.skyflow.generated.rest.resources.binlookup.BinLookupClient;
-import com.skyflow.generated.rest.resources.deprecated.DeprecatedClient;
 import com.skyflow.generated.rest.resources.files.FilesClient;
+import com.skyflow.generated.rest.resources.guardrails.GuardrailsClient;
 import com.skyflow.generated.rest.resources.query.QueryClient;
 import com.skyflow.generated.rest.resources.records.RecordsClient;
 import com.skyflow.generated.rest.resources.strings.StringsClient;
@@ -31,7 +31,7 @@ public class ApiClient {
 
     protected final Supplier<AuthenticationClient> authenticationClient;
 
-    protected final Supplier<DeprecatedClient> deprecatedClient;
+    protected final Supplier<GuardrailsClient> guardrailsClient;
 
     protected final Supplier<StringsClient> stringsClient;
 
@@ -45,7 +45,7 @@ public class ApiClient {
         this.tokensClient = Suppliers.memoize(() -> new TokensClient(clientOptions));
         this.queryClient = Suppliers.memoize(() -> new QueryClient(clientOptions));
         this.authenticationClient = Suppliers.memoize(() -> new AuthenticationClient(clientOptions));
-        this.deprecatedClient = Suppliers.memoize(() -> new DeprecatedClient(clientOptions));
+        this.guardrailsClient = Suppliers.memoize(() -> new GuardrailsClient(clientOptions));
         this.stringsClient = Suppliers.memoize(() -> new StringsClient(clientOptions));
         this.filesClient = Suppliers.memoize(() -> new FilesClient(clientOptions));
     }
@@ -74,8 +74,8 @@ public class ApiClient {
         return this.authenticationClient.get();
     }
 
-    public DeprecatedClient deprecated() {
-        return this.deprecatedClient.get();
+    public GuardrailsClient guardrails() {
+        return this.guardrailsClient.get();
     }
 
     public StringsClient strings() {

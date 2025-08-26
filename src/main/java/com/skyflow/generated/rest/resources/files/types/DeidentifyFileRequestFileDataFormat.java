@@ -10,6 +10,8 @@ public enum DeidentifyFileRequestFileDataFormat {
 
     CSV("csv"),
 
+    DCM("dcm"),
+
     DOC("doc"),
 
     DOCX("docx"),
@@ -51,7 +53,7 @@ public enum DeidentifyFileRequestFileDataFormat {
     }
 
     @JsonValue
-    @java.lang.Override
+    @Override
     public String toString() {
         return this.value;
     }

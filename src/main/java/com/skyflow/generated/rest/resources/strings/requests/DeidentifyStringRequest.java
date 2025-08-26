@@ -29,6 +29,8 @@ public final class DeidentifyStringRequest {
 
     private final String text;
 
+    private final Optional<String> configurationId;
+
     private final Optional<List<EntityType>> entityTypes;
 
     private final Optional<TokenType> tokenType;
@@ -44,6 +46,7 @@ public final class DeidentifyStringRequest {
     private DeidentifyStringRequest(
             String vaultId,
             String text,
+            Optional<String> configurationId,
             Optional<List<EntityType>> entityTypes,
             Optional<TokenType> tokenType,
             Optional<List<String>> allowRegex,
@@ -52,6 +55,7 @@ public final class DeidentifyStringRequest {
             Map<String, Object> additionalProperties) {
         this.vaultId = vaultId;
         this.text = text;
+        this.configurationId = configurationId;
         this.entityTypes = entityTypes;
         this.tokenType = tokenType;
         this.allowRegex = allowRegex;
@@ -71,6 +75,11 @@ public final class DeidentifyStringRequest {
     @JsonProperty("text")
     public String getText() {
         return text;
+    }
+
+    @JsonProperty("configuration_id")
+    public Optional<String> getConfigurationId() {
+        return configurationId;
     }
 
     @JsonProperty("entity_types")
@@ -98,7 +107,7 @@ public final class DeidentifyStringRequest {
         return transformations;
     }
 
-    @java.lang.Override
+    @Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof DeidentifyStringRequest && equalTo((DeidentifyStringRequest) other);
@@ -112,6 +121,7 @@ public final class DeidentifyStringRequest {
     private boolean equalTo(DeidentifyStringRequest other) {
         return vaultId.equals(other.vaultId)
                 && text.equals(other.text)
+                && configurationId.equals(other.configurationId)
                 && entityTypes.equals(other.entityTypes)
                 && tokenType.equals(other.tokenType)
                 && allowRegex.equals(other.allowRegex)
@@ -119,11 +129,12 @@ public final class DeidentifyStringRequest {
                 && transformations.equals(other.transformations);
     }
 
-    @java.lang.Override
+    @Override
     public int hashCode() {
         return Objects.hash(
                 this.vaultId,
                 this.text,
+                this.configurationId,
                 this.entityTypes,
                 this.tokenType,
                 this.allowRegex,
@@ -131,7 +142,7 @@ public final class DeidentifyStringRequest {
                 this.transformations);
     }
 
-    @java.lang.Override
+    @Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }
@@ -155,6 +166,10 @@ public final class DeidentifyStringRequest {
 
     public interface _FinalStage {
         DeidentifyStringRequest build();
+
+        _FinalStage configurationId(Optional<String> configurationId);
+
+        _FinalStage configurationId(String configurationId);
 
         _FinalStage entityTypes(Optional<List<EntityType>> entityTypes);
 
@@ -193,15 +208,18 @@ public final class DeidentifyStringRequest {
 
         private Optional<List<EntityType>> entityTypes = Optional.empty();
 
+        private Optional<String> configurationId = Optional.empty();
+
         @JsonAnySetter
         private Map<String, Object> additionalProperties = new HashMap<>();
 
         private Builder() {}
 
-        @java.lang.Override
+        @Override
         public Builder from(DeidentifyStringRequest other) {
             vaultId(other.getVaultId());
             text(other.getText());
+            configurationId(other.getConfigurationId());
             entityTypes(other.getEntityTypes());
             tokenType(other.getTokenType());
             allowRegex(other.getAllowRegex());
@@ -210,7 +228,7 @@ public final class DeidentifyStringRequest {
             return this;
         }
 
-        @java.lang.Override
+        @Override
         @JsonSetter("vault_id")
         public TextStage vaultId(@NotNull String vaultId) {
             this.vaultId = Objects.requireNonNull(vaultId, "vaultId must not be null");
@@ -221,83 +239,97 @@ public final class DeidentifyStringRequest {
          * String to de-identify.<p>String to de-identify.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @java.lang.Override
+        @Override
         @JsonSetter("text")
         public _FinalStage text(@NotNull String text) {
             this.text = Objects.requireNonNull(text, "text must not be null");
             return this;
         }
 
-        @java.lang.Override
+        @Override
         public _FinalStage transformations(Transformations transformations) {
             this.transformations = Optional.ofNullable(transformations);
             return this;
         }
 
-        @java.lang.Override
+        @Override
         @JsonSetter(value = "transformations", nulls = Nulls.SKIP)
         public _FinalStage transformations(Optional<Transformations> transformations) {
             this.transformations = transformations;
             return this;
         }
 
-        @java.lang.Override
+        @Override
         public _FinalStage restrictRegex(List<String> restrictRegex) {
             this.restrictRegex = Optional.ofNullable(restrictRegex);
             return this;
         }
 
-        @java.lang.Override
+        @Override
         @JsonSetter(value = "restrict_regex", nulls = Nulls.SKIP)
         public _FinalStage restrictRegex(Optional<List<String>> restrictRegex) {
             this.restrictRegex = restrictRegex;
             return this;
         }
 
-        @java.lang.Override
+        @Override
         public _FinalStage allowRegex(List<String> allowRegex) {
             this.allowRegex = Optional.ofNullable(allowRegex);
             return this;
         }
 
-        @java.lang.Override
+        @Override
         @JsonSetter(value = "allow_regex", nulls = Nulls.SKIP)
         public _FinalStage allowRegex(Optional<List<String>> allowRegex) {
             this.allowRegex = allowRegex;
             return this;
         }
 
-        @java.lang.Override
+        @Override
         public _FinalStage tokenType(TokenType tokenType) {
             this.tokenType = Optional.ofNullable(tokenType);
             return this;
         }
 
-        @java.lang.Override
+        @Override
         @JsonSetter(value = "token_type", nulls = Nulls.SKIP)
         public _FinalStage tokenType(Optional<TokenType> tokenType) {
             this.tokenType = tokenType;
             return this;
         }
 
-        @java.lang.Override
+        @Override
         public _FinalStage entityTypes(List<EntityType> entityTypes) {
             this.entityTypes = Optional.ofNullable(entityTypes);
             return this;
         }
 
-        @java.lang.Override
+        @Override
         @JsonSetter(value = "entity_types", nulls = Nulls.SKIP)
         public _FinalStage entityTypes(Optional<List<EntityType>> entityTypes) {
             this.entityTypes = entityTypes;
             return this;
         }
 
-        @java.lang.Override
+        @Override
+        public _FinalStage configurationId(String configurationId) {
+            this.configurationId = Optional.ofNullable(configurationId);
+            return this;
+        }
+
+        @Override
+        @JsonSetter(value = "configuration_id", nulls = Nulls.SKIP)
+        public _FinalStage configurationId(Optional<String> configurationId) {
+            this.configurationId = configurationId;
+            return this;
+        }
+
+        @Override
         public DeidentifyStringRequest build() {
             return new DeidentifyStringRequest(
                     vaultId,
                     text,
+                    configurationId,
                     entityTypes,
                     tokenType,
                     allowRegex,

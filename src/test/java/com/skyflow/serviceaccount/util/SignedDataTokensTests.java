@@ -213,9 +213,13 @@ public class SignedDataTokensTests {
     public void testSignedDataTokenResponse() {
         try {
             String signedToken = "test_signed_data_token";
-            SignedDataTokenResponse response = new SignedDataTokenResponse(dataToken, signedToken);
-            String responseString = "{\"token\":\"" + dataToken + "\"," +
-                    "\"signedToken\":\"signed_token_" + signedToken + "\"}";
+            SignedDataTokenResponse response = new SignedDataTokenResponse(dataToken, signedToken, null);
+            String responseString = "{"
+                    + "\"token\":\"" + dataToken + "\","
+                    + "\"signedToken\":\"signed_token_" + signedToken + "\","
+                    + "\"errors\":null"
+                    + "}";
+
             Assert.assertEquals(responseString, response.toString());
             Assert.assertEquals(dataToken, response.getToken());
             Assert.assertEquals("signed_token_" + signedToken, response.getSignedToken());
