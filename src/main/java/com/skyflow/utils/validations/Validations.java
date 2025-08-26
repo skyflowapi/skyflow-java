@@ -789,7 +789,7 @@ public class Validations {
         }
 
         TokenFormat tokenFormat = request.getTokenFormat();
-        if (tokenFormat.getVaultToken() != null && !tokenFormat.getVaultToken().isEmpty()) {
+        if (tokenFormat != null && tokenFormat.getVaultToken() != null && !tokenFormat.getVaultToken().isEmpty()) {
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.VaultTokenFormatIsNotAllowedForFiles.getMessage());
         }
 
