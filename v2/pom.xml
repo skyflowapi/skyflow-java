@@ -7,6 +7,7 @@
         <groupId>com.skyflow</groupId>
         <artifactId>skyflow</artifactId>
         <version>1.0.0</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>v2</artifactId>
