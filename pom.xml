@@ -247,14 +247,6 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-deploy-plugin</artifactId>
-            <version>3.1.2</version>
-            <configuration>
-                <skip>true</skip>
-            </configuration>
-        </plugin>
         </plugins>
     </build>
     <repositories>
@@ -264,51 +256,4 @@
             <url>https://repo.maven.apache.org/maven2/</url>
         </repository>
     </repositories>
-
-    <profiles>
-        <!-- ... existing profiles ... -->
-        <profile>
-            <id>maven-central</id>
-            <distributionManagement>
-                <repository>
-                    <id>central</id>
-                    <url>https://central.sonatype.com/api/v1/publisher/upload</url>
-                </repository>
-                <snapshotRepository>
-                    <id>central-snapshots</id>
-                    <url>https://central.sonatype.com/api/v1/publisher/upload</url>
-                </snapshotRepository>
-            </distributionManagement>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.sonatype.central</groupId>
-                        <artifactId>central-publishing-maven-plugin</artifactId>
-                        <version>0.4.0</version>
-                        <extensions>true</extensions>
-                        <configuration>
-                            <publishingServerId>central</publishingServerId>
-                            <tokenAuth>true</tokenAuth>
-                            <autoPublish>true</autoPublish>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        <profile>
-            <id>jfrog</id>
-            <distributionManagement>
-                <repository>
-                    <id>central</id>
-                    <name>prekarilabs.jfrog.io-releases</name>
-                    <url>https://prekarilabs.jfrog.io/artifactory/skyflow-java</url>
-                </repository>
-                <snapshotRepository>
-                    <id>snapshots</id>
-                    <name>prekarilabs.jfrog.io-snapshots</name>
-                    <url>https://prekarilabs.jfrog.io/artifactory/skyflow-java</url>
-                </snapshotRepository>
-            </distributionManagement>
-        </profile>
-    </profiles>
 </project>
