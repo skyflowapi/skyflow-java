@@ -1,4 +1,4 @@
-name: Publish package to the JFROG Artifactory
+name: Publish v3 module to the JFROG Artifactory
 on:
   push:
     tags-ignore:
@@ -6,16 +6,17 @@ on:
     paths-ignore:
       - "*.md"
     branches:
-      - release/*
+      - v3-release/*
 
 jobs:
-  build-and-deploy:
+  build-and-deploy-v3:
     uses: ./.github/workflows/shared-build-and-deploy.yml
     with:
       ref: ${{ github.ref_name }}
       server-id: central
       profile: jfrog
       tag: 'internal'
+      module: 'v3'
     secrets:
       server-username: ${{ secrets.ARTIFACTORY_USERNAME }}
       server-password: ${{ secrets.ARTIFACTORY_PASSWORD }}

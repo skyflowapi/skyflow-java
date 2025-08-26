@@ -21,6 +21,13 @@ on:
         description: 'Release Tag'
         required: true
         type: string
+
+      module:
+        description: 'Module to build and publish'
+        required: false
+        type: string
+        default: ''
+      
     secrets:
       server-username:
         required: true
@@ -125,7 +132,12 @@ jobs:
           json: ${{ secrets.TEST_CREDENTIALS_FILE_STRING }}
 
       - name: Publish package
-        run: mvn --batch-mode deploy -P ${{ inputs.profile }}
+        run: |
+          if [ -n "${{ inputs.module }}" ]; then
+            mvn --batch-mode -pl ${{ inputs.module }} -am deploy -P ${{ inputs.profile }}
+          else
+            mvn --batch-mode deploy -P ${{ inputs.profile }}
+          fi
 
         env:
           SERVER_USERNAME: ${{ secrets.server-username }}
