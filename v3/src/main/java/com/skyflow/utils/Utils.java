@@ -31,6 +31,7 @@ public final class Utils extends BaseUtils {
         }
         return batches;
     }
+
     public static ErrorRecord createErrorRecord(Map<String, Object> recordMap, int indexNumber) {
         ErrorRecord err = new ErrorRecord();
         err.setIndex(indexNumber);
@@ -45,6 +46,7 @@ public final class Utils extends BaseUtils {
         }
         return err;
     }
+
     public static List<ErrorRecord> handleBatchException(
             Throwable ex, List<InsertRecordData> batch, int batchNumber, List<List<InsertRecordData>> batches
     ) {
@@ -90,15 +92,17 @@ public final class Utils extends BaseUtils {
         }
         return errorRecords;
     }
-    public static com.skyflow.vault.data.InsertResponse formatResponse(InsertResponse response, int batch, int batchSize){
-        com.skyflow.vault.data.InsertResponse response1 = new com.skyflow.vault.data.InsertResponse();
+
+    public static com.skyflow.vault.data.InsertResponse formatResponse(InsertResponse response, int batch, int batchSize) {
+        com.skyflow.vault.data.InsertResponse formattedResponse = null;
         List<Success> successRecords = new ArrayList<>();
         List<ErrorRecord> errorRecords = new ArrayList<>();
         if (response != null) {
             List<RecordResponseObject> record = response.getRecords().get();
-            int indexNumber = (batch) * batchSize;
-            for(int index = 0; index < response.getRecords().get().size(); index++) {
-                if (record.get(index).getError().isPresent()){
+            int indexNumber = batch * batchSize;
+            int recordsSize = response.getRecords().get().size();
+            for (int index = 0; index < recordsSize; index++) {
+                if (record.get(index).getError().isPresent()) {
                     ErrorRecord errorRecord = new ErrorRecord();
                     errorRecord.setIndex(indexNumber);
                     errorRecord.setError(record.get(index).getError().get());
@@ -110,7 +114,7 @@ public final class Utils extends BaseUtils {
                     success.setIndex(indexNumber);
                     success.setSkyflowId(record.get(index).getSkyflowId().get());
 //                    success.setData(record.get(index).getData().get());
-                    if(record.get(index).getTokens().isPresent()) {
+                    if (record.get(index).getTokens().isPresent()) {
                         List<Token> tokens = null;
                         Map<String, Object> tok = record.get(index).getTokens().get();
                         for (int i = 0; i < tok.size(); i++) {
@@ -126,10 +130,12 @@ public final class Utils extends BaseUtils {
                 }
                 indexNumber++;
             }
-            response1.setSuccess(successRecords);
-            response1.setErrors(errorRecords);
+
+            formattedResponse = new com.skyflow.vault.data.InsertResponse(successRecords, errorRecords);
+//            formattedResponse.setSuccessRecords(successRecords);
+//            formattedResponse.setErrorRecords(errorRecords);
         }
-        return response1;
+        return formattedResponse;
     }
 
 }

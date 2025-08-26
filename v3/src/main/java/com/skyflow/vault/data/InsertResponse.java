@@ -1,17 +1,42 @@
 package com.skyflow.vault.data;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.annotations.Expose;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class InsertResponse {
+    // These members will be included in the toString() output
+    @Expose
     private Summary summary;
+    @Expose
     private List<Success> success;
+    @Expose
     private List<ErrorRecord> errors;
 
+    // Internal fields. Should not be included in toString() output
+    private ArrayList<HashMap<String, Object>> originalPayload;
     private List<Map<String, Object>> recordsToRetry;
+
+    public InsertResponse(List<Success> successRecords, List<ErrorRecord> errorRecords) {
+        this.success = successRecords;
+        this.errors = errorRecords;
+    }
+
+    public InsertResponse(
+            List<Success> successRecords,
+            List<ErrorRecord> errorRecords,
+            ArrayList<HashMap<String, Object>> originalPayload
+    ) {
+        this.success = successRecords;
+        this.errors = errorRecords;
+        this.originalPayload = originalPayload;
+        this.summary = new Summary(this.originalPayload.size(), this.success.size(), this.errors.size());
+    }
 
     public Summary getSummary() {
         return summary;
@@ -37,23 +62,20 @@ public class InsertResponse {
         this.errors = errors;
     }
 
-    public void setRecordsToRetry(List<Map<String, Object>> records) {
-        if(recordsToRetry == null){
-            recordsToRetry = records;
-        } else {
-            recordsToRetry.addAll(records);
-        }
-    }
     public List<Map<String, Object>> getRecordsToRetry() {
-        if(recordsToRetry == null){
-            return new ArrayList<>();
+        if (recordsToRetry == null) {
+            recordsToRetry = new ArrayList<>();
+            for (ErrorRecord errorRecord : errors) {
+                int index = errorRecord.getIndex();
+                recordsToRetry.add(originalPayload.get(index));
+            }
         }
         return recordsToRetry;
     }
 
     @Override
     public String toString() {
-        Gson gson = new Gson();
+        Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
         return gson.toJson(this);
     }
 }
