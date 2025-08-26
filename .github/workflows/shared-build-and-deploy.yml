@@ -134,7 +134,7 @@ jobs:
       - name: Publish package
         run: |
           if [ -n "${{ inputs.module }}" ]; then
-            mvn --batch-mode -pl v3 -am deploy -P jfrog
+            mvn --batch-mode -pl ${{ inputs.module }} -am deploy -P ${{ inputs.profile }}
           else
             mvn --batch-mode deploy -P ${{ inputs.profile }}
           fi
