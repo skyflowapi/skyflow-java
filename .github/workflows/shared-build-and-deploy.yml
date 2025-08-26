@@ -106,7 +106,7 @@ jobs:
             git checkout ${{ env.branch_name }}
           fi
 
-          git add pom.xml
+          git add v3/pom.xml
           if [[ "${{ inputs.tag }}" == "internal" ]]; then
             git commit -m "[AUTOMATED] Private Release ${{ steps.previoustag.outputs.tag }}-dev-$(git rev-parse --short $GITHUB_SHA)"
             git push origin ${{ github.ref_name }} -f
