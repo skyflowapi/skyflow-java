@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -44,8 +45,8 @@ public final class VaultController extends VaultClient {
             // validation
             LogUtil.printInfoLog(InfoLogs.VALIDATE_INSERT_REQUEST.getLog());
             Validations.validateInsertRequest(insertRequest);
-            int batchSize = 10;
-            int concurrencyLimit = 5;
+            int batchSize = 50;
+            int concurrencyLimit = 10;
             setBearerToken();
             // calculate batch concurrency
 
@@ -57,7 +58,23 @@ public final class VaultController extends VaultClient {
             String bodyString = gson.toJson(e.body());
             LogUtil.printErrorLog(ErrorLogs.INSERT_RECORDS_REJECTED.getLog());
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
+        } catch (ExecutionException | InterruptedException e){
+            LogUtil.printErrorLog(ErrorLogs.INSERT_RECORDS_REJECTED.getLog());
+            throw new SkyflowException(e.getMessage());
         }
+        Summary summary = new Summary();
+        summary.setTotalRecords(insertRequest.getValues().size());
+        if (response.getSuccess() != null) {
+            summary.setTotalInserted(response.getSuccess().size());
+        } else {
+            summary.setTotalInserted(0);
+        }
+        if (response.getErrors() != null) {
+            summary.setTotalFailed(response.getErrors().size());
+        } else {
+            summary.setTotalFailed(0);
+        }
+        response.setSummary(summary);
         return response;
     }
 
@@ -98,16 +115,16 @@ public final class VaultController extends VaultClient {
                         }
 
                         com.skyflow.vault.data.InsertResponse response1 = new com.skyflow.vault.data.InsertResponse();
+                        Summary summary = new Summary();
                         if (!successRecords1.isEmpty()) {
                             response1.setSuccess(successRecords1);
+                            summary.setTotalInserted(successRecords1.size());
                         }
                         if (!errorRecords.isEmpty()) {
                             response1.setErrors(errorRecords);
+                            summary.setTotalFailed(errorRecords.size());
                         }
-                        Summary summary = new Summary();
                         summary.setTotalRecords(insertRequest.getValues().size());
-                        summary.setTotalInserted(successRecords1.size());
-                        summary.setTotalFailed(errorRecords.size());
                         response1.setSummary(summary);
                         return response1;
                     });
@@ -120,12 +137,10 @@ public final class VaultController extends VaultClient {
 
     private com.skyflow.vault.data.InsertResponse processSync(
             int batchSize, int concurrencyLimit, com.skyflow.generated.rest.resources.recordservice.requests.InsertRequest insertRequest
-    ) {
+    ) throws ExecutionException, InterruptedException {
         LogUtil.printInfoLog(InfoLogs.PROCESSING_BATCHES.getLog());
         List<ErrorRecord> errorRecords = new ArrayList<>();
         List<Success> successRecords = new ArrayList<>();
-        List<Map<String, Object>> recordsToRetry = new ArrayList<>();
-        try {
 
             List<CompletableFuture<com.skyflow.vault.data.InsertResponse>> futures = this.insertBatchFutures(
                     batchSize, concurrencyLimit, insertRequest, errorRecords
@@ -145,16 +160,6 @@ public final class VaultController extends VaultClient {
                     }
                 }
             }
-        } catch (InterruptedException e) {
-            LogUtil.printErrorLog(Utils.parameterizedString(ErrorLogs.UNEXPECTED_ERROR_DURING_BATCH_PROCESSING.getLog(), e.getMessage()));
-            Thread.currentThread().interrupt();
-        } catch (Exception e) {
-            LogUtil.printErrorLog(Utils.parameterizedString(ErrorLogs.UNEXPECTED_ERROR_DURING_BATCH_PROCESSING.getLog(), e.getMessage()));
-            ErrorRecord err = new ErrorRecord();
-            err.setError(e.getMessage());
-            err.setCode(500);
-            errorRecords.add(err);
-        }
         com.skyflow.vault.data.InsertResponse response = new com.skyflow.vault.data.InsertResponse();
         if (!errorRecords.isEmpty()) {
             response.setErrors(errorRecords);
@@ -183,8 +188,7 @@ public final class VaultController extends VaultClient {
                 CompletableFuture<com.skyflow.vault.data.InsertResponse> future = CompletableFuture
                         .supplyAsync(() -> insertBatch(batch, insertRequest.getTableName().get()), executor)
                         .exceptionally(ex -> {
-                            // retry logic
-//                            recordsToRetry.addAll(batch.stream().map(InsertRecordData::getFields).toList());
+                            LogUtil.printInfoLog(ErrorLogs.PROCESSING_ERROR_RESPONSE.getLog());
                             errorRecords.addAll(handleBatchException(ex, batch, batchNumber, batches));
                             return null;
                         })
@@ -197,17 +201,12 @@ public final class VaultController extends VaultClient {
         return futures;
     }
 
-    private InsertResponse insertBatch(List<InsertRecordData> batch, String tableName) {
-        try {
-            com.skyflow.generated.rest.resources.recordservice.requests.InsertRequest req = com.skyflow.generated.rest.resources.recordservice.requests.InsertRequest.builder()
-                    .vaultId(this.getVaultConfig().getVaultId())
-                    .tableName(tableName)
-                    .records(batch)
-                    .build();
-            return this.getRecordsApi().insert(req);
-        } catch (Exception e) {
-            LogUtil.printErrorLog(ErrorLogs.INSERT_RECORDS_REJECTED.getLog());
-            return null;
-        }
+    private InsertResponse insertBatch(List<InsertRecordData> batch, String tableName){
+        com.skyflow.generated.rest.resources.recordservice.requests.InsertRequest req = com.skyflow.generated.rest.resources.recordservice.requests.InsertRequest.builder()
+                .vaultId(this.getVaultConfig().getVaultId())
+                .tableName(tableName)
+                .records(batch)
+                .build();
+        return this.getRecordsApi().insert(req);
     }
 }

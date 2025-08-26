@@ -18,9 +18,9 @@ public class InsertRequest extends BaseInsertRequest {
         return new InsertRequestBuilder();
     }
 
-    public Boolean getReturnData() {
-        return this.builder.returnData;
-    }
+//    public Boolean getReturnData() {
+//        return this.builder.returnData;
+//    }
     public List<String> getUpsert() {
         return this.builder.upsert;
     }
@@ -32,14 +32,14 @@ public class InsertRequest extends BaseInsertRequest {
 //    }
 
     public static final class InsertRequestBuilder extends BaseInsertRequestBuilder {
-        private Boolean returnData;
+//        private Boolean returnData;
         private List<String> upsert;
 
         private UpdateType upsertType;
 
         private InsertRequestBuilder() {
             super();
-            this.returnData = false;
+//            this.returnData = false;
         }
 
         @Override
@@ -68,10 +68,10 @@ public class InsertRequest extends BaseInsertRequest {
 //            return this;
 //        }
 
-        public InsertRequestBuilder returnData(Boolean returnData) {
-            this.returnData = returnData;
-            return this;
-        }
+//        public InsertRequestBuilder returnData(Boolean returnData) {
+//            this.returnData = returnData;
+//            return this;
+//        }
         public InsertRequest build() {
             return new InsertRequest(this);
         }

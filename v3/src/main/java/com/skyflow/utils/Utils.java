@@ -78,6 +78,9 @@ public final class Utils extends BaseUtils {
         if (recordMap.containsKey("error")) {
             err.setError((String) recordMap.get("error"));
         }
+        if (recordMap.containsKey("message")) {
+            err.setError((String) recordMap.get("message"));
+        }
         if (recordMap.containsKey("http_code")) {
             err.setCode((Integer) recordMap.get("http_code"));
         }
@@ -91,8 +94,7 @@ public final class Utils extends BaseUtils {
         if (cause instanceof ApiClientApiException) {
             ApiClientApiException apiException = (ApiClientApiException) cause;
             Map<String, Object> responseBody = (Map<String, Object>) apiException.body();
-            int indexNumber = batchNumber > 0 ? batchNumber * batches.get(batchNumber - 1).size() : 0;
-
+            int indexNumber = batchNumber > 0 ? batchNumber * batch.size() : 0;
             if (responseBody != null) {
                 if (responseBody.containsKey("records")) {
                     Object recordss = responseBody.get("records");
@@ -117,7 +119,7 @@ public final class Utils extends BaseUtils {
                 }
             }
         } else {
-            int indexNumber = batchNumber > 0 ? batchNumber * batches.get(batchNumber - 1).size() : 0;
+            int indexNumber = batchNumber > 0 ? batchNumber * batch.size() : 0;
             for (int j = 0; j < batch.size(); j++) {
                 ErrorRecord err = new ErrorRecord();
                 err.setIndex(indexNumber);
