@@ -37,7 +37,7 @@
     </scm>
 
     <properties>
-    <maven.deploy.skip>true</maven.deploy.skip>
+        <maven.deploy.skip>true</maven.deploy.skip>
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
         <okhttp-version>4.12.0</okhttp-version>
@@ -257,4 +257,21 @@
             <url>https://repo.maven.apache.org/maven2/</url>
         </repository>
     </repositories>
+    <profiles>
+        <profile>
+            <id>jfrog</id>
+            <distributionManagement>
+                <repository>
+                    <id>central</id>
+                    <name>prekarilabs.jfrog.io-releases</name>
+                    <url>https://prekarilabs.jfrog.io/artifactory/skyflow-java</url>
+                </repository>
+                <snapshotRepository>
+                    <id>snapshots</id>
+                    <name>prekarilabs.jfrog.io-snapshots</name>
+                    <url>https://prekarilabs.jfrog.io/artifactory/skyflow-java</url>
+                </snapshotRepository>
+            </distributionManagement>
+        </profile>
+    </profiles>
 </project>
