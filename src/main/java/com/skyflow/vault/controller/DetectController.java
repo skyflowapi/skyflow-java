@@ -12,6 +12,7 @@ import com.skyflow.generated.rest.core.ApiClientApiException;
 import com.skyflow.generated.rest.resources.files.requests.*;
 import com.skyflow.generated.rest.resources.strings.requests.DeidentifyStringRequest;
 import com.skyflow.generated.rest.resources.strings.requests.ReidentifyStringRequest;
+import com.skyflow.generated.rest.types.DeidentifyStatusResponseOutputType;
 import com.skyflow.generated.rest.types.*;
 import com.skyflow.logs.ErrorLogs;
 import com.skyflow.logs.InfoLogs;
@@ -239,6 +240,25 @@ public final class DetectController extends VaultClient {
                                                                                    String runId, String status) throws SkyflowException {
         DeidentifyFileOutput firstOutput = getFirstOutput(response);
 
+        if (firstOutput == null) {
+            return new DeidentifyFileResponse(
+                    null,
+                    null,
+                    response.getOutputType().name(),
+                    null,
+                    null,
+                    null,
+                    response.getSize().orElse(null),
+                    response.getDuration().orElse(null),
+                    response.getPages().orElse(null),
+                    response.getSlides().orElse(null),
+                    getEntities(response),
+                    runId,
+                    response.getStatus().name(),
+                    null
+            );
+        }
+
         Object wordCharObj = response.getAdditionalProperties().get("word_character_count");
         Integer wordCount = null;
         Integer charCount = null;
@@ -257,9 +277,8 @@ public final class DetectController extends VaultClient {
 
         File processedFileObject = null;
         FileInfo fileInfo = null;
-        Optional<String> processedFileBase64 = firstOutput != null ? firstOutput.getProcessedFile() : Optional.empty();
-        Optional<String> processedFileExtension = firstOutput != null ? firstOutput.getProcessedFileExtension() : Optional.empty();
-
+        Optional<String> processedFileBase64 = Optional.of(firstOutput).flatMap(DeidentifyFileOutput::getProcessedFile);
+        Optional<String> processedFileExtension = Optional.of(firstOutput).flatMap(DeidentifyFileOutput::getProcessedFileExtension);
         if (processedFileBase64.isPresent() && processedFileExtension.isPresent()) {
             try {
                 byte[] decodedBytes = Base64.getDecoder().decode(processedFileBase64.get());
@@ -274,11 +293,18 @@ public final class DetectController extends VaultClient {
             }
         }
 
+        String processedFileType = firstOutput.getProcessedFileType()
+                .map(Object::toString)
+                .orElse(DeidentifyStatusResponseOutputType.UNKNOWN.toString());
+
+        String fileExtension = firstOutput.getProcessedFileExtension()
+                .orElse(DeidentifyStatusResponseOutputType.UNKNOWN.toString());
+
         return new DeidentifyFileResponse(
                 fileInfo,
                 firstOutput.getProcessedFile().orElse(null),
-                firstOutput.getProcessedFileType().get().toString(),
-                firstOutput.getProcessedFileExtension().get(),
+                processedFileType,
+                fileExtension,
                 wordCount,
                 charCount,
                 response.getSize().orElse(null),

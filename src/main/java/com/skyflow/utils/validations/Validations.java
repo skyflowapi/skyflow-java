@@ -789,7 +789,7 @@ public class Validations {
         }
 
         TokenFormat tokenFormat = request.getTokenFormat();
-        if (tokenFormat != null && !tokenFormat.getVaultToken().isEmpty()) {
+        if (tokenFormat != null && tokenFormat.getVaultToken() != null && !tokenFormat.getVaultToken().isEmpty()) {
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.VaultTokenFormatIsNotAllowedForFiles.getMessage());
         }
 
@@ -845,9 +845,6 @@ public class Validations {
                 LogUtil.printErrorLog(Utils.parameterizedString(
                     ErrorLogs.INVALID_BLEEP_TO_DEIDENTIFY_AUDIO.getLog(), InterfaceName.DETECT.getName()
                 ));
-                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidRequestBody.getMessage());
-            }
-            if (request.getBleep().getGain() == null) {
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidRequestBody.getMessage());
             }
             if (request.getBleep().getStartPadding() == null || request.getBleep().getStartPadding() < 0) {
