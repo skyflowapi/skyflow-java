@@ -8,8 +8,10 @@ import com.skyflow.generated.rest.types.InsertResponse;
 import com.skyflow.generated.rest.types.RecordResponseObject;
 import com.skyflow.vault.data.ErrorRecord;
 import com.skyflow.vault.data.Success;
+import com.skyflow.vault.data.Token;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -101,17 +103,29 @@ public final class Utils extends BaseUtils {
                     ErrorRecord errorRecord = new ErrorRecord(indexNumber, record.get(index).getError().get(), record.get(index).getHttpCode().get());
                     errorRecords.add(errorRecord);
                 } else {
-                    Success success = new Success(index, record.get(index).getSkyflowId().get(), null, null);
-//                    if (record.get(index).getTokens().isPresent()) {
-//                        List<Token> tokens = null;
-//                        Map<String, Object> tok = record.get(index).getTokens().get();
-//                        for (int i = 0; i < tok.size(); i++) {
-//                            Object obj = tok.get(i);
-////                            Token token = new Token(obj.toString());
-//                        }
-//                    }
-//                    success.setTokens(record.get(index).getTokens().get());
+                    Map<String, List<Token>> tokensMap = null;
 
+                    if (record.get(index).getTokens().isPresent()) {
+                        tokensMap = new HashMap<>();
+                        Map<String, Object> tok = record.get(index).getTokens().get();
+                        for (Map.Entry<String, Object> entry : tok.entrySet()) {
+                            String key = entry.getKey();
+                            Object value = entry.getValue();
+                            List<Token> tokenList = new ArrayList<>();
+                            if (value instanceof List) {
+                                List<?> valueList = (List<?>) value;
+                                for (Object item : valueList) {
+                                    if(item instanceof Map) {
+                                        Map<String, Object> tokenMap = (Map<String, Object>) item;
+                                        Token token = new Token((String) tokenMap.get("token"), (String) tokenMap.get("tokenGroupName"));
+                                        tokenList.add(token);
+                                    }
+                                }
+                            }
+                            tokensMap.put(key, tokenList);
+                        }
+                    }
+                    Success success = new Success(index, record.get(index).getSkyflowId().get(), tokensMap, null);
                     successRecords.add(success);
                 }
                 indexNumber++;

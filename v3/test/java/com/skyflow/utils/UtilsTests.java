@@ -2,6 +2,7 @@ package com.skyflow.utils;
 
 import com.google.gson.JsonObject;
 import com.skyflow.config.Credentials;
+import com.skyflow.enums.Env;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
@@ -10,6 +11,8 @@ import com.skyflow.generated.rest.types.InsertRecordData;
 import com.skyflow.generated.rest.types.InsertResponse;
 import com.skyflow.generated.rest.types.RecordResponseObject;
 import com.skyflow.vault.data.ErrorRecord;
+import com.skyflow.vault.data.Success;
+import com.skyflow.vault.data.Token;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -18,7 +21,7 @@ import java.util.*;
 
 public class UtilsTests {
     private static final String INVALID_EXCEPTION_THROWN = "Should not have thrown any exception";
-    private static final String EXCEPTION_NOT_THROWN = "Should have thrown an exception";
+    private static final String EXCEPTIONNOTTHROWN = "Should have thrown an exception";
     private static String filePath = null;
     private static String credentialsString = null;
     private static String token = null;
@@ -30,11 +33,41 @@ public class UtilsTests {
         filePath = "invalid/file/path/credentials.json";
         credentialsString = "invalid credentials string";
         token = "invalid-token";
-        context = "test_context";
+        context = "testcontext";
         roles = new ArrayList<>();
-        String role = "test_role";
+        String role = "testrole";
         roles.add(role);
         SdkVersion.setSdkPrefix(Constants.SDK_PREFIX);
+    }
+
+    @Test
+    public void testGetVaultURL() {
+        // Test with production environment
+        String prodUrl = Utils.getVaultURL("abc123", Env.PROD);
+        Assert.assertEquals(
+                "https://abc123.skyvault.skyflowapis.com",
+                prodUrl
+        );
+
+        // Test with development environment
+        String devUrl = Utils.getVaultURL("xyz789", Env.DEV);
+        Assert.assertEquals(
+                "https://xyz789.skyvault.skyflowapis.dev",
+                devUrl
+        );
+    }
+    @Test(expected = NullPointerException.class)
+    public void testGetVaultURLWithNullEnv() {
+        Utils.getVaultURL("abc123", null);
+    }
+
+    @Test
+    public void testGetVaultURLWithEmptyClusterId() {
+        String url = Utils.getVaultURL("", Env.PROD);
+        Assert.assertEquals(
+                "https://.skyvault.skyflowapis.com",
+                url
+        );
     }
 
     @Test
@@ -45,7 +78,7 @@ public class UtilsTests {
             credentials.setContext(context);
             credentials.setRoles(roles);
             Utils.generateBearerToken(credentials);
-            Assert.fail(EXCEPTION_NOT_THROWN);
+            Assert.fail(EXCEPTIONNOTTHROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
@@ -63,7 +96,7 @@ public class UtilsTests {
             credentials.setContext(context);
             credentials.setRoles(roles);
             Utils.generateBearerToken(credentials);
-            Assert.fail(EXCEPTION_NOT_THROWN);
+            Assert.fail(EXCEPTIONNOTTHROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.CredentialsStringInvalidJson.getMessage(), e.getMessage());
@@ -116,7 +149,7 @@ public class UtilsTests {
     }
 
     @Test
-    public void testCreateBatches_MultipleBatches() {
+    public void testCreateBatchesMultipleBatches() {
         List<InsertRecordData> records = new ArrayList<>();
         for (int i = 0; i < 125; i++) {
             records.add(InsertRecordData.builder().build());
@@ -130,14 +163,14 @@ public class UtilsTests {
     }
 
     @Test
-    public void testCreateBatches_WithEmptyList() {
+    public void testCreateBatchesWithEmptyList() {
         List<InsertRecordData> records = new ArrayList<>();
         List<List<InsertRecordData>> batches = Utils.createBatches(records, 50);
         Assert.assertTrue("Batches should be empty for empty input", batches.isEmpty());
     }
 
     @Test
-    public void testCreateBatches_WithSmallerSizeThanBatch() {
+    public void testCreateBatchesWithSmallerSizeThanBatch() {
         List<InsertRecordData> records = new ArrayList<>();
         for (int i = 0; i < 25; i++) {
             records.add(InsertRecordData.builder().build());
@@ -149,7 +182,7 @@ public class UtilsTests {
     }
 
     @Test
-    public void testCreateBatches_WithExactBatchSize() {
+    public void testCreateBatchesWithExactBatchSize() {
         List<InsertRecordData> records = new ArrayList<>();
         for (int i = 0; i < 50; i++) {
             records.add(InsertRecordData.builder().build());
@@ -161,7 +194,7 @@ public class UtilsTests {
     }
 
     @Test
-    public void testCreateBatches_PreservesOrder() {
+    public void testCreateBatchesPreservesOrder() {
         List<InsertRecordData> records = new ArrayList<>();
         for (int i = 0; i < 75; i++) {
             InsertRecordData record = InsertRecordData.builder()
@@ -180,7 +213,7 @@ public class UtilsTests {
     }
 
     @Test(expected = NullPointerException.class)
-    public void testCreateBatches_WithNullList() {
+    public void testCreateBatchesWithNullList() {
         Utils.createBatches(null, 50);
     }
 
@@ -199,7 +232,7 @@ public class UtilsTests {
     }
 
     @Test
-    public void testHandleBatchException_ApiClientExceptionWithSingleError() {
+    public void testHandleBatchExceptionApiClientExceptionWithSingleError() {
         List<InsertRecordData> batch = Arrays.asList(InsertRecordData.builder().build(), InsertRecordData.builder().build());
         List<List<InsertRecordData>> batches = Collections.singletonList(batch);
 
@@ -223,7 +256,7 @@ public class UtilsTests {
     }
 
     @Test
-    public void testHandleBatchException_WithNonApiClientException() {
+    public void testHandleBatchExceptionWithNonApiClientException() {
         List<InsertRecordData> batch = Arrays.asList(InsertRecordData.builder().build(), InsertRecordData.builder().build());
         List<List<InsertRecordData>> batches = Collections.singletonList(batch);
 
@@ -239,7 +272,7 @@ public class UtilsTests {
     }
 
     @Test
-    public void testHandleBatchException_WithNonZeroBatchNumber() {
+    public void testHandleBatchExceptionWithNonZeroBatchNumber() {
         List<InsertRecordData> batch = Arrays.asList(InsertRecordData.builder().build(), InsertRecordData.builder().build());
         List<List<InsertRecordData>> batches = Arrays.asList(new ArrayList<>(), batch);
 
@@ -253,7 +286,7 @@ public class UtilsTests {
     }
 
     @Test
-    public void testHandleBatchException_WithNullResponseBody() {
+    public void testHandleBatchExceptionWithNullResponseBody() {
         List<InsertRecordData> batch = Arrays.asList(InsertRecordData.builder().build(), InsertRecordData.builder().build());
         List<List<InsertRecordData>> batches = Collections.singletonList(batch);
 
@@ -266,7 +299,7 @@ public class UtilsTests {
     }
 
     @Test
-    public void testFormatResponse_WithSuccessAndErrorRecords() {
+    public void testFormatResponseWithSuccessAndErrorRecords() {
         RecordResponseObject successRecord = RecordResponseObject.builder()
                 .skyflowId(Optional.of("testId1"))
                 .error(Optional.empty())
@@ -293,13 +326,13 @@ public class UtilsTests {
     }
 
     @Test
-    public void testFormatResponse_WithNullResponse() {
+    public void testFormatResponseWithNullResponse() {
         com.skyflow.vault.data.InsertResponse result = Utils.formatResponse(null, 0, 50);
         Assert.assertNull(result);
     }
 
     @Test
-    public void testFormatResponse_WithSuccessRecordsOnly() {
+    public void testFormatResponseWithSuccessRecordsOnly() {
         RecordResponseObject successRecord1 = RecordResponseObject.builder()
                 .skyflowId(Optional.of("id1"))
                 .error(Optional.empty())
@@ -323,7 +356,7 @@ public class UtilsTests {
     }
 
     @Test
-    public void testFormatResponse_WithErrorRecordsOnly() {
+    public void testFormatResponseWithErrorRecordsOnly() {
         RecordResponseObject errorRecord1 = RecordResponseObject.builder()
                 .error(Optional.of("Error 1"))
                 .httpCode(Optional.of(400))
@@ -349,7 +382,7 @@ public class UtilsTests {
     }
 
     @Test
-    public void testFormatResponse_WithBatchOffset() {
+    public void testFormatResponseWithBatchOffset() {
         RecordResponseObject successRecord = RecordResponseObject.builder()
                 .skyflowId(Optional.of("id1"))
                 .error(Optional.empty())
@@ -370,7 +403,7 @@ public class UtilsTests {
     }
 
     @Test
-    public void testFormatResponse_WithEmptyRecords() {
+    public void testFormatResponseWithEmptyRecords() {
         InsertResponse response = InsertResponse.builder()
                 .records(Optional.of(new ArrayList<>()))
                 .build();
@@ -383,7 +416,7 @@ public class UtilsTests {
     }
 
     @Test
-    public void testFormatResponse_WithTokens() {
+    public void testFormatResponseWithTokens() {
         Map<String, Object> tokens = new HashMap<>();
         tokens.put("field1", "token1");
         tokens.put("field2", "token2");
@@ -403,5 +436,92 @@ public class UtilsTests {
         Assert.assertNotNull("Response should not be null", result);
         Assert.assertEquals("Should have one success record", 1, result.getSuccess().size());
         Assert.assertEquals("Skyflow ID should match", "id1", result.getSuccess().get(0).getSkyflowId());
+    }
+    @Test
+    public void testFormatResponseWithTokenListMapping() {
+        // Prepare test data
+        Map<String, Object> tokenData = new HashMap<>();
+        List<Map<String, String>> tokenList = new ArrayList<>();
+        Map<String, String> tokenMap = new HashMap<>();
+        tokenMap.put("token", "token123");
+        tokenMap.put("tokenGroupName", "group1");
+        tokenList.add(tokenMap);
+        tokenData.put("field1", tokenList);
+
+        // Create success record with tokens
+        RecordResponseObject successRecord = RecordResponseObject.builder()
+                .skyflowId(Optional.of("id1"))
+                .tokens(Optional.of(tokenData))
+                .error(Optional.empty())
+                .build();
+
+        // Create response object
+        InsertResponse response = InsertResponse.builder()
+                .records(Optional.of(Collections.singletonList(successRecord)))
+                .build();
+
+        // Format response
+        com.skyflow.vault.data.InsertResponse result = Utils.formatResponse(response, 0, 50);
+
+        // Assertions
+        Assert.assertNotNull("Response should not be null", result);
+        Assert.assertEquals("Should have one success record", 1, result.getSuccess().size());
+
+        Success successResult = result.getSuccess().get(0);
+        Assert.assertEquals("Skyflow ID should match", "id1", successResult.getSkyflowId());
+
+        Map<String, List<Token>> tokens = successResult.getTokens();
+        Assert.assertNotNull("Tokens map should not be null", tokens);
+        Assert.assertTrue("Should contain field1", tokens.containsKey("field1"));
+
+        List<Token> tokensList = tokens.get("field1");
+        Assert.assertEquals("Should have one token", 1, tokensList.size());
+        Assert.assertEquals("Token value should match", "token123", tokensList.get(0).getToken());
+        Assert.assertEquals("Token group name should match", "group1", tokensList.get(0).getTokenGroupName());
+    }
+    @Test
+    public void testHandleBatchExceptionWithRecordsInResponseBody() {
+        // Prepare test data
+        List<InsertRecordData> batch = Arrays.asList(
+                InsertRecordData.builder().build(),
+                InsertRecordData.builder().build()
+        );
+        List<List<InsertRecordData>> batches = Collections.singletonList(batch);
+
+        // Create nested records with errors
+        List<Map<String, Object>> recordsList = new ArrayList<>();
+        Map<String, Object> record1 = new HashMap<>();
+        record1.put("error", "Error 1");
+        record1.put("http_code", 400);
+        Map<String, Object> record2 = new HashMap<>();
+        record2.put("error", "Error 2");
+        record2.put("http_code", 401);
+        recordsList.add(record1);
+        recordsList.add(record2);
+
+        // Create response body
+        Map<String, Object> responseBody = new HashMap<>();
+        responseBody.put("records", recordsList);
+
+        // Create API exception
+        ApiClientApiException apiException = new ApiClientApiException("Bad Request", 400, responseBody);
+        Exception exception = new Exception("Test exception", apiException);
+
+        // Test the method
+        List<ErrorRecord> errors = Utils.handleBatchException(exception, batch, 0, batches);
+
+        // Assertions
+        Assert.assertNotNull("Errors list should not be null", errors);
+        Assert.assertEquals("Should have two error records", 2, errors.size());
+
+        // Verify first error
+        Assert.assertEquals("First error message should match", "Error 1", errors.get(0).getError());
+        Assert.assertEquals("First error code should match", 400, errors.get(0).getCode());
+        Assert.assertEquals("First error index should be 0", 0, errors.get(0).getIndex());
+
+        // Verify second error
+        Assert.assertEquals("Second error message should match", "Error 2", errors.get(1).getError());
+        Assert.assertEquals("Second error code should match", 401, errors.get(1).getCode());
+        Assert.assertEquals("Second error index should be 1", 1, errors.get(1).getIndex());
     }
 }

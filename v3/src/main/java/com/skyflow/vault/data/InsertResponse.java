@@ -53,12 +53,12 @@ public class InsertResponse {
     public ArrayList<HashMap<String, Object>> getRecordsToRetry() {
         if (recordsToRetry == null) {
             recordsToRetry = new ArrayList<>();
-            return errors.stream()
+            recordsToRetry = errors.stream()
                     .filter(error -> (error.getCode() >= 500 && error.getCode() <= 599) && error.getCode() != 529)
                     .map(errorRecord -> originalPayload.get(errorRecord.getIndex()))
                     .collect(Collectors.toCollection(ArrayList::new));
         }
-        return this.recordsToRetry;
+        return recordsToRetry;
     }
 
     @Override
