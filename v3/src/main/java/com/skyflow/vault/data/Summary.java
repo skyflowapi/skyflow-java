@@ -24,25 +24,15 @@ public class Summary {
         return totalRecords;
     }
 
-//    public void setTotalRecords(int totalRecords) {
-//        this.totalRecords = totalRecords;
-//    }
 
     public int getTotalInserted() {
         return totalInserted;
     }
 
-//    public void setTotalInserted(int totalInserted) {
-//        this.totalInserted = totalInserted;
-//    }
-
     public int getTotalFailed() {
         return totalFailed;
     }
 
-//    public void setTotalFailed(int totalFailed) {
-//        this.totalFailed = totalFailed;
-//    }
 
     @Override
     public String toString() {

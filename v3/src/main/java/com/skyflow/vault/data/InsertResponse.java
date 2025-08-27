@@ -42,25 +42,13 @@ public class InsertResponse {
         return this.summary;
     }
 
-//    public void setSummary(Summary summary) {
-//        this.summary = summary;
-//    }
-
     public List<Success> getSuccess() {
         return this.success;
     }
 
-//    public void setSuccess(List<Success> success) {
-//        this.success = success;
-//    }
-
     public List<ErrorRecord> getErrors() {
         return this.errors;
     }
-
-//    public void setErrors(List<ErrorRecord> errors) {
-//        this.errors = errors;
-//    }
 
     public List<Map<String, Object>> getRecordsToRetry() {
         if (recordsToRetry == null) {

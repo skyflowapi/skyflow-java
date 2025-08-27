@@ -12,17 +12,12 @@ public class Token {
         return token;
     }
 
-//    public void setToken(String token) {
-//        this.token = token;
-//    }
-
     public String getTokenGroupName() {
         return tokenGroupName;
     }
 
-    public void setTokenGroupName(String tokenGroupName) {
+    public Token(String token, String tokenGroupName) {
+        this.token = token;
         this.tokenGroupName = tokenGroupName;
     }
-
-
 }

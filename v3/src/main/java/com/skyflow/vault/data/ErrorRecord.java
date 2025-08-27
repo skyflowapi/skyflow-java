@@ -10,36 +10,27 @@ public class ErrorRecord {
     private String error;
     @Expose(serialize = true)
     private int code;
-    public int getIndex() {
-        return index;
-    }
-
-    public ErrorRecord() {
-    }
+//    public ErrorRecord() {
+//    }
 
     public ErrorRecord(int index, String error, int code) {
         this.index = index;
         this.error = error;
         this.code = code;
     }
-
-    public void setIndex(int index) {
-        this.index = index;
-    }
-
     public String getError() {
         return error;
     }
 
-    public void setError(String error) {
-        this.error = error;
-    }
     public int getCode() {
         return code;
     }
-    public void setCode(int code) {
-        this.code = code;
+
+    public int getIndex() {
+        return index;
     }
+
+
     @Override
     public String toString() {
         Gson gson = new Gson();

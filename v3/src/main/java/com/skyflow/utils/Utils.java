@@ -33,16 +33,12 @@ public final class Utils extends BaseUtils {
     }
 
     public static ErrorRecord createErrorRecord(Map<String, Object> recordMap, int indexNumber) {
-        ErrorRecord err = new ErrorRecord();
-        err.setIndex(indexNumber);
-        if (recordMap.containsKey("error")) {
-            err.setError((String) recordMap.get("error"));
-        }
-        if (recordMap.containsKey("message")) {
-            err.setError((String) recordMap.get("message"));
-        }
-        if (recordMap.containsKey("http_code")) {
-            err.setCode((Integer) recordMap.get("http_code"));
+        ErrorRecord err = null;
+        if( recordMap != null ) {
+            int code = recordMap.containsKey("http_code") ? (Integer) recordMap.get("http_code") : 500;
+            String message = recordMap.containsKey("error") ? (String) recordMap.get("error") :
+                    recordMap.containsKey("message") ? (String) recordMap.get("message") : "Unknown error";
+            err = new ErrorRecord(indexNumber, message, code);
         }
         return err;
     }
@@ -82,10 +78,7 @@ public final class Utils extends BaseUtils {
         } else {
             int indexNumber = batchNumber > 0 ? batchNumber * batch.size() : 0;
             for (int j = 0; j < batch.size(); j++) {
-                ErrorRecord err = new ErrorRecord();
-                err.setIndex(indexNumber);
-                err.setError(ex.getMessage());
-                err.setCode(500);
+                ErrorRecord err = new ErrorRecord(indexNumber, ex.getMessage(), 500);
                 errorRecords.add(err);
                 indexNumber++;
             }
@@ -104,26 +97,17 @@ public final class Utils extends BaseUtils {
             for (int index = 0; index < recordsSize; index++) {
                 if (record.get(index).getError().isPresent()) {
                     ErrorRecord errorRecord = new ErrorRecord(indexNumber, record.get(index).getError().get(), record.get(index).getHttpCode().get());
-//                    errorRecord.setIndex(indexNumber);
-//                    errorRecord.setError(record.get(index).getError().get());
-//                    errorRecord.setCode(record.get(index).getHttpCode().get());
                     errorRecords.add(errorRecord);
-//                    errorRecord.setCode(record.get(index).getError().get().getCode());
                 } else {
                     Success success = new Success(index, record.get(index).getSkyflowId().get(), null, null);
-//                    success.setIndex(indexNumber);
-//                    success.setSkyflowId(record.get(index).getSkyflowId().get());
-//                    success.setData(record.get(index).getData().get());
-                    if (record.get(index).getTokens().isPresent()) {
-                        List<Token> tokens = null;
-                        Map<String, Object> tok = record.get(index).getTokens().get();
-                        for (int i = 0; i < tok.size(); i++) {
-                            Token token = new Token();
-                            Object obj = tok.get(i);
-//                            token.setToken();
-//                            token.setTokenGroupName("");
-                        }
-                    }
+//                    if (record.get(index).getTokens().isPresent()) {
+//                        List<Token> tokens = null;
+//                        Map<String, Object> tok = record.get(index).getTokens().get();
+//                        for (int i = 0; i < tok.size(); i++) {
+//                            Object obj = tok.get(i);
+////                            Token token = new Token(obj.toString());
+//                        }
+//                    }
 //                    success.setTokens(record.get(index).getTokens().get());
 
                     successRecords.add(success);
@@ -132,8 +116,6 @@ public final class Utils extends BaseUtils {
             }
 
             formattedResponse = new com.skyflow.vault.data.InsertResponse(successRecords, errorRecords);
-//            formattedResponse.setSuccessRecords(successRecords);
-//            formattedResponse.setErrorRecords(errorRecords);
         }
         return formattedResponse;
     }

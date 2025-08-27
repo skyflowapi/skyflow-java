@@ -3,7 +3,7 @@ package com.skyflow.vault.data;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class BaseInsertRequest {
+class BaseInsertRequest {
     private final BaseInsertRequestBuilder builder;
 
     protected BaseInsertRequest(BaseInsertRequestBuilder builder) {
@@ -18,19 +18,12 @@ public class BaseInsertRequest {
         return this.builder.values;
     }
 
-//    public Boolean getReturnTokens() {
-//        return this.builder.returnTokens;
-//    }
-
     static class BaseInsertRequestBuilder {
         protected String table;
         protected ArrayList<HashMap<String, Object>> values;
-//        protected ArrayList<HashMap<String, Object>> tokens;
-//        protected Boolean returnTokens;
         protected String upsert;
 
         protected BaseInsertRequestBuilder() {
-//            this.returnTokens = false;
         }
 
         public BaseInsertRequestBuilder table(String table) {
@@ -43,10 +36,6 @@ public class BaseInsertRequest {
             return this;
         }
 
-//        public BaseInsertRequestBuilder returnTokens(Boolean returnTokens) {
-//            this.returnTokens = returnTokens != null && returnTokens;
-//            return this;
-//        }
     }
 }
 

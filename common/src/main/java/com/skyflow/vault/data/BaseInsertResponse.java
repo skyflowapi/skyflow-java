@@ -5,7 +5,7 @@ import com.google.gson.Gson;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class BaseInsertResponse {
+class BaseInsertResponse {
     private final ArrayList<HashMap<String, Object>> insertedFields;
     private final ArrayList<HashMap<String, Object>> errors;
 

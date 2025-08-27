@@ -63,20 +63,6 @@ public final class VaultController extends VaultClient {
             LogUtil.printErrorLog(ErrorLogs.INSERT_RECORDS_REJECTED.getLog());
             throw new SkyflowException(e.getMessage());
         }
-//        Summary summary = new Summary();
-//        summary.setTotalRecords(insertRequest.getValues().size());
-//        if (response.getSuccessRecords() != null) {
-//            summary.setTotalInserted(response.getSuccessRecords().size());
-//        } else {
-//            summary.setTotalInserted(0);
-//        }
-//        if (response.getErrorRecords() != null) {
-//            summary.setTotalFailed(response.getErrorRecords().size());
-//        } else {
-//            summary.setTotalFailed(0);
-//        }
-//        response.setSummary(summary);
-//        return response;
     }
 
     public CompletableFuture<com.skyflow.vault.data.InsertResponse> bulkInsertAsync(InsertRequest insertRequest) throws SkyflowException {
@@ -108,18 +94,6 @@ public final class VaultController extends VaultClient {
                         }
 
                         return new com.skyflow.vault.data.InsertResponse(successRecords, errorRecords, insertRequest.getValues());
-//                        Summary summary = new Summary();
-//                        if (!successRecords.isEmpty()) {
-//                            response.setSuccessRecords(successRecords);
-//                            summary.setTotalInserted(successRecords.size());
-//                        }
-//                        if (!errorRecords.isEmpty()) {
-//                            response.setErrorRecords(errorRecords);
-//                            summary.setTotalFailed(errorRecords.size());
-//                        }
-//                        summary.setTotalRecords(insertRequest.getValues().size());
-//                        response.setSummary(summary);
-//                        return response;
                     });
         } catch (ApiClientApiException e) {
             String bodyString = gson.toJson(e.body());
@@ -153,12 +127,6 @@ public final class VaultController extends VaultClient {
             }
         }
         com.skyflow.vault.data.InsertResponse response = new com.skyflow.vault.data.InsertResponse(successRecords, errorRecords, originalPayload);
-//        if (!errorRecords.isEmpty()) {
-//            response.setErrorRecords(errorRecords);
-//        }
-//        if (!successRecords.isEmpty()) {
-//            response.setSuccessRecords(successRecords);
-//        }
         LogUtil.printInfoLog(InfoLogs.INSERT_REQUEST_RESOLVED.getLog());
         return response;
     }
