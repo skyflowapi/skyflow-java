@@ -11,11 +11,11 @@ import java.util.Map;
 
 public class InsertResponse {
     // These members will be included in the toString() output
-    @Expose
+    @Expose(serialize = true)
     private Summary summary;
-    @Expose
+    @Expose(serialize = true)
     private List<Success> success;
-    @Expose
+    @Expose(serialize = true)
     private List<ErrorRecord> errors;
 
     // Internal fields. Should not be included in toString() output
@@ -39,28 +39,28 @@ public class InsertResponse {
     }
 
     public Summary getSummary() {
-        return summary;
+        return this.summary;
     }
 
-    public void setSummary(Summary summary) {
-        this.summary = summary;
-    }
+//    public void setSummary(Summary summary) {
+//        this.summary = summary;
+//    }
 
     public List<Success> getSuccess() {
-        return success;
+        return this.success;
     }
 
-    public void setSuccess(List<Success> success) {
-        this.success = success;
-    }
+//    public void setSuccess(List<Success> success) {
+//        this.success = success;
+//    }
 
     public List<ErrorRecord> getErrors() {
-        return errors;
+        return this.errors;
     }
 
-    public void setErrors(List<ErrorRecord> errors) {
-        this.errors = errors;
-    }
+//    public void setErrors(List<ErrorRecord> errors) {
+//        this.errors = errors;
+//    }
 
     public List<Map<String, Object>> getRecordsToRetry() {
         if (recordsToRetry == null) {
@@ -70,7 +70,7 @@ public class InsertResponse {
                 recordsToRetry.add(originalPayload.get(index));
             }
         }
-        return recordsToRetry;
+        return this.recordsToRetry;
     }
 
     @Override

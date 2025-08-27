@@ -18,6 +18,7 @@ public class Validations extends BaseValidations {
         super();
     }
 
+    // add validations specific to v3 SDK
     public static void validateInsertRequest(InsertRequest insertRequest) throws SkyflowException {
         String table = insertRequest.getTable();
         ArrayList<HashMap<String, Object>> values = insertRequest.getValues();
@@ -43,6 +44,10 @@ public class Validations extends BaseValidations {
                     ErrorLogs.EMPTY_VALUES.getLog(), InterfaceName.INSERT.getName()
             ));
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyValues.getMessage());
+        } else if (upsert != null && upsert.isEmpty()){
+            LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.EMPTY_UPSERT.getLog(), InterfaceName.INSERT.getName()
+            ));
         }
         // upsert
 

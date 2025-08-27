@@ -103,16 +103,16 @@ public final class Utils extends BaseUtils {
             int recordsSize = response.getRecords().get().size();
             for (int index = 0; index < recordsSize; index++) {
                 if (record.get(index).getError().isPresent()) {
-                    ErrorRecord errorRecord = new ErrorRecord();
-                    errorRecord.setIndex(indexNumber);
-                    errorRecord.setError(record.get(index).getError().get());
-                    errorRecord.setCode(record.get(index).getHttpCode().get());
+                    ErrorRecord errorRecord = new ErrorRecord(indexNumber, record.get(index).getError().get(), record.get(index).getHttpCode().get());
+//                    errorRecord.setIndex(indexNumber);
+//                    errorRecord.setError(record.get(index).getError().get());
+//                    errorRecord.setCode(record.get(index).getHttpCode().get());
                     errorRecords.add(errorRecord);
 //                    errorRecord.setCode(record.get(index).getError().get().getCode());
                 } else {
-                    Success success = new Success();
-                    success.setIndex(indexNumber);
-                    success.setSkyflowId(record.get(index).getSkyflowId().get());
+                    Success success = new Success(index, record.get(index).getSkyflowId().get(), null, null);
+//                    success.setIndex(indexNumber);
+//                    success.setSkyflowId(record.get(index).getSkyflowId().get());
 //                    success.setData(record.get(index).getData().get());
                     if (record.get(index).getTokens().isPresent()) {
                         List<Token> tokens = null;

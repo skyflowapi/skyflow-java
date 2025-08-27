@@ -203,43 +203,50 @@ public final class VaultController extends VaultClient {
     }
 
     private void configureConcurrencyAndBatchSize(int totalRequests) {
-        Dotenv dotenv = Dotenv.load();
-        String userProvidedBatchSize = dotenv.get("BATCH_SIZE");
-        String userProvidedConcurrencyLimit = dotenv.get("CONCURRENCY_LIMIT");
+        try {
+            Dotenv dotenv = Dotenv.load();
+            String userProvidedBatchSize = dotenv.get("BATCH_SIZE");
+            String userProvidedConcurrencyLimit = dotenv.get("CONCURRENCY_LIMIT");
 
-        if (userProvidedBatchSize != null) {
-            try {
-                int batchSize = Integer.parseInt(userProvidedBatchSize);
-                if (batchSize > 0) {
-                    this.batchSize = batchSize;
-                } else {
+            if (userProvidedBatchSize != null) {
+                try {
+                    int batchSize = Integer.parseInt(userProvidedBatchSize);
+                    if (batchSize > 0) {
+                        this.batchSize = batchSize;
+                    } else {
+                        LogUtil.printWarningLog(WarningLogs.INVALID_BATCH_SIZE_PROVIDED.getLog());
+                        this.batchSize = Constants.BATCH_SIZE;
+                    }
+                } catch (NumberFormatException e) {
                     LogUtil.printWarningLog(WarningLogs.INVALID_BATCH_SIZE_PROVIDED.getLog());
                     this.batchSize = Constants.BATCH_SIZE;
                 }
-            } catch (NumberFormatException e) {
-                LogUtil.printWarningLog(WarningLogs.INVALID_BATCH_SIZE_PROVIDED.getLog());
-                this.batchSize = Constants.BATCH_SIZE;
             }
-        }
 
-        // Max no of threads required to run all batches concurrently at once
-        int maxConcurrencyNeeded = (totalRequests + this.batchSize - 1) / this.batchSize;
+            // Max no of threads required to run all batches concurrently at once
+            int maxConcurrencyNeeded = (totalRequests + this.batchSize - 1) / this.batchSize;
 
-        if (userProvidedConcurrencyLimit != null) {
-            try {
-                int concurrencyLimit = Integer.parseInt(userProvidedConcurrencyLimit);
-                if (concurrencyLimit > 0) {
-                    this.concurrencyLimit = Math.min(concurrencyLimit, maxConcurrencyNeeded);
-                } else {
+            if (userProvidedConcurrencyLimit != null) {
+                try {
+                    int concurrencyLimit = Integer.parseInt(userProvidedConcurrencyLimit);
+                    if (concurrencyLimit > 0) {
+                        this.concurrencyLimit = Math.min(concurrencyLimit, maxConcurrencyNeeded);
+                    } else {
+                        LogUtil.printWarningLog(WarningLogs.INVALID_CONCURRENCY_LIMIT_PROVIDED.getLog());
+                        this.concurrencyLimit = Math.min(Constants.CONCURRENCY_LIMIT, maxConcurrencyNeeded);
+                    }
+                } catch (NumberFormatException e) {
                     LogUtil.printWarningLog(WarningLogs.INVALID_CONCURRENCY_LIMIT_PROVIDED.getLog());
                     this.concurrencyLimit = Math.min(Constants.CONCURRENCY_LIMIT, maxConcurrencyNeeded);
                 }
-            } catch (NumberFormatException e) {
-                LogUtil.printWarningLog(WarningLogs.INVALID_CONCURRENCY_LIMIT_PROVIDED.getLog());
+            } else {
                 this.concurrencyLimit = Math.min(Constants.CONCURRENCY_LIMIT, maxConcurrencyNeeded);
             }
-        } else {
+        } catch (Exception e) {
+            this.batchSize = Constants.BATCH_SIZE;
+            int maxConcurrencyNeeded = (totalRequests + this.batchSize - 1) / this.batchSize;
             this.concurrencyLimit = Math.min(Constants.CONCURRENCY_LIMIT, maxConcurrencyNeeded);
         }
     }
+
 }
