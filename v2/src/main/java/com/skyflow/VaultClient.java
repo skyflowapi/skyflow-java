@@ -783,7 +783,7 @@ public class VaultClient {
     }
 
     private void updateVaultURL() {
-        String vaultURL = Utils.getV2VaultURL(this.vaultConfig.getClusterId(), this.vaultConfig.getEnv());
+        String vaultURL = Utils.getVaultURL(this.vaultConfig.getClusterId(), this.vaultConfig.getEnv());
         this.apiClientBuilder.url(vaultURL);
     }
 

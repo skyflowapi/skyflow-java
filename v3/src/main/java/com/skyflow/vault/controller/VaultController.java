@@ -34,13 +34,17 @@ import static com.skyflow.utils.Utils.handleBatchException;
 
 public final class VaultController extends VaultClient {
     private static final Gson gson = new GsonBuilder().serializeNulls().create();
-    private int batchSize;
-    private int concurrencyLimit;
+    private int insertBatchSize;
+    private int insertConcurrencyLimit;
+    private int detokenizeBatchSize;
+    private int detokenizeConcurrencyLimit;
 
     public VaultController(VaultConfig vaultConfig, Credentials credentials) {
         super(vaultConfig, credentials);
-        this.batchSize = Constants.BATCH_SIZE;
-        this.concurrencyLimit = Constants.CONCURRENCY_LIMIT;
+        this.insertBatchSize = Constants.INSERT_BATCH_SIZE;
+        this.insertConcurrencyLimit = Constants.INSERT_CONCURRENCY_LIMIT;
+        this.detokenizeBatchSize = Constants.DETOKENIZE_BATCH_SIZE;
+        this.detokenizeConcurrencyLimit = Constants.DETOKENIZE_CONCURRENCY_LIMIT;
     }
 
     public com.skyflow.vault.data.InsertResponse bulkInsert(InsertRequest insertRequest) throws SkyflowException {
@@ -50,7 +54,7 @@ public final class VaultController extends VaultClient {
             LogUtil.printInfoLog(InfoLogs.VALIDATE_INSERT_REQUEST.getLog());
             Validations.validateInsertRequest(insertRequest);
             setBearerToken();
-            configureConcurrencyAndBatchSize(insertRequest.getValues().size());
+            configureInsertConcurrencyAndBatchSize(insertRequest.getValues().size());
             com.skyflow.generated.rest.resources.recordservice.requests.InsertRequest request = super.getBulkInsertRequestBody(insertRequest, super.getVaultConfig());
 
             response = this.processSync(request, insertRequest.getValues());
@@ -71,7 +75,7 @@ public final class VaultController extends VaultClient {
             LogUtil.printInfoLog(InfoLogs.VALIDATE_INSERT_REQUEST.getLog());
             Validations.validateInsertRequest(insertRequest);
             setBearerToken();
-            configureConcurrencyAndBatchSize(insertRequest.getValues().size());
+            configureInsertConcurrencyAndBatchSize(insertRequest.getValues().size());
             com.skyflow.generated.rest.resources.recordservice.requests.InsertRequest request = super.getBulkInsertRequestBody(insertRequest, super.getVaultConfig());
 
             List<ErrorRecord> errorRecords = new ArrayList<>();
@@ -137,8 +141,8 @@ public final class VaultController extends VaultClient {
     ) {
         List<InsertRecordData> records = insertRequest.getRecords().get();
 
-        ExecutorService executor = Executors.newFixedThreadPool(concurrencyLimit);
-        List<List<InsertRecordData>> batches = Utils.createBatches(records, batchSize);
+        ExecutorService executor = Executors.newFixedThreadPool(insertConcurrencyLimit);
+        List<List<InsertRecordData>> batches = Utils.createBatches(records, insertBatchSize);
         List<CompletableFuture<com.skyflow.vault.data.InsertResponse>> futures = new ArrayList<>();
 
         try {
@@ -152,7 +156,7 @@ public final class VaultController extends VaultClient {
                             errorRecords.addAll(handleBatchException(ex, batch, batchNumber, batches));
                             return null;
                         })
-                        .thenApply(response -> formatResponse(response, batchNumber, batchSize));
+                        .thenApply(response -> formatResponse(response, batchNumber, insertBatchSize));
                 futures.add(future);
             }
         } finally {
@@ -170,51 +174,53 @@ public final class VaultController extends VaultClient {
         return this.getRecordsApi().insert(req);
     }
 
-    private void configureConcurrencyAndBatchSize(int totalRequests) {
+    private void configureInsertConcurrencyAndBatchSize(int totalRequests) {
         try {
             Dotenv dotenv = Dotenv.load();
-            String userProvidedBatchSize = dotenv.get("BATCH_SIZE");
-            String userProvidedConcurrencyLimit = dotenv.get("CONCURRENCY_LIMIT");
+            String userProvidedBatchSize = dotenv.get("INSERT_BATCH_SIZE");
+            String userProvidedConcurrencyLimit = dotenv.get("INSERT_CONCURRENCY_LIMIT");
 
             if (userProvidedBatchSize != null) {
                 try {
                     int batchSize = Integer.parseInt(userProvidedBatchSize);
-                    if (batchSize > 0) {
-                        this.batchSize = batchSize;
+                    int maxBatchSize = Math.min(batchSize, Constants.MAX_INSERT_BATCH_SIZE);
+                    if (maxBatchSize > 0) {
+                        this.insertBatchSize = batchSize;
                     } else {
                         LogUtil.printWarningLog(WarningLogs.INVALID_BATCH_SIZE_PROVIDED.getLog());
-                        this.batchSize = Constants.BATCH_SIZE;
+                        this.insertBatchSize = Constants.INSERT_BATCH_SIZE;
                     }
                 } catch (NumberFormatException e) {
                     LogUtil.printWarningLog(WarningLogs.INVALID_BATCH_SIZE_PROVIDED.getLog());
-                    this.batchSize = Constants.BATCH_SIZE;
+                    this.insertBatchSize = Constants.INSERT_BATCH_SIZE;
                 }
             }
 
             // Max no of threads required to run all batches concurrently at once
-            int maxConcurrencyNeeded = (totalRequests + this.batchSize - 1) / this.batchSize;
+            int maxConcurrencyNeeded = (totalRequests + this.insertBatchSize - 1) / this.insertBatchSize;
 
             if (userProvidedConcurrencyLimit != null) {
                 try {
                     int concurrencyLimit = Integer.parseInt(userProvidedConcurrencyLimit);
-                    if (concurrencyLimit > 0) {
-                        this.concurrencyLimit = Math.min(concurrencyLimit, maxConcurrencyNeeded);
+                    int maxConcurrencyLimit = Math.min(concurrencyLimit, Constants.MAX_INSERT_CONCURRENCY_LIMIT);
+
+                    if (maxConcurrencyLimit > 0) {
+                        this.insertConcurrencyLimit = Math.min(maxConcurrencyLimit, maxConcurrencyNeeded);
                     } else {
                         LogUtil.printWarningLog(WarningLogs.INVALID_CONCURRENCY_LIMIT_PROVIDED.getLog());
-                        this.concurrencyLimit = Math.min(Constants.CONCURRENCY_LIMIT, maxConcurrencyNeeded);
+                        this.insertConcurrencyLimit = Math.min(Constants.INSERT_CONCURRENCY_LIMIT, maxConcurrencyNeeded);
                     }
                 } catch (NumberFormatException e) {
                     LogUtil.printWarningLog(WarningLogs.INVALID_CONCURRENCY_LIMIT_PROVIDED.getLog());
-                    this.concurrencyLimit = Math.min(Constants.CONCURRENCY_LIMIT, maxConcurrencyNeeded);
+                    this.insertConcurrencyLimit = Math.min(Constants.INSERT_CONCURRENCY_LIMIT, maxConcurrencyNeeded);
                 }
             } else {
-                this.concurrencyLimit = Math.min(Constants.CONCURRENCY_LIMIT, maxConcurrencyNeeded);
+                this.insertConcurrencyLimit = Math.min(Constants.INSERT_CONCURRENCY_LIMIT, maxConcurrencyNeeded);
             }
         } catch (Exception e) {
-            this.batchSize = Constants.BATCH_SIZE;
-            int maxConcurrencyNeeded = (totalRequests + this.batchSize - 1) / this.batchSize;
-            this.concurrencyLimit = Math.min(Constants.CONCURRENCY_LIMIT, maxConcurrencyNeeded);
+            this.insertBatchSize = Constants.INSERT_BATCH_SIZE;
+            int maxConcurrencyNeeded = (totalRequests + this.insertBatchSize - 1) / this.insertBatchSize;
+            this.insertConcurrencyLimit = Math.min(Constants.INSERT_CONCURRENCY_LIMIT, maxConcurrencyNeeded);
         }
     }
-
 }

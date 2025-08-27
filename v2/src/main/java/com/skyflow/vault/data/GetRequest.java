@@ -1,15 +1,15 @@
 package com.skyflow.vault.data;
 
 import com.skyflow.enums.RedactionType;
+import com.skyflow.utils.BaseConstants;
 import com.skyflow.utils.Constants;
 
 import java.util.ArrayList;
 
-public class GetRequest extends BaseGetRequest {
+public class GetRequest {
     private final GetRequestBuilder builder;
 
     private GetRequest(GetRequestBuilder builder) {
-        super(builder);
         this.builder = builder;
     }
 
@@ -17,28 +17,75 @@ public class GetRequest extends BaseGetRequest {
         return new GetRequestBuilder();
     }
 
+    public String getTable() {
+        return this.builder.table;
+    }
+
+    public ArrayList<String> getIds() {
+        return this.builder.ids;
+    }
+
+    public Boolean getReturnTokens() {
+        return this.builder.returnTokens;
+    }
+
+    public ArrayList<String> getFields() {
+        return this.builder.fields;
+    }
+
+    public String getOffset() {
+        return this.builder.offset;
+    }
+
+    public String getLimit() {
+        return this.builder.limit;
+    }
+
+    public Boolean getDownloadURL() {
+        return this.builder.downloadURL;
+    }
+
+    public String getColumnName() {
+        return this.builder.columnName;
+    }
+
+    public ArrayList<String> getColumnValues() {
+        return this.builder.columnValues;
+    }
+
+    public String getOrderBy() {
+        return this.builder.orderBy;
+    }
+
     public RedactionType getRedactionType() {
         return this.builder.redactionType;
     }
 
-    public static final class GetRequestBuilder extends BaseGetRequestBuilder {
+    public static final class GetRequestBuilder {
+        private String table;
+        private ArrayList<String> ids;
+        private Boolean returnTokens;
+        private ArrayList<String> fields;
+        private String offset;
+        private String limit;
+        private Boolean downloadURL;
+        private String columnName;
+        private ArrayList<String> columnValues;
+        private String orderBy;
         private RedactionType redactionType;
 
         private GetRequestBuilder() {
-            super();
             this.downloadURL = true;
             this.orderBy = Constants.ORDER_ASCENDING;
         }
 
-        @Override
         public GetRequestBuilder table(String table) {
-            super.table(table);
+            this.table = table;
             return this;
         }
 
-        @Override
         public GetRequestBuilder ids(ArrayList<String> ids) {
-            super.ids(ids);
+            this.ids = ids;
             return this;
         }
 
@@ -47,51 +94,43 @@ public class GetRequest extends BaseGetRequest {
             return this;
         }
 
-        @Override
         public GetRequestBuilder returnTokens(Boolean returnTokens) {
-            super.returnTokens(returnTokens);
+            this.returnTokens = returnTokens;
             return this;
         }
 
-        @Override
         public GetRequestBuilder fields(ArrayList<String> fields) {
-            super.fields(fields);
+            this.fields = fields;
             return this;
         }
 
-        @Override
         public GetRequestBuilder offset(String offset) {
-            super.offset(offset);
+            this.offset = offset;
             return this;
         }
 
-        @Override
         public GetRequestBuilder limit(String limit) {
-            super.limit(limit);
+            this.limit = limit;
             return this;
         }
 
-        @Override
         public GetRequestBuilder downloadURL(Boolean downloadURL) {
-            super.downloadURL(downloadURL);
+            this.downloadURL = downloadURL == null || downloadURL;
             return this;
         }
 
-        @Override
         public GetRequestBuilder columnName(String columnName) {
-            super.columnName(columnName);
+            this.columnName = columnName;
             return this;
         }
 
-        @Override
         public GetRequestBuilder columnValues(ArrayList<String> columnValues) {
-            super.columnValues(columnValues);
+            this.columnValues = columnValues;
             return this;
         }
 
-        @Override
         public GetRequestBuilder orderBy(String orderBy) {
-            super.orderBy(orderBy);
+            this.orderBy = orderBy == null ? BaseConstants.ORDER_ASCENDING : orderBy;
             return this;
         }
 

@@ -23,9 +23,7 @@ import java.security.spec.PKCS8EncodedKeySpec;
 
 public class BaseUtils {
     public static String getVaultURL(String clusterId, Env env, String vaultDomain) {
-        StringBuilder sb = new StringBuilder(BaseConstants.SECURE_PROTOCOL);
-        sb.append(clusterId);
-        sb.append(vaultDomain);
+        StringBuilder sb = buildBaseUrl(clusterId, vaultDomain);
         switch (env) {
             case DEV:
                 sb.append(BaseConstants.DEV_DOMAIN);
@@ -44,13 +42,6 @@ public class BaseUtils {
         return sb.toString();
     }
 
-    public static String getV2VaultURL(String clusterId, Env env) {
-        return getVaultURL(clusterId, env, BaseConstants.V2_VAULT_DOMAIN);
-    }
-
-    public static String getV3VaultURL(String clusterId, Env env) {
-        return getVaultURL(clusterId, env, BaseConstants.V3_VAULT_DOMAIN);
-    }
     public static String generateBearerToken(Credentials credentials) throws SkyflowException {
         if (credentials.getPath() != null) {
             return BearerToken.builder()
@@ -168,4 +159,10 @@ public class BaseUtils {
         return privateKey;
     }
 
+    private static StringBuilder buildBaseUrl(String clusterId, String vaultDomain) {
+        StringBuilder sb = new StringBuilder(BaseConstants.SECURE_PROTOCOL);
+        sb.append(clusterId);
+        sb.append(vaultDomain);
+        return sb;
+    }
 }

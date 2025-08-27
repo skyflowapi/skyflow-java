@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class InsertResponse {
     // These members will be included in the toString() output
@@ -53,10 +54,11 @@ public class InsertResponse {
     public List<Map<String, Object>> getRecordsToRetry() {
         if (recordsToRetry == null) {
             recordsToRetry = new ArrayList<>();
-            for (ErrorRecord errorRecord : errors) {
-                int index = errorRecord.getIndex();
-                recordsToRetry.add(originalPayload.get(index));
-            }
+
+            return errors.stream()
+                    .filter(error -> (error.getCode() >= 500 && error.getCode() <= 599) && error.getCode() != 529)
+                    .map(errorRecord -> originalPayload.get(errorRecord.getIndex()))
+                    .collect(Collectors.toList());
         }
         return this.recordsToRetry;
     }

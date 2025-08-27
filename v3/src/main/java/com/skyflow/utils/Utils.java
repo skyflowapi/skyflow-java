@@ -1,21 +1,23 @@
 package com.skyflow.utils;
 
 import com.google.gson.JsonObject;
+import com.skyflow.enums.Env;
 import com.skyflow.generated.rest.core.ApiClientApiException;
 import com.skyflow.generated.rest.types.InsertRecordData;
 import com.skyflow.generated.rest.types.InsertResponse;
 import com.skyflow.generated.rest.types.RecordResponseObject;
-import com.skyflow.logs.InfoLogs;
-import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.vault.data.ErrorRecord;
 import com.skyflow.vault.data.Success;
-import com.skyflow.vault.data.Token;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 public final class Utils extends BaseUtils {
+
+    public static String getVaultURL(String clusterId, Env env) {
+        return getVaultURL(clusterId, env, Constants.VAULT_DOMAIN);
+    }
 
     public static JsonObject getMetrics() {
         JsonObject details = getCommonMetrics();
@@ -34,7 +36,7 @@ public final class Utils extends BaseUtils {
 
     public static ErrorRecord createErrorRecord(Map<String, Object> recordMap, int indexNumber) {
         ErrorRecord err = null;
-        if( recordMap != null ) {
+        if (recordMap != null) {
             int code = recordMap.containsKey("http_code") ? (Integer) recordMap.get("http_code") : 500;
             String message = recordMap.containsKey("error") ? (String) recordMap.get("error") :
                     recordMap.containsKey("message") ? (String) recordMap.get("message") : "Unknown error";
