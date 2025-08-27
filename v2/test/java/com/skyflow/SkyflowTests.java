@@ -8,9 +8,12 @@ import com.skyflow.enums.LogLevel;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.utils.Constants;
+import com.skyflow.utils.SdkVersion;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runners.Suite;
 
 public class SkyflowTests {
     private static final String INVALID_EXCEPTION_THROWN = "Should not have thrown any exception";
@@ -32,6 +35,7 @@ public class SkyflowTests {
         connectionURL = "https://test.connection.url";
         newConnectionURL = "https://new.test.connection.url";
         token = "test_token";
+        SdkVersion.setSdkPrefix(Constants.SDK_PREFIX);
     }
 
     @Test

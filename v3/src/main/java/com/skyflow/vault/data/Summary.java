@@ -1,35 +1,38 @@
 package com.skyflow.vault.data;
 
 import com.google.gson.Gson;
+import com.google.gson.annotations.Expose;
 
 public class Summary {
-    private int total_records;
-    private int total_inserted;
-    private int total_failed;
+    @Expose(serialize = true)
+    private int totalRecords;
+    @Expose(serialize = true)
+    private int totalInserted;
+    @Expose(serialize = true)
+    private int totalFailed;
+
+    public Summary() {
+    }
+
+    public Summary(int totalRecords, int totalInserted, int totalFailed) {
+        this.totalRecords = totalRecords;
+        this.totalInserted = totalInserted;
+        this.totalFailed = totalFailed;
+    }
 
     public int getTotalRecords() {
-        return total_records;
+        return totalRecords;
     }
 
-    public void setTotalRecords(int total_records) {
-        this.total_records = total_records;
-    }
 
     public int getTotalInserted() {
-        return total_inserted;
-    }
-
-    public void setTotalInserted(int total_inserted) {
-        this.total_inserted = total_inserted;
+        return totalInserted;
     }
 
     public int getTotalFailed() {
-        return total_failed;
+        return totalFailed;
     }
 
-    public void setTotalFailed(int total_failed) {
-        this.total_failed = total_failed;
-    }
 
     @Override
     public String toString() {

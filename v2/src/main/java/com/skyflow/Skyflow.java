@@ -10,6 +10,8 @@ import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.logs.ErrorLogs;
 import com.skyflow.logs.InfoLogs;
+import com.skyflow.utils.Constants;
+import com.skyflow.utils.SdkVersion;
 import com.skyflow.utils.Utils;
 import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.utils.validations.Validations;
@@ -29,6 +31,7 @@ public final class Skyflow extends BaseSkyflow {
     }
 
     public static SkyflowClientBuilder builder() {
+        SdkVersion.setSdkPrefix(Constants.SDK_PREFIX);
         return new SkyflowClientBuilder();
     }
 
@@ -141,10 +144,7 @@ public final class Skyflow extends BaseSkyflow {
         private final LinkedHashMap<String, ConnectionController> connectionsMap;
         private final LinkedHashMap<String, VaultController> vaultClientsMap;
         private final LinkedHashMap<String, DetectController> detectClientsMap;
-        //        private final LinkedHashMap<String, VaultConfig> vaultConfigMap;
         private final LinkedHashMap<String, ConnectionConfig> connectionConfigMap;
-//        private Credentials skyflowCredentials;
-//        private LogLevel logLevel;
 
         public SkyflowClientBuilder() {
             super();
@@ -164,11 +164,9 @@ public final class Skyflow extends BaseSkyflow {
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(),
                         ErrorMessage.VaultIdAlreadyInConfigList.getMessage());
             } else {
-                VaultConfig vaultConfigDeepCopy = Utils.deepCopy(vaultConfig);
-                assert vaultConfigDeepCopy != null;
-                this.vaultConfigMap.put(vaultConfigDeepCopy.getVaultId(), vaultConfigDeepCopy);
-                this.vaultClientsMap.put(vaultConfigDeepCopy.getVaultId(), new VaultController(vaultConfigDeepCopy, this.skyflowCredentials));
-                this.detectClientsMap.put(vaultConfigDeepCopy.getVaultId(), new DetectController(vaultConfigDeepCopy, this.skyflowCredentials));
+                this.vaultConfigMap.put(vaultConfig.getVaultId(), vaultConfig);
+                this.vaultClientsMap.put(vaultConfig.getVaultId(), new VaultController(vaultConfig, this.skyflowCredentials));
+                this.detectClientsMap.put(vaultConfig.getVaultId(), new DetectController(vaultConfig, this.skyflowCredentials));
                 LogUtil.printInfoLog(Utils.parameterizedString(
                         InfoLogs.VAULT_CONTROLLER_INITIALIZED.getLog(), vaultConfig.getVaultId()));
                 LogUtil.printInfoLog(Utils.parameterizedString(
@@ -180,10 +178,8 @@ public final class Skyflow extends BaseSkyflow {
         public SkyflowClientBuilder updateVaultConfig(VaultConfig vaultConfig) throws SkyflowException {
             LogUtil.printInfoLog(InfoLogs.VALIDATING_VAULT_CONFIG.getLog());
             Validations.validateVaultConfig(vaultConfig);
-            VaultConfig vaultConfigDeepCopy = Utils.deepCopy(vaultConfig);
-            assert vaultConfigDeepCopy != null;
-            if (this.vaultClientsMap.containsKey(vaultConfigDeepCopy.getVaultId())) {
-                VaultConfig updatedConfig = findAndUpdateVaultConfig(vaultConfigDeepCopy);
+            if (this.vaultClientsMap.containsKey(vaultConfig.getVaultId())) {
+                VaultConfig updatedConfig = findAndUpdateVaultConfig(vaultConfig);
                 this.vaultClientsMap.get(updatedConfig.getVaultId()).updateVaultConfig();
             } else {
                 LogUtil.printErrorLog(Utils.parameterizedString(

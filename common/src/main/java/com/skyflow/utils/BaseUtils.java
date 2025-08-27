@@ -1,16 +1,18 @@
 package com.skyflow.utils;
 
+import com.google.gson.JsonObject;
 import com.skyflow.config.Credentials;
 import com.skyflow.enums.Env;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.logs.ErrorLogs;
+import com.skyflow.logs.InfoLogs;
 import com.skyflow.serviceaccount.util.BearerToken;
 import com.skyflow.utils.logger.LogUtil;
 import org.apache.commons.codec.binary.Base64;
 
-import java.io.*;
+import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.KeyFactory;
@@ -21,9 +23,7 @@ import java.security.spec.PKCS8EncodedKeySpec;
 
 public class BaseUtils {
     public static String getVaultURL(String clusterId, Env env, String vaultDomain) {
-        StringBuilder sb = new StringBuilder(BaseConstants.SECURE_PROTOCOL);
-        sb.append(clusterId);
-        sb.append(vaultDomain);
+        StringBuilder sb = buildBaseUrl(clusterId, vaultDomain);
         switch (env) {
             case DEV:
                 sb.append(BaseConstants.DEV_DOMAIN);
@@ -42,13 +42,6 @@ public class BaseUtils {
         return sb.toString();
     }
 
-    public static String getV2VaultURL(String clusterId, Env env) {
-        return getVaultURL(clusterId, env, BaseConstants.V2_VAULT_DOMAIN);
-    }
-
-    public static String getV3VaultURL(String clusterId, Env env) {
-        return getVaultURL(clusterId, env, BaseConstants.V3_VAULT_DOMAIN);
-    }
     public static String generateBearerToken(Credentials credentials) throws SkyflowException {
         if (credentials.getPath() != null) {
             return BearerToken.builder()
@@ -103,6 +96,52 @@ public class BaseUtils {
         return base;
     }
 
+    protected static JsonObject getCommonMetrics() {
+        JsonObject details = new JsonObject();
+        String deviceModel;
+        String osDetails;
+        String javaVersion;
+        // Retrieve device model
+        try {
+            deviceModel = System.getProperty("os.name");
+            if (deviceModel == null) throw new Exception();
+        } catch (Exception e) {
+            LogUtil.printInfoLog(parameterizedString(
+                    InfoLogs.UNABLE_TO_GENERATE_SDK_METRIC.getLog(),
+                    BaseConstants.SDK_METRIC_CLIENT_DEVICE_MODEL
+            ));
+            deviceModel = "";
+        }
+
+        // Retrieve OS details
+        try {
+            osDetails = System.getProperty("os.version");
+            if (osDetails == null) throw new Exception();
+        } catch (Exception e) {
+            LogUtil.printInfoLog(parameterizedString(
+                    InfoLogs.UNABLE_TO_GENERATE_SDK_METRIC.getLog(),
+                    BaseConstants.SDK_METRIC_CLIENT_OS_DETAILS
+            ));
+            osDetails = "";
+        }
+
+        // Retrieve Java version details
+        try {
+            javaVersion = System.getProperty("java.version");
+            if (javaVersion == null) throw new Exception();
+        } catch (Exception e) {
+            LogUtil.printInfoLog(parameterizedString(
+                    InfoLogs.UNABLE_TO_GENERATE_SDK_METRIC.getLog(),
+                    BaseConstants.SDK_METRIC_RUNTIME_DETAILS
+            ));
+            javaVersion = "";
+        }
+        details.addProperty(BaseConstants.SDK_METRIC_CLIENT_DEVICE_MODEL, deviceModel);
+        details.addProperty(BaseConstants.SDK_METRIC_RUNTIME_DETAILS, BaseConstants.SDK_METRIC_RUNTIME_DETAILS_PREFIX + javaVersion);
+        details.addProperty(BaseConstants.SDK_METRIC_CLIENT_OS_DETAILS, osDetails);
+        return details;
+    }
+
     private static PrivateKey parsePkcs8PrivateKey(byte[] pkcs8Bytes) throws SkyflowException {
         KeyFactory keyFactory;
         PrivateKey privateKey = null;
@@ -120,26 +159,10 @@ public class BaseUtils {
         return privateKey;
     }
 
-    public static <T extends Serializable> T deepCopy(T obj) {
-        try {
-            // Serialize the object to a byte array
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            ObjectOutputStream oos = new ObjectOutputStream(bos);
-            oos.writeObject(obj);
-            oos.close();
-            bos.close();
-
-            // Deserialize the byte array back to a new object
-            ByteArrayInputStream bis = new ByteArrayInputStream(bos.toByteArray());
-            ObjectInputStream ois = new ObjectInputStream(bis);
-            T copiedObj = (T) ois.readObject();
-            ois.close();
-            bis.close();
-
-            return copiedObj;
-        } catch (IOException | ClassNotFoundException e) {
-            e.printStackTrace();
-            return null;
-        }
+    private static StringBuilder buildBaseUrl(String clusterId, String vaultDomain) {
+        StringBuilder sb = new StringBuilder(BaseConstants.SECURE_PROTOCOL);
+        sb.append(clusterId);
+        sb.append(vaultDomain);
+        return sb;
     }
 }

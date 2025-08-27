@@ -5,6 +5,8 @@ import com.skyflow.enums.RequestMethod;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.utils.Constants;
+import com.skyflow.utils.SdkVersion;
 import com.skyflow.utils.validations.Validations;
 import org.junit.Assert;
 import org.junit.Before;
@@ -28,6 +30,7 @@ public class InvokeConnectionTests {
         pathParams = new HashMap<>();
         requestHeaders = new HashMap<>();
         requestBody = new HashMap<>();
+        SdkVersion.setSdkPrefix(Constants.SDK_PREFIX);
     }
 
     @Before

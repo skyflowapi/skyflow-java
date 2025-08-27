@@ -21,15 +21,12 @@ import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.utils.validations.Validations;
 import io.github.cdimascio.dotenv.Dotenv;
 import io.github.cdimascio.dotenv.DotenvException;
-import okhttp3.Dispatcher;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 
 public class VaultClient {
@@ -63,11 +60,6 @@ public class VaultClient {
         prioritiseCredentials();
     }
 
-    protected void updateVaultConfig() throws SkyflowException {
-        updateVaultURL();
-        prioritiseCredentials();
-    }
-
     protected void setBearerToken() throws SkyflowException {
         prioritiseCredentials();
         Validations.validateCredentials(this.finalCredentials);
@@ -87,7 +79,7 @@ public class VaultClient {
     }
 
     private void updateVaultURL() {
-        String vaultURL = Utils.getV3VaultURL(this.vaultConfig.getClusterId(), this.vaultConfig.getEnv());
+        String vaultURL = Utils.getVaultURL(this.vaultConfig.getClusterId(), this.vaultConfig.getEnv());
         this.apiClientBuilder.url(vaultURL);
     }
 
@@ -133,7 +125,7 @@ public class VaultClient {
                 .build();
         apiClientBuilder.httpClient(httpClient);
     }
-    protected InsertRequest getBUlkInsertRequestBody(com.skyflow.vault.data.InsertRequest request, VaultConfig config) throws SkyflowException {
+    protected InsertRequest getBulkInsertRequestBody(com.skyflow.vault.data.InsertRequest request, VaultConfig config) throws SkyflowException {
         List<HashMap<String, Object>> values = request.getValues();
         List<InsertRecordData> insertRecordDataList = new ArrayList<>();
         for (HashMap<String, Object> value : values) {

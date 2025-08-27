@@ -72,7 +72,7 @@ public class InsertRequest extends BaseInsertRequest {
         }
 
         public InsertRequestBuilder returnTokens(Boolean returnTokens) {
-            this.returnTokens = returnTokens;
+            this.returnTokens = returnTokens != null && returnTokens;
             return this;
         }
 

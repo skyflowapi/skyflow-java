@@ -44,6 +44,10 @@ public class Validations extends BaseValidations {
                     ErrorLogs.EMPTY_VALUES.getLog(), InterfaceName.INSERT.getName()
             ));
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyValues.getMessage());
+        } else if (upsert != null && upsert.isEmpty()){
+            LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.EMPTY_UPSERT.getLog(), InterfaceName.INSERT.getName()
+            ));
         }
         // upsert
 

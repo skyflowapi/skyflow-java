@@ -6,6 +6,7 @@ public enum ErrorMessage {
     // Client initialization
     VaultIdAlreadyInConfigList("%s0 Validation error. VaultId is present in an existing config. Specify a new vaultId in config."),
     VaultIdNotInConfigList("%s0 Validation error. VaultId is missing from the config. Specify the vaultIds from configs."),
+    OnlySingleVaultConfigAllowed("%s0 Validation error. A vault config already exists. Cannot add another vault config."),
     ConnectionIdAlreadyInConfigList("%s0 Validation error. ConnectionId is present in an existing config. Specify a connectionId in config."),
     ConnectionIdNotInConfigList("%s0 Validation error. ConnectionId is missing from the config. Specify the connectionIds from configs."),
     EmptyCredentials("%s0 Validation error. Invalid credentials. Credentials must not be empty."),

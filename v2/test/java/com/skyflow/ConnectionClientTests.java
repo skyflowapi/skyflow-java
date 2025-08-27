@@ -2,6 +2,8 @@ package com.skyflow;
 
 import com.skyflow.config.ConnectionConfig;
 import com.skyflow.config.Credentials;
+import com.skyflow.utils.Constants;
+import com.skyflow.utils.SdkVersion;
 import io.github.cdimascio.dotenv.Dotenv;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -29,6 +31,7 @@ public class ConnectionClientTests {
         connectionConfig.setConnectionId(connectionID);
         connectionConfig.setConnectionUrl(connectionURL);
         connectionClient = new ConnectionClient(connectionConfig, credentials);
+        SdkVersion.setSdkPrefix(Constants.SDK_PREFIX);
     }
 
     @Test
