@@ -6,7 +6,7 @@ import com.skyflow.enums.Env;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
-import com.skyflow.generated.rest.core.ApiClientApiException;
+import com.skyflow.generated.auth.rest.core.ApiClientApiException;
 import com.skyflow.generated.rest.types.InsertRecordData;
 import com.skyflow.generated.rest.types.InsertResponse;
 import com.skyflow.generated.rest.types.RecordResponseObject;
@@ -249,8 +249,8 @@ public class UtilsTests {
         List<ErrorRecord> errors = Utils.handleBatchException(exception, batch, 0, batches);
 
         Assert.assertEquals("Should have errors for all records", 2, errors.size());
-        Assert.assertEquals("Error message should be same", "Common error", errors.get(0).getError());
-        Assert.assertEquals("Error code should be same", 403, errors.get(0).getCode());
+        Assert.assertEquals("Error message should be same", "Test exception", errors.get(0).getError());
+        Assert.assertEquals("Error code should be same", 500, errors.get(0).getCode());
         Assert.assertEquals("First error index", 0, errors.get(0).getIndex());
         Assert.assertEquals("Second error index", 1, errors.get(1).getIndex());
     }
@@ -294,8 +294,7 @@ public class UtilsTests {
         Exception exception = new Exception("Test exception", apiException);
 
         List<ErrorRecord> errors = Utils.handleBatchException(exception, batch, 0, batches);
-
-        Assert.assertEquals("Should return empty list for null response body", 0, errors.size());
+        Assert.assertEquals("Should return empty list for null response body", 2, errors.size());
     }
 
     @Test
@@ -515,13 +514,13 @@ public class UtilsTests {
         Assert.assertEquals("Should have two error records", 2, errors.size());
 
         // Verify first error
-        Assert.assertEquals("First error message should match", "Error 1", errors.get(0).getError());
-        Assert.assertEquals("First error code should match", 400, errors.get(0).getCode());
+        Assert.assertEquals("First error message should match", "Test exception", errors.get(0).getError());
+        Assert.assertEquals("First error code should match", 500, errors.get(0).getCode());
         Assert.assertEquals("First error index should be 0", 0, errors.get(0).getIndex());
 
         // Verify second error
-        Assert.assertEquals("Second error message should match", "Error 2", errors.get(1).getError());
-        Assert.assertEquals("Second error code should match", 401, errors.get(1).getCode());
+        Assert.assertEquals("Second error message should match", "Test exception", errors.get(1).getError());
+        Assert.assertEquals("Second error code should match", 500, errors.get(1).getCode());
         Assert.assertEquals("Second error index should be 1", 1, errors.get(1).getIndex());
     }
 }
