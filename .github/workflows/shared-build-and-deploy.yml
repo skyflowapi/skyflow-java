@@ -21,6 +21,13 @@ on:
         description: 'Release Tag'
         required: true
         type: string
+
+      module:
+        description: 'Module to build and publish'
+        required: false
+        type: string
+        default: ''
+      
     secrets:
       server-username:
         required: true
@@ -99,7 +106,7 @@ jobs:
             git checkout ${{ env.branch_name }}
           fi
 
-          git add pom.xml
+          git add v3/pom.xml
           if [[ "${{ inputs.tag }}" == "internal" ]]; then
             git commit -m "[AUTOMATED] Private Release ${{ steps.previoustag.outputs.tag }}-dev-$(git rev-parse --short $GITHUB_SHA)"
             git push origin ${{ github.ref_name }} -f
@@ -125,7 +132,12 @@ jobs:
           json: ${{ secrets.TEST_CREDENTIALS_FILE_STRING }}
 
       - name: Publish package
-        run: mvn --batch-mode deploy -P ${{ inputs.profile }}
+        run: |
+          if [ -n "${{ inputs.module }}" ]; then
+            mvn --batch-mode -pl v3 -am deploy -P jfrog
+          else
+            mvn --batch-mode deploy -P ${{ inputs.profile }}
+          fi
 
         env:
           SERVER_USERNAME: ${{ secrets.server-username }}
