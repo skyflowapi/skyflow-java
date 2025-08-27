@@ -7,7 +7,6 @@ import com.google.gson.annotations.Expose;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 public class InsertResponse {
@@ -21,7 +20,7 @@ public class InsertResponse {
 
     // Internal fields. Should not be included in toString() output
     private ArrayList<HashMap<String, Object>> originalPayload;
-    private List<Map<String, Object>> recordsToRetry;
+    private ArrayList<HashMap<String, Object>> recordsToRetry;
 
     public InsertResponse(List<Success> successRecords, List<ErrorRecord> errorRecords) {
         this.success = successRecords;
@@ -51,14 +50,13 @@ public class InsertResponse {
         return this.errors;
     }
 
-    public List<Map<String, Object>> getRecordsToRetry() {
+    public ArrayList<HashMap<String, Object>> getRecordsToRetry() {
         if (recordsToRetry == null) {
             recordsToRetry = new ArrayList<>();
-
             return errors.stream()
                     .filter(error -> (error.getCode() >= 500 && error.getCode() <= 599) && error.getCode() != 529)
                     .map(errorRecord -> originalPayload.get(errorRecord.getIndex()))
-                    .collect(Collectors.toList());
+                    .collect(Collectors.toCollection(ArrayList::new));
         }
         return this.recordsToRetry;
     }
