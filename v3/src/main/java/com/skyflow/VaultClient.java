@@ -66,8 +66,7 @@ public class VaultClient {
         if (this.finalCredentials.getApiKey() != null) {
             LogUtil.printInfoLog(InfoLogs.REUSE_API_KEY.getLog());
             token = this.finalCredentials.getApiKey();
-        } else if (Token.isExpired(token)) {
-            LogUtil.printInfoLog(InfoLogs.BEARER_TOKEN_EXPIRED.getLog());
+        } else if (token == null || token.isEmpty() || Token.isExpired(token)) {
             token = Utils.generateBearerToken(this.finalCredentials);
         } else {
             LogUtil.printInfoLog(InfoLogs.REUSE_BEARER_TOKEN.getLog());
@@ -118,7 +117,7 @@ public class VaultClient {
                 .addInterceptor(chain -> {
                     Request original = chain.request();
                     Request requestWithAuth = original.newBuilder()
-                            .header("Authorization", "Bearer " + this.vaultConfig.getCredentials().getToken())
+                            .header("Authorization", "Bearer " + this.token)
                             .build();
                     return chain.proceed(requestWithAuth);
                 })
