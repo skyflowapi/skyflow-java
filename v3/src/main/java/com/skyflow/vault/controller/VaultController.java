@@ -22,6 +22,7 @@ import com.skyflow.vault.data.Success;
 import io.github.cdimascio.dotenv.Dotenv;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -77,13 +78,13 @@ public final class VaultController extends VaultClient {
             setBearerToken();
             configureInsertConcurrencyAndBatchSize(insertRequest.getValues().size());
             com.skyflow.generated.rest.resources.recordservice.requests.InsertRequest request = super.getBulkInsertRequestBody(insertRequest, super.getVaultConfig());
-
-            List<CompletableFuture<com.skyflow.vault.data.InsertResponse>> futures = this.insertBatchFutures(request);
+            List<ErrorRecord> errorRecords = Collections.synchronizedList(new ArrayList<>());
+            List<CompletableFuture<com.skyflow.vault.data.InsertResponse>> futures = this.insertBatchFutures(request, errorRecords);
 
             return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
                     .thenApply(v -> {
                         List<Success> successRecords = new ArrayList<>();
-                        List<ErrorRecord> errorRecords = new ArrayList<>();
+//                        List<ErrorRecord> errorRecords = new ArrayList<>();
 
                         for (CompletableFuture<com.skyflow.vault.data.InsertResponse> future : futures) {
                             com.skyflow.vault.data.InsertResponse futureResponse = future.join();
@@ -111,10 +112,10 @@ public final class VaultController extends VaultClient {
             ArrayList<HashMap<String, Object>> originalPayload
     ) throws ExecutionException, InterruptedException {
         LogUtil.printInfoLog(InfoLogs.PROCESSING_BATCHES.getLog());
-        List<ErrorRecord> errorRecords = new ArrayList<>();
+//        List<ErrorRecord> errorRecords = new ArrayList<>();
         List<Success> successRecords = new ArrayList<>();
-
-        List<CompletableFuture<com.skyflow.vault.data.InsertResponse>> futures = this.insertBatchFutures(insertRequest);
+        List<ErrorRecord> errorRecords = Collections.synchronizedList(new ArrayList<>());
+        List<CompletableFuture<com.skyflow.vault.data.InsertResponse>> futures = this.insertBatchFutures(insertRequest, errorRecords);
 
         CompletableFuture<Void> allFutures = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
         allFutures.join();
@@ -137,8 +138,8 @@ public final class VaultController extends VaultClient {
 
 
     private List<CompletableFuture<com.skyflow.vault.data.InsertResponse>> insertBatchFutures(
-            com.skyflow.generated.rest.resources.recordservice.requests.InsertRequest insertRequest
-    ) {
+            com.skyflow.generated.rest.resources.recordservice.requests.InsertRequest insertRequest,
+            List<ErrorRecord> errorRecords) {
         List<InsertRecordData> records = insertRequest.getRecords().get();
 
         ExecutorService executor = Executors.newFixedThreadPool(insertConcurrencyLimit);
@@ -152,7 +153,10 @@ public final class VaultController extends VaultClient {
                 CompletableFuture<com.skyflow.vault.data.InsertResponse> future = CompletableFuture
                         .supplyAsync(() -> insertBatch(batch, insertRequest.getTableName().get()), executor)
                         .thenApply(response -> formatResponse(response, batchNumber, insertBatchSize))
-                        .exceptionally(ex -> new com.skyflow.vault.data.InsertResponse(null, handleBatchException(ex, batch, batchNumber, batches)));
+                        .exceptionally(ex -> {
+                            errorRecords.addAll(handleBatchException(ex, batch, batchNumber, batches));
+                            return null;
+                        });
                 futures.add(future);
             }
         } finally {
@@ -181,7 +185,7 @@ public final class VaultController extends VaultClient {
                     int batchSize = Integer.parseInt(userProvidedBatchSize);
                     int maxBatchSize = Math.min(batchSize, Constants.MAX_INSERT_BATCH_SIZE);
                     if (maxBatchSize > 0) {
-                        this.insertBatchSize = batchSize;
+                        this.insertBatchSize = maxBatchSize;
                     } else {
                         LogUtil.printWarningLog(WarningLogs.INVALID_BATCH_SIZE_PROVIDED.getLog());
                         this.insertBatchSize = Constants.INSERT_BATCH_SIZE;
