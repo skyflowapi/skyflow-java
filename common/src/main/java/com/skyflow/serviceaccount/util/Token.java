@@ -31,9 +31,6 @@ public class Token {
             LogUtil.printErrorLog(ErrorLogs.INVALID_BEARER_TOKEN.getLog());
             return true;
         }
-        if (currentTime > expiryTime) {
-            LogUtil.printInfoLog(InfoLogs.BEARER_TOKEN_EXPIRED.getLog());
-        }
         return currentTime > expiryTime;
     }
 
