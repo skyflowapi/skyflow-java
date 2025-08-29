@@ -125,7 +125,7 @@ public final class Utils extends BaseUtils {
                             tokensMap.put(key, tokenList);
                         }
                     }
-                    Success success = new Success(index, record.get(index).getSkyflowId().get(), tokensMap, null);
+                    Success success = new Success(indexNumber, record.get(index).getSkyflowId().get(), tokensMap, null);
                     successRecords.add(success);
                 }
                 indexNumber++;
