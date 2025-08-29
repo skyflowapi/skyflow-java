@@ -144,6 +144,7 @@ public enum ErrorMessage {
     FailedToEncodeFile("%s0 Validation error. Failed to encode the file. Ensure the file is in a supported format and try again."),
     FailedToDecodeFileFromResponse("%s0  Failed to decode the file from the response. Ensure the response is valid and try again."),
     EmptyFileAndFilePathInDeIdentifyFile("%s0 Validation error. Both file and filePath are empty. Specify either file object or filePath, not both."),
+    VaultTokenFormatIsNotAllowedForFiles("%s0 Validation error. Vault token format is not allowed for deidentify file request."),
     PollingForResultsFailed("%s0 API error. Polling for results failed. Unable to retrieve the deidentified file"),
     FailedtoSaveProcessedFile("%s0 Validation error. Failed to save the processed file. Ensure the output directory is valid and writable."),
     InvalidAudioFileType("%s0 Validation error. The file type is not supported. Specify a valid file type mp3 or wav."),

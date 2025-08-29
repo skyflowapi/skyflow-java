@@ -236,9 +236,19 @@ public class RecordsClient {
      * Uploads a file to the specified record.
      */
     public V1UpdateRecordResponse fileServiceUploadFile(
-            String vaultId, String objectName, String id, Optional<File> fileColumnName) {
+            String vaultId, String objectName, String id, Optional<File> file) {
         return this.rawClient
-                .fileServiceUploadFile(vaultId, objectName, id, fileColumnName)
+                .fileServiceUploadFile(vaultId, objectName, id, file)
+                .body();
+    }
+
+    /**
+     * Uploads a file to the specified record.
+     */
+    public V1UpdateRecordResponse fileServiceUploadFile(
+            String vaultId, String objectName, String id, Optional<File> file, FileServiceUploadFileRequest request) {
+        return this.rawClient
+                .fileServiceUploadFile(vaultId, objectName, id, file, request)
                 .body();
     }
 
@@ -249,25 +259,11 @@ public class RecordsClient {
             String vaultId,
             String objectName,
             String id,
-            Optional<File> fileColumnName,
-            FileServiceUploadFileRequest request) {
-        return this.rawClient
-                .fileServiceUploadFile(vaultId, objectName, id, fileColumnName, request)
-                .body();
-    }
-
-    /**
-     * Uploads a file to the specified record.
-     */
-    public V1UpdateRecordResponse fileServiceUploadFile(
-            String vaultId,
-            String objectName,
-            String id,
-            Optional<File> fileColumnName,
+            Optional<File> file,
             FileServiceUploadFileRequest request,
             RequestOptions requestOptions) {
         return this.rawClient
-                .fileServiceUploadFile(vaultId, objectName, id, fileColumnName, request, requestOptions)
+                .fileServiceUploadFile(vaultId, objectName, id, file, request, requestOptions)
                 .body();
     }
 

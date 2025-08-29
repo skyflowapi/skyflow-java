@@ -77,7 +77,7 @@ public final class DeidentifyStringResponse {
         return characterCount;
     }
 
-    @java.lang.Override
+    @Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof DeidentifyStringResponse && equalTo((DeidentifyStringResponse) other);
@@ -95,12 +95,12 @@ public final class DeidentifyStringResponse {
                 && characterCount == other.characterCount;
     }
 
-    @java.lang.Override
+    @Override
     public int hashCode() {
         return Objects.hash(this.processedText, this.entities, this.wordCount, this.characterCount);
     }
 
-    @java.lang.Override
+    @Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }
@@ -160,7 +160,7 @@ public final class DeidentifyStringResponse {
 
         private Builder() {}
 
-        @java.lang.Override
+        @Override
         public Builder from(DeidentifyStringResponse other) {
             processedText(other.getProcessedText());
             entities(other.getEntities());
@@ -173,7 +173,7 @@ public final class DeidentifyStringResponse {
          * De-identified text.<p>De-identified text.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @java.lang.Override
+        @Override
         @JsonSetter("processed_text")
         public WordCountStage processedText(@NotNull String processedText) {
             this.processedText = Objects.requireNonNull(processedText, "processedText must not be null");
@@ -184,7 +184,7 @@ public final class DeidentifyStringResponse {
          * Number of words from the input text.<p>Number of words from the input text.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @java.lang.Override
+        @Override
         @JsonSetter("word_count")
         public CharacterCountStage wordCount(int wordCount) {
             this.wordCount = wordCount;
@@ -195,7 +195,7 @@ public final class DeidentifyStringResponse {
          * Number of characters from the input text.<p>Number of characters from the input text.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @java.lang.Override
+        @Override
         @JsonSetter("character_count")
         public _FinalStage characterCount(int characterCount) {
             this.characterCount = characterCount;
@@ -206,7 +206,7 @@ public final class DeidentifyStringResponse {
          * <p>Detected entities.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @java.lang.Override
+        @Override
         public _FinalStage addAllEntities(List<DetectedEntity> entities) {
             this.entities.addAll(entities);
             return this;
@@ -216,7 +216,7 @@ public final class DeidentifyStringResponse {
          * <p>Detected entities.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @java.lang.Override
+        @Override
         public _FinalStage addEntities(DetectedEntity entities) {
             this.entities.add(entities);
             return this;
@@ -225,7 +225,7 @@ public final class DeidentifyStringResponse {
         /**
          * <p>Detected entities.</p>
          */
-        @java.lang.Override
+        @Override
         @JsonSetter(value = "entities", nulls = Nulls.SKIP)
         public _FinalStage entities(List<DetectedEntity> entities) {
             this.entities.clear();
@@ -233,7 +233,7 @@ public final class DeidentifyStringResponse {
             return this;
         }
 
-        @java.lang.Override
+        @Override
         public DeidentifyStringResponse build() {
             return new DeidentifyStringResponse(
                     processedText, entities, wordCount, characterCount, additionalProperties);

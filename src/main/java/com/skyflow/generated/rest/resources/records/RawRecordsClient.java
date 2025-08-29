@@ -591,12 +591,12 @@ public class RawRecordsClient {
      * Uploads a file to the specified record.
      */
     public ApiClientHttpResponse<V1UpdateRecordResponse> fileServiceUploadFile(
-            String vaultId, String objectName, String id, Optional<File> fileColumnName) {
+            String vaultId, String objectName, String id, Optional<File> file) {
         return fileServiceUploadFile(
                 vaultId,
                 objectName,
                 id,
-                fileColumnName,
+                file,
                 FileServiceUploadFileRequest.builder().build());
     }
 
@@ -604,12 +604,8 @@ public class RawRecordsClient {
      * Uploads a file to the specified record.
      */
     public ApiClientHttpResponse<V1UpdateRecordResponse> fileServiceUploadFile(
-            String vaultId,
-            String objectName,
-            String id,
-            Optional<File> fileColumnName,
-            FileServiceUploadFileRequest request) {
-        return fileServiceUploadFile(vaultId, objectName, id, fileColumnName, request, null);
+            String vaultId, String objectName, String id, Optional<File> file, FileServiceUploadFileRequest request) {
+        return fileServiceUploadFile(vaultId, objectName, id, file, request, null);
     }
 
     /**
@@ -619,7 +615,7 @@ public class RawRecordsClient {
             String vaultId,
             String objectName,
             String id,
-            Optional<File> fileColumnName,
+            Optional<File> file,
             FileServiceUploadFileRequest request,
             RequestOptions requestOptions) {
         HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
@@ -632,15 +628,17 @@ public class RawRecordsClient {
                 .build();
         MultipartBody.Builder body = new MultipartBody.Builder().setType(MultipartBody.FORM);
         try {
-            if (fileColumnName.isPresent()) {
-                String fileColumnNameMimeType =
-                        Files.probeContentType(fileColumnName.get().toPath());
-                MediaType fileColumnNameMimeTypeMediaType =
-                        fileColumnNameMimeType != null ? MediaType.parse(fileColumnNameMimeType) : null;
+            if (file.isPresent()) {
+                String fileMimeType = Files.probeContentType(file.get().toPath());
+                MediaType fileMimeTypeMediaType = fileMimeType != null ? MediaType.parse(fileMimeType) : null;
                 body.addFormDataPart(
-                        "fileColumnName",
-                        fileColumnName.get().getName(),
-                        RequestBody.create(fileColumnName.get(), fileColumnNameMimeTypeMediaType));
+                        "file", file.get().getName(), RequestBody.create(file.get(), fileMimeTypeMediaType));
+            }
+            if (request.getColumnName().isPresent()) {
+                body.addFormDataPart(
+                        "columnName",
+                        ObjectMappers.JSON_MAPPER.writeValueAsString(
+                                request.getColumnName().get()));
             }
         } catch (Exception e) {
             throw new RuntimeException(e);

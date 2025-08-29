@@ -83,7 +83,7 @@ public final class ErrorResponseError {
         return details;
     }
 
-    @java.lang.Override
+    @Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof ErrorResponseError && equalTo((ErrorResponseError) other);
@@ -102,12 +102,12 @@ public final class ErrorResponseError {
                 && details.equals(other.details);
     }
 
-    @java.lang.Override
+    @Override
     public int hashCode() {
         return Objects.hash(this.grpcCode, this.httpCode, this.httpStatus, this.message, this.details);
     }
 
-    @java.lang.Override
+    @Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }
@@ -169,7 +169,7 @@ public final class ErrorResponseError {
 
         private Builder() {}
 
-        @java.lang.Override
+        @Override
         public Builder from(ErrorResponseError other) {
             grpcCode(other.getGrpcCode());
             httpCode(other.getHttpCode());
@@ -183,7 +183,7 @@ public final class ErrorResponseError {
          * gRPC status codes. See https://grpc.io/docs/guides/status-codes.<p>gRPC status codes. See https://grpc.io/docs/guides/status-codes.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @java.lang.Override
+        @Override
         @JsonSetter("grpc_code")
         public HttpCodeStage grpcCode(int grpcCode) {
             this.grpcCode = grpcCode;
@@ -194,7 +194,7 @@ public final class ErrorResponseError {
          * HTTP status codes. See https://developer.mozilla.org/en-US/docs/Web/HTTP/Status.<p>HTTP status codes. See https://developer.mozilla.org/en-US/docs/Web/HTTP/Status.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @java.lang.Override
+        @Override
         @JsonSetter("http_code")
         public HttpStatusStage httpCode(int httpCode) {
             this.httpCode = httpCode;
@@ -205,34 +205,34 @@ public final class ErrorResponseError {
          * HTTP status message.<p>HTTP status message.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @java.lang.Override
+        @Override
         @JsonSetter("http_status")
         public MessageStage httpStatus(@NotNull String httpStatus) {
             this.httpStatus = Objects.requireNonNull(httpStatus, "httpStatus must not be null");
             return this;
         }
 
-        @java.lang.Override
+        @Override
         @JsonSetter("message")
         public _FinalStage message(@NotNull String message) {
             this.message = Objects.requireNonNull(message, "message must not be null");
             return this;
         }
 
-        @java.lang.Override
+        @Override
         public _FinalStage details(List<Map<String, Object>> details) {
             this.details = Optional.ofNullable(details);
             return this;
         }
 
-        @java.lang.Override
+        @Override
         @JsonSetter(value = "details", nulls = Nulls.SKIP)
         public _FinalStage details(Optional<List<Map<String, Object>>> details) {
             this.details = details;
             return this;
         }
 
-        @java.lang.Override
+        @Override
         public ErrorResponseError build() {
             return new ErrorResponseError(grpcCode, httpCode, httpStatus, message, details, additionalProperties);
         }
