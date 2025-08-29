@@ -69,6 +69,11 @@ public enum InfoLogs {
     TOKENIZE_REQUEST_RESOLVED("Tokenize request resolved."),
     TOKENIZE_SUCCESS("Data tokenized."),
 
+    // File upload interface
+    FILE_UPLOAD_TRIGGERED("File upload method triggered."),
+    VALIDATING_FILE_UPLOAD_REQUEST("Validating file upload request."),
+    FILE_UPLOAD_REQUEST_RESOLVED("File upload request resolved."),
+    FILE_UPLOAD_SUCCESS("File uploaded successfully."),
 
     // Invoke connection interface
     INVOKE_CONNECTION_TRIGGERED("Invoke connection method triggered."),
