@@ -118,7 +118,7 @@ public class VaultClient {
                 .addInterceptor(chain -> {
                     Request original = chain.request();
                     Request requestWithAuth = original.newBuilder()
-                            .header("Authorization", "Bearer " + this.vaultConfig.getCredentials().getToken())
+                            .header("Authorization", "Bearer " + this.token)
                             .build();
                     return chain.proceed(requestWithAuth);
                 })
