@@ -67,6 +67,7 @@ public class VaultClient {
             LogUtil.printInfoLog(InfoLogs.REUSE_API_KEY.getLog());
             token = this.finalCredentials.getApiKey();
         } else if (Token.isExpired(token)) {
+            LogUtil.printInfoLog(InfoLogs.BEARER_TOKEN_EXPIRED.getLog());
             token = Utils.generateBearerToken(this.finalCredentials);
         } else {
             LogUtil.printInfoLog(InfoLogs.REUSE_BEARER_TOKEN.getLog());
