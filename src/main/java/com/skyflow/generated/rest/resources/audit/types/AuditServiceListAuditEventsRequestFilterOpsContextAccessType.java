@@ -21,7 +21,7 @@ public enum AuditServiceListAuditEventsRequestFilterOpsContextAccessType {
     }
 
     @JsonValue
-    @java.lang.Override
+    @Override
     public String toString() {
         return this.value;
     }

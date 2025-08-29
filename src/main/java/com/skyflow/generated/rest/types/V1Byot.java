@@ -19,7 +19,7 @@ public enum V1Byot {
     }
 
     @JsonValue
-    @java.lang.Override
+    @Override
     public String toString() {
         return this.value;
     }

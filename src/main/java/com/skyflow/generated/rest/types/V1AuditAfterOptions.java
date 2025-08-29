@@ -49,7 +49,7 @@ public final class V1AuditAfterOptions {
         return changeId;
     }
 
-    @java.lang.Override
+    @Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof V1AuditAfterOptions && equalTo((V1AuditAfterOptions) other);
@@ -64,12 +64,12 @@ public final class V1AuditAfterOptions {
         return timestamp.equals(other.timestamp) && changeId.equals(other.changeId);
     }
 
-    @java.lang.Override
+    @Override
     public int hashCode() {
         return Objects.hash(this.timestamp, this.changeId);
     }
 
-    @java.lang.Override
+    @Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }

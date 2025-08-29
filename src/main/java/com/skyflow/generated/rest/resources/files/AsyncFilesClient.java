@@ -15,8 +15,10 @@ import com.skyflow.generated.rest.resources.files.requests.DeidentifySpreadsheet
 import com.skyflow.generated.rest.resources.files.requests.DeidentifyStructuredTextRequest;
 import com.skyflow.generated.rest.resources.files.requests.DeidentifyTextRequest;
 import com.skyflow.generated.rest.resources.files.requests.GetRunRequest;
+import com.skyflow.generated.rest.resources.files.requests.ReidentifyFileRequest;
 import com.skyflow.generated.rest.types.DeidentifyFileResponse;
 import com.skyflow.generated.rest.types.DeidentifyStatusResponse;
+import com.skyflow.generated.rest.types.ReidentifyFileResponse;
 import java.util.concurrent.CompletableFuture;
 
 public class AsyncFilesClient {
@@ -184,5 +186,20 @@ public class AsyncFilesClient {
     public CompletableFuture<DeidentifyStatusResponse> getRun(
             String runId, GetRunRequest request, RequestOptions requestOptions) {
         return this.rawClient.getRun(runId, request, requestOptions).thenApply(response -> response.body());
+    }
+
+    /**
+     * Re-identifies tokens in a file.
+     */
+    public CompletableFuture<ReidentifyFileResponse> reidentifyFile(ReidentifyFileRequest request) {
+        return this.rawClient.reidentifyFile(request).thenApply(response -> response.body());
+    }
+
+    /**
+     * Re-identifies tokens in a file.
+     */
+    public CompletableFuture<ReidentifyFileResponse> reidentifyFile(
+            ReidentifyFileRequest request, RequestOptions requestOptions) {
+        return this.rawClient.reidentifyFile(request, requestOptions).thenApply(response -> response.body());
     }
 }

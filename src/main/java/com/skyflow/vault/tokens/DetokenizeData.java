@@ -8,12 +8,12 @@ public class DetokenizeData {
 
     public DetokenizeData(String token) {
         this.token = token;
-        this.redactionType = RedactionType.PLAIN_TEXT;
+        this.redactionType = RedactionType.DEFAULT;
     }
 
     public DetokenizeData(String token, RedactionType redactionType) {
         this.token = token;
-        this.redactionType = redactionType == null ? RedactionType.PLAIN_TEXT : redactionType;
+            this.redactionType = redactionType == null ? RedactionType.DEFAULT : redactionType;
     }
 
     public String getToken() {

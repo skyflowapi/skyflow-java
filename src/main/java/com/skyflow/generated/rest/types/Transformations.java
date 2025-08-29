@@ -37,7 +37,7 @@ public final class Transformations {
         return shiftDates;
     }
 
-    @java.lang.Override
+    @Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof Transformations && equalTo((Transformations) other);
@@ -52,12 +52,12 @@ public final class Transformations {
         return shiftDates.equals(other.shiftDates);
     }
 
-    @java.lang.Override
+    @Override
     public int hashCode() {
         return Objects.hash(this.shiftDates);
     }
 
-    @java.lang.Override
+    @Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }

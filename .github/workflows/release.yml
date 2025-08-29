@@ -7,12 +7,12 @@ jobs:
     uses: ./.github/workflows/shared-build-and-deploy.yml
     with:
       ref: ${{ github.ref_name }}
-      server-id: ossrh
+      server-id: central
       profile: maven-central
       tag: 'public'
     secrets:
-      server-username: ${{ secrets.OSSRH_USERNAME }}
-      server-password: ${{ secrets.OSSRH_PASSWORD }}
+      server-username: ${{ secrets.CENTRAL_PUBLISHER_PORTAL_USERNAME }}
+      server-password: ${{ secrets.CENTRAL_PUBLISHER_PORTAL_PASSWORD }}
       gpg-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
       gpg-passphrase: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
       skyflow-credentials: ${{ secrets.SKYFLOW_CREDENTIALS }} >> .env

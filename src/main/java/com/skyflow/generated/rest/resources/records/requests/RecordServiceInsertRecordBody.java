@@ -87,7 +87,7 @@ public final class RecordServiceInsertRecordBody {
         return byot;
     }
 
-    @java.lang.Override
+    @Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof RecordServiceInsertRecordBody && equalTo((RecordServiceInsertRecordBody) other);
@@ -106,12 +106,12 @@ public final class RecordServiceInsertRecordBody {
                 && byot.equals(other.byot);
     }
 
-    @java.lang.Override
+    @Override
     public int hashCode() {
         return Objects.hash(this.records, this.tokenization, this.upsert, this.homogeneous, this.byot);
     }
 
-    @java.lang.Override
+    @Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }
