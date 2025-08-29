@@ -43,6 +43,7 @@ public enum ErrorLogs {
     INVALID_KEY_SPEC("Unable to parse RSA private key."),
     BEARER_TOKEN_REJECTED("Bearer token request resulted in failure."),
     SIGNED_DATA_TOKENS_REJECTED("Signed data tokens request resulted in failure."),
+    BEARER_TOKEN_EXPIRED("Bearer token is expired."),
 
     // Vault api interfaces
     TABLE_IS_REQUIRED("Invalid %s1 request. Table is required."),

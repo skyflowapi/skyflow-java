@@ -64,8 +64,10 @@ public class VaultClient {
         prioritiseCredentials();
         Validations.validateCredentials(this.finalCredentials);
         if (this.finalCredentials.getApiKey() != null) {
-            LogUtil.printInfoLog(InfoLogs.REUSE_API_KEY.getLog());
+            LogUtil.printInfoLog(InfoLogs.USE_API_KEY.getLog());
             token = this.finalCredentials.getApiKey();
+        } else if (token == null || token.trim().isEmpty()) {
+            token = Utils.generateBearerToken(this.finalCredentials);
         } else if (Token.isExpired(token)) {
             LogUtil.printInfoLog(InfoLogs.BEARER_TOKEN_EXPIRED.getLog());
             token = Utils.generateBearerToken(this.finalCredentials);
@@ -73,9 +75,7 @@ public class VaultClient {
             LogUtil.printInfoLog(InfoLogs.REUSE_BEARER_TOKEN.getLog());
         }
         updateExecutorInHTTP(); // update executor
-        // token need to add in http client
         this.apiClient = this.apiClientBuilder.build();
-
     }
 
     private void updateVaultURL() {

@@ -9,6 +9,7 @@ import com.skyflow.errors.SkyflowException;
 import com.skyflow.logs.ErrorLogs;
 import com.skyflow.logs.InfoLogs;
 import com.skyflow.serviceaccount.util.BearerToken;
+import com.skyflow.serviceaccount.util.Token;
 import com.skyflow.utils.logger.LogUtil;
 import org.apache.commons.codec.binary.Base64;
 
@@ -43,23 +44,31 @@ public class BaseUtils {
     }
 
     public static String generateBearerToken(Credentials credentials) throws SkyflowException {
+        String bearerToken;
         if (credentials.getPath() != null) {
-            return BearerToken.builder()
+            bearerToken = BearerToken.builder()
                     .setCredentials(new File(credentials.getPath()))
                     .setRoles(credentials.getRoles())
                     .setCtx(credentials.getContext())
                     .build()
                     .getBearerToken();
         } else if (credentials.getCredentialsString() != null) {
-            return BearerToken.builder()
+            bearerToken = BearerToken.builder()
                     .setCredentials(credentials.getCredentialsString())
                     .setRoles(credentials.getRoles())
                     .setCtx(credentials.getContext())
                     .build()
                     .getBearerToken();
         } else {
-            return credentials.getToken();
+            LogUtil.printInfoLog(InfoLogs.USE_CLIENT_PROVIDED_BEARER_TOKEN.getLog());
+            bearerToken = credentials.getToken();
         }
+        // check expiry for generated token
+        if (Token.isExpired(bearerToken)) {
+            LogUtil.printErrorLog(ErrorLogs.BEARER_TOKEN_EXPIRED.getLog());
+            throw new SkyflowException(ErrorMessage.BearerTokenExpired.getMessage());
+        }
+        return bearerToken;
     }
 
     public static PrivateKey getPrivateKeyFromPem(String pemKey) throws SkyflowException {
