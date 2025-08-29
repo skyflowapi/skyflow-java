@@ -146,7 +146,7 @@ public class SignedDataTokens {
                     .setExpiration(expirationDate)
                     .signWith(SignatureAlgorithm.RS256, pvtKey)
                     .compact();
-            SignedDataTokenResponse responseObject = new SignedDataTokenResponse(dataToken, eachSignedDataToken);
+            SignedDataTokenResponse responseObject = new SignedDataTokenResponse(dataToken, eachSignedDataToken, null);
             list.add(responseObject);
         }
         return list;

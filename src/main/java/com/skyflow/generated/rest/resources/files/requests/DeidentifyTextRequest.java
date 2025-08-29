@@ -30,6 +30,8 @@ public final class DeidentifyTextRequest {
 
     private final DeidentifyTextRequestFile file;
 
+    private final Optional<String> configurationId;
+
     private final Optional<List<EntityType>> entityTypes;
 
     private final Optional<TokenTypeWithoutVault> tokenType;
@@ -45,6 +47,7 @@ public final class DeidentifyTextRequest {
     private DeidentifyTextRequest(
             String vaultId,
             DeidentifyTextRequestFile file,
+            Optional<String> configurationId,
             Optional<List<EntityType>> entityTypes,
             Optional<TokenTypeWithoutVault> tokenType,
             Optional<List<String>> allowRegex,
@@ -53,6 +56,7 @@ public final class DeidentifyTextRequest {
             Map<String, Object> additionalProperties) {
         this.vaultId = vaultId;
         this.file = file;
+        this.configurationId = configurationId;
         this.entityTypes = entityTypes;
         this.tokenType = tokenType;
         this.allowRegex = allowRegex;
@@ -72,6 +76,11 @@ public final class DeidentifyTextRequest {
     @JsonProperty("file")
     public DeidentifyTextRequestFile getFile() {
         return file;
+    }
+
+    @JsonProperty("configuration_id")
+    public Optional<String> getConfigurationId() {
+        return configurationId;
     }
 
     @JsonProperty("entity_types")
@@ -99,7 +108,7 @@ public final class DeidentifyTextRequest {
         return transformations;
     }
 
-    @java.lang.Override
+    @Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof DeidentifyTextRequest && equalTo((DeidentifyTextRequest) other);
@@ -113,6 +122,7 @@ public final class DeidentifyTextRequest {
     private boolean equalTo(DeidentifyTextRequest other) {
         return vaultId.equals(other.vaultId)
                 && file.equals(other.file)
+                && configurationId.equals(other.configurationId)
                 && entityTypes.equals(other.entityTypes)
                 && tokenType.equals(other.tokenType)
                 && allowRegex.equals(other.allowRegex)
@@ -120,11 +130,12 @@ public final class DeidentifyTextRequest {
                 && transformations.equals(other.transformations);
     }
 
-    @java.lang.Override
+    @Override
     public int hashCode() {
         return Objects.hash(
                 this.vaultId,
                 this.file,
+                this.configurationId,
                 this.entityTypes,
                 this.tokenType,
                 this.allowRegex,
@@ -132,7 +143,7 @@ public final class DeidentifyTextRequest {
                 this.transformations);
     }
 
-    @java.lang.Override
+    @Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }
@@ -156,6 +167,10 @@ public final class DeidentifyTextRequest {
 
     public interface _FinalStage {
         DeidentifyTextRequest build();
+
+        _FinalStage configurationId(Optional<String> configurationId);
+
+        _FinalStage configurationId(String configurationId);
 
         _FinalStage entityTypes(Optional<List<EntityType>> entityTypes);
 
@@ -194,15 +209,18 @@ public final class DeidentifyTextRequest {
 
         private Optional<List<EntityType>> entityTypes = Optional.empty();
 
+        private Optional<String> configurationId = Optional.empty();
+
         @JsonAnySetter
         private Map<String, Object> additionalProperties = new HashMap<>();
 
         private Builder() {}
 
-        @java.lang.Override
+        @Override
         public Builder from(DeidentifyTextRequest other) {
             vaultId(other.getVaultId());
             file(other.getFile());
+            configurationId(other.getConfigurationId());
             entityTypes(other.getEntityTypes());
             tokenType(other.getTokenType());
             allowRegex(other.getAllowRegex());
@@ -211,7 +229,7 @@ public final class DeidentifyTextRequest {
             return this;
         }
 
-        @java.lang.Override
+        @Override
         @JsonSetter("vault_id")
         public FileStage vaultId(@NotNull String vaultId) {
             this.vaultId = Objects.requireNonNull(vaultId, "vaultId must not be null");
@@ -222,83 +240,97 @@ public final class DeidentifyTextRequest {
          * File to de-identify. Files are specified as Base64-encoded data.<p>File to de-identify. Files are specified as Base64-encoded data.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @java.lang.Override
+        @Override
         @JsonSetter("file")
         public _FinalStage file(@NotNull DeidentifyTextRequestFile file) {
             this.file = Objects.requireNonNull(file, "file must not be null");
             return this;
         }
 
-        @java.lang.Override
+        @Override
         public _FinalStage transformations(Transformations transformations) {
             this.transformations = Optional.ofNullable(transformations);
             return this;
         }
 
-        @java.lang.Override
+        @Override
         @JsonSetter(value = "transformations", nulls = Nulls.SKIP)
         public _FinalStage transformations(Optional<Transformations> transformations) {
             this.transformations = transformations;
             return this;
         }
 
-        @java.lang.Override
+        @Override
         public _FinalStage restrictRegex(List<String> restrictRegex) {
             this.restrictRegex = Optional.ofNullable(restrictRegex);
             return this;
         }
 
-        @java.lang.Override
+        @Override
         @JsonSetter(value = "restrict_regex", nulls = Nulls.SKIP)
         public _FinalStage restrictRegex(Optional<List<String>> restrictRegex) {
             this.restrictRegex = restrictRegex;
             return this;
         }
 
-        @java.lang.Override
+        @Override
         public _FinalStage allowRegex(List<String> allowRegex) {
             this.allowRegex = Optional.ofNullable(allowRegex);
             return this;
         }
 
-        @java.lang.Override
+        @Override
         @JsonSetter(value = "allow_regex", nulls = Nulls.SKIP)
         public _FinalStage allowRegex(Optional<List<String>> allowRegex) {
             this.allowRegex = allowRegex;
             return this;
         }
 
-        @java.lang.Override
+        @Override
         public _FinalStage tokenType(TokenTypeWithoutVault tokenType) {
             this.tokenType = Optional.ofNullable(tokenType);
             return this;
         }
 
-        @java.lang.Override
+        @Override
         @JsonSetter(value = "token_type", nulls = Nulls.SKIP)
         public _FinalStage tokenType(Optional<TokenTypeWithoutVault> tokenType) {
             this.tokenType = tokenType;
             return this;
         }
 
-        @java.lang.Override
+        @Override
         public _FinalStage entityTypes(List<EntityType> entityTypes) {
             this.entityTypes = Optional.ofNullable(entityTypes);
             return this;
         }
 
-        @java.lang.Override
+        @Override
         @JsonSetter(value = "entity_types", nulls = Nulls.SKIP)
         public _FinalStage entityTypes(Optional<List<EntityType>> entityTypes) {
             this.entityTypes = entityTypes;
             return this;
         }
 
-        @java.lang.Override
+        @Override
+        public _FinalStage configurationId(String configurationId) {
+            this.configurationId = Optional.ofNullable(configurationId);
+            return this;
+        }
+
+        @Override
+        @JsonSetter(value = "configuration_id", nulls = Nulls.SKIP)
+        public _FinalStage configurationId(Optional<String> configurationId) {
+            this.configurationId = configurationId;
+            return this;
+        }
+
+        @Override
         public DeidentifyTextRequest build() {
             return new DeidentifyTextRequest(
                     vaultId,
                     file,
+                    configurationId,
                     entityTypes,
                     tokenType,
                     allowRegex,

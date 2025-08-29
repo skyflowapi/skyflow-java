@@ -15,8 +15,10 @@ import com.skyflow.generated.rest.resources.files.requests.DeidentifySpreadsheet
 import com.skyflow.generated.rest.resources.files.requests.DeidentifyStructuredTextRequest;
 import com.skyflow.generated.rest.resources.files.requests.DeidentifyTextRequest;
 import com.skyflow.generated.rest.resources.files.requests.GetRunRequest;
+import com.skyflow.generated.rest.resources.files.requests.ReidentifyFileRequest;
 import com.skyflow.generated.rest.types.DeidentifyFileResponse;
 import com.skyflow.generated.rest.types.DeidentifyStatusResponse;
+import com.skyflow.generated.rest.types.ReidentifyFileResponse;
 
 public class FilesClient {
     protected final ClientOptions clientOptions;
@@ -176,5 +178,19 @@ public class FilesClient {
      */
     public DeidentifyStatusResponse getRun(String runId, GetRunRequest request, RequestOptions requestOptions) {
         return this.rawClient.getRun(runId, request, requestOptions).body();
+    }
+
+    /**
+     * Re-identifies tokens in a file.
+     */
+    public ReidentifyFileResponse reidentifyFile(ReidentifyFileRequest request) {
+        return this.rawClient.reidentifyFile(request).body();
+    }
+
+    /**
+     * Re-identifies tokens in a file.
+     */
+    public ReidentifyFileResponse reidentifyFile(ReidentifyFileRequest request, RequestOptions requestOptions) {
+        return this.rawClient.reidentifyFile(request, requestOptions).body();
     }
 }

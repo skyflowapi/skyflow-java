@@ -65,7 +65,7 @@ public final class ReidentifyStringRequestFormat {
         return plaintext;
     }
 
-    @java.lang.Override
+    @Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof ReidentifyStringRequestFormat && equalTo((ReidentifyStringRequestFormat) other);
@@ -80,12 +80,12 @@ public final class ReidentifyStringRequestFormat {
         return redacted.equals(other.redacted) && masked.equals(other.masked) && plaintext.equals(other.plaintext);
     }
 
-    @java.lang.Override
+    @Override
     public int hashCode() {
         return Objects.hash(this.redacted, this.masked, this.plaintext);
     }
 
-    @java.lang.Override
+    @Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }

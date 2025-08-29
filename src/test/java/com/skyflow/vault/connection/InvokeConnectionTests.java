@@ -425,9 +425,11 @@ public class InvokeConnectionTests {
             data.addProperty("test_key_2", "test_value_2");
             HashMap<String, String> metadata = new HashMap<>();
             metadata.put("requestId", "12345");
-            InvokeConnectionResponse connectionResponse = new InvokeConnectionResponse(data, metadata);
+            InvokeConnectionResponse connectionResponse = new InvokeConnectionResponse(data, metadata, null);
             String responseString = "{\"data\":{\"test_key_1\":\"test_value_1\",\"test_key_2\":\"test_value_2\"}," +
-                    "\"metadata\":{\"requestId\":\"12345\"}}";
+                    "\"metadata\":{\"requestId\":\"12345\"}," +
+                    "\"errors\":null}";
+
             Assert.assertNotNull(connectionResponse.getData());
             Assert.assertEquals(responseString, connectionResponse.toString());
             Assert.assertEquals(1, connectionResponse.getMetadata().size());

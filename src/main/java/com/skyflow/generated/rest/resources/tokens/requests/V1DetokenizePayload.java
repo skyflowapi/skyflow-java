@@ -65,7 +65,7 @@ public final class V1DetokenizePayload {
         return continueOnError;
     }
 
-    @java.lang.Override
+    @Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof V1DetokenizePayload && equalTo((V1DetokenizePayload) other);
@@ -82,12 +82,12 @@ public final class V1DetokenizePayload {
                 && continueOnError.equals(other.continueOnError);
     }
 
-    @java.lang.Override
+    @Override
     public int hashCode() {
         return Objects.hash(this.detokenizationParameters, this.downloadUrl, this.continueOnError);
     }
 
-    @java.lang.Override
+    @Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }

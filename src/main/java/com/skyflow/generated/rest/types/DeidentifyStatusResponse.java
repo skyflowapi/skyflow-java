@@ -35,9 +35,9 @@ public final class DeidentifyStatusResponse {
 
     private final Optional<Integer> characterCount;
 
-    private final Optional<Integer> size;
+    private final Optional<Double> size;
 
-    private final Optional<Integer> duration;
+    private final Optional<Double> duration;
 
     private final Optional<Integer> pages;
 
@@ -52,8 +52,8 @@ public final class DeidentifyStatusResponse {
             String message,
             Optional<Integer> wordCount,
             Optional<Integer> characterCount,
-            Optional<Integer> size,
-            Optional<Integer> duration,
+            Optional<Double> size,
+            Optional<Double> duration,
             Optional<Integer> pages,
             Optional<Integer> slides,
             Map<String, Object> additionalProperties) {
@@ -122,7 +122,7 @@ public final class DeidentifyStatusResponse {
      * @return Size of the processed text in kilobytes (KB).
      */
     @JsonProperty("size")
-    public Optional<Integer> getSize() {
+    public Optional<Double> getSize() {
         return size;
     }
 
@@ -130,7 +130,7 @@ public final class DeidentifyStatusResponse {
      * @return Duration of the processed audio in seconds.
      */
     @JsonProperty("duration")
-    public Optional<Integer> getDuration() {
+    public Optional<Double> getDuration() {
         return duration;
     }
 
@@ -150,7 +150,7 @@ public final class DeidentifyStatusResponse {
         return slides;
     }
 
-    @java.lang.Override
+    @Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof DeidentifyStatusResponse && equalTo((DeidentifyStatusResponse) other);
@@ -174,7 +174,7 @@ public final class DeidentifyStatusResponse {
                 && slides.equals(other.slides);
     }
 
-    @java.lang.Override
+    @Override
     public int hashCode() {
         return Objects.hash(
                 this.status,
@@ -189,7 +189,7 @@ public final class DeidentifyStatusResponse {
                 this.slides);
     }
 
-    @java.lang.Override
+    @Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }
@@ -250,16 +250,16 @@ public final class DeidentifyStatusResponse {
         /**
          * <p>Size of the processed text in kilobytes (KB).</p>
          */
-        _FinalStage size(Optional<Integer> size);
+        _FinalStage size(Optional<Double> size);
 
-        _FinalStage size(Integer size);
+        _FinalStage size(Double size);
 
         /**
          * <p>Duration of the processed audio in seconds.</p>
          */
-        _FinalStage duration(Optional<Integer> duration);
+        _FinalStage duration(Optional<Double> duration);
 
-        _FinalStage duration(Integer duration);
+        _FinalStage duration(Double duration);
 
         /**
          * <p>Number of pages in the processed PDF.</p>
@@ -288,9 +288,9 @@ public final class DeidentifyStatusResponse {
 
         private Optional<Integer> pages = Optional.empty();
 
-        private Optional<Integer> duration = Optional.empty();
+        private Optional<Double> duration = Optional.empty();
 
-        private Optional<Integer> size = Optional.empty();
+        private Optional<Double> size = Optional.empty();
 
         private Optional<Integer> characterCount = Optional.empty();
 
@@ -303,7 +303,7 @@ public final class DeidentifyStatusResponse {
 
         private Builder() {}
 
-        @java.lang.Override
+        @Override
         public Builder from(DeidentifyStatusResponse other) {
             status(other.getStatus());
             output(other.getOutput());
@@ -322,7 +322,7 @@ public final class DeidentifyStatusResponse {
          * Status of the detect run.<p>Status of the detect run.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @java.lang.Override
+        @Override
         @JsonSetter("status")
         public OutputTypeStage status(@NotNull DeidentifyStatusResponseStatus status) {
             this.status = Objects.requireNonNull(status, "status must not be null");
@@ -333,7 +333,7 @@ public final class DeidentifyStatusResponse {
          * How the output file is specified.<p>How the output file is specified.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @java.lang.Override
+        @Override
         @JsonSetter("output_type")
         public MessageStage outputType(@NotNull DeidentifyStatusResponseOutputType outputType) {
             this.outputType = Objects.requireNonNull(outputType, "outputType must not be null");
@@ -344,7 +344,7 @@ public final class DeidentifyStatusResponse {
          * Status details about the detect run.<p>Status details about the detect run.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @java.lang.Override
+        @Override
         @JsonSetter("message")
         public _FinalStage message(@NotNull String message) {
             this.message = Objects.requireNonNull(message, "message must not be null");
@@ -355,7 +355,7 @@ public final class DeidentifyStatusResponse {
          * <p>Number of slides in the processed presentation.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @java.lang.Override
+        @Override
         public _FinalStage slides(Integer slides) {
             this.slides = Optional.ofNullable(slides);
             return this;
@@ -364,7 +364,7 @@ public final class DeidentifyStatusResponse {
         /**
          * <p>Number of slides in the processed presentation.</p>
          */
-        @java.lang.Override
+        @Override
         @JsonSetter(value = "slides", nulls = Nulls.SKIP)
         public _FinalStage slides(Optional<Integer> slides) {
             this.slides = slides;
@@ -375,7 +375,7 @@ public final class DeidentifyStatusResponse {
          * <p>Number of pages in the processed PDF.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @java.lang.Override
+        @Override
         public _FinalStage pages(Integer pages) {
             this.pages = Optional.ofNullable(pages);
             return this;
@@ -384,7 +384,7 @@ public final class DeidentifyStatusResponse {
         /**
          * <p>Number of pages in the processed PDF.</p>
          */
-        @java.lang.Override
+        @Override
         @JsonSetter(value = "pages", nulls = Nulls.SKIP)
         public _FinalStage pages(Optional<Integer> pages) {
             this.pages = pages;
@@ -395,8 +395,8 @@ public final class DeidentifyStatusResponse {
          * <p>Duration of the processed audio in seconds.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @java.lang.Override
-        public _FinalStage duration(Integer duration) {
+        @Override
+        public _FinalStage duration(Double duration) {
             this.duration = Optional.ofNullable(duration);
             return this;
         }
@@ -404,9 +404,9 @@ public final class DeidentifyStatusResponse {
         /**
          * <p>Duration of the processed audio in seconds.</p>
          */
-        @java.lang.Override
+        @Override
         @JsonSetter(value = "duration", nulls = Nulls.SKIP)
-        public _FinalStage duration(Optional<Integer> duration) {
+        public _FinalStage duration(Optional<Double> duration) {
             this.duration = duration;
             return this;
         }
@@ -415,8 +415,8 @@ public final class DeidentifyStatusResponse {
          * <p>Size of the processed text in kilobytes (KB).</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @java.lang.Override
-        public _FinalStage size(Integer size) {
+        @Override
+        public _FinalStage size(Double size) {
             this.size = Optional.ofNullable(size);
             return this;
         }
@@ -424,9 +424,9 @@ public final class DeidentifyStatusResponse {
         /**
          * <p>Size of the processed text in kilobytes (KB).</p>
          */
-        @java.lang.Override
+        @Override
         @JsonSetter(value = "size", nulls = Nulls.SKIP)
-        public _FinalStage size(Optional<Integer> size) {
+        public _FinalStage size(Optional<Double> size) {
             this.size = size;
             return this;
         }
@@ -435,7 +435,7 @@ public final class DeidentifyStatusResponse {
          * <p>Number of characters in the processed text.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @java.lang.Override
+        @Override
         public _FinalStage characterCount(Integer characterCount) {
             this.characterCount = Optional.ofNullable(characterCount);
             return this;
@@ -444,7 +444,7 @@ public final class DeidentifyStatusResponse {
         /**
          * <p>Number of characters in the processed text.</p>
          */
-        @java.lang.Override
+        @Override
         @JsonSetter(value = "character_count", nulls = Nulls.SKIP)
         public _FinalStage characterCount(Optional<Integer> characterCount) {
             this.characterCount = characterCount;
@@ -455,7 +455,7 @@ public final class DeidentifyStatusResponse {
          * <p>Number of words in the processed text.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @java.lang.Override
+        @Override
         public _FinalStage wordCount(Integer wordCount) {
             this.wordCount = Optional.ofNullable(wordCount);
             return this;
@@ -464,7 +464,7 @@ public final class DeidentifyStatusResponse {
         /**
          * <p>Number of words in the processed text.</p>
          */
-        @java.lang.Override
+        @Override
         @JsonSetter(value = "word_count", nulls = Nulls.SKIP)
         public _FinalStage wordCount(Optional<Integer> wordCount) {
             this.wordCount = wordCount;
@@ -475,7 +475,7 @@ public final class DeidentifyStatusResponse {
          * <p>How the input file was specified.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @java.lang.Override
+        @Override
         public _FinalStage addAllOutput(List<DeidentifyFileOutput> output) {
             this.output.addAll(output);
             return this;
@@ -485,7 +485,7 @@ public final class DeidentifyStatusResponse {
          * <p>How the input file was specified.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @java.lang.Override
+        @Override
         public _FinalStage addOutput(DeidentifyFileOutput output) {
             this.output.add(output);
             return this;
@@ -494,7 +494,7 @@ public final class DeidentifyStatusResponse {
         /**
          * <p>How the input file was specified.</p>
          */
-        @java.lang.Override
+        @Override
         @JsonSetter(value = "output", nulls = Nulls.SKIP)
         public _FinalStage output(List<DeidentifyFileOutput> output) {
             this.output.clear();
@@ -502,7 +502,7 @@ public final class DeidentifyStatusResponse {
             return this;
         }
 
-        @java.lang.Override
+        @Override
         public DeidentifyStatusResponse build() {
             return new DeidentifyStatusResponse(
                     status,

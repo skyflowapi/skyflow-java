@@ -5,19 +5,23 @@ package com.skyflow.generated.rest.types;
 
 import com.fasterxml.jackson.annotation.JsonValue;
 
-public enum DetectFileRequestDataType {
-    UNKNOWN("UNKNOWN"),
+public enum ReidentifyFileResponseStatus {
+    FAILED("FAILED"),
 
-    BASE_64("BASE64");
+    IN_PROGRESS("IN_PROGRESS"),
+
+    SUCCESS("SUCCESS"),
+
+    UNKNOWN("UNKNOWN");
 
     private final String value;
 
-    DetectFileRequestDataType(String value) {
+    ReidentifyFileResponseStatus(String value) {
         this.value = value;
     }
 
     @JsonValue
-    @java.lang.Override
+    @Override
     public String toString() {
         return this.value;
     }

@@ -24,7 +24,7 @@ public class InsertResponse {
 
     @Override
     public String toString() {
-        Gson gson = new Gson();
+        Gson gson = new Gson().newBuilder().serializeNulls().create();
         return gson.toJson(this);
     }
 }

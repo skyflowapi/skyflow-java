@@ -162,7 +162,7 @@ public final class AuditEventContext {
         return bearerTokenContextId;
     }
 
-    @java.lang.Override
+    @Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof AuditEventContext && equalTo((AuditEventContext) other);
@@ -188,7 +188,7 @@ public final class AuditEventContext {
                 && bearerTokenContextId.equals(other.bearerTokenContextId);
     }
 
-    @java.lang.Override
+    @Override
     public int hashCode() {
         return Objects.hash(
                 this.changeId,
@@ -205,7 +205,7 @@ public final class AuditEventContext {
                 this.bearerTokenContextId);
     }
 
-    @java.lang.Override
+    @Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }

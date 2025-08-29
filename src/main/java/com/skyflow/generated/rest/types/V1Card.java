@@ -135,7 +135,7 @@ public final class V1Card {
         return cardExpiry;
     }
 
-    @java.lang.Override
+    @Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof V1Card && equalTo((V1Card) other);
@@ -158,7 +158,7 @@ public final class V1Card {
                 && cardExpiry.equals(other.cardExpiry);
     }
 
-    @java.lang.Override
+    @Override
     public int hashCode() {
         return Objects.hash(
                 this.bin,
@@ -172,7 +172,7 @@ public final class V1Card {
                 this.cardExpiry);
     }
 
-    @java.lang.Override
+    @Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }
