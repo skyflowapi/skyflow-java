@@ -65,8 +65,8 @@ public class BaseUtils {
         }
         // check expiry for generated token
         if (Token.isExpired(bearerToken)) {
-            LogUtil.printErrorLog(ErrorLogs.BEARER_TOKEN_EXPIRED.getLog());
-            throw new SkyflowException(ErrorMessage.BearerTokenExpired.getMessage());
+            LogUtil.printErrorLog(ErrorLogs.INVALID_BEARER_TOKEN.getLog());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.BearerTokenExpired.getMessage());
         }
         return bearerToken;
     }
