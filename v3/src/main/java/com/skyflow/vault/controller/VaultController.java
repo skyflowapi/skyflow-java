@@ -77,14 +77,13 @@ public final class VaultController extends VaultClient {
             setBearerToken();
             configureInsertConcurrencyAndBatchSize(insertRequest.getValues().size());
             com.skyflow.generated.rest.resources.recordservice.requests.InsertRequest request = super.getBulkInsertRequestBody(insertRequest, super.getVaultConfig());
-            ExecutorService executor = Executors.newFixedThreadPool(insertConcurrencyLimit);
 
-            List<ErrorRecord> errorRecords = new ArrayList<>();
-            List<CompletableFuture<com.skyflow.vault.data.InsertResponse>> futures = this.insertBatchFutures(request, errorRecords, executor);
+            List<CompletableFuture<com.skyflow.vault.data.InsertResponse>> futures = this.insertBatchFutures(request);
 
             return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
                     .thenApply(v -> {
                         List<Success> successRecords = new ArrayList<>();
+                        List<ErrorRecord> errorRecords = new ArrayList<>();
 
                         for (CompletableFuture<com.skyflow.vault.data.InsertResponse> future : futures) {
                             com.skyflow.vault.data.InsertResponse futureResponse = future.join();
@@ -97,7 +96,6 @@ public final class VaultController extends VaultClient {
                                 }
                             }
                         }
-                        executor.shutdown(); // Shutdown the executor after all tasks are completed
 
                         return new com.skyflow.vault.data.InsertResponse(successRecords, errorRecords, insertRequest.getValues());
                     });
@@ -115,9 +113,9 @@ public final class VaultController extends VaultClient {
         LogUtil.printInfoLog(InfoLogs.PROCESSING_BATCHES.getLog());
         List<ErrorRecord> errorRecords = new ArrayList<>();
         List<Success> successRecords = new ArrayList<>();
-        ExecutorService executor = Executors.newFixedThreadPool(insertConcurrencyLimit);
 
-        List<CompletableFuture<com.skyflow.vault.data.InsertResponse>> futures = this.insertBatchFutures(insertRequest, errorRecords, executor);
+        List<CompletableFuture<com.skyflow.vault.data.InsertResponse>> futures = this.insertBatchFutures(insertRequest);
+
         CompletableFuture<Void> allFutures = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
         allFutures.join();
 
@@ -131,7 +129,6 @@ public final class VaultController extends VaultClient {
                     errorRecords.addAll(futureResponse.getErrors());
                 }
             }
-            executor.shutdown(); // Shutdown the executor after all tasks are completed
         }
         com.skyflow.vault.data.InsertResponse response = new com.skyflow.vault.data.InsertResponse(successRecords, errorRecords, originalPayload);
         LogUtil.printInfoLog(InfoLogs.INSERT_REQUEST_RESOLVED.getLog());
@@ -140,9 +137,11 @@ public final class VaultController extends VaultClient {
 
 
     private List<CompletableFuture<com.skyflow.vault.data.InsertResponse>> insertBatchFutures(
-            com.skyflow.generated.rest.resources.recordservice.requests.InsertRequest insertRequest, List<ErrorRecord> errorRecords, ExecutorService executor) {
+            com.skyflow.generated.rest.resources.recordservice.requests.InsertRequest insertRequest
+    ) {
         List<InsertRecordData> records = insertRequest.getRecords().get();
 
+        ExecutorService executor = Executors.newFixedThreadPool(insertConcurrencyLimit);
         List<List<InsertRecordData>> batches = Utils.createBatches(records, insertBatchSize);
         List<CompletableFuture<com.skyflow.vault.data.InsertResponse>> futures = new ArrayList<>();
 
@@ -153,12 +152,7 @@ public final class VaultController extends VaultClient {
                 CompletableFuture<com.skyflow.vault.data.InsertResponse> future = CompletableFuture
                         .supplyAsync(() -> insertBatch(batch, insertRequest.getTableName().get()), executor)
                         .thenApply(response -> formatResponse(response, batchNumber, insertBatchSize))
-                        .exceptionally(ex -> {
-                            synchronized (errorRecords){
-                                errorRecords.addAll(handleBatchException(ex, batch, batchNumber, batches));
-                            }
-                            return null;
-                        });
+                        .exceptionally(ex -> new com.skyflow.vault.data.InsertResponse(null, handleBatchException(ex, batch, batchNumber, batches)));
                 futures.add(future);
             }
         } finally {
