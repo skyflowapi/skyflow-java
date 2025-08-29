@@ -122,9 +122,10 @@ public class UtilsTests {
             credentials.setContext(context);
             credentials.setRoles(roles);
             String bearerToken = Utils.generateBearerToken(credentials);
-            Assert.assertEquals(token, bearerToken);
+            Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.fail(INVALID_EXCEPTION_THROWN);
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(ErrorMessage.BearerTokenExpired.getMessage(), e.getMessage());
         }
     }
 

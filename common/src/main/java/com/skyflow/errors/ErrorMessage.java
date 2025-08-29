@@ -52,6 +52,7 @@ public enum ErrorMessage {
     JwtDecodeError("%s0 Validation error. Invalid access token. Verify your credentials."),
     MissingAccessToken("%s0 Validation error. Access token not present in the response from bearer token generation. Verify your credentials."),
     MissingTokenType("%s0 Validation error. Token type not present in the response from bearer token generation. Verify your credentials."),
+    BearerTokenExpired("%s0 Validation error. Bearer token is invalid or expired. Please provide a valid bearer token."),
 
     // Insert
     TableKeyError("%s0 Validation error. 'table' key is missing from the payload. Specify a 'table' key."),

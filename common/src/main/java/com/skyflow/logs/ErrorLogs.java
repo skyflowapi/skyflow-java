@@ -129,8 +129,7 @@ public enum ErrorLogs {
 
     UNEXPECTED_ERROR_DURING_BATCH_PROCESSING("Unexpected error occurred during batch processing. Error: %s1"),
 
-    PROCESSING_ERROR_RESPONSE("Processing error response.")
-    ;
+    PROCESSING_ERROR_RESPONSE("Processing error response.");
 
     private final String log;
 
