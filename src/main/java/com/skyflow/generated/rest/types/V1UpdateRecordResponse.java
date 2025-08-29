@@ -51,7 +51,7 @@ public final class V1UpdateRecordResponse {
         return tokens;
     }
 
-    @Override
+    @java.lang.Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof V1UpdateRecordResponse && equalTo((V1UpdateRecordResponse) other);
@@ -66,12 +66,12 @@ public final class V1UpdateRecordResponse {
         return skyflowId.equals(other.skyflowId) && tokens.equals(other.tokens);
     }
 
-    @Override
+    @java.lang.Override
     public int hashCode() {
         return Objects.hash(this.skyflowId, this.tokens);
     }
 
-    @Override
+    @java.lang.Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }

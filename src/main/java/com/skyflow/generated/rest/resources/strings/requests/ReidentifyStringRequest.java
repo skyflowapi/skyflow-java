@@ -65,7 +65,7 @@ public final class ReidentifyStringRequest {
         return format;
     }
 
-    @Override
+    @java.lang.Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof ReidentifyStringRequest && equalTo((ReidentifyStringRequest) other);
@@ -80,12 +80,12 @@ public final class ReidentifyStringRequest {
         return text.equals(other.text) && vaultId.equals(other.vaultId) && format.equals(other.format);
     }
 
-    @Override
+    @java.lang.Override
     public int hashCode() {
         return Objects.hash(this.text, this.vaultId, this.format);
     }
 
-    @Override
+    @java.lang.Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }
@@ -134,7 +134,7 @@ public final class ReidentifyStringRequest {
 
         private Builder() {}
 
-        @Override
+        @java.lang.Override
         public Builder from(ReidentifyStringRequest other) {
             text(other.getText());
             vaultId(other.getVaultId());
@@ -146,7 +146,7 @@ public final class ReidentifyStringRequest {
          * String to re-identify.<p>String to re-identify.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @Override
+        @java.lang.Override
         @JsonSetter("text")
         public VaultIdStage text(@NotNull String text) {
             this.text = Objects.requireNonNull(text, "text must not be null");
@@ -157,7 +157,7 @@ public final class ReidentifyStringRequest {
          * ID of the vault where the entities are stored.<p>ID of the vault where the entities are stored.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @Override
+        @java.lang.Override
         @JsonSetter("vault_id")
         public _FinalStage vaultId(@NotNull String vaultId) {
             this.vaultId = Objects.requireNonNull(vaultId, "vaultId must not be null");
@@ -168,7 +168,7 @@ public final class ReidentifyStringRequest {
          * <p>Mapping of perferred data formatting options to entity types. Returned values are dependent on the configuration of the vault storing the data and the permissions of the user or account making the request.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @Override
+        @java.lang.Override
         public _FinalStage format(ReidentifyStringRequestFormat format) {
             this.format = Optional.ofNullable(format);
             return this;
@@ -177,14 +177,14 @@ public final class ReidentifyStringRequest {
         /**
          * <p>Mapping of perferred data formatting options to entity types. Returned values are dependent on the configuration of the vault storing the data and the permissions of the user or account making the request.</p>
          */
-        @Override
+        @java.lang.Override
         @JsonSetter(value = "format", nulls = Nulls.SKIP)
         public _FinalStage format(Optional<ReidentifyStringRequestFormat> format) {
             this.format = format;
             return this;
         }
 
-        @Override
+        @java.lang.Override
         public ReidentifyStringRequest build() {
             return new ReidentifyStringRequest(text, vaultId, format, additionalProperties);
         }

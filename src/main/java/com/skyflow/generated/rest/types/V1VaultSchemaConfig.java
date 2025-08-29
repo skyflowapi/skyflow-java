@@ -60,7 +60,7 @@ public final class V1VaultSchemaConfig {
         return mapping;
     }
 
-    @Override
+    @java.lang.Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof V1VaultSchemaConfig && equalTo((V1VaultSchemaConfig) other);
@@ -75,12 +75,12 @@ public final class V1VaultSchemaConfig {
         return id.equals(other.id) && tableName.equals(other.tableName) && mapping.equals(other.mapping);
     }
 
-    @Override
+    @java.lang.Override
     public int hashCode() {
         return Objects.hash(this.id, this.tableName, this.mapping);
     }
 
-    @Override
+    @java.lang.Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }

@@ -37,7 +37,7 @@ public final class FileServiceUploadFileRequest {
         return columnName;
     }
 
-    @Override
+    @java.lang.Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof FileServiceUploadFileRequest && equalTo((FileServiceUploadFileRequest) other);
@@ -52,12 +52,12 @@ public final class FileServiceUploadFileRequest {
         return columnName.equals(other.columnName);
     }
 
-    @Override
+    @java.lang.Override
     public int hashCode() {
         return Objects.hash(this.columnName);
     }
 
-    @Override
+    @java.lang.Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }

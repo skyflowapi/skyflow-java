@@ -59,7 +59,7 @@ public final class ReidentifyFileResponse {
         return output;
     }
 
-    @Override
+    @java.lang.Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof ReidentifyFileResponse && equalTo((ReidentifyFileResponse) other);
@@ -74,12 +74,12 @@ public final class ReidentifyFileResponse {
         return status.equals(other.status) && outputType.equals(other.outputType) && output.equals(other.output);
     }
 
-    @Override
+    @java.lang.Override
     public int hashCode() {
         return Objects.hash(this.status, this.outputType, this.output);
     }
 
-    @Override
+    @java.lang.Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }
@@ -125,7 +125,7 @@ public final class ReidentifyFileResponse {
 
         private Builder() {}
 
-        @Override
+        @java.lang.Override
         public Builder from(ReidentifyFileResponse other) {
             status(other.getStatus());
             outputType(other.getOutputType());
@@ -137,7 +137,7 @@ public final class ReidentifyFileResponse {
          * Status of the re-identify operation.<p>Status of the re-identify operation.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @Override
+        @java.lang.Override
         @JsonSetter("status")
         public OutputTypeStage status(@NotNull ReidentifyFileResponseStatus status) {
             this.status = Objects.requireNonNull(status, "status must not be null");
@@ -148,21 +148,21 @@ public final class ReidentifyFileResponse {
          * Format of the output file.<p>Format of the output file.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @Override
+        @java.lang.Override
         @JsonSetter("output_type")
         public OutputStage outputType(@NotNull ReidentifyFileResponseOutputType outputType) {
             this.outputType = Objects.requireNonNull(outputType, "outputType must not be null");
             return this;
         }
 
-        @Override
+        @java.lang.Override
         @JsonSetter("output")
         public _FinalStage output(@NotNull ReidentifyFileResponseOutput output) {
             this.output = Objects.requireNonNull(output, "output must not be null");
             return this;
         }
 
-        @Override
+        @java.lang.Override
         public ReidentifyFileResponse build() {
             return new ReidentifyFileResponse(status, outputType, output, additionalProperties);
         }

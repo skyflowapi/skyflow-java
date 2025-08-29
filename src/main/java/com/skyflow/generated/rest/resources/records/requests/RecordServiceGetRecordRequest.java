@@ -78,7 +78,7 @@ public final class RecordServiceGetRecordRequest {
         return downloadUrl;
     }
 
-    @Override
+    @java.lang.Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof RecordServiceGetRecordRequest && equalTo((RecordServiceGetRecordRequest) other);
@@ -96,12 +96,12 @@ public final class RecordServiceGetRecordRequest {
                 && downloadUrl.equals(other.downloadUrl);
     }
 
-    @Override
+    @java.lang.Override
     public int hashCode() {
         return Objects.hash(this.fields, this.redaction, this.tokenization, this.downloadUrl);
     }
 
-    @Override
+    @java.lang.Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }

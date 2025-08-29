@@ -63,7 +63,7 @@ public final class ReidentifyFileRequest {
         return format;
     }
 
-    @Override
+    @java.lang.Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof ReidentifyFileRequest && equalTo((ReidentifyFileRequest) other);
@@ -78,12 +78,12 @@ public final class ReidentifyFileRequest {
         return vaultId.equals(other.vaultId) && file.equals(other.file) && format.equals(other.format);
     }
 
-    @Override
+    @java.lang.Override
     public int hashCode() {
         return Objects.hash(this.vaultId, this.file, this.format);
     }
 
-    @Override
+    @java.lang.Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }
@@ -129,7 +129,7 @@ public final class ReidentifyFileRequest {
 
         private Builder() {}
 
-        @Override
+        @java.lang.Override
         public Builder from(ReidentifyFileRequest other) {
             vaultId(other.getVaultId());
             file(other.getFile());
@@ -137,7 +137,7 @@ public final class ReidentifyFileRequest {
             return this;
         }
 
-        @Override
+        @java.lang.Override
         @JsonSetter("vault_id")
         public FileStage vaultId(@NotNull String vaultId) {
             this.vaultId = Objects.requireNonNull(vaultId, "vaultId must not be null");
@@ -148,7 +148,7 @@ public final class ReidentifyFileRequest {
          * File to re-identify. Files are specified as Base64-encoded data or an EFS path.<p>File to re-identify. Files are specified as Base64-encoded data or an EFS path.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @Override
+        @java.lang.Override
         @JsonSetter("file")
         public _FinalStage file(@NotNull ReidentifyFileRequestFile file) {
             this.file = Objects.requireNonNull(file, "file must not be null");
@@ -159,7 +159,7 @@ public final class ReidentifyFileRequest {
          * <p>Mapping of preferred data formatting options to entity types. Returned values are dependent on the configuration of the vault storing the data and the permissions of the user or account making the request.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @Override
+        @java.lang.Override
         public _FinalStage format(ReidentifyFileRequestFormat format) {
             this.format = Optional.ofNullable(format);
             return this;
@@ -168,14 +168,14 @@ public final class ReidentifyFileRequest {
         /**
          * <p>Mapping of preferred data formatting options to entity types. Returned values are dependent on the configuration of the vault storing the data and the permissions of the user or account making the request.</p>
          */
-        @Override
+        @java.lang.Override
         @JsonSetter(value = "format", nulls = Nulls.SKIP)
         public _FinalStage format(Optional<ReidentifyFileRequestFormat> format) {
             this.format = format;
             return this;
         }
 
-        @Override
+        @java.lang.Override
         public ReidentifyFileRequest build() {
             return new ReidentifyFileRequest(vaultId, file, format, additionalProperties);
         }

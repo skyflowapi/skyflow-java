@@ -39,7 +39,7 @@ public final class V1DetokenizeResponse {
         return records;
     }
 
-    @Override
+    @java.lang.Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof V1DetokenizeResponse && equalTo((V1DetokenizeResponse) other);
@@ -54,12 +54,12 @@ public final class V1DetokenizeResponse {
         return records.equals(other.records);
     }
 
-    @Override
+    @java.lang.Override
     public int hashCode() {
         return Objects.hash(this.records);
     }
 
-    @Override
+    @java.lang.Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }

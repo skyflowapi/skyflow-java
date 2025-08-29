@@ -48,7 +48,7 @@ public final class V1DetokenizeRecordRequest {
         return redaction;
     }
 
-    @Override
+    @java.lang.Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof V1DetokenizeRecordRequest && equalTo((V1DetokenizeRecordRequest) other);
@@ -63,12 +63,12 @@ public final class V1DetokenizeRecordRequest {
         return token.equals(other.token) && redaction.equals(other.redaction);
     }
 
-    @Override
+    @java.lang.Override
     public int hashCode() {
         return Objects.hash(this.token, this.redaction);
     }
 
-    @Override
+    @java.lang.Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }

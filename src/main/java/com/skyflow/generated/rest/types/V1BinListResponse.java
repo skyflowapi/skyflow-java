@@ -38,7 +38,7 @@ public final class V1BinListResponse {
         return cardsData;
     }
 
-    @Override
+    @java.lang.Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof V1BinListResponse && equalTo((V1BinListResponse) other);
@@ -53,12 +53,12 @@ public final class V1BinListResponse {
         return cardsData.equals(other.cardsData);
     }
 
-    @Override
+    @java.lang.Override
     public int hashCode() {
         return Objects.hash(this.cardsData);
     }
 
-    @Override
+    @java.lang.Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }
