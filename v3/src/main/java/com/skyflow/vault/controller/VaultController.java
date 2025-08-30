@@ -16,22 +16,16 @@ import com.skyflow.utils.Constants;
 import com.skyflow.utils.Utils;
 import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.utils.validations.Validations;
-import com.skyflow.vault.data.ErrorRecord;
-import com.skyflow.vault.data.InsertRequest;
-import com.skyflow.vault.data.Success;
+import com.skyflow.vault.data.*;
 import io.github.cdimascio.dotenv.Dotenv;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 
-import static com.skyflow.utils.Utils.formatResponse;
-import static com.skyflow.utils.Utils.handleBatchException;
+import static com.skyflow.utils.Utils.*;
 
 public final class VaultController extends VaultClient {
     private static final Gson gson = new GsonBuilder().serializeNulls().create();
@@ -107,12 +101,76 @@ public final class VaultController extends VaultClient {
         }
     }
 
+    public DetokenizeResponse bulkDetokenize(DetokenizeRequest detokenizeRequest) throws SkyflowException {
+        LogUtil.printInfoLog(InfoLogs.DETOKENIZE_TRIGGERED.getLog());
+        try {
+            DetokenizeResponse response;
+            configureDetokenizeConcurrencyAndBatchSize(detokenizeRequest.getTokens().size());
+            LogUtil.printInfoLog(InfoLogs.VALIDATE_DETOKENIZE_REQUEST.getLog());
+            Validations.validateDetokenizeRequest(detokenizeRequest);
+            setBearerToken();
+            com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest request = super.getDetokenizeRequestBody(detokenizeRequest);
+
+            response = this.processDetokenizeSync(request, detokenizeRequest.getTokens());
+            return response;
+        } catch (ApiClientApiException e) {
+            String bodyString = gson.toJson(e.body());
+            LogUtil.printErrorLog(ErrorLogs.DETOKENIZE_REQUEST_REJECTED.getLog());
+            throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
+        } catch (ExecutionException | InterruptedException e) {
+            LogUtil.printErrorLog(ErrorLogs.DETOKENIZE_REQUEST_REJECTED.getLog());
+            throw new SkyflowException(e.getMessage());
+        }
+    }
+
+    public CompletableFuture<DetokenizeResponse> bulkDetokenizeAsync(DetokenizeRequest detokenizeRequest) throws SkyflowException{
+        LogUtil.printInfoLog(InfoLogs.DETOKENIZE_TRIGGERED.getLog());
+        ExecutorService executor = Executors.newFixedThreadPool(detokenizeConcurrencyLimit);
+        try {
+            configureDetokenizeConcurrencyAndBatchSize(detokenizeRequest.getTokens().size());
+            LogUtil.printInfoLog(InfoLogs.VALIDATE_DETOKENIZE_REQUEST.getLog());
+            Validations.validateDetokenizeRequest(detokenizeRequest);
+            setBearerToken();
+            com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest request = super.getDetokenizeRequestBody(detokenizeRequest);
+
+            LogUtil.printInfoLog(InfoLogs.PROCESSING_BATCHES.getLog());
+
+            List<ErrorRecord> errorTokens = Collections.synchronizedList(new ArrayList<>());
+            List<DetokenizeResponseObject> successRecords = new ArrayList<>();
+
+            // Create batches
+            List<com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest> batches = Utils.createDetokenizeBatches(request, detokenizeBatchSize);
+
+            List<CompletableFuture<DetokenizeResponse>> futures = this.detokenizeBatchFutures(executor, batches, errorTokens);
+            return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
+                    .thenApply(v -> {
+                        for (CompletableFuture<DetokenizeResponse> future : futures) {
+                            DetokenizeResponse futureResponse = future.join();
+                            if (futureResponse != null) {
+                                if (futureResponse.getSuccess() != null) {
+                                    successRecords.addAll(futureResponse.getSuccess());
+                                }
+                                if (futureResponse.getErrors() != null) {
+                                    errorTokens.addAll(futureResponse.getErrors());
+                                }
+                            }
+                        }
+                        LogUtil.printInfoLog(InfoLogs.DETOKENIZE_REQUEST_RESOLVED.getLog());
+                        executor.shutdown();
+                        return new DetokenizeResponse(successRecords, errorTokens, detokenizeRequest.getTokens());
+                    });
+        } catch (Exception e){
+            LogUtil.printErrorLog(ErrorLogs.DETOKENIZE_REQUEST_REJECTED.getLog());
+            throw new SkyflowException(e.getMessage());
+        } finally {
+            executor.shutdown();
+        }
+    }
     private com.skyflow.vault.data.InsertResponse processSync(
             com.skyflow.generated.rest.resources.recordservice.requests.InsertRequest insertRequest,
             ArrayList<HashMap<String, Object>> originalPayload
     ) throws ExecutionException, InterruptedException {
         LogUtil.printInfoLog(InfoLogs.PROCESSING_BATCHES.getLog());
-//        List<ErrorRecord> errorRecords = new ArrayList<>();
         List<Success> successRecords = new ArrayList<>();
         List<ErrorRecord> errorRecords = Collections.synchronizedList(new ArrayList<>());
         List<CompletableFuture<com.skyflow.vault.data.InsertResponse>> futures = this.insertBatchFutures(insertRequest, errorRecords);
@@ -136,8 +194,73 @@ public final class VaultController extends VaultClient {
         return response;
     }
 
+    private DetokenizeResponse processDetokenizeSync(
+            com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest detokenizeRequest,
+            ArrayList<String> originalTokens
+    ) throws ExecutionException, InterruptedException, SkyflowException {
+        LogUtil.printInfoLog(InfoLogs.PROCESSING_BATCHES.getLog());
+        List<ErrorRecord> errorTokens = Collections.synchronizedList(new ArrayList<>());
+        List<DetokenizeResponseObject> successTokens = new ArrayList<>();
+        ExecutorService executor = Executors.newFixedThreadPool(detokenizeConcurrencyLimit);
+        List<com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest> batches = Utils.createDetokenizeBatches(detokenizeRequest, detokenizeBatchSize);
+        try {
+            List<CompletableFuture<DetokenizeResponse>> futures = this.detokenizeBatchFutures(executor, batches, errorTokens);
+            try{
 
-    private List<CompletableFuture<com.skyflow.vault.data.InsertResponse>> insertBatchFutures(
+                CompletableFuture<Void> allFutures = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
+                allFutures.join();
+            } catch (Exception e){
+            }
+            for (CompletableFuture<DetokenizeResponse> future : futures) {
+                DetokenizeResponse futureResponse = future.get();
+                if (futureResponse != null) {
+                    if (futureResponse.getSuccess() != null) {
+                        successTokens.addAll(futureResponse.getSuccess());
+                    }
+                    if (futureResponse.getErrors() != null) {
+                        errorTokens.addAll(futureResponse.getErrors());
+                    }
+                }
+            }
+        } catch (Exception e){
+            LogUtil.printErrorLog(ErrorLogs.DETOKENIZE_REQUEST_REJECTED.getLog());
+            throw new SkyflowException(e.getMessage());
+        } finally {
+            executor.shutdown();
+        }
+        DetokenizeResponse response = new DetokenizeResponse(successTokens, errorTokens, originalTokens);
+        LogUtil.printInfoLog(InfoLogs.DETOKENIZE_REQUEST_RESOLVED.getLog());
+        return response;
+    }
+
+    private List<CompletableFuture<DetokenizeResponse>> detokenizeBatchFutures(ExecutorService executor, List<com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest> batches, List<ErrorRecord> errorTokens) {
+        List<CompletableFuture<DetokenizeResponse>> futures = new ArrayList<>();
+        try {
+
+            for (int batchIndex = 0; batchIndex < batches.size(); batchIndex++) {
+               com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest batch = batches.get(batchIndex);
+                int batchNumber = batchIndex;
+                CompletableFuture<DetokenizeResponse> future = CompletableFuture
+                        .supplyAsync(() -> processDetokenizeBatch(batch), executor)
+                        .thenApply(response -> formatDetokenizeResponse(response, batchNumber, detokenizeBatchSize))
+                        .exceptionally(ex -> {
+                            errorTokens.addAll(handleDetokenizeBatchException(ex, batch, batchNumber, detokenizeBatchSize));
+                            return null;
+                        });
+                futures.add(future);
+            }
+        } catch (Exception e){
+            ErrorRecord errorRecord = new ErrorRecord(0, e.getMessage(), 500);
+            errorTokens.add(errorRecord);
+        }
+        return futures;
+    }
+    private com.skyflow.generated.rest.types.DetokenizeResponse processDetokenizeBatch(com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest batch) {
+        return this.getRecordsApi().detokenize(batch);
+    }
+
+    private List<CompletableFuture<com.skyflow.vault.data.InsertResponse>>
+    insertBatchFutures(
             com.skyflow.generated.rest.resources.recordservice.requests.InsertRequest insertRequest,
             List<ErrorRecord> errorRecords) {
         List<InsertRecordData> records = insertRequest.getRecords().get();
@@ -154,7 +277,7 @@ public final class VaultController extends VaultClient {
                         .supplyAsync(() -> insertBatch(batch, insertRequest.getTableName().get()), executor)
                         .thenApply(response -> formatResponse(response, batchNumber, insertBatchSize))
                         .exceptionally(ex -> {
-                            errorRecords.addAll(handleBatchException(ex, batch, batchNumber, batches));
+                            errorRecords.addAll(handleBatchException(ex, batch, batchNumber));
                             return null;
                         });
                 futures.add(future);
@@ -223,4 +346,56 @@ public final class VaultController extends VaultClient {
             this.insertConcurrencyLimit = Math.min(Constants.INSERT_CONCURRENCY_LIMIT, maxConcurrencyNeeded);
         }
     }
+
+
+    private void configureDetokenizeConcurrencyAndBatchSize(int totalRequests) {
+        try {
+            Dotenv dotenv = Dotenv.load();
+            String userProvidedBatchSize = dotenv.get("DETOKENIZE_BATCH_SIZE");
+            String userProvidedConcurrencyLimit = dotenv.get("DETOKENIZE_CONCURRENCY_LIMIT");
+
+            if (userProvidedBatchSize != null) {
+                try {
+                    int batchSize = Integer.parseInt(userProvidedBatchSize);
+                    int maxBatchSize = Math.min(batchSize, Constants.MAX_DETOKENIZE_BATCH_SIZE);
+                    if (maxBatchSize > 0) {
+                        this.detokenizeBatchSize = maxBatchSize;
+                    } else {
+                        LogUtil.printWarningLog(WarningLogs.INVALID_BATCH_SIZE_PROVIDED.getLog());
+                        this.detokenizeBatchSize = Constants.DETOKENIZE_BATCH_SIZE;
+                    }
+                } catch (NumberFormatException e) {
+                    LogUtil.printWarningLog(WarningLogs.INVALID_BATCH_SIZE_PROVIDED.getLog());
+                    this.detokenizeBatchSize = Constants.DETOKENIZE_BATCH_SIZE;
+                }
+            }
+
+            // Max no of threads required to run all batches concurrently at once
+            int maxConcurrencyNeeded = (totalRequests + this.detokenizeBatchSize - 1) / this.detokenizeBatchSize;
+
+            if (userProvidedConcurrencyLimit != null) {
+                try {
+                    int concurrencyLimit = Integer.parseInt(userProvidedConcurrencyLimit);
+                    int maxConcurrencyLimit = Math.min(concurrencyLimit, Constants.MAX_DETOKENIZE_CONCURRENCY_LIMIT);
+
+                    if (maxConcurrencyLimit > 0) {
+                        this.detokenizeConcurrencyLimit = Math.min(maxConcurrencyLimit, maxConcurrencyNeeded);
+                    } else {
+                        LogUtil.printWarningLog(WarningLogs.INVALID_CONCURRENCY_LIMIT_PROVIDED.getLog());
+                        this.detokenizeConcurrencyLimit = Math.min(Constants.DETOKENIZE_CONCURRENCY_LIMIT, maxConcurrencyNeeded);
+                    }
+                } catch (NumberFormatException e) {
+                    LogUtil.printWarningLog(WarningLogs.INVALID_CONCURRENCY_LIMIT_PROVIDED.getLog());
+                    this.detokenizeConcurrencyLimit = Math.min(Constants.DETOKENIZE_CONCURRENCY_LIMIT, maxConcurrencyNeeded);
+                }
+            } else {
+                this.detokenizeConcurrencyLimit = Math.min(Constants.DETOKENIZE_CONCURRENCY_LIMIT, maxConcurrencyNeeded);
+            }
+        } catch (Exception e) {
+            this.detokenizeBatchSize = Constants.DETOKENIZE_BATCH_SIZE;
+            int maxConcurrencyNeeded = (totalRequests + this.detokenizeBatchSize - 1) / this.detokenizeBatchSize;
+            this.detokenizeConcurrencyLimit = Math.min(Constants.DETOKENIZE_CONCURRENCY_LIMIT, maxConcurrencyNeeded);
+        }
+    }
+
 }

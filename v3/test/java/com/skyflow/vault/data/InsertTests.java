@@ -255,11 +255,9 @@ public class InsertTests {
             errorList.add(error);
 
             InsertResponse response1 = new InsertResponse(successList, errorList);
-            System.out.println("response: " + response1.getErrors());
             String responseString = "{\"success\":[{\"index\":0,\"skyflow_id\":\"id\",\"data\":{\"test_column_1\":\"test_value_1\"}}],\"errors\":[{\"index\":1,\"error\":\"Bad Request\",\"code\":400}]}";
             Assert.assertEquals(1, response1.getSuccess().size());
             Assert.assertEquals(1, response1.getErrors().size());
-            System.out.println("response: " + response1.toString());
             Assert.assertEquals(responseString, response1.toString());
         } catch (Exception e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);

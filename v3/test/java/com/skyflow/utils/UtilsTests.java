@@ -10,14 +10,16 @@ import com.skyflow.generated.auth.rest.core.ApiClientApiException;
 import com.skyflow.generated.rest.types.InsertRecordData;
 import com.skyflow.generated.rest.types.InsertResponse;
 import com.skyflow.generated.rest.types.RecordResponseObject;
-import com.skyflow.vault.data.ErrorRecord;
-import com.skyflow.vault.data.Success;
-import com.skyflow.vault.data.Token;
+import com.skyflow.utils.validations.Validations;
+import com.skyflow.vault.data.*;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.*;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class UtilsTests {
     private static final String INVALID_EXCEPTION_THROWN = "Should not have thrown any exception";
@@ -113,7 +115,7 @@ public class UtilsTests {
             String bearerToken = Utils.generateBearerToken(credentials);
             Assert.assertEquals(token, bearerToken);
         } catch (SkyflowException e) {
-            Assert.fail(INVALID_EXCEPTION_THROWN);
+            Assert.assertEquals(e.getMessage(), ErrorMessage.BearerTokenExpired.getMessage());
         }
     }
 
@@ -246,7 +248,7 @@ public class UtilsTests {
         ApiClientApiException apiException = new ApiClientApiException("Forbidden", 403, responseBody);
         Exception exception = new Exception("Test exception", apiException);
 
-        List<ErrorRecord> errors = Utils.handleBatchException(exception, batch, 0, batches);
+        List<ErrorRecord> errors = Utils.handleBatchException(exception, batch, 0);
 
         Assert.assertEquals("Should have errors for all records", 2, errors.size());
         Assert.assertEquals("Error message should be same", "Test exception", errors.get(0).getError());
@@ -262,7 +264,7 @@ public class UtilsTests {
 
         RuntimeException exception = new RuntimeException("Unexpected error");
 
-        List<ErrorRecord> errors = Utils.handleBatchException(exception, batch, 0, batches);
+        List<ErrorRecord> errors = Utils.handleBatchException(exception, batch, 0);
 
         Assert.assertEquals("Should have errors for all records", 2, errors.size());
         Assert.assertEquals("Error message should match", "Unexpected error", errors.get(0).getError());
@@ -278,7 +280,7 @@ public class UtilsTests {
 
         RuntimeException exception = new RuntimeException("Batch error");
 
-        List<ErrorRecord> errors = Utils.handleBatchException(exception, batch, 1, batches);
+        List<ErrorRecord> errors = Utils.handleBatchException(exception, batch, 1);
 
         Assert.assertEquals("Should have errors for all records", 2, errors.size());
         Assert.assertEquals("First error index should be offset", 2, errors.get(0).getIndex());
@@ -293,7 +295,7 @@ public class UtilsTests {
         ApiClientApiException apiException = new ApiClientApiException("Bad Request", 400, null);
         Exception exception = new Exception("Test exception", apiException);
 
-        List<ErrorRecord> errors = Utils.handleBatchException(exception, batch, 0, batches);
+        List<ErrorRecord> errors = Utils.handleBatchException(exception, batch, 0);
         Assert.assertEquals("Should return empty list for null response body", 2, errors.size());
     }
 
@@ -507,7 +509,7 @@ public class UtilsTests {
         Exception exception = new Exception("Test exception", apiException);
 
         // Test the method
-        List<ErrorRecord> errors = Utils.handleBatchException(exception, batch, 0, batches);
+        List<ErrorRecord> errors = Utils.handleBatchException(exception, batch, 0);
 
         // Assertions
         Assert.assertNotNull("Errors list should not be null", errors);
@@ -523,4 +525,304 @@ public class UtilsTests {
         Assert.assertEquals("Second error code should match", 500, errors.get(1).getCode());
         Assert.assertEquals("Second error index should be 1", 1, errors.get(1).getIndex());
     }
+
+    @Test
+    public void testValidateDetokenizeRequestValidInput() throws SkyflowException {
+        ArrayList<String> tokens = new ArrayList<>();
+        tokens.add("token1");
+        tokens.add("token2");
+
+        ArrayList<TokenGroupRedactions> groupRedactions = new ArrayList<>();
+        groupRedactions.add(TokenGroupRedactions.builder()
+                .tokenGroupName("group1")
+                .redaction("MASK")
+                .build());
+
+        DetokenizeRequest request = DetokenizeRequest.builder()
+                .tokens(tokens)
+                .tokenGroupRedactions(groupRedactions)
+                .build();
+
+        Validations.validateDetokenizeRequest(request); // Should not throw an exception
+    }
+
+    @Test
+    public void testValidateDetokenizeRequestNullRequest() {
+        try{
+            Validations.validateDetokenizeRequest(null);
+            Assert.fail(EXCEPTIONNOTTHROWN);
+        } catch (SkyflowException e){
+            assertEquals(e.getMessage(), ErrorMessage.DetokenizeRequestNull.getMessage());
+        }
+
+    }
+
+    @Test
+    public void testValidateDetokenizeRequestEmptyTokens() {
+        try {
+            DetokenizeRequest request = DetokenizeRequest.builder()
+                    .tokens(new ArrayList<>())
+                    .tokenGroupRedactions(new ArrayList<>())
+                    .build();
+
+            Validations.validateDetokenizeRequest(request);
+
+        } catch (SkyflowException e){
+            assertEquals(e.getMessage(), ErrorMessage.EmptyDetokenizeData.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateDetokenizeRequestNullTokenInList() {
+        ArrayList<String> tokens = new ArrayList<>();
+        tokens.add(null);
+
+        DetokenizeRequest request = DetokenizeRequest.builder()
+                .tokens(tokens)
+                .tokenGroupRedactions(new ArrayList<>())
+                .build();
+    }
+
+    @Test
+    public void testValidateDetokenizeRequestNullGroupRedactions() {
+        ArrayList<String> tokens = new ArrayList<>();
+        tokens.add("token1");
+
+        DetokenizeRequest request = DetokenizeRequest.builder()
+                .tokens(tokens)
+                .tokenGroupRedactions(null)
+                .build();
+        try{
+            Validations.validateDetokenizeRequest(request);
+        } catch (SkyflowException e){
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testValidateDetokenizeRequestNullTokenGroupRedaction() {
+        ArrayList<String> tokens = new ArrayList<>();
+        tokens.add("token1");
+
+        ArrayList<TokenGroupRedactions> groupRedactions = new ArrayList<>();
+        groupRedactions.add(null);
+
+        DetokenizeRequest request = DetokenizeRequest.builder()
+                .tokens(tokens)
+                .tokenGroupRedactions(groupRedactions)
+                .build();
+        try{
+            Validations.validateDetokenizeRequest(request);
+        } catch (SkyflowException e){
+            Assert.assertEquals(ErrorMessage.NullTokenGroupRedactions.getMessage(), e.getMessage());//
+        }
+    }
+
+    @Test
+    public void testValidateDetokenizeRequestEmptyTokenGroupName() {
+        ArrayList<String> tokens = new ArrayList<>();
+        tokens.add("token1");
+
+        ArrayList<TokenGroupRedactions> groupRedactions = new ArrayList<>();
+        groupRedactions.add(TokenGroupRedactions.builder()
+                .tokenGroupName("")
+                .redaction("MASK")
+                .build());
+
+        DetokenizeRequest request = DetokenizeRequest.builder()
+                .tokens(tokens)
+                .tokenGroupRedactions(groupRedactions)
+                .build();
+
+        try{
+            Validations.validateDetokenizeRequest(request);
+        } catch (SkyflowException e){
+            assertEquals(ErrorMessage.NullTokenGroupNameInTokenGroup.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateDetokenizeRequestEmptyRedaction() {
+        ArrayList<String> tokens = new ArrayList<>();
+        tokens.add("token1");
+
+        ArrayList<TokenGroupRedactions> groupRedactions = new ArrayList<>();
+        groupRedactions.add(TokenGroupRedactions.builder()
+                .tokenGroupName("group1")
+                .redaction("")
+                .build());
+
+        DetokenizeRequest request = DetokenizeRequest.builder()
+                .tokens(tokens)
+                .tokenGroupRedactions(groupRedactions)
+                .build();
+
+        try {
+            Validations.validateDetokenizeRequest(request);
+        } catch (SkyflowException e){
+            assertEquals(ErrorMessage.NullRedactionInTokenGroup.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateInsertRequestNullTable() {
+        ArrayList<HashMap<String, Object>> values = new ArrayList<>();
+        HashMap<String, Object> valueMap = new HashMap<>();
+        valueMap.put("key1", "value1");
+        values.add(valueMap);
+
+        InsertRequest request = InsertRequest.builder()
+                .table(null)
+                .values(values)
+                .build();
+
+        try {
+            Validations.validateInsertRequest(request);
+        } catch (SkyflowException e) {
+            assertEquals(ErrorMessage.TableKeyError.getMessage(), e.getMessage()); // Replace with the actual error message
+        }
+    }
+
+    @Test
+    public void testValidateInsertRequestEmptyTable() {
+        ArrayList<HashMap<String, Object>> values = new ArrayList<>();
+        HashMap<String, Object> valueMap = new HashMap<>();
+        valueMap.put("key1", "value1");
+        values.add(valueMap);
+
+        InsertRequest request = InsertRequest.builder()
+                .table("")
+                .values(values)
+                .build();
+
+        try {
+            Validations.validateInsertRequest(request);
+        } catch (SkyflowException e) {
+            assertEquals(ErrorMessage.EmptyTable.getMessage(), e.getMessage()); // Replace with the actual error message
+        }
+    }
+
+    @Test
+    public void testValidateInsertRequestNullValues() {
+        InsertRequest request = InsertRequest.builder()
+                .table("testTable")
+                .values(null)
+                .build();
+
+        try {
+            Validations.validateInsertRequest(request);
+        } catch (SkyflowException e) {
+            assertEquals(ErrorMessage.ValuesKeyError.getMessage(), e.getMessage()); // Replace with the actual error message
+        }
+    }
+
+    @Test
+    public void testValidateInsertRequestEmptyValues() {
+        InsertRequest request = InsertRequest.builder()
+                .table("testTable")
+                .values(new ArrayList<>())
+                .build();
+
+        try {
+            Validations.validateInsertRequest(request);
+        } catch (SkyflowException e) {
+            assertEquals(ErrorMessage.EmptyValues.getMessage(), e.getMessage()); // Replace with the actual error message
+        }
+    }
+
+
+    @Test
+    public void testFormatDetokenizeResponseValidResponse() {
+        // Arrange
+        List<com.skyflow.generated.rest.types.DetokenizeResponseObject> responseObjectsGen = new ArrayList<>();
+        Map<String, Object> tokens = new HashMap<>();
+        tokens.put("token1", "value1");
+        tokens.put("token2", "value2");
+        com.skyflow.generated.rest.types.DetokenizeResponseObject object = com.skyflow.generated.rest.types.DetokenizeResponseObject.builder().token("token1").value("value1").tokenGroupName("demo").build();
+        responseObjectsGen.add(object);
+        responseObjectsGen.add(object);
+
+        com.skyflow.generated.rest.types.DetokenizeResponse response = com.skyflow.generated.rest.types.DetokenizeResponse.builder().response(Optional.of(responseObjectsGen)).build();
+
+        int batch = 0;
+        int batchSize = 2;
+
+        // Act
+        DetokenizeResponse result = Utils.formatDetokenizeResponse(response, batch, batchSize);
+
+        // Assert
+        Assert.assertNotNull(result);
+        Assert.assertEquals(2, result.getSuccess().size());
+        Assert.assertEquals(0, result.getErrors().size());
+    }
+
+    @Test
+    public void testFormatDetokenizeResponseResponseWithErrors() {
+
+
+        List<com.skyflow.generated.rest.types.DetokenizeResponseObject> responseObjectsGen = new ArrayList<>();
+        com.skyflow.generated.rest.types.DetokenizeResponseObject object = com.skyflow.generated.rest.types.DetokenizeResponseObject.builder().error("Error occurred").httpCode(400).build();
+        com.skyflow.generated.rest.types.DetokenizeResponseObject object2 = com.skyflow.generated.rest.types.DetokenizeResponseObject.builder().token("token1").tokenGroupName("demo").value("hello").build();
+
+        responseObjectsGen.add(object);
+        responseObjectsGen.add(object2);
+
+        com.skyflow.generated.rest.types.DetokenizeResponse response = com.skyflow.generated.rest.types.DetokenizeResponse.builder().response(Optional.of(responseObjectsGen)).build();
+
+        int batch = 1;
+        int batchSize = 2;
+
+        // Act
+        DetokenizeResponse result = Utils.formatDetokenizeResponse(response, batch, batchSize);
+
+        // Assert
+        assertEquals(1, result.getSuccess().size());
+        assertEquals(1, result.getErrors().size());
+        assertEquals("Error occurred", result.getErrors().get(0).getError());
+    }
+
+    @Test
+    public void testFormatDetokenizeResponse_NullResponse() {
+        // Act
+        DetokenizeResponse result = Utils.formatDetokenizeResponse(null, 0, 2);
+
+        // Assert
+        Assert.assertNull(result);
+    }
+
+    public static List<com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest> createDetokenizeBatches(com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest request, int batchSize) {
+        List<com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest> detokenizeRequests = new ArrayList<>();
+        List<String> tokens = request.getTokens().get();
+
+        for (int i = 0; i < tokens.size(); i += batchSize) {
+            // Create a sublist for the current batch
+            List<String> batchTokens = tokens.subList(i, Math.min(i + batchSize, tokens.size()));
+            List<com.skyflow.generated.rest.types.TokenGroupRedactions> tokenGroupRedactions = null;
+            if (request.getTokenGroupRedactions().isPresent() && !request.getTokenGroupRedactions().get().isEmpty() && i < request.getTokenGroupRedactions().get().size()) {
+                tokenGroupRedactions = request.getTokenGroupRedactions().get().subList(i, Math.min(i + batchSize, request.getTokenGroupRedactions().get().size()));            }
+            // Build a new DetokenizeRequest for the current batch
+            com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest batchRequest = com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest.builder()
+                    .vaultId(request.getVaultId())
+                    .tokens(new ArrayList<>(batchTokens))
+                    .tokenGroupRedactions(tokenGroupRedactions)
+                    .build();
+
+            detokenizeRequests.add(batchRequest);
+        }
+
+        return detokenizeRequests;
+    }
+
+
+    private DetokenizeResponseObject createResponseObject(String token, String value, String groupName, String error, Integer httpCode) {
+        DetokenizeResponseObject responseObject = new DetokenizeResponseObject(
+                0,
+                String.valueOf(Optional.ofNullable(token)),
+                Optional.ofNullable(value),
+                String.valueOf(Optional.ofNullable(groupName)),
+                String.valueOf(Optional.ofNullable(error)),
+                null
+        );return responseObject;
+    }
+
 }

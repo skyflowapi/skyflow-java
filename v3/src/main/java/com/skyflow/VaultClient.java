@@ -19,6 +19,7 @@ import com.skyflow.utils.Constants;
 import com.skyflow.utils.Utils;
 import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.utils.validations.Validations;
+import com.skyflow.vault.data.DetokenizeRequest;
 import io.github.cdimascio.dotenv.Dotenv;
 import io.github.cdimascio.dotenv.DotenvException;
 import okhttp3.OkHttpClient;
@@ -155,4 +156,25 @@ public class VaultClient {
 
     }
 
+    protected com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest getDetokenizeRequestBody(DetokenizeRequest request) {
+        List<String> tokens = request.getTokens();
+        com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest.Builder builder =
+                com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest.builder()
+                        .vaultId(this.vaultConfig.getVaultId())
+                        .tokens(tokens);
+        if (request.getTokenGroupRedactions() != null){
+            List<com.skyflow.generated.rest.types.TokenGroupRedactions> tokenGroupRedactionsList = new ArrayList<>();
+            for (com.skyflow.vault.data.TokenGroupRedactions tokenGroupRedactions : request.getTokenGroupRedactions()) {
+                com.skyflow.generated.rest.types.TokenGroupRedactions redactions =
+                        com.skyflow.generated.rest.types.TokenGroupRedactions.builder()
+                                .tokenGroupName(tokenGroupRedactions.getTokenGroupName())
+                                .redaction(tokenGroupRedactions.getRedaction())
+                                .build();
+                tokenGroupRedactionsList.add(redactions);
+            }
+
+            builder.tokenGroupRedactions(tokenGroupRedactionsList);
+        }
+        return builder.build();
+    }
 }

@@ -150,7 +150,16 @@ public enum ErrorMessage {
     FailedToSaveProcessedFile("%s0 Validation error. Failed to save the processed file. Ensure the output directory is valid and writable."),
     InvalidAudioFileType("%s0 Validation error. The file type is not supported. Specify a valid file type mp3 or wav."),
     // Generic
-    ErrorOccurred("%s0 API error. Error occurred.")
+    ErrorOccurred("%s0 API error. Error occurred."),
+
+    DetokenizeRequestNull("%s0 Validation error. DetokenizeRequest object is null. Specify a valid DetokenizeRequest object."),
+
+    NullTokenGroupRedactions("%s0 Validation error. TokenGroupRedaction in the list is null. Specify a valid TokenGroupRedactions object."),
+
+    NullRedactionInTokenGroup("%s0 Validation error. Redaction in TokenGroupRedactions is null or empty. Specify a valid redaction."),
+
+    NullTokenGroupNameInTokenGroup("%s0 Validation error. TokenGroupName in TokenGroupRedactions is null or empty. Specify a valid tokenGroupName."),
+    ;
     ;
     private final String message;
 
