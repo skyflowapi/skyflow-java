@@ -7,7 +7,9 @@ import com.skyflow.errors.SkyflowException;
 import com.skyflow.logs.ErrorLogs;
 import com.skyflow.utils.Utils;
 import com.skyflow.utils.logger.LogUtil;
+import com.skyflow.vault.data.DetokenizeRequest;
 import com.skyflow.vault.data.InsertRequest;
+import com.skyflow.vault.data.TokenGroupRedactions;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -70,6 +72,50 @@ public class Validations extends BaseValidations {
                 }
             }
         }
+    }
+
+    public static void validateDetokenizeRequest(DetokenizeRequest request) throws SkyflowException {
+        if (request == null) {
+            LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.DETOKENIZE_REQUEST_NULL.getLog(), InterfaceName.DETOKENIZE.getName()
+            ));
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.DetokenizeRequestNull.getMessage());
+        }
+        ArrayList<String> tokens = request.getTokens();
+        if (tokens == null || tokens.isEmpty()) {
+            LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.EMPTY_DETOKENIZE_DATA.getLog(), InterfaceName.DETOKENIZE.getName()
+            ));
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyDetokenizeData.getMessage());
+        }
+        for (String token : tokens) {
+            if (token == null || token.trim().isEmpty()) {
+                LogUtil.printErrorLog(Utils.parameterizedString(
+                        ErrorLogs.EMPTY_OR_NULL_TOKEN_IN_DETOKENIZE_DATA.getLog(), InterfaceName.DETOKENIZE.getName()
+                ));
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyTokenInDetokenizeData.getMessage());
+            }
+        }
+        ArrayList<TokenGroupRedactions> groupRedactions = request.getTokenGroupRedactions();
+        if (groupRedactions != null && !groupRedactions.isEmpty()) {
+            for (TokenGroupRedactions group : groupRedactions) {
+                if (group == null) {
+                    LogUtil.printErrorLog(Utils.parameterizedString(ErrorLogs.NULL_TOKEN_REDACTION_GROUP_OBJECT.getLog(), InterfaceName.DETOKENIZE.getName()));
+                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.NullTokenGroupRedactions.getMessage());
+                }
+                String groupName = group.getTokenGroupName();
+                String redaction = group.getRedaction();
+                if (groupName == null || groupName.trim().isEmpty()) {
+                    LogUtil.printErrorLog(Utils.parameterizedString(ErrorLogs.NULL_TOKEN_GROUP_NAME_IN_TOKEN_GROUP.getLog(), InterfaceName.DETOKENIZE.getName()));
+                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.NullTokenGroupNameInTokenGroup.getMessage());
+                }
+                if (redaction == null || redaction.trim().isEmpty()) {
+                    LogUtil.printErrorLog(Utils.parameterizedString(ErrorLogs.EMPTY_OR_NULL_REDACTION_IN_TOKEN_GROUP.getLog(), InterfaceName.DETOKENIZE.getName()));
+                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.NullRedactionInTokenGroup.getMessage());
+                }
+            }
+        }
+
     }
 
 }

@@ -3,9 +3,12 @@ package com.skyflow.utils;
 import com.google.gson.JsonObject;
 import com.skyflow.enums.Env;
 import com.skyflow.generated.rest.core.ApiClientApiException;
+import com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest;
 import com.skyflow.generated.rest.types.InsertRecordData;
 import com.skyflow.generated.rest.types.InsertResponse;
 import com.skyflow.generated.rest.types.RecordResponseObject;
+import com.skyflow.generated.rest.types.TokenGroupRedactions;
+import com.skyflow.vault.data.DetokenizeResponse;
 import com.skyflow.vault.data.ErrorRecord;
 import com.skyflow.vault.data.Success;
 import com.skyflow.vault.data.Token;
@@ -36,6 +39,29 @@ public final class Utils extends BaseUtils {
         return batches;
     }
 
+    public static List<DetokenizeRequest> createDetokenizeBatches(DetokenizeRequest request, int batchSize) {
+        List<DetokenizeRequest> detokenizeRequests = new ArrayList<>();
+        List<String> tokens = request.getTokens().get();
+
+        for (int i = 0; i < tokens.size(); i += batchSize) {
+            // Create a sublist for the current batch
+            List<String> batchTokens = tokens.subList(i, Math.min(i + batchSize, tokens.size()));
+            List<TokenGroupRedactions> tokenGroupRedactions = null;
+            if (request.getTokenGroupRedactions().isPresent() && !request.getTokenGroupRedactions().get().isEmpty() && i < request.getTokenGroupRedactions().get().size()) {
+                tokenGroupRedactions = request.getTokenGroupRedactions().get().subList(i, Math.min(i + batchSize, request.getTokenGroupRedactions().get().size()));            }
+            // Build a new DetokenizeRequest for the current batch
+            DetokenizeRequest batchRequest = DetokenizeRequest.builder()
+                    .vaultId(request.getVaultId())
+                    .tokens(new ArrayList<>(batchTokens))
+                    .tokenGroupRedactions(tokenGroupRedactions)
+                    .build();
+
+            detokenizeRequests.add(batchRequest);
+        }
+
+        return detokenizeRequests;
+    }
+
     public static ErrorRecord createErrorRecord(Map<String, Object> recordMap, int indexNumber) {
         ErrorRecord err = null;
         if (recordMap != null) {
@@ -48,7 +74,7 @@ public final class Utils extends BaseUtils {
     }
 
     public static List<ErrorRecord> handleBatchException(
-            Throwable ex, List<InsertRecordData> batch, int batchNumber, List<List<InsertRecordData>> batches
+            Throwable ex, List<InsertRecordData> batch, int batchNumber
     ) {
         List<ErrorRecord> errorRecords = new ArrayList<>();
         Throwable cause = ex.getCause();
@@ -88,6 +114,72 @@ public final class Utils extends BaseUtils {
             }
         }
         return errorRecords;
+    }
+
+    public static List<ErrorRecord> handleDetokenizeBatchException(
+            Throwable ex, DetokenizeRequest batch, int batchNumber, int batchSize
+    ) {
+        List<ErrorRecord> errorRecords = new ArrayList<>();
+        Throwable cause = ex.getCause();
+        if (cause instanceof ApiClientApiException) {
+            ApiClientApiException apiException = (ApiClientApiException) cause;
+            Map<String, Object> responseBody = (Map<String, Object>) apiException.body();
+            int indexNumber = batchNumber * batchSize;
+            if (responseBody != null) {
+                if (responseBody.containsKey("records")) {
+                    Object recordss = responseBody.get("records");
+                    if (recordss instanceof List) {
+                        List<?> recordsList = (List<?>) recordss;
+                        for (Object record : recordsList) {
+                            if (record instanceof Map) {
+                                Map<String, Object> recordMap = (Map<String, Object>) record;
+                                ErrorRecord err = Utils.createErrorRecord(recordMap, indexNumber);
+                                errorRecords.add(err);
+                                indexNumber++;
+                            }
+                        }
+                    }
+                } else if (responseBody.containsKey("error")) {
+                    Map<String, Object> recordMap = (Map<String, Object>) responseBody.get("error");
+                    for (int j = 0; j < batch.getTokens().get().size(); j++) {
+                        ErrorRecord err = Utils.createErrorRecord(recordMap, indexNumber);
+                        errorRecords.add(err);
+                        indexNumber++;
+                    }
+                }
+            }
+        } else {
+            int indexNumber = batchNumber * batchSize;
+            for (int j = 0; j < batch.getTokens().get().size(); j++) {
+                ErrorRecord err = new ErrorRecord(indexNumber, ex.getMessage(), 500);
+                errorRecords.add(err);
+                indexNumber++;
+            }
+        }
+        return errorRecords;
+    }
+
+    public static DetokenizeResponse formatDetokenizeResponse(com.skyflow.generated.rest.types.DetokenizeResponse response, int batch, int batchSize) {
+        if (response != null) {
+            List<com.skyflow.generated.rest.types.DetokenizeResponseObject> record = response.getResponse().get();
+            List<ErrorRecord> errorRecords = new ArrayList<>();
+            List<com.skyflow.vault.data.DetokenizeResponseObject> successRecords = new ArrayList<>();
+            int indexNumber = batch * batchSize;
+            int recordsSize = response.getResponse().get().size();
+            for (int index = 0; index < recordsSize; index++) {
+                if (record.get(index).getError().isPresent()) {
+                    ErrorRecord errorRecord = new ErrorRecord(indexNumber, record.get(index).getError().get(), record.get(index).getHttpCode().get());
+                    errorRecords.add(errorRecord);
+                } else {
+                    com.skyflow.vault.data.DetokenizeResponseObject success = new com.skyflow.vault.data.DetokenizeResponseObject(indexNumber, record.get(index).getToken().orElse(null), record.get(index).getValue().orElse(null), record.get(index).getTokenGroupName().orElse(null), record.get(index).getError().orElse(null), record.get(index).getMetadata().orElse(null));
+                    successRecords.add(success);
+                }
+                indexNumber++;
+            }
+            DetokenizeResponse formattedResponse = new DetokenizeResponse(successRecords, errorRecords);
+            return formattedResponse;
+        }
+        return null;
     }
 
     public static com.skyflow.vault.data.InsertResponse formatResponse(InsertResponse response, int batch, int batchSize) {
