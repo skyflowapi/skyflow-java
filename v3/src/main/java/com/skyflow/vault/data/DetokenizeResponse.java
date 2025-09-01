@@ -40,7 +40,7 @@ public class DetokenizeResponse {
             recordsToRetry = errors.stream()
                     .filter(error -> (error.getCode() >= 500 && error.getCode() <= 599) && error.getCode() != 529)
                     .map(errorRecord -> originalPayload.get(errorRecord.getIndex()))
-                    .collect(Collectors.toCollection(ArrayList::new));
+                    .collect(Collectors.toList());
         }
         return recordsToRetry;
     }
