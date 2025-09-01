@@ -5,7 +5,6 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.Expose;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -19,7 +18,7 @@ public class DetokenizeResponse {
     private List<ErrorRecord> errors;
 
     private List<String> originalPayload;
-    private List<String> recordsToRetry;
+    private List<String> tokensToRetry;
 
     public DetokenizeResponse(List<DetokenizeResponseObject> success, List<ErrorRecord> errors) {
         this.success = success;
@@ -35,14 +34,14 @@ public class DetokenizeResponse {
     }
 
     public List<String> getTokensToRetry() {
-        if (recordsToRetry == null) {
-            recordsToRetry = new ArrayList<>();
-            recordsToRetry = errors.stream()
+        if (tokensToRetry == null) {
+            tokensToRetry = new ArrayList<>();
+            tokensToRetry = errors.stream()
                     .filter(error -> (error.getCode() >= 500 && error.getCode() <= 599) && error.getCode() != 529)
                     .map(errorRecord -> originalPayload.get(errorRecord.getIndex()))
                     .collect(Collectors.toList());
         }
-        return recordsToRetry;
+        return tokensToRetry;
     }
 
     public List<DetokenizeResponseObject> getSuccess() {
