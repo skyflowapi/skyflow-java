@@ -1,7 +1,8 @@
 # Input Arguments
 Version=$1
 CommitHash=$2
-PomFile="$GITHUB_WORKSPACE/v3/pom.xml"
+Module=$3
+PomFile="/home/saib/skyflow3/skyflow-java/$Module/pom.xml"
 
 if [ -z "$Version" ]; then
     echo "Error: Version argument is required."

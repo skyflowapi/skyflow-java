@@ -59,9 +59,9 @@ jobs:
           fetch-depth: 0
 
       - name: Set up maven or jfrog repository
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v4
         with:
-          java-version: "1.8"
+          java-version: "11"
           distribution: "adopt"
           server-id: ${{ inputs.server-id }}
           server-username: SERVER_USERNAME
@@ -94,7 +94,7 @@ jobs:
           if ${{ inputs.tag == 'internal' }}; then
             ./scripts/bump_version.sh "${{ steps.previoustag.outputs.tag }}" "$(git rev-parse --short "$GITHUB_SHA")"
           else
-            ./scripts/bump_version.sh "${{ steps.previoustag.outputs.tag }}"
+            ./scripts/bump_version.sh "${{ steps.previoustag.outputs.tag }}" "" "${{ inputs.module }}"
           fi
 
       - name: Commit changes
@@ -133,11 +133,11 @@ jobs:
 
       - name: Publish package
         run: |
-          if [ -n "${{ inputs.module }}" ]; then
-            mvn --batch-mode -pl v3 -am deploy -P jfrog
-          else
-            mvn --batch-mode deploy -P ${{ inputs.profile }}
-          fi
+          if [[ "${{ inputs.tag }}" == "internal" ]]; then
+            mvn --batch-mode -pl ${{ inputs.module }} -am deploy -P jfrog
+
+          elif [[ "${{ inputs.tag }}" == "beta" || "${{ inputs.tag }}" == "public" ]]; then
+            mvn --batch-mode -pl ${{ inputs.module }} -am deploy -P ${{ inputs.profile }}
 
         env:
           SERVER_USERNAME: ${{ secrets.server-username }}
