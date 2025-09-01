@@ -2,7 +2,7 @@
 Version=$1
 CommitHash=$2
 Module=$3
-PomFile="$GITHUB_WORKSPACE/v3/pom.xml"
+PomFile="/home/saib/skyflow3/skyflow-java/v3/pom.xml"
 
 if [ -z "$Version" ]; then
     echo "Error: Version argument is required."
@@ -15,12 +15,13 @@ if [ -z "$CommitHash" ]; then
 
     awk -v version="$Version" '
         BEGIN { updated = 0 }
+        /<parent>/,/<\/parent>/ { print; next }
         /<version>/ && updated == 0 {
             sub(/<version>.*<\/version>/, "<version>" version "</version>")
             updated = 1
         }
         { print }
-        ' "$PomFile" > tempfile && cat tempfile > "$PomFile" && rm -f tempfile
+    ' "$PomFile" > tempfile && cat tempfile > "$PomFile" && rm -f tempfile
 
     echo "--------------------------"
     echo "Done. Main project version now at $Version"
