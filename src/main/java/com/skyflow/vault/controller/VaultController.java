@@ -392,7 +392,7 @@ public final class VaultController extends VaultClient {
             LogUtil.printErrorLog(ErrorLogs.UPLOAD_FILE_REQUEST_REJECTED.getLog());
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
         } catch (IOException e) {
-            LogUtil.printErrorLog(ErrorLogs.UPLOAD_FILE_REQUEST_REJECTED.getLog());
+            LogUtil.printErrorLog(ErrorLogs.UPLOAD_FILE_REQUEST_REJECTED.getLog()); 
             throw new SkyflowException(e.getMessage(), e);
         }
         LogUtil.printInfoLog(InfoLogs.FILE_UPLOAD_SUCCESS.getLog());
