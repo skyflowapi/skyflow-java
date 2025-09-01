@@ -81,7 +81,7 @@ public class Validations extends BaseValidations {
             ));
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.DetokenizeRequestNull.getMessage());
         }
-        ArrayList<String> tokens = request.getTokens();
+        List<String> tokens = request.getTokens();
         if (tokens == null || tokens.isEmpty()) {
             LogUtil.printErrorLog(Utils.parameterizedString(
                     ErrorLogs.EMPTY_DETOKENIZE_DATA.getLog(), InterfaceName.DETOKENIZE.getName()
@@ -96,7 +96,7 @@ public class Validations extends BaseValidations {
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyTokenInDetokenizeData.getMessage());
             }
         }
-        ArrayList<TokenGroupRedactions> groupRedactions = request.getTokenGroupRedactions();
+        List<TokenGroupRedactions> groupRedactions = request.getTokenGroupRedactions();
         if (groupRedactions != null && !groupRedactions.isEmpty()) {
             for (TokenGroupRedactions group : groupRedactions) {
                 if (group == null) {
