@@ -1,0 +1,17 @@
+package com.skyflow.logs;
+
+public enum WarningLogs {
+    INVALID_BATCH_SIZE_PROVIDED("Invalid value for batch size provided, switching to default value."),
+    INVALID_CONCURRENCY_LIMIT_PROVIDED("Invalid value for concurrency limit provided, switching to default value."),
+    ;
+
+    private final String log;
+
+    WarningLogs(String log) {
+        this.log = log;
+    }
+
+    public final String getLog() {
+        return log;
+    }
+}
