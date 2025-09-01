@@ -137,6 +137,7 @@ jobs:
             mvn --batch-mode -pl ${{ inputs.module }} -am deploy -P jfrog
           elif [[ "${{ inputs.tag }}" == "beta" || "${{ inputs.tag }}" == "public" ]]; then
             mvn --batch-mode -pl ${{ inputs.module }} -am deploy -P ${{ inputs.profile }}
+          fi
 
         env:
           SERVER_USERNAME: ${{ secrets.server-username }}
