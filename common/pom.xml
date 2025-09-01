@@ -12,6 +12,7 @@
 
     <artifactId>common</artifactId>
     <version>1.0.0</version>
+    <name>${project.groupId}:${project.artifactId}</name>
 
 
     <properties>

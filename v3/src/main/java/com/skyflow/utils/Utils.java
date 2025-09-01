@@ -48,7 +48,8 @@ public final class Utils extends BaseUtils {
             List<String> batchTokens = tokens.subList(i, Math.min(i + batchSize, tokens.size()));
             List<TokenGroupRedactions> tokenGroupRedactions = null;
             if (request.getTokenGroupRedactions().isPresent() && !request.getTokenGroupRedactions().get().isEmpty() && i < request.getTokenGroupRedactions().get().size()) {
-                tokenGroupRedactions = request.getTokenGroupRedactions().get().subList(i, Math.min(i + batchSize, request.getTokenGroupRedactions().get().size()));            }
+                tokenGroupRedactions = request.getTokenGroupRedactions().get();
+            }
             // Build a new DetokenizeRequest for the current batch
             DetokenizeRequest batchRequest = DetokenizeRequest.builder()
                     .vaultId(request.getVaultId())
@@ -65,7 +66,17 @@ public final class Utils extends BaseUtils {
     public static ErrorRecord createErrorRecord(Map<String, Object> recordMap, int indexNumber) {
         ErrorRecord err = null;
         if (recordMap != null) {
-            int code = recordMap.containsKey("http_code") ? (Integer) recordMap.get("http_code") : 500;
+            int code = 500;
+            if (recordMap.containsKey("http_code")) {
+                code = (Integer) recordMap.get("http_code");
+            } else if (recordMap.containsKey("httpCode")) {
+                code = (Integer) recordMap.get("httpCode");
+
+            } else{
+                if (recordMap.containsKey("statusCode")) {
+                    code = (Integer) recordMap.get("statusCode");
+                }
+            }
             String message = recordMap.containsKey("error") ? (String) recordMap.get("error") :
                     recordMap.containsKey("message") ? (String) recordMap.get("message") : "Unknown error";
             err = new ErrorRecord(indexNumber, message, code);
@@ -126,8 +137,8 @@ public final class Utils extends BaseUtils {
             Map<String, Object> responseBody = (Map<String, Object>) apiException.body();
             int indexNumber = batchNumber * batchSize;
             if (responseBody != null) {
-                if (responseBody.containsKey("records")) {
-                    Object recordss = responseBody.get("records");
+                if (responseBody.containsKey("response")) {
+                    Object recordss = responseBody.get("response");
                     if (recordss instanceof List) {
                         List<?> recordsList = (List<?>) recordss;
                         for (Object record : recordsList) {

@@ -15,12 +15,13 @@ if [ -z "$CommitHash" ]; then
 
     awk -v version="$Version" '
         BEGIN { updated = 0 }
+        /<parent>/,/<\/parent>/ { print; next }
         /<version>/ && updated == 0 {
             sub(/<version>.*<\/version>/, "<version>" version "</version>")
             updated = 1
         }
         { print }
-        ' "$PomFile" > tempfile && cat tempfile > "$PomFile" && rm -f tempfile
+    ' "$PomFile" > tempfile && cat tempfile > "$PomFile" && rm -f tempfile
 
     echo "--------------------------"
     echo "Done. Main project version now at $Version"

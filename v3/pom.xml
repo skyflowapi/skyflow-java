@@ -13,6 +13,22 @@
     <artifactId>skyflow-java</artifactId>
     <version>3.0.0-beta.2-dev.ee3fe71</version>
     <packaging>jar</packaging>
+    <name>${project.groupId}:${project.artifactId}</name>
+    <description>Skyflow V3 SDK for the Java programming language</description>
+    <url>https://github.com/skyflowapi/skyflow-java/tree/main</url>
+
+    <licenses>
+        <license>
+            <name>The MIT License (MIT)</name>
+            <url>https://github.com/skyflowapi/skyflow-java/blob/main/LICENSE</url>
+        </license>
+    </licenses>
+    <developers>
+        <developer>
+            <id>skyflow</id>
+            <name>skyflow</name>
+        </developer>
+    </developers>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
