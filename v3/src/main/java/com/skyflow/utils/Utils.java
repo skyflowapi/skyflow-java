@@ -48,7 +48,8 @@ public final class Utils extends BaseUtils {
             List<String> batchTokens = tokens.subList(i, Math.min(i + batchSize, tokens.size()));
             List<TokenGroupRedactions> tokenGroupRedactions = null;
             if (request.getTokenGroupRedactions().isPresent() && !request.getTokenGroupRedactions().get().isEmpty() && i < request.getTokenGroupRedactions().get().size()) {
-                tokenGroupRedactions = request.getTokenGroupRedactions().get().subList(i, Math.min(i + batchSize, request.getTokenGroupRedactions().get().size()));            }
+                tokenGroupRedactions = request.getTokenGroupRedactions().get();
+            }
             // Build a new DetokenizeRequest for the current batch
             DetokenizeRequest batchRequest = DetokenizeRequest.builder()
                     .vaultId(request.getVaultId())
