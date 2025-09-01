@@ -1,10 +1,14 @@
 package com.skyflow.vault.data;
 
 import com.google.gson.Gson;
+import com.google.gson.annotations.Expose;
 
 public class DetokenizeSummary {
+    @Expose(serialize = true)
     private int totalTokens;
+    @Expose(serialize = true)
     private int totalDetokenized;
+    @Expose(serialize = true)
     private int totalFailed;
 
     public DetokenizeSummary() {
