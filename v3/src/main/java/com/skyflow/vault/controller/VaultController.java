@@ -48,8 +48,8 @@ public final class VaultController extends VaultClient {
         try {
             LogUtil.printInfoLog(InfoLogs.VALIDATE_INSERT_REQUEST.getLog());
             Validations.validateInsertRequest(insertRequest);
-            setBearerToken();
             configureInsertConcurrencyAndBatchSize(insertRequest.getValues().size());
+            setBearerToken();
             com.skyflow.generated.rest.resources.recordservice.requests.InsertRequest request = super.getBulkInsertRequestBody(insertRequest, super.getVaultConfig());
 
             response = this.processSync(request, insertRequest.getValues());
@@ -69,8 +69,8 @@ public final class VaultController extends VaultClient {
         try {
             LogUtil.printInfoLog(InfoLogs.VALIDATE_INSERT_REQUEST.getLog());
             Validations.validateInsertRequest(insertRequest);
-            setBearerToken();
             configureInsertConcurrencyAndBatchSize(insertRequest.getValues().size());
+            setBearerToken();
             com.skyflow.generated.rest.resources.recordservice.requests.InsertRequest request = super.getBulkInsertRequestBody(insertRequest, super.getVaultConfig());
             List<ErrorRecord> errorRecords = Collections.synchronizedList(new ArrayList<>());
             List<CompletableFuture<com.skyflow.vault.data.InsertResponse>> futures = this.insertBatchFutures(request, errorRecords);
