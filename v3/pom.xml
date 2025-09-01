@@ -11,7 +11,7 @@
     </parent>
 
     <artifactId>skyflow-java</artifactId>
-    <version>3.0.0-beta.2-dev.679d2a7</version>
+    <version>3.0.0-beta.2-dev.77d7933</version>
     <packaging>jar</packaging>
 
     <properties>
