@@ -1,6 +1,7 @@
 package com.skyflow.vault.data;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class DetokenizeRequest {
     private final DetokenizeRequestBuilder builder;
@@ -11,23 +12,23 @@ public class DetokenizeRequest {
     public static DetokenizeRequestBuilder builder(){
         return new DetokenizeRequestBuilder();
     }
-    public ArrayList<String> getTokens(){
+    public List<String> getTokens(){
         return this.builder.tokens;
     }
-    public ArrayList<TokenGroupRedactions> getTokenGroupRedactions(){
+    public List<TokenGroupRedactions> getTokenGroupRedactions(){
         return this.builder.tokenGroupRedactions;
     }
 
     public static final class DetokenizeRequestBuilder{
-        private ArrayList<String> tokens;
+        private List<String> tokens;
 
-        private ArrayList<TokenGroupRedactions> tokenGroupRedactions;
+        private List<TokenGroupRedactions> tokenGroupRedactions;
 
-        public DetokenizeRequestBuilder tokens(ArrayList<String> tokens){
+        public DetokenizeRequestBuilder tokens(List<String> tokens){
             this.tokens = tokens;
             return this;
         }
-        public DetokenizeRequestBuilder tokenGroupRedactions(ArrayList<TokenGroupRedactions> tokenGroupRedactions){
+        public DetokenizeRequestBuilder tokenGroupRedactions(List<TokenGroupRedactions> tokenGroupRedactions){
             this.tokenGroupRedactions = tokenGroupRedactions;
             return this;
         }

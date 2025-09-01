@@ -196,7 +196,7 @@ public final class VaultController extends VaultClient {
 
     private DetokenizeResponse processDetokenizeSync(
             com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest detokenizeRequest,
-            ArrayList<String> originalTokens
+            List<String> originalTokens
     ) throws ExecutionException, InterruptedException, SkyflowException {
         LogUtil.printInfoLog(InfoLogs.PROCESSING_BATCHES.getLog());
         List<ErrorRecord> errorTokens = Collections.synchronizedList(new ArrayList<>());
