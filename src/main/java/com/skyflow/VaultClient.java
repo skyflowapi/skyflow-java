@@ -17,6 +17,7 @@ import com.skyflow.generated.rest.resources.records.RecordsClient;
 import com.skyflow.generated.rest.resources.records.requests.RecordServiceBatchOperationBody;
 import com.skyflow.generated.rest.resources.records.requests.RecordServiceInsertRecordBody;
 import com.skyflow.generated.rest.resources.records.requests.RecordServiceUpdateRecordBody;
+import com.skyflow.generated.rest.resources.records.requests.UploadFileV2Request;
 import com.skyflow.generated.rest.resources.strings.StringsClient;
 import com.skyflow.generated.rest.resources.strings.requests.DeidentifyStringRequest;
 import com.skyflow.generated.rest.resources.strings.requests.ReidentifyStringRequest;
@@ -32,6 +33,7 @@ import com.skyflow.utils.Constants;
 import com.skyflow.utils.Utils;
 import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.utils.validations.Validations;
+import com.skyflow.vault.data.FileUploadRequest;
 import com.skyflow.vault.data.InsertRequest;
 import com.skyflow.vault.data.UpdateRequest;
 import com.skyflow.vault.detect.*;
@@ -44,6 +46,10 @@ import com.skyflow.vault.tokens.TokenizeRequest;
 import io.github.cdimascio.dotenv.Dotenv;
 import io.github.cdimascio.dotenv.DotenvException;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -207,6 +213,22 @@ public class VaultClient {
         }
 
         return payloadBuilder.build();
+    }
+
+    protected File getFileForFileUpload(FileUploadRequest fileUploadRequest) throws IOException {
+        if (fileUploadRequest.getFilePath() != null) {
+            return new File(fileUploadRequest.getFilePath());
+        }
+        else if (fileUploadRequest.getBase64() != null) {
+            byte[] decodedBytes = Base64.getDecoder().decode(fileUploadRequest.getBase64());
+            File file = new File(fileUploadRequest.getFileName());
+            Files.write(file.toPath(), decodedBytes);
+            return file;
+        }
+        else if (fileUploadRequest.getFileObject() != null) {
+            return fileUploadRequest.getFileObject();
+        }
+        return null;
     }
 
     protected void setBearerToken() throws SkyflowException {

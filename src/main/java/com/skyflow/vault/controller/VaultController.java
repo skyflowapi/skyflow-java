@@ -23,6 +23,8 @@ import com.skyflow.utils.validations.Validations;
 import com.skyflow.vault.data.*;
 import com.skyflow.vault.tokens.*;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 public final class VaultController extends VaultClient {
@@ -363,23 +365,37 @@ public final class VaultController extends VaultClient {
 
     public FileUploadResponse uploadFile(FileUploadRequest fileUploadRequest) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.FILE_UPLOAD_TRIGGERED.getLog());
-
         FileUploadResponse fileUploadResponse = null;
+
         try {
             LogUtil.printInfoLog(InfoLogs.VALIDATING_FILE_UPLOAD_REQUEST.getLog());
             Validations.validateFileUploadRequest(fileUploadRequest);
             setBearerToken();
-//            UploadFileV2Request uploadFileV2Request = super.getFileUploadRequest(fileUploadRequest);
-            UploadFileV2Request uploadFileV2Request = null;
-            UploadFileV2Response uploadFileV2Response = super.getRecordsApi().uploadFileV2(super.getVaultConfig().getVaultId(), fileUploadRequest.getFileObject(), uploadFileV2Request);
+            File file = super.getFileForFileUpload(fileUploadRequest);
+
+            UploadFileV2Request uploadFileV2Request = UploadFileV2Request.builder()
+                    .tableName(fileUploadRequest.getTable())
+                    .columnName(fileUploadRequest.getColumnName())
+                    .skyflowId(fileUploadRequest.getSkyflowId())
+                    .returnFileMetadata(false)
+                    .build();
+
+            UploadFileV2Response uploadFileV2Response = super.getRecordsApi().uploadFileV2(super.getVaultConfig().getVaultId(), file, uploadFileV2Request);
+
+            fileUploadResponse = new FileUploadResponse(
+                    uploadFileV2Response.getSkyflowId().orElse(null),
+                    null
+            );
 
         } catch (ApiClientApiException e) {
             String bodyString = gson.toJson(e.body());
             LogUtil.printErrorLog(ErrorLogs.UPLOAD_FILE_REQUEST_REJECTED.getLog());
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
+        } catch (IOException e) {
+            LogUtil.printErrorLog(ErrorLogs.UPLOAD_FILE_REQUEST_REJECTED.getLog());
+            throw new SkyflowException(e.getMessage(), e);
         }
         LogUtil.printInfoLog(InfoLogs.FILE_UPLOAD_SUCCESS.getLog());
         return fileUploadResponse;
-
     }
 }
