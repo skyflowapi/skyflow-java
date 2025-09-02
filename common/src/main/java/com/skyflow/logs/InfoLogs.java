@@ -92,7 +92,9 @@ public enum InfoLogs {
     VALIDATE_GET_DETECT_RUN_REQUEST("Validating get detect run request."),
     REIDENTIFY_TEXT_SUCCESS("Text data re-identified."),
 
-    PROCESSING_BATCHES("Processing batch")
+    PROCESSING_BATCHES("Processing batch"),
+    SET_CONCURRENCY_LIMIT("Setting concurrency limit to %s1"),
+    SET_BATCH_SIZE("Setting batch size to %s1"),
     ;
 
 

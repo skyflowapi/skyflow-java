@@ -306,8 +306,12 @@ public final class VaultController extends VaultClient {
             if (userProvidedBatchSize != null) {
                 try {
                     int batchSize = Integer.parseInt(userProvidedBatchSize);
+                    if (batchSize > Constants.MAX_DETOKENIZE_BATCH_SIZE) {
+                        LogUtil.printWarningLog(WarningLogs.BATCH_SIZE_EXCEEDS_MAX_LIMIT.getLog());
+                    }
                     int maxBatchSize = Math.min(batchSize, Constants.MAX_INSERT_BATCH_SIZE);
                     if (maxBatchSize > 0) {
+//                        LogUtil.printInfoLog(InfoLogs.SET_BATCH_SIZE.getLog() + maxBatchSize);
                         this.insertBatchSize = maxBatchSize;
                     } else {
                         LogUtil.printWarningLog(WarningLogs.INVALID_BATCH_SIZE_PROVIDED.getLog());
@@ -326,8 +330,11 @@ public final class VaultController extends VaultClient {
                 try {
                     int concurrencyLimit = Integer.parseInt(userProvidedConcurrencyLimit);
                     int maxConcurrencyLimit = Math.min(concurrencyLimit, Constants.MAX_INSERT_CONCURRENCY_LIMIT);
-
+                    if (concurrencyLimit > Constants.MAX_DETOKENIZE_CONCURRENCY_LIMIT) {
+                        LogUtil.printWarningLog(WarningLogs.CONCURRENCY_EXCEEDS_MAX_LIMIT.getLog());
+                    }
                     if (maxConcurrencyLimit > 0) {
+//                        LogUtil.printInfoLog(InfoLogs.SET_CONCURRENCY_LIMIT.getLog() + maxConcurrencyLimit);
                         this.insertConcurrencyLimit = Math.min(maxConcurrencyLimit, maxConcurrencyNeeded);
                     } else {
                         LogUtil.printWarningLog(WarningLogs.INVALID_CONCURRENCY_LIMIT_PROVIDED.getLog());
@@ -357,8 +364,12 @@ public final class VaultController extends VaultClient {
             if (userProvidedBatchSize != null) {
                 try {
                     int batchSize = Integer.parseInt(userProvidedBatchSize);
+                    if (batchSize > Constants.MAX_DETOKENIZE_BATCH_SIZE) {
+                        LogUtil.printWarningLog(WarningLogs.BATCH_SIZE_EXCEEDS_MAX_LIMIT.getLog());
+                    }
                     int maxBatchSize = Math.min(batchSize, Constants.MAX_DETOKENIZE_BATCH_SIZE);
                     if (maxBatchSize > 0) {
+//                        LogUtil.printInfoLog(InfoLogs.SET_BATCH_SIZE.getLog() + maxBatchSize);
                         this.detokenizeBatchSize = maxBatchSize;
                     } else {
                         LogUtil.printWarningLog(WarningLogs.INVALID_BATCH_SIZE_PROVIDED.getLog());
@@ -376,9 +387,13 @@ public final class VaultController extends VaultClient {
             if (userProvidedConcurrencyLimit != null) {
                 try {
                     int concurrencyLimit = Integer.parseInt(userProvidedConcurrencyLimit);
+                    if (concurrencyLimit > Constants.MAX_DETOKENIZE_CONCURRENCY_LIMIT) {
+                        LogUtil.printWarningLog(WarningLogs.CONCURRENCY_EXCEEDS_MAX_LIMIT.getLog());
+                    }
                     int maxConcurrencyLimit = Math.min(concurrencyLimit, Constants.MAX_DETOKENIZE_CONCURRENCY_LIMIT);
 
                     if (maxConcurrencyLimit > 0) {
+//                        LogUtil.printInfoLog(InfoLogs.SET_CONCURRENCY_LIMIT.getLog() + maxConcurrencyLimit);
                         this.detokenizeConcurrencyLimit = Math.min(maxConcurrencyLimit, maxConcurrencyNeeded);
                     } else {
                         LogUtil.printWarningLog(WarningLogs.INVALID_CONCURRENCY_LIMIT_PROVIDED.getLog());
