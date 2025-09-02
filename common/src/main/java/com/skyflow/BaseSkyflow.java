@@ -10,21 +10,18 @@ import com.skyflow.utils.logger.LogUtil;
 import java.util.LinkedHashMap;
 
 class BaseSkyflow {
+    // base skyflow class
     private final BaseSkyflowClientBuilder builder;
-
     protected BaseSkyflow(BaseSkyflowClientBuilder builder) {
         this.builder = builder;
     }
-
     public LogLevel getLogLevel() {
         return this.builder.logLevel;
     }
-
     public VaultConfig getVaultConfig() {
         Object[] array = this.builder.vaultConfigMap.values().toArray();
         return (VaultConfig) array[0];
     }
-
     static class BaseSkyflowClientBuilder {
         protected final LinkedHashMap<String, VaultConfig> vaultConfigMap;
         protected Credentials skyflowCredentials;

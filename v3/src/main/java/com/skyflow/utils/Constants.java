@@ -9,7 +9,6 @@ public final class Constants extends BaseConstants {
     public static final Integer MAX_INSERT_BATCH_SIZE = 1000;
     public static final Integer INSERT_CONCURRENCY_LIMIT = 10;
     public static final Integer MAX_INSERT_CONCURRENCY_LIMIT = 10;
-
     public static final Integer DETOKENIZE_BATCH_SIZE = 50;
     public static final Integer DETOKENIZE_CONCURRENCY_LIMIT = 10;
     public static final Integer MAX_DETOKENIZE_BATCH_SIZE = 1000;
