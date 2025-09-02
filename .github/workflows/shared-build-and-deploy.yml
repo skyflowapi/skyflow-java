@@ -131,6 +131,9 @@ jobs:
           name: "credentials.json"
           json: ${{ secrets.TEST_CREDENTIALS_FILE_STRING }}
 
+      - name: Install parent POM
+        run: mvn install -N
+
       - name: Publish package
         run: |
           if [[ "${{ inputs.tag }}" == "internal" ]]; then
