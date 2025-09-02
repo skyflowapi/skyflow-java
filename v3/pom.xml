@@ -11,7 +11,7 @@
     </parent>
 
     <artifactId>skyflow-java</artifactId>
-    <version>3.0.0-beta.2-dev.9e1af77</version>
+    <version>3.0.0-beta.2-dev.9924b50</version>
     <packaging>jar</packaging>
     <name>${project.groupId}:${project.artifactId}</name>
     <description>Skyflow V3 SDK for the Java programming language</description>
