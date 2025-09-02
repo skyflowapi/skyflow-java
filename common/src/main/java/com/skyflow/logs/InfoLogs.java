@@ -92,7 +92,7 @@ public enum InfoLogs {
     VALIDATE_GET_DETECT_RUN_REQUEST("Validating get detect run request."),
     REIDENTIFY_TEXT_SUCCESS("Text data re-identified."),
 
-    PROCESSING_BATCHES("Processing batch")
+    PROCESSING_BATCHES("Processing batch"),
     ;
 
 
