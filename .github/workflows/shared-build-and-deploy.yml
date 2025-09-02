@@ -131,12 +131,6 @@ jobs:
           name: "credentials.json"
           json: ${{ secrets.TEST_CREDENTIALS_FILE_STRING }}
 
-      - name: Install parent POM
-        run: mvn install -N -DskipSigning=true
-
-      - name: List installed parent POM
-        run: ls ~/.m2/repository/com/skyflow/skyflow/1.0.0
-
       - name: Publish package
         run: |
           if [[ "${{ inputs.tag }}" == "internal" ]]; then

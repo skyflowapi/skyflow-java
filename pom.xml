@@ -253,27 +253,50 @@
         </plugins>
     </build>
     <profiles>
-  <profile>
-    <id>skip-signing</id>
-    <activation>
-      <property>
-        <name>skipSigning</name>
-        <value>true</value>
-      </property>
-    </activation>
-    <build>
-      <plugins>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-gpg-plugin</artifactId>
-          <configuration>
-            <skip>true</skip>
-          </configuration>
-        </plugin>
-      </plugins>
-    </build>
-  </profile>
-</profiles>
+        <profile>
+            <id>jfrog</id>
+            <distributionManagement>
+                <repository>
+                    <id>central</id>
+                    <name>prekarilabs.jfrog.io-releases</name>
+                    <url>https://prekarilabs.jfrog.io/artifactory/skyflow-java</url>
+                </repository>
+                <snapshotRepository>
+                    <id>snapshots</id>
+                    <name>prekarilabs.jfrog.io-snapshots</name>
+                    <url>https://prekarilabs.jfrog.io/artifactory/skyflow-java</url>
+                </snapshotRepository>
+            </distributionManagement>
+        </profile>
+       <profile>
+           <id>maven-central</id>
+           <distributionManagement>
+               <repository>
+                   <id>central</id>
+                   <url>https://central.sonatype.com/api/v1/publisher/upload</url>
+               </repository>
+               <snapshotRepository>
+                   <id>central-snapshots</id>
+                   <url>https://central.sonatype.com/api/v1/publisher/upload</url>
+               </snapshotRepository>
+           </distributionManagement>
+           <build>
+               <plugins>
+                   <plugin>
+                       <groupId>org.sonatype.central</groupId>
+                       <artifactId>central-publishing-maven-plugin</artifactId>
+                       <version>0.4.0</version>
+                       <extensions>true</extensions>
+                       <configuration>
+                           <publishingServerId>central</publishingServerId>
+                           <tokenAuth>true</tokenAuth>
+                           <autoPublish>true</autoPublish>
+                       </configuration>
+                   </plugin>
+               </plugins>
+           </build>
+       </profile>
+    </profiles>
    <repositories>
        <repository>
            <id>maven_central</id>
