@@ -44,6 +44,8 @@
             <groupId>com.skyflow</groupId>
             <artifactId>common</artifactId>
             <version>1.0.0</version>
+            <scope>compile</scope>
+            <optional>false</optional>
         </dependency>
     </dependencies>
 
