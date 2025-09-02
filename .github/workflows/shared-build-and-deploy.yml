@@ -132,7 +132,7 @@ jobs:
           json: ${{ secrets.TEST_CREDENTIALS_FILE_STRING }}
 
       - name: Install parent POM
-        run: mvn install -N
+        run: mvn install -N -DskipSigning=true
 
       - name: Publish package
         run: |
