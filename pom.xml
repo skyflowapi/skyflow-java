@@ -259,11 +259,13 @@
 <!--            <url>https://repo.maven.apache.org/maven2/</url>-->
 <!--        </repository>-->
 <!--    </repositories>-->
-<repository>
+        <repositories>
+            <repository>
             <id>central</id>
             <url>https://prekarilabs.jfrog.io/artifactory/skyflow-java</url>
             <snapshots>
                 <enabled>false</enabled>
             </snapshots>
         </repository>
+        </repositories>
 </project>
