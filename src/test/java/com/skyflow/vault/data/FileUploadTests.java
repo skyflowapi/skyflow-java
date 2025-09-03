@@ -116,6 +116,47 @@ public class FileUploadTests {
     }
 
     @Test
+    public void testMissingSkyflowId() {
+        try {
+            FileUploadRequest request = FileUploadRequest.builder()
+                    .table(table)
+                    .columnName(columnName)
+                    .fileName(fileName)
+                    .build();
+
+            Validations.validateFileUploadRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(
+                    Utils.parameterizedString(ErrorMessage.SkyflowIdKeyError.getMessage(), Constants.SDK_PREFIX),
+                    e.getMessage()
+            );
+        }
+    }
+
+    @Test
+    public void testEmptySkyflowId() {
+        try {
+            FileUploadRequest request = FileUploadRequest.builder()
+                    .table(table)
+                    .skyflowId("")
+                    .columnName(columnName)
+                    .fileName(fileName)
+                    .build();
+
+            Validations.validateFileUploadRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(
+                    Utils.parameterizedString(ErrorMessage.EmptySkyflowId.getMessage(), Constants.SDK_PREFIX),
+                    e.getMessage()
+            );
+        }
+    }
+
+    @Test
     public void testMissingColumnName() {
         try {
             FileUploadRequest request = FileUploadRequest.builder()
@@ -152,6 +193,27 @@ public class FileUploadTests {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
                     Utils.parameterizedString(ErrorMessage.MissingFileSourceInUploadFileRequest.getMessage(), Constants.SDK_PREFIX),
+                    e.getMessage()
+            );
+        }
+    }
+
+    @Test
+    public void testMissingFileNameWithBase64Invalid() {
+        try {
+            FileUploadRequest request = FileUploadRequest.builder()
+                    .table(table)
+                    .skyflowId(skyflowId)
+                    .columnName(columnName)
+                    .base64(base64Content)
+                    .build();
+
+            Validations.validateFileUploadRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(
+                    Utils.parameterizedString(ErrorMessage.FileNameMustBeProvidedWithFileObject.getMessage(), Constants.SDK_PREFIX),
                     e.getMessage()
             );
         }
