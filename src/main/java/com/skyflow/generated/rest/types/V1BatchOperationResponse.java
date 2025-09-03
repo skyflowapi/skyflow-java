@@ -52,7 +52,7 @@ public final class V1BatchOperationResponse {
         return responses;
     }
 
-    @Override
+    @java.lang.Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof V1BatchOperationResponse && equalTo((V1BatchOperationResponse) other);
@@ -67,12 +67,12 @@ public final class V1BatchOperationResponse {
         return vaultId.equals(other.vaultId) && responses.equals(other.responses);
     }
 
-    @Override
+    @java.lang.Override
     public int hashCode() {
         return Objects.hash(this.vaultId, this.responses);
     }
 
-    @Override
+    @java.lang.Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }

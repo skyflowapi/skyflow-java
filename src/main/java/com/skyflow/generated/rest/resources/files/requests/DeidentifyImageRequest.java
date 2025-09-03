@@ -145,7 +145,7 @@ public final class DeidentifyImageRequest {
         return transformations;
     }
 
-    @Override
+    @java.lang.Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof DeidentifyImageRequest && equalTo((DeidentifyImageRequest) other);
@@ -170,7 +170,7 @@ public final class DeidentifyImageRequest {
                 && transformations.equals(other.transformations);
     }
 
-    @Override
+    @java.lang.Override
     public int hashCode() {
         return Objects.hash(
                 this.vaultId,
@@ -186,7 +186,7 @@ public final class DeidentifyImageRequest {
                 this.transformations);
     }
 
-    @Override
+    @java.lang.Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }
@@ -286,7 +286,7 @@ public final class DeidentifyImageRequest {
 
         private Builder() {}
 
-        @Override
+        @java.lang.Override
         public Builder from(DeidentifyImageRequest other) {
             vaultId(other.getVaultId());
             file(other.getFile());
@@ -302,7 +302,7 @@ public final class DeidentifyImageRequest {
             return this;
         }
 
-        @Override
+        @java.lang.Override
         @JsonSetter("vault_id")
         public FileStage vaultId(@NotNull String vaultId) {
             this.vaultId = Objects.requireNonNull(vaultId, "vaultId must not be null");
@@ -313,72 +313,72 @@ public final class DeidentifyImageRequest {
          * File to de-identify. Files are specified as Base64-encoded data.<p>File to de-identify. Files are specified as Base64-encoded data.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @Override
+        @java.lang.Override
         @JsonSetter("file")
         public _FinalStage file(@NotNull DeidentifyImageRequestFile file) {
             this.file = Objects.requireNonNull(file, "file must not be null");
             return this;
         }
 
-        @Override
+        @java.lang.Override
         public _FinalStage transformations(Transformations transformations) {
             this.transformations = Optional.ofNullable(transformations);
             return this;
         }
 
-        @Override
+        @java.lang.Override
         @JsonSetter(value = "transformations", nulls = Nulls.SKIP)
         public _FinalStage transformations(Optional<Transformations> transformations) {
             this.transformations = transformations;
             return this;
         }
 
-        @Override
+        @java.lang.Override
         public _FinalStage restrictRegex(List<String> restrictRegex) {
             this.restrictRegex = Optional.ofNullable(restrictRegex);
             return this;
         }
 
-        @Override
+        @java.lang.Override
         @JsonSetter(value = "restrict_regex", nulls = Nulls.SKIP)
         public _FinalStage restrictRegex(Optional<List<String>> restrictRegex) {
             this.restrictRegex = restrictRegex;
             return this;
         }
 
-        @Override
+        @java.lang.Override
         public _FinalStage allowRegex(List<String> allowRegex) {
             this.allowRegex = Optional.ofNullable(allowRegex);
             return this;
         }
 
-        @Override
+        @java.lang.Override
         @JsonSetter(value = "allow_regex", nulls = Nulls.SKIP)
         public _FinalStage allowRegex(Optional<List<String>> allowRegex) {
             this.allowRegex = allowRegex;
             return this;
         }
 
-        @Override
+        @java.lang.Override
         public _FinalStage tokenType(TokenTypeWithoutVault tokenType) {
             this.tokenType = Optional.ofNullable(tokenType);
             return this;
         }
 
-        @Override
+        @java.lang.Override
         @JsonSetter(value = "token_type", nulls = Nulls.SKIP)
         public _FinalStage tokenType(Optional<TokenTypeWithoutVault> tokenType) {
             this.tokenType = tokenType;
             return this;
         }
 
-        @Override
+        @java.lang.Override
         public _FinalStage entityTypes(List<EntityType> entityTypes) {
             this.entityTypes = Optional.ofNullable(entityTypes);
             return this;
         }
 
-        @Override
+        @java.lang.Override
         @JsonSetter(value = "entity_types", nulls = Nulls.SKIP)
         public _FinalStage entityTypes(Optional<List<EntityType>> entityTypes) {
             this.entityTypes = entityTypes;
@@ -389,7 +389,7 @@ public final class DeidentifyImageRequest {
          * <p>Method to mask the entities in the image.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @Override
+        @java.lang.Override
         public _FinalStage maskingMethod(DeidentifyImageRequestMaskingMethod maskingMethod) {
             this.maskingMethod = Optional.ofNullable(maskingMethod);
             return this;
@@ -398,7 +398,7 @@ public final class DeidentifyImageRequest {
         /**
          * <p>Method to mask the entities in the image.</p>
          */
-        @Override
+        @java.lang.Override
         @JsonSetter(value = "masking_method", nulls = Nulls.SKIP)
         public _FinalStage maskingMethod(Optional<DeidentifyImageRequestMaskingMethod> maskingMethod) {
             this.maskingMethod = maskingMethod;
@@ -409,7 +409,7 @@ public final class DeidentifyImageRequest {
          * <p>If <code>true</code>, includes OCR text output in the response.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @Override
+        @java.lang.Override
         public _FinalStage outputOcrText(Boolean outputOcrText) {
             this.outputOcrText = Optional.ofNullable(outputOcrText);
             return this;
@@ -418,7 +418,7 @@ public final class DeidentifyImageRequest {
         /**
          * <p>If <code>true</code>, includes OCR text output in the response.</p>
          */
-        @Override
+        @java.lang.Override
         @JsonSetter(value = "output_ocr_text", nulls = Nulls.SKIP)
         public _FinalStage outputOcrText(Optional<Boolean> outputOcrText) {
             this.outputOcrText = outputOcrText;
@@ -429,7 +429,7 @@ public final class DeidentifyImageRequest {
          * <p>If <code>true</code>, includes processed image in the output.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @Override
+        @java.lang.Override
         public _FinalStage outputProcessedImage(Boolean outputProcessedImage) {
             this.outputProcessedImage = Optional.ofNullable(outputProcessedImage);
             return this;
@@ -438,27 +438,27 @@ public final class DeidentifyImageRequest {
         /**
          * <p>If <code>true</code>, includes processed image in the output.</p>
          */
-        @Override
+        @java.lang.Override
         @JsonSetter(value = "output_processed_image", nulls = Nulls.SKIP)
         public _FinalStage outputProcessedImage(Optional<Boolean> outputProcessedImage) {
             this.outputProcessedImage = outputProcessedImage;
             return this;
         }
 
-        @Override
+        @java.lang.Override
         public _FinalStage configurationId(String configurationId) {
             this.configurationId = Optional.ofNullable(configurationId);
             return this;
         }
 
-        @Override
+        @java.lang.Override
         @JsonSetter(value = "configuration_id", nulls = Nulls.SKIP)
         public _FinalStage configurationId(Optional<String> configurationId) {
             this.configurationId = configurationId;
             return this;
         }
 
-        @Override
+        @java.lang.Override
         public DeidentifyImageRequest build() {
             return new DeidentifyImageRequest(
                     vaultId,

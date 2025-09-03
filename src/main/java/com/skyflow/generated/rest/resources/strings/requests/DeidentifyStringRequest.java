@@ -107,7 +107,7 @@ public final class DeidentifyStringRequest {
         return transformations;
     }
 
-    @Override
+    @java.lang.Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof DeidentifyStringRequest && equalTo((DeidentifyStringRequest) other);
@@ -129,7 +129,7 @@ public final class DeidentifyStringRequest {
                 && transformations.equals(other.transformations);
     }
 
-    @Override
+    @java.lang.Override
     public int hashCode() {
         return Objects.hash(
                 this.vaultId,
@@ -142,7 +142,7 @@ public final class DeidentifyStringRequest {
                 this.transformations);
     }
 
-    @Override
+    @java.lang.Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }
@@ -215,7 +215,7 @@ public final class DeidentifyStringRequest {
 
         private Builder() {}
 
-        @Override
+        @java.lang.Override
         public Builder from(DeidentifyStringRequest other) {
             vaultId(other.getVaultId());
             text(other.getText());
@@ -228,7 +228,7 @@ public final class DeidentifyStringRequest {
             return this;
         }
 
-        @Override
+        @java.lang.Override
         @JsonSetter("vault_id")
         public TextStage vaultId(@NotNull String vaultId) {
             this.vaultId = Objects.requireNonNull(vaultId, "vaultId must not be null");
@@ -239,92 +239,92 @@ public final class DeidentifyStringRequest {
          * String to de-identify.<p>String to de-identify.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @Override
+        @java.lang.Override
         @JsonSetter("text")
         public _FinalStage text(@NotNull String text) {
             this.text = Objects.requireNonNull(text, "text must not be null");
             return this;
         }
 
-        @Override
+        @java.lang.Override
         public _FinalStage transformations(Transformations transformations) {
             this.transformations = Optional.ofNullable(transformations);
             return this;
         }
 
-        @Override
+        @java.lang.Override
         @JsonSetter(value = "transformations", nulls = Nulls.SKIP)
         public _FinalStage transformations(Optional<Transformations> transformations) {
             this.transformations = transformations;
             return this;
         }
 
-        @Override
+        @java.lang.Override
         public _FinalStage restrictRegex(List<String> restrictRegex) {
             this.restrictRegex = Optional.ofNullable(restrictRegex);
             return this;
         }
 
-        @Override
+        @java.lang.Override
         @JsonSetter(value = "restrict_regex", nulls = Nulls.SKIP)
         public _FinalStage restrictRegex(Optional<List<String>> restrictRegex) {
             this.restrictRegex = restrictRegex;
             return this;
         }
 
-        @Override
+        @java.lang.Override
         public _FinalStage allowRegex(List<String> allowRegex) {
             this.allowRegex = Optional.ofNullable(allowRegex);
             return this;
         }
 
-        @Override
+        @java.lang.Override
         @JsonSetter(value = "allow_regex", nulls = Nulls.SKIP)
         public _FinalStage allowRegex(Optional<List<String>> allowRegex) {
             this.allowRegex = allowRegex;
             return this;
         }
 
-        @Override
+        @java.lang.Override
         public _FinalStage tokenType(TokenType tokenType) {
             this.tokenType = Optional.ofNullable(tokenType);
             return this;
         }
 
-        @Override
+        @java.lang.Override
         @JsonSetter(value = "token_type", nulls = Nulls.SKIP)
         public _FinalStage tokenType(Optional<TokenType> tokenType) {
             this.tokenType = tokenType;
             return this;
         }
 
-        @Override
+        @java.lang.Override
         public _FinalStage entityTypes(List<EntityType> entityTypes) {
             this.entityTypes = Optional.ofNullable(entityTypes);
             return this;
         }
 
-        @Override
+        @java.lang.Override
         @JsonSetter(value = "entity_types", nulls = Nulls.SKIP)
         public _FinalStage entityTypes(Optional<List<EntityType>> entityTypes) {
             this.entityTypes = entityTypes;
             return this;
         }
 
-        @Override
+        @java.lang.Override
         public _FinalStage configurationId(String configurationId) {
             this.configurationId = Optional.ofNullable(configurationId);
             return this;
         }
 
-        @Override
+        @java.lang.Override
         @JsonSetter(value = "configuration_id", nulls = Nulls.SKIP)
         public _FinalStage configurationId(Optional<String> configurationId) {
             this.configurationId = configurationId;
             return this;
         }
 
-        @Override
+        @java.lang.Override
         public DeidentifyStringRequest build() {
             return new DeidentifyStringRequest(
                     vaultId,

@@ -37,7 +37,7 @@ public final class V1TokenizeRecordResponse {
         return token;
     }
 
-    @Override
+    @java.lang.Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof V1TokenizeRecordResponse && equalTo((V1TokenizeRecordResponse) other);
@@ -52,12 +52,12 @@ public final class V1TokenizeRecordResponse {
         return token.equals(other.token);
     }
 
-    @Override
+    @java.lang.Override
     public int hashCode() {
         return Objects.hash(this.token);
     }
 
-    @Override
+    @java.lang.Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }

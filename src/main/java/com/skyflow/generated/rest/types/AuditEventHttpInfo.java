@@ -49,7 +49,7 @@ public final class AuditEventHttpInfo {
         return method;
     }
 
-    @Override
+    @java.lang.Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof AuditEventHttpInfo && equalTo((AuditEventHttpInfo) other);
@@ -64,12 +64,12 @@ public final class AuditEventHttpInfo {
         return uri.equals(other.uri) && method.equals(other.method);
     }
 
-    @Override
+    @java.lang.Override
     public int hashCode() {
         return Objects.hash(this.uri, this.method);
     }
 
-    @Override
+    @java.lang.Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }

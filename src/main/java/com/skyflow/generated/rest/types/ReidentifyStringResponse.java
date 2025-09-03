@@ -37,7 +37,7 @@ public final class ReidentifyStringResponse {
         return text;
     }
 
-    @Override
+    @java.lang.Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof ReidentifyStringResponse && equalTo((ReidentifyStringResponse) other);
@@ -52,12 +52,12 @@ public final class ReidentifyStringResponse {
         return text.equals(other.text);
     }
 
-    @Override
+    @java.lang.Override
     public int hashCode() {
         return Objects.hash(this.text);
     }
 
-    @Override
+    @java.lang.Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }

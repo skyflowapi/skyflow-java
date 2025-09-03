@@ -18,43 +18,38 @@ import java.util.Objects;
 import java.util.Optional;
 
 @JsonInclude(JsonInclude.Include.NON_ABSENT)
-@JsonDeserialize(builder = V1RecordMetaProperties.Builder.class)
-public final class V1RecordMetaProperties {
+@JsonDeserialize(builder = UploadFileV2Response.Builder.class)
+public final class UploadFileV2Response {
     private final Optional<String> skyflowId;
 
-    private final Optional<Map<String, Object>> tokens;
+    private final Optional<Object> fileMetadata;
 
     private final Map<String, Object> additionalProperties;
 
-    private V1RecordMetaProperties(
-            Optional<String> skyflowId,
-            Optional<Map<String, Object>> tokens,
-            Map<String, Object> additionalProperties) {
+    private UploadFileV2Response(
+            Optional<String> skyflowId, Optional<Object> fileMetadata, Map<String, Object> additionalProperties) {
         this.skyflowId = skyflowId;
-        this.tokens = tokens;
+        this.fileMetadata = fileMetadata;
         this.additionalProperties = additionalProperties;
     }
 
     /**
-     * @return ID of the inserted record.
+     * @return Skyflow ID of the record the file was uploaded to.
      */
-    @JsonProperty("skyflow_id")
+    @JsonProperty("skyflowID")
     public Optional<String> getSkyflowId() {
         return skyflowId;
     }
 
-    /**
-     * @return Tokens for the record.
-     */
-    @JsonProperty("tokens")
-    public Optional<Map<String, Object>> getTokens() {
-        return tokens;
+    @JsonProperty("fileMetadata")
+    public Optional<Object> getFileMetadata() {
+        return fileMetadata;
     }
 
     @java.lang.Override
     public boolean equals(Object other) {
         if (this == other) return true;
-        return other instanceof V1RecordMetaProperties && equalTo((V1RecordMetaProperties) other);
+        return other instanceof UploadFileV2Response && equalTo((UploadFileV2Response) other);
     }
 
     @JsonAnyGetter
@@ -62,13 +57,13 @@ public final class V1RecordMetaProperties {
         return this.additionalProperties;
     }
 
-    private boolean equalTo(V1RecordMetaProperties other) {
-        return skyflowId.equals(other.skyflowId) && tokens.equals(other.tokens);
+    private boolean equalTo(UploadFileV2Response other) {
+        return skyflowId.equals(other.skyflowId) && fileMetadata.equals(other.fileMetadata);
     }
 
     @java.lang.Override
     public int hashCode() {
-        return Objects.hash(this.skyflowId, this.tokens);
+        return Objects.hash(this.skyflowId, this.fileMetadata);
     }
 
     @java.lang.Override
@@ -84,23 +79,23 @@ public final class V1RecordMetaProperties {
     public static final class Builder {
         private Optional<String> skyflowId = Optional.empty();
 
-        private Optional<Map<String, Object>> tokens = Optional.empty();
+        private Optional<Object> fileMetadata = Optional.empty();
 
         @JsonAnySetter
         private Map<String, Object> additionalProperties = new HashMap<>();
 
         private Builder() {}
 
-        public Builder from(V1RecordMetaProperties other) {
+        public Builder from(UploadFileV2Response other) {
             skyflowId(other.getSkyflowId());
-            tokens(other.getTokens());
+            fileMetadata(other.getFileMetadata());
             return this;
         }
 
         /**
-         * <p>ID of the inserted record.</p>
+         * <p>Skyflow ID of the record the file was uploaded to.</p>
          */
-        @JsonSetter(value = "skyflow_id", nulls = Nulls.SKIP)
+        @JsonSetter(value = "skyflowID", nulls = Nulls.SKIP)
         public Builder skyflowId(Optional<String> skyflowId) {
             this.skyflowId = skyflowId;
             return this;
@@ -111,22 +106,19 @@ public final class V1RecordMetaProperties {
             return this;
         }
 
-        /**
-         * <p>Tokens for the record.</p>
-         */
-        @JsonSetter(value = "tokens", nulls = Nulls.SKIP)
-        public Builder tokens(Optional<Map<String, Object>> tokens) {
-            this.tokens = tokens;
+        @JsonSetter(value = "fileMetadata", nulls = Nulls.SKIP)
+        public Builder fileMetadata(Optional<Object> fileMetadata) {
+            this.fileMetadata = fileMetadata;
             return this;
         }
 
-        public Builder tokens(Map<String, Object> tokens) {
-            this.tokens = Optional.ofNullable(tokens);
+        public Builder fileMetadata(Object fileMetadata) {
+            this.fileMetadata = Optional.ofNullable(fileMetadata);
             return this;
         }
 
-        public V1RecordMetaProperties build() {
-            return new V1RecordMetaProperties(skyflowId, tokens, additionalProperties);
+        public UploadFileV2Response build() {
+            return new UploadFileV2Response(skyflowId, fileMetadata, additionalProperties);
         }
     }
 }

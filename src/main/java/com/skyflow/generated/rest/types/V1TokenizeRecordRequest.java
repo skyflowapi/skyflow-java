@@ -49,7 +49,7 @@ public final class V1TokenizeRecordRequest {
         return columnGroup;
     }
 
-    @Override
+    @java.lang.Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof V1TokenizeRecordRequest && equalTo((V1TokenizeRecordRequest) other);
@@ -64,12 +64,12 @@ public final class V1TokenizeRecordRequest {
         return value.equals(other.value) && columnGroup.equals(other.columnGroup);
     }
 
-    @Override
+    @java.lang.Override
     public int hashCode() {
         return Objects.hash(this.value, this.columnGroup);
     }
 
-    @Override
+    @java.lang.Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }

@@ -56,7 +56,7 @@ public final class ReidentifyFileResponseOutput {
         return processedFileExtension;
     }
 
-    @Override
+    @java.lang.Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof ReidentifyFileResponseOutput && equalTo((ReidentifyFileResponseOutput) other);
@@ -71,12 +71,12 @@ public final class ReidentifyFileResponseOutput {
         return processedFile.equals(other.processedFile) && processedFileExtension.equals(other.processedFileExtension);
     }
 
-    @Override
+    @java.lang.Override
     public int hashCode() {
         return Objects.hash(this.processedFile, this.processedFileExtension);
     }
 
-    @Override
+    @java.lang.Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }
@@ -116,7 +116,7 @@ public final class ReidentifyFileResponseOutput {
 
         private Builder() {}
 
-        @Override
+        @java.lang.Override
         public Builder from(ReidentifyFileResponseOutput other) {
             processedFile(other.getProcessedFile());
             processedFileExtension(other.getProcessedFileExtension());
@@ -127,7 +127,7 @@ public final class ReidentifyFileResponseOutput {
          * Re-identified file content in base64 format.<p>Re-identified file content in base64 format.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @Override
+        @java.lang.Override
         @JsonSetter("processed_file")
         public ProcessedFileExtensionStage processedFile(@NotNull String processedFile) {
             this.processedFile = Objects.requireNonNull(processedFile, "processedFile must not be null");
@@ -138,7 +138,7 @@ public final class ReidentifyFileResponseOutput {
          * Extension of the processed file.<p>Extension of the processed file.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @Override
+        @java.lang.Override
         @JsonSetter("processed_file_extension")
         public _FinalStage processedFileExtension(@NotNull String processedFileExtension) {
             this.processedFileExtension =
@@ -146,7 +146,7 @@ public final class ReidentifyFileResponseOutput {
             return this;
         }
 
-        @Override
+        @java.lang.Override
         public ReidentifyFileResponseOutput build() {
             return new ReidentifyFileResponseOutput(processedFile, processedFileExtension, additionalProperties);
         }

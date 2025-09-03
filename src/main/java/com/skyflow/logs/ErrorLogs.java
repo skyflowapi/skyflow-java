@@ -109,6 +109,15 @@ public enum ErrorLogs {
     INVALID_REQUEST_BODY("Invalid %s1 request. Request body can not be empty."),
     INVOKE_CONNECTION_REQUEST_REJECTED("Invoke connection request resulted in failure."),
 
+    // File upload interface
+    COLUMN_NAME_IS_REQUIRED_FILE_UPLOAD("Invalid %s1 request. Column name is required."),
+    EMPTY_COLUMN_NAME_FILE_UPLOAD("Invalid %s1 request. Column name can not be empty."),
+    FILE_IS_REQUIRED("Invalid %s1 request. File is required."),
+    EMPTY_FILE("Invalid %s1 request. File can not be empty."),
+    INVALID_FILE_TYPE("Invalid %s1 request. File should be of type java.io.File"),
+    MISSING_FILE_SOURCE_IN_UPLOAD_FILE("Invalid %s1 request. Provide exactly one of filePath, base64, or fileObject."),
+    UPLOAD_FILE_REQUEST_REJECTED("Upload file request resulted in failure."),
+
 
     // detect interface
     INVALID_TEXT_IN_DEIDENTIFY("Invalid %s1 request. The text field is required and must be a non-empty string. Specify a valid text."),

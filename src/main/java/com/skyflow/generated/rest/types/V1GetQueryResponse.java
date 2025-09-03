@@ -38,7 +38,7 @@ public final class V1GetQueryResponse {
         return records;
     }
 
-    @Override
+    @java.lang.Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof V1GetQueryResponse && equalTo((V1GetQueryResponse) other);
@@ -53,12 +53,12 @@ public final class V1GetQueryResponse {
         return records.equals(other.records);
     }
 
-    @Override
+    @java.lang.Override
     public int hashCode() {
         return Objects.hash(this.records);
     }
 
-    @Override
+    @java.lang.Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }
