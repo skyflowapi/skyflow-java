@@ -39,7 +39,7 @@ public final class RecordServiceBulkDeleteRecordBody {
         return skyflowIds;
     }
 
-    @Override
+    @java.lang.Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof RecordServiceBulkDeleteRecordBody && equalTo((RecordServiceBulkDeleteRecordBody) other);
@@ -54,12 +54,12 @@ public final class RecordServiceBulkDeleteRecordBody {
         return skyflowIds.equals(other.skyflowIds);
     }
 
-    @Override
+    @java.lang.Override
     public int hashCode() {
         return Objects.hash(this.skyflowIds);
     }
 
-    @Override
+    @java.lang.Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }

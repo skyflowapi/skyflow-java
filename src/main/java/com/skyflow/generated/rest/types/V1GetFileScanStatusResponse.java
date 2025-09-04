@@ -35,7 +35,7 @@ public final class V1GetFileScanStatusResponse {
         return avScanStatus;
     }
 
-    @Override
+    @java.lang.Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof V1GetFileScanStatusResponse && equalTo((V1GetFileScanStatusResponse) other);
@@ -50,12 +50,12 @@ public final class V1GetFileScanStatusResponse {
         return avScanStatus.equals(other.avScanStatus);
     }
 
-    @Override
+    @java.lang.Override
     public int hashCode() {
         return Objects.hash(this.avScanStatus);
     }
 
-    @Override
+    @java.lang.Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }

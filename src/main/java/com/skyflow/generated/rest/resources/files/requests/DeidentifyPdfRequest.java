@@ -132,7 +132,7 @@ public final class DeidentifyPdfRequest {
         return transformations;
     }
 
-    @Override
+    @java.lang.Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof DeidentifyPdfRequest && equalTo((DeidentifyPdfRequest) other);
@@ -156,7 +156,7 @@ public final class DeidentifyPdfRequest {
                 && transformations.equals(other.transformations);
     }
 
-    @Override
+    @java.lang.Override
     public int hashCode() {
         return Objects.hash(
                 this.vaultId,
@@ -171,7 +171,7 @@ public final class DeidentifyPdfRequest {
                 this.transformations);
     }
 
-    @Override
+    @java.lang.Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }
@@ -262,7 +262,7 @@ public final class DeidentifyPdfRequest {
 
         private Builder() {}
 
-        @Override
+        @java.lang.Override
         public Builder from(DeidentifyPdfRequest other) {
             vaultId(other.getVaultId());
             file(other.getFile());
@@ -277,7 +277,7 @@ public final class DeidentifyPdfRequest {
             return this;
         }
 
-        @Override
+        @java.lang.Override
         @JsonSetter("vault_id")
         public FileStage vaultId(@NotNull String vaultId) {
             this.vaultId = Objects.requireNonNull(vaultId, "vaultId must not be null");
@@ -288,72 +288,72 @@ public final class DeidentifyPdfRequest {
          * File to de-identify. Files are specified as Base64-encoded data.<p>File to de-identify. Files are specified as Base64-encoded data.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @Override
+        @java.lang.Override
         @JsonSetter("file")
         public _FinalStage file(@NotNull DeidentifyPdfRequestFile file) {
             this.file = Objects.requireNonNull(file, "file must not be null");
             return this;
         }
 
-        @Override
+        @java.lang.Override
         public _FinalStage transformations(Transformations transformations) {
             this.transformations = Optional.ofNullable(transformations);
             return this;
         }
 
-        @Override
+        @java.lang.Override
         @JsonSetter(value = "transformations", nulls = Nulls.SKIP)
         public _FinalStage transformations(Optional<Transformations> transformations) {
             this.transformations = transformations;
             return this;
         }
 
-        @Override
+        @java.lang.Override
         public _FinalStage restrictRegex(List<String> restrictRegex) {
             this.restrictRegex = Optional.ofNullable(restrictRegex);
             return this;
         }
 
-        @Override
+        @java.lang.Override
         @JsonSetter(value = "restrict_regex", nulls = Nulls.SKIP)
         public _FinalStage restrictRegex(Optional<List<String>> restrictRegex) {
             this.restrictRegex = restrictRegex;
             return this;
         }
 
-        @Override
+        @java.lang.Override
         public _FinalStage allowRegex(List<String> allowRegex) {
             this.allowRegex = Optional.ofNullable(allowRegex);
             return this;
         }
 
-        @Override
+        @java.lang.Override
         @JsonSetter(value = "allow_regex", nulls = Nulls.SKIP)
         public _FinalStage allowRegex(Optional<List<String>> allowRegex) {
             this.allowRegex = allowRegex;
             return this;
         }
 
-        @Override
+        @java.lang.Override
         public _FinalStage tokenType(TokenTypeWithoutVault tokenType) {
             this.tokenType = Optional.ofNullable(tokenType);
             return this;
         }
 
-        @Override
+        @java.lang.Override
         @JsonSetter(value = "token_type", nulls = Nulls.SKIP)
         public _FinalStage tokenType(Optional<TokenTypeWithoutVault> tokenType) {
             this.tokenType = tokenType;
             return this;
         }
 
-        @Override
+        @java.lang.Override
         public _FinalStage entityTypes(List<EntityType> entityTypes) {
             this.entityTypes = Optional.ofNullable(entityTypes);
             return this;
         }
 
-        @Override
+        @java.lang.Override
         @JsonSetter(value = "entity_types", nulls = Nulls.SKIP)
         public _FinalStage entityTypes(Optional<List<EntityType>> entityTypes) {
             this.entityTypes = entityTypes;
@@ -364,7 +364,7 @@ public final class DeidentifyPdfRequest {
          * <p>Max resolution at which to process the PDF file.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @Override
+        @java.lang.Override
         public _FinalStage maxResolution(Double maxResolution) {
             this.maxResolution = Optional.ofNullable(maxResolution);
             return this;
@@ -373,7 +373,7 @@ public final class DeidentifyPdfRequest {
         /**
          * <p>Max resolution at which to process the PDF file.</p>
          */
-        @Override
+        @java.lang.Override
         @JsonSetter(value = "max_resolution", nulls = Nulls.SKIP)
         public _FinalStage maxResolution(Optional<Double> maxResolution) {
             this.maxResolution = maxResolution;
@@ -384,7 +384,7 @@ public final class DeidentifyPdfRequest {
          * <p>Pixel density at which to process the PDF file.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @Override
+        @java.lang.Override
         public _FinalStage density(Double density) {
             this.density = Optional.ofNullable(density);
             return this;
@@ -393,27 +393,27 @@ public final class DeidentifyPdfRequest {
         /**
          * <p>Pixel density at which to process the PDF file.</p>
          */
-        @Override
+        @java.lang.Override
         @JsonSetter(value = "density", nulls = Nulls.SKIP)
         public _FinalStage density(Optional<Double> density) {
             this.density = density;
             return this;
         }
 
-        @Override
+        @java.lang.Override
         public _FinalStage configurationId(String configurationId) {
             this.configurationId = Optional.ofNullable(configurationId);
             return this;
         }
 
-        @Override
+        @java.lang.Override
         @JsonSetter(value = "configuration_id", nulls = Nulls.SKIP)
         public _FinalStage configurationId(Optional<String> configurationId) {
             this.configurationId = configurationId;
             return this;
         }
 
-        @Override
+        @java.lang.Override
         public DeidentifyPdfRequest build() {
             return new DeidentifyPdfRequest(
                     vaultId,

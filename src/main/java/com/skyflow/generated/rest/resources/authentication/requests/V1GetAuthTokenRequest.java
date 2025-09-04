@@ -100,7 +100,7 @@ public final class V1GetAuthTokenRequest {
         return scope;
     }
 
-    @Override
+    @java.lang.Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof V1GetAuthTokenRequest && equalTo((V1GetAuthTokenRequest) other);
@@ -120,7 +120,7 @@ public final class V1GetAuthTokenRequest {
                 && scope.equals(other.scope);
     }
 
-    @Override
+    @java.lang.Override
     public int hashCode() {
         return Objects.hash(
                 this.grantType,
@@ -131,7 +131,7 @@ public final class V1GetAuthTokenRequest {
                 this.scope);
     }
 
-    @Override
+    @java.lang.Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }
@@ -207,7 +207,7 @@ public final class V1GetAuthTokenRequest {
 
         private Builder() {}
 
-        @Override
+        @java.lang.Override
         public Builder from(V1GetAuthTokenRequest other) {
             grantType(other.getGrantType());
             assertion(other.getAssertion());
@@ -222,7 +222,7 @@ public final class V1GetAuthTokenRequest {
          * Grant type of the request. Set this to `urn:ietf:params:oauth:grant-type:jwt-bearer`.<p>Grant type of the request. Set this to <code>urn:ietf:params:oauth:grant-type:jwt-bearer</code>.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @Override
+        @java.lang.Override
         @JsonSetter("grant_type")
         public AssertionStage grantType(@NotNull String grantType) {
             this.grantType = Objects.requireNonNull(grantType, "grantType must not be null");
@@ -233,7 +233,7 @@ public final class V1GetAuthTokenRequest {
          * User-signed JWT token that contains the following fields: <br/> <ul><li><code>iss</code>: Issuer of the JWT.</li><li><code>key</code>: Unique identifier for the key.</li><li><code>aud</code>: Recipient the JWT is intended for.</li><li><code>exp</code>: Time the JWT expires.</li><li><code>sub</code>: Subject of the JWT.</li><li><code>ctx</code>: (Optional) Value for <a href='/context-aware-overview/'>Context-aware authorization</a>.</li></ul><p>User-signed JWT token that contains the following fields: &lt;br/&gt; &lt;ul&gt;&lt;li&gt;&lt;code&gt;iss&lt;/code&gt;: Issuer of the JWT.&lt;/li&gt;&lt;li&gt;&lt;code&gt;key&lt;/code&gt;: Unique identifier for the key.&lt;/li&gt;&lt;li&gt;&lt;code&gt;aud&lt;/code&gt;: Recipient the JWT is intended for.&lt;/li&gt;&lt;li&gt;&lt;code&gt;exp&lt;/code&gt;: Time the JWT expires.&lt;/li&gt;&lt;li&gt;&lt;code&gt;sub&lt;/code&gt;: Subject of the JWT.&lt;/li&gt;&lt;li&gt;&lt;code&gt;ctx&lt;/code&gt;: (Optional) Value for &lt;a href='/context-aware-overview/'&gt;Context-aware authorization&lt;/a&gt;.&lt;/li&gt;&lt;/ul&gt;</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @Override
+        @java.lang.Override
         @JsonSetter("assertion")
         public _FinalStage assertion(@NotNull String assertion) {
             this.assertion = Objects.requireNonNull(assertion, "assertion must not be null");
@@ -244,7 +244,7 @@ public final class V1GetAuthTokenRequest {
          * <p>Subset of available &lt;a href='#Roles'&gt;roles&lt;/a&gt; to associate with the requested token. Uses the format &quot;role:&lt;roleID1&gt; role:&lt;roleID2&gt;&quot;.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @Override
+        @java.lang.Override
         public _FinalStage scope(String scope) {
             this.scope = Optional.ofNullable(scope);
             return this;
@@ -253,7 +253,7 @@ public final class V1GetAuthTokenRequest {
         /**
          * <p>Subset of available &lt;a href='#Roles'&gt;roles&lt;/a&gt; to associate with the requested token. Uses the format &quot;role:&lt;roleID1&gt; role:&lt;roleID2&gt;&quot;.</p>
          */
-        @Override
+        @java.lang.Override
         @JsonSetter(value = "scope", nulls = Nulls.SKIP)
         public _FinalStage scope(Optional<String> scope) {
             this.scope = scope;
@@ -264,7 +264,7 @@ public final class V1GetAuthTokenRequest {
          * <p>Token use type. Either <code>delegation</code> or <code>impersonation</code>.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @Override
+        @java.lang.Override
         public _FinalStage requestedTokenUse(String requestedTokenUse) {
             this.requestedTokenUse = Optional.ofNullable(requestedTokenUse);
             return this;
@@ -273,7 +273,7 @@ public final class V1GetAuthTokenRequest {
         /**
          * <p>Token use type. Either <code>delegation</code> or <code>impersonation</code>.</p>
          */
-        @Override
+        @java.lang.Override
         @JsonSetter(value = "requested_token_use", nulls = Nulls.SKIP)
         public _FinalStage requestedTokenUse(Optional<String> requestedTokenUse) {
             this.requestedTokenUse = requestedTokenUse;
@@ -284,7 +284,7 @@ public final class V1GetAuthTokenRequest {
          * <p>Subject token type.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @Override
+        @java.lang.Override
         public _FinalStage subjectTokenType(String subjectTokenType) {
             this.subjectTokenType = Optional.ofNullable(subjectTokenType);
             return this;
@@ -293,7 +293,7 @@ public final class V1GetAuthTokenRequest {
         /**
          * <p>Subject token type.</p>
          */
-        @Override
+        @java.lang.Override
         @JsonSetter(value = "subject_token_type", nulls = Nulls.SKIP)
         public _FinalStage subjectTokenType(Optional<String> subjectTokenType) {
             this.subjectTokenType = subjectTokenType;
@@ -304,7 +304,7 @@ public final class V1GetAuthTokenRequest {
          * <p>Subject token.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @Override
+        @java.lang.Override
         public _FinalStage subjectToken(String subjectToken) {
             this.subjectToken = Optional.ofNullable(subjectToken);
             return this;
@@ -313,14 +313,14 @@ public final class V1GetAuthTokenRequest {
         /**
          * <p>Subject token.</p>
          */
-        @Override
+        @java.lang.Override
         @JsonSetter(value = "subject_token", nulls = Nulls.SKIP)
         public _FinalStage subjectToken(Optional<String> subjectToken) {
             this.subjectToken = subjectToken;
             return this;
         }
 
-        @Override
+        @java.lang.Override
         public V1GetAuthTokenRequest build() {
             return new V1GetAuthTokenRequest(
                     grantType,

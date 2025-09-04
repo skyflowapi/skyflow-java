@@ -48,7 +48,7 @@ public final class DeidentifyImageRequestFile {
         return dataFormat;
     }
 
-    @Override
+    @java.lang.Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof DeidentifyImageRequestFile && equalTo((DeidentifyImageRequestFile) other);
@@ -63,12 +63,12 @@ public final class DeidentifyImageRequestFile {
         return base64.equals(other.base64) && dataFormat.equals(other.dataFormat);
     }
 
-    @Override
+    @java.lang.Override
     public int hashCode() {
         return Objects.hash(this.base64, this.dataFormat);
     }
 
-    @Override
+    @java.lang.Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }
@@ -108,7 +108,7 @@ public final class DeidentifyImageRequestFile {
 
         private Builder() {}
 
-        @Override
+        @java.lang.Override
         public Builder from(DeidentifyImageRequestFile other) {
             base64(other.getBase64());
             dataFormat(other.getDataFormat());
@@ -119,7 +119,7 @@ public final class DeidentifyImageRequestFile {
          * Base64-encoded data of the file to de-identify.<p>Base64-encoded data of the file to de-identify.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @Override
+        @java.lang.Override
         @JsonSetter("base64")
         public DataFormatStage base64(@NotNull String base64) {
             this.base64 = Objects.requireNonNull(base64, "base64 must not be null");
@@ -130,14 +130,14 @@ public final class DeidentifyImageRequestFile {
          * Data format of the file.<p>Data format of the file.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @Override
+        @java.lang.Override
         @JsonSetter("data_format")
         public _FinalStage dataFormat(@NotNull DeidentifyImageRequestFileDataFormat dataFormat) {
             this.dataFormat = Objects.requireNonNull(dataFormat, "dataFormat must not be null");
             return this;
         }
 
-        @Override
+        @java.lang.Override
         public DeidentifyImageRequestFile build() {
             return new DeidentifyImageRequestFile(base64, dataFormat, additionalProperties);
         }

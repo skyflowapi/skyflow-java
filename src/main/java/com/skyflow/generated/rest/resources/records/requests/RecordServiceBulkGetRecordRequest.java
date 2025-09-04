@@ -151,7 +151,7 @@ public final class RecordServiceBulkGetRecordRequest {
         return orderBy;
     }
 
-    @Override
+    @java.lang.Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof RecordServiceBulkGetRecordRequest && equalTo((RecordServiceBulkGetRecordRequest) other);
@@ -175,7 +175,7 @@ public final class RecordServiceBulkGetRecordRequest {
                 && orderBy.equals(other.orderBy);
     }
 
-    @Override
+    @java.lang.Override
     public int hashCode() {
         return Objects.hash(
                 this.skyflowIds,
@@ -190,7 +190,7 @@ public final class RecordServiceBulkGetRecordRequest {
                 this.orderBy);
     }
 
-    @Override
+    @java.lang.Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }

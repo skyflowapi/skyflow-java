@@ -84,7 +84,7 @@ public final class DetectedEntity {
         return entityScores;
     }
 
-    @Override
+    @java.lang.Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof DetectedEntity && equalTo((DetectedEntity) other);
@@ -103,12 +103,12 @@ public final class DetectedEntity {
                 && entityScores.equals(other.entityScores);
     }
 
-    @Override
+    @java.lang.Override
     public int hashCode() {
         return Objects.hash(this.token, this.value, this.location, this.entityType, this.entityScores);
     }
 
-    @Override
+    @java.lang.Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }

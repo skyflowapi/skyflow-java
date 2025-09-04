@@ -65,7 +65,7 @@ public class ApiClientApiException extends ApiClientException {
         return this.headers;
     }
 
-    @Override
+    @java.lang.Override
     public String toString() {
         return "ApiClientApiException{" + "message: " + getMessage() + ", statusCode: " + statusCode + ", body: " + body
                 + "}";
