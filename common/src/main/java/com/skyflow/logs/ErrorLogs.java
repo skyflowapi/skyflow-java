@@ -66,6 +66,15 @@ public enum ErrorLogs {
     EMPTY_OR_NULL_TOKEN_IN_DETOKENIZE_DATA("Invalid %s1 request. Token can not be null or empty in detokenize data at index %s2."),
     REDACTION_IS_REQUIRED("Invalid %s1 request. Redaction is required."),
     DETOKENIZE_REQUEST_REJECTED("Detokenize request resulted in failure."),
+    DETOKENIZE_REQUEST_NULL("Invalid %s1 request. Detokenize request can not be null."),
+
+    NULL_TOKEN_REDACTION_GROUP_OBJECT("Invalid %s1 request. Token Redaction group object can not be null or empty."),
+
+    NULL_REDACTION_IN_TOKEN_GROUP("Invalid %s1 request. Redaction can not be null in token redaction group"),
+
+    NULL_TOKEN_GROUP_NAME_IN_TOKEN_GROUP("Invalid %s1 request. Token group name can not be null in token redaction group"),
+
+    EMPTY_OR_NULL_REDACTION_IN_TOKEN_GROUP("Invalid %s1 request. Redaction can not be null or empty in token redaction group"),
     IDS_IS_REQUIRED("Invalid %s1 request. Ids are required."),
     EMPTY_IDS("Invalid %s1 request. Ids can not be empty."),
     EMPTY_OR_NULL_ID_IN_IDS("Invalid %s1 request. Id can not be null or empty in ids at index %s2."),
@@ -126,7 +135,10 @@ public enum ErrorLogs {
     OUTPUT_DIRECTORY_NOT_FOUND("Invalid %s1 request. The output directory does not exist. Please specify a valid output directory."),
     INVALID_PERMISSIONS_FOR_OUTPUT_DIRECTORY("Invalid %s1 request. The output directory is not writable. Please check the permissions or specify a valid output directory."),
     EMPTY_FILE_AND_FILE_PATH_IN_DEIDENTIFY_FILE("Invalid %s1 request. The file and file path fields are both empty. Specify a valid file object or file path."),
-    ;
+
+    UNEXPECTED_ERROR_DURING_BATCH_PROCESSING("Unexpected error occurred during batch processing. Error: %s1"),
+
+    PROCESSING_ERROR_RESPONSE("Processing error response.");
 
     private final String log;
 

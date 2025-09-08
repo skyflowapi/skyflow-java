@@ -213,7 +213,7 @@ public class VaultClient {
         prioritiseCredentials();
         Validations.validateCredentials(this.finalCredentials);
         if (this.finalCredentials.getApiKey() != null) {
-            LogUtil.printInfoLog(InfoLogs.REUSE_API_KEY.getLog());
+            LogUtil.printInfoLog(InfoLogs.USE_API_KEY.getLog());
             token = this.finalCredentials.getApiKey();
         } else if (Token.isExpired(token)) {
             LogUtil.printInfoLog(InfoLogs.BEARER_TOKEN_EXPIRED.getLog());

@@ -20,7 +20,8 @@ public enum InfoLogs {
     GET_SIGNED_DATA_TOKENS_TRIGGERED("getSignedDataTokens method triggered."),
     GET_SIGNED_DATA_TOKEN_SUCCESS("Signed data tokens generated."),
     REUSE_BEARER_TOKEN("Reusing bearer token."),
-    REUSE_API_KEY("Reusing api key."),
+    USE_CLIENT_PROVIDED_BEARER_TOKEN("Using bearer token provided by client."),
+    USE_API_KEY("Using api key."),
     GENERATE_BEARER_TOKEN_FROM_CREDENTIALS_TRIGGERED("generateBearerTokenFromCredentials method triggered."),
     GENERATE_BEARER_TOKEN_FROM_CREDENTIALS_STRING_TRIGGERED("generateBearerTokenFromCredentialString method triggered."),
     GENERATE_SIGNED_TOKENS_FROM_CREDENTIALS_FILE_TRIGGERED("generateSignedTokensFromCredentialsFile method triggered."),
@@ -90,6 +91,8 @@ public enum InfoLogs {
     GET_DETECT_RUN_TRIGGERED("Get detect run method triggered."),
     VALIDATE_GET_DETECT_RUN_REQUEST("Validating get detect run request."),
     REIDENTIFY_TEXT_SUCCESS("Text data re-identified."),
+
+    PROCESSING_BATCHES("Processing batch"),
     ;
 
 

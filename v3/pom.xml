@@ -5,51 +5,117 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.skyflow</groupId>
-        <artifactId>skyflow-java</artifactId>
+        <artifactId>skyflow</artifactId>
         <version>1.0.0</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>skyflow-java</artifactId>
-    <version>3.0.0-beta.0</version>
+    <version>3.0.0-beta.3</version>
     <packaging>jar</packaging>
+    <name>${project.groupId}:${project.artifactId}</name>
+    <description>Skyflow V3 SDK for the Java programming language</description>
+    <url>https://github.com/skyflowapi/skyflow-java/tree/main</url>
+
+    <licenses>
+        <license>
+            <name>The MIT License (MIT)</name>
+            <url>https://github.com/skyflowapi/skyflow-java/blob/main/LICENSE</url>
+        </license>
+    </licenses>
+    <developers>
+        <developer>
+            <id>skyflow</id>
+            <name>skyflow</name>
+        </developer>
+    </developers>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.deploy.skip>false</maven.deploy.skip>
     </properties>
+
+
 
     <dependencies>
         <dependency>
             <groupId>com.skyflow</groupId>
             <artifactId>common</artifactId>
-            <version>1.0.0</version>
+            <version>1.0.1</version>
         </dependency>
     </dependencies>
 
     <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <version>3.6.0</version>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
+    <plugins>
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-shade-plugin</artifactId>
+            <version>3.6.0</version>
+            <executions>
+                <execution>
+                    <phase>package</phase>
+                    <goals>
+                        <goal>shade</goal>
+                    </goals>
+                    <configuration>
+                        <artifactSet>
+                            <includes>
+                                <include>com.skyflow:common</include>
+                            </includes>
+                        </artifactSet>
+                    </configuration>
+                </execution>
+            </executions>
+        </plugin>
+    </plugins>
+</build>
+
+    <profiles>
+        <profile>
+            <id>jfrog</id>
+            <distributionManagement>
+                <repository>
+                    <id>central</id>
+                    <name>prekarilabs.jfrog.io-releases</name>
+                    <url>https://prekarilabs.jfrog.io/artifactory/skyflow-java</url>
+                </repository>
+                <snapshotRepository>
+                    <id>snapshots</id>
+                    <name>prekarilabs.jfrog.io-snapshots</name>
+                    <url>https://prekarilabs.jfrog.io/artifactory/skyflow-java</url>
+                </snapshotRepository>
+            </distributionManagement>
+        </profile>
+        <profile>
+            <id>maven-central</id>
+            <distributionManagement>
+                <repository>
+                    <id>central</id>
+                    <url>https://central.sonatype.com/api/v1/publisher/upload</url>
+                </repository>
+                <snapshotRepository>
+                    <id>central-snapshots</id>
+                    <url>https://central.sonatype.com/api/v1/publisher/upload</url>
+                </snapshotRepository>
+            </distributionManagement>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
+                        <version>0.4.0</version>
+                        <extensions>true</extensions>
                         <configuration>
-                            <artifactSet>
-                                <includes>
-                                    <include>com.skyflow:common</include>
-                                </includes>
-                            </artifactSet>
+                            <publishingServerId>central</publishingServerId>
+                            <tokenAuth>true</tokenAuth>
+                            <autoPublish>true</autoPublish>
                         </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
 </project>

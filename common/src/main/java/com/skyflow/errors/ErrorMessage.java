@@ -6,6 +6,7 @@ public enum ErrorMessage {
     // Client initialization
     VaultIdAlreadyInConfigList("%s0 Validation error. VaultId is present in an existing config. Specify a new vaultId in config."),
     VaultIdNotInConfigList("%s0 Validation error. VaultId is missing from the config. Specify the vaultIds from configs."),
+    OnlySingleVaultConfigAllowed("%s0 Validation error. A vault config already exists. Cannot add another vault config."),
     ConnectionIdAlreadyInConfigList("%s0 Validation error. ConnectionId is present in an existing config. Specify a connectionId in config."),
     ConnectionIdNotInConfigList("%s0 Validation error. ConnectionId is missing from the config. Specify the connectionIds from configs."),
     EmptyCredentials("%s0 Validation error. Invalid credentials. Credentials must not be empty."),
@@ -51,6 +52,7 @@ public enum ErrorMessage {
     JwtDecodeError("%s0 Validation error. Invalid access token. Verify your credentials."),
     MissingAccessToken("%s0 Validation error. Access token not present in the response from bearer token generation. Verify your credentials."),
     MissingTokenType("%s0 Validation error. Token type not present in the response from bearer token generation. Verify your credentials."),
+    BearerTokenExpired("%s0 Validation error. Bearer token is invalid or expired. Please provide a valid bearer token."),
 
     // Insert
     TableKeyError("%s0 Validation error. 'table' key is missing from the payload. Specify a 'table' key."),
@@ -148,7 +150,16 @@ public enum ErrorMessage {
     FailedToSaveProcessedFile("%s0 Validation error. Failed to save the processed file. Ensure the output directory is valid and writable."),
     InvalidAudioFileType("%s0 Validation error. The file type is not supported. Specify a valid file type mp3 or wav."),
     // Generic
-    ErrorOccurred("%s0 API error. Error occurred.")
+    ErrorOccurred("%s0 API error. Error occurred."),
+
+    DetokenizeRequestNull("%s0 Validation error. DetokenizeRequest object is null. Specify a valid DetokenizeRequest object."),
+
+    NullTokenGroupRedactions("%s0 Validation error. TokenGroupRedaction in the list is null. Specify a valid TokenGroupRedactions object."),
+
+    NullRedactionInTokenGroup("%s0 Validation error. Redaction in TokenGroupRedactions is null or empty. Specify a valid redaction."),
+
+    NullTokenGroupNameInTokenGroup("%s0 Validation error. TokenGroupName in TokenGroupRedactions is null or empty. Specify a valid tokenGroupName."),
+    ;
     ;
     private final String message;
 

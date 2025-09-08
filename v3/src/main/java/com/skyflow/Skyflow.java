@@ -43,6 +43,7 @@ public final class Skyflow extends BaseSkyflow {
             LogUtil.printErrorLog(ErrorLogs.VAULT_CONFIG_DOES_NOT_EXIST.getLog());
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.VaultIdNotInConfigList.getMessage());
         }
+        
         return controller;
     }
 

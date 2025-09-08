@@ -28,16 +28,30 @@ public class InsertRequest extends BaseInsertRequest {
     public TokenMode getTokenMode() {
         return this.builder.tokenMode;
     }
+    public String getUpsert() {
+        return this.builder.upsert;
+    }
+    public Boolean getReturnTokens() {
+        return this.builder.returnTokens;
+    }
+    
+    public ArrayList<HashMap<String, Object>> getTokens() {
+        return this.builder.tokens;
+    }
 
     public static final class InsertRequestBuilder extends BaseInsertRequestBuilder {
         private Boolean homogeneous;
         private Boolean continueOnError;
         private TokenMode tokenMode;
 
+        private ArrayList<HashMap<String, Object>> tokens;
+        private Boolean returnTokens;
+
         private InsertRequestBuilder() {
             super();
             this.continueOnError = false;
             this.tokenMode = TokenMode.DISABLE;
+            this.returnTokens = false;
         }
 
         @Override
@@ -52,21 +66,18 @@ public class InsertRequest extends BaseInsertRequest {
             return this;
         }
 
-        @Override
         public InsertRequestBuilder tokens(ArrayList<HashMap<String, Object>> tokens) {
-            super.tokens(tokens);
+            this.tokens = tokens ;
             return this;
         }
 
-        @Override
         public InsertRequestBuilder returnTokens(Boolean returnTokens) {
-            super.returnTokens(returnTokens);
+            this.returnTokens = returnTokens != null && returnTokens;
             return this;
         }
 
-        @Override
         public InsertRequestBuilder upsert(String upsert) {
-            super.upsert(upsert);
+            this.upsert = upsert;
             return this;
         }
 

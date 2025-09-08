@@ -2,12 +2,17 @@ package com.skyflow.utils;
 
 import com.google.gson.JsonObject;
 import com.skyflow.config.ConnectionConfig;
+import com.skyflow.enums.Env;
 import com.skyflow.vault.connection.InvokeConnectionRequest;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public final class Utils extends BaseUtils {
+
+    public static String getVaultURL(String clusterId, Env env) {
+        return getVaultURL(clusterId, env, Constants.VAULT_DOMAIN);
+    }
 
     public static String constructConnectionURL(ConnectionConfig config, InvokeConnectionRequest invokeConnectionRequest) {
         StringBuilder filledURL = new StringBuilder(config.getConnectionUrl());

@@ -9,6 +9,7 @@ import com.skyflow.errors.SkyflowException;
 import com.skyflow.logs.ErrorLogs;
 import com.skyflow.logs.InfoLogs;
 import com.skyflow.serviceaccount.util.BearerToken;
+import com.skyflow.serviceaccount.util.Token;
 import com.skyflow.utils.logger.LogUtil;
 import org.apache.commons.codec.binary.Base64;
 
@@ -22,9 +23,8 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 
 public class BaseUtils {
-    public static String getVaultURL(String clusterId, Env env) {
-        StringBuilder sb = new StringBuilder(BaseConstants.SECURE_PROTOCOL);
-        sb.append(clusterId);
+    public static String getVaultURL(String clusterId, Env env, String vaultDomain) {
+        StringBuilder sb = buildBaseUrl(clusterId, vaultDomain);
         switch (env) {
             case DEV:
                 sb.append(BaseConstants.DEV_DOMAIN);
@@ -44,23 +44,31 @@ public class BaseUtils {
     }
 
     public static String generateBearerToken(Credentials credentials) throws SkyflowException {
+        String bearerToken;
         if (credentials.getPath() != null) {
-            return BearerToken.builder()
+            bearerToken = BearerToken.builder()
                     .setCredentials(new File(credentials.getPath()))
                     .setRoles(credentials.getRoles())
                     .setCtx(credentials.getContext())
                     .build()
                     .getBearerToken();
         } else if (credentials.getCredentialsString() != null) {
-            return BearerToken.builder()
+            bearerToken = BearerToken.builder()
                     .setCredentials(credentials.getCredentialsString())
                     .setRoles(credentials.getRoles())
                     .setCtx(credentials.getContext())
                     .build()
                     .getBearerToken();
         } else {
-            return credentials.getToken();
+            LogUtil.printInfoLog(InfoLogs.USE_CLIENT_PROVIDED_BEARER_TOKEN.getLog());
+            bearerToken = credentials.getToken();
         }
+        // check expiry for generated token
+        if (Token.isExpired(bearerToken)) {
+            LogUtil.printErrorLog(ErrorLogs.INVALID_BEARER_TOKEN.getLog());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.BearerTokenExpired.getMessage());
+        }
+        return bearerToken;
     }
 
     public static PrivateKey getPrivateKeyFromPem(String pemKey) throws SkyflowException {
@@ -160,4 +168,10 @@ public class BaseUtils {
         return privateKey;
     }
 
+    private static StringBuilder buildBaseUrl(String clusterId, String vaultDomain) {
+        StringBuilder sb = new StringBuilder(BaseConstants.SECURE_PROTOCOL);
+        sb.append(clusterId);
+        sb.append(vaultDomain);
+        return sb;
+    }
 }

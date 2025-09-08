@@ -57,7 +57,7 @@ public class ConnectionClient {
         if (apiKey == null) {
             apiKey = this.finalCredentials.getApiKey();
         } else {
-            LogUtil.printInfoLog(InfoLogs.REUSE_API_KEY.getLog());
+            LogUtil.printInfoLog(InfoLogs.USE_API_KEY.getLog());
         }
     }
 

@@ -2,20 +2,32 @@ package com.skyflow;
 
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
+import com.skyflow.enums.UpdateType;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.generated.rest.ApiClient;
 import com.skyflow.generated.rest.ApiClientBuilder;
 import com.skyflow.generated.rest.resources.recordservice.RecordserviceClient;
+import com.skyflow.generated.rest.resources.recordservice.requests.InsertRequest;
+import com.skyflow.generated.rest.types.EnumUpdateType;
+import com.skyflow.generated.rest.types.InsertRecordData;
+import com.skyflow.generated.rest.types.Upsert;
 import com.skyflow.logs.InfoLogs;
 import com.skyflow.serviceaccount.util.Token;
 import com.skyflow.utils.Constants;
 import com.skyflow.utils.Utils;
 import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.utils.validations.Validations;
+import com.skyflow.vault.data.DetokenizeRequest;
 import io.github.cdimascio.dotenv.Dotenv;
 import io.github.cdimascio.dotenv.DotenvException;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 
 public class VaultClient {
@@ -53,14 +65,17 @@ public class VaultClient {
         prioritiseCredentials();
         Validations.validateCredentials(this.finalCredentials);
         if (this.finalCredentials.getApiKey() != null) {
-            LogUtil.printInfoLog(InfoLogs.REUSE_API_KEY.getLog());
+            LogUtil.printInfoLog(InfoLogs.USE_API_KEY.getLog());
             token = this.finalCredentials.getApiKey();
+        } else if (token == null || token.trim().isEmpty()) {
+            token = Utils.generateBearerToken(this.finalCredentials);
         } else if (Token.isExpired(token)) {
             LogUtil.printInfoLog(InfoLogs.BEARER_TOKEN_EXPIRED.getLog());
             token = Utils.generateBearerToken(this.finalCredentials);
         } else {
             LogUtil.printInfoLog(InfoLogs.REUSE_BEARER_TOKEN.getLog());
         }
+        updateExecutorInHTTP(); // update executor
         this.apiClient = this.apiClientBuilder.build();
     }
 
@@ -97,5 +112,69 @@ public class VaultClient {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    protected void updateExecutorInHTTP() {
+        OkHttpClient httpClient = new OkHttpClient.Builder()
+                .addInterceptor(chain -> {
+                    Request original = chain.request();
+                    Request requestWithAuth = original.newBuilder()
+                            .header("Authorization", "Bearer " + this.token)
+                            .build();
+                    return chain.proceed(requestWithAuth);
+                })
+                .build();
+        apiClientBuilder.httpClient(httpClient);
+    }
+    protected InsertRequest getBulkInsertRequestBody(com.skyflow.vault.data.InsertRequest request, VaultConfig config) throws SkyflowException {
+        List<HashMap<String, Object>> values = request.getValues();
+        List<InsertRecordData> insertRecordDataList = new ArrayList<>();
+        for (HashMap<String, Object> value : values) {
+            InsertRecordData data = InsertRecordData.builder().data(value).build();
+            insertRecordDataList.add(data);
+        }
+        InsertRequest.Builder builder = InsertRequest.builder()
+                .vaultId(config.getVaultId())
+                .records(insertRecordDataList)
+                .tableName(request.getTable());
+        if(request.getUpsert() != null && !request.getUpsert().isEmpty()){
+            if (request.getUpsertType() != null) {
+                EnumUpdateType updateType = null;
+                if(request.getUpsertType() == UpdateType.REPLACE){
+                    updateType = EnumUpdateType.REPLACE;
+                } else if (request.getUpsertType() == UpdateType.REPLACE) {
+                    updateType = EnumUpdateType.UPDATE;
+                }
+                Upsert upsert = Upsert.builder().uniqueColumns(request.getUpsert()).updateType(updateType).build();
+                builder.upsert(upsert);
+            } else {
+                Upsert upsert = Upsert.builder().uniqueColumns(request.getUpsert()).build();
+                builder.upsert(upsert);
+            }
+        }
+        return builder.build();
+
+    }
+
+    protected com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest getDetokenizeRequestBody(DetokenizeRequest request) {
+        List<String> tokens = request.getTokens();
+        com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest.Builder builder =
+                com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest.builder()
+                        .vaultId(this.vaultConfig.getVaultId())
+                        .tokens(tokens);
+        if (request.getTokenGroupRedactions() != null){
+            List<com.skyflow.generated.rest.types.TokenGroupRedactions> tokenGroupRedactionsList = new ArrayList<>();
+            for (com.skyflow.vault.data.TokenGroupRedactions tokenGroupRedactions : request.getTokenGroupRedactions()) {
+                com.skyflow.generated.rest.types.TokenGroupRedactions redactions =
+                        com.skyflow.generated.rest.types.TokenGroupRedactions.builder()
+                                .tokenGroupName(tokenGroupRedactions.getTokenGroupName())
+                                .redaction(tokenGroupRedactions.getRedaction())
+                                .build();
+                tokenGroupRedactionsList.add(redactions);
+            }
+
+            builder.tokenGroupRedactions(tokenGroupRedactionsList);
+        }
+        return builder.build();
     }
 }
