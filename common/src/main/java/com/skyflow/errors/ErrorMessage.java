@@ -81,6 +81,7 @@ public enum ErrorMessage {
     InvalidDetokenizeData("%s0 Validation error. Invalid detokenize data. Specify valid detokenize data."),
     EmptyDetokenizeData("%s0 Validation error. Invalid data tokens. Specify at least one data token."),
     EmptyTokenInDetokenizeData("%s0 Validation error. Invalid data tokens. Specify a valid data token."),
+    TokensSizeExceedError("%s0 Maximum number of tokens exceeded. The limit is 10000."),
 
     // Get
     IdsKeyError("%s0 Validation error. 'ids' key is missing from the payload. Specify an 'ids' key."),
