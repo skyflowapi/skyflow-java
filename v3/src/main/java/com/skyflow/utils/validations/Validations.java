@@ -1,10 +1,13 @@
 package com.skyflow.utils.validations;
 
+import com.skyflow.config.Credentials;
+import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.InterfaceName;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.logs.ErrorLogs;
+import com.skyflow.utils.BaseUtils;
 import com.skyflow.utils.Utils;
 import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.vault.data.DetokenizeRequest;
@@ -125,4 +128,26 @@ public class Validations extends BaseValidations {
 
     }
 
+    public static void validateVaultConfiguration(VaultConfig vaultConfig) throws SkyflowException {
+        String vaultId = vaultConfig.getVaultId();
+        String clusterId = vaultConfig.getClusterId();
+        Credentials credentials = vaultConfig.getCredentials();
+        if (vaultId == null) {
+            LogUtil.printErrorLog(ErrorLogs.VAULT_ID_IS_REQUIRED.getLog());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidVaultId.getMessage());
+        } else if (vaultId.trim().isEmpty()) {
+            LogUtil.printErrorLog(ErrorLogs.EMPTY_VAULT_ID.getLog());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyVaultId.getMessage());
+        } else if (Utils.getEnvVaultURL() == null) {
+            if (clusterId == null) {
+                LogUtil.printErrorLog(ErrorLogs.CLUSTER_ID_IS_REQUIRED.getLog());
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidClusterId.getMessage());
+            } else if (clusterId.trim().isEmpty()) {
+                LogUtil.printErrorLog(ErrorLogs.EMPTY_CLUSTER_ID.getLog());
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyClusterId.getMessage());
+            }
+        } else if (credentials != null) {
+            validateCredentials(credentials);
+        }
+    }
 }

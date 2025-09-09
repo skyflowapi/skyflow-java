@@ -28,15 +28,14 @@ public class BaseValidations {
         } else if (vaultId.trim().isEmpty()) {
             LogUtil.printErrorLog(ErrorLogs.EMPTY_VAULT_ID.getLog());
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyVaultId.getMessage());
-        } else if (BaseUtils.getEnvVaultURL() == null) {
-            if (clusterId == null) {
-                LogUtil.printErrorLog(ErrorLogs.CLUSTER_ID_IS_REQUIRED.getLog());
-                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidClusterId.getMessage());
-            } else if (clusterId.trim().isEmpty()) {
-                LogUtil.printErrorLog(ErrorLogs.EMPTY_CLUSTER_ID.getLog());
-                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyClusterId.getMessage());
-            }
-        } else if (credentials != null) {
+        } else if (clusterId == null) {
+            LogUtil.printErrorLog(ErrorLogs.CLUSTER_ID_IS_REQUIRED.getLog());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidClusterId.getMessage());
+        } else if (clusterId.trim().isEmpty()) {
+            LogUtil.printErrorLog(ErrorLogs.EMPTY_CLUSTER_ID.getLog());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyClusterId.getMessage());
+        }
+         else if (credentials != null) {
             validateCredentials(credentials);
         }
     }
