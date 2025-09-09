@@ -47,6 +47,7 @@ public class Validations extends BaseValidations {
             ));
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyValues.getMessage());
         } else if(values.size() > 10000) {
+            LogUtil.printErrorLog(ErrorLogs.RECORD_SIZE_EXCEED.getLog());
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.RecordSizeExceedError.getMessage());
         } else if (upsert != null && upsert.isEmpty()){
             LogUtil.printErrorLog(Utils.parameterizedString(
@@ -85,6 +86,7 @@ public class Validations extends BaseValidations {
         }
         List<String> tokens = request.getTokens();
         if(tokens.size() > 10000) {
+            LogUtil.printErrorLog(ErrorLogs.TOKENS_SIZE_EXCEED.getLog());
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.TokensSizeExceedError.getMessage());
         }
         if (tokens == null || tokens.isEmpty()) {
