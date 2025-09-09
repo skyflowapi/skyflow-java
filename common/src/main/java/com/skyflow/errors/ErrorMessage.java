@@ -17,6 +17,7 @@ public enum ErrorMessage {
     InvalidClusterId("%s0 Initialization failed. Invalid cluster ID. Specify cluster ID."),
     EmptyClusterId("%s0 Initialization failed. Invalid cluster ID. Specify a valid cluster ID."),
     EmptyVaultUrl("%s0 Initialization failed. Vault URL is empty. Specify a valid vault URL."),
+    InvalidVaultUrlFormat("%s0 Initialization failed. Vault URL must start with 'https://'."),
 
     // Connection config
     InvalidConnectionId("%s0 Initialization failed. Invalid connection ID. Specify a valid connection ID."),

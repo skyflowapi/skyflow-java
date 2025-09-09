@@ -51,6 +51,8 @@ public class BaseUtils {
             String vaultURL = dotenv.get("VAULT_URL");
             if (vaultURL != null && vaultURL.trim().isEmpty()) {
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyVaultUrl.getMessage());
+            } else if (vaultURL != null && !vaultURL.startsWith(BaseConstants.SECURE_PROTOCOL)) {
+                throw new SkyflowException( ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidVaultUrlFormat.getMessage());
             }
             return vaultURL;
         } catch (DotenvException e) {
