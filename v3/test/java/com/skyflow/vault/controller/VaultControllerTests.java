@@ -16,7 +16,7 @@ import static org.junit.Assert.*;
 
 
 public class VaultControllerTests {
-    private static final String ENV_PATH = "/home/saib/skyflow3/skyflow-java/v3/.env";
+    private static final String ENV_PATH = "./.env";
 
     private VaultConfig vaultConfig;
     private Credentials credentials;
@@ -42,14 +42,28 @@ public class VaultControllerTests {
     }
 
     private void writeEnv(String content) {
-        try (FileWriter writer = new FileWriter(ENV_PATH)) {
+        java.io.File envFile = new java.io.File(ENV_PATH);
+        java.io.File parentDir = envFile.getParentFile();
+        if (parentDir != null && !parentDir.exists()) {
+            parentDir.mkdirs(); // Create parent directory if it doesn't exist
+        }
+        try (FileWriter writer = new FileWriter(envFile)) {
             writer.write(content);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        // Print the contents of the .env file
+        try (Scanner scanner = new Scanner(envFile)) {
+            System.out.println("Current .env contents:");
+            while (scanner.hasNextLine()) {
+                System.out.println(scanner.nextLine());
+            }
+        } catch (IOException e) {
+            System.out.println("Could not read .env file: " + e.getMessage());
+        }
     }
 
-    private VaultController createController() {
+    private VaultController createController() throws SkyflowException {
         return new VaultController(vaultConfig, credentials);
     }
 
@@ -354,7 +368,7 @@ public class VaultControllerTests {
     public void testFractionalLastBatch() throws Exception {
         writeEnv("INSERT_BATCH_SIZE=100");
         VaultController controller = createController();
-        InsertRequest insertRequest = InsertRequest.builder().table("table1").values(generateValues(10050)).build();
+        InsertRequest insertRequest = InsertRequest.builder().table("table1").values(generateValues(9050)).build();
 
         try {
             controller.bulkInsert(insertRequest);

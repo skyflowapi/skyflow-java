@@ -95,11 +95,13 @@ public class VaultClient {
             } else if (this.commonCredentials != null) {
                 this.finalCredentials = this.commonCredentials;
             } else {
-                Dotenv dotenv = Dotenv.load();
-                String sysCredentials = dotenv.get(Constants.ENV_CREDENTIALS_KEY_NAME);
+                String sysCredentials = System.getenv(Constants.ENV_CREDENTIALS_KEY_NAME);
                 if (sysCredentials == null) {
-                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(),
-                            ErrorMessage.EmptyCredentials.getMessage());
+                    Dotenv dotenv = Dotenv.load();
+                    sysCredentials = dotenv.get(Constants.ENV_CREDENTIALS_KEY_NAME);
+                }
+                if (sysCredentials == null) {
+                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyCredentials.getMessage());
                 } else {
                     this.finalCredentials = new Credentials();
                     this.finalCredentials.setCredentialsString(sysCredentials);
