@@ -16,6 +16,7 @@ public enum ErrorMessage {
     EmptyVaultId("%s0 Initialization failed. Invalid vault ID. Vault ID must not be empty."),
     InvalidClusterId("%s0 Initialization failed. Invalid cluster ID. Specify cluster ID."),
     EmptyClusterId("%s0 Initialization failed. Invalid cluster ID. Specify a valid cluster ID."),
+    EmptyVaultUrl("%s0 Initialization failed. Vault URL is empty. Specify a valid vault URL."),
 
     // Connection config
     InvalidConnectionId("%s0 Initialization failed. Invalid connection ID. Specify a valid connection ID."),
@@ -73,6 +74,7 @@ public enum ErrorMessage {
     InsufficientTokensPassedForTokenModeEnableStrict("%s0 Validation error. 'tokenMode' is set to 'ENABLE_STRICT', but some fields are missing tokens. Specify tokens for all fields."),
     BatchInsertPartialSuccess("%s0 Insert operation completed with partial success."),
     BatchInsertFailure("%s0 Insert operation failed."),
+    RecordSizeExceedError("%s0 Maximum number of records exceeded. The limit is 10000."),
 
     // Detokenize
     InvalidDetokenizeData("%s0 Validation error. Invalid detokenize data. Specify valid detokenize data."),

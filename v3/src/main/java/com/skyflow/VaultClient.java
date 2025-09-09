@@ -80,7 +80,10 @@ public class VaultClient {
     }
 
     private void updateVaultURL() {
-        String vaultURL = Utils.getVaultURL(this.vaultConfig.getClusterId(), this.vaultConfig.getEnv());
+        String vaultURL = Utils.getEnvVaultURL();
+        if (vaultURL == null || vaultURL.isEmpty()) {
+            vaultURL = Utils.getVaultURL(this.vaultConfig.getClusterId(), this.vaultConfig.getEnv());
+        }
         this.apiClientBuilder.url(vaultURL);
     }
 
