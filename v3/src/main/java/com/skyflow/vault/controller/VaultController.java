@@ -34,7 +34,7 @@ public final class VaultController extends VaultClient {
     private int detokenizeBatchSize;
     private int detokenizeConcurrencyLimit;
 
-    public VaultController(VaultConfig vaultConfig, Credentials credentials) {
+    public VaultController(VaultConfig vaultConfig, Credentials credentials) throws SkyflowException {
         super(vaultConfig, credentials);
         this.insertBatchSize = Constants.INSERT_BATCH_SIZE;
         this.insertConcurrencyLimit = Constants.INSERT_CONCURRENCY_LIMIT;

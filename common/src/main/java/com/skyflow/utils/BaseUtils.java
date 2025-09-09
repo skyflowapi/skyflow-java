@@ -45,10 +45,13 @@ public class BaseUtils {
         return sb.toString();
     }
 
-    public static String getEnvVaultURL() {
+    public static String getEnvVaultURL() throws SkyflowException {
         try {
-            Dotenv dotenv = Dotenv.load();
-            String vaultURL = dotenv.get("VAULT_URL");
+            String vaultURL = System.getenv("VAULT_URL");
+            if (vaultURL == null) {
+                Dotenv dotenv = Dotenv.load();
+                vaultURL = dotenv.get("VAULT_URL");
+            }
             if (vaultURL != null && vaultURL.trim().isEmpty()) {
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyVaultUrl.getMessage());
             } else if (vaultURL != null && !vaultURL.startsWith(BaseConstants.SECURE_PROTOCOL)) {
@@ -57,8 +60,6 @@ public class BaseUtils {
             return vaultURL;
         } catch (DotenvException e) {
             return null;
-        } catch (SkyflowException e) {
-           throw new RuntimeException(e);
         }
     }
 
