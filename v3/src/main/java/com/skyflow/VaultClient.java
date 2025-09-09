@@ -39,7 +39,7 @@ public class VaultClient {
     private String token;
     private String apiKey;
 
-    protected VaultClient(VaultConfig vaultConfig, Credentials credentials) {
+    protected VaultClient(VaultConfig vaultConfig, Credentials credentials) throws SkyflowException {
         super();
         this.vaultConfig = vaultConfig;
         this.commonCredentials = credentials;
@@ -79,8 +79,11 @@ public class VaultClient {
         this.apiClient = this.apiClientBuilder.build();
     }
 
-    private void updateVaultURL() {
-        String vaultURL = Utils.getVaultURL(this.vaultConfig.getClusterId(), this.vaultConfig.getEnv());
+    private void updateVaultURL() throws SkyflowException {
+        String vaultURL = Utils.getEnvVaultURL();
+        if (vaultURL == null || vaultURL.isEmpty()) {
+            vaultURL = Utils.getVaultURL(this.vaultConfig.getClusterId(), this.vaultConfig.getEnv());
+        }
         this.apiClientBuilder.url(vaultURL);
     }
 

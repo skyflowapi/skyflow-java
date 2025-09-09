@@ -25,6 +25,8 @@ public enum ErrorLogs {
     EMPTY_ROLES("Invalid credentials. Roles can not be empty."),
     EMPTY_OR_NULL_ROLE_IN_ROLES("Invalid credentials. Role can not be null or empty in roles at index %s1."),
     EMPTY_OR_NULL_CONTEXT("Invalid credentials. Context can not be empty."),
+    EMPTY_VAULT_URL("Invalid vault config. Vault URL can not be empty."),
+    INVALID_VAULT_URL_FORMAT("Invalid vault config. Vault URL format is incorrect"),
 
     // Bearer token generation
     INVALID_BEARER_TOKEN("Bearer token is invalid or expired."),
@@ -49,6 +51,8 @@ public enum ErrorLogs {
     EMPTY_TABLE_NAME("Invalid %s1 request. Table name can not be empty."),
     VALUES_IS_REQUIRED("Invalid %s1 request. Values are required."),
     EMPTY_VALUES("Invalid %s1 request. Values can not be empty."),
+    RECORD_SIZE_EXCEED("Maximum number of records exceeded. The limit is 10000."),
+    TOKENS_SIZE_EXCEED("Maximum number of tokens exceeded. The limit is 10000."),
     EMPTY_OR_NULL_VALUE_IN_VALUES("Invalid %s1 request. Value can not be null or empty in values for key \"%s2\"."),
     EMPTY_OR_NULL_KEY_IN_VALUES("Invalid %s1 request. Key can not be null or empty in values"),
     EMPTY_UPSERT("Invalid %s1 request. Upsert can not be empty."),
