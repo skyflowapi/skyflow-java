@@ -11,6 +11,8 @@ import com.skyflow.logs.InfoLogs;
 import com.skyflow.serviceaccount.util.BearerToken;
 import com.skyflow.serviceaccount.util.Token;
 import com.skyflow.utils.logger.LogUtil;
+import io.github.cdimascio.dotenv.Dotenv;
+import io.github.cdimascio.dotenv.DotenvException;
 import org.apache.commons.codec.binary.Base64;
 
 import java.io.File;
@@ -41,6 +43,23 @@ public class BaseUtils {
                 break;
         }
         return sb.toString();
+    }
+
+    public static String getEnvVaultURL() {
+        try {
+            Dotenv dotenv = Dotenv.load();
+            String vaultURL = dotenv.get("VAULT_URL");
+            if (vaultURL != null && vaultURL.trim().isEmpty()) {
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyVaultUrl.getMessage());
+            } else if (vaultURL != null && !vaultURL.startsWith(BaseConstants.SECURE_PROTOCOL)) {
+                throw new SkyflowException( ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidVaultUrlFormat.getMessage());
+            }
+            return vaultURL;
+        } catch (DotenvException e) {
+            return null;
+        } catch (SkyflowException e) {
+           throw new RuntimeException(e);
+        }
     }
 
     public static String generateBearerToken(Credentials credentials) throws SkyflowException {
