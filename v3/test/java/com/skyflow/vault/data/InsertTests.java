@@ -211,11 +211,11 @@ public class InsertTests {
         InsertRequest request = InsertRequest.builder().table(table).values(values).upsert(new ArrayList<>()).build();
         try {
             Validations.validateInsertRequest(request);
-//            Assert.fail(EXCEPTION_NOT_THROWN);
+            Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
-                    Utils.parameterizedString(ErrorMessage.EmptyUpsert.getMessage(), Constants.SDK_PREFIX),
+                    Utils.parameterizedString(ErrorMessage.EmptyUpsertValues.getMessage(), Constants.SDK_PREFIX),
                     e.getMessage()
             );
         }
