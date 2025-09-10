@@ -3,9 +3,6 @@ package com.skyflow.serviceaccount.util;
 import com.google.gson.Gson;
 import com.skyflow.utils.Constants;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-
 public class SignedDataTokenResponse {
     private static final String prefix = Constants.SIGNED_DATA_TOKEN_PREFIX;
     private final String token;
@@ -24,11 +21,9 @@ public class SignedDataTokenResponse {
         return signedToken;
     }
 
-
-
     @Override
     public String toString() {
-        Gson gson = new Gson().newBuilder().serializeNulls().create();
+        Gson gson = new Gson();
         return gson.toJson(this);
     }
 }
