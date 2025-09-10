@@ -22,6 +22,9 @@ import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.utils.validations.Validations;
 import com.skyflow.vault.data.*;
 import com.skyflow.vault.tokens.*;
+
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 public final class VaultController extends VaultClient {
@@ -31,7 +34,7 @@ public final class VaultController extends VaultClient {
         super(vaultConfig, credentials);
     }
 
-    private static synchronized HashMap<String, Object> getFormattedBatchInsertRecord(Object record, int requestIndex) {
+    private static synchronized HashMap<String, Object> getFormattedBatchInsertRecord(Object record, Integer requestIndex) {
         HashMap<String, Object> insertRecord = new HashMap<>();
         String jsonString = gson.toJson(record);
         JsonObject bodyObject = JsonParser.parseString(jsonString).getAsJsonObject().get("Body").getAsJsonObject();
@@ -95,11 +98,9 @@ public final class VaultController extends VaultClient {
 
     private static synchronized HashMap<String, Object> getFormattedQueryRecord(V1FieldRecords record) {
         HashMap<String, Object> queryRecord = new HashMap<>();
-        Object fields = record.getFields();
-        if (fields != null) {
-            String fieldsString = gson.toJson(fields);
-            JsonObject fieldsObject = JsonParser.parseString(fieldsString).getAsJsonObject();
-            queryRecord.putAll(fieldsObject.asMap());
+        Optional<Map<String, Object>> fieldsOpt = record.getFields();
+        if (fieldsOpt.isPresent()) {
+            queryRecord.putAll(fieldsOpt.get());
         }
         return queryRecord;
     }
@@ -124,7 +125,7 @@ public final class VaultController extends VaultClient {
                 if (records.isPresent()) {
                     List<Map<String, Object>> recordList = records.get();
 
-                    for (int index = 0; index < recordList.size(); index++) {
+                    for (Integer index = (Integer) 0; index < recordList.size(); index++) {
                         Map<String, Object> record = recordList.get(index);
                         HashMap<String, Object> insertRecord = getFormattedBatchInsertRecord(record, index);
 
@@ -132,6 +133,7 @@ public final class VaultController extends VaultClient {
                             insertedFields.add(insertRecord);
                         } else {
                             insertRecord.put("requestId", batchInsertResult.headers().get("x-request-id").get(0));
+                            insertRecord.put("httpCode", 400);
                             errorFields.add(insertRecord);
                         }
                     }
@@ -232,6 +234,7 @@ public final class VaultController extends VaultClient {
                     .downloadUrl(getRequest.getDownloadURL())
                     .columnName(getRequest.getColumnName())
                     .columnValues(getRequest.getColumnValues())
+                    .fields(getRequest.getFields())
                     .orderBy(RecordServiceBulkGetRecordRequestOrderBy.valueOf(getRequest.getOrderBy()))
                     .build();
 
@@ -358,5 +361,41 @@ public final class VaultController extends VaultClient {
         }
         LogUtil.printInfoLog(InfoLogs.TOKENIZE_SUCCESS.getLog());
         return new TokenizeResponse(list);
+    }
+
+    public FileUploadResponse uploadFile(FileUploadRequest fileUploadRequest) throws SkyflowException {
+        LogUtil.printInfoLog(InfoLogs.FILE_UPLOAD_TRIGGERED.getLog());
+        FileUploadResponse fileUploadResponse = null;
+
+        try {
+            LogUtil.printInfoLog(InfoLogs.VALIDATING_FILE_UPLOAD_REQUEST.getLog());
+            Validations.validateFileUploadRequest(fileUploadRequest);
+            setBearerToken();
+            File file = super.getFileForFileUpload(fileUploadRequest);
+
+            UploadFileV2Request uploadFileV2Request = UploadFileV2Request.builder()
+                    .tableName(fileUploadRequest.getTable())
+                    .columnName(fileUploadRequest.getColumnName())
+                    .skyflowId(fileUploadRequest.getSkyflowId())
+                    .returnFileMetadata(false)
+                    .build();
+
+            UploadFileV2Response uploadFileV2Response = super.getRecordsApi().uploadFileV2(super.getVaultConfig().getVaultId(), file, uploadFileV2Request);
+
+            fileUploadResponse = new FileUploadResponse(
+                    uploadFileV2Response.getSkyflowId().orElse(null),
+                    null
+            );
+
+        } catch (ApiClientApiException e) {
+            String bodyString = gson.toJson(e.body());
+            LogUtil.printErrorLog(ErrorLogs.UPLOAD_FILE_REQUEST_REJECTED.getLog());
+            throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
+        } catch (IOException e) {
+            LogUtil.printErrorLog(ErrorLogs.UPLOAD_FILE_REQUEST_REJECTED.getLog()); 
+            throw new SkyflowException(e.getMessage(), e);
+        }
+        LogUtil.printInfoLog(InfoLogs.FILE_UPLOAD_SUCCESS.getLog());
+        return fileUploadResponse;
     }
 }

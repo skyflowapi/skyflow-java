@@ -408,12 +408,7 @@ public class Validations {
                 }
             }
         }
-        if (redactionType == null && (tokenization == null || !tokenization)) {
-            LogUtil.printErrorLog(Utils.parameterizedString(
-                    ErrorLogs.REDACTION_IS_REQUIRED.getLog(), InterfaceName.GET.getName()
-            ));
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.RedactionKeyError.getMessage());
-        }
+
         if (tokenization != null && tokenization) {
             if (redactionType != null) {
                 LogUtil.printErrorLog(Utils.parameterizedString(
@@ -687,6 +682,99 @@ public class Validations {
         }
     }
 
+    public static void validateFileUploadRequest(FileUploadRequest fileUploadRequest) throws SkyflowException {
+        if (fileUploadRequest == null) {
+            LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.EMPTY_REQUEST_BODY.getLog(), InterfaceName.FILE_UPLOAD.getName()
+            ));
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyRequestBody.getMessage());
+        }
+
+        String table = fileUploadRequest.getTable();
+        if (table == null) {
+            LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.TABLE_IS_REQUIRED.getLog(), InterfaceName.FILE_UPLOAD.getName()
+            ));
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.TableKeyError.getMessage());
+        } else if (table.trim().isEmpty()) {
+            LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.EMPTY_TABLE_NAME.getLog(), InterfaceName.FILE_UPLOAD.getName()
+            ));
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyTable.getMessage());
+        }
+
+        String skyflowId = fileUploadRequest.getSkyflowId();
+        if (skyflowId == null) {
+            LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.SKYFLOW_ID_IS_REQUIRED.getLog(), InterfaceName.FILE_UPLOAD.getName()
+            ));
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.SkyflowIdKeyError.getMessage());
+        } else if (skyflowId.trim().isEmpty()) {
+            LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.EMPTY_SKYFLOW_ID.getLog(), InterfaceName.FILE_UPLOAD.getName()
+            ));
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptySkyflowId.getMessage());
+        }
+
+        String columnName = fileUploadRequest.getColumnName();
+        if (columnName == null) {
+            LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.COLUMN_NAME_IS_REQUIRED_FILE_UPLOAD.getLog(), InterfaceName.FILE_UPLOAD.getName()
+            ));
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.ColumnNameKeyErrorFileUpload.getMessage());
+        } else if (columnName.trim().isEmpty()) {
+            LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.EMPTY_COLUMN_NAME.getLog(), InterfaceName.FILE_UPLOAD.getName()
+            ));
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyColumnName.getMessage());
+        }
+
+        String filePath = fileUploadRequest.getFilePath();
+        String base64 = fileUploadRequest.getBase64();
+        File fileObject = fileUploadRequest.getFileObject();
+        String fileName = fileUploadRequest.getFileName();
+
+        // Check if at least one (path, base64, fileObject) is provided
+        if (isNullOrEmpty(filePath) && isNullOrEmpty(base64) && fileObject == null) {
+            LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.MISSING_FILE_SOURCE_IN_UPLOAD_FILE.getLog(), InterfaceName.FILE_UPLOAD.getName()
+            ));
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.MissingFileSourceInUploadFileRequest.getMessage());
+        }
+
+        // Check filePath
+        if (!isNullOrEmpty(filePath)) {
+            File f = new File(filePath);
+            if (!f.exists() || !f.isFile()) {
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidFilePath.getMessage());
+            }
+        }
+
+        // Check base64
+        if (!isNullOrEmpty(base64)) {
+            if (isNullOrEmpty(fileName)) {
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.FileNameMustBeProvidedWithFileObject.getMessage());
+            }
+            // Validate if Base64 is actually valid
+            try {
+                java.util.Base64.getDecoder().decode(base64);
+            } catch (IllegalArgumentException e) {
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidBase64.getMessage());
+            }
+        }
+
+        // Check fileObject
+        if (fileObject != null) {
+            if (!fileObject.exists() || !fileObject.isFile()) {
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidFileObject.getMessage());
+            }
+        }
+    }
+
+    private static boolean isNullOrEmpty(String str) {
+        return str == null || str.trim().isEmpty();
+    }
+
     public static void validateDeidentifyTextRequest(DeidentifyTextRequest deidentifyTextRequest) throws SkyflowException {
         // Validate required fields
         String deidentifyText = deidentifyTextRequest.getText();
@@ -788,6 +876,11 @@ public class Validations {
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyRequestBody.getMessage());
         }
 
+        TokenFormat tokenFormat = request.getTokenFormat();
+        if (tokenFormat != null && tokenFormat.getVaultToken() != null && !tokenFormat.getVaultToken().isEmpty()) {
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.VaultTokenFormatIsNotAllowedForFiles.getMessage());
+        }
+
         File file = request.getFileInput().getFile();
         String filePath = request.getFileInput().getFilePath();
 
@@ -840,9 +933,6 @@ public class Validations {
                 LogUtil.printErrorLog(Utils.parameterizedString(
                     ErrorLogs.INVALID_BLEEP_TO_DEIDENTIFY_AUDIO.getLog(), InterfaceName.DETECT.getName()
                 ));
-                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidRequestBody.getMessage());
-            }
-            if (request.getBleep().getGain() == null) {
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidRequestBody.getMessage());
             }
             if (request.getBleep().getStartPadding() == null || request.getBleep().getStartPadding() < 0) {

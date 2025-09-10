@@ -30,9 +30,11 @@ public final class DeidentifyPdfRequest {
 
     private final DeidentifyPdfRequestFile file;
 
-    private final Optional<Integer> density;
+    private final Optional<String> configurationId;
 
-    private final Optional<Integer> maxResolution;
+    private final Optional<Double> density;
+
+    private final Optional<Double> maxResolution;
 
     private final Optional<List<EntityType>> entityTypes;
 
@@ -49,8 +51,9 @@ public final class DeidentifyPdfRequest {
     private DeidentifyPdfRequest(
             String vaultId,
             DeidentifyPdfRequestFile file,
-            Optional<Integer> density,
-            Optional<Integer> maxResolution,
+            Optional<String> configurationId,
+            Optional<Double> density,
+            Optional<Double> maxResolution,
             Optional<List<EntityType>> entityTypes,
             Optional<TokenTypeWithoutVault> tokenType,
             Optional<List<String>> allowRegex,
@@ -59,6 +62,7 @@ public final class DeidentifyPdfRequest {
             Map<String, Object> additionalProperties) {
         this.vaultId = vaultId;
         this.file = file;
+        this.configurationId = configurationId;
         this.density = density;
         this.maxResolution = maxResolution;
         this.entityTypes = entityTypes;
@@ -82,11 +86,16 @@ public final class DeidentifyPdfRequest {
         return file;
     }
 
+    @JsonProperty("configuration_id")
+    public Optional<String> getConfigurationId() {
+        return configurationId;
+    }
+
     /**
      * @return Pixel density at which to process the PDF file.
      */
     @JsonProperty("density")
-    public Optional<Integer> getDensity() {
+    public Optional<Double> getDensity() {
         return density;
     }
 
@@ -94,7 +103,7 @@ public final class DeidentifyPdfRequest {
      * @return Max resolution at which to process the PDF file.
      */
     @JsonProperty("max_resolution")
-    public Optional<Integer> getMaxResolution() {
+    public Optional<Double> getMaxResolution() {
         return maxResolution;
     }
 
@@ -137,6 +146,7 @@ public final class DeidentifyPdfRequest {
     private boolean equalTo(DeidentifyPdfRequest other) {
         return vaultId.equals(other.vaultId)
                 && file.equals(other.file)
+                && configurationId.equals(other.configurationId)
                 && density.equals(other.density)
                 && maxResolution.equals(other.maxResolution)
                 && entityTypes.equals(other.entityTypes)
@@ -151,6 +161,7 @@ public final class DeidentifyPdfRequest {
         return Objects.hash(
                 this.vaultId,
                 this.file,
+                this.configurationId,
                 this.density,
                 this.maxResolution,
                 this.entityTypes,
@@ -185,19 +196,23 @@ public final class DeidentifyPdfRequest {
     public interface _FinalStage {
         DeidentifyPdfRequest build();
 
+        _FinalStage configurationId(Optional<String> configurationId);
+
+        _FinalStage configurationId(String configurationId);
+
         /**
          * <p>Pixel density at which to process the PDF file.</p>
          */
-        _FinalStage density(Optional<Integer> density);
+        _FinalStage density(Optional<Double> density);
 
-        _FinalStage density(Integer density);
+        _FinalStage density(Double density);
 
         /**
          * <p>Max resolution at which to process the PDF file.</p>
          */
-        _FinalStage maxResolution(Optional<Integer> maxResolution);
+        _FinalStage maxResolution(Optional<Double> maxResolution);
 
-        _FinalStage maxResolution(Integer maxResolution);
+        _FinalStage maxResolution(Double maxResolution);
 
         _FinalStage entityTypes(Optional<List<EntityType>> entityTypes);
 
@@ -236,9 +251,11 @@ public final class DeidentifyPdfRequest {
 
         private Optional<List<EntityType>> entityTypes = Optional.empty();
 
-        private Optional<Integer> maxResolution = Optional.empty();
+        private Optional<Double> maxResolution = Optional.empty();
 
-        private Optional<Integer> density = Optional.empty();
+        private Optional<Double> density = Optional.empty();
+
+        private Optional<String> configurationId = Optional.empty();
 
         @JsonAnySetter
         private Map<String, Object> additionalProperties = new HashMap<>();
@@ -249,6 +266,7 @@ public final class DeidentifyPdfRequest {
         public Builder from(DeidentifyPdfRequest other) {
             vaultId(other.getVaultId());
             file(other.getFile());
+            configurationId(other.getConfigurationId());
             density(other.getDensity());
             maxResolution(other.getMaxResolution());
             entityTypes(other.getEntityTypes());
@@ -347,7 +365,7 @@ public final class DeidentifyPdfRequest {
          * @return Reference to {@code this} so that method calls can be chained together.
          */
         @java.lang.Override
-        public _FinalStage maxResolution(Integer maxResolution) {
+        public _FinalStage maxResolution(Double maxResolution) {
             this.maxResolution = Optional.ofNullable(maxResolution);
             return this;
         }
@@ -357,7 +375,7 @@ public final class DeidentifyPdfRequest {
          */
         @java.lang.Override
         @JsonSetter(value = "max_resolution", nulls = Nulls.SKIP)
-        public _FinalStage maxResolution(Optional<Integer> maxResolution) {
+        public _FinalStage maxResolution(Optional<Double> maxResolution) {
             this.maxResolution = maxResolution;
             return this;
         }
@@ -367,7 +385,7 @@ public final class DeidentifyPdfRequest {
          * @return Reference to {@code this} so that method calls can be chained together.
          */
         @java.lang.Override
-        public _FinalStage density(Integer density) {
+        public _FinalStage density(Double density) {
             this.density = Optional.ofNullable(density);
             return this;
         }
@@ -377,8 +395,21 @@ public final class DeidentifyPdfRequest {
          */
         @java.lang.Override
         @JsonSetter(value = "density", nulls = Nulls.SKIP)
-        public _FinalStage density(Optional<Integer> density) {
+        public _FinalStage density(Optional<Double> density) {
             this.density = density;
+            return this;
+        }
+
+        @java.lang.Override
+        public _FinalStage configurationId(String configurationId) {
+            this.configurationId = Optional.ofNullable(configurationId);
+            return this;
+        }
+
+        @java.lang.Override
+        @JsonSetter(value = "configuration_id", nulls = Nulls.SKIP)
+        public _FinalStage configurationId(Optional<String> configurationId) {
+            this.configurationId = configurationId;
             return this;
         }
 
@@ -387,6 +418,7 @@ public final class DeidentifyPdfRequest {
             return new DeidentifyPdfRequest(
                     vaultId,
                     file,
+                    configurationId,
                     density,
                     maxResolution,
                     entityTypes,

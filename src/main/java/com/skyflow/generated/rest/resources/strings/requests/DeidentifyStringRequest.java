@@ -29,6 +29,8 @@ public final class DeidentifyStringRequest {
 
     private final String text;
 
+    private final Optional<String> configurationId;
+
     private final Optional<List<EntityType>> entityTypes;
 
     private final Optional<TokenType> tokenType;
@@ -44,6 +46,7 @@ public final class DeidentifyStringRequest {
     private DeidentifyStringRequest(
             String vaultId,
             String text,
+            Optional<String> configurationId,
             Optional<List<EntityType>> entityTypes,
             Optional<TokenType> tokenType,
             Optional<List<String>> allowRegex,
@@ -52,6 +55,7 @@ public final class DeidentifyStringRequest {
             Map<String, Object> additionalProperties) {
         this.vaultId = vaultId;
         this.text = text;
+        this.configurationId = configurationId;
         this.entityTypes = entityTypes;
         this.tokenType = tokenType;
         this.allowRegex = allowRegex;
@@ -71,6 +75,11 @@ public final class DeidentifyStringRequest {
     @JsonProperty("text")
     public String getText() {
         return text;
+    }
+
+    @JsonProperty("configuration_id")
+    public Optional<String> getConfigurationId() {
+        return configurationId;
     }
 
     @JsonProperty("entity_types")
@@ -112,6 +121,7 @@ public final class DeidentifyStringRequest {
     private boolean equalTo(DeidentifyStringRequest other) {
         return vaultId.equals(other.vaultId)
                 && text.equals(other.text)
+                && configurationId.equals(other.configurationId)
                 && entityTypes.equals(other.entityTypes)
                 && tokenType.equals(other.tokenType)
                 && allowRegex.equals(other.allowRegex)
@@ -124,6 +134,7 @@ public final class DeidentifyStringRequest {
         return Objects.hash(
                 this.vaultId,
                 this.text,
+                this.configurationId,
                 this.entityTypes,
                 this.tokenType,
                 this.allowRegex,
@@ -155,6 +166,10 @@ public final class DeidentifyStringRequest {
 
     public interface _FinalStage {
         DeidentifyStringRequest build();
+
+        _FinalStage configurationId(Optional<String> configurationId);
+
+        _FinalStage configurationId(String configurationId);
 
         _FinalStage entityTypes(Optional<List<EntityType>> entityTypes);
 
@@ -193,6 +208,8 @@ public final class DeidentifyStringRequest {
 
         private Optional<List<EntityType>> entityTypes = Optional.empty();
 
+        private Optional<String> configurationId = Optional.empty();
+
         @JsonAnySetter
         private Map<String, Object> additionalProperties = new HashMap<>();
 
@@ -202,6 +219,7 @@ public final class DeidentifyStringRequest {
         public Builder from(DeidentifyStringRequest other) {
             vaultId(other.getVaultId());
             text(other.getText());
+            configurationId(other.getConfigurationId());
             entityTypes(other.getEntityTypes());
             tokenType(other.getTokenType());
             allowRegex(other.getAllowRegex());
@@ -294,10 +312,24 @@ public final class DeidentifyStringRequest {
         }
 
         @java.lang.Override
+        public _FinalStage configurationId(String configurationId) {
+            this.configurationId = Optional.ofNullable(configurationId);
+            return this;
+        }
+
+        @java.lang.Override
+        @JsonSetter(value = "configuration_id", nulls = Nulls.SKIP)
+        public _FinalStage configurationId(Optional<String> configurationId) {
+            this.configurationId = configurationId;
+            return this;
+        }
+
+        @java.lang.Override
         public DeidentifyStringRequest build() {
             return new DeidentifyStringRequest(
                     vaultId,
                     text,
+                    configurationId,
                     entityTypes,
                     tokenType,
                     allowRegex,

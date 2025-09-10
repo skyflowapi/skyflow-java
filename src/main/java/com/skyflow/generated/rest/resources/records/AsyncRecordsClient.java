@@ -12,6 +12,8 @@ import com.skyflow.generated.rest.resources.records.requests.RecordServiceBulkGe
 import com.skyflow.generated.rest.resources.records.requests.RecordServiceGetRecordRequest;
 import com.skyflow.generated.rest.resources.records.requests.RecordServiceInsertRecordBody;
 import com.skyflow.generated.rest.resources.records.requests.RecordServiceUpdateRecordBody;
+import com.skyflow.generated.rest.resources.records.requests.UploadFileV2Request;
+import com.skyflow.generated.rest.types.UploadFileV2Response;
 import com.skyflow.generated.rest.types.V1BatchOperationResponse;
 import com.skyflow.generated.rest.types.V1BulkDeleteRecordResponse;
 import com.skyflow.generated.rest.types.V1BulkGetRecordResponse;
@@ -240,9 +242,19 @@ public class AsyncRecordsClient {
      * Uploads a file to the specified record.
      */
     public CompletableFuture<V1UpdateRecordResponse> fileServiceUploadFile(
-            String vaultId, String objectName, String id, Optional<File> fileColumnName) {
+            String vaultId, String objectName, String id, Optional<File> file) {
         return this.rawClient
-                .fileServiceUploadFile(vaultId, objectName, id, fileColumnName)
+                .fileServiceUploadFile(vaultId, objectName, id, file)
+                .thenApply(response -> response.body());
+    }
+
+    /**
+     * Uploads a file to the specified record.
+     */
+    public CompletableFuture<V1UpdateRecordResponse> fileServiceUploadFile(
+            String vaultId, String objectName, String id, Optional<File> file, FileServiceUploadFileRequest request) {
+        return this.rawClient
+                .fileServiceUploadFile(vaultId, objectName, id, file, request)
                 .thenApply(response -> response.body());
     }
 
@@ -253,25 +265,11 @@ public class AsyncRecordsClient {
             String vaultId,
             String objectName,
             String id,
-            Optional<File> fileColumnName,
-            FileServiceUploadFileRequest request) {
-        return this.rawClient
-                .fileServiceUploadFile(vaultId, objectName, id, fileColumnName, request)
-                .thenApply(response -> response.body());
-    }
-
-    /**
-     * Uploads a file to the specified record.
-     */
-    public CompletableFuture<V1UpdateRecordResponse> fileServiceUploadFile(
-            String vaultId,
-            String objectName,
-            String id,
-            Optional<File> fileColumnName,
+            Optional<File> file,
             FileServiceUploadFileRequest request,
             RequestOptions requestOptions) {
         return this.rawClient
-                .fileServiceUploadFile(vaultId, objectName, id, fileColumnName, request, requestOptions)
+                .fileServiceUploadFile(vaultId, objectName, id, file, request, requestOptions)
                 .thenApply(response -> response.body());
     }
 
@@ -312,6 +310,24 @@ public class AsyncRecordsClient {
             String vaultId, String tableName, String id, String columnName, RequestOptions requestOptions) {
         return this.rawClient
                 .fileServiceGetFileScanStatus(vaultId, tableName, id, columnName, requestOptions)
+                .thenApply(response -> response.body());
+    }
+
+    /**
+     * Uploads the specified file to a record. If an existing record isn't specified, creates a new record and uploads the file to that record.
+     */
+    public CompletableFuture<UploadFileV2Response> uploadFileV2(
+            String vaultId, File file, UploadFileV2Request request) {
+        return this.rawClient.uploadFileV2(vaultId, file, request).thenApply(response -> response.body());
+    }
+
+    /**
+     * Uploads the specified file to a record. If an existing record isn't specified, creates a new record and uploads the file to that record.
+     */
+    public CompletableFuture<UploadFileV2Response> uploadFileV2(
+            String vaultId, File file, UploadFileV2Request request, RequestOptions requestOptions) {
+        return this.rawClient
+                .uploadFileV2(vaultId, file, request, requestOptions)
                 .thenApply(response -> response.body());
     }
 }

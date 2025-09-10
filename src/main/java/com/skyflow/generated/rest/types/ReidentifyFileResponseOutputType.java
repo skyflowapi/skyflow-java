@@ -5,16 +5,14 @@ package com.skyflow.generated.rest.types;
 
 import com.fasterxml.jackson.annotation.JsonValue;
 
-public enum DetectRequestDeidentifyOption {
-    UNKNOWN("UNKNOWN"),
+public enum ReidentifyFileResponseOutputType {
+    BASE_64("BASE64"),
 
-    ENTITY_UNQ_COUNTER("ENTITY_UNQ_COUNTER"),
-
-    ENTITY_ONLY("ENTITY_ONLY");
+    UNKNOWN("UNKNOWN");
 
     private final String value;
 
-    DetectRequestDeidentifyOption(String value) {
+    ReidentifyFileResponseOutputType(String value) {
         this.value = value;
     }
 

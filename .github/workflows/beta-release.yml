@@ -7,7 +7,7 @@ jobs:
     uses: ./.github/workflows/shared-build-and-deploy.yml
     with:
       ref: ${{ github.ref_name }}
-      server-id: ossrh
+      server-id: central
       profile: maven-central
       tag: 'beta'
     secrets:

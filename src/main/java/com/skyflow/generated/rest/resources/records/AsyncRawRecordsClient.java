@@ -12,7 +12,10 @@ import com.skyflow.generated.rest.core.MediaTypes;
 import com.skyflow.generated.rest.core.ObjectMappers;
 import com.skyflow.generated.rest.core.QueryStringMapper;
 import com.skyflow.generated.rest.core.RequestOptions;
+import com.skyflow.generated.rest.errors.BadRequestError;
+import com.skyflow.generated.rest.errors.InternalServerError;
 import com.skyflow.generated.rest.errors.NotFoundError;
+import com.skyflow.generated.rest.errors.UnauthorizedError;
 import com.skyflow.generated.rest.resources.records.requests.FileServiceUploadFileRequest;
 import com.skyflow.generated.rest.resources.records.requests.RecordServiceBatchOperationBody;
 import com.skyflow.generated.rest.resources.records.requests.RecordServiceBulkDeleteRecordBody;
@@ -20,6 +23,9 @@ import com.skyflow.generated.rest.resources.records.requests.RecordServiceBulkGe
 import com.skyflow.generated.rest.resources.records.requests.RecordServiceGetRecordRequest;
 import com.skyflow.generated.rest.resources.records.requests.RecordServiceInsertRecordBody;
 import com.skyflow.generated.rest.resources.records.requests.RecordServiceUpdateRecordBody;
+import com.skyflow.generated.rest.resources.records.requests.UploadFileV2Request;
+import com.skyflow.generated.rest.types.ErrorResponse;
+import com.skyflow.generated.rest.types.UploadFileV2Response;
 import com.skyflow.generated.rest.types.V1BatchOperationResponse;
 import com.skyflow.generated.rest.types.V1BulkDeleteRecordResponse;
 import com.skyflow.generated.rest.types.V1BulkGetRecordResponse;
@@ -703,12 +709,12 @@ public class AsyncRawRecordsClient {
      * Uploads a file to the specified record.
      */
     public CompletableFuture<ApiClientHttpResponse<V1UpdateRecordResponse>> fileServiceUploadFile(
-            String vaultId, String objectName, String id, Optional<File> fileColumnName) {
+            String vaultId, String objectName, String id, Optional<File> file) {
         return fileServiceUploadFile(
                 vaultId,
                 objectName,
                 id,
-                fileColumnName,
+                file,
                 FileServiceUploadFileRequest.builder().build());
     }
 
@@ -716,12 +722,8 @@ public class AsyncRawRecordsClient {
      * Uploads a file to the specified record.
      */
     public CompletableFuture<ApiClientHttpResponse<V1UpdateRecordResponse>> fileServiceUploadFile(
-            String vaultId,
-            String objectName,
-            String id,
-            Optional<File> fileColumnName,
-            FileServiceUploadFileRequest request) {
-        return fileServiceUploadFile(vaultId, objectName, id, fileColumnName, request, null);
+            String vaultId, String objectName, String id, Optional<File> file, FileServiceUploadFileRequest request) {
+        return fileServiceUploadFile(vaultId, objectName, id, file, request, null);
     }
 
     /**
@@ -731,7 +733,7 @@ public class AsyncRawRecordsClient {
             String vaultId,
             String objectName,
             String id,
-            Optional<File> fileColumnName,
+            Optional<File> file,
             FileServiceUploadFileRequest request,
             RequestOptions requestOptions) {
         HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
@@ -744,15 +746,15 @@ public class AsyncRawRecordsClient {
                 .build();
         MultipartBody.Builder body = new MultipartBody.Builder().setType(MultipartBody.FORM);
         try {
-            if (fileColumnName.isPresent()) {
-                String fileColumnNameMimeType =
-                        Files.probeContentType(fileColumnName.get().toPath());
-                MediaType fileColumnNameMimeTypeMediaType =
-                        fileColumnNameMimeType != null ? MediaType.parse(fileColumnNameMimeType) : null;
+            if (file.isPresent()) {
+                String fileMimeType = Files.probeContentType(file.get().toPath());
+                MediaType fileMimeTypeMediaType = fileMimeType != null ? MediaType.parse(fileMimeType) : null;
                 body.addFormDataPart(
-                        "fileColumnName",
-                        fileColumnName.get().getName(),
-                        RequestBody.create(fileColumnName.get(), fileColumnNameMimeTypeMediaType));
+                        "file", file.get().getName(), RequestBody.create(file.get(), fileMimeTypeMediaType));
+            }
+            if (request.getColumnName().isPresent()) {
+                QueryStringMapper.addFormDataPart(
+                        body, "columnName", request.getColumnName().get(), false);
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -931,6 +933,113 @@ public class AsyncRawRecordsClient {
                             future.completeExceptionally(new NotFoundError(
                                     ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class), response));
                             return;
+                        }
+                    } catch (JsonProcessingException ignored) {
+                        // unable to map error response, throwing generic error
+                    }
+                    future.completeExceptionally(new ApiClientApiException(
+                            "Error with status code " + response.code(),
+                            response.code(),
+                            ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
+                            response));
+                    return;
+                } catch (IOException e) {
+                    future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
+                }
+            }
+
+            @Override
+            public void onFailure(@NotNull Call call, @NotNull IOException e) {
+                future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
+            }
+        });
+        return future;
+    }
+
+    /**
+     * Uploads the specified file to a record. If an existing record isn't specified, creates a new record and uploads the file to that record.
+     */
+    public CompletableFuture<ApiClientHttpResponse<UploadFileV2Response>> uploadFileV2(
+            String vaultId, File file, UploadFileV2Request request) {
+        return uploadFileV2(vaultId, file, request, null);
+    }
+
+    /**
+     * Uploads the specified file to a record. If an existing record isn't specified, creates a new record and uploads the file to that record.
+     */
+    public CompletableFuture<ApiClientHttpResponse<UploadFileV2Response>> uploadFileV2(
+            String vaultId, File file, UploadFileV2Request request, RequestOptions requestOptions) {
+        HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
+                .newBuilder()
+                .addPathSegments("v2/vaults")
+                .addPathSegment(vaultId)
+                .addPathSegments("files/upload")
+                .build();
+        MultipartBody.Builder body = new MultipartBody.Builder().setType(MultipartBody.FORM);
+        try {
+            QueryStringMapper.addFormDataPart(body, "tableName", request.getTableName(), false);
+            QueryStringMapper.addFormDataPart(body, "columnName", request.getColumnName(), false);
+            String fileMimeType = Files.probeContentType(file.toPath());
+            MediaType fileMimeTypeMediaType = fileMimeType != null ? MediaType.parse(fileMimeType) : null;
+            body.addFormDataPart("file", file.getName(), RequestBody.create(file, fileMimeTypeMediaType));
+            if (request.getSkyflowId().isPresent()) {
+                QueryStringMapper.addFormDataPart(
+                        body, "skyflowID", request.getSkyflowId().get(), false);
+            }
+            if (request.getReturnFileMetadata().isPresent()) {
+                QueryStringMapper.addFormDataPart(
+                        body,
+                        "returnFileMetadata",
+                        request.getReturnFileMetadata().get(),
+                        false);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        Request.Builder _requestBuilder = new Request.Builder()
+                .url(httpUrl)
+                .method("POST", body.build())
+                .headers(Headers.of(clientOptions.headers(requestOptions)))
+                .addHeader("Accept", "application/json");
+        Request okhttpRequest = _requestBuilder.build();
+        OkHttpClient client = clientOptions.httpClient();
+        if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
+            client = clientOptions.httpClientWithTimeout(requestOptions);
+        }
+        CompletableFuture<ApiClientHttpResponse<UploadFileV2Response>> future = new CompletableFuture<>();
+        client.newCall(okhttpRequest).enqueue(new Callback() {
+            @Override
+            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+                try (ResponseBody responseBody = response.body()) {
+                    if (response.isSuccessful()) {
+                        future.complete(new ApiClientHttpResponse<>(
+                                ObjectMappers.JSON_MAPPER.readValue(responseBody.string(), UploadFileV2Response.class),
+                                response));
+                        return;
+                    }
+                    String responseBodyString = responseBody != null ? responseBody.string() : "{}";
+                    try {
+                        switch (response.code()) {
+                            case 400:
+                                future.completeExceptionally(new BadRequestError(
+                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
+                                        response));
+                                return;
+                            case 401:
+                                future.completeExceptionally(new UnauthorizedError(
+                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
+                                        response));
+                                return;
+                            case 404:
+                                future.completeExceptionally(new NotFoundError(
+                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
+                                        response));
+                                return;
+                            case 500:
+                                future.completeExceptionally(new InternalServerError(
+                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class),
+                                        response));
+                                return;
                         }
                     } catch (JsonProcessingException ignored) {
                         // unable to map error response, throwing generic error

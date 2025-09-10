@@ -34,7 +34,7 @@ public final class ClientOptions {
             {
                 put("X-Fern-Language", "JAVA");
                 put("X-Fern-SDK-Name", "com.skyflow.fern:api-sdk");
-                put("X-Fern-SDK-Version", "0.0.219");
+                put("X-Fern-SDK-Version", "0.0.322");
             }
         });
         this.headerSuppliers = headerSuppliers;

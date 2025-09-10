@@ -10,6 +10,8 @@ public enum DeidentifyFileRequestFileDataFormat {
 
     CSV("csv"),
 
+    DCM("dcm"),
+
     DOC("doc"),
 
     DOCX("docx"),

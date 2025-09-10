@@ -271,9 +271,9 @@ public class GetTests {
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
-                    Utils.parameterizedString(ErrorMessage.RedactionKeyError.getMessage(), Constants.SDK_PREFIX),
-                    e.getMessage()
-            );
+                Utils.parameterizedString(ErrorMessage.UniqueColumnOrIdsKeyError.getMessage(), Constants.SDK_PREFIX),
+                e.getMessage()
+        );
         }
     }
 

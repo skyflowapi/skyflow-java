@@ -35,9 +35,9 @@ public final class DeidentifyStatusResponse {
 
     private final Optional<Integer> characterCount;
 
-    private final Optional<Integer> size;
+    private final Optional<Double> size;
 
-    private final Optional<Integer> duration;
+    private final Optional<Double> duration;
 
     private final Optional<Integer> pages;
 
@@ -52,8 +52,8 @@ public final class DeidentifyStatusResponse {
             String message,
             Optional<Integer> wordCount,
             Optional<Integer> characterCount,
-            Optional<Integer> size,
-            Optional<Integer> duration,
+            Optional<Double> size,
+            Optional<Double> duration,
             Optional<Integer> pages,
             Optional<Integer> slides,
             Map<String, Object> additionalProperties) {
@@ -122,7 +122,7 @@ public final class DeidentifyStatusResponse {
      * @return Size of the processed text in kilobytes (KB).
      */
     @JsonProperty("size")
-    public Optional<Integer> getSize() {
+    public Optional<Double> getSize() {
         return size;
     }
 
@@ -130,7 +130,7 @@ public final class DeidentifyStatusResponse {
      * @return Duration of the processed audio in seconds.
      */
     @JsonProperty("duration")
-    public Optional<Integer> getDuration() {
+    public Optional<Double> getDuration() {
         return duration;
     }
 
@@ -250,16 +250,16 @@ public final class DeidentifyStatusResponse {
         /**
          * <p>Size of the processed text in kilobytes (KB).</p>
          */
-        _FinalStage size(Optional<Integer> size);
+        _FinalStage size(Optional<Double> size);
 
-        _FinalStage size(Integer size);
+        _FinalStage size(Double size);
 
         /**
          * <p>Duration of the processed audio in seconds.</p>
          */
-        _FinalStage duration(Optional<Integer> duration);
+        _FinalStage duration(Optional<Double> duration);
 
-        _FinalStage duration(Integer duration);
+        _FinalStage duration(Double duration);
 
         /**
          * <p>Number of pages in the processed PDF.</p>
@@ -288,9 +288,9 @@ public final class DeidentifyStatusResponse {
 
         private Optional<Integer> pages = Optional.empty();
 
-        private Optional<Integer> duration = Optional.empty();
+        private Optional<Double> duration = Optional.empty();
 
-        private Optional<Integer> size = Optional.empty();
+        private Optional<Double> size = Optional.empty();
 
         private Optional<Integer> characterCount = Optional.empty();
 
@@ -396,7 +396,7 @@ public final class DeidentifyStatusResponse {
          * @return Reference to {@code this} so that method calls can be chained together.
          */
         @java.lang.Override
-        public _FinalStage duration(Integer duration) {
+        public _FinalStage duration(Double duration) {
             this.duration = Optional.ofNullable(duration);
             return this;
         }
@@ -406,7 +406,7 @@ public final class DeidentifyStatusResponse {
          */
         @java.lang.Override
         @JsonSetter(value = "duration", nulls = Nulls.SKIP)
-        public _FinalStage duration(Optional<Integer> duration) {
+        public _FinalStage duration(Optional<Double> duration) {
             this.duration = duration;
             return this;
         }
@@ -416,7 +416,7 @@ public final class DeidentifyStatusResponse {
          * @return Reference to {@code this} so that method calls can be chained together.
          */
         @java.lang.Override
-        public _FinalStage size(Integer size) {
+        public _FinalStage size(Double size) {
             this.size = Optional.ofNullable(size);
             return this;
         }
@@ -426,7 +426,7 @@ public final class DeidentifyStatusResponse {
          */
         @java.lang.Override
         @JsonSetter(value = "size", nulls = Nulls.SKIP)
-        public _FinalStage size(Optional<Integer> size) {
+        public _FinalStage size(Optional<Double> size) {
             this.size = size;
             return this;
         }
