@@ -408,12 +408,7 @@ public class Validations {
                 }
             }
         }
-        if (redactionType == null && (tokenization == null || !tokenization)) {
-            LogUtil.printErrorLog(Utils.parameterizedString(
-                    ErrorLogs.REDACTION_IS_REQUIRED.getLog(), InterfaceName.GET.getName()
-            ));
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.RedactionKeyError.getMessage());
-        }
+
         if (tokenization != null && tokenization) {
             if (redactionType != null) {
                 LogUtil.printErrorLog(Utils.parameterizedString(
