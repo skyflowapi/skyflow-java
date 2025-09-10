@@ -56,6 +56,7 @@ public enum ErrorLogs {
     EMPTY_OR_NULL_VALUE_IN_VALUES("Invalid %s1 request. Value can not be null or empty in values for key \"%s2\"."),
     EMPTY_OR_NULL_KEY_IN_VALUES("Invalid %s1 request. Key can not be null or empty in values"),
     EMPTY_UPSERT("Invalid %s1 request. Upsert can not be empty."),
+    EMPTY_UPSERT_VALUES("Invalid %s1 request. Upsert values can not be empty."),
     HOMOGENOUS_NOT_SUPPORTED_WITH_UPSERT("Invalid %s1 request. Homogenous is not supported when upsert is passed."),
     TOKENS_NOT_ALLOWED_WITH_TOKEN_MODE_DISABLE("Invalid %s1 request. Tokens are not allowed when tokenMode is DISABLE."),
     TOKENS_REQUIRED_WITH_TOKEN_MODE("Invalid %s1 request. Tokens are required when tokenMode is %s2."),
