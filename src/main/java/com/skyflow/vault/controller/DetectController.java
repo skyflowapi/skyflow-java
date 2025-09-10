@@ -254,8 +254,7 @@ public final class DetectController extends VaultClient {
                     response.getSlides().orElse(null),
                     getEntities(response),
                     runId,
-                    response.getStatus().name(),
-                    null
+                    response.getStatus().name()
             );
         }
 
@@ -313,8 +312,7 @@ public final class DetectController extends VaultClient {
                 response.getSlides().orElse(null),
                 getEntities(response),
                 runId,
-                status,
-                null
+                status
         );
     }
 

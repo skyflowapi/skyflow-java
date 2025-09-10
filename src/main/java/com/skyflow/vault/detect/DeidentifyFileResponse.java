@@ -20,13 +20,12 @@ public class DeidentifyFileResponse {
     private final List<FileEntityInfo> entities;
     private final String runId;
     private final String status;
-    private final List<String> errors;
 
 
     public DeidentifyFileResponse(FileInfo file, String fileBase64, String type, String extension,
                                   Integer wordCount, Integer charCount, Double sizeInKb,
                                   Double durationInSeconds, Integer pageCount, Integer slideCount,
-                                  List<FileEntityInfo> entities, String runId, String status, List<String> errors) {
+                                  List<FileEntityInfo> entities, String runId, String status) {
         this.file = file;
         this.fileBase64 = fileBase64;
         this.type = type;
@@ -40,11 +39,10 @@ public class DeidentifyFileResponse {
         this.entities = entities;
         this.runId = runId;
         this.status = status;
-        this.errors = errors;
     }
 
     public DeidentifyFileResponse(String runId, String status) {
-        this(null, null, null, null, null, null, null, null, null, null, null, runId, status, null);
+        this(null, null, null, null, null, null, null, null, null, null, null, runId, status);
     }
 
     public FileInfo getFile() {
@@ -97,10 +95,6 @@ public class DeidentifyFileResponse {
 
     public String getStatus() {
         return status;
-    }
-
-    public List<String> getErrors() {
-        return errors;
     }
 
     @Override
