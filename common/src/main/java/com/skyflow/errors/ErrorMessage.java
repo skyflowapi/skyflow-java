@@ -68,6 +68,7 @@ public enum ErrorMessage {
     EmptyKeyInTokens("%s0 Validation error. Invalid key tokens. Specify a valid key."),
     EmptyValueInTokens("%s0 Validation error. Invalid value in tokens. Specify a valid value."),
     EmptyUpsert("%s0 Validation error. 'upsert' key can't be empty. Specify an upsert column."),
+    EmptyUpsertValues("%s0 Validation error. Upsert column values can't be empty. Specify at least one upsert column."),
     HomogenousNotSupportedWithUpsert("%s0 Validation error. 'homogenous' is not supported with 'upsert'. Specify either 'homogenous' or 'upsert'."),
     TokensPassedForTokenModeDisable("%s0 Validation error. 'tokenMode' wasn't specified. Set 'tokenMode' to 'ENABLE' to insert tokens."),
     NoTokensWithTokenMode("%s0 Validation error. Tokens weren't specified for records while 'tokenMode' was %s1. Specify tokens."),

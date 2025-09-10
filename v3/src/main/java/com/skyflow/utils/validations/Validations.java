@@ -7,7 +7,6 @@ import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.logs.ErrorLogs;
-import com.skyflow.utils.BaseUtils;
 import com.skyflow.utils.Utils;
 import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.vault.data.DetokenizeRequest;
@@ -23,7 +22,6 @@ public class Validations extends BaseValidations {
         super();
     }
 
-    // add validations specific to v3 SDK
     public static void validateInsertRequest(InsertRequest insertRequest) throws SkyflowException {
         String table = insertRequest.getTable();
         ArrayList<HashMap<String, Object>> values = insertRequest.getValues();
@@ -49,15 +47,15 @@ public class Validations extends BaseValidations {
                     ErrorLogs.EMPTY_VALUES.getLog(), InterfaceName.INSERT.getName()
             ));
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyValues.getMessage());
-        } else if(values.size() > 10000) {
+        } else if (values.size() > 10000) {
             LogUtil.printErrorLog(ErrorLogs.RECORD_SIZE_EXCEED.getLog());
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.RecordSizeExceedError.getMessage());
-        } else if (upsert != null && upsert.isEmpty()){
+        } else if (upsert != null && upsert.isEmpty()) {
             LogUtil.printErrorLog(Utils.parameterizedString(
-                    ErrorLogs.EMPTY_UPSERT.getLog(), InterfaceName.INSERT.getName()
+                    ErrorLogs.EMPTY_UPSERT_VALUES.getLog(), InterfaceName.INSERT.getName()
             ));
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyUpsertValues.getMessage());
         }
-        // upsert
 
         for (HashMap<String, Object> valuesMap : values) {
             for (String key : valuesMap.keySet()) {
@@ -88,7 +86,7 @@ public class Validations extends BaseValidations {
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.DetokenizeRequestNull.getMessage());
         }
         List<String> tokens = request.getTokens();
-        if(tokens.size() > 10000) {
+        if (tokens.size() > 10000) {
             LogUtil.printErrorLog(ErrorLogs.TOKENS_SIZE_EXCEED.getLog());
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.TokensSizeExceedError.getMessage());
         }

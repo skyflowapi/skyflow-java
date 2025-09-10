@@ -131,6 +131,7 @@ public class VaultClient {
                 .build();
         apiClientBuilder.httpClient(httpClient);
     }
+
     protected InsertRequest getBulkInsertRequestBody(com.skyflow.vault.data.InsertRequest request, VaultConfig config) throws SkyflowException {
         List<HashMap<String, Object>> values = request.getValues();
         List<InsertRecordData> insertRecordDataList = new ArrayList<>();
@@ -142,12 +143,12 @@ public class VaultClient {
                 .vaultId(config.getVaultId())
                 .records(insertRecordDataList)
                 .tableName(request.getTable());
-        if(request.getUpsert() != null && !request.getUpsert().isEmpty()){
+        if (request.getUpsert() != null && !request.getUpsert().isEmpty()) {
             if (request.getUpsertType() != null) {
                 EnumUpdateType updateType = null;
-                if(request.getUpsertType() == UpdateType.REPLACE){
+                if (request.getUpsertType() == UpdateType.REPLACE) {
                     updateType = EnumUpdateType.REPLACE;
-                } else if (request.getUpsertType() == UpdateType.REPLACE) {
+                } else if (request.getUpsertType() == UpdateType.UPDATE) {
                     updateType = EnumUpdateType.UPDATE;
                 }
                 Upsert upsert = Upsert.builder().uniqueColumns(request.getUpsert()).updateType(updateType).build();
@@ -167,7 +168,7 @@ public class VaultClient {
                 com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest.builder()
                         .vaultId(this.vaultConfig.getVaultId())
                         .tokens(tokens);
-        if (request.getTokenGroupRedactions() != null){
+        if (request.getTokenGroupRedactions() != null) {
             List<com.skyflow.generated.rest.types.TokenGroupRedactions> tokenGroupRedactionsList = new ArrayList<>();
             for (com.skyflow.vault.data.TokenGroupRedactions tokenGroupRedactions : request.getTokenGroupRedactions()) {
                 com.skyflow.generated.rest.types.TokenGroupRedactions redactions =

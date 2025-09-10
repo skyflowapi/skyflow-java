@@ -2,16 +2,25 @@ package com.skyflow.vault.controller;
 
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
+import com.skyflow.errors.ErrorCode;
+import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.utils.Constants;
 import com.skyflow.utils.validations.Validations;
 import com.skyflow.vault.data.InsertRequest;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+
 import java.io.FileWriter;
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.lang.reflect.Field;
-import java.util.*;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Scanner;
+
 import static org.junit.Assert.*;
 
 
@@ -80,7 +89,7 @@ public class VaultControllerTests {
         method.invoke(controller, totalRequests);
     }
 
-    private ArrayList<HashMap<String, Object>> generateValues(int noOfRecords){
+    private ArrayList<HashMap<String, Object>> generateValues(int noOfRecords) {
         ArrayList<HashMap<String, Object>> values = new ArrayList<>();
         for (int i = 0; i < noOfRecords; i++) {
             values.add(new HashMap<>());
@@ -135,9 +144,19 @@ public class VaultControllerTests {
 
     @Test
     public void testValidation_upsertIsEmpty() throws SkyflowException {
-        InsertRequest req = InsertRequest.builder().table("table1").values(generateValues(1)).upsert(new ArrayList<>()).build();
-        // Should not throw, just logs a warning
-        Validations.validateInsertRequest(req);
+        try {
+            InsertRequest req = InsertRequest.builder()
+                    .table("table1")
+                    .values(generateValues(1))
+                    .upsert(new ArrayList<>())
+                    .build();
+            Validations.validateInsertRequest(req);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(ErrorMessage.EmptyUpsertValues.getMessage(), e.getMessage());
+        } catch (Exception e) {
+            Assert.fail(e.getMessage());
+        }
     }
 
 
@@ -299,8 +318,6 @@ public class VaultControllerTests {
         assertEquals(min, getPrivateInt(controller, "insertConcurrencyLimit"));
 
 
-
-
         writeEnv("INSERT_CONCURRENCY_LIMIT=-5");
 
         try {
@@ -356,7 +373,8 @@ public class VaultControllerTests {
 
         try {
             controller.bulkInsert(insertRequest);
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
 
         // Only 10 batches needed, so concurrency should be clamped to 10
         assertEquals(1000, getPrivateInt(controller, "insertBatchSize"));
@@ -372,7 +390,8 @@ public class VaultControllerTests {
 
         try {
             controller.bulkInsert(insertRequest);
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
 
         // Last batch should have 50 records, concurrency should be 101
         assertEquals(100, getPrivateInt(controller, "insertBatchSize"));
