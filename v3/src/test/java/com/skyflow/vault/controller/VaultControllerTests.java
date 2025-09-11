@@ -61,15 +61,6 @@ public class VaultControllerTests {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        // Print the contents of the .env file
-        try (Scanner scanner = new Scanner(envFile)) {
-            System.out.println("Current .env contents:");
-            while (scanner.hasNextLine()) {
-                System.out.println(scanner.nextLine());
-            }
-        } catch (IOException e) {
-            System.out.println("Could not read .env file: " + e.getMessage());
-        }
     }
 
     private VaultController createController() throws SkyflowException {
@@ -395,7 +386,7 @@ public class VaultControllerTests {
 
         // Last batch should have 50 records, concurrency should be 101
         assertEquals(100, getPrivateInt(controller, "insertBatchSize"));
-        assertEquals(Constants.INSERT_CONCURRENCY_LIMIT.intValue(), getPrivateInt(controller, "insertConcurrencyLimit"));
+        assertEquals(10, getPrivateInt(controller, "insertConcurrencyLimit"));
     }
 
     private int getPrivateInt(Object obj, String field) throws Exception {
