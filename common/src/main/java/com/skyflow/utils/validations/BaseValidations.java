@@ -34,7 +34,8 @@ public class BaseValidations {
         } else if (clusterId.trim().isEmpty()) {
             LogUtil.printErrorLog(ErrorLogs.EMPTY_CLUSTER_ID.getLog());
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyClusterId.getMessage());
-        } else if (credentials != null) {
+        }
+         else if (credentials != null) {
             validateCredentials(credentials);
         }
     }

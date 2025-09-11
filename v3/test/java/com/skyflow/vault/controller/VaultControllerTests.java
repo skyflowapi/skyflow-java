@@ -2,21 +2,30 @@ package com.skyflow.vault.controller;
 
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
+import com.skyflow.errors.ErrorCode;
+import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.utils.Constants;
 import com.skyflow.utils.validations.Validations;
 import com.skyflow.vault.data.InsertRequest;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+
 import java.io.FileWriter;
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.lang.reflect.Field;
-import java.util.*;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Scanner;
+
 import static org.junit.Assert.*;
 
 
 public class VaultControllerTests {
-    private static final String ENV_PATH = "/home/saib/skyflow3/skyflow-java/v3/.env";
+    private static final String ENV_PATH = "./.env";
 
     private VaultConfig vaultConfig;
     private Credentials credentials;
@@ -42,14 +51,28 @@ public class VaultControllerTests {
     }
 
     private void writeEnv(String content) {
-        try (FileWriter writer = new FileWriter(ENV_PATH)) {
+        java.io.File envFile = new java.io.File(ENV_PATH);
+        java.io.File parentDir = envFile.getParentFile();
+        if (parentDir != null && !parentDir.exists()) {
+            parentDir.mkdirs(); // Create parent directory if it doesn't exist
+        }
+        try (FileWriter writer = new FileWriter(envFile)) {
             writer.write(content);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        // Print the contents of the .env file
+        try (Scanner scanner = new Scanner(envFile)) {
+            System.out.println("Current .env contents:");
+            while (scanner.hasNextLine()) {
+                System.out.println(scanner.nextLine());
+            }
+        } catch (IOException e) {
+            System.out.println("Could not read .env file: " + e.getMessage());
+        }
     }
 
-    private VaultController createController() {
+    private VaultController createController() throws SkyflowException {
         return new VaultController(vaultConfig, credentials);
     }
 
@@ -66,7 +89,7 @@ public class VaultControllerTests {
         method.invoke(controller, totalRequests);
     }
 
-    private ArrayList<HashMap<String, Object>> generateValues(int noOfRecords){
+    private ArrayList<HashMap<String, Object>> generateValues(int noOfRecords) {
         ArrayList<HashMap<String, Object>> values = new ArrayList<>();
         for (int i = 0; i < noOfRecords; i++) {
             values.add(new HashMap<>());
@@ -121,9 +144,19 @@ public class VaultControllerTests {
 
     @Test
     public void testValidation_upsertIsEmpty() throws SkyflowException {
-        InsertRequest req = InsertRequest.builder().table("table1").values(generateValues(1)).upsert(new ArrayList<>()).build();
-        // Should not throw, just logs a warning
-        Validations.validateInsertRequest(req);
+        try {
+            InsertRequest req = InsertRequest.builder()
+                    .table("table1")
+                    .values(generateValues(1))
+                    .upsert(new ArrayList<>())
+                    .build();
+            Validations.validateInsertRequest(req);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(ErrorMessage.EmptyUpsertValues.getMessage(), e.getMessage());
+        } catch (Exception e) {
+            Assert.fail(e.getMessage());
+        }
     }
 
 
@@ -285,8 +318,6 @@ public class VaultControllerTests {
         assertEquals(min, getPrivateInt(controller, "insertConcurrencyLimit"));
 
 
-
-
         writeEnv("INSERT_CONCURRENCY_LIMIT=-5");
 
         try {
@@ -342,7 +373,8 @@ public class VaultControllerTests {
 
         try {
             controller.bulkInsert(insertRequest);
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
 
         // Only 10 batches needed, so concurrency should be clamped to 10
         assertEquals(1000, getPrivateInt(controller, "insertBatchSize"));
@@ -354,15 +386,16 @@ public class VaultControllerTests {
     public void testFractionalLastBatch() throws Exception {
         writeEnv("INSERT_BATCH_SIZE=100");
         VaultController controller = createController();
-        InsertRequest insertRequest = InsertRequest.builder().table("table1").values(generateValues(10050)).build();
+        InsertRequest insertRequest = InsertRequest.builder().table("table1").values(generateValues(9050)).build();
 
         try {
             controller.bulkInsert(insertRequest);
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
 
         // Last batch should have 50 records, concurrency should be 101
         assertEquals(100, getPrivateInt(controller, "insertBatchSize"));
-        assertEquals(10, getPrivateInt(controller, "insertConcurrencyLimit"));
+        assertEquals(Constants.INSERT_CONCURRENCY_LIMIT.intValue(), getPrivateInt(controller, "insertConcurrencyLimit"));
     }
 
     private int getPrivateInt(Object obj, String field) throws Exception {

@@ -56,7 +56,7 @@ public final class Skyflow extends BaseSkyflow {
 
         public SkyflowClientBuilder addVaultConfig(VaultConfig vaultConfig) throws SkyflowException {
             LogUtil.printInfoLog(InfoLogs.VALIDATING_VAULT_CONFIG.getLog());
-            Validations.validateVaultConfig(vaultConfig);
+            Validations.validateVaultConfiguration(vaultConfig);
             VaultConfig vaultConfigCopy;
             try {
                 vaultConfigCopy = (VaultConfig) vaultConfig.clone();

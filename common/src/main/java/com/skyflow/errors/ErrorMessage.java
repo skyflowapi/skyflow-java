@@ -16,6 +16,8 @@ public enum ErrorMessage {
     EmptyVaultId("%s0 Initialization failed. Invalid vault ID. Vault ID must not be empty."),
     InvalidClusterId("%s0 Initialization failed. Invalid cluster ID. Specify cluster ID."),
     EmptyClusterId("%s0 Initialization failed. Invalid cluster ID. Specify a valid cluster ID."),
+    EmptyVaultUrl("%s0 Initialization failed. Vault URL is empty. Specify a valid vault URL."),
+    InvalidVaultUrlFormat("%s0 Initialization failed. Vault URL must start with 'https://'."),
 
     // Connection config
     InvalidConnectionId("%s0 Initialization failed. Invalid connection ID. Specify a valid connection ID."),
@@ -66,6 +68,7 @@ public enum ErrorMessage {
     EmptyKeyInTokens("%s0 Validation error. Invalid key tokens. Specify a valid key."),
     EmptyValueInTokens("%s0 Validation error. Invalid value in tokens. Specify a valid value."),
     EmptyUpsert("%s0 Validation error. 'upsert' key can't be empty. Specify an upsert column."),
+    EmptyUpsertValues("%s0 Validation error. Upsert column values can't be empty. Specify at least one upsert column."),
     HomogenousNotSupportedWithUpsert("%s0 Validation error. 'homogenous' is not supported with 'upsert'. Specify either 'homogenous' or 'upsert'."),
     TokensPassedForTokenModeDisable("%s0 Validation error. 'tokenMode' wasn't specified. Set 'tokenMode' to 'ENABLE' to insert tokens."),
     NoTokensWithTokenMode("%s0 Validation error. Tokens weren't specified for records while 'tokenMode' was %s1. Specify tokens."),
@@ -73,11 +76,13 @@ public enum ErrorMessage {
     InsufficientTokensPassedForTokenModeEnableStrict("%s0 Validation error. 'tokenMode' is set to 'ENABLE_STRICT', but some fields are missing tokens. Specify tokens for all fields."),
     BatchInsertPartialSuccess("%s0 Insert operation completed with partial success."),
     BatchInsertFailure("%s0 Insert operation failed."),
+    RecordSizeExceedError("%s0 Maximum number of records exceeded. The limit is 10000."),
 
     // Detokenize
     InvalidDetokenizeData("%s0 Validation error. Invalid detokenize data. Specify valid detokenize data."),
     EmptyDetokenizeData("%s0 Validation error. Invalid data tokens. Specify at least one data token."),
     EmptyTokenInDetokenizeData("%s0 Validation error. Invalid data tokens. Specify a valid data token."),
+    TokensSizeExceedError("%s0 Maximum number of tokens exceeded. The limit is 10000."),
 
     // Get
     IdsKeyError("%s0 Validation error. 'ids' key is missing from the payload. Specify an 'ids' key."),

@@ -11,6 +11,8 @@ import com.skyflow.logs.InfoLogs;
 import com.skyflow.serviceaccount.util.BearerToken;
 import com.skyflow.serviceaccount.util.Token;
 import com.skyflow.utils.logger.LogUtil;
+import io.github.cdimascio.dotenv.Dotenv;
+import io.github.cdimascio.dotenv.DotenvException;
 import org.apache.commons.codec.binary.Base64;
 
 import java.io.File;
@@ -42,6 +44,7 @@ public class BaseUtils {
         }
         return sb.toString();
     }
+
 
     public static String generateBearerToken(Credentials credentials) throws SkyflowException {
         String bearerToken;
