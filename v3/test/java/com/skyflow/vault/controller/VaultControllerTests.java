@@ -395,7 +395,7 @@ public class VaultControllerTests {
 
         // Last batch should have 50 records, concurrency should be 101
         assertEquals(100, getPrivateInt(controller, "insertBatchSize"));
-        assertEquals(10, getPrivateInt(controller, "insertConcurrencyLimit"));
+        assertEquals(Constants.INSERT_CONCURRENCY_LIMIT.intValue(), getPrivateInt(controller, "insertConcurrencyLimit"));
     }
 
     private int getPrivateInt(Object obj, String field) throws Exception {
