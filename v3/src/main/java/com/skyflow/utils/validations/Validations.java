@@ -1,5 +1,7 @@
 package com.skyflow.utils.validations;
 
+import com.skyflow.config.Credentials;
+import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.InterfaceName;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
@@ -20,7 +22,6 @@ public class Validations extends BaseValidations {
         super();
     }
 
-    // add validations specific to v3 SDK
     public static void validateInsertRequest(InsertRequest insertRequest) throws SkyflowException {
         String table = insertRequest.getTable();
         ArrayList<HashMap<String, Object>> values = insertRequest.getValues();
@@ -46,12 +47,15 @@ public class Validations extends BaseValidations {
                     ErrorLogs.EMPTY_VALUES.getLog(), InterfaceName.INSERT.getName()
             ));
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyValues.getMessage());
-        } else if (upsert != null && upsert.isEmpty()){
+        } else if (values.size() > 10000) {
+            LogUtil.printErrorLog(ErrorLogs.RECORD_SIZE_EXCEED.getLog());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.RecordSizeExceedError.getMessage());
+        } else if (upsert != null && upsert.isEmpty()) {
             LogUtil.printErrorLog(Utils.parameterizedString(
-                    ErrorLogs.EMPTY_UPSERT.getLog(), InterfaceName.INSERT.getName()
+                    ErrorLogs.EMPTY_UPSERT_VALUES.getLog(), InterfaceName.INSERT.getName()
             ));
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyUpsertValues.getMessage());
         }
-        // upsert
 
         for (HashMap<String, Object> valuesMap : values) {
             for (String key : valuesMap.keySet()) {
@@ -82,6 +86,10 @@ public class Validations extends BaseValidations {
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.DetokenizeRequestNull.getMessage());
         }
         List<String> tokens = request.getTokens();
+        if (tokens.size() > 10000) {
+            LogUtil.printErrorLog(ErrorLogs.TOKENS_SIZE_EXCEED.getLog());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.TokensSizeExceedError.getMessage());
+        }
         if (tokens == null || tokens.isEmpty()) {
             LogUtil.printErrorLog(Utils.parameterizedString(
                     ErrorLogs.EMPTY_DETOKENIZE_DATA.getLog(), InterfaceName.DETOKENIZE.getName()
@@ -118,4 +126,26 @@ public class Validations extends BaseValidations {
 
     }
 
+    public static void validateVaultConfiguration(VaultConfig vaultConfig) throws SkyflowException {
+        String vaultId = vaultConfig.getVaultId();
+        String clusterId = vaultConfig.getClusterId();
+        Credentials credentials = vaultConfig.getCredentials();
+        if (vaultId == null) {
+            LogUtil.printErrorLog(ErrorLogs.VAULT_ID_IS_REQUIRED.getLog());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidVaultId.getMessage());
+        } else if (vaultId.trim().isEmpty()) {
+            LogUtil.printErrorLog(ErrorLogs.EMPTY_VAULT_ID.getLog());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyVaultId.getMessage());
+        } else if (Utils.getEnvVaultURL() == null) {
+            if (clusterId == null) {
+                LogUtil.printErrorLog(ErrorLogs.CLUSTER_ID_IS_REQUIRED.getLog());
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidClusterId.getMessage());
+            } else if (clusterId.trim().isEmpty()) {
+                LogUtil.printErrorLog(ErrorLogs.EMPTY_CLUSTER_ID.getLog());
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyClusterId.getMessage());
+            }
+        } else if (credentials != null) {
+            validateCredentials(credentials);
+        }
+    }
 }

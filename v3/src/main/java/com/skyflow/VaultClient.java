@@ -39,7 +39,7 @@ public class VaultClient {
     private String token;
     private String apiKey;
 
-    protected VaultClient(VaultConfig vaultConfig, Credentials credentials) {
+    protected VaultClient(VaultConfig vaultConfig, Credentials credentials) throws SkyflowException {
         super();
         this.vaultConfig = vaultConfig;
         this.commonCredentials = credentials;
@@ -79,8 +79,11 @@ public class VaultClient {
         this.apiClient = this.apiClientBuilder.build();
     }
 
-    private void updateVaultURL() {
-        String vaultURL = Utils.getVaultURL(this.vaultConfig.getClusterId(), this.vaultConfig.getEnv());
+    private void updateVaultURL() throws SkyflowException {
+        String vaultURL = Utils.getEnvVaultURL();
+        if (vaultURL == null || vaultURL.isEmpty()) {
+            vaultURL = Utils.getVaultURL(this.vaultConfig.getClusterId(), this.vaultConfig.getEnv());
+        }
         this.apiClientBuilder.url(vaultURL);
     }
 
@@ -92,11 +95,13 @@ public class VaultClient {
             } else if (this.commonCredentials != null) {
                 this.finalCredentials = this.commonCredentials;
             } else {
-                Dotenv dotenv = Dotenv.load();
-                String sysCredentials = dotenv.get(Constants.ENV_CREDENTIALS_KEY_NAME);
+                String sysCredentials = System.getenv(Constants.ENV_CREDENTIALS_KEY_NAME);
                 if (sysCredentials == null) {
-                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(),
-                            ErrorMessage.EmptyCredentials.getMessage());
+                    Dotenv dotenv = Dotenv.load();
+                    sysCredentials = dotenv.get(Constants.ENV_CREDENTIALS_KEY_NAME);
+                }
+                if (sysCredentials == null) {
+                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyCredentials.getMessage());
                 } else {
                     this.finalCredentials = new Credentials();
                     this.finalCredentials.setCredentialsString(sysCredentials);
@@ -126,6 +131,7 @@ public class VaultClient {
                 .build();
         apiClientBuilder.httpClient(httpClient);
     }
+
     protected InsertRequest getBulkInsertRequestBody(com.skyflow.vault.data.InsertRequest request, VaultConfig config) throws SkyflowException {
         List<HashMap<String, Object>> values = request.getValues();
         List<InsertRecordData> insertRecordDataList = new ArrayList<>();
@@ -137,12 +143,12 @@ public class VaultClient {
                 .vaultId(config.getVaultId())
                 .records(insertRecordDataList)
                 .tableName(request.getTable());
-        if(request.getUpsert() != null && !request.getUpsert().isEmpty()){
+        if (request.getUpsert() != null && !request.getUpsert().isEmpty()) {
             if (request.getUpsertType() != null) {
                 EnumUpdateType updateType = null;
-                if(request.getUpsertType() == UpdateType.REPLACE){
+                if (request.getUpsertType() == UpdateType.REPLACE) {
                     updateType = EnumUpdateType.REPLACE;
-                } else if (request.getUpsertType() == UpdateType.REPLACE) {
+                } else if (request.getUpsertType() == UpdateType.UPDATE) {
                     updateType = EnumUpdateType.UPDATE;
                 }
                 Upsert upsert = Upsert.builder().uniqueColumns(request.getUpsert()).updateType(updateType).build();
@@ -162,7 +168,7 @@ public class VaultClient {
                 com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest.builder()
                         .vaultId(this.vaultConfig.getVaultId())
                         .tokens(tokens);
-        if (request.getTokenGroupRedactions() != null){
+        if (request.getTokenGroupRedactions() != null) {
             List<com.skyflow.generated.rest.types.TokenGroupRedactions> tokenGroupRedactionsList = new ArrayList<>();
             for (com.skyflow.vault.data.TokenGroupRedactions tokenGroupRedactions : request.getTokenGroupRedactions()) {
                 com.skyflow.generated.rest.types.TokenGroupRedactions redactions =
