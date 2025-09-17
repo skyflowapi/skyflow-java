@@ -3,8 +3,6 @@ package com.skyflow.vault.data;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
-import com.skyflow.utils.Constants;
-import com.skyflow.utils.Utils;
 import com.skyflow.utils.validations.Validations;
 import org.junit.Assert;
 import org.junit.Test;
