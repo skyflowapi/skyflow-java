@@ -3,10 +3,15 @@
  */
 package com.skyflow.generated.rest.types;
 
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.annotation.Nulls;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.skyflow.generated.rest.core.ObjectMappers;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -21,16 +26,20 @@ public final class UpdateRecordData {
 
     private final Optional<Map<String, Object>> tokens;
 
+    private final Optional<String> tableName;
+
     private final Map<String, Object> additionalProperties;
 
     private UpdateRecordData(
             Optional<String> skyflowId,
             Optional<Map<String, Object>> data,
             Optional<Map<String, Object>> tokens,
+            Optional<String> tableName,
             Map<String, Object> additionalProperties) {
         this.skyflowId = skyflowId;
         this.data = data;
         this.tokens = tokens;
+        this.tableName = tableName;
         this.additionalProperties = additionalProperties;
     }
 
@@ -51,14 +60,22 @@ public final class UpdateRecordData {
     }
 
     /**
-     * @return Tokens data for the columns if any
+     * @return undocumented_field; Tokens data for the columns if any
      */
     @JsonProperty("tokens")
     public Optional<Map<String, Object>> getTokens() {
         return tokens;
     }
 
-    @Override
+    /**
+     * @return Table name for the record
+     */
+    @JsonProperty("tableName")
+    public Optional<String> getTableName() {
+        return tableName;
+    }
+
+    @java.lang.Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof UpdateRecordData && equalTo((UpdateRecordData) other);
@@ -70,15 +87,18 @@ public final class UpdateRecordData {
     }
 
     private boolean equalTo(UpdateRecordData other) {
-        return skyflowId.equals(other.skyflowId) && data.equals(other.data) && tokens.equals(other.tokens);
+        return skyflowId.equals(other.skyflowId)
+                && data.equals(other.data)
+                && tokens.equals(other.tokens)
+                && tableName.equals(other.tableName);
     }
 
-    @Override
+    @java.lang.Override
     public int hashCode() {
-        return Objects.hash(this.skyflowId, this.data, this.tokens);
+        return Objects.hash(this.skyflowId, this.data, this.tokens, this.tableName);
     }
 
-    @Override
+    @java.lang.Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }
@@ -95,6 +115,8 @@ public final class UpdateRecordData {
 
         private Optional<Map<String, Object>> tokens = Optional.empty();
 
+        private Optional<String> tableName = Optional.empty();
+
         @JsonAnySetter
         private Map<String, Object> additionalProperties = new HashMap<>();
 
@@ -104,6 +126,7 @@ public final class UpdateRecordData {
             skyflowId(other.getSkyflowId());
             data(other.getData());
             tokens(other.getTokens());
+            tableName(other.getTableName());
             return this;
         }
 
@@ -136,7 +159,7 @@ public final class UpdateRecordData {
         }
 
         /**
-         * <p>Tokens data for the columns if any</p>
+         * <p>undocumented_field; Tokens data for the columns if any</p>
          */
         @JsonSetter(value = "tokens", nulls = Nulls.SKIP)
         public Builder tokens(Optional<Map<String, Object>> tokens) {
@@ -149,8 +172,22 @@ public final class UpdateRecordData {
             return this;
         }
 
+        /**
+         * <p>Table name for the record</p>
+         */
+        @JsonSetter(value = "tableName", nulls = Nulls.SKIP)
+        public Builder tableName(Optional<String> tableName) {
+            this.tableName = tableName;
+            return this;
+        }
+
+        public Builder tableName(String tableName) {
+            this.tableName = Optional.ofNullable(tableName);
+            return this;
+        }
+
         public UpdateRecordData build() {
-            return new UpdateRecordData(skyflowId, data, tokens, additionalProperties);
+            return new UpdateRecordData(skyflowId, data, tokens, tableName, additionalProperties);
         }
     }
 }

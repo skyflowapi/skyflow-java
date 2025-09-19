@@ -3,10 +3,15 @@
  */
 package com.skyflow.generated.rest.types;
 
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.annotation.Nulls;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.skyflow.generated.rest.core.ObjectMappers;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -19,14 +24,22 @@ public final class InsertRecordData {
 
     private final Optional<Map<String, Object>> tokens;
 
+    private final Optional<String> tableName;
+
+    private final Optional<Upsert> upsert;
+
     private final Map<String, Object> additionalProperties;
 
     private InsertRecordData(
             Optional<Map<String, Object>> data,
             Optional<Map<String, Object>> tokens,
+            Optional<String> tableName,
+            Optional<Upsert> upsert,
             Map<String, Object> additionalProperties) {
         this.data = data;
         this.tokens = tokens;
+        this.tableName = tableName;
+        this.upsert = upsert;
         this.additionalProperties = additionalProperties;
     }
 
@@ -39,14 +52,27 @@ public final class InsertRecordData {
     }
 
     /**
-     * @return Tokens data for the columns if any
+     * @return undocumented_field; Tokens data for the columns if any
      */
     @JsonProperty("tokens")
     public Optional<Map<String, Object>> getTokens() {
         return tokens;
     }
 
-    @Override
+    /**
+     * @return Table name for the record
+     */
+    @JsonProperty("tableName")
+    public Optional<String> getTableName() {
+        return tableName;
+    }
+
+    @JsonProperty("upsert")
+    public Optional<Upsert> getUpsert() {
+        return upsert;
+    }
+
+    @java.lang.Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof InsertRecordData && equalTo((InsertRecordData) other);
@@ -58,15 +84,18 @@ public final class InsertRecordData {
     }
 
     private boolean equalTo(InsertRecordData other) {
-        return data.equals(other.data) && tokens.equals(other.tokens);
+        return data.equals(other.data)
+                && tokens.equals(other.tokens)
+                && tableName.equals(other.tableName)
+                && upsert.equals(other.upsert);
     }
 
-    @Override
+    @java.lang.Override
     public int hashCode() {
-        return Objects.hash(this.data, this.tokens);
+        return Objects.hash(this.data, this.tokens, this.tableName, this.upsert);
     }
 
-    @Override
+    @java.lang.Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }
@@ -81,6 +110,10 @@ public final class InsertRecordData {
 
         private Optional<Map<String, Object>> tokens = Optional.empty();
 
+        private Optional<String> tableName = Optional.empty();
+
+        private Optional<Upsert> upsert = Optional.empty();
+
         @JsonAnySetter
         private Map<String, Object> additionalProperties = new HashMap<>();
 
@@ -89,6 +122,8 @@ public final class InsertRecordData {
         public Builder from(InsertRecordData other) {
             data(other.getData());
             tokens(other.getTokens());
+            tableName(other.getTableName());
+            upsert(other.getUpsert());
             return this;
         }
 
@@ -107,7 +142,7 @@ public final class InsertRecordData {
         }
 
         /**
-         * <p>Tokens data for the columns if any</p>
+         * <p>undocumented_field; Tokens data for the columns if any</p>
          */
         @JsonSetter(value = "tokens", nulls = Nulls.SKIP)
         public Builder tokens(Optional<Map<String, Object>> tokens) {
@@ -120,8 +155,33 @@ public final class InsertRecordData {
             return this;
         }
 
+        /**
+         * <p>Table name for the record</p>
+         */
+        @JsonSetter(value = "tableName", nulls = Nulls.SKIP)
+        public Builder tableName(Optional<String> tableName) {
+            this.tableName = tableName;
+            return this;
+        }
+
+        public Builder tableName(String tableName) {
+            this.tableName = Optional.ofNullable(tableName);
+            return this;
+        }
+
+        @JsonSetter(value = "upsert", nulls = Nulls.SKIP)
+        public Builder upsert(Optional<Upsert> upsert) {
+            this.upsert = upsert;
+            return this;
+        }
+
+        public Builder upsert(Upsert upsert) {
+            this.upsert = Optional.ofNullable(upsert);
+            return this;
+        }
+
         public InsertRecordData build() {
-            return new InsertRecordData(data, tokens, additionalProperties);
+            return new InsertRecordData(data, tokens, tableName, upsert, additionalProperties);
         }
     }
 }

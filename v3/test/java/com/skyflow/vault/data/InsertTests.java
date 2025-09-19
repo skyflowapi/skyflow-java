@@ -28,7 +28,7 @@ public class InsertTests {
     private static String vaultID = null;
     private static String clusterID = null;
     private static String table = null;
-    private static ArrayList<HashMap<String, Object>> values = null;
+    private static ArrayList<InsertRecord> values = null;
     private static ArrayList<HashMap<String, Object>> tokens = null;
     private static HashMap<String, Object> valueMap = null;
     private static HashMap<String, Object> tokenMap = null;
@@ -73,19 +73,20 @@ public class InsertTests {
     @Test
     public void testValidInputInInsertRequestValidations() {
         try {
-            values.add(valueMap);
+            InsertRecord record = InsertRecord.builder().data(valueMap).build();
+            values.add(record);
             tokens.add(tokenMap);
 
             InsertRequest request = InsertRequest.builder()
                     .table(table)
                     .upsert(upsert)
-                    .values(values)
+                    .records(values)
                     .build();
             Validations.validateInsertRequest(request);
 
             Assert.assertEquals(table, request.getTable());
             Assert.assertEquals(upsert, request.getUpsert());
-            Assert.assertEquals(1, request.getValues().size());
+            Assert.assertEquals(1, request.getRecords().size());
         } catch (SkyflowException e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
         }
@@ -94,18 +95,19 @@ public class InsertTests {
     @Test
     public void testValidInputInInsertRequestValidationsWithTokenModeDisable() {
         try {
-            values.add(valueMap);
+            InsertRecord record = InsertRecord.builder().data(valueMap).build();
+            values.add(record);
             tokens.add(tokenMap);
             InsertRequest request = InsertRequest.builder()
                     .table(table)
                     .upsert(upsert)
-                    .values(values)
+                    .records(values)
                     .build();
             Validations.validateInsertRequest(request);
 
             Assert.assertEquals(table, request.getTable());
             Assert.assertEquals(upsert, request.getUpsert());
-            Assert.assertEquals(1, request.getValues().size());
+            Assert.assertEquals(1, request.getRecords().size());
         } catch (SkyflowException e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
         }
@@ -158,7 +160,7 @@ public class InsertTests {
 
     @Test
     public void testEmptyValuesInInsertRequestValidations() {
-        InsertRequest request = InsertRequest.builder().table(table).values(values).build();
+        InsertRequest request = InsertRequest.builder().table(table).records(values).build();
         try {
             Validations.validateInsertRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
@@ -174,8 +176,9 @@ public class InsertTests {
     @Test
     public void testEmptyKeyInValuesInInsertRequestValidations() {
         valueMap.put("", "test_value_3");
-        values.add(valueMap);
-        InsertRequest request = InsertRequest.builder().table(table).values(values).build();
+        InsertRecord record = InsertRecord.builder().data(valueMap).build();
+        values.add(record);
+        InsertRequest request = InsertRequest.builder().table(table).records(values).build();
         try {
             Validations.validateInsertRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
@@ -191,8 +194,9 @@ public class InsertTests {
     @Test
     public void testEmptyValueInValuesInInsertRequestValidations() {
         valueMap.put("test_column_3", "");
-        values.add(valueMap);
-        InsertRequest request = InsertRequest.builder().table(table).values(values).build();
+        InsertRecord record = InsertRecord.builder().data(valueMap).build();
+        values.add(record);
+        InsertRequest request = InsertRequest.builder().table(table).records(values).build();
         try {
             Validations.validateInsertRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
@@ -207,8 +211,9 @@ public class InsertTests {
 
     @Test
     public void testEmptyUpsertInInsertRequestValidations() {
-        values.add(valueMap);
-        InsertRequest request = InsertRequest.builder().table(table).values(values).upsert(new ArrayList<>()).build();
+        InsertRecord record = InsertRecord.builder().data(valueMap).build();
+        values.add(record);
+        InsertRequest request = InsertRequest.builder().table(table).records(values).upsert(new ArrayList<>()).build();
         try {
             Validations.validateInsertRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
@@ -226,7 +231,7 @@ public class InsertTests {
         try {
             Map<String, Object> value = new HashMap<>();
             value.put("test_column_1", "test_value_1");
-            Success success = new Success(0, "id", null, null);
+            Success success = new Success(0, "id", null, null, "table");
 
             List<Success> successList = new ArrayList<>();
             successList.add(success);
@@ -245,7 +250,7 @@ public class InsertTests {
         try {
             HashMap<String, Object> value = new HashMap<>();
             value.put("test_column_1", "test_value_1");
-            Success success = new Success(0, "id", null, value);
+            Success success = new Success(0, "id", null, value, "table");
 
             List<Success> successList = new ArrayList<>();
             successList.add(success);

@@ -10,7 +10,11 @@ public enum ErrorMessage {
     ConnectionIdAlreadyInConfigList("%s0 Validation error. ConnectionId is present in an existing config. Specify a connectionId in config."),
     ConnectionIdNotInConfigList("%s0 Validation error. ConnectionId is missing from the config. Specify the connectionIds from configs."),
     EmptyCredentials("%s0 Validation error. Invalid credentials. Credentials must not be empty."),
-
+    TableSpecifiedInRequestAndRecordObject("%s0 Validation error. Table name cannot be specified at both the request and record levels. Please specify the table name in only one place."),
+    UpsertAtRecordLevel("%s0 Validation error. Upsert specify "),
+    UpsertTableRequestAtRecordLevel("%s0 Validation error. Table name should be present at each record level when upsert is present at record level."),
+    UpsertTableRequestAtRequestLevel("%S0 Validation error. Upsert should be present at each record level when table name is present at record level."),
+    TableNotSpecifiedInRequestAndRecordObject("%s0 Validation error. Table name is missing. Table name should be specified at one place either at the request level or record level. Please specify the table name at one place."),
     // Vault config
     InvalidVaultId("%s0 Initialization failed. Invalid vault ID. Specify a valid vault ID."),
     EmptyVaultId("%s0 Initialization failed. Invalid vault ID. Vault ID must not be empty."),

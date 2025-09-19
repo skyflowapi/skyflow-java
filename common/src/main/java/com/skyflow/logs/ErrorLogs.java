@@ -143,8 +143,11 @@ public enum ErrorLogs {
 
     UNEXPECTED_ERROR_DURING_BATCH_PROCESSING("Unexpected error occurred during batch processing. Error: %s1"),
 
-    PROCESSING_ERROR_RESPONSE("Processing error response.");
-
+    PROCESSING_ERROR_RESPONSE("Processing error response."),
+    TABLE_SPECIFIED_AT_BOTH_PLACE("Invalid %s1 request. Table name cannot be specified at both the request and record levels. Please specify the table name at only one place."),
+    TABLE_NOT_SPECIFIED_AT_BOTH_PLACE("Invalid %s1 request. Table name is missing. Table name should be specified at one place either at the request level or record level. Please specify the table name at one place."),
+    UPSERT_TABLE_REQUEST_AT_RECORD_LEVEL("Invalid %s1 request. Table name should be present at each record level when upsert is present at record level."),
+    UPSERT_TABLE_REQUEST_AT_REQUEST_LEVEL("Invalid %s1 request. Upsert should be present at each record level when table name is present at record level.");
     private final String log;
 
     ErrorLogs(String log) {

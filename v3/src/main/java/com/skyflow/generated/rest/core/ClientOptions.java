@@ -3,13 +3,12 @@
  */
 package com.skyflow.generated.rest.core;
 
-import okhttp3.OkHttpClient;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
+import okhttp3.OkHttpClient;
 
 public final class ClientOptions {
     private final Environment environment;
@@ -35,7 +34,7 @@ public final class ClientOptions {
             {
                 put("X-Fern-Language", "JAVA");
                 put("X-Fern-SDK-Name", "com.skyflow.fern:api-sdk");
-                put("X-Fern-SDK-Version", "0.0.275");
+                put("X-Fern-SDK-Version", "0.0.352");
             }
         });
         this.headerSuppliers = headerSuppliers;
