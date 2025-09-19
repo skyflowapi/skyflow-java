@@ -55,7 +55,7 @@ public final class Utils extends BaseUtils {
             // Create a sublist for the current batch
             List<String> batchTokens = tokens.subList(i, Math.min(i + batchSize, tokens.size()));
             List<TokenGroupRedactions> tokenGroupRedactions = null;
-            if (request.getTokenGroupRedactions().isPresent() && !request.getTokenGroupRedactions().get().isEmpty() && i < request.getTokenGroupRedactions().get().size()) {
+            if (request.getTokenGroupRedactions().isPresent() && !request.getTokenGroupRedactions().get().isEmpty()){
                 tokenGroupRedactions = request.getTokenGroupRedactions().get();
             }
             // Build a new DetokenizeRequest for the current batch

@@ -7,6 +7,9 @@ import java.util.Map;
 
 public class DetokenizeResponseObject {
     @Expose(serialize = true)
+    private int index;
+
+    @Expose(serialize = true)
     private String token;
     @Expose(serialize = true)
     private Object value;
@@ -14,9 +17,6 @@ public class DetokenizeResponseObject {
     private String tokenGroupName;
     @Expose(serialize = true)
     private String error;
-
-    @Expose(serialize = true)
-    private int index;
 
     @Expose(serialize = true)
     private Map<String, Object> metadata;
