@@ -158,7 +158,7 @@ public class InsertTests {
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
-                    Utils.parameterizedString(ErrorMessage.ValuesKeyError.getMessage(), Constants.SDK_PREFIX),
+                    Utils.parameterizedString(ErrorMessage.RecordsKeyError.getMessage(), Constants.SDK_PREFIX),
                     e.getMessage()
             );
         }
@@ -191,7 +191,7 @@ public class InsertTests {
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
-                    Utils.parameterizedString(ErrorMessage.EmptyKeyInValues.getMessage(), Constants.SDK_PREFIX),
+                    Utils.parameterizedString(ErrorMessage.EmptyKeyInRecords.getMessage(), Constants.SDK_PREFIX),
                     e.getMessage()
             );
         }

@@ -53,6 +53,7 @@ public enum ErrorLogs {
     EMPTY_VALUES("Invalid %s1 request. Values can not be empty."),
     RECORDS_IS_REQUIRED("Invalid %s1 request. Records are required."),
     EMPTY_RECORDS("Invalid %s1 request. Records can not be empty."),
+    INVALID_RECORD("Invalid %s1 request. Invalid record. Specify a valid record."),
     RECORD_SIZE_EXCEED("Maximum number of records exceeded. The limit is 10000."),
     TOKENS_SIZE_EXCEED("Maximum number of tokens exceeded. The limit is 10000."),
     EMPTY_OR_NULL_VALUE_IN_VALUES("Invalid %s1 request. Value can not be null or empty in values for key \"%s2\"."),

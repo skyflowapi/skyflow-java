@@ -64,9 +64,9 @@ public enum ErrorMessage {
     EmptyTable("%s0 Validation error. 'table' can't be empty. Specify a table."),
     ValuesKeyError("%s0 Validation error. 'values' key is missing from the payload. Specify a 'values' key."),
     EmptyRecords("%s0 Validation error. 'records' can't be empty. Specify records."),
-    EmptyKeyInRecords("%s0 Validation error. Invalid key in records. Specify a valid key."),
+    EmptyKeyInRecords("%s0 Validation error. Invalid key in data in records. Specify a valid key."),
     EmptyValueInRecords("%s0 Validation error. Invalid value in records. Specify a valid value."),
-    RecordsKeyError("%s0 Validation error. 'values' key is missing from the payload. Specify a 'values' key."),
+    RecordsKeyError("%s0 Validation error. 'records' key is missing from the payload. Specify a 'records' key."),
     EmptyValues("%s0 Validation error. 'values' can't be empty. Specify values."),
     EmptyKeyInValues("%s0 Validation error. Invalid key in values. Specify a valid key."),
     EmptyValueInValues("%s0 Validation error. Invalid value in values. Specify a valid value."),
@@ -171,6 +171,7 @@ public enum ErrorMessage {
     NullRedactionInTokenGroup("%s0 Validation error. Redaction in TokenGroupRedactions is null or empty. Specify a valid redaction."),
 
     NullTokenGroupNameInTokenGroup("%s0 Validation error. TokenGroupName in TokenGroupRedactions is null or empty. Specify a valid tokenGroupName."),
+    InvalidRecord("%s0 Validation error. InsertRecord object in the list is invalid. Specify a valid InsertRecord object."),
     ;
     ;
     private final String message;

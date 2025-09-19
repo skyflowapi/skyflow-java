@@ -134,26 +134,26 @@ public class VaultClient {
     }
 
     protected InsertRequest getBulkInsertRequestBody(com.skyflow.vault.data.InsertRequest request, VaultConfig config) {
-        ArrayList<InsertRecord> values = request.getRecords();
+        ArrayList<InsertRecord> records = request.getRecords();
         List<InsertRecordData> insertRecordDataList = new ArrayList<>();
-        for (InsertRecord value : values) {
+        for (InsertRecord record : records) {
             InsertRecordData.Builder data = InsertRecordData.builder();
-            data.data(value.getData());
-            if (value.getTable() != null && !value.getTable().isEmpty()){
-                data.tableName(value.getTable());
+            data.data(record.getData());
+            if (record.getTable() != null && !record.getTable().isEmpty()){
+                data.tableName(record.getTable());
             }
-            if (value.getUpsert() != null && !value.getUpsert().isEmpty()){
-                if (value.getUpsertType() != null) {
+            if (record.getUpsert() != null && !record.getUpsert().isEmpty()){
+                if (record.getUpsertType() != null) {
                     EnumUpdateType updateType = null;
-                    if (value.getUpsertType() == UpdateType.REPLACE) {
+                    if (record.getUpsertType() == UpdateType.REPLACE) {
                         updateType = EnumUpdateType.REPLACE;
-                    } else if (value.getUpsertType() == UpdateType.UPDATE) {
+                    } else if (record.getUpsertType() == UpdateType.UPDATE) {
                         updateType = EnumUpdateType.UPDATE;
                     }
-                    Upsert upsert = Upsert.builder().uniqueColumns(value.getUpsert()).updateType(updateType).build();
+                    Upsert upsert = Upsert.builder().uniqueColumns(record.getUpsert()).updateType(updateType).build();
                     data.upsert(upsert);
                 } else {
-                    Upsert upsert = Upsert.builder().uniqueColumns(value.getUpsert()).build();
+                    Upsert upsert = Upsert.builder().uniqueColumns(record.getUpsert()).build();
                     data.upsert(upsert);
                 }
             }
