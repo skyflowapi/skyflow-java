@@ -20,7 +20,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Scanner;
 
 import static org.junit.Assert.*;
 
@@ -61,15 +60,6 @@ public class VaultControllerTests {
             writer.write(content);
         } catch (IOException e) {
             throw new RuntimeException(e);
-        }
-        // Print the contents of the .env file
-        try (Scanner scanner = new Scanner(envFile)) {
-            System.out.println("Current .env contents:");
-            while (scanner.hasNextLine()) {
-                System.out.println(scanner.nextLine());
-            }
-        } catch (IOException e) {
-            System.out.println("Could not read .env file: " + e.getMessage());
         }
     }
 
@@ -259,7 +249,7 @@ public class VaultControllerTests {
             //  Ignore, Testing concurrency/batch config
         }
 
-        assertEquals(1000, getPrivateInt(controller, "insertBatchSize"));
+        assertEquals(Constants.MAX_INSERT_BATCH_SIZE.intValue(), getPrivateInt(controller, "insertBatchSize"));
     }
 
     @Test
@@ -275,7 +265,7 @@ public class VaultControllerTests {
             // Ignore, Testing concurrency/batch config
         }
 
-        assertEquals(1, getPrivateInt(controller, "insertConcurrencyLimit"));
+        assertEquals(Constants.INSERT_CONCURRENCY_LIMIT.intValue(), getPrivateInt(controller, "insertConcurrencyLimit"));
     }
 
     @Test
@@ -290,7 +280,7 @@ public class VaultControllerTests {
             // Ignore, Testing concurrency/batch config
         }
 
-        assertEquals(50, getPrivateInt(controller, "insertBatchSize"));
+        assertEquals(Constants.INSERT_BATCH_SIZE.intValue(), getPrivateInt(controller, "insertBatchSize"));
 
         writeEnv("INSERT_BATCH_SIZE=-5");
 
@@ -300,7 +290,7 @@ public class VaultControllerTests {
             // Ignore, Testing concurrency/batch config
         }
 
-        assertEquals(50, getPrivateInt(controller, "insertBatchSize"));
+        assertEquals(Constants.INSERT_BATCH_SIZE.intValue(), getPrivateInt(controller, "insertBatchSize"));
     }
 
     @Test
@@ -379,7 +369,7 @@ public class VaultControllerTests {
 
         // Only 10 batches needed, so concurrency should be clamped to 10
         assertEquals(1000, getPrivateInt(controller, "insertBatchSize"));
-        assertEquals(10, getPrivateInt(controller, "insertConcurrencyLimit"));
+        assertEquals(Constants.MAX_INSERT_CONCURRENCY_LIMIT.intValue(), getPrivateInt(controller, "insertConcurrencyLimit"));
     }
 
 
@@ -396,7 +386,7 @@ public class VaultControllerTests {
 
         // Last batch should have 50 records, concurrency should be 101
         assertEquals(100, getPrivateInt(controller, "insertBatchSize"));
-        assertEquals(10, getPrivateInt(controller, "insertConcurrencyLimit"));
+        assertEquals(Constants.INSERT_CONCURRENCY_LIMIT.intValue(), getPrivateInt(controller, "insertConcurrencyLimit"));
     }
 
     private int getPrivateInt(Object obj, String field) throws Exception {

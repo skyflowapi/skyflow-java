@@ -19,6 +19,7 @@ import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.utils.validations.Validations;
 import com.skyflow.vault.data.*;
 import io.github.cdimascio.dotenv.Dotenv;
+import io.github.cdimascio.dotenv.DotenvException;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -312,9 +313,22 @@ public final class VaultController extends VaultClient {
 
     private void configureInsertConcurrencyAndBatchSize(int totalRequests) {
         try {
-            Dotenv dotenv = Dotenv.load();
-            String userProvidedBatchSize = dotenv.get("INSERT_BATCH_SIZE");
-            String userProvidedConcurrencyLimit = dotenv.get("INSERT_CONCURRENCY_LIMIT");
+            String userProvidedBatchSize = System.getenv("INSERT_BATCH_SIZE");
+            String userProvidedConcurrencyLimit = System.getenv("INSERT_CONCURRENCY_LIMIT");
+
+            Dotenv dotenv = null;
+            try {
+                dotenv = Dotenv.load();
+            } catch (DotenvException ignored) {
+                // ignore the case if .env file is not found
+            }
+
+            if (userProvidedBatchSize == null && dotenv != null) {
+                userProvidedBatchSize = dotenv.get("INSERT_BATCH_SIZE");
+            }
+            if (userProvidedConcurrencyLimit == null && dotenv != null) {
+                userProvidedConcurrencyLimit = dotenv.get("INSERT_CONCURRENCY_LIMIT");
+            }
 
             if (userProvidedBatchSize != null) {
                 try {
@@ -368,9 +382,22 @@ public final class VaultController extends VaultClient {
 
     private void configureDetokenizeConcurrencyAndBatchSize(int totalRequests) {
         try {
-            Dotenv dotenv = Dotenv.load();
-            String userProvidedBatchSize = dotenv.get("DETOKENIZE_BATCH_SIZE");
-            String userProvidedConcurrencyLimit = dotenv.get("DETOKENIZE_CONCURRENCY_LIMIT");
+            String userProvidedBatchSize = System.getenv("DETOKENIZE_BATCH_SIZE");
+            String userProvidedConcurrencyLimit = System.getenv("DETOKENIZE_BATCH_SIZE");
+
+            Dotenv dotenv = null;
+            try {
+                dotenv = Dotenv.load();
+            } catch (DotenvException ignored) {
+                // ignore the case if .env file is not found
+            }
+
+            if (userProvidedBatchSize == null && dotenv != null) {
+                userProvidedBatchSize = dotenv.get("DETOKENIZE_BATCH_SIZE");
+            }
+            if (userProvidedConcurrencyLimit == null && dotenv != null) {
+                userProvidedConcurrencyLimit = dotenv.get("DETOKENIZE_BATCH_SIZE");
+            }
 
             if (userProvidedBatchSize != null) {
                 try {
