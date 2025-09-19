@@ -52,12 +52,12 @@ public final class VaultController extends VaultClient {
         try {
             LogUtil.printInfoLog(InfoLogs.VALIDATE_INSERT_REQUEST.getLog());
             Validations.validateInsertRequest(insertRequest);
-            configureInsertConcurrencyAndBatchSize(insertRequest.getValues().size());
+            configureInsertConcurrencyAndBatchSize(insertRequest.getRecords().size());
 
             setBearerToken();
             com.skyflow.generated.rest.resources.recordservice.requests.InsertRequest request = super.getBulkInsertRequestBody(insertRequest, super.getVaultConfig());
 
-            response = this.processSync(request, insertRequest.getValues());
+            response = this.processSync(request, insertRequest.getRecords());
             return response;
         } catch (ApiClientApiException e) {
             String bodyString = gson.toJson(e.body());
@@ -74,7 +74,7 @@ public final class VaultController extends VaultClient {
         try {
             LogUtil.printInfoLog(InfoLogs.VALIDATE_INSERT_REQUEST.getLog());
             Validations.validateInsertRequest(insertRequest);
-            configureInsertConcurrencyAndBatchSize(insertRequest.getValues().size());
+            configureInsertConcurrencyAndBatchSize(insertRequest.getRecords().size());
 
             setBearerToken();
             com.skyflow.generated.rest.resources.recordservice.requests.InsertRequest request = super.getBulkInsertRequestBody(insertRequest, super.getVaultConfig());
@@ -98,7 +98,7 @@ public final class VaultController extends VaultClient {
                             }
                         }
 
-                        return new com.skyflow.vault.data.InsertResponse(successRecords, errorRecords, insertRequest.getValues());
+                        return new com.skyflow.vault.data.InsertResponse(successRecords, errorRecords, insertRequest.getRecords());
                     });
         } catch (ApiClientApiException e) {
             String bodyString = gson.toJson(e.body());
@@ -175,7 +175,7 @@ public final class VaultController extends VaultClient {
 
     private com.skyflow.vault.data.InsertResponse processSync(
             com.skyflow.generated.rest.resources.recordservice.requests.InsertRequest insertRequest,
-            ArrayList<HashMap<String, Object>> originalPayload
+            ArrayList<InsertRecord> originalPayload
     ) throws ExecutionException, InterruptedException {
         LogUtil.printInfoLog(InfoLogs.PROCESSING_BATCHES.getLog());
         List<Success> successRecords = new ArrayList<>();
@@ -283,7 +283,7 @@ public final class VaultController extends VaultClient {
                 List<InsertRecordData> batch = batches.get(batchIndex);
                 int batchNumber = batchIndex;
                 CompletableFuture<com.skyflow.vault.data.InsertResponse> future = CompletableFuture
-                        .supplyAsync(() -> insertBatch(batch, insertRequest.getTableName().get(), upsert), executor)
+                        .supplyAsync(() -> insertBatch(batch, insertRequest.getTableName().isPresent() ? insertRequest.getTableName().get() : null, upsert), executor)
                         .thenApply(response -> formatResponse(response, batchNumber, insertBatchSize))
                         .exceptionally(ex -> {
                             errorRecords.addAll(handleBatchException(ex, batch, batchNumber));
@@ -298,13 +298,16 @@ public final class VaultController extends VaultClient {
     }
 
     private InsertResponse insertBatch(List<InsertRecordData> batch, String tableName, Upsert upsert) {
-        com.skyflow.generated.rest.resources.recordservice.requests.InsertRequest req = com.skyflow.generated.rest.resources.recordservice.requests.InsertRequest.builder()
+        com.skyflow.generated.rest.resources.recordservice.requests.InsertRequest.Builder req = com.skyflow.generated.rest.resources.recordservice.requests.InsertRequest.builder()
                 .vaultId(this.getVaultConfig().getVaultId())
-                .tableName(tableName)
                 .records(batch)
-                .upsert(upsert)
-                .build();
-        return this.getRecordsApi().insert(req);
+                .upsert(upsert);
+//                .build();
+        if(tableName != null && !tableName.isEmpty()){
+            req.tableName(tableName);
+        }
+        com.skyflow.generated.rest.resources.recordservice.requests.InsertRequest  request = req.build();
+        return this.getRecordsApi().insert(request);
     }
 
     private void configureInsertConcurrencyAndBatchSize(int totalRequests) {

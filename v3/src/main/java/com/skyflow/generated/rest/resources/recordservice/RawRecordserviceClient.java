@@ -4,77 +4,41 @@
 package com.skyflow.generated.rest.resources.recordservice;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.skyflow.generated.rest.core.*;
-import com.skyflow.generated.rest.resources.recordservice.requests.*;
-import com.skyflow.generated.rest.types.*;
-import okhttp3.*;
-
+import com.skyflow.generated.rest.core.ApiClientApiException;
+import com.skyflow.generated.rest.core.ApiClientException;
+import com.skyflow.generated.rest.core.ApiClientHttpResponse;
+import com.skyflow.generated.rest.core.ClientOptions;
+import com.skyflow.generated.rest.core.MediaTypes;
+import com.skyflow.generated.rest.core.ObjectMappers;
+import com.skyflow.generated.rest.core.RequestOptions;
+import com.skyflow.generated.rest.resources.recordservice.requests.DeleteRequest;
+import com.skyflow.generated.rest.resources.recordservice.requests.DeleteTokenRequest;
+import com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest;
+import com.skyflow.generated.rest.resources.recordservice.requests.GetRequest;
+import com.skyflow.generated.rest.resources.recordservice.requests.InsertRequest;
+import com.skyflow.generated.rest.resources.recordservice.requests.TokenizeRequest;
+import com.skyflow.generated.rest.resources.recordservice.requests.UpdateRequest;
+import com.skyflow.generated.rest.types.DeleteResponse;
+import com.skyflow.generated.rest.types.DeleteTokenResponse;
+import com.skyflow.generated.rest.types.DetokenizeResponse;
+import com.skyflow.generated.rest.types.GetResponse;
+import com.skyflow.generated.rest.types.InsertResponse;
+import com.skyflow.generated.rest.types.TokenizeResponse;
+import com.skyflow.generated.rest.types.UpdateResponse;
 import java.io.IOException;
+import okhttp3.Headers;
+import okhttp3.HttpUrl;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
 
 public class RawRecordserviceClient {
     protected final ClientOptions clientOptions;
 
     public RawRecordserviceClient(ClientOptions clientOptions) {
         this.clientOptions = clientOptions;
-    }
-
-    /**
-     * Executes a query on the specified vault.
-     */
-    public ApiClientHttpResponse<ExecuteQueryResponse> executequery() {
-        return executequery(ExecuteQueryRequest.builder().build());
-    }
-
-    /**
-     * Executes a query on the specified vault.
-     */
-    public ApiClientHttpResponse<ExecuteQueryResponse> executequery(ExecuteQueryRequest request) {
-        return executequery(request, null);
-    }
-
-    /**
-     * Executes a query on the specified vault.
-     */
-    public ApiClientHttpResponse<ExecuteQueryResponse> executequery(
-            ExecuteQueryRequest request, RequestOptions requestOptions) {
-        HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
-                .newBuilder()
-                .addPathSegments("v2/query")
-                .build();
-        RequestBody body;
-        try {
-            body = RequestBody.create(
-                    ObjectMappers.JSON_MAPPER.writeValueAsBytes(request), MediaTypes.APPLICATION_JSON);
-        } catch (JsonProcessingException e) {
-            throw new ApiClientException("Failed to serialize request", e);
-        }
-        Request okhttpRequest = new Request.Builder()
-                .url(httpUrl)
-                .method("POST", body)
-                .headers(Headers.of(clientOptions.headers(requestOptions)))
-                .addHeader("Content-Type", "application/json")
-                .addHeader("Accept", "application/json")
-                .build();
-        OkHttpClient client = clientOptions.httpClient();
-        if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
-            client = clientOptions.httpClientWithTimeout(requestOptions);
-        }
-        try (Response response = client.newCall(okhttpRequest).execute()) {
-            ResponseBody responseBody = response.body();
-            if (response.isSuccessful()) {
-                return new ApiClientHttpResponse<>(
-                        ObjectMappers.JSON_MAPPER.readValue(responseBody.string(), ExecuteQueryResponse.class),
-                        response);
-            }
-            String responseBodyString = responseBody != null ? responseBody.string() : "{}";
-            throw new ApiClientApiException(
-                    "Error with status code " + response.code(),
-                    response.code(),
-                    ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                    response);
-        } catch (IOException e) {
-            throw new ApiClientException("Network error executing HTTP request", e);
-        }
     }
 
     public ApiClientHttpResponse<DeleteResponse> delete() {
@@ -355,7 +319,8 @@ public class RawRecordserviceClient {
             ResponseBody responseBody = response.body();
             if (response.isSuccessful()) {
                 return new ApiClientHttpResponse<>(
-                        ObjectMappers.JSON_MAPPER.readValue(responseBody.string(), DetokenizeResponse.class), response);
+                        ObjectMappers.JSON_MAPPER.readValue(responseBody.string(), DetokenizeResponse.class),
+                        response);
             }
             String responseBodyString = responseBody != null ? responseBody.string() : "{}";
             throw new ApiClientApiException(
@@ -376,7 +341,8 @@ public class RawRecordserviceClient {
         return tokenize(request, null);
     }
 
-    public ApiClientHttpResponse<TokenizeResponse> tokenize(TokenizeRequest request, RequestOptions requestOptions) {
+    public ApiClientHttpResponse<TokenizeResponse> tokenize(
+            TokenizeRequest request, RequestOptions requestOptions) {
         HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
                 .newBuilder()
                 .addPathSegments("v2/tokens/get")

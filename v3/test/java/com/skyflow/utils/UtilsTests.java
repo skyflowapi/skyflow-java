@@ -666,14 +666,15 @@ public class UtilsTests {
 
     @Test
     public void testValidateInsertRequestNullTable() {
-        ArrayList<HashMap<String, Object>> values = new ArrayList<>();
+        ArrayList<InsertRecord> values = new ArrayList<>();
+
         HashMap<String, Object> valueMap = new HashMap<>();
         valueMap.put("key1", "value1");
-        values.add(valueMap);
+        values.add(InsertRecord.builder().data(valueMap).build());
 
         InsertRequest request = InsertRequest.builder()
                 .table(null)
-                .values(values)
+                .records(values)
                 .build();
 
         try {
@@ -685,14 +686,16 @@ public class UtilsTests {
 
     @Test
     public void testValidateInsertRequestEmptyTable() {
-        ArrayList<HashMap<String, Object>> values = new ArrayList<>();
+        ArrayList<InsertRecord> values = new ArrayList<>();
+
         HashMap<String, Object> valueMap = new HashMap<>();
         valueMap.put("key1", "value1");
-        values.add(valueMap);
+        values.add(InsertRecord.builder().data(valueMap).build());
+
 
         InsertRequest request = InsertRequest.builder()
                 .table("")
-                .values(values)
+                .records(values)
                 .build();
 
         try {
@@ -706,7 +709,7 @@ public class UtilsTests {
     public void testValidateInsertRequestNullValues() {
         InsertRequest request = InsertRequest.builder()
                 .table("testTable")
-                .values(null)
+                .records(null)
                 .build();
 
         try {
@@ -720,7 +723,7 @@ public class UtilsTests {
     public void testValidateInsertRequestEmptyValues() {
         InsertRequest request = InsertRequest.builder()
                 .table("testTable")
-                .values(new ArrayList<>())
+                .records(new ArrayList<>())
                 .build();
 
         try {

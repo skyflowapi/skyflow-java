@@ -13,35 +13,34 @@ import com.fasterxml.jackson.annotation.Nulls;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.skyflow.generated.rest.core.ObjectMappers;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
 @JsonInclude(JsonInclude.Include.NON_ABSENT)
-@JsonDeserialize(builder = DeleteResponse.Builder.class)
-public final class DeleteResponse {
-    private final Optional<List<DeleteResponseObject>> records;
+@JsonDeserialize(builder = UniqueValue.Builder.class)
+public final class UniqueValue {
+    private final Optional<Map<String, Object>> data;
 
     private final Map<String, Object> additionalProperties;
 
-    private DeleteResponse(Optional<List<DeleteResponseObject>> records, Map<String, Object> additionalProperties) {
-        this.records = records;
+    private UniqueValue(Optional<Map<String, Object>> data, Map<String, Object> additionalProperties) {
+        this.data = data;
         this.additionalProperties = additionalProperties;
     }
 
     /**
-     * @return List of deleted records with skyflow ID and any partial errors.
+     * @return Columns names and values for unique value entry
      */
-    @JsonProperty("records")
-    public Optional<List<DeleteResponseObject>> getRecords() {
-        return records;
+    @JsonProperty("data")
+    public Optional<Map<String, Object>> getData() {
+        return data;
     }
 
     @java.lang.Override
     public boolean equals(Object other) {
         if (this == other) return true;
-        return other instanceof DeleteResponse && equalTo((DeleteResponse) other);
+        return other instanceof UniqueValue && equalTo((UniqueValue) other);
     }
 
     @JsonAnyGetter
@@ -49,13 +48,13 @@ public final class DeleteResponse {
         return this.additionalProperties;
     }
 
-    private boolean equalTo(DeleteResponse other) {
-        return records.equals(other.records);
+    private boolean equalTo(UniqueValue other) {
+        return data.equals(other.data);
     }
 
     @java.lang.Override
     public int hashCode() {
-        return Objects.hash(this.records);
+        return Objects.hash(this.data);
     }
 
     @java.lang.Override
@@ -69,34 +68,34 @@ public final class DeleteResponse {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static final class Builder {
-        private Optional<List<DeleteResponseObject>> records = Optional.empty();
+        private Optional<Map<String, Object>> data = Optional.empty();
 
         @JsonAnySetter
         private Map<String, Object> additionalProperties = new HashMap<>();
 
         private Builder() {}
 
-        public Builder from(DeleteResponse other) {
-            records(other.getRecords());
+        public Builder from(UniqueValue other) {
+            data(other.getData());
             return this;
         }
 
         /**
-         * <p>List of deleted records with skyflow ID and any partial errors.</p>
+         * <p>Columns names and values for unique value entry</p>
          */
-        @JsonSetter(value = "records", nulls = Nulls.SKIP)
-        public Builder records(Optional<List<DeleteResponseObject>> records) {
-            this.records = records;
+        @JsonSetter(value = "data", nulls = Nulls.SKIP)
+        public Builder data(Optional<Map<String, Object>> data) {
+            this.data = data;
             return this;
         }
 
-        public Builder records(List<DeleteResponseObject> records) {
-            this.records = Optional.ofNullable(records);
+        public Builder data(Map<String, Object> data) {
+            this.data = Optional.ofNullable(data);
             return this;
         }
 
-        public DeleteResponse build() {
-            return new DeleteResponse(records, additionalProperties);
+        public UniqueValue build() {
+            return new UniqueValue(data, additionalProperties);
         }
     }
 }

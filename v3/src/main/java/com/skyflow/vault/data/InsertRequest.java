@@ -14,6 +14,7 @@ public class InsertRequest extends BaseInsertRequest {
         this.builder = builder;
     }
 
+
     public static InsertRequestBuilder builder() {
         return new InsertRequestBuilder();
     }
@@ -26,10 +27,16 @@ public class InsertRequest extends BaseInsertRequest {
         return this.builder.upsertType;
     }
 
+    public ArrayList<InsertRecord> getRecords(){
+        return this.builder.records;
+    }
+
     public static final class InsertRequestBuilder extends BaseInsertRequestBuilder {
         private List<String> upsert;
 
         private UpdateType upsertType;
+
+        private ArrayList<InsertRecord> records;
 
         private InsertRequestBuilder() {
             super();
@@ -41,12 +48,6 @@ public class InsertRequest extends BaseInsertRequest {
             return this;
         }
 
-        @Override
-        public InsertRequestBuilder values(ArrayList<HashMap<String, Object>> values) {
-            super.values(values);
-            return this;
-        }
-
         public InsertRequestBuilder upsert(List<String> upsert) {
             this.upsert = upsert;
             return this;
@@ -54,6 +55,11 @@ public class InsertRequest extends BaseInsertRequest {
 
         public InsertRequestBuilder upsertType(UpdateType upsertType) {
             this.upsertType = upsertType;
+            return this;
+        }
+
+        public InsertRequestBuilder records(ArrayList<InsertRecord> records){
+            this.records = records;
             return this;
         }
 

@@ -19,29 +19,29 @@ import java.util.Objects;
 import java.util.Optional;
 
 @JsonInclude(JsonInclude.Include.NON_ABSENT)
-@JsonDeserialize(builder = DeleteResponse.Builder.class)
-public final class DeleteResponse {
-    private final Optional<List<DeleteResponseObject>> records;
+@JsonDeserialize(builder = ExecuteQueryResponseMetadata.Builder.class)
+public final class ExecuteQueryResponseMetadata {
+    private final Optional<List<String>> columns;
 
     private final Map<String, Object> additionalProperties;
 
-    private DeleteResponse(Optional<List<DeleteResponseObject>> records, Map<String, Object> additionalProperties) {
-        this.records = records;
+    private ExecuteQueryResponseMetadata(Optional<List<String>> columns, Map<String, Object> additionalProperties) {
+        this.columns = columns;
         this.additionalProperties = additionalProperties;
     }
 
     /**
-     * @return List of deleted records with skyflow ID and any partial errors.
+     * @return Return columns for the query
      */
-    @JsonProperty("records")
-    public Optional<List<DeleteResponseObject>> getRecords() {
-        return records;
+    @JsonProperty("columns")
+    public Optional<List<String>> getColumns() {
+        return columns;
     }
 
     @java.lang.Override
     public boolean equals(Object other) {
         if (this == other) return true;
-        return other instanceof DeleteResponse && equalTo((DeleteResponse) other);
+        return other instanceof ExecuteQueryResponseMetadata && equalTo((ExecuteQueryResponseMetadata) other);
     }
 
     @JsonAnyGetter
@@ -49,13 +49,13 @@ public final class DeleteResponse {
         return this.additionalProperties;
     }
 
-    private boolean equalTo(DeleteResponse other) {
-        return records.equals(other.records);
+    private boolean equalTo(ExecuteQueryResponseMetadata other) {
+        return columns.equals(other.columns);
     }
 
     @java.lang.Override
     public int hashCode() {
-        return Objects.hash(this.records);
+        return Objects.hash(this.columns);
     }
 
     @java.lang.Override
@@ -69,34 +69,34 @@ public final class DeleteResponse {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static final class Builder {
-        private Optional<List<DeleteResponseObject>> records = Optional.empty();
+        private Optional<List<String>> columns = Optional.empty();
 
         @JsonAnySetter
         private Map<String, Object> additionalProperties = new HashMap<>();
 
         private Builder() {}
 
-        public Builder from(DeleteResponse other) {
-            records(other.getRecords());
+        public Builder from(ExecuteQueryResponseMetadata other) {
+            columns(other.getColumns());
             return this;
         }
 
         /**
-         * <p>List of deleted records with skyflow ID and any partial errors.</p>
+         * <p>Return columns for the query</p>
          */
-        @JsonSetter(value = "records", nulls = Nulls.SKIP)
-        public Builder records(Optional<List<DeleteResponseObject>> records) {
-            this.records = records;
+        @JsonSetter(value = "columns", nulls = Nulls.SKIP)
+        public Builder columns(Optional<List<String>> columns) {
+            this.columns = columns;
             return this;
         }
 
-        public Builder records(List<DeleteResponseObject> records) {
-            this.records = Optional.ofNullable(records);
+        public Builder columns(List<String> columns) {
+            this.columns = Optional.ofNullable(columns);
             return this;
         }
 
-        public DeleteResponse build() {
-            return new DeleteResponse(records, additionalProperties);
+        public ExecuteQueryResponseMetadata build() {
+            return new ExecuteQueryResponseMetadata(columns, additionalProperties);
         }
     }
 }

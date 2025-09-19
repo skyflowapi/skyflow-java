@@ -7,6 +7,7 @@ import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.utils.Constants;
 import com.skyflow.utils.validations.Validations;
+import com.skyflow.vault.data.InsertRecord;
 import com.skyflow.vault.data.InsertRequest;
 import org.junit.After;
 import org.junit.Assert;
@@ -89,10 +90,10 @@ public class VaultControllerTests {
         method.invoke(controller, totalRequests);
     }
 
-    private ArrayList<HashMap<String, Object>> generateValues(int noOfRecords) {
-        ArrayList<HashMap<String, Object>> values = new ArrayList<>();
+    private ArrayList<InsertRecord> generateValues(int noOfRecords) {
+        ArrayList<InsertRecord> values = new ArrayList<>();
         for (int i = 0; i < noOfRecords; i++) {
-            values.add(new HashMap<>());
+            values.add(InsertRecord.builder().data(new HashMap<>()).build());
         }
 
         return values;
@@ -100,7 +101,7 @@ public class VaultControllerTests {
 
     @Test
     public void testValidation_tableIsNull() {
-        InsertRequest req = InsertRequest.builder().table(null).values(generateValues(1)).build();
+        InsertRequest req = InsertRequest.builder().table(null).records(generateValues(1)).build();
         try {
             Validations.validateInsertRequest(req);
             fail("Expected SkyflowException for null table");
@@ -111,7 +112,7 @@ public class VaultControllerTests {
 
     @Test
     public void testValidation_tableIsEmpty() {
-        InsertRequest req = InsertRequest.builder().table("   ").values(generateValues(1)).build();
+        InsertRequest req = InsertRequest.builder().table("   ").records(generateValues(1)).build();
         try {
             Validations.validateInsertRequest(req);
             fail("Expected SkyflowException for empty table");
@@ -122,7 +123,7 @@ public class VaultControllerTests {
 
     @Test
     public void testValidation_valuesIsNull() {
-        InsertRequest req = InsertRequest.builder().table("table1").values(null).build();
+        InsertRequest req = InsertRequest.builder().table("table1").records(null).build();
         try {
             Validations.validateInsertRequest(req);
             fail("Expected SkyflowException for null values");
@@ -133,7 +134,7 @@ public class VaultControllerTests {
 
     @Test
     public void testValidation_valuesIsEmpty() {
-        InsertRequest req = InsertRequest.builder().table("table1").values(new ArrayList<>()).build();
+        InsertRequest req = InsertRequest.builder().table("table1").records(new ArrayList<>()).build();
         try {
             Validations.validateInsertRequest(req);
             fail("Expected SkyflowException for empty values");
@@ -147,7 +148,7 @@ public class VaultControllerTests {
         try {
             InsertRequest req = InsertRequest.builder()
                     .table("table1")
-                    .values(generateValues(1))
+                    .records(generateValues(1))
                     .upsert(new ArrayList<>())
                     .build();
             Validations.validateInsertRequest(req);
@@ -162,11 +163,11 @@ public class VaultControllerTests {
 
     @Test
     public void testValidation_keyIsNullOrEmpty() {
-        ArrayList<HashMap<String, Object>> values = new ArrayList<>();
+        ArrayList<InsertRecord> values = new ArrayList<>();
         HashMap<String, Object> map = new HashMap<>();
         map.put(null, "value");
-        values.add(map);
-        InsertRequest req = InsertRequest.builder().table("table1").values(values).build();
+        values.add(InsertRecord.builder().data(map).build());
+        InsertRequest req = InsertRequest.builder().table("table1").records(values).build();
         try {
             Validations.validateInsertRequest(req);
             fail("Expected SkyflowException for null key in values");
@@ -178,8 +179,8 @@ public class VaultControllerTests {
         values.clear();
         map = new HashMap<>();
         map.put("   ", "value");
-        values.add(map);
-        req = InsertRequest.builder().table("table1").values(values).build();
+        values.add(InsertRecord.builder().data(map).build());
+        req = InsertRequest.builder().table("table1").records(values).build();
         try {
             Validations.validateInsertRequest(req);
             fail("Expected SkyflowException for empty key in values");
@@ -190,11 +191,11 @@ public class VaultControllerTests {
 
     @Test
     public void testValidation_valueIsNullOrEmpty() {
-        ArrayList<HashMap<String, Object>> values = new ArrayList<>();
+        ArrayList<InsertRecord> values = new ArrayList<>();
         HashMap<String, Object> map = new HashMap<>();
         map.put("field1", null);
-        values.add(map);
-        InsertRequest req = InsertRequest.builder().table("table1").values(values).build();
+        values.add(InsertRecord.builder().data(map).build());
+        InsertRequest req = InsertRequest.builder().table("table1").records(values).build();
         try {
             Validations.validateInsertRequest(req);
             fail("Expected SkyflowException for null value in values");
@@ -206,8 +207,8 @@ public class VaultControllerTests {
         values.clear();
         map = new HashMap<>();
         map.put("field1", "   ");
-        values.add(map);
-        req = InsertRequest.builder().table("table1").values(values).build();
+        values.add(InsertRecord.builder().data(map).build());
+        req = InsertRequest.builder().table("table1").records(values).build();
         try {
             Validations.validateInsertRequest(req);
             fail("Expected SkyflowException for empty value in values");
@@ -233,7 +234,7 @@ public class VaultControllerTests {
         writeEnv("INSERT_BATCH_SIZE=5\nINSERT_CONCURRENCY_LIMIT=3");
         VaultController controller = createController();
 
-        InsertRequest insertRequest = InsertRequest.builder().table("table1").values(generateValues(20)).build();
+        InsertRequest insertRequest = InsertRequest.builder().table("table1").records(generateValues(20)).build();
 
         try {
             controller.bulkInsert(insertRequest);
@@ -250,7 +251,7 @@ public class VaultControllerTests {
         writeEnv("INSERT_BATCH_SIZE=1100\nINSERT_CONCURRENCY_LIMIT=3");
         VaultController controller = createController();
 
-        InsertRequest insertRequest = InsertRequest.builder().table("table1").values(generateValues(50)).build();
+        InsertRequest insertRequest = InsertRequest.builder().table("table1").records(generateValues(50)).build();
 
         try {
             controller.bulkInsert(insertRequest);
@@ -265,7 +266,7 @@ public class VaultControllerTests {
     public void testConcurrencyExceedsMax() throws Exception {
         writeEnv("INSERT_CONCURRENCY_LIMIT=110");
         VaultController controller = createController();
-        InsertRequest insertRequest = InsertRequest.builder().table("table1").values(generateValues(50)).build();
+        InsertRequest insertRequest = InsertRequest.builder().table("table1").records(generateValues(50)).build();
 
 
         try {
@@ -281,7 +282,7 @@ public class VaultControllerTests {
     public void testBatchSizeZeroOrNegative() throws Exception {
         writeEnv("INSERT_BATCH_SIZE=0");
         VaultController controller = createController();
-        InsertRequest insertRequest = InsertRequest.builder().table("table1").values(generateValues(10)).build();
+        InsertRequest insertRequest = InsertRequest.builder().table("table1").records(generateValues(10)).build();
 
         try {
             controller.bulkInsert(insertRequest);
@@ -306,7 +307,7 @@ public class VaultControllerTests {
     public void testConcurrencyZeroOrNegative() throws Exception {
         writeEnv("INSERT_CONCURRENCY_LIMIT=0");
         VaultController controller = createController();
-        InsertRequest insertRequest = InsertRequest.builder().table("table1").values(generateValues(10)).build();
+        InsertRequest insertRequest = InsertRequest.builder().table("table1").records(generateValues(10)).build();
 
         try {
             controller.bulkInsert(insertRequest);
@@ -335,7 +336,7 @@ public class VaultControllerTests {
     public void testTotalRequestsLessThanBatchSize() throws Exception {
         writeEnv("INSERT_BATCH_SIZE=100\nINSERT_CONCURRENCY_LIMIT=10");
         VaultController controller = createController();
-        InsertRequest insertRequest = InsertRequest.builder().table("table1").values(generateValues(10)).build();
+        InsertRequest insertRequest = InsertRequest.builder().table("table1").records(generateValues(10)).build();
 
 
         try {
@@ -351,7 +352,7 @@ public class VaultControllerTests {
     @Test
     public void testTotalRequestsZero() throws Exception {
         VaultController controller = createController();
-        InsertRequest insertRequest = InsertRequest.builder().table("table1").values(generateValues(0)).build();
+        InsertRequest insertRequest = InsertRequest.builder().table("table1").records(generateValues(0)).build();
 
         boolean exceptionThrown = false;
 
@@ -369,7 +370,7 @@ public class VaultControllerTests {
     public void testHighConcurrencyForLowRecords() throws Exception {
         writeEnv("INSERT_BATCH_SIZE=1000\nINSERT_CONCURRENCY_LIMIT=100");
         VaultController controller = createController();
-        InsertRequest insertRequest = InsertRequest.builder().table("table1").values(generateValues(10000)).build();
+        InsertRequest insertRequest = InsertRequest.builder().table("table1").records(generateValues(10000)).build();
 
         try {
             controller.bulkInsert(insertRequest);
@@ -386,7 +387,7 @@ public class VaultControllerTests {
     public void testFractionalLastBatch() throws Exception {
         writeEnv("INSERT_BATCH_SIZE=100");
         VaultController controller = createController();
-        InsertRequest insertRequest = InsertRequest.builder().table("table1").values(generateValues(9050)).build();
+        InsertRequest insertRequest = InsertRequest.builder().table("table1").records(generateValues(9050)).build();
 
         try {
             controller.bulkInsert(insertRequest);
