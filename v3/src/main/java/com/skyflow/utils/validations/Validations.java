@@ -1,5 +1,8 @@
 package com.skyflow.utils.validations;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.InterfaceName;
@@ -10,12 +13,9 @@ import com.skyflow.logs.ErrorLogs;
 import com.skyflow.utils.Utils;
 import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.vault.data.DetokenizeRequest;
+import com.skyflow.vault.data.InsertRecord;
 import com.skyflow.vault.data.InsertRequest;
 import com.skyflow.vault.data.TokenGroupRedactions;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 
 public class Validations extends BaseValidations {
     private Validations() {
@@ -24,54 +24,105 @@ public class Validations extends BaseValidations {
 
     public static void validateInsertRequest(InsertRequest insertRequest) throws SkyflowException {
         String table = insertRequest.getTable();
-        ArrayList<HashMap<String, Object>> values = insertRequest.getValues();
-        List<String> upsert = insertRequest.getUpsert();
-
-        if (table == null) {
+        ArrayList<InsertRecord> records = insertRequest.getRecords();
+        if (records == null) {
             LogUtil.printErrorLog(Utils.parameterizedString(
-                    ErrorLogs.TABLE_IS_REQUIRED.getLog(), InterfaceName.INSERT.getName()
+                    ErrorLogs.RECORDS_IS_REQUIRED.getLog(), InterfaceName.INSERT.getName()
             ));
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.TableKeyError.getMessage());
-        } else if (table.trim().isEmpty()) {
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.RecordsKeyError.getMessage());
+        } else if (records.isEmpty()) {
             LogUtil.printErrorLog(Utils.parameterizedString(
-                    ErrorLogs.EMPTY_TABLE_NAME.getLog(), InterfaceName.INSERT.getName()
+                    ErrorLogs.EMPTY_RECORDS.getLog(), InterfaceName.INSERT.getName()
             ));
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyTable.getMessage());
-        } else if (values == null) {
-            LogUtil.printErrorLog(Utils.parameterizedString(
-                    ErrorLogs.VALUES_IS_REQUIRED.getLog(), InterfaceName.INSERT.getName()
-            ));
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.ValuesKeyError.getMessage());
-        } else if (values.isEmpty()) {
-            LogUtil.printErrorLog(Utils.parameterizedString(
-                    ErrorLogs.EMPTY_VALUES.getLog(), InterfaceName.INSERT.getName()
-            ));
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyValues.getMessage());
-        } else if (values.size() > 10000) {
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyRecords.getMessage());
+        } else if (records.size() > 10000) {
             LogUtil.printErrorLog(ErrorLogs.RECORD_SIZE_EXCEED.getLog());
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.RecordSizeExceedError.getMessage());
-        } else if (upsert != null && upsert.isEmpty()) {
+        }
+        for (InsertRecord record : records) {
+            if(record == null){
+                LogUtil.printErrorLog(Utils.parameterizedString(
+                        ErrorLogs.INVALID_RECORD.getLog(), InterfaceName.INSERT.getName()
+                ));
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidRecord.getMessage());
+            }
+        }
+
+        // table check if specified for both
+        if (insertRequest.getTable() != null && !table.trim().isEmpty()){ // if table name specified at both place
+            for (InsertRecord record : records) {
+                if (record.getTable() != null && !record.getTable().trim().isEmpty()){
+                    LogUtil.printErrorLog(Utils.parameterizedString(
+                            ErrorLogs.TABLE_SPECIFIED_AT_BOTH_PLACE.getLog(), InterfaceName.INSERT.getName()
+                    ));
+                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.TableSpecifiedInRequestAndRecordObject.getMessage());
+                }
+            }
+        }
+        // table check if not specified for both or if missing in any object
+        if (insertRequest.getTable() == null || table.trim().isEmpty()){ // if table name specified at both place
+            for (InsertRecord record : records) {
+                if (record.getTable() == null || record.getTable().trim().isEmpty()){
+                    LogUtil.printErrorLog(Utils.parameterizedString(
+                            ErrorLogs.TABLE_NOT_SPECIFIED_AT_BOTH_PLACE.getLog(), InterfaceName.INSERT.getName()
+                    ));
+                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.TableNotSpecifiedInRequestAndRecordObject.getMessage());
+                }
+            }
+        }
+        // upsert check 1
+        if (insertRequest.getTable() != null && !table.trim().isEmpty()){ // if table name specified at both place
+            for (InsertRecord record : records) {
+                if (record.getUpsert() != null && record.getUpsert().isEmpty()) {
+                    LogUtil.printErrorLog(Utils.parameterizedString(
+                            ErrorLogs.EMPTY_UPSERT_VALUES.getLog(), InterfaceName.INSERT.getName()
+                    ));
+                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyUpsertValues.getMessage());
+                }
+                if (record.getUpsert() != null && !record.getUpsert().isEmpty()){
+                    LogUtil.printErrorLog(Utils.parameterizedString(
+                            ErrorLogs.UPSERT_TABLE_REQUEST_AT_RECORD_LEVEL.getLog(), InterfaceName.INSERT.getName()
+                    ));
+                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.UpsertTableRequestAtRecordLevel.getMessage());
+                }
+            }
+        }
+        // upsert check 2
+        if (insertRequest.getTable() == null || table.trim().isEmpty()){
+            if (insertRequest.getUpsert() != null && !insertRequest.getUpsert().isEmpty()){
+                LogUtil.printErrorLog(Utils.parameterizedString(
+                        ErrorLogs.UPSERT_TABLE_REQUEST_AT_REQUEST_LEVEL.getLog(), InterfaceName.INSERT.getName()
+                ));
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.UpsertTableRequestAtRequestLevel.getMessage());
+            }
+        }
+
+        if (insertRequest.getUpsert() != null && insertRequest.getUpsert().isEmpty()) {
             LogUtil.printErrorLog(Utils.parameterizedString(
                     ErrorLogs.EMPTY_UPSERT_VALUES.getLog(), InterfaceName.INSERT.getName()
             ));
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyUpsertValues.getMessage());
         }
 
-        for (HashMap<String, Object> valuesMap : values) {
-            for (String key : valuesMap.keySet()) {
-                if (key == null || key.trim().isEmpty()) {
-                    LogUtil.printErrorLog(Utils.parameterizedString(
-                            ErrorLogs.EMPTY_OR_NULL_KEY_IN_VALUES.getLog(), InterfaceName.INSERT.getName()
-                    ));
-                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyKeyInValues.getMessage());
-                } else {
-                    Object value = valuesMap.get(key);
-                    if (value == null || value.toString().trim().isEmpty()) {
-                        LogUtil.printErrorLog(Utils.parameterizedString(
-                                ErrorLogs.EMPTY_OR_NULL_VALUE_IN_VALUES.getLog(),
-                                InterfaceName.INSERT.getName(), key
-                        ));
-                        throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyValueInValues.getMessage());
+        for (InsertRecord record : records) {
+            if (record != null ) {
+                if (record.getData() != null){
+                    for (String key : record.getData().keySet()) {
+                        if (key == null || key.trim().isEmpty()) {
+                            LogUtil.printErrorLog(Utils.parameterizedString(
+                                    ErrorLogs.EMPTY_OR_NULL_KEY_IN_VALUES.getLog(), InterfaceName.INSERT.getName()
+                            ));
+                            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyKeyInRecords.getMessage());
+                        } else {
+                            Object value = record.getData().get(key);
+                            if (value == null || value.toString().trim().isEmpty()) {
+                                LogUtil.printErrorLog(Utils.parameterizedString(
+                                        ErrorLogs.EMPTY_OR_NULL_VALUE_IN_VALUES.getLog(),
+                                        InterfaceName.INSERT.getName(), key
+                                ));
+                                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyValueInValues.getMessage());
+                            }
+                        }
                     }
                 }
             }

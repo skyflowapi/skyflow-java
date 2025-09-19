@@ -10,7 +10,10 @@ public enum ErrorMessage {
     ConnectionIdAlreadyInConfigList("%s0 Validation error. ConnectionId is present in an existing config. Specify a connectionId in config."),
     ConnectionIdNotInConfigList("%s0 Validation error. ConnectionId is missing from the config. Specify the connectionIds from configs."),
     EmptyCredentials("%s0 Validation error. Invalid credentials. Credentials must not be empty."),
-
+    TableSpecifiedInRequestAndRecordObject("%s0 Validation error. Table name cannot be specified at both the request and record levels. Please specify the table name in only one place."),
+    UpsertTableRequestAtRecordLevel("%s0 Validation error. Table name should be present at each record level when upsert is present at record level."),
+    UpsertTableRequestAtRequestLevel("%s0 Validation error. Upsert should be present at each record level when table name is present at record level."),
+    TableNotSpecifiedInRequestAndRecordObject("%s0 Validation error. Table name is missing. Table name should be specified at one place either at the request level or record level. Please specify the table name at one place."),
     // Vault config
     InvalidVaultId("%s0 Initialization failed. Invalid vault ID. Specify a valid vault ID."),
     EmptyVaultId("%s0 Initialization failed. Invalid vault ID. Vault ID must not be empty."),
@@ -60,6 +63,10 @@ public enum ErrorMessage {
     TableKeyError("%s0 Validation error. 'table' key is missing from the payload. Specify a 'table' key."),
     EmptyTable("%s0 Validation error. 'table' can't be empty. Specify a table."),
     ValuesKeyError("%s0 Validation error. 'values' key is missing from the payload. Specify a 'values' key."),
+    EmptyRecords("%s0 Validation error. 'records' can't be empty. Specify records."),
+    EmptyKeyInRecords("%s0 Validation error. Invalid key in data in records. Specify a valid key."),
+    EmptyValueInRecords("%s0 Validation error. Invalid value in records. Specify a valid value."),
+    RecordsKeyError("%s0 Validation error. 'records' key is missing from the payload. Specify a 'records' key."),
     EmptyValues("%s0 Validation error. 'values' can't be empty. Specify values."),
     EmptyKeyInValues("%s0 Validation error. Invalid key in values. Specify a valid key."),
     EmptyValueInValues("%s0 Validation error. Invalid value in values. Specify a valid value."),
@@ -164,6 +171,7 @@ public enum ErrorMessage {
     NullRedactionInTokenGroup("%s0 Validation error. Redaction in TokenGroupRedactions is null or empty. Specify a valid redaction."),
 
     NullTokenGroupNameInTokenGroup("%s0 Validation error. TokenGroupName in TokenGroupRedactions is null or empty. Specify a valid tokenGroupName."),
+    InvalidRecord("%s0 Validation error. InsertRecord object in the list is invalid. Specify a valid InsertRecord object."),
     ;
     ;
     private final String message;

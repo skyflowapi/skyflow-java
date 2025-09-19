@@ -3,10 +3,15 @@
  */
 package com.skyflow.generated.rest.types;
 
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.annotation.Nulls;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.skyflow.generated.rest.core.ObjectMappers;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -27,6 +32,8 @@ public final class RecordResponseObject {
 
     private final Optional<Integer> httpCode;
 
+    private final Optional<String> tableName;
+
     private final Map<String, Object> additionalProperties;
 
     private RecordResponseObject(
@@ -36,6 +43,7 @@ public final class RecordResponseObject {
             Optional<Map<String, Object>> hashedData,
             Optional<String> error,
             Optional<Integer> httpCode,
+            Optional<String> tableName,
             Map<String, Object> additionalProperties) {
         this.skyflowId = skyflowId;
         this.tokens = tokens;
@@ -43,6 +51,7 @@ public final class RecordResponseObject {
         this.hashedData = hashedData;
         this.error = error;
         this.httpCode = httpCode;
+        this.tableName = tableName;
         this.additionalProperties = additionalProperties;
     }
 
@@ -94,7 +103,15 @@ public final class RecordResponseObject {
         return httpCode;
     }
 
-    @Override
+    /**
+     * @return Name of the table record belongs to
+     */
+    @JsonProperty("tableName")
+    public Optional<String> getTableName() {
+        return tableName;
+    }
+
+    @java.lang.Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof RecordResponseObject && equalTo((RecordResponseObject) other);
@@ -111,15 +128,17 @@ public final class RecordResponseObject {
                 && data.equals(other.data)
                 && hashedData.equals(other.hashedData)
                 && error.equals(other.error)
-                && httpCode.equals(other.httpCode);
+                && httpCode.equals(other.httpCode)
+                && tableName.equals(other.tableName);
     }
 
-    @Override
+    @java.lang.Override
     public int hashCode() {
-        return Objects.hash(this.skyflowId, this.tokens, this.data, this.hashedData, this.error, this.httpCode);
+        return Objects.hash(
+                this.skyflowId, this.tokens, this.data, this.hashedData, this.error, this.httpCode, this.tableName);
     }
 
-    @Override
+    @java.lang.Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }
@@ -142,6 +161,8 @@ public final class RecordResponseObject {
 
         private Optional<Integer> httpCode = Optional.empty();
 
+        private Optional<String> tableName = Optional.empty();
+
         @JsonAnySetter
         private Map<String, Object> additionalProperties = new HashMap<>();
 
@@ -154,6 +175,7 @@ public final class RecordResponseObject {
             hashedData(other.getHashedData());
             error(other.getError());
             httpCode(other.getHttpCode());
+            tableName(other.getTableName());
             return this;
         }
 
@@ -241,8 +263,23 @@ public final class RecordResponseObject {
             return this;
         }
 
+        /**
+         * <p>Name of the table record belongs to</p>
+         */
+        @JsonSetter(value = "tableName", nulls = Nulls.SKIP)
+        public Builder tableName(Optional<String> tableName) {
+            this.tableName = tableName;
+            return this;
+        }
+
+        public Builder tableName(String tableName) {
+            this.tableName = Optional.ofNullable(tableName);
+            return this;
+        }
+
         public RecordResponseObject build() {
-            return new RecordResponseObject(skyflowId, tokens, data, hashedData, error, httpCode, additionalProperties);
+            return new RecordResponseObject(
+                    skyflowId, tokens, data, hashedData, error, httpCode, tableName, additionalProperties);
         }
     }
 }

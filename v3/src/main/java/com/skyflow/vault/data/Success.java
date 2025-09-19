@@ -14,28 +14,35 @@ public class Success {
     private Map<String, List<Token>> tokens;
     @Expose(serialize = true)
     private Map<String, Object> data;
+    @Expose(serialize = true)
+    private String table;
 
     public int getIndex() {
         return index;
     }
 
-    public Success(int index, String skyflow_id, Map<String, List<Token>> tokens, Map<String, Object> data) {
+    public Success(int index, String skyflow_id, Map<String, List<Token>> tokens, Map<String, Object> data, String table) {
         this.index = index;
         this.skyflow_id = skyflow_id;
         this.tokens = tokens;
         this.data = data;
+        this.table = table;
     }
 
     public String getSkyflowId() {
-        return skyflow_id;
+        return this.skyflow_id;
     }
 
     public Map<String, List<Token>> getTokens() {
-        return tokens;
+        return this.tokens;
     }
 
     public Map<String, Object> getData() {
-        return data;
+        return this.data;
+    }
+
+    public String getTable(){
+        return this.table;
     }
 
     @Override

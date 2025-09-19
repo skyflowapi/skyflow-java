@@ -1,7 +1,5 @@
 package com.skyflow.enums;
 
-import com.fasterxml.jackson.annotation.JsonValue;
-
 public enum UpdateType {
     UPDATE("UPDATE"),
 
