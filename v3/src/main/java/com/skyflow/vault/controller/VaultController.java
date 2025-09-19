@@ -1,5 +1,13 @@
 package com.skyflow.vault.controller;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.skyflow.VaultClient;
@@ -15,21 +23,21 @@ import com.skyflow.logs.InfoLogs;
 import com.skyflow.logs.WarningLogs;
 import com.skyflow.utils.Constants;
 import com.skyflow.utils.Utils;
+import static com.skyflow.utils.Utils.formatDetokenizeResponse;
+import static com.skyflow.utils.Utils.formatResponse;
+import static com.skyflow.utils.Utils.handleBatchException;
+import static com.skyflow.utils.Utils.handleDetokenizeBatchException;
 import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.utils.validations.Validations;
-import com.skyflow.vault.data.*;
+import com.skyflow.vault.data.DetokenizeRequest;
+import com.skyflow.vault.data.DetokenizeResponse;
+import com.skyflow.vault.data.DetokenizeResponseObject;
+import com.skyflow.vault.data.ErrorRecord;
+import com.skyflow.vault.data.InsertRecord;
+import com.skyflow.vault.data.InsertRequest;
+import com.skyflow.vault.data.Success;
+
 import io.github.cdimascio.dotenv.Dotenv;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
-import static com.skyflow.utils.Utils.*;
 
 public final class VaultController extends VaultClient {
     private static final Gson gson = new GsonBuilder().serializeNulls().create();
@@ -286,7 +294,7 @@ public final class VaultController extends VaultClient {
                         .supplyAsync(() -> insertBatch(batch, insertRequest.getTableName().isPresent() ? insertRequest.getTableName().get() : null, upsert), executor)
                         .thenApply(response -> formatResponse(response, batchNumber, insertBatchSize))
                         .exceptionally(ex -> {
-                            errorRecords.addAll(handleBatchException(ex, batch, batchNumber));
+                            errorRecords.addAll(handleBatchException(ex, batch, batchNumber, insertBatchSize));
                             return null;
                         });
                 futures.add(future);

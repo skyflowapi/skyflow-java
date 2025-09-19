@@ -1,5 +1,10 @@
 package com.skyflow.utils;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import com.google.gson.JsonObject;
 import com.skyflow.enums.Env;
 import com.skyflow.errors.ErrorCode;
@@ -17,13 +22,9 @@ import com.skyflow.vault.data.DetokenizeResponse;
 import com.skyflow.vault.data.ErrorRecord;
 import com.skyflow.vault.data.Success;
 import com.skyflow.vault.data.Token;
+
 import io.github.cdimascio.dotenv.Dotenv;
 import io.github.cdimascio.dotenv.DotenvException;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 public final class Utils extends BaseUtils {
 
@@ -92,14 +93,14 @@ public final class Utils extends BaseUtils {
     }
 
     public static List<ErrorRecord> handleBatchException(
-            Throwable ex, List<InsertRecordData> batch, int batchNumber
+            Throwable ex, List<InsertRecordData> batch, int batchNumber, int batchSize
     ) {
         List<ErrorRecord> errorRecords = new ArrayList<>();
         Throwable cause = ex.getCause();
         if (cause instanceof ApiClientApiException) {
             ApiClientApiException apiException = (ApiClientApiException) cause;
             Map<String, Object> responseBody = (Map<String, Object>) apiException.body();
-            int indexNumber = batchNumber > 0 ? batchNumber * batch.size() : 0;
+            int indexNumber = batchNumber > 0 ? batchNumber * batchSize : 0;
             if (responseBody != null) {
                 if (responseBody.containsKey("records")) {
                     Object recordss = responseBody.get("records");
@@ -124,7 +125,7 @@ public final class Utils extends BaseUtils {
                 }
             }
         } else {
-            int indexNumber = batchNumber > 0 ? batchNumber * batch.size() : 0;
+            int indexNumber = batchNumber > 0 ? batchNumber * batchSize: 0;
             for (int j = 0; j < batch.size(); j++) {
                 ErrorRecord err = new ErrorRecord(indexNumber, ex.getMessage(), 500);
                 errorRecords.add(err);

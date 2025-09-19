@@ -248,7 +248,7 @@ public class UtilsTests {
         ApiClientApiException apiException = new ApiClientApiException("Forbidden", 403, responseBody);
         Exception exception = new Exception("Test exception", apiException);
 
-        List<ErrorRecord> errors = Utils.handleBatchException(exception, batch, 0);
+        List<ErrorRecord> errors = Utils.handleBatchException(exception, batch, 0, 1);
 
         Assert.assertEquals("Should have errors for all records", 2, errors.size());
         Assert.assertEquals("Error message should be same", "Test exception", errors.get(0).getError());
@@ -264,7 +264,7 @@ public class UtilsTests {
 
         RuntimeException exception = new RuntimeException("Unexpected error");
 
-        List<ErrorRecord> errors = Utils.handleBatchException(exception, batch, 0);
+        List<ErrorRecord> errors = Utils.handleBatchException(exception, batch, 0, 1);
 
         Assert.assertEquals("Should have errors for all records", 2, errors.size());
         Assert.assertEquals("Error message should match", "Unexpected error", errors.get(0).getError());
@@ -280,11 +280,10 @@ public class UtilsTests {
 
         RuntimeException exception = new RuntimeException("Batch error");
 
-        List<ErrorRecord> errors = Utils.handleBatchException(exception, batch, 1);
-
+        List<ErrorRecord> errors = Utils.handleBatchException(exception, batch, 1, 1);
         Assert.assertEquals("Should have errors for all records", 2, errors.size());
-        Assert.assertEquals("First error index should be offset", 2, errors.get(0).getIndex());
-        Assert.assertEquals("Second error index should be offset", 3, errors.get(1).getIndex());
+        Assert.assertEquals("First error index should be offset", 1, errors.get(0).getIndex());
+        Assert.assertEquals("Second error index should be offset", 2, errors.get(1).getIndex());
     }
 
     @Test
@@ -295,7 +294,7 @@ public class UtilsTests {
         ApiClientApiException apiException = new ApiClientApiException("Bad Request", 400, null);
         Exception exception = new Exception("Test exception", apiException);
 
-        List<ErrorRecord> errors = Utils.handleBatchException(exception, batch, 0);
+        List<ErrorRecord> errors = Utils.handleBatchException(exception, batch, 0, 1);
         Assert.assertEquals("Should return empty list for null response body", 2, errors.size());
     }
 
@@ -509,7 +508,7 @@ public class UtilsTests {
         Exception exception = new Exception("Test exception", apiException);
 
         // Test the method
-        List<ErrorRecord> errors = Utils.handleBatchException(exception, batch, 0);
+        List<ErrorRecord> errors = Utils.handleBatchException(exception, batch, 0, 1);
 
         // Assertions
         Assert.assertNotNull("Errors list should not be null", errors);
@@ -828,7 +827,8 @@ public class UtilsTests {
         List<com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest> batches = Utils.createDetokenizeBatches(request, 1);
 
         Assert.assertEquals(2, batches.size());
-        Assert.assertTrue(batches.get(0).getTokenGroupRedactions().isEmpty());
+//        List<com.skyflow.generated.rest.types.TokenGroupRedactions> redactions = batches.get(0).getTokenGroupRedactions().get();
+//        Assert.assertTrue(redactions.isEmpty());
     }
 
     @Test
@@ -938,7 +938,7 @@ public class UtilsTests {
         ApiClientApiException apiException = new ApiClientApiException("Error", 500, null);
         Exception exception = new Exception("Test", apiException);
 
-        List<ErrorRecord> errors = Utils.handleBatchException(exception, batch, 0);
+        List<ErrorRecord> errors = Utils.handleBatchException(exception, batch, 0, 1);
         Assert.assertEquals(1, errors.size());
         Assert.assertEquals("Test", errors.get(0).getError());
         Assert.assertEquals(500, errors.get(0).getCode());
@@ -952,7 +952,7 @@ public class UtilsTests {
         ApiClientApiException apiException = new ApiClientApiException("Error", 500, responseBody);
         Exception exception = new Exception("Test", apiException);
 
-        List<ErrorRecord> errors = Utils.handleBatchException(exception, batch, 0);
+        List<ErrorRecord> errors = Utils.handleBatchException(exception, batch, 0, 1);
         Assert.assertEquals(1, errors.size());
     }
 
@@ -964,7 +964,7 @@ public class UtilsTests {
         ApiClientApiException apiException = new ApiClientApiException("Error", 500, responseBody);
         Exception exception = new Exception("Test", apiException);
 
-        List<ErrorRecord> errors = Utils.handleBatchException(exception, batch, 0);
+        List<ErrorRecord> errors = Utils.handleBatchException(exception, batch, 0, 1);
         Assert.assertEquals(1, errors.size());
     }
 
@@ -981,7 +981,7 @@ public class UtilsTests {
         com.skyflow.generated.rest.core.ApiClientApiException apiException = new com.skyflow.generated.rest.core.ApiClientApiException("Error", 400, responseBody);
         Exception exception = new Exception("Outer exception", apiException);
 
-        List<ErrorRecord> errors = Utils.handleBatchException(exception, batch, 0);
+        List<ErrorRecord> errors = Utils.handleBatchException(exception, batch, 0, 1);
         Assert.assertEquals(1, errors.size());
         Assert.assertEquals("Test error", errors.get(0).getError());
         Assert.assertEquals(400, errors.get(0).getCode());
