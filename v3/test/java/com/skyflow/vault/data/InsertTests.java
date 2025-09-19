@@ -173,7 +173,7 @@ public class InsertTests {
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
-                    Utils.parameterizedString(ErrorMessage.EmptyValues.getMessage(), Constants.SDK_PREFIX),
+                    Utils.parameterizedString(ErrorMessage.EmptyRecords.getMessage(), Constants.SDK_PREFIX),
                     e.getMessage()
             );
         }

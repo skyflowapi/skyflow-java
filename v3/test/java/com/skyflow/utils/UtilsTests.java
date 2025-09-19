@@ -729,7 +729,7 @@ public class UtilsTests {
         try {
             Validations.validateInsertRequest(request);
         } catch (SkyflowException e) {
-            assertEquals(ErrorMessage.EmptyValues.getMessage(), e.getMessage()); // Replace with the actual error message
+            assertEquals(ErrorMessage.EmptyRecords.getMessage(), e.getMessage()); // Replace with the actual error message
         }
     }
 
