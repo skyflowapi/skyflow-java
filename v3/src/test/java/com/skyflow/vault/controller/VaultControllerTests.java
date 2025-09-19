@@ -265,7 +265,7 @@ public class VaultControllerTests {
             // Ignore, Testing concurrency/batch config
         }
 
-        assertEquals(Constants.INSERT_CONCURRENCY_LIMIT.intValue(), getPrivateInt(controller, "insertConcurrencyLimit"));
+        assertEquals(1, getPrivateInt(controller, "insertConcurrencyLimit"));
     }
 
     @Test
