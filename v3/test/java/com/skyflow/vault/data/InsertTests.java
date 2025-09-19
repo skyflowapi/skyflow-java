@@ -115,14 +115,17 @@ public class InsertTests {
 
     @Test
     public void testNoTableInInsertRequestValidations() {
-        InsertRequest request = InsertRequest.builder().build();
+        ArrayList<InsertRecord> records = new ArrayList<>();
+        InsertRecord record = InsertRecord.builder().data(valueMap).build();
+        records.add(record);
+        InsertRequest request = InsertRequest.builder().records(records).table("").build();
         try {
             Validations.validateInsertRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
-                    Utils.parameterizedString(ErrorMessage.TableKeyError.getMessage(), Constants.SDK_PREFIX),
+                    Utils.parameterizedString(ErrorMessage.TableNotSpecifiedInRequestAndRecordObject.getMessage(), Constants.SDK_PREFIX),
                     e.getMessage()
             );
         }
@@ -130,14 +133,17 @@ public class InsertTests {
 
     @Test
     public void testEmptyTableInInsertRequestValidations() {
-        InsertRequest request = InsertRequest.builder().table("").build();
+        ArrayList<InsertRecord> records = new ArrayList<>();
+        InsertRecord record = InsertRecord.builder().data(valueMap).build();
+        records.add(record);
+        InsertRequest request = InsertRequest.builder().records(records).table("").build();
         try {
             Validations.validateInsertRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
-                    Utils.parameterizedString(ErrorMessage.EmptyTable.getMessage(), Constants.SDK_PREFIX),
+                    Utils.parameterizedString(ErrorMessage.TableNotSpecifiedInRequestAndRecordObject.getMessage(), Constants.SDK_PREFIX),
                     e.getMessage()
             );
         }
@@ -236,7 +242,7 @@ public class InsertTests {
             List<Success> successList = new ArrayList<>();
             successList.add(success);
             InsertResponse response = new InsertResponse(successList, null);
-            String responseString = "{\"success\":[{\"index\":0,\"skyflow_id\":\"id\"}]}";
+            String responseString = "{\"success\":[{\"index\":0,\"skyflow_id\":\"id\",\"table\":\"table\"}]}";
             Assert.assertEquals(1, response.getSuccess().size());
             Assert.assertNull(response.getErrors());
             Assert.assertEquals(responseString, response.toString());
@@ -260,7 +266,7 @@ public class InsertTests {
             errorList.add(error);
 
             InsertResponse response1 = new InsertResponse(successList, errorList);
-            String responseString = "{\"success\":[{\"index\":0,\"skyflow_id\":\"id\",\"data\":{\"test_column_1\":\"test_value_1\"}}],\"errors\":[{\"index\":1,\"error\":\"Bad Request\",\"code\":400}]}";
+            String responseString = "{\"success\":[{\"index\":0,\"skyflow_id\":\"id\",\"data\":{\"test_column_1\":\"test_value_1\"},\"table\":\"table\"}],\"errors\":[{\"index\":1,\"error\":\"Bad Request\",\"code\":400}]}";
             Assert.assertEquals(1, response1.getSuccess().size());
             Assert.assertEquals(1, response1.getErrors().size());
             Assert.assertEquals(responseString, response1.toString());
@@ -268,5 +274,95 @@ public class InsertTests {
             Assert.fail(INVALID_EXCEPTION_THROWN);
         }
     }
+// Java
+
+   @Test
+   public void testTableSpecifiedAtBothRequestAndRecordLevel() {
+    InsertRecord record = InsertRecord.builder().data(valueMap).table("record_table").build();
+    values.add(record);
+    InsertRequest request = InsertRequest.builder().table(table).records(values).build();
+    try {
+        Validations.validateInsertRequest(request);
+        Assert.fail(EXCEPTION_NOT_THROWN);
+    } catch (SkyflowException e) {
+        Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+        Assert.assertEquals(
+            Utils.parameterizedString(ErrorMessage.TableSpecifiedInRequestAndRecordObject.getMessage(), Constants.SDK_PREFIX),
+            e.getMessage()
+        );
+    }
+}
+
+   @Test
+   public void testUpsertSpecifiedAtBothRequestAndRecordLevel() {
+    InsertRecord record = InsertRecord.builder().data(valueMap).upsert(upsert).build();
+    values.add(record);
+    InsertRequest request = InsertRequest.builder().table(table).records(values).upsert(upsert).build();
+    try {
+        Validations.validateInsertRequest(request);
+        Assert.fail(EXCEPTION_NOT_THROWN);
+    } catch (SkyflowException e) {
+        Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+        Assert.assertEquals(
+            Utils.parameterizedString(ErrorMessage.UpsertTableRequestAtRecordLevel.getMessage(), Constants.SDK_PREFIX),
+            e.getMessage()
+        );
+    }
+}
+
+   @Test
+   public void testUpsertAtRecordLevelWithTableAtRequestLevel() {
+    InsertRecord record = InsertRecord.builder().data(valueMap).upsert(upsert).build();
+    values.add(record);
+    InsertRequest request = InsertRequest.builder().table(table).records(values).build();
+    try {
+        Validations.validateInsertRequest(request);
+        Assert.fail(EXCEPTION_NOT_THROWN);
+    } catch (SkyflowException e) {
+        Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+        Assert.assertEquals(
+            Utils.parameterizedString(ErrorMessage.UpsertTableRequestAtRecordLevel.getMessage(), Constants.SDK_PREFIX),
+            e.getMessage()
+        );
+    }
+}
+
+   @Test
+   public void testUpsertAtRequestLevelWithNoTable() {
+    InsertRecord record = InsertRecord.builder().table("table").data(valueMap).build();
+    values.add(record);
+    InsertRequest request = InsertRequest.builder().records(values).upsert(upsert).build();
+    try {
+        Validations.validateInsertRequest(request);
+        Assert.fail(EXCEPTION_NOT_THROWN);
+    } catch (SkyflowException e) {
+        Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+        Assert.assertEquals(
+            Utils.parameterizedString(ErrorMessage.UpsertTableRequestAtRequestLevel.getMessage(), Constants.SDK_PREFIX),
+            e.getMessage()
+        );
+    }
+}
+
+   @Test
+   public void testUpsertAtRequestLevelWithEmptyTable() {
+        InsertRecord record = InsertRecord.builder().table("table").data(valueMap).build();
+        values.add(record);
+        List<String> upsert = new ArrayList<>();
+        upsert.add("upsert_column");
+
+        InsertRequest request = InsertRequest.builder().table("").records(values).upsert(upsert).build();
+        try {
+            Validations.validateInsertRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(
+                    Utils.parameterizedString(ErrorMessage.UpsertTableRequestAtRequestLevel.getMessage(), Constants.SDK_PREFIX),
+                    e.getMessage()
+            );
+        }
+    }
+
 
 }

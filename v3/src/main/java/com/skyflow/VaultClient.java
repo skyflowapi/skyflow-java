@@ -1,5 +1,8 @@
 package com.skyflow;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.UpdateType;
@@ -26,9 +29,6 @@ import io.github.cdimascio.dotenv.Dotenv;
 import io.github.cdimascio.dotenv.DotenvException;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
-
-import java.util.ArrayList;
-import java.util.List;
 
 
 public class VaultClient {
@@ -145,9 +145,9 @@ public class VaultClient {
             if (value.getUpsert() != null && !value.getUpsert().isEmpty()){
                 if (value.getUpsertType() != null) {
                     EnumUpdateType updateType = null;
-                    if (request.getUpsertType() == UpdateType.REPLACE) {
+                    if (value.getUpsertType() == UpdateType.REPLACE) {
                         updateType = EnumUpdateType.REPLACE;
-                    } else if (request.getUpsertType() == UpdateType.UPDATE) {
+                    } else if (value.getUpsertType() == UpdateType.UPDATE) {
                         updateType = EnumUpdateType.UPDATE;
                     }
                     Upsert upsert = Upsert.builder().uniqueColumns(value.getUpsert()).updateType(updateType).build();

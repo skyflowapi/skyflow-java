@@ -26,6 +26,7 @@ public class Success {
         this.skyflow_id = skyflow_id;
         this.tokens = tokens;
         this.data = data;
+        this.table = table;
     }
 
     public String getSkyflowId() {
