@@ -1,10 +1,5 @@
 package com.skyflow.utils;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import com.google.gson.JsonObject;
 import com.skyflow.enums.Env;
 import com.skyflow.errors.ErrorCode;
@@ -22,9 +17,13 @@ import com.skyflow.vault.data.DetokenizeResponse;
 import com.skyflow.vault.data.ErrorRecord;
 import com.skyflow.vault.data.Success;
 import com.skyflow.vault.data.Token;
-
 import io.github.cdimascio.dotenv.Dotenv;
 import io.github.cdimascio.dotenv.DotenvException;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public final class Utils extends BaseUtils {
 
@@ -55,7 +54,8 @@ public final class Utils extends BaseUtils {
             // Create a sublist for the current batch
             List<String> batchTokens = tokens.subList(i, Math.min(i + batchSize, tokens.size()));
             List<TokenGroupRedactions> tokenGroupRedactions = null;
-            if (request.getTokenGroupRedactions().isPresent() && !request.getTokenGroupRedactions().get().isEmpty() && i < request.getTokenGroupRedactions().get().size()) {
+            if (request.getTokenGroupRedactions().isPresent() && !request.getTokenGroupRedactions().get().isEmpty()
+            ) {
                 tokenGroupRedactions = request.getTokenGroupRedactions().get();
             }
             // Build a new DetokenizeRequest for the current batch
@@ -80,7 +80,7 @@ public final class Utils extends BaseUtils {
             } else if (recordMap.containsKey("httpCode")) {
                 code = (Integer) recordMap.get("httpCode");
 
-            } else{
+            } else {
                 if (recordMap.containsKey("statusCode")) {
                     code = (Integer) recordMap.get("statusCode");
                 }
@@ -125,7 +125,7 @@ public final class Utils extends BaseUtils {
                 }
             }
         } else {
-            int indexNumber = batchNumber > 0 ? batchNumber * batchSize: 0;
+            int indexNumber = batchNumber > 0 ? batchNumber * batchSize : 0;
             for (int j = 0; j < batch.size(); j++) {
                 ErrorRecord err = new ErrorRecord(indexNumber, ex.getMessage(), 500);
                 errorRecords.add(err);
@@ -226,7 +226,7 @@ public final class Utils extends BaseUtils {
                             if (value instanceof List) {
                                 List<?> valueList = (List<?>) value;
                                 for (Object item : valueList) {
-                                    if(item instanceof Map) {
+                                    if (item instanceof Map) {
                                         Map<String, Object> tokenMap = (Map<String, Object>) item;
                                         Token token = new Token((String) tokenMap.get("token"), (String) tokenMap.get("tokenGroupName"));
                                         tokenList.add(token);
@@ -259,7 +259,7 @@ public final class Utils extends BaseUtils {
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyVaultUrl.getMessage());
             } else if (vaultURL != null && !vaultURL.startsWith(BaseConstants.SECURE_PROTOCOL)) {
                 LogUtil.printErrorLog(ErrorLogs.INVALID_VAULT_URL_FORMAT.getLog());
-                throw new SkyflowException( ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidVaultUrlFormat.getMessage());
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidVaultUrlFormat.getMessage());
             }
             return vaultURL;
         } catch (DotenvException e) {
