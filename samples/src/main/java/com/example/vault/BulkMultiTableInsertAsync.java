@@ -24,7 +24,7 @@ import java.util.concurrent.CompletionException;
  * 3. Building and executing an async bulk insert request
  * 4. Handling the insert response or errors using CompletableFuture
  */
-public class BulkInsertAsync {
+public class BulkMultiTableInsertAsync {
 
     public static void main(String[] args) {
         try {
@@ -51,9 +51,15 @@ public class BulkInsertAsync {
             record1.put("<YOUR_COLUMN_NAME_1>", "<YOUR_VALUE_1>");
             record1.put("<YOUR_COLUMN_NAME_2>", "<YOUR_VALUE_1>");
 
+            List<String> upsert = new ArrayList<>();
+            upsert.add("<YOUR_COLUMN_NAME_1>");
+
             InsertRecord recordObj1 = InsertRecord
                     .builder()
                     .data(record1)
+                    .table("<YOUR_TABLE_NAME>")
+                    .upsert(upsert)
+                    .upsertType(UpdateType.UPDATE)
                     .build();
 
             // Step 5: Prepare second record for insertion
@@ -64,6 +70,7 @@ public class BulkInsertAsync {
             InsertRecord recordObj2 = InsertRecord
                     .builder()
                     .data(record2)
+                    .table("<YOUR_TABLE_NAME>")
                     .build();
 
             // Step 6: Combine records into a Insert record list
@@ -71,13 +78,8 @@ public class BulkInsertAsync {
             values.add(recordObj1);
             values.add(recordObj2);
 
-            List<String> upsert = new ArrayList<>();
-            upsert.add("<YOUR_COLUMN_NAME_1>");
             // Step 7: Build the insert request with table name and values
             InsertRequest request = InsertRequest.builder()
-                    .table("<YOUR_TABLE_NAME>")
-                    .upsert(upsert)
-                    .upsertType(UpdateType.REPLACE)
                     .records(values)
                     .build();
 
