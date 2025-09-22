@@ -5,12 +5,14 @@ import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.Env;
 import com.skyflow.enums.LogLevel;
+import com.skyflow.enums.UpdateType;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.vault.data.InsertRequest;
 import com.skyflow.vault.data.InsertResponse;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * This sample demonstrates how to perform a synchronous bulk insert operation using the Skyflow Java SDK.
@@ -52,15 +54,24 @@ public class BulkInsertSync {
             record2.put("<YOUR_COLUMN_NAME_1>", "<YOUR_VALUE_1>");
             record2.put("<YOUR_COLUMN_NAME_2>", "<YOUR_VALUE_1>");
 
-            // Step 6: Combine records into a single list
-            ArrayList<HashMap<String, Object>> values = new ArrayList<>();
-            values.add(record1);
-            values.add(record2);
+            InsertRecord recordObj2 = InsertRecord
+                    .builder()
+                    .data(record2)
+                    .build();
 
+            // Step 6: Combine records into a Insert record list
+            ArrayList<InsertRecord> values = new ArrayList<>();
+            values.add(recordObj1);
+            values.add(recordObj2);
+
+            List<String> upsert = new ArrayList<>();
+            upsert.add("<YOUR_COLUMN_NAME_1>");
             // Step 7: Build the insert request with table name and values
             InsertRequest request = InsertRequest.builder()
                     .table("<YOUR_TABLE_NAME>")
-                    .values(values)
+                    .upsert(upsert)
+                    .upsertType(UpdateType.REPLACE)
+                    .records(values)
                     .build();
 
             // Step 8: Execute the bulk insert operation and print the response

@@ -6,25 +6,23 @@ import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.Env;
 import com.skyflow.enums.LogLevel;
 import com.skyflow.enums.UpdateType;
-import com.skyflow.vault.data.InsertRecord;
+import com.skyflow.errors.SkyflowException;
 import com.skyflow.vault.data.InsertRequest;
 import com.skyflow.vault.data.InsertResponse;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 
 /**
- * This sample demonstrates how to perform an asynchronous bulk insert operation using the Skyflow Java SDK.
+ * This sample demonstrates how to perform a synchronous bulk insert operation using the Skyflow Java SDK.
  * The process involves:
  * 1. Setting up credentials and vault configuration
  * 2. Creating multiple records to be inserted
- * 3. Building and executing an async bulk insert request
- * 4. Handling the insert response or errors using CompletableFuture
+ * 3. Building and executing a bulk insert request
+ * 4. Handling the insert response or any potential errors
  */
-public class BulkInsertAsync {
+public class BulkMultiTableInsertSync {
 
     public static void main(String[] args) {
         try {
@@ -51,9 +49,15 @@ public class BulkInsertAsync {
             record1.put("<YOUR_COLUMN_NAME_1>", "<YOUR_VALUE_1>");
             record1.put("<YOUR_COLUMN_NAME_2>", "<YOUR_VALUE_1>");
 
+            List<String> upsert = new ArrayList<>();
+            upsert.add("<YOUR_COLUMN_NAME_1>");
+
             InsertRecord recordObj1 = InsertRecord
                     .builder()
                     .data(record1)
+                    .table("<YOUR_TABLE_NAME>")
+                    .upsert(upsert)
+                    .upsertType(UpdateType.UPDATE)
                     .build();
 
             // Step 5: Prepare second record for insertion
@@ -64,6 +68,7 @@ public class BulkInsertAsync {
             InsertRecord recordObj2 = InsertRecord
                     .builder()
                     .data(record2)
+                    .table("<YOUR_TABLE_NAME>")
                     .build();
 
             // Step 6: Combine records into a Insert record list
@@ -71,28 +76,17 @@ public class BulkInsertAsync {
             values.add(recordObj1);
             values.add(recordObj2);
 
-            List<String> upsert = new ArrayList<>();
-            upsert.add("<YOUR_COLUMN_NAME_1>");
             // Step 7: Build the insert request with table name and values
             InsertRequest request = InsertRequest.builder()
-                    .table("<YOUR_TABLE_NAME>")
-                    .upsert(upsert)
-                    .upsertType(UpdateType.REPLACE)
                     .records(values)
                     .build();
 
-            // Step 8: Execute the async bulk insert operation and handle response using callbacks
-            CompletableFuture<InsertResponse> future = skyflowClient.vault().bulkInsertAsync(request);
-            // Add success and error callbacks
-            future.thenAccept(response -> {
-                System.out.println("Async bulk insert resolved with response:\t" + response);
-            }).exceptionally(throwable -> {
-                System.err.println("Async bulk insert rejected with error:\t" + throwable.getMessage());
-                throw new CompletionException(throwable);
-            });
-        } catch (Exception e) {
-            // Step 9: Handle any synchronous errors that occur during setup
-            System.err.println("Error in Skyflow operations:\t" + e.getMessage());
+            // Step 8: Execute the bulk insert operation and print the response
+            InsertResponse response = skyflowClient.vault().bulkInsert(request);
+            System.out.println(response);
+        } catch (SkyflowException e) {
+            // Step 9: Handle any errors that occur during the process
+            System.err.println("Error in Skyflow operations: " + e.getMessage());
         }
     }
 }
