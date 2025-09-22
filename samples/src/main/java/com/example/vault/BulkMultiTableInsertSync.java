@@ -45,40 +45,40 @@ public class BulkMultiTableInsertSync {
                     .build();
 
             // Step 4: Prepare first record for insertion
-            HashMap<String, Object> record1 = new HashMap<>();
-            record1.put("<YOUR_COLUMN_NAME_1>", "<YOUR_VALUE_1>");
-            record1.put("<YOUR_COLUMN_NAME_2>", "<YOUR_VALUE_1>");
+            HashMap<String, Object> recordData1 = new HashMap<>();
+            rerecordData1cord1.put("<YOUR_COLUMN_NAME_1>", "<YOUR_VALUE_1>");
+            recordData1.put("<YOUR_COLUMN_NAME_2>", "<YOUR_VALUE_1>");
 
-            List<String> upsert = new ArrayList<>();
-            upsert.add("<YOUR_COLUMN_NAME_1>");
+            List<String> upsertColumns = new ArrayList<>();
+            upsertColumns.add("<YOUR_COLUMN_NAME_1>");
 
-            InsertRecord recordObj1 = InsertRecord
+            InsertRecord insertRecord1 = InsertRecord
                     .builder()
-                    .data(record1)
+                    .data(recordData1)
                     .table("<YOUR_TABLE_NAME>")
-                    .upsert(upsert)
-                    .upsertType(UpdateType.UPDATE)
+                    .upsert(upsertColumns)
+                    .upsertType(UpsertType.UPDATE)
                     .build();
 
             // Step 5: Prepare second record for insertion
-            HashMap<String, Object> record2 = new HashMap<>();
-            record2.put("<YOUR_COLUMN_NAME_1>", "<YOUR_VALUE_1>");
-            record2.put("<YOUR_COLUMN_NAME_2>", "<YOUR_VALUE_1>");
+            HashMap<String, Object> recordData2 = new HashMap<>();
+            recordData2.put("<YOUR_COLUMN_NAME_1>", "<YOUR_VALUE_1>");
+            recordData2.put("<YOUR_COLUMN_NAME_2>", "<YOUR_VALUE_1>");
 
-            InsertRecord recordObj2 = InsertRecord
+            InsertRecord insertRecord2 = InsertRecord
                     .builder()
-                    .data(record2)
+                    .data(recordData2)
                     .table("<YOUR_TABLE_NAME>")
                     .build();
 
             // Step 6: Combine records into a Insert record list
-            ArrayList<InsertRecord> values = new ArrayList<>();
-            values.add(recordObj1);
-            values.add(recordObj2);
+            ArrayList<InsertRecord> insertRecords = new ArrayList<>();
+            insertRecords.add(insertRecord1);
+            insertRecords.add(insertRecord2);
 
             // Step 7: Build the insert request with table name and values
             InsertRequest request = InsertRequest.builder()
-                    .records(values)
+                    .records(insertRecords)
                     .build();
 
             // Step 8: Execute the bulk insert operation and print the response
