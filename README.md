@@ -199,7 +199,7 @@ public class InsertSchema {
             
             // Step 1: Prepare the data to be inserted into the Skyflow vault
             HashMap<String, Object> recordData1 = new HashMap<>();
-            rerecordData1cord1.put("<YOUR_COLUMN_NAME_1>", "<YOUR_VALUE_1>");
+            recordData1.put("<YOUR_COLUMN_NAME_1>", "<YOUR_VALUE_1>");
             recordData1.put("<YOUR_COLUMN_NAME_2>", "<YOUR_VALUE_1>");
             
             // Specify the columns to be used for upsert operation
@@ -255,10 +255,10 @@ public class InsertSchema {
 ```
 
 **Note**:
-- The tableName can be specified either at the request level `InsertRequest` or at the record level `InsertRecord`, but not both.
-- If tableName is not specified at the request level `InsertRequest`, then it must be specified in all record objects.
-- If tableName is specified at the request level `InsertRequest`, then upsert must also be specified at the request level.
-- If tableName is specified at the record level `InsertRecord`, then upsert must also be specified at the record level `InsertRecord`.
+- The table name can be specified either at the request level `InsertRequest` or at the record level `InsertRecord`, but not both.
+- If table name is not specified at the request level `InsertRequest`, then it must be specified in all record objects.
+- If table name is specified at the request level `InsertRequest`, then upsert must also be specified at the request level.
+- If table name is specified at the record level `InsertRecord`, then upsert must also be specified at the record level `InsertRecord`.
 
 ### An [example](https://github.com/skyflowapi/skyflow-java/blob/v3/samples/src/main/java/com/example/vault/BulkInsertSync.java) of a sync bulkInsert call
 
