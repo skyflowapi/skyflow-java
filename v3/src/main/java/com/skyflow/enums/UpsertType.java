@@ -1,13 +1,13 @@
 package com.skyflow.enums;
 
-public enum UpdateType {
+public enum UpsertType {
     UPDATE("UPDATE"),
 
     REPLACE("REPLACE");
 
     private final String value;
 
-    UpdateType(String value) {
+    UpsertType(String value) {
         this.value = value;
     }
 

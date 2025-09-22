@@ -1,9 +1,8 @@
 package com.skyflow.vault.data;
 
-import com.skyflow.enums.UpdateType;
+import com.skyflow.enums.UpsertType;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 public class InsertRequest extends BaseInsertRequest {
@@ -23,7 +22,7 @@ public class InsertRequest extends BaseInsertRequest {
         return this.builder.upsert;
     }
 
-    public UpdateType getUpsertType() {
+    public UpsertType getUpsertType() {
         return this.builder.upsertType;
     }
 
@@ -34,7 +33,7 @@ public class InsertRequest extends BaseInsertRequest {
     public static final class InsertRequestBuilder extends BaseInsertRequestBuilder {
         private List<String> upsert;
 
-        private UpdateType upsertType;
+        private UpsertType upsertType;
 
         private ArrayList<InsertRecord> records;
 
@@ -53,7 +52,7 @@ public class InsertRequest extends BaseInsertRequest {
             return this;
         }
 
-        public InsertRequestBuilder upsertType(UpdateType upsertType) {
+        public InsertRequestBuilder upsertType(UpsertType upsertType) {
             this.upsertType = upsertType;
             return this;
         }

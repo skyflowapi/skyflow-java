@@ -5,7 +5,7 @@ import java.util.List;
 
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
-import com.skyflow.enums.UpdateType;
+import com.skyflow.enums.UpsertType;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
@@ -145,9 +145,9 @@ public class VaultClient {
             if (record.getUpsert() != null && !record.getUpsert().isEmpty()){
                 if (record.getUpsertType() != null) {
                     EnumUpdateType updateType = null;
-                    if (record.getUpsertType() == UpdateType.REPLACE) {
+                    if (record.getUpsertType() == UpsertType.REPLACE) {
                         updateType = EnumUpdateType.REPLACE;
-                    } else if (record.getUpsertType() == UpdateType.UPDATE) {
+                    } else if (record.getUpsertType() == UpsertType.UPDATE) {
                         updateType = EnumUpdateType.UPDATE;
                     }
                     Upsert upsert = Upsert.builder().uniqueColumns(record.getUpsert()).updateType(updateType).build();
@@ -171,9 +171,9 @@ public class VaultClient {
         if (request.getUpsert() != null && !request.getUpsert().isEmpty()) {
             if (request.getUpsertType() != null) {
                 EnumUpdateType updateType = null;
-                if (request.getUpsertType() == UpdateType.REPLACE) {
+                if (request.getUpsertType() == UpsertType.REPLACE) {
                     updateType = EnumUpdateType.REPLACE;
-                } else if (request.getUpsertType() == UpdateType.UPDATE) {
+                } else if (request.getUpsertType() == UpsertType.UPDATE) {
                     updateType = EnumUpdateType.UPDATE;
                 }
                 Upsert upsert = Upsert.builder().uniqueColumns(request.getUpsert()).updateType(updateType).build();

@@ -1,6 +1,6 @@
 package com.skyflow.vault.data;
 
-import com.skyflow.enums.UpdateType;
+import com.skyflow.enums.UpsertType;
 
 import java.util.List;
 import java.util.Map;
@@ -25,7 +25,7 @@ public class InsertRecord {
         return this.builder.upsert;
     }
 
-    public UpdateType getUpsertType() {
+    public UpsertType getUpsertType() {
         return this.builder.upsertType;
     }
 
@@ -34,7 +34,7 @@ public class InsertRecord {
         private String table;
         private Map<String, Object> data;
         private List<String> upsert;
-        private UpdateType upsertType;
+        private UpsertType upsertType;
 
         public InsertRecordBuilder table(String table) {
             this.table = table;
@@ -51,7 +51,7 @@ public class InsertRecord {
             return this;
         }
 
-        public InsertRecordBuilder upsertType(UpdateType upsertType) {
+        public InsertRecordBuilder upsertType(UpsertType upsertType) {
             this.upsertType = upsertType;
             return this;
         }
