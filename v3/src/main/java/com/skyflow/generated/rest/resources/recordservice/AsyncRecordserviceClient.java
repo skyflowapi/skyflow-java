@@ -5,9 +5,20 @@ package com.skyflow.generated.rest.resources.recordservice;
 
 import com.skyflow.generated.rest.core.ClientOptions;
 import com.skyflow.generated.rest.core.RequestOptions;
-import com.skyflow.generated.rest.resources.recordservice.requests.*;
-import com.skyflow.generated.rest.types.*;
-
+import com.skyflow.generated.rest.resources.recordservice.requests.DeleteRequest;
+import com.skyflow.generated.rest.resources.recordservice.requests.DeleteTokenRequest;
+import com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest;
+import com.skyflow.generated.rest.resources.recordservice.requests.GetRequest;
+import com.skyflow.generated.rest.resources.recordservice.requests.InsertRequest;
+import com.skyflow.generated.rest.resources.recordservice.requests.TokenizeRequest;
+import com.skyflow.generated.rest.resources.recordservice.requests.UpdateRequest;
+import com.skyflow.generated.rest.types.DeleteResponse;
+import com.skyflow.generated.rest.types.DeleteTokenResponse;
+import com.skyflow.generated.rest.types.DetokenizeResponse;
+import com.skyflow.generated.rest.types.GetResponse;
+import com.skyflow.generated.rest.types.InsertResponse;
+import com.skyflow.generated.rest.types.TokenizeResponse;
+import com.skyflow.generated.rest.types.UpdateResponse;
 import java.util.concurrent.CompletableFuture;
 
 public class AsyncRecordserviceClient {
@@ -25,28 +36,6 @@ public class AsyncRecordserviceClient {
      */
     public AsyncRawRecordserviceClient withRawResponse() {
         return this.rawClient;
-    }
-
-    /**
-     * Executes a query on the specified vault.
-     */
-    public CompletableFuture<ExecuteQueryResponse> executequery() {
-        return this.rawClient.executequery().thenApply(response -> response.body());
-    }
-
-    /**
-     * Executes a query on the specified vault.
-     */
-    public CompletableFuture<ExecuteQueryResponse> executequery(ExecuteQueryRequest request) {
-        return this.rawClient.executequery(request).thenApply(response -> response.body());
-    }
-
-    /**
-     * Executes a query on the specified vault.
-     */
-    public CompletableFuture<ExecuteQueryResponse> executequery(
-            ExecuteQueryRequest request, RequestOptions requestOptions) {
-        return this.rawClient.executequery(request, requestOptions).thenApply(response -> response.body());
     }
 
     public CompletableFuture<DeleteResponse> delete() {
@@ -118,7 +107,8 @@ public class AsyncRecordserviceClient {
         return this.rawClient.detokenize(request).thenApply(response -> response.body());
     }
 
-    public CompletableFuture<DetokenizeResponse> detokenize(DetokenizeRequest request, RequestOptions requestOptions) {
+    public CompletableFuture<DetokenizeResponse> detokenize(
+            DetokenizeRequest request, RequestOptions requestOptions) {
         return this.rawClient.detokenize(request, requestOptions).thenApply(response -> response.body());
     }
 

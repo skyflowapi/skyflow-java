@@ -34,7 +34,10 @@ public class InsertRequest extends BaseInsertRequest {
     public Boolean getReturnTokens() {
         return this.builder.returnTokens;
     }
-    
+    public ArrayList<HashMap<String, Object>> getValues() {
+        return this.builder.values;
+    }
+
     public ArrayList<HashMap<String, Object>> getTokens() {
         return this.builder.tokens;
     }
@@ -43,6 +46,7 @@ public class InsertRequest extends BaseInsertRequest {
         private Boolean homogeneous;
         private Boolean continueOnError;
         private TokenMode tokenMode;
+        private ArrayList<HashMap<String, Object>> values;
 
         private ArrayList<HashMap<String, Object>> tokens;
         private Boolean returnTokens;
@@ -60,9 +64,8 @@ public class InsertRequest extends BaseInsertRequest {
             return this;
         }
 
-        @Override
         public InsertRequestBuilder values(ArrayList<HashMap<String, Object>> values) {
-            super.values(values);
+            this.values = values;
             return this;
         }
 

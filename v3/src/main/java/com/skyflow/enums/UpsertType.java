@@ -1,15 +1,13 @@
 package com.skyflow.enums;
 
-import com.fasterxml.jackson.annotation.JsonValue;
-
-public enum UpdateType {
+public enum UpsertType {
     UPDATE("UPDATE"),
 
     REPLACE("REPLACE");
 
     private final String value;
 
-    UpdateType(String value) {
+    UpsertType(String value) {
         this.value = value;
     }
 

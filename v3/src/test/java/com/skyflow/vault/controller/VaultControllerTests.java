@@ -7,6 +7,8 @@ import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.utils.Constants;
 import com.skyflow.utils.validations.Validations;
+import com.skyflow.vault.data.DetokenizeRequest;
+import com.skyflow.vault.data.InsertRecord;
 import com.skyflow.vault.data.InsertRequest;
 import org.junit.After;
 import org.junit.Assert;
@@ -19,7 +21,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Scanner;
+import java.util.List;
 
 import static org.junit.Assert.*;
 
@@ -61,15 +63,6 @@ public class VaultControllerTests {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        // Print the contents of the .env file
-        try (Scanner scanner = new Scanner(envFile)) {
-            System.out.println("Current .env contents:");
-            while (scanner.hasNextLine()) {
-                System.out.println(scanner.nextLine());
-            }
-        } catch (IOException e) {
-            System.out.println("Could not read .env file: " + e.getMessage());
-        }
     }
 
     private VaultController createController() throws SkyflowException {
@@ -88,11 +81,16 @@ public class VaultControllerTests {
         method.setAccessible(true);
         method.invoke(controller, totalRequests);
     }
+    private void invokeConfigureDetokenizeConcurrencyAndBatchSize(VaultController controller, int totalRequests) throws Exception {
+        Method method = VaultController.class.getDeclaredMethod("configureDetokenizeConcurrencyAndBatchSize", int.class);
+        method.setAccessible(true);
+        method.invoke(controller, totalRequests);
+    }
 
-    private ArrayList<HashMap<String, Object>> generateValues(int noOfRecords) {
-        ArrayList<HashMap<String, Object>> values = new ArrayList<>();
+    private ArrayList<InsertRecord> generateValues(int noOfRecords) {
+        ArrayList<InsertRecord> values = new ArrayList<>();
         for (int i = 0; i < noOfRecords; i++) {
-            values.add(new HashMap<>());
+            values.add(InsertRecord.builder().data(new HashMap<>()).build());
         }
 
         return values;
@@ -100,7 +98,7 @@ public class VaultControllerTests {
 
     @Test
     public void testValidation_tableIsNull() {
-        InsertRequest req = InsertRequest.builder().table(null).values(generateValues(1)).build();
+        InsertRequest req = InsertRequest.builder().table(null).records(generateValues(1)).build();
         try {
             Validations.validateInsertRequest(req);
             fail("Expected SkyflowException for null table");
@@ -111,7 +109,7 @@ public class VaultControllerTests {
 
     @Test
     public void testValidation_tableIsEmpty() {
-        InsertRequest req = InsertRequest.builder().table("   ").values(generateValues(1)).build();
+        InsertRequest req = InsertRequest.builder().table("   ").records(generateValues(1)).build();
         try {
             Validations.validateInsertRequest(req);
             fail("Expected SkyflowException for empty table");
@@ -122,7 +120,7 @@ public class VaultControllerTests {
 
     @Test
     public void testValidation_valuesIsNull() {
-        InsertRequest req = InsertRequest.builder().table("table1").values(null).build();
+        InsertRequest req = InsertRequest.builder().table("table1").records(null).build();
         try {
             Validations.validateInsertRequest(req);
             fail("Expected SkyflowException for null values");
@@ -133,7 +131,7 @@ public class VaultControllerTests {
 
     @Test
     public void testValidation_valuesIsEmpty() {
-        InsertRequest req = InsertRequest.builder().table("table1").values(new ArrayList<>()).build();
+        InsertRequest req = InsertRequest.builder().table("table1").records(new ArrayList<>()).build();
         try {
             Validations.validateInsertRequest(req);
             fail("Expected SkyflowException for empty values");
@@ -147,7 +145,7 @@ public class VaultControllerTests {
         try {
             InsertRequest req = InsertRequest.builder()
                     .table("table1")
-                    .values(generateValues(1))
+                    .records(generateValues(1))
                     .upsert(new ArrayList<>())
                     .build();
             Validations.validateInsertRequest(req);
@@ -162,11 +160,11 @@ public class VaultControllerTests {
 
     @Test
     public void testValidation_keyIsNullOrEmpty() {
-        ArrayList<HashMap<String, Object>> values = new ArrayList<>();
+        ArrayList<InsertRecord> values = new ArrayList<>();
         HashMap<String, Object> map = new HashMap<>();
         map.put(null, "value");
-        values.add(map);
-        InsertRequest req = InsertRequest.builder().table("table1").values(values).build();
+        values.add(InsertRecord.builder().data(map).build());
+        InsertRequest req = InsertRequest.builder().table("table1").records(values).build();
         try {
             Validations.validateInsertRequest(req);
             fail("Expected SkyflowException for null key in values");
@@ -178,8 +176,8 @@ public class VaultControllerTests {
         values.clear();
         map = new HashMap<>();
         map.put("   ", "value");
-        values.add(map);
-        req = InsertRequest.builder().table("table1").values(values).build();
+        values.add(InsertRecord.builder().data(map).build());
+        req = InsertRequest.builder().table("table1").records(values).build();
         try {
             Validations.validateInsertRequest(req);
             fail("Expected SkyflowException for empty key in values");
@@ -190,11 +188,11 @@ public class VaultControllerTests {
 
     @Test
     public void testValidation_valueIsNullOrEmpty() {
-        ArrayList<HashMap<String, Object>> values = new ArrayList<>();
+        ArrayList<InsertRecord> values = new ArrayList<>();
         HashMap<String, Object> map = new HashMap<>();
         map.put("field1", null);
-        values.add(map);
-        InsertRequest req = InsertRequest.builder().table("table1").values(values).build();
+        values.add(InsertRecord.builder().data(map).build());
+        InsertRequest req = InsertRequest.builder().table("table1").records(values).build();
         try {
             Validations.validateInsertRequest(req);
             fail("Expected SkyflowException for null value in values");
@@ -206,8 +204,8 @@ public class VaultControllerTests {
         values.clear();
         map = new HashMap<>();
         map.put("field1", "   ");
-        values.add(map);
-        req = InsertRequest.builder().table("table1").values(values).build();
+        values.add(InsertRecord.builder().data(map).build());
+        req = InsertRequest.builder().table("table1").records(values).build();
         try {
             Validations.validateInsertRequest(req);
             fail("Expected SkyflowException for empty value in values");
@@ -227,13 +225,24 @@ public class VaultControllerTests {
         assertEquals(Math.min(Constants.INSERT_CONCURRENCY_LIMIT, (10 + Constants.INSERT_BATCH_SIZE - 1) / Constants.INSERT_BATCH_SIZE),
                 getPrivateInt(controller, "insertConcurrencyLimit"));
     }
+    @Test
+    public void testDefaultValuesForDetokenize() throws Exception {
+        VaultController controller = createController();
+        setPrivateField(controller, "detokenizeBatchSize", Constants.DETOKENIZE_BATCH_SIZE);
+        setPrivateField(controller, "detokenizeConcurrencyLimit", Constants.DETOKENIZE_CONCURRENCY_LIMIT);
+
+        invokeConfigureDetokenizeConcurrencyAndBatchSize(controller, 10);
+        assertEquals(Constants.DETOKENIZE_BATCH_SIZE.intValue(), getPrivateInt(controller, "detokenizeBatchSize"));
+        assertEquals(Math.min(Constants.DETOKENIZE_CONCURRENCY_LIMIT, (10 + Constants.DETOKENIZE_BATCH_SIZE - 1) / Constants.DETOKENIZE_BATCH_SIZE),
+                getPrivateInt(controller, "detokenizeConcurrencyLimit"));
+    }
 
     @Test
     public void testCustomValidBatchAndConcurrency() throws Exception {
         writeEnv("INSERT_BATCH_SIZE=5\nINSERT_CONCURRENCY_LIMIT=3");
         VaultController controller = createController();
 
-        InsertRequest insertRequest = InsertRequest.builder().table("table1").values(generateValues(20)).build();
+        InsertRequest insertRequest = InsertRequest.builder().table("table1").records(generateValues(20)).build();
 
         try {
             controller.bulkInsert(insertRequest);
@@ -250,7 +259,7 @@ public class VaultControllerTests {
         writeEnv("INSERT_BATCH_SIZE=1100\nINSERT_CONCURRENCY_LIMIT=3");
         VaultController controller = createController();
 
-        InsertRequest insertRequest = InsertRequest.builder().table("table1").values(generateValues(50)).build();
+        InsertRequest insertRequest = InsertRequest.builder().table("table1").records(generateValues(50)).build();
 
         try {
             controller.bulkInsert(insertRequest);
@@ -258,14 +267,14 @@ public class VaultControllerTests {
             //  Ignore, Testing concurrency/batch config
         }
 
-        assertEquals(1000, getPrivateInt(controller, "insertBatchSize"));
+        assertEquals(Constants.MAX_INSERT_BATCH_SIZE.intValue(), getPrivateInt(controller, "insertBatchSize"));
     }
 
     @Test
     public void testConcurrencyExceedsMax() throws Exception {
         writeEnv("INSERT_CONCURRENCY_LIMIT=110");
         VaultController controller = createController();
-        InsertRequest insertRequest = InsertRequest.builder().table("table1").values(generateValues(50)).build();
+        InsertRequest insertRequest = InsertRequest.builder().table("table1").records(generateValues(50)).build();
 
 
         try {
@@ -281,7 +290,7 @@ public class VaultControllerTests {
     public void testBatchSizeZeroOrNegative() throws Exception {
         writeEnv("INSERT_BATCH_SIZE=0");
         VaultController controller = createController();
-        InsertRequest insertRequest = InsertRequest.builder().table("table1").values(generateValues(10)).build();
+        InsertRequest insertRequest = InsertRequest.builder().table("table1").records(generateValues(10)).build();
 
         try {
             controller.bulkInsert(insertRequest);
@@ -289,7 +298,7 @@ public class VaultControllerTests {
             // Ignore, Testing concurrency/batch config
         }
 
-        assertEquals(50, getPrivateInt(controller, "insertBatchSize"));
+        assertEquals(Constants.INSERT_BATCH_SIZE.intValue(), getPrivateInt(controller, "insertBatchSize"));
 
         writeEnv("INSERT_BATCH_SIZE=-5");
 
@@ -299,14 +308,14 @@ public class VaultControllerTests {
             // Ignore, Testing concurrency/batch config
         }
 
-        assertEquals(50, getPrivateInt(controller, "insertBatchSize"));
+        assertEquals(Constants.INSERT_BATCH_SIZE.intValue(), getPrivateInt(controller, "insertBatchSize"));
     }
 
     @Test
     public void testConcurrencyZeroOrNegative() throws Exception {
         writeEnv("INSERT_CONCURRENCY_LIMIT=0");
         VaultController controller = createController();
-        InsertRequest insertRequest = InsertRequest.builder().table("table1").values(generateValues(10)).build();
+        InsertRequest insertRequest = InsertRequest.builder().table("table1").records(generateValues(10)).build();
 
         try {
             controller.bulkInsert(insertRequest);
@@ -335,7 +344,7 @@ public class VaultControllerTests {
     public void testTotalRequestsLessThanBatchSize() throws Exception {
         writeEnv("INSERT_BATCH_SIZE=100\nINSERT_CONCURRENCY_LIMIT=10");
         VaultController controller = createController();
-        InsertRequest insertRequest = InsertRequest.builder().table("table1").values(generateValues(10)).build();
+        InsertRequest insertRequest = InsertRequest.builder().table("table1").records(generateValues(10)).build();
 
 
         try {
@@ -351,7 +360,7 @@ public class VaultControllerTests {
     @Test
     public void testTotalRequestsZero() throws Exception {
         VaultController controller = createController();
-        InsertRequest insertRequest = InsertRequest.builder().table("table1").values(generateValues(0)).build();
+        InsertRequest insertRequest = InsertRequest.builder().table("table1").records(generateValues(0)).build();
 
         boolean exceptionThrown = false;
 
@@ -369,7 +378,7 @@ public class VaultControllerTests {
     public void testHighConcurrencyForLowRecords() throws Exception {
         writeEnv("INSERT_BATCH_SIZE=1000\nINSERT_CONCURRENCY_LIMIT=100");
         VaultController controller = createController();
-        InsertRequest insertRequest = InsertRequest.builder().table("table1").values(generateValues(10000)).build();
+        InsertRequest insertRequest = InsertRequest.builder().table("table1").records(generateValues(10000)).build();
 
         try {
             controller.bulkInsert(insertRequest);
@@ -378,7 +387,7 @@ public class VaultControllerTests {
 
         // Only 10 batches needed, so concurrency should be clamped to 10
         assertEquals(1000, getPrivateInt(controller, "insertBatchSize"));
-        assertEquals(10, getPrivateInt(controller, "insertConcurrencyLimit"));
+        assertEquals(Constants.MAX_INSERT_CONCURRENCY_LIMIT.intValue(), getPrivateInt(controller, "insertConcurrencyLimit"));
     }
 
 
@@ -386,7 +395,7 @@ public class VaultControllerTests {
     public void testFractionalLastBatch() throws Exception {
         writeEnv("INSERT_BATCH_SIZE=100");
         VaultController controller = createController();
-        InsertRequest insertRequest = InsertRequest.builder().table("table1").values(generateValues(9050)).build();
+        InsertRequest insertRequest = InsertRequest.builder().table("table1").records(generateValues(9050)).build();
 
         try {
             controller.bulkInsert(insertRequest);
@@ -395,12 +404,199 @@ public class VaultControllerTests {
 
         // Last batch should have 50 records, concurrency should be 101
         assertEquals(100, getPrivateInt(controller, "insertBatchSize"));
-        assertEquals(10, getPrivateInt(controller, "insertConcurrencyLimit"));
+        assertEquals(Constants.INSERT_CONCURRENCY_LIMIT.intValue(), getPrivateInt(controller, "insertConcurrencyLimit"));
+    }
+
+    @Test
+    public void testCustomValidBatchAndConcurrencyDETOKENIZE() throws Exception {
+        writeEnv("DETOKENIZE_BATCH_SIZE=5\nDETOKENIZE_CONCURRENCY_LIMIT=3");
+        VaultController controller = createController();
+        //20
+        List<String> tokens = getTokens(20);
+        DetokenizeRequest request = DetokenizeRequest.builder().tokens(tokens).build();
+        try {
+            controller.bulkDetokenize(request);
+        } catch (Exception ignored) {
+            //  Ignore, Testing concurrency/batch config
+        }
+
+        assertEquals(5, getPrivateInt(controller, "detokenizeBatchSize"));
+        assertEquals(3, getPrivateInt(controller, "detokenizeConcurrencyLimit"));
+    }
+
+    @Test
+    public void testBatchSizeExceedsMaxDETOKENIZE() throws Exception {
+        writeEnv("DETOKENIZE_BATCH_SIZE=1100\nDETOKENIZE_CONCURRENCY_LIMIT=3");
+        VaultController controller = createController();
+        //20
+        List<String> tokens = getTokens(50);
+        DetokenizeRequest request = DetokenizeRequest.builder().tokens(tokens).build();
+        try {
+            controller.bulkDetokenize(request);
+        } catch (Exception ignored) {
+            //  Ignore, Testing concurrency/batch config
+        }
+
+
+        assertEquals(Constants.MAX_DETOKENIZE_BATCH_SIZE.intValue(), getPrivateInt(controller, "detokenizeBatchSize"));
+    }
+
+    @Test
+    public void testConcurrencyExceedsMaxDETOKENIZE() throws Exception {
+        writeEnv("DETOKENIZE_CONCURRENCY_LIMIT=110");
+        VaultController controller = createController();
+        //20
+        List<String> tokens = getTokens(50);
+        DetokenizeRequest request = DetokenizeRequest.builder().tokens(tokens).build();
+        try {
+            controller.bulkDetokenize(request);
+        } catch (Exception ignored) {
+            //  Ignore, Testing concurrency/batch config
+        }
+
+
+        assertEquals(1, getPrivateInt(controller, "detokenizeConcurrencyLimit"));
+    }
+
+    @Test
+    public void testBatchSizeZeroOrNegativeDETOKENIZE() throws Exception {
+        writeEnv("DETOKENIZE_BATCH_SIZE=0");
+        VaultController controller = createController();
+        //20
+        List<String> tokens = getTokens(10);
+        DetokenizeRequest request = DetokenizeRequest.builder().tokens(tokens).build();
+        try {
+            controller.bulkDetokenize(request);
+        } catch (Exception ignored) {
+            //  Ignore, Testing concurrency/batch config
+        }
+
+        assertEquals(Constants.DETOKENIZE_BATCH_SIZE.intValue(), getPrivateInt(controller, "detokenizeBatchSize"));
+
+        writeEnv("DETOKENIZE_BATCH_SIZE=-5");
+
+        try {
+            controller.bulkDetokenize(request);
+        } catch (Exception ignored) {
+            // Ignore, Testing concurrency/batch config
+        }
+
+        assertEquals(Constants.DETOKENIZE_BATCH_SIZE.intValue(), getPrivateInt(controller, "detokenizeBatchSize"));
+    }
+
+    @Test
+    public void testConcurrencyZeroOrNegativeDETOKENIZE() throws Exception {
+        writeEnv("DETOKENIZE_CONCURRENCY_LIMIT=0");
+        VaultController controller = createController();
+        //20
+        List<String> tokens = getTokens(10);
+        DetokenizeRequest request = DetokenizeRequest.builder().tokens(tokens).build();
+        try {
+            controller.bulkDetokenize(request);
+        } catch (Exception ignored) {
+            //  Ignore, Testing concurrency/batch config
+        }
+
+        int min = Math.min(Constants.DETOKENIZE_CONCURRENCY_LIMIT, (10 + Constants.DETOKENIZE_BATCH_SIZE - 1) / Constants.DETOKENIZE_BATCH_SIZE);
+        assertEquals(min, getPrivateInt(controller, "detokenizeConcurrencyLimit"));
+
+
+        writeEnv("DETOKENIZE_CONCURRENCY_LIMIT=-5");
+
+        try {
+            controller.bulkDetokenize(request);
+        } catch (Exception ignored) {
+            // Ignore, Testing concurrency/batch config
+        }
+
+        min = Math.min(Constants.DETOKENIZE_CONCURRENCY_LIMIT, (10 + Constants.DETOKENIZE_BATCH_SIZE - 1) / Constants.DETOKENIZE_BATCH_SIZE);
+        assertEquals(min, getPrivateInt(controller, "detokenizeConcurrencyLimit"));
+    }
+
+
+    @Test
+    public void testTotalRequestsLessThanBatchSizeDETOKENIZE() throws Exception {
+        writeEnv("DETOKENIZE_BATCH_SIZE=100\nDETOKENIZE_CONCURRENCY_LIMIT=10");
+        VaultController controller = createController();
+        //20
+        List<String> tokens = getTokens(10);
+        DetokenizeRequest request = DetokenizeRequest.builder().tokens(tokens).build();
+        try {
+            controller.bulkDetokenize(request);
+        } catch (Exception ignored) {
+            //  Ignore, Testing concurrency/batch config
+        }
+
+
+        assertEquals(100, getPrivateInt(controller, "detokenizeBatchSize"));
+        assertEquals(1, getPrivateInt(controller, "detokenizeConcurrencyLimit"));
+    }
+
+    @Test
+    public void testTotalRequestsZeroDETOKENIZE() throws Exception {
+        VaultController controller = createController();
+        //20
+        List<String> tokens = getTokens(0);
+        DetokenizeRequest request = DetokenizeRequest.builder().tokens(tokens).build();
+
+        boolean exceptionThrown = false;
+
+        try {
+
+            controller.bulkDetokenize(request);
+        } catch (Exception e) {
+            exceptionThrown = true;
+        }
+        assertTrue("Exception should be thrown for zero records", exceptionThrown);
+    }
+
+
+    @Test
+    public void testHighConcurrencyForLowRecordsDETOKENIZE() throws Exception {
+        writeEnv("DETOKENIZE_BATCH_SIZE=1000\nDETOKENIZE_CONCURRENCY_LIMIT=100");
+        VaultController controller = createController();
+        List<String> tokens = getTokens(10000);
+        DetokenizeRequest request = DetokenizeRequest.builder().tokens(tokens).build();
+        try {
+            controller.bulkDetokenize(request);
+        } catch (Exception ignored) {
+            //  Ignore, Testing concurrency/batch config
+        }
+
+        // Only 10 batches needed, so concurrency should be clamped to 10
+        assertEquals(1000, getPrivateInt(controller, "detokenizeBatchSize"));
+        assertEquals(Constants.MAX_DETOKENIZE_CONCURRENCY_LIMIT.intValue(), getPrivateInt(controller, "detokenizeConcurrencyLimit"));
+    }
+
+
+    @Test
+    public void testFractionalLastBatchDETOKENIZE() throws Exception {
+        writeEnv("DETOKENIZE_BATCH_SIZE=100");
+        VaultController controller = createController();
+        List<String> tokens = getTokens(9050);
+        DetokenizeRequest request = DetokenizeRequest.builder().tokens(tokens).build();
+        try {
+            controller.bulkDetokenize(request);
+        } catch (Exception ignored) {
+            //  Ignore, Testing concurrency/batch config
+        }
+
+
+        // Last batch should have 50 records, concurrency should be 101
+        assertEquals(100, getPrivateInt(controller, "detokenizeBatchSize"));
+        assertEquals(Constants.DETOKENIZE_CONCURRENCY_LIMIT.intValue(), getPrivateInt(controller, "detokenizeConcurrencyLimit"));
     }
 
     private int getPrivateInt(Object obj, String field) throws Exception {
         Field f = obj.getClass().getDeclaredField(field);
         f.setAccessible(true);
         return f.getInt(obj);
+    }
+    private List<String> getTokens(int count) {
+        List<String> tokens = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            tokens.add("token" + i);
+        }
+        return tokens;
     }
 }

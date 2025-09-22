@@ -3,22 +3,36 @@
  */
 package com.skyflow.generated.rest.types;
 
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.annotation.Nulls;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.skyflow.generated.rest.core.ObjectMappers;
-
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 
 @JsonInclude(JsonInclude.Include.NON_ABSENT)
 @JsonDeserialize(builder = ExecuteQueryResponse.Builder.class)
 public final class ExecuteQueryResponse {
     private final Optional<List<ExecuteQueryRecordResponse>> records;
 
+    private final Optional<ExecuteQueryResponseMetadata> metadata;
+
     private final Map<String, Object> additionalProperties;
 
     private ExecuteQueryResponse(
-            Optional<List<ExecuteQueryRecordResponse>> records, Map<String, Object> additionalProperties) {
+            Optional<List<ExecuteQueryRecordResponse>> records,
+            Optional<ExecuteQueryResponseMetadata> metadata,
+            Map<String, Object> additionalProperties) {
         this.records = records;
+        this.metadata = metadata;
         this.additionalProperties = additionalProperties;
     }
 
@@ -30,7 +44,12 @@ public final class ExecuteQueryResponse {
         return records;
     }
 
-    @Override
+    @JsonProperty("metadata")
+    public Optional<ExecuteQueryResponseMetadata> getMetadata() {
+        return metadata;
+    }
+
+    @java.lang.Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof ExecuteQueryResponse && equalTo((ExecuteQueryResponse) other);
@@ -42,15 +61,15 @@ public final class ExecuteQueryResponse {
     }
 
     private boolean equalTo(ExecuteQueryResponse other) {
-        return records.equals(other.records);
+        return records.equals(other.records) && metadata.equals(other.metadata);
     }
 
-    @Override
+    @java.lang.Override
     public int hashCode() {
-        return Objects.hash(this.records);
+        return Objects.hash(this.records, this.metadata);
     }
 
-    @Override
+    @java.lang.Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }
@@ -63,6 +82,8 @@ public final class ExecuteQueryResponse {
     public static final class Builder {
         private Optional<List<ExecuteQueryRecordResponse>> records = Optional.empty();
 
+        private Optional<ExecuteQueryResponseMetadata> metadata = Optional.empty();
+
         @JsonAnySetter
         private Map<String, Object> additionalProperties = new HashMap<>();
 
@@ -70,6 +91,7 @@ public final class ExecuteQueryResponse {
 
         public Builder from(ExecuteQueryResponse other) {
             records(other.getRecords());
+            metadata(other.getMetadata());
             return this;
         }
 
@@ -87,8 +109,19 @@ public final class ExecuteQueryResponse {
             return this;
         }
 
+        @JsonSetter(value = "metadata", nulls = Nulls.SKIP)
+        public Builder metadata(Optional<ExecuteQueryResponseMetadata> metadata) {
+            this.metadata = metadata;
+            return this;
+        }
+
+        public Builder metadata(ExecuteQueryResponseMetadata metadata) {
+            this.metadata = Optional.ofNullable(metadata);
+            return this;
+        }
+
         public ExecuteQueryResponse build() {
-            return new ExecuteQueryResponse(records, additionalProperties);
+            return new ExecuteQueryResponse(records, metadata, additionalProperties);
         }
     }
 }

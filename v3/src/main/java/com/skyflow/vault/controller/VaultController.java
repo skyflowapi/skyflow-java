@@ -19,17 +19,15 @@ import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.utils.validations.Validations;
 import com.skyflow.vault.data.*;
 import io.github.cdimascio.dotenv.Dotenv;
+import io.github.cdimascio.dotenv.DotenvException;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
-import static com.skyflow.utils.Utils.*;
 
 public final class VaultController extends VaultClient {
     private static final Gson gson = new GsonBuilder().serializeNulls().create();
@@ -52,12 +50,12 @@ public final class VaultController extends VaultClient {
         try {
             LogUtil.printInfoLog(InfoLogs.VALIDATE_INSERT_REQUEST.getLog());
             Validations.validateInsertRequest(insertRequest);
-            configureInsertConcurrencyAndBatchSize(insertRequest.getValues().size());
+            configureInsertConcurrencyAndBatchSize(insertRequest.getRecords().size());
 
             setBearerToken();
             com.skyflow.generated.rest.resources.recordservice.requests.InsertRequest request = super.getBulkInsertRequestBody(insertRequest, super.getVaultConfig());
 
-            response = this.processSync(request, insertRequest.getValues());
+            response = this.processSync(request, insertRequest.getRecords());
             return response;
         } catch (ApiClientApiException e) {
             String bodyString = gson.toJson(e.body());
@@ -74,7 +72,7 @@ public final class VaultController extends VaultClient {
         try {
             LogUtil.printInfoLog(InfoLogs.VALIDATE_INSERT_REQUEST.getLog());
             Validations.validateInsertRequest(insertRequest);
-            configureInsertConcurrencyAndBatchSize(insertRequest.getValues().size());
+            configureInsertConcurrencyAndBatchSize(insertRequest.getRecords().size());
 
             setBearerToken();
             com.skyflow.generated.rest.resources.recordservice.requests.InsertRequest request = super.getBulkInsertRequestBody(insertRequest, super.getVaultConfig());
@@ -98,7 +96,7 @@ public final class VaultController extends VaultClient {
                             }
                         }
 
-                        return new com.skyflow.vault.data.InsertResponse(successRecords, errorRecords, insertRequest.getValues());
+                        return new com.skyflow.vault.data.InsertResponse(successRecords, errorRecords, insertRequest.getRecords());
                     });
         } catch (ApiClientApiException e) {
             String bodyString = gson.toJson(e.body());
@@ -175,7 +173,7 @@ public final class VaultController extends VaultClient {
 
     private com.skyflow.vault.data.InsertResponse processSync(
             com.skyflow.generated.rest.resources.recordservice.requests.InsertRequest insertRequest,
-            ArrayList<HashMap<String, Object>> originalPayload
+            ArrayList<InsertRecord> originalPayload
     ) throws ExecutionException, InterruptedException {
         LogUtil.printInfoLog(InfoLogs.PROCESSING_BATCHES.getLog());
         List<Success> successRecords = new ArrayList<>();
@@ -249,9 +247,9 @@ public final class VaultController extends VaultClient {
                 int batchNumber = batchIndex;
                 CompletableFuture<DetokenizeResponse> future = CompletableFuture
                         .supplyAsync(() -> processDetokenizeBatch(batch), executor)
-                        .thenApply(response -> formatDetokenizeResponse(response, batchNumber, detokenizeBatchSize))
+                        .thenApply(response -> Utils.formatDetokenizeResponse(response, batchNumber, detokenizeBatchSize))
                         .exceptionally(ex -> {
-                            errorTokens.addAll(handleDetokenizeBatchException(ex, batch, batchNumber, detokenizeBatchSize));
+                            errorTokens.addAll(Utils.handleDetokenizeBatchException(ex, batch, batchNumber, detokenizeBatchSize));
                             return null;
                         });
                 futures.add(future);
@@ -283,10 +281,10 @@ public final class VaultController extends VaultClient {
                 List<InsertRecordData> batch = batches.get(batchIndex);
                 int batchNumber = batchIndex;
                 CompletableFuture<com.skyflow.vault.data.InsertResponse> future = CompletableFuture
-                        .supplyAsync(() -> insertBatch(batch, insertRequest.getTableName().get(), upsert), executor)
-                        .thenApply(response -> formatResponse(response, batchNumber, insertBatchSize))
+                        .supplyAsync(() -> insertBatch(batch, insertRequest.getTableName().isPresent() ? insertRequest.getTableName().get() : null, upsert), executor)
+                        .thenApply(response -> Utils.formatResponse(response, batchNumber, insertBatchSize))
                         .exceptionally(ex -> {
-                            errorRecords.addAll(handleBatchException(ex, batch, batchNumber));
+                            errorRecords.addAll(Utils.handleBatchException(ex, batch, batchNumber, insertBatchSize));
                             return null;
                         });
                 futures.add(future);
@@ -298,20 +296,36 @@ public final class VaultController extends VaultClient {
     }
 
     private InsertResponse insertBatch(List<InsertRecordData> batch, String tableName, Upsert upsert) {
-        com.skyflow.generated.rest.resources.recordservice.requests.InsertRequest req = com.skyflow.generated.rest.resources.recordservice.requests.InsertRequest.builder()
+        com.skyflow.generated.rest.resources.recordservice.requests.InsertRequest.Builder req = com.skyflow.generated.rest.resources.recordservice.requests.InsertRequest.builder()
                 .vaultId(this.getVaultConfig().getVaultId())
-                .tableName(tableName)
                 .records(batch)
-                .upsert(upsert)
-                .build();
-        return this.getRecordsApi().insert(req);
+                .upsert(upsert);
+//                .build();
+        if (tableName != null && !tableName.isEmpty()) {
+            req.tableName(tableName);
+        }
+        com.skyflow.generated.rest.resources.recordservice.requests.InsertRequest request = req.build();
+        return this.getRecordsApi().insert(request);
     }
 
     private void configureInsertConcurrencyAndBatchSize(int totalRequests) {
         try {
-            Dotenv dotenv = Dotenv.load();
-            String userProvidedBatchSize = dotenv.get("INSERT_BATCH_SIZE");
-            String userProvidedConcurrencyLimit = dotenv.get("INSERT_CONCURRENCY_LIMIT");
+            String userProvidedBatchSize = System.getenv("INSERT_BATCH_SIZE");
+            String userProvidedConcurrencyLimit = System.getenv("INSERT_CONCURRENCY_LIMIT");
+
+            Dotenv dotenv = null;
+            try {
+                dotenv = Dotenv.load();
+            } catch (DotenvException ignored) {
+                // ignore the case if .env file is not found
+            }
+
+            if (userProvidedBatchSize == null && dotenv != null) {
+                userProvidedBatchSize = dotenv.get("INSERT_BATCH_SIZE");
+            }
+            if (userProvidedConcurrencyLimit == null && dotenv != null) {
+                userProvidedConcurrencyLimit = dotenv.get("INSERT_CONCURRENCY_LIMIT");
+            }
 
             if (userProvidedBatchSize != null) {
                 try {
@@ -365,9 +379,22 @@ public final class VaultController extends VaultClient {
 
     private void configureDetokenizeConcurrencyAndBatchSize(int totalRequests) {
         try {
-            Dotenv dotenv = Dotenv.load();
-            String userProvidedBatchSize = dotenv.get("DETOKENIZE_BATCH_SIZE");
-            String userProvidedConcurrencyLimit = dotenv.get("DETOKENIZE_CONCURRENCY_LIMIT");
+            String userProvidedBatchSize = System.getenv("DETOKENIZE_BATCH_SIZE");
+            String userProvidedConcurrencyLimit = System.getenv("DETOKENIZE_CONCURRENCY_LIMIT");
+
+            Dotenv dotenv = null;
+            try {
+                dotenv = Dotenv.load();
+            } catch (DotenvException ignored) {
+                // ignore the case if .env file is not found
+            }
+
+            if (userProvidedBatchSize == null && dotenv != null) {
+                userProvidedBatchSize = dotenv.get("DETOKENIZE_BATCH_SIZE");
+            }
+            if (userProvidedConcurrencyLimit == null && dotenv != null) {
+                userProvidedConcurrencyLimit = dotenv.get("DETOKENIZE_CONCURRENCY_LIMIT");
+            }
 
             if (userProvidedBatchSize != null) {
                 try {

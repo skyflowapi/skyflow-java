@@ -54,7 +54,7 @@ public final class Utils extends BaseUtils {
             // Create a sublist for the current batch
             List<String> batchTokens = tokens.subList(i, Math.min(i + batchSize, tokens.size()));
             List<TokenGroupRedactions> tokenGroupRedactions = null;
-            if (request.getTokenGroupRedactions().isPresent() && !request.getTokenGroupRedactions().get().isEmpty() && i < request.getTokenGroupRedactions().get().size()) {
+            if (request.getTokenGroupRedactions().isPresent() && !request.getTokenGroupRedactions().get().isEmpty()){
                 tokenGroupRedactions = request.getTokenGroupRedactions().get();
             }
             // Build a new DetokenizeRequest for the current batch
@@ -79,7 +79,7 @@ public final class Utils extends BaseUtils {
             } else if (recordMap.containsKey("httpCode")) {
                 code = (Integer) recordMap.get("httpCode");
 
-            } else{
+            } else {
                 if (recordMap.containsKey("statusCode")) {
                     code = (Integer) recordMap.get("statusCode");
                 }
@@ -92,14 +92,14 @@ public final class Utils extends BaseUtils {
     }
 
     public static List<ErrorRecord> handleBatchException(
-            Throwable ex, List<InsertRecordData> batch, int batchNumber
+            Throwable ex, List<InsertRecordData> batch, int batchNumber, int batchSize
     ) {
         List<ErrorRecord> errorRecords = new ArrayList<>();
         Throwable cause = ex.getCause();
         if (cause instanceof ApiClientApiException) {
             ApiClientApiException apiException = (ApiClientApiException) cause;
             Map<String, Object> responseBody = (Map<String, Object>) apiException.body();
-            int indexNumber = batchNumber > 0 ? batchNumber * batch.size() : 0;
+            int indexNumber = batchNumber > 0 ? batchNumber * batchSize : 0;
             if (responseBody != null) {
                 if (responseBody.containsKey("records")) {
                     Object recordss = responseBody.get("records");
@@ -124,7 +124,7 @@ public final class Utils extends BaseUtils {
                 }
             }
         } else {
-            int indexNumber = batchNumber > 0 ? batchNumber * batch.size() : 0;
+            int indexNumber = batchNumber > 0 ? batchNumber * batchSize : 0;
             for (int j = 0; j < batch.size(); j++) {
                 ErrorRecord err = new ErrorRecord(indexNumber, ex.getMessage(), 500);
                 errorRecords.add(err);
@@ -225,7 +225,7 @@ public final class Utils extends BaseUtils {
                             if (value instanceof List) {
                                 List<?> valueList = (List<?>) value;
                                 for (Object item : valueList) {
-                                    if(item instanceof Map) {
+                                    if (item instanceof Map) {
                                         Map<String, Object> tokenMap = (Map<String, Object>) item;
                                         Token token = new Token((String) tokenMap.get("token"), (String) tokenMap.get("tokenGroupName"));
                                         tokenList.add(token);
@@ -235,7 +235,7 @@ public final class Utils extends BaseUtils {
                             tokensMap.put(key, tokenList);
                         }
                     }
-                    Success success = new Success(indexNumber, record.get(index).getSkyflowId().get(), tokensMap, record.get(index).getData().isPresent() ? record.get(index).getData().get() : null);
+                    Success success = new Success(indexNumber, record.get(index).getSkyflowId().get(), tokensMap, record.get(index).getData().isPresent() ? record.get(index).getData().get() : null, record.get(index).getTableName().isPresent() ? record.get(index).getTableName().get() : null);
                     successRecords.add(success);
                 }
                 indexNumber++;
@@ -258,7 +258,7 @@ public final class Utils extends BaseUtils {
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyVaultUrl.getMessage());
             } else if (vaultURL != null && !vaultURL.startsWith(BaseConstants.SECURE_PROTOCOL)) {
                 LogUtil.printErrorLog(ErrorLogs.INVALID_VAULT_URL_FORMAT.getLog());
-                throw new SkyflowException( ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidVaultUrlFormat.getMessage());
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidVaultUrlFormat.getMessage());
             }
             return vaultURL;
         } catch (DotenvException e) {

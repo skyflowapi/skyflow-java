@@ -3,13 +3,12 @@
  */
 package com.skyflow.generated.rest.core;
 
-import okhttp3.Interceptor;
-import okhttp3.Response;
-
 import java.io.IOException;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.Random;
+import okhttp3.Interceptor;
+import okhttp3.Response;
 
 public class RetryInterceptor implements Interceptor {
 

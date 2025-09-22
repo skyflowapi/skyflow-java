@@ -51,6 +51,9 @@ public enum ErrorLogs {
     EMPTY_TABLE_NAME("Invalid %s1 request. Table name can not be empty."),
     VALUES_IS_REQUIRED("Invalid %s1 request. Values are required."),
     EMPTY_VALUES("Invalid %s1 request. Values can not be empty."),
+    RECORDS_IS_REQUIRED("Invalid %s1 request. Records are required."),
+    EMPTY_RECORDS("Invalid %s1 request. Records can not be empty."),
+    INVALID_RECORD("Invalid %s1 request. Invalid record. Specify a valid record."),
     RECORD_SIZE_EXCEED("Maximum number of records exceeded. The limit is 10000."),
     TOKENS_SIZE_EXCEED("Maximum number of tokens exceeded. The limit is 10000."),
     EMPTY_OR_NULL_VALUE_IN_VALUES("Invalid %s1 request. Value can not be null or empty in values for key \"%s2\"."),
@@ -143,8 +146,11 @@ public enum ErrorLogs {
 
     UNEXPECTED_ERROR_DURING_BATCH_PROCESSING("Unexpected error occurred during batch processing. Error: %s1"),
 
-    PROCESSING_ERROR_RESPONSE("Processing error response.");
-
+    PROCESSING_ERROR_RESPONSE("Processing error response."),
+    TABLE_SPECIFIED_AT_BOTH_PLACE("Invalid %s1 request. Table name cannot be specified at both the request and record levels. Please specify the table name at only one place."),
+    TABLE_NOT_SPECIFIED_AT_BOTH_PLACE("Invalid %s1 request. Table name is missing. Table name should be specified at one place either at the request level or record level. Please specify the table name at one place."),
+    UPSERT_TABLE_REQUEST_AT_RECORD_LEVEL("Invalid %s1 request. Table name should be present at each record level when upsert is present at record level."),
+    UPSERT_TABLE_REQUEST_AT_REQUEST_LEVEL("Invalid %s1 request. Upsert should be present at each record level when table name is present at record level.");
     private final String log;
 
     ErrorLogs(String log) {
