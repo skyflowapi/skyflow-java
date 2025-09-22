@@ -3,7 +3,7 @@ package com.skyflow;
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.Env;
-import com.skyflow.enums.UpdateType;
+import com.skyflow.enums.UpsertType;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.generated.rest.resources.recordservice.RecordserviceClient;
@@ -217,7 +217,7 @@ public class VaultClientTests {
                 com.skyflow.vault.data.InsertRequest.builder()
                         .records(records)
                         .upsert(upsertColumns)
-                        .upsertType(UpdateType.REPLACE)
+                        .upsertType(UpsertType.REPLACE)
                         .build();
 
         InsertRequest result = vaultClient.getBulkInsertRequestBody(request, vaultConfig);
@@ -231,7 +231,7 @@ public class VaultClientTests {
         Map<String, Object> data = new HashMap<>();
         data.put("key", "value");
         List<String> upsertColumns = Arrays.asList("col2");
-        InsertRecord record = InsertRecord.builder().data(data).upsert(upsertColumns).upsertType(UpdateType.UPDATE).build();
+        InsertRecord record = InsertRecord.builder().data(data).upsert(upsertColumns).upsertType(UpsertType.UPDATE).build();
         System.out.println("record upsert: " + record.getUpsertType());
         ArrayList<InsertRecord> records = new ArrayList<>();
         records.add(record);
