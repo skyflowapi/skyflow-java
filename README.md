@@ -374,7 +374,7 @@ Skyflow returns tokens and data for the records that were just inserted.
 }
 ```
 
-### An [example](https://github.com/skyflowapi/skyflow-java/blob/v3/samples/src/main/java/com/example/vault/BulkInsertSync.java) of a sync bulkInsert call for inserting data into multiple tables
+### An [example](https://github.com/skyflowapi/skyflow-java/blob/v3/samples/src/main/java/com/example/vault/BulkMultiTableInsertSync.java) of a sync bulkInsert call for inserting data into multiple tables
 
 The `bulkInsert` operation will insert records in multiple tables the data synchronously into the vault.
 
@@ -614,7 +614,7 @@ Skyflow returns tokens and data for the records you just inserted.
 }
 ```
 
-### An [example](https://github.com/skyflowapi/skyflow-java/blob/v3/samples/src/main/java/com/example/vault/BulkInsertAsync.java) of an async bulkInsert call for inserting data into multiple tables
+### An [example](https://github.com/skyflowapi/skyflow-java/blob/v3/samples/src/main/java/com/example/vault/BulkMultiTableInsertAsync.java) of an async bulkInsert call for inserting data into multiple tables
 
 The `bulkInsertAsync` operation operation will insert records in multiple tables the data asynchronously into the vault.
 
