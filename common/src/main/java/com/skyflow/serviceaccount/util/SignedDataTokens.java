@@ -56,7 +56,7 @@ public class SignedDataTokens {
             FileReader reader = new FileReader(String.valueOf(credentialsFile));
             JsonObject serviceAccountCredentials = JsonParser.parseReader(reader).getAsJsonObject();
             responseToken = generateSignedTokensFromCredentials(serviceAccountCredentials, dataTokens, timeToLive, context);
-        } catch (JsonSyntaxException e) {
+        } catch (JsonSyntaxException | IllegalStateException e) {
             LogUtil.printErrorLog(ErrorLogs.INVALID_CREDENTIALS_FILE_FORMAT.getLog());
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), BaseUtils.parameterizedString(
                     ErrorMessage.FileInvalidJson.getMessage(), credentialsFile.getPath()));
@@ -80,7 +80,7 @@ public class SignedDataTokens {
             }
             JsonObject serviceAccountCredentials = JsonParser.parseString(credentials).getAsJsonObject();
             responseToken = generateSignedTokensFromCredentials(serviceAccountCredentials, dataTokens, timeToLive, context);
-        } catch (JsonSyntaxException e) {
+        } catch (JsonSyntaxException | IllegalStateException e) {
             LogUtil.printErrorLog(ErrorLogs.INVALID_CREDENTIALS_STRING_FORMAT.getLog());
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(),
                     ErrorMessage.CredentialsStringInvalidJson.getMessage());

@@ -208,7 +208,7 @@ public class VaultClientTests {
         Map<String, Object> data = new HashMap<>();
         data.put("key", "value");
         InsertRecord record = InsertRecord.builder().data(data).build();
-                ArrayList<InsertRecord> records = new ArrayList<>();
+        ArrayList<InsertRecord> records = new ArrayList<>();
         records.add(record);
 
 
@@ -232,10 +232,8 @@ public class VaultClientTests {
         data.put("key", "value");
         List<String> upsertColumns = Arrays.asList("col2");
         InsertRecord record = InsertRecord.builder().data(data).upsert(upsertColumns).upsertType(UpsertType.UPDATE).build();
-        System.out.println("record upsert: " + record.getUpsertType());
         ArrayList<InsertRecord> records = new ArrayList<>();
         records.add(record);
-
 
         com.skyflow.vault.data.InsertRequest request =
                 com.skyflow.vault.data.InsertRequest.builder()
@@ -244,7 +242,6 @@ public class VaultClientTests {
 
         InsertRequest result = vaultClient.getBulkInsertRequestBody(request, vaultConfig);
         Assert.assertNotNull(result.getRecords().get().get(0).getUpsert());
-        System.out.println("result upsert: " + result.getRecords().get().get(0).getUpsert());
         Assert.assertEquals("col2", result.getRecords().get().get(0).getUpsert().get().getUniqueColumns().get().get(0));
         Assert.assertEquals("UPDATE", result.getRecords().get().get(0).getUpsert().get().getUpdateType().get().name());
     }
@@ -255,7 +252,7 @@ public class VaultClientTests {
         data.put("key", "value");
         List<String> upsertColumns = Arrays.asList("col3");
         InsertRecord record = InsertRecord.builder().data(data).table("table3").upsert(upsertColumns).build();
-                ArrayList<InsertRecord> records = new ArrayList<>();
+        ArrayList<InsertRecord> records = new ArrayList<>();
         records.add(record);
 
 

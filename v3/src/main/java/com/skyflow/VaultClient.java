@@ -1,8 +1,5 @@
 package com.skyflow;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.UpsertType;
@@ -24,11 +21,13 @@ import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.utils.validations.Validations;
 import com.skyflow.vault.data.DetokenizeRequest;
 import com.skyflow.vault.data.InsertRecord;
-
 import io.github.cdimascio.dotenv.Dotenv;
 import io.github.cdimascio.dotenv.DotenvException;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class VaultClient {
@@ -115,9 +114,10 @@ public class VaultClient {
         } catch (DotenvException e) {
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(),
                     ErrorMessage.EmptyCredentials.getMessage());
-        } catch (Exception e) {
-            throw new RuntimeException(e);
         }
+//         catch (Exception e) {
+//            throw new RuntimeException(e);
+//        }
     }
 
     protected void updateExecutorInHTTP() {
@@ -139,10 +139,10 @@ public class VaultClient {
         for (InsertRecord record : records) {
             InsertRecordData.Builder data = InsertRecordData.builder();
             data.data(record.getData());
-            if (record.getTable() != null && !record.getTable().isEmpty()){
+            if (record.getTable() != null && !record.getTable().isEmpty()) {
                 data.tableName(record.getTable());
             }
-            if (record.getUpsert() != null && !record.getUpsert().isEmpty()){
+            if (record.getUpsert() != null && !record.getUpsert().isEmpty()) {
                 if (record.getUpsertType() != null) {
                     EnumUpdateType updateType = null;
                     if (record.getUpsertType() == UpsertType.REPLACE) {
@@ -164,7 +164,7 @@ public class VaultClient {
                 .vaultId(config.getVaultId())
                 .records(insertRecordDataList);
 
-        if (request.getTable() != null && !request.getTable().isEmpty()){
+        if (request.getTable() != null && !request.getTable().isEmpty()) {
             builder.tableName(request.getTable());
         }
 
