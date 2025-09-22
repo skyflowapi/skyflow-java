@@ -179,12 +179,12 @@ The [Vault](https://github.com/skyflowapi/skyflow-java/tree/main/src/main/java/c
 To insert data into your vault, use the `bulkinsert` or `bulkInsertAsync` methods.  The `InsertRequest` class creates an insert request, which includes the values to be inserted as a list of records.
 
 ### Construct an insert request
-
 ```java
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.vault.data.InsertRequest;
 import com.skyflow.vault.data.InsertResponse;
-
+import com.skyflow.enums.UpsertType;
+import com.skyflow.vault.data.InsertRecord;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -195,44 +195,70 @@ import java.util.HashMap;
 public class InsertSchema {
     public static void main(String[] args) {
         try {
-		        // Initialize Skyflow client
+            // Initialize Skyflow client
             
             // Step 1: Prepare the data to be inserted into the Skyflow vault
-            ArrayList<HashMap<String, Object>> insertData = new ArrayList<>();
+            HashMap<String, Object> recordData1 = new HashMap<>();
+            recordData1.put("<YOUR_COLUMN_NAME_1>", "<YOUR_VALUE_1>");
+            recordData1.put("<YOUR_COLUMN_NAME_2>", "<YOUR_VALUE_1>");
+            
+            // Specify the columns to be used for upsert operation
+            List<String> upsertColumns = new ArrayList<>();
+            upsertColumns.add("<YOUR_COLUMN_NAME_1>");
 
             // Create the first record with field names and their respective values
-            HashMap<String, Object> insertRecord1 = new HashMap<>();
-            insertRecord1.put("<FIELD_NAME_1>", "<VALUE_1>"); // Replace with actual field name and value
-            insertRecord1.put("<FIELD_NAME_2>", "<VALUE_2>"); // Replace with actual field name and value
-
-            // Create the second record with field names and their respective values
-            HashMap<String, Object> insertRecord2 = new HashMap<>();
-            insertRecord2.put("<FIELD_NAME_1>", "<VALUE_1>"); // Replace with actual field name and value
-            insertRecord2.put("<FIELD_NAME_2>", "<VALUE_2>"); // Replace with actual field name and value
-
-            // Add the records to the list of data to be inserted
-            insertData.add(insertRecord1);
-            insertData.add(insertRecord2);
-
-            // Step 2: Build an InsertRequest object with the table name and the data to insert
-            InsertRequest insertRequest = InsertRequest.builder()
-                    .table("<TABLE_NAME>") // Replace with the actual table name in your Skyflow vault
-                    .values(insertData)   // Attach the data to be inserted
+            InsertRecord insertRecord1 = InsertRecord
+                    .builder()
+                    .data(recordData1)
+                    .table("<YOUR_TABLE_NAME>")
+                    .upsert(upsertColumns)
+                    .upsertType(UpsertType.UPDATE)
                     .build();
 
-            // Step 3: Use the Skyflow client to perform the sync bulk insert operation
+            // Step 2: Prepare second record for insertion
+            HashMap<String, Object> recordData2 = new HashMap<>();
+            recordData2.put("<YOUR_COLUMN_NAME_1>", "<YOUR_VALUE_1>");
+            recordData2.put("<YOUR_COLUMN_NAME_2>", "<YOUR_VALUE_1>");
+
+            InsertRecord insertRecord2 = InsertRecord
+                    .builder()
+                    .data(recordData2)
+                    .table("<YOUR_TABLE_NAME>")
+                    .build();
+
+            // Step 3: Combine records into a Insert record list
+            ArrayList<InsertRecord> insertRecords = new ArrayList<>();
+            insertRecords.add(insertRecord1);
+            insertRecords.add(insertRecord2);
+
+            // Step 4: Build the insert request with table name and values
+            InsertRequest request = InsertRequest
+                    .builder()
+                    .records(insertRecords)
+                    .table("<YOUR_TABLE_NAME>")
+                    .upsert(upsertColumns)
+                    .upsertType(UpsertType.UPDATE)
+                    .build();
+            
+            // Step 5: Use the Skyflow client to perform the sync bulk insert operation
             InsertResponse insertResponse = skyflowClient.vault().bulkInsert(insertRequest);
 
             // Print the response from the insert operation
             System.out.println("Insert Response: " + insertResponse);
         } catch (SkyflowException e) {
-            // Step 4: Handle any exceptions that occur during the insert operation
+            // Step 6: Handle any exceptions that occur during the insert operation
             System.out.println("Error occurred while inserting data: ");
             e.printStackTrace(); // Print the stack trace for debugging
         }
     }
 }
 ```
+
+**Note**:
+- The table name can be specified either at the request level `InsertRequest` or at the record level `InsertRecord`, but not both.
+- If table name is not specified at the request level `InsertRequest`, then it must be specified in all record objects.
+- If table name is specified at the request level `InsertRequest`, then upsert must also be specified at the request level.
+- If table name is specified at the record level `InsertRecord`, then upsert must also be specified at the record level `InsertRecord`.
 
 ### An [example](https://github.com/skyflowapi/skyflow-java/blob/v3/samples/src/main/java/com/example/vault/BulkInsertSync.java) of a sync bulkInsert call
 
@@ -253,26 +279,40 @@ public class BulkInsertSync {
 		        // Initialize Skyflow client
             
             // Step 1: Prepare the data to be inserted into the Skyflow vault
-            ArrayList<HashMap<String, Object>> insertData = new ArrayList<>();
+            ArrayList<InsertRecord> insertRecords = new ArrayList<>();
 
             // Create the first record with field names and their respective values
-            HashMap<String, Object> insertRecord1 = new HashMap<>();
-            insertRecord1.put("name", "John doe"); // Replace with actual field name and value
-            insertRecord1.put("email", "john.doe@example.com"); // Replace with actual field name and value
+            HashMap<String, Object> insertData1 = new HashMap<>();
+            insertData1.put("name", "John doe"); // Replace with actual field name and value
+            insertData1.put("email", "john.doe@example.com"); // Replace with actual field name and value
+            InsertRecord insertRecord1 = InsertRecord
+                    .builder()
+                    .data(insertData1)
+                    .build();
 
             // Create the second record with field names and their respective values
-            HashMap<String, Object> insertRecord2 = new HashMap<>();
-            insertRecord2.put("name", "Jane doe"); // Replace with actual field name and value
-            insertRecord2.put("email", "jane.doe@example.com"); // Replace with actual field name and value
+            HashMap<String, Object> insertData2 = new HashMap<>();
+            insertData2.put("name", "Jane doe"); // Replace with actual field name and value
+            insertData2.put("email", "jane.doe@example.com"); // Replace with actual field name and value
+            InsertRecord insertRecord2 = InsertRecord
+                    .builder()
+                    .data(insertData2)
+                    .build();
 
             // Add the records to the list of data to be inserted
-            insertData.add(insertRecord1);
-            insertData.add(insertRecord2);
+            insertRecords.add(insertRecord1);
+            insertRecords.add(insertRecord2);
+
+            // Specify the columns to be used for upsert operation
+            List<String> upsertColumns = new ArrayList<>();
+            upsertColumns.add("name"); // // Replace with actual unique field name 
 
             // Step 2: Build an InsertRequest object with the table name and the data to insert
             InsertRequest insertRequest = InsertRequest.builder()
                     .table("table1") // Replace with the actual table name in your Skyflow vault
-                    .values(insertData)   // Attach the data to be inserted
+                    .records(insertRecords)   // Attach the data to be inserted
+                    .upsert(upsertColumns) // upsert 
+                    .upsertType(UpsertType.UPDATE) // upsert type
                     .build();
 
             // Step 3: Use the Skyflow client to perform the sync bulk insert operation
@@ -311,7 +351,8 @@ Skyflow returns tokens and data for the records that were just inserted.
           }
         ]
       },
-      "data": { "email": "john.doe@example.com", "name": "john doe" }
+      "data": { "email": "john.doe@example.com", "name": "john doe" },
+      "table": "table1",
     },
     {
       "index": 1,
@@ -325,7 +366,124 @@ Skyflow returns tokens and data for the records that were just inserted.
           }
         ]
       },
-      "data": { "email": "jane.doe@example.com", "name": "Jane doe" }
+      "data": { "email": "jane.doe@example.com", "name": "Jane doe" },
+      "table": "table1",
+    },
+  ],
+  "errors": []
+}
+```
+
+### An [example](https://github.com/skyflowapi/skyflow-java/blob/v3/samples/src/main/java/com/example/vault/BulkInsertSync.java) of a sync bulkInsert call for inserting data into multiple tables
+
+The `bulkInsert` operation will insert records in multiple tables the data synchronously into the vault.
+
+```java
+/**
+ * Example program to demonstrate how to perform a synchronous bulk insert operation using the Skyflow Java SDK.
+ * The process involves:
+ * 1. Setting up credentials and vault configuration
+ * 2. Creating multiple records to be inserted
+ * 3. Building and executing a bulk insert request
+ * 4. Handling the insert response or any potential errors
+ */
+public class BulkInsertSync {
+    public static void main(String[] args) {
+        try {
+		        // Initialize Skyflow client
+            
+            // Step 1: Prepare the data to be inserted into the Skyflow vault
+            ArrayList<InsertRecord> insertRecords = new ArrayList<>();
+
+            // Create the first record with field names and their respective values
+            HashMap<String, Object> insertData1 = new HashMap<>();
+            insertData1.put("name", "John doe"); // Replace with actual field name and value
+            insertData1.put("email", "john.doe@example.com"); // Replace with actual field name and value
+            
+            // Specify the columns to be used for upsert operation
+            List<String> upsertColumns = new ArrayList<>();
+            upsertColumns.add("name"); // Replace with actual unique field name 
+
+            InsertRecord insertRecord1 = InsertRecord
+                    .builder()
+                    .table("table1") // replace the table name 
+                    .data(insertData1)
+                    .upsert(upsertColumns) // upsert 
+                    .upsertType(UpsertType.UPDATE) // upsert type
+                    .build();
+
+            // Create the second record with field names and their respective values
+            HashMap<String, Object> insertData2 = new HashMap<>();
+            insertData2.put("name", "Jane doe"); // Replace with actual field name and value
+            insertData2.put("email", "jane.doe@example.com"); // Replace with actual field name and value
+            InsertRecord insertRecord2 = InsertRecord
+                    .builder()
+                    .table("table2") // replace the table name 
+                    .data(insertData2)
+                    .build();
+
+            // Add the records to the list of data to be inserted
+            insertRecords.add(insertRecord1);
+            insertRecords.add(insertRecord2);
+
+            // Step 2: Build an InsertRequest object with the table name and the data to insert
+            InsertRequest insertRequest = InsertRequest.builder()
+                    .records(insertRecords)   // Attach the data to be inserted
+                    .build();
+
+            // Step 3: Use the Skyflow client to perform the sync bulk insert operation
+            InsertResponse insertResponse = skyflowClient.vault().bulkInsert(insertRequest);
+
+            // Print the response from the insert operation
+            System.out.println("Insert Response: " + insertResponse);
+        } catch (SkyflowException e) {
+            // Step 4: Handle any exceptions that occur during the insert operation
+            System.out.println("Error occurred while inserting data: ");
+            e.printStackTrace(); // Print the stack trace for debugging
+        }
+    }
+}
+```
+
+Skyflow returns tokens and data for the records that were just inserted.
+
+```json
+{
+  "summary": { 
+    "totalRecords": 2, 
+    "totalInserted": 2,
+    "totalFailed": 0 
+  },
+  "sucess": [
+    {
+      "index": 0,
+      "skyflow_id": "9fac9201-7b8a-4446-93f8-5244e1213bd1",
+      "tokens": {
+        "name": [{ "token": "token_name", "tokenGroupName": "deterministic_string" }],
+        "email": [
+          {
+            "token": "augn0@xebggri.lmp",
+            "tokenGroupName": "nondeterministic_string"
+          }
+        ]
+      },
+      "data": { "email": "john.doe@example.com", "name": "john doe" },
+      "table": "table1",
+    },
+    {
+      "index": 1,
+      "skyflow_id": "9fac9201-7b8a-4446-93f8-5244e1213bd3",
+      "tokens": {
+        "name": [{ "token": "token_name", "tokenGroupName": "deterministic_string" }],
+        "email": [
+          {
+            "token": "buhn0@xebggrj.lmt",
+            "tokenGroupName": "nondeterministic_string"
+          }
+        ]
+      },
+      "data": { "email": "jane.doe@example.com", "name": "Jane doe" },
+      "table":"table2"
     },
   ],
   "errors": []
@@ -357,26 +515,40 @@ public class BulkInsertAsync {
         try {
 		// Initialize Skyflow client
             // Step 1: Prepare the data to be inserted into the Skyflow vault
-            ArrayList<HashMap<String, Object>> insertData = new ArrayList<>();
+            ArrayList<InsertRecord> insertRecords = new ArrayList<>();
 
             // Create the first record with field names and their respective values
-            HashMap<String, Object> insertRecord1 = new HashMap<>();
-            insertRecord1.put("name", "John doe"); // Replace with actual field name and value
-            insertRecord1.put("email", "john.doe@example.com"); // Replace with actual field name and value
+            HashMap<String, Object> insertData1 = new HashMap<>();
+            insertData1.put("name", "John doe"); // Replace with actual field name and value
+            insertData1.put("email", "john.doe@example.com"); // Replace with actual field name and value
+            InsertRecord insertRecord1 = InsertRecord
+                    .builder()
+                    .data(insertData1)
+                    .build();
 
             // Create the second record with field names and their respective values
-            HashMap<String, Object> insertRecord2 = new HashMap<>();
-            insertRecord2.put("name", "Jane doe"); // Replace with actual field name and value
-            insertRecord2.put("email", "jane.doe@example.com"); // Replace with actual field name and value
+            HashMap<String, Object> insertData2 = new HashMap<>();
+            insertData2.put("name", "Jane doe"); // Replace with actual field name and value
+            insertData2.put("email", "jane.doe@example.com"); // Replace with actual field name and value
+            InsertRecord insertRecord2 = InsertRecord
+                    .builder()
+                    .data(insertData2)
+                    .build();
 
             // Add the records to the list of data to be inserted
-            insertData.add(insertRecord1);
-            insertData.add(insertRecord2);
+            insertRecords.add(insertRecord1);
+            insertRecords.add(insertRecord2);
+
+            // Specify the columns to be used for upsert operation
+            List<String> upsertColumns = new ArrayList<>();
+            upsertColumns.add("name"); // // Replace with actual unique field name 
 
             // Step 2: Build an InsertRequest object with the table name and the data to insert
             InsertRequest insertRequest = InsertRequest.builder()
                     .table("table1") // Replace with the actual table name in your Skyflow vault
-                    .values(insertData)   // Attach the data to be inserted
+                    .records(insertRecords)   // Attach the data to be inserted
+                    .upsert(upsertColumns) // upsert 
+                    .upsertType(UpsertType.UPDATE) // upsert type
                     .build();
 
             // Step 3: Perform the async bulk insert operation using the Skyflow client
@@ -419,7 +591,8 @@ Skyflow returns tokens and data for the records you just inserted.
           }
         ]
       },
-      "data": { "email": "john.doe@example.com", "name": "john doe" }
+      "data": { "email": "john.doe@example.com", "name": "john doe" },
+      "table": "table1",
     },
     {
       "index": 1,
@@ -433,12 +606,140 @@ Skyflow returns tokens and data for the records you just inserted.
           }
         ]
       },
-      "data": { "email": "jane.doe@example.com", "name": "Jane doe" }
+      "data": { "email": "jane.doe@example.com", "name": "Jane doe" },
+      "table": "table1",
     },
   ],
   "errors": []
 }
 ```
+
+### An [example](https://github.com/skyflowapi/skyflow-java/blob/v3/samples/src/main/java/com/example/vault/BulkInsertAsync.java) of an async bulkInsert call for inserting data into multiple tables
+
+The `bulkInsertAsync` operation operation will insert records in multiple tables the data asynchronously into the vault.
+
+```java
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.data.InsertRequest;
+import com.skyflow.vault.data.InsertResponse;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+
+/**
+ * Example program to demonstrate how to perform an asynchronous bulk insert operation using the Skyflow Java SDK.
+ * The process involves:
+ * 1. Setting up credentials and vault configuration
+ * 2. Creating multiple records to be inserted
+ * 3. Building and executing an async bulk insert request
+ * 4. Handling the insert response or errors using CompletableFuture
+ */
+public class BulkInsertAsync {
+    public static void main(String[] args) {
+        try {
+		// Initialize Skyflow client
+            // Step 1: Prepare the data to be inserted into the Skyflow vault
+            ArrayList<InsertRecord> insertRecords = new ArrayList<>();
+
+            // Create the first record with field names and their respective values
+            HashMap<String, Object> insertData1 = new HashMap<>();
+            insertData1.put("name", "John doe"); // Replace with actual field name and value
+            insertData1.put("email", "john.doe@example.com"); // Replace with actual field name and value
+            
+            // Specify the columns to be used for upsert operation
+            List<String> upsertColumns = new ArrayList<>();
+            upsertColumns.add("name"); // Replace with actual unique field name 
+
+            InsertRecord insertRecord1 = InsertRecord
+                    .builder()
+                    .table("table1") // replace the table name 
+                    .data(insertData1)
+                    .upsert(upsertColumns) // upsert 
+                    .upsertType(UpsertType.UPDATE) // upsert type
+                    .build();
+
+            // Create the second record with field names and their respective values
+            HashMap<String, Object> insertData2 = new HashMap<>();
+            insertData2.put("name", "Jane doe"); // Replace with actual field name and value
+            insertData2.put("email", "jane.doe@example.com"); // Replace with actual field name and value
+            InsertRecord insertRecord2 = InsertRecord
+                    .builder()
+                    .table("table2") // replace the table name 
+                    .data(insertData2)
+                    .build();
+
+            // Add the records to the list of data to be inserted
+            insertRecords.add(insertRecord1);
+            insertRecords.add(insertRecord2);
+
+            // Step 2: Build an InsertRequest object with the table name and the data to insert
+            InsertRequest insertRequest = InsertRequest.builder()
+                    .records(insertRecords)   // Attach the data to be inserted
+                    .build();
+
+            // Step 3: Perform the async bulk insert operation using the Skyflow client
+            CompletableFuture<InsertResponse> future = skyflowClient.vault().bulkInsertAsync(insertRequest);
+            // Add success and error callbacks
+            future.thenAccept(response -> {
+                System.out.println("Async bulk insert resolved with response:\t" + response);
+            }).exceptionally(throwable -> {
+                System.err.println("Async bulk insert rejected with error:\t" + throwable.getMessage());
+                throw new CompletionException(throwable);
+            });
+        } catch (SkyflowException e) {
+            // Step 7: Handle any exceptions that may occur during the insert/upsert operation
+            System.out.println("Error occurred: ");
+            e.printStackTrace(); // Print the stack trace for debugging purposes
+        }
+    }
+}
+```
+
+Skyflow returns tokens and data for the records you just inserted.
+
+```json
+{
+  "summary": { 
+    "totalRecords": 2, 
+    "totalInserted": 2,
+    "totalFailed": 0 
+  },
+  "sucess": [
+    {
+      "index": 0,
+      "skyflow_id": "9fac9201-7b8a-4446-93f8-5244e1213bd1",
+      "tokens": {
+        "name": [{ "token": "token_name", "tokenGroupName": "deterministic_string" }],
+        "email": [
+          {
+            "token": "augn0@xebggri.lmp",
+            "tokenGroupName": "nondeterministic_string"
+          }
+        ]
+      },
+      "data": { "email": "john.doe@example.com", "name": "john doe" },
+      "table": "table1",
+    },
+    {
+      "index": 1,
+      "skyflow_id": "9fac9201-7b8a-4446-93f8-5244e1213bd3",
+      "tokens": {
+        "name": [{ "token": "token_name", "tokenGroupName": "deterministic_string" }],
+        "email": [
+          {
+            "token": "buhn0@xebggrj.lmt",
+            "tokenGroupName": "nondeterministic_string"
+          }
+        ]
+      },
+      "data": { "email": "jane.doe@example.com", "name": "Jane doe" },
+      "table": "table2",
+    },
+  ],
+  "errors": []
+}
+```
+
 
 ## Bulk detokenize
 
