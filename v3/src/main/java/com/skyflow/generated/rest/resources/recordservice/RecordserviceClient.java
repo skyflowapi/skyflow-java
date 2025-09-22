@@ -5,8 +5,20 @@ package com.skyflow.generated.rest.resources.recordservice;
 
 import com.skyflow.generated.rest.core.ClientOptions;
 import com.skyflow.generated.rest.core.RequestOptions;
-import com.skyflow.generated.rest.resources.recordservice.requests.*;
-import com.skyflow.generated.rest.types.*;
+import com.skyflow.generated.rest.resources.recordservice.requests.DeleteRequest;
+import com.skyflow.generated.rest.resources.recordservice.requests.DeleteTokenRequest;
+import com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest;
+import com.skyflow.generated.rest.resources.recordservice.requests.GetRequest;
+import com.skyflow.generated.rest.resources.recordservice.requests.InsertRequest;
+import com.skyflow.generated.rest.resources.recordservice.requests.TokenizeRequest;
+import com.skyflow.generated.rest.resources.recordservice.requests.UpdateRequest;
+import com.skyflow.generated.rest.types.DeleteResponse;
+import com.skyflow.generated.rest.types.DeleteTokenResponse;
+import com.skyflow.generated.rest.types.DetokenizeResponse;
+import com.skyflow.generated.rest.types.GetResponse;
+import com.skyflow.generated.rest.types.InsertResponse;
+import com.skyflow.generated.rest.types.TokenizeResponse;
+import com.skyflow.generated.rest.types.UpdateResponse;
 
 public class RecordserviceClient {
     protected final ClientOptions clientOptions;
@@ -23,27 +35,6 @@ public class RecordserviceClient {
      */
     public RawRecordserviceClient withRawResponse() {
         return this.rawClient;
-    }
-
-    /**
-     * Executes a query on the specified vault.
-     */
-    public ExecuteQueryResponse executequery() {
-        return this.rawClient.executequery().body();
-    }
-
-    /**
-     * Executes a query on the specified vault.
-     */
-    public ExecuteQueryResponse executequery(ExecuteQueryRequest request) {
-        return this.rawClient.executequery(request).body();
-    }
-
-    /**
-     * Executes a query on the specified vault.
-     */
-    public ExecuteQueryResponse executequery(ExecuteQueryRequest request, RequestOptions requestOptions) {
-        return this.rawClient.executequery(request, requestOptions).body();
     }
 
     public DeleteResponse delete() {

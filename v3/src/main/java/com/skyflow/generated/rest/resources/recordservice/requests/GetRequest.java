@@ -3,12 +3,23 @@
  */
 package com.skyflow.generated.rest.resources.recordservice.requests;
 
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.annotation.Nulls;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.skyflow.generated.rest.core.ObjectMappers;
 import com.skyflow.generated.rest.types.ColumnRedactions;
-
-import java.util.*;
+import com.skyflow.generated.rest.types.GetRequestData;
+import com.skyflow.generated.rest.types.UniqueValue;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 
 @JsonInclude(JsonInclude.Include.NON_ABSENT)
 @JsonDeserialize(builder = GetRequest.Builder.class)
@@ -27,6 +38,10 @@ public final class GetRequest {
 
     private final Optional<Integer> offset;
 
+    private final Optional<List<UniqueValue>> uniqueValues;
+
+    private final Optional<List<GetRequestData>> records;
+
     private final Map<String, Object> additionalProperties;
 
     private GetRequest(
@@ -37,6 +52,8 @@ public final class GetRequest {
             Optional<List<String>> columns,
             Optional<Integer> limit,
             Optional<Integer> offset,
+            Optional<List<UniqueValue>> uniqueValues,
+            Optional<List<GetRequestData>> records,
             Map<String, Object> additionalProperties) {
         this.vaultId = vaultId;
         this.tableName = tableName;
@@ -45,6 +62,8 @@ public final class GetRequest {
         this.columns = columns;
         this.limit = limit;
         this.offset = offset;
+        this.uniqueValues = uniqueValues;
+        this.records = records;
         this.additionalProperties = additionalProperties;
     }
 
@@ -104,7 +123,23 @@ public final class GetRequest {
         return offset;
     }
 
-    @Override
+    /**
+     * @return List of unique constraint values to query records by data
+     */
+    @JsonProperty("uniqueValues")
+    public Optional<List<UniqueValue>> getUniqueValues() {
+        return uniqueValues;
+    }
+
+    /**
+     * @return List of records to be fetched. This field contains tableName and skyflowIDs belonging to the table.
+     */
+    @JsonProperty("records")
+    public Optional<List<GetRequestData>> getRecords() {
+        return records;
+    }
+
+    @java.lang.Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof GetRequest && equalTo((GetRequest) other);
@@ -122,10 +157,12 @@ public final class GetRequest {
                 && columnRedactions.equals(other.columnRedactions)
                 && columns.equals(other.columns)
                 && limit.equals(other.limit)
-                && offset.equals(other.offset);
+                && offset.equals(other.offset)
+                && uniqueValues.equals(other.uniqueValues)
+                && records.equals(other.records);
     }
 
-    @Override
+    @java.lang.Override
     public int hashCode() {
         return Objects.hash(
                 this.vaultId,
@@ -134,10 +171,12 @@ public final class GetRequest {
                 this.columnRedactions,
                 this.columns,
                 this.limit,
-                this.offset);
+                this.offset,
+                this.uniqueValues,
+                this.records);
     }
 
-    @Override
+    @java.lang.Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }
@@ -162,6 +201,10 @@ public final class GetRequest {
 
         private Optional<Integer> offset = Optional.empty();
 
+        private Optional<List<UniqueValue>> uniqueValues = Optional.empty();
+
+        private Optional<List<GetRequestData>> records = Optional.empty();
+
         @JsonAnySetter
         private Map<String, Object> additionalProperties = new HashMap<>();
 
@@ -175,6 +218,8 @@ public final class GetRequest {
             columns(other.getColumns());
             limit(other.getLimit());
             offset(other.getOffset());
+            uniqueValues(other.getUniqueValues());
+            records(other.getRecords());
             return this;
         }
 
@@ -276,9 +321,46 @@ public final class GetRequest {
             return this;
         }
 
+        /**
+         * <p>List of unique constraint values to query records by data</p>
+         */
+        @JsonSetter(value = "uniqueValues", nulls = Nulls.SKIP)
+        public Builder uniqueValues(Optional<List<UniqueValue>> uniqueValues) {
+            this.uniqueValues = uniqueValues;
+            return this;
+        }
+
+        public Builder uniqueValues(List<UniqueValue> uniqueValues) {
+            this.uniqueValues = Optional.ofNullable(uniqueValues);
+            return this;
+        }
+
+        /**
+         * <p>List of records to be fetched. This field contains tableName and skyflowIDs belonging to the table.</p>
+         */
+        @JsonSetter(value = "records", nulls = Nulls.SKIP)
+        public Builder records(Optional<List<GetRequestData>> records) {
+            this.records = records;
+            return this;
+        }
+
+        public Builder records(List<GetRequestData> records) {
+            this.records = Optional.ofNullable(records);
+            return this;
+        }
+
         public GetRequest build() {
             return new GetRequest(
-                    vaultId, tableName, skyflowIDs, columnRedactions, columns, limit, offset, additionalProperties);
+                    vaultId,
+                    tableName,
+                    skyflowIDs,
+                    columnRedactions,
+                    columns,
+                    limit,
+                    offset,
+                    uniqueValues,
+                    records,
+                    additionalProperties);
         }
     }
 }

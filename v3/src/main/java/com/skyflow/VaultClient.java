@@ -2,7 +2,7 @@ package com.skyflow;
 
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
-import com.skyflow.enums.UpdateType;
+import com.skyflow.enums.UpsertType;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
@@ -20,13 +20,13 @@ import com.skyflow.utils.Utils;
 import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.utils.validations.Validations;
 import com.skyflow.vault.data.DetokenizeRequest;
+import com.skyflow.vault.data.InsertRecord;
 import io.github.cdimascio.dotenv.Dotenv;
 import io.github.cdimascio.dotenv.DotenvException;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 
@@ -114,9 +114,10 @@ public class VaultClient {
         } catch (DotenvException e) {
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(),
                     ErrorMessage.EmptyCredentials.getMessage());
-        } catch (Exception e) {
-            throw new RuntimeException(e);
         }
+//         catch (Exception e) {
+//            throw new RuntimeException(e);
+//        }
     }
 
     protected void updateExecutorInHTTP() {
@@ -132,23 +133,47 @@ public class VaultClient {
         apiClientBuilder.httpClient(httpClient);
     }
 
-    protected InsertRequest getBulkInsertRequestBody(com.skyflow.vault.data.InsertRequest request, VaultConfig config) throws SkyflowException {
-        List<HashMap<String, Object>> values = request.getValues();
+    protected InsertRequest getBulkInsertRequestBody(com.skyflow.vault.data.InsertRequest request, VaultConfig config) {
+        ArrayList<InsertRecord> records = request.getRecords();
         List<InsertRecordData> insertRecordDataList = new ArrayList<>();
-        for (HashMap<String, Object> value : values) {
-            InsertRecordData data = InsertRecordData.builder().data(value).build();
-            insertRecordDataList.add(data);
+        for (InsertRecord record : records) {
+            InsertRecordData.Builder data = InsertRecordData.builder();
+            data.data(record.getData());
+            if (record.getTable() != null && !record.getTable().isEmpty()) {
+                data.tableName(record.getTable());
+            }
+            if (record.getUpsert() != null && !record.getUpsert().isEmpty()) {
+                if (record.getUpsertType() != null) {
+                    EnumUpdateType updateType = null;
+                    if (record.getUpsertType() == UpsertType.REPLACE) {
+                        updateType = EnumUpdateType.REPLACE;
+                    } else if (record.getUpsertType() == UpsertType.UPDATE) {
+                        updateType = EnumUpdateType.UPDATE;
+                    }
+                    Upsert upsert = Upsert.builder().uniqueColumns(record.getUpsert()).updateType(updateType).build();
+                    data.upsert(upsert);
+                } else {
+                    Upsert upsert = Upsert.builder().uniqueColumns(record.getUpsert()).build();
+                    data.upsert(upsert);
+                }
+            }
+            insertRecordDataList.add(data.build());
         }
+
         InsertRequest.Builder builder = InsertRequest.builder()
                 .vaultId(config.getVaultId())
-                .records(insertRecordDataList)
-                .tableName(request.getTable());
+                .records(insertRecordDataList);
+
+        if (request.getTable() != null && !request.getTable().isEmpty()) {
+            builder.tableName(request.getTable());
+        }
+
         if (request.getUpsert() != null && !request.getUpsert().isEmpty()) {
             if (request.getUpsertType() != null) {
                 EnumUpdateType updateType = null;
-                if (request.getUpsertType() == UpdateType.REPLACE) {
+                if (request.getUpsertType() == UpsertType.REPLACE) {
                     updateType = EnumUpdateType.REPLACE;
-                } else if (request.getUpsertType() == UpdateType.UPDATE) {
+                } else if (request.getUpsertType() == UpsertType.UPDATE) {
                     updateType = EnumUpdateType.UPDATE;
                 }
                 Upsert upsert = Upsert.builder().uniqueColumns(request.getUpsert()).updateType(updateType).build();

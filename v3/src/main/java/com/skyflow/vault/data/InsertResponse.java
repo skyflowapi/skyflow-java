@@ -19,8 +19,8 @@ public class InsertResponse {
     private List<ErrorRecord> errors;
 
     // Internal fields. Should not be included in toString() output
-    private ArrayList<HashMap<String, Object>> originalPayload;
-    private ArrayList<HashMap<String, Object>> recordsToRetry;
+    private ArrayList<InsertRecord> originalPayload;
+    private ArrayList<InsertRecord> recordsToRetry;
 
     public InsertResponse(List<Success> successRecords, List<ErrorRecord> errorRecords) {
         this.success = successRecords;
@@ -30,7 +30,7 @@ public class InsertResponse {
     public InsertResponse(
             List<Success> successRecords,
             List<ErrorRecord> errorRecords,
-            ArrayList<HashMap<String, Object>> originalPayload
+            ArrayList<InsertRecord> originalPayload
     ) {
         this.success = successRecords;
         this.errors = errorRecords;
@@ -50,7 +50,7 @@ public class InsertResponse {
         return this.errors;
     }
 
-    public ArrayList<HashMap<String, Object>> getRecordsToRetry() {
+    public ArrayList<InsertRecord> getRecordsToRetry() {
         if (recordsToRetry == null) {
             recordsToRetry = new ArrayList<>();
             recordsToRetry = errors.stream()

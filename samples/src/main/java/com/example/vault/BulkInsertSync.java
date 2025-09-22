@@ -5,12 +5,14 @@ import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.Env;
 import com.skyflow.enums.LogLevel;
+import com.skyflow.enums.UpdateType;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.vault.data.InsertRequest;
 import com.skyflow.vault.data.InsertResponse;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * This sample demonstrates how to perform a synchronous bulk insert operation using the Skyflow Java SDK.
@@ -43,24 +45,39 @@ public class BulkInsertSync {
                     .build();
 
             // Step 4: Prepare first record for insertion
-            HashMap<String, Object> record1 = new HashMap<>();
-            record1.put("<YOUR_COLUMN_NAME_1>", "<YOUR_VALUE_1>");
-            record1.put("<YOUR_COLUMN_NAME_2>", "<YOUR_VALUE_1>");
+            HashMap<String, Object> recordData1 = new HashMap<>();
+            recordData1.put("<YOUR_COLUMN_NAME_1>", "<YOUR_VALUE_1>");
+            recordData1.put("<YOUR_COLUMN_NAME_2>", "<YOUR_VALUE_1>");
+
+            InsertRecord insertRecord1 = InsertRecord
+                    .builder()
+                    .data(recordData1)
+                    .build();
 
             // Step 5: Prepare second record for insertion
-            HashMap<String, Object> record2 = new HashMap<>();
-            record2.put("<YOUR_COLUMN_NAME_1>", "<YOUR_VALUE_1>");
-            record2.put("<YOUR_COLUMN_NAME_2>", "<YOUR_VALUE_1>");
+            HashMap<String, Object> recordData2 = new HashMap<>();
+            recordData2.put("<YOUR_COLUMN_NAME_1>", "<YOUR_VALUE_1>");
+            recordData2.put("<YOUR_COLUMN_NAME_2>", "<YOUR_VALUE_1>");
 
-            // Step 6: Combine records into a single list
-            ArrayList<HashMap<String, Object>> values = new ArrayList<>();
-            values.add(record1);
-            values.add(record2);
+            InsertRecord insertRecord2 = InsertRecord
+                    .builder()
+                    .data(recordData2)
+                    .build();
 
-            // Step 7: Build the insert request with table name and values
+            // Step 6: Combine records into a Insert record list
+            ArrayList<InsertRecord> insertRecords = new ArrayList<>();
+            insertRecords.add(insertRecord1);
+            insertRecords.add(insertRecord2);
+
+            List<String> upsertColumns = new ArrayList<>();
+            upsertColumns.add("<YOUR_COLUMN_NAME_1>");
+
+            // Step 7: Build the insert request with table name and insertRecords
             InsertRequest request = InsertRequest.builder()
                     .table("<YOUR_TABLE_NAME>")
-                    .values(values)
+                    .upsert(upsertColumns)
+                    .upsertType(UpdateType.REPLACE)
+                    .records(insertRecords)
                     .build();
 
             // Step 8: Execute the bulk insert operation and print the response

@@ -10,9 +10,10 @@ import java.util.stream.Collectors;
 
 public class DetokenizeResponse {
     @Expose(serialize = true)
-    private List<DetokenizeResponseObject> success;
-    @Expose(serialize = true)
     private DetokenizeSummary summary;
+
+    @Expose(serialize = true)
+    private List<DetokenizeResponseObject> success;
 
     @Expose(serialize = true)
     private List<ErrorRecord> errors;

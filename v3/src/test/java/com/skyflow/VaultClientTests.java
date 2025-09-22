@@ -3,15 +3,21 @@ package com.skyflow;
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.Env;
+import com.skyflow.enums.UpsertType;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.generated.rest.resources.recordservice.RecordserviceClient;
+import com.skyflow.generated.rest.resources.recordservice.requests.InsertRequest;
+import com.skyflow.generated.rest.types.InsertRecordData;
 import com.skyflow.utils.Constants;
 import com.skyflow.utils.SdkVersion;
+import com.skyflow.vault.data.InsertRecord;
 import io.github.cdimascio.dotenv.Dotenv;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import java.util.*;
 
 public class VaultClientTests {
     private static final String INVALID_EXCEPTION_THROWN = "Should not have thrown any exception";
@@ -150,6 +156,120 @@ public class VaultClientTests {
         // common credentials should be prioritised
         Assert.assertEquals(credentials, getPrivateField(vaultClient, "finalCredentials"));
     }
+
+    @Test
+    public void testEmptyRecords() {
+        com.skyflow.vault.data.InsertRequest request =
+                com.skyflow.vault.data.InsertRequest.builder().records(new ArrayList<>()).build();
+        InsertRequest result = vaultClient.getBulkInsertRequestBody(request, vaultConfig);
+        Assert.assertTrue(result.getRecords().get().isEmpty());
+    }
+
+    @Test
+    public void testTableAtRequestLevel() {
+        Map<String, Object> data = new HashMap<>();
+        data.put("key", "value");
+        InsertRecord record = InsertRecord.builder().data(data).build();
+        ArrayList<InsertRecord> records = new ArrayList<>();
+        records.add(record);
+
+        com.skyflow.vault.data.InsertRequest request =
+                com.skyflow.vault.data.InsertRequest.builder()
+                        .table("table1")
+                        .records(records)
+                        .build();
+
+        InsertRequest result = vaultClient.getBulkInsertRequestBody(request, vaultConfig);
+        Assert.assertEquals("table1", result.getTableName().get());
+        List<InsertRecordData> recordData = result.getRecords().get();
+        Assert.assertEquals("value", recordData.get(0).getData().get().get("key"));
+    }
+
+    @Test
+    public void testTableAtRecordLevel() {
+        Map<String, Object> data = new HashMap<>();
+        data.put("key", "value");
+        InsertRecord record = InsertRecord.builder().data(data).table("table2").build();
+
+        ArrayList<InsertRecord> records = new ArrayList<>();
+        records.add(record);
+
+        com.skyflow.vault.data.InsertRequest request =
+                com.skyflow.vault.data.InsertRequest.builder()
+                        .records(records)
+                        .build();
+
+        InsertRequest result = vaultClient.getBulkInsertRequestBody(request, vaultConfig);
+        Assert.assertEquals("table2", result.getRecords().get().get(0).getTableName().get());
+    }
+
+    @Test
+    public void testUpsertAtRequestLevel() {
+        Map<String, Object> data = new HashMap<>();
+        data.put("key", "value");
+        InsertRecord record = InsertRecord.builder().data(data).build();
+        ArrayList<InsertRecord> records = new ArrayList<>();
+        records.add(record);
+
+
+        List<String> upsertColumns = Arrays.asList("col1");
+        com.skyflow.vault.data.InsertRequest request =
+                com.skyflow.vault.data.InsertRequest.builder()
+                        .records(records)
+                        .upsert(upsertColumns)
+                        .upsertType(UpsertType.REPLACE)
+                        .build();
+
+        InsertRequest result = vaultClient.getBulkInsertRequestBody(request, vaultConfig);
+        Assert.assertNotNull(result.getUpsert());
+        Assert.assertEquals("col1", result.getUpsert().get().getUniqueColumns().get().get(0));
+        Assert.assertEquals("REPLACE", result.getUpsert().get().getUpdateType().get().name());
+    }
+
+    @Test
+    public void testUpsertAtRecordLevel() {
+        Map<String, Object> data = new HashMap<>();
+        data.put("key", "value");
+        List<String> upsertColumns = Arrays.asList("col2");
+        InsertRecord record = InsertRecord.builder().data(data).upsert(upsertColumns).upsertType(UpsertType.UPDATE).build();
+        ArrayList<InsertRecord> records = new ArrayList<>();
+        records.add(record);
+
+        com.skyflow.vault.data.InsertRequest request =
+                com.skyflow.vault.data.InsertRequest.builder()
+                        .records(records)
+                        .build();
+
+        InsertRequest result = vaultClient.getBulkInsertRequestBody(request, vaultConfig);
+        Assert.assertNotNull(result.getRecords().get().get(0).getUpsert());
+        Assert.assertEquals("col2", result.getRecords().get().get(0).getUpsert().get().getUniqueColumns().get().get(0));
+        Assert.assertEquals("UPDATE", result.getRecords().get().get(0).getUpsert().get().getUpdateType().get().name());
+    }
+
+    @Test
+    public void testMixedTableAndUpsertLevels() {
+        Map<String, Object> data = new HashMap<>();
+        data.put("key", "value");
+        List<String> upsertColumns = Arrays.asList("col3");
+        InsertRecord record = InsertRecord.builder().data(data).table("table3").upsert(upsertColumns).build();
+        ArrayList<InsertRecord> records = new ArrayList<>();
+        records.add(record);
+
+
+        com.skyflow.vault.data.InsertRequest request =
+                com.skyflow.vault.data.InsertRequest.builder()
+                        .table("table4")
+                        .upsert(Arrays.asList("col4"))
+                        .records(records)
+                        .build();
+
+        InsertRequest result = vaultClient.getBulkInsertRequestBody(request, vaultConfig);
+        Assert.assertEquals("table4", result.getTableName().get());
+        Assert.assertEquals("table3", result.getRecords().get().get(0).getTableName().get());
+        Assert.assertEquals("col3", result.getRecords().get().get(0).getUpsert().get().getUniqueColumns().get().get(0));
+        Assert.assertEquals("col4", result.getUpsert().get().getUniqueColumns().get().get(0));
+    }
+
 
     // Helper methods for reflection field access
     private Object getPrivateField(Object obj, String fieldName) throws Exception {
