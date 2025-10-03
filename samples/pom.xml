@@ -18,7 +18,7 @@
         <dependency>
             <groupId>com.skyflow</groupId>
             <artifactId>skyflow-java</artifactId>
-            <version>3.0.0-beta.3</version>
+            <version>3.0.0-beta.6</version>
         </dependency>
 
     </dependencies>

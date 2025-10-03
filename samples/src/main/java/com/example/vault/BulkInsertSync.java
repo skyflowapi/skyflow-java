@@ -5,8 +5,9 @@ import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.Env;
 import com.skyflow.enums.LogLevel;
-import com.skyflow.enums.UpdateType;
+import com.skyflow.enums.UpsertType;
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.data.InsertRecord;
 import com.skyflow.vault.data.InsertRequest;
 import com.skyflow.vault.data.InsertResponse;
 
@@ -76,7 +77,7 @@ public class BulkInsertSync {
             InsertRequest request = InsertRequest.builder()
                     .table("<YOUR_TABLE_NAME>")
                     .upsert(upsertColumns)
-                    .upsertType(UpdateType.REPLACE)
+                    .upsertType(UpsertType.REPLACE)
                     .records(insertRecords)
                     .build();
 

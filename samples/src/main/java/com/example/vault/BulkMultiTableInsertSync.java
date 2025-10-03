@@ -5,8 +5,9 @@ import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.Env;
 import com.skyflow.enums.LogLevel;
-import com.skyflow.enums.UpdateType;
+import com.skyflow.enums.UpsertType;
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.data.InsertRecord;
 import com.skyflow.vault.data.InsertRequest;
 import com.skyflow.vault.data.InsertResponse;
 
@@ -46,7 +47,7 @@ public class BulkMultiTableInsertSync {
 
             // Step 4: Prepare first record for insertion
             HashMap<String, Object> recordData1 = new HashMap<>();
-            rerecordData1cord1.put("<YOUR_COLUMN_NAME_1>", "<YOUR_VALUE_1>");
+            recordData1.put("<YOUR_COLUMN_NAME_1>", "<YOUR_VALUE_1>");
             recordData1.put("<YOUR_COLUMN_NAME_2>", "<YOUR_VALUE_1>");
 
             List<String> upsertColumns = new ArrayList<>();
