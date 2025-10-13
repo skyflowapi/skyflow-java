@@ -37,6 +37,7 @@ The Skyflow Java SDK is designed to help with integrating Skyflow into a Java ba
   - [Update](#update)
   - [Delete](#delete)
   - [Query](#query)
+  - [Upload File](#upload-file)
 - [Detect](#detect)
   - [Deidentify Text](#deidentify-text)
   - [Reidentify Text](#reidentify-text)
@@ -309,7 +310,7 @@ InsertOptions insertOptions = new InsertOptions(true);
 **V2 (New)**
 
 ```java
-InsertRequest upsertRequest = new InsertRequest.builder()
+InsertRequest upsertRequest = InsertRequest.builder()
        .table("<TABLE_NAME>") // Replace with the table name
        .continueOnError(false) // Stop inserting if any record fails
        .tokenMode(TokenMode.DISABLE) // Disable BYOT
@@ -559,7 +560,7 @@ Skyflow returns tokens for the record that was just inserted.
 
 # Vault
 
-The [Vault](https://github.com/skyflowapi/skyflow-java/tree/main/src/main/java/com/skyflow/vault) module performs operations on the vault, including inserting records, detokenizing tokens, and retrieving tokens associated with a `skyflow_id`.
+The [Vault](https://github.com/skyflowapi/skyflow-java/tree/main/samples/src/main/java/com/example/vault) module performs operations on the vault, including inserting records, detokenizing tokens, and retrieving tokens associated with a `skyflow_id`.
 
 ## Insert data into the vault
 
@@ -621,7 +622,7 @@ public class InsertSchema {
 }
 ```
 
-### Insert call [example](https://github.com/skyflowapi/skyflow-java/blob/SK-1893-update-readme-for-v2/samples/src/main/java/com/example/vault/InsertExample.java) with `continueOnError` option
+### Insert call [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/vault/InsertExample.java) with `continueOnError` option
 
 The `continueOnError` flag is a boolean that determines whether insert operation should proceed despite encountering partial errors. Set to `true` to allow the process to continue even if some errors occur.
 
@@ -802,16 +803,16 @@ public class DetokenizeSchema {
         try {
 		// Initialize Skyflow client
             // Step 1: Initialize a list of tokens to be detokenized (replace with actual tokens)
-            ArrayList<String> tokens = new ArrayList<>();
-            tokens.add("<YOUR_TOKEN_VALUE_1>"); // Replace with your actual token value
-            tokens.add("<YOUR_TOKEN_VALUE_2>"); // Replace with your actual token value
-            tokens.add("<YOUR_TOKEN_VALUE_3>"); // Replace with your actual token value
+            ArrayList<DetokenizeData> detokenizeData1 = new ArrayList<>();
+            DetokenizeData detokenizeDataRecord1 = new DetokenizeData("<YOUR_TOKEN_VALUE_1>", RedactionType.PLAIN_TEXT);   // Replace with a token to detokenize with PLAIN_TEXT redaction
+            DetokenizeData detokenizeDataRecord2 = new DetokenizeData("<YOUR_TOKEN_VALUE_2>", RedactionType.PLAIN_TEXT); // Replace with another token to detokenize with PLAIN_TEXT redaction
+            detokenizeData1.add(detokenizeDataRecord1);
+            detokenizeData1.add(detokenizeDataRecord2);
 
             // Step 2: Create the DetokenizeRequest object with the tokens and redaction type
             DetokenizeRequest detokenizeRequest = DetokenizeRequest.builder()
-                    .tokens(tokens)                        // Provide the list of tokens to be detokenized
+                    .detokenizeData(detokenizeData1)        // Specify  detokenize data with specified redaction types
                     .continueOnError(true)                  // Continue even if one token cannot be detokenized
-                    .redactionType(RedactionType.PLAIN_TEXT) // Specify how the detokenized data should be returned (plain text)
                     .build();                               // Build the detokenization request
 
             // Step 3: Call the Skyflow vault to detokenize the provided tokens
@@ -858,16 +859,16 @@ public class DetokenizeExample {
         try {
 		// Initialize Skyflow client
             // Step 1: Initialize a list of tokens to be detokenized (replace with actual token values)
-            ArrayList<String> tokens = new ArrayList<>();
-            tokens.add("9738-1683-0486-1480"); // Replace with your actual token value
-            tokens.add("6184-6357-8409-6668"); // Replace with your actual token value
-            tokens.add("4914-9088-2814-3840"); // Replace with your actual token value
+            ArrayList<DetokenizeData> detokenizeData1 = new ArrayList<>();
+            DetokenizeData detokenizeDataRecord1 = new DetokenizeData("9738-1683-0486-1480", RedactionType.PLAIN_TEXT);   // Replace with a token to detokenize with PLAIN_TEXT redaction
+            DetokenizeData detokenizeDataRecord2 = new DetokenizeData("6184-6357-8409-6668", RedactionType.PLAIN_TEXT); // Replace with another token to detokenize with PLAIN_TEXT redaction
+            detokenizeData1.add(detokenizeDataRecord1);
+            detokenizeData1.add(detokenizeDataRecord2);
 
             // Step 2: Create the DetokenizeRequest object with the tokens and redaction type
             DetokenizeRequest detokenizeRequest = DetokenizeRequest.builder()
-                    .tokens(tokens)                        // Provide the list of tokens to be detokenized
-                    .continueOnError(false)                 // Stop the process if any token cannot be detokenized
-                    .redactionType(RedactionType.PLAIN_TEXT) // Specify how the detokenized data should be returned (plain text)
+                    .detokenizeData(detokenizeData1)        // Specify  detokenize data with specified redaction types
+                    .continueOnError(true)                  // Continue even if one token cannot be detokenized
                     .build();                               // Build the detokenization request
 
             // Step 3: Call the Skyflow vault to detokenize the provided tokens
@@ -897,11 +898,7 @@ Sample response:
 		"token": "6184-6357-8409-6668",
 		"value": "4111111111111119",
 		"type": "STRING",
-	}, {
-		"token": "4914-9088-2814-3840",
-		"value": "4111111111111118",
-		"type": "STRING",
-	}]
+	}],
 	"errors": []
 }
 
@@ -931,16 +928,19 @@ public class DetokenizeExample {
         try {
 		// Initialize Skyflow client
             // Step 1: Initialize a list of tokens to be detokenized (replace with actual token values)
-            ArrayList<String> tokens = new ArrayList<>();
-            tokens.add("9738-1683-0486-1480"); // Example token value 1
-            tokens.add("6184-6357-8409-6668"); // Example token value 2
-            tokens.add("4914-9088-2814-384");  // Example token value 3
+            // Step 1: Initialize a list of tokens to be detokenized (replace with actual token values)
+            ArrayList<DetokenizeData> detokenizeData1 = new ArrayList<>();
+            DetokenizeData detokenizeDataRecord1 = new DetokenizeData("9738-1683-0486-1480", RedactionType.PLAIN_TEXT);   // Replace with a token to detokenize with PLAIN_TEXT redaction
+            DetokenizeData detokenizeDataRecord2 = new DetokenizeData("6184-6357-8409-6668", RedactionType.PLAIN_TEXT); // Replace with another token to detokenize with PLAIN_TEXT redaction
+            DetokenizeData detokenizeDataRecord2 = new DetokenizeData("4914-9088-2814-384", RedactionType.PLAIN_TEXT); // Replace with another token to detokenize with PLAIN_TEXT redaction
+
+            detokenizeData1.add(detokenizeDataRecord1);
+            detokenizeData1.add(detokenizeDataRecord2);
 
             // Step 2: Create the DetokenizeRequest object with the tokens and redaction type
             DetokenizeRequest detokenizeRequest = DetokenizeRequest.builder()
-                    .tokens(tokens)                        // Provide the list of tokens to detokenize
-                    .continueOnError(true)                  // Continue even if some tokens cannot be detokenized
-                    .redactionType(RedactionType.PLAIN_TEXT) // Specify the format for the detokenized data (plain text)
+                    .detokenizeData(detokenizeData1)        // Specify  detokenize data with specified redaction types
+                    .continueOnError(true)                  // Continue even if one token cannot be detokenized
                     .build();                               // Build the detokenization request
 
             // Step 3: Call the Skyflow vault to detokenize the provided tokens
@@ -970,7 +970,7 @@ Sample response:
 		"token": "6184-6357-8409-6668",
 		"value": "4111111111111119",
 		"type": "STRING",
-	}]
+	}],
 	"errors": [{
 		"token": "4914-9088-2814-384",
 		"error": "Token Not Found",
@@ -1170,7 +1170,7 @@ public class GetSchema {
 
 Retrieve specific records using `skyflow_ids`. Ideal for fetching exact records when IDs are known.
 
-An [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/vault/GetExample.java) of a get call to retrieve data using Redaction type:
+#### An [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/vault/GetExample.java) of a get call to retrieve data using Redaction type:
 
 ```java
 import com.skyflow.enums.RedactionType;
@@ -1250,7 +1250,7 @@ Sample response:
 
 Return tokens for records. Ideal for securely processing sensitive data while maintaining data privacy.
 
-An [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/vault/getExample.java) of get call to retrieve tokens using Skyflow IDs:
+#### An [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/vault/getExample.java) of get call to retrieve tokens using Skyflow IDs:
 
 ```java
 import com.skyflow.enums.RedactionType;
@@ -1326,7 +1326,7 @@ Sample response:
 
 Retrieve records by unique column values. Ideal for querying data without knowing Skyflow IDs, using alternate unique identifiers.
 
-An [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/vault/GetExample.java) of get call to retrieve data using column name and column values:
+#### An [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/vault/GetExample.java) of get call to retrieve data using column name and column values:
 
 ```java
 import com.skyflow.enums.RedactionType;
@@ -1761,6 +1761,102 @@ Sample response:
 }
 ```
 
+## Upload File
+
+To upload files to a Skyflow vault, use the `uploadFile` method. The `UploadFileRequest` class accepts parameters such as the file path, table name, and file name.
+
+### Construct a file upload request
+
+```java
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.file.UploadFileRequest;
+import com.skyflow.vault.file.UploadFileResponse;
+
+/**
+ * This example demonstrates how to upload a file to a Skyflow vault, along with the UploadFileRequest schema.
+ *
+ */
+public class UploadFileSchema {
+    public static void main(String[] args) {
+        try {
+            // Initialize Skyflow client
+            // Step 1: Specify file Object
+            File file = new File("<FILE_PATH>");
+
+            // Step 2: Create an UploadFileRequest with the file details
+            UploadFileRequest uploadFileRequest = UploadFileRequest.builder()
+                    .fileObject(filePath) // File object
+                    .table("<SENSITIVE_TABLE_NAME>") // Vault table to upload into
+                    .columnName("<COLUMN_NAME>") // Column to assign to the uploaded file
+                    .skyflowId("<SKYFLOW_ID>")  // Skyflow id of the record
+                    .build();
+
+            // Step 3: Execute the file upload request on the specified Skyflow vault
+            UploadFileResponse uploadResponse = skyflowClient.vault("<VAULT_ID>").uploadFile(uploadFileRequest); // Replace <VAULT_ID> with your Vault ID
+            System.out.println(uploadResponse); // Print the response containing the upload details
+
+        } catch (SkyflowException e) {
+            // Step 4: Handle any exceptions that occur during the upload
+            System.out.println("Error occurred during file upload:");
+            e.printStackTrace(); // Print the exception stack trace for debugging
+        }
+    }
+}
+
+```
+
+### An [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/vault/FileUploadExample.java) of file upload call
+```java
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.file.UploadFileRequest;
+import com.skyflow.vault.file.UploadFileResponse;
+
+/**
+ * This example demonstrates how to upload a file to a Skyflow vault.
+ *
+ * 1. Initializes the Skyflow client with the Vault ID.
+ * 2. Constructs a file upload request with the file path, table name, and file name.
+ * 3. Executes the upload request against the Skyflow vault.
+ * 4. Prints the response from the upload.
+ */
+public class UploadFileExample {
+    public static void main(String[] args) {
+        try {
+            // Initialize Skyflow client
+            // Step 1: Specify file Object
+            File file = new File("test/sample.txt");
+
+            // Step 2: Create an UploadFileRequest with the file details
+            UploadFileRequest uploadFileRequest = UploadFileRequest.builder()
+                    .fileObject(filePath) // File object
+                    .table("cards") // Vault table to upload into
+                    .columnName("file") // Column to assign to the uploaded file
+                    .skyflowId("c9312531-2087-439a-bd26-74c41f24db83")  // Skyflow id of the record
+                    .build();
+
+            // Step 3: Execute the file upload request
+            UploadFileResponse uploadResponse = skyflowClient.vault("9f27764a10f7946fe56b3258e117").uploadFile(uploadFileRequest); // Vault ID: 9f27764a10f7946fe56b3258e117
+            System.out.println(uploadResponse); // Print upload response (contains upload status and details)
+
+        } catch (SkyflowException e) {
+            // Step 4: Handle any exceptions during the upload
+            System.out.println("Error occurred during file upload:");
+            e.printStackTrace(); // Print exception details for debugging
+        }
+    }
+}
+
+```
+
+Sample response:
+
+```json
+{
+  "skyflowId": "c9312531-2087-439a-bd26-74c41f24db83",
+  "errors": null
+}
+```
+
 # Detect
 Skyflow Detect enables you to deidentify and reidentify sensitive data in text and files, supporting advanced privacy-preserving workflows. The Detect API supports the following operations:
 
@@ -1850,7 +1946,7 @@ public class DeidentifyTextSchema {
 
 ```
 
-## An [example](https://github.com/skyflowapi/skyflow-java/blob/beta-release/25.6.2/samples/src/main/java/com/example/detect/DeidentifyTextExample.java) of deidentify text:
+## An [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/detect/DeidentifyTextExample.java) of deidentify text:
 ```java
 import java.util.ArrayList;
 import java.util.List;
@@ -2013,7 +2109,7 @@ public class ReidentifyTextSchema {
 }
 ```
 
-## An [example](https://github.com/skyflowapi/skyflow-java/blob/beta-release/25.6.2/samples/src/main/java/com/example/detect/ReidentifyTextExample.java) of Reidentify text
+## An [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/detect/ReidentifyTextExample.java) of Reidentify text
 
 ```java
 import com.skyflow.enums.DetectEntities;
@@ -2164,7 +2260,7 @@ public class DeidentifyFileSchema {
 } 
 ```
 
-## An [example](https://github.com/skyflowapi/skyflow-java/blob/beta-release/25.6.2/samples/src/main/java/com/example/detect/DeidentifyFileExample.java) of Deidentify file
+## An [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/detect/DeidentifyFileExample.java) of Deidentify file
 
 ```java
 import java.io.File;
@@ -2205,7 +2301,7 @@ public class DeidentifyFileExample {
                     .build();
 
             // Output configuration
-            String outputDirectory = "deidenfied-file/"; // Replace with the desired output directory to save the deidentified file
+            String outputDirectory = "deidentified-file/"; // Replace with the desired output directory to save the deidentified file
 
             // Entities to detect
             // List<DetectEntities> detectEntities = new ArrayList<>();
@@ -2226,7 +2322,7 @@ public class DeidentifyFileExample {
                     .build();
 
             // Step 3: Invoking deidentifyFile 
-            // Replace `9f27764a10f7946fe56b3258e117` with the acutal vault id
+            // Replace `9f27764a10f7946fe56b3258e117` with the actual vault id
             DeidentifyFileResponse deidentifyFileResponse = skyflowClient.detect("9f27764a10f7946fe56b3258e117").deidentifyFile(deidentifyFileRequest);
             System.out.println("Deidentify file response: " + deidentifyFileResponse.toString());
         } catch (SkyflowException e) {
@@ -2343,7 +2439,7 @@ public class GetDetectRunSchema {
 
 ```
 
-## An [example](https://github.com/skyflowapi/skyflow-java/blob/beta-release/25.6.2/samples/src/main/java/com/example/detect/GetDetectRunExample.java) of get run
+## An [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/detect/GetDetectRunExample.java) of get run
 ```java
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
@@ -2606,7 +2702,7 @@ This section covers methods for generating and managing tokens to authenticate A
 
 ## Generate a bearer token
 
-The [Service Account](https://github.com/skyflowapi/skyflow-java/tree/v2/src/main/java/com/skyflow/serviceaccount/util) Java module generates service account tokens using a service account credentials file, which is provided when a service account is created. The tokens generated by this module are valid for 60 minutes and can be used to make API calls to the [Data](https://docs.skyflow.com/record/) and [Management](https://docs.skyflow.com/management/) APIs, depending on the permissions assigned to the service account.
+The [Service Account](https://github.com/skyflowapi/skyflow-java/tree/main/src/main/java/com/skyflow/serviceaccount/util) Java module generates service account tokens using a service account credentials file, which is provided when a service account is created. The tokens generated by this module are valid for 60 minutes and can be used to make API calls to the [Data](https://docs.skyflow.com/record/) and [Management](https://docs.skyflow.com/management/) APIs, depending on the permissions assigned to the service account.
 
 The `BearerToken` utility class generates bearer tokens using a credentials JSON file. Alternatively, you can pass the credentials as a string.
 
@@ -2887,7 +2983,7 @@ message: Authentication failed. Bearer token is expired. Use a valid bearer toke
 
 If you encounter this kind of error, retry the request. During the retry, the SDK detects that the previous bearer token has expired and generates a new one for the current and subsequent requests.
 
-#### [Example](https://github.com/skyflowapi/skyflow-java/blob/v2/samples/src/main/java/com/example/serviceaccount/BearerTokenExpiryExample.java):
+#### [Example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/serviceaccount/BearerTokenExpiryExample.java):
 
 ```java
 package com.example.serviceaccount;

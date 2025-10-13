@@ -7,6 +7,7 @@ import com.skyflow.enums.Env;
 import com.skyflow.enums.LogLevel;
 import com.skyflow.enums.RedactionType;
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.tokens.DetokenizeData;
 import com.skyflow.vault.tokens.DetokenizeRequest;
 import com.skyflow.vault.tokens.DetokenizeResponse;
 import io.github.cdimascio.dotenv.Dotenv;
@@ -66,15 +67,16 @@ public class BearerTokenExpiryExample {
      */
     public static void detokenizeData(Skyflow skyflowClient) throws SkyflowException {
         // Creating a list of tokens to be detokenized
-        ArrayList<String> tokenList = new ArrayList<>();
-        tokenList.add("<YOUR_TOKEN_VALUE_1>"); // First token
-        tokenList.add("<YOUR_TOKEN_VALUE_2>"); // Second token
+        DetokenizeData detokenizeDataToken1 = new DetokenizeData("<YOUR_TOKEN_VALUE_1>", RedactionType.PLAIN_TEXT);
+        DetokenizeData detokenizeDataToken2 = new DetokenizeData("<YOUR_TOKEN_VALUE_2>");
+        ArrayList<DetokenizeData> detokenizeDataList = new ArrayList<>();
+        detokenizeDataList.add(detokenizeDataToken1); // First token
+        detokenizeDataList.add(detokenizeDataToken2); // Second token
 
         // Building a detokenization request with the token list and configuration
         DetokenizeRequest detokenizeRequest = DetokenizeRequest.builder()
-                .tokens(tokenList) // Adding tokens to the request
+                .detokenizeData(detokenizeDataList) // Adding tokens to the request
                 .continueOnError(false) // Stop on error
-                .redactionType(RedactionType.PLAIN_TEXT) // Redaction type (e.g., PLAIN_TEXT)
                 .build();
 
         // Sending the detokenization request and receiving the response

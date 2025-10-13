@@ -5,6 +5,7 @@ import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.Env;
 import com.skyflow.enums.LogLevel;
+import com.skyflow.enums.RedactionType;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.vault.tokens.DetokenizeData;
 import com.skyflow.vault.tokens.DetokenizeRequest;
@@ -53,7 +54,7 @@ public class DetokenizeExample {
             detokenizeData1.add(detokenizeDataRecord2);
 
             DetokenizeRequest detokenizeRequest1 = DetokenizeRequest.builder()
-                    .detokenizeData(detokenizeData1)     // Specify the tokens to detokenize with specified redaction types
+                    .detokenizeData(detokenizeData1)     // Specify  detokenize data with specified redaction types
                     .continueOnError(true)              // Continue processing even if an error occurs for some tokens
                     .build();
 
