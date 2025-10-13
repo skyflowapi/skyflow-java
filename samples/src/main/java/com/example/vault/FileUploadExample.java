@@ -28,9 +28,9 @@ public class FileUploadExample {
 
         // Step 2: Configure the vault connection
         VaultConfig primaryVaultConfig = new VaultConfig();
-        primaryVaultConfig.setVaultId("f1a61d67f4964378888c91cd1a54af5c");         // Replace with your vault ID
-        primaryVaultConfig.setClusterId("qhdmceurtnlz");     // Replace with your vault cluster ID
-        primaryVaultConfig.setEnv(Env.DEV);                        // Set the environment (e.g., DEV, STAGE, SANDBOX)
+        primaryVaultConfig.setVaultId("<VAULT_ID>");         // Replace with your vault ID
+        primaryVaultConfig.setClusterId("<CLUSTER_ID>");     // Replace with your vault cluster ID
+        primaryVaultConfig.setEnv(Env.PROD);                        // Set the environment (e.g., DEV, STAGE, SANDBOX)
         primaryVaultConfig.setCredentials(credentials);             // Associate credentials with the vault configuration
 
         // Step 3: Set up general Skyflow client credentials
@@ -50,8 +50,8 @@ public class FileUploadExample {
             File file = new File("<FILE_PATH>"); // Replace with the path to the file you want to upload
 
             // Step 6: Create the file upload request
-            UploadFileRequest uploadFileRequest = UploadFileRequest.builder()
-                    .fileObject(filePath)            // File object
+            FileUploadRequest uploadFileRequest = FileUploadRequest.builder()
+                    .fileObject(file)            // File object
                     .table("<SENSITIVE_TABLE_NAME>") // Vault table to upload into
                     .columnName("<COLUMN_NAME>")     // Column to assign to the uploaded file
                     .skyflowId("<SKYFLOW_ID>")       // Skyflow id of the record

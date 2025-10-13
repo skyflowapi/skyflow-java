@@ -1769,8 +1769,8 @@ To upload files to a Skyflow vault, use the `uploadFile` method. The `UploadFile
 
 ```java
 import com.skyflow.errors.SkyflowException;
-import com.skyflow.vault.file.UploadFileRequest;
-import com.skyflow.vault.file.UploadFileResponse;
+import com.skyflow.vault.data.FileUploadRequest;
+import com.skyflow.vault.data.FileUploadResponse;
 
 /**
  * This example demonstrates how to upload a file to a Skyflow vault, along with the UploadFileRequest schema.
@@ -1784,16 +1784,16 @@ public class UploadFileSchema {
             File file = new File("<FILE_PATH>");
 
             // Step 2: Create an UploadFileRequest with the file details
-            UploadFileRequest uploadFileRequest = UploadFileRequest.builder()
-                    .fileObject(filePath) // File object
+            FileUploadRequest uploadFileRequest = FileUploadRequest.builder()
+                    .fileObject(file)            // File object
                     .table("<SENSITIVE_TABLE_NAME>") // Vault table to upload into
-                    .columnName("<COLUMN_NAME>") // Column to assign to the uploaded file
-                    .skyflowId("<SKYFLOW_ID>")  // Skyflow id of the record
+                    .columnName("<COLUMN_NAME>")     // Column to assign to the uploaded file
+                    .skyflowId("<SKYFLOW_ID>")       // Skyflow id of the record
                     .build();
 
             // Step 3: Execute the file upload request on the specified Skyflow vault
-            UploadFileResponse uploadResponse = skyflowClient.vault("<VAULT_ID>").uploadFile(uploadFileRequest); // Replace <VAULT_ID> with your Vault ID
-            System.out.println(uploadResponse); // Print the response containing the upload details
+            FileUploadResponse fileUploadResponse = skyflowClient.vault().uploadFile(uploadFileRequest);
+            System.out.println("File Upload Response: " + fileUploadResponse);
 
         } catch (SkyflowException e) {
             // Step 4: Handle any exceptions that occur during the upload
@@ -1808,8 +1808,8 @@ public class UploadFileSchema {
 ### An [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/vault/FileUploadExample.java) of file upload call
 ```java
 import com.skyflow.errors.SkyflowException;
-import com.skyflow.vault.file.UploadFileRequest;
-import com.skyflow.vault.file.UploadFileResponse;
+import com.skyflow.vault.data.FileUploadRequest;
+import com.skyflow.vault.data.FileUploadResponse;
 
 /**
  * This example demonstrates how to upload a file to a Skyflow vault.
@@ -1827,16 +1827,16 @@ public class UploadFileExample {
             File file = new File("test/sample.txt");
 
             // Step 2: Create an UploadFileRequest with the file details
-            UploadFileRequest uploadFileRequest = UploadFileRequest.builder()
-                    .fileObject(filePath) // File object
+            FileUploadRequest uploadFileRequest = FileUploadRequest.builder()
+                    .fileObject(file) // File object
                     .table("cards") // Vault table to upload into
                     .columnName("file") // Column to assign to the uploaded file
                     .skyflowId("c9312531-2087-439a-bd26-74c41f24db83")  // Skyflow id of the record
                     .build();
 
             // Step 3: Execute the file upload request
-            UploadFileResponse uploadResponse = skyflowClient.vault("9f27764a10f7946fe56b3258e117").uploadFile(uploadFileRequest); // Vault ID: 9f27764a10f7946fe56b3258e117
-            System.out.println(uploadResponse); // Print upload response (contains upload status and details)
+            FileUploadResponse uploadResponse = skyflowClient.vault("9f27764a10f7946fe56b3258e117").uploadFile(uploadFileRequest);
+            System.out.println("File Upload Response: " + fileUploadResponse);
 
         } catch (SkyflowException e) {
             // Step 4: Handle any exceptions during the upload
