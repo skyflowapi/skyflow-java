@@ -1,0 +1,50 @@
+name: Endor Labs Scan Java Project
+
+on:
+  workflow_dispatch:
+    inputs:
+      java_version:
+        description: "The version of Java to be used for build"
+        default: "8.0.422"
+        required: true
+
+jobs:
+  build-and-scan:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: ${{ github.event.inputs.java_version }}
+
+      - name: Create env
+        id: create-env
+        run: |
+          touch .env
+          echo SKYFLOW_CREDENTIALS=${{ secrets.SKYFLOW_CREDENTIALS }} >> .env
+          echo TEST_EXPIRED_TOKEN=${{ secrets.TEST_EXPIRED_TOKEN }} >> .env
+          echo TEST_REUSABLE_TOKEN=${{ secrets.TEST_REUSABLE_TOKEN }} >> .env
+
+      - name: create-json
+        id: create-json
+        uses: jsdaniell/create-json@1.1.2
+        with:
+          name: "credentials.json"
+          json: ${{ secrets.TEST_CREDENTIALS_FILE_STRING }}
+
+      - name: Compile Package
+        run: mvn -B package -f pom.xml -Dmaven.javadoc.skip=true
+
+      - name: Endor Labs SCA Scan
+        uses: endorlabs/github-action@main
+        with:
+          namespace: "skyflow"
+          api: "https://api.endorlabs.com"
+          pr: false
+          enable_github_action_token: true
+          scan_dependencies: true
+          additional_args: "--as-default-branch --call-graph-languages=java"
