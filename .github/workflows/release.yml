@@ -1,7 +1,7 @@
 name: Public release
 on:
   push:
-    tags: '*.*.*'
+    tags: '[0-9]+.[0-9]+.[0-9]+'
 jobs:
   build-and-deploy:
     uses: ./.github/workflows/shared-build-and-deploy.yml
