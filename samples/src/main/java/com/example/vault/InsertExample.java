@@ -27,12 +27,12 @@ public class InsertExample {
         Credentials credentials = new Credentials();
         credentials.setApiKey("<YOUR_API_KEY>"); // Replace with the actual API key
 
-        // Step 2: Configure the first vault
-        VaultConfig primaryVaultConfig = new VaultConfig();
-        primaryVaultConfig.setVaultId("<YOUR_VAULT_ID_1>");         // Replace with the first vault ID
-        primaryVaultConfig.setClusterId("<YOUR_CLUSTER_ID_1>");     // Replace with the first vault cluster ID
-        primaryVaultConfig.setEnv(Env.PROD);                        // Set the environment (e.g., DEV, STAGE, SANDBOX)
-        primaryVaultConfig.setCredentials(credentials);             // Associate credentials with the vault
+        // Step 2: Configure the vault
+        VaultConfig vaultConfig = new VaultConfig();
+        vaultConfig.setVaultId("<YOUR_VAULT_ID_1>");         // Replace with the vault ID
+        vaultConfig.setClusterId("<YOUR_CLUSTER_ID_1>");     // Replace with the first vault cluster ID
+        vaultConfig.setEnv(Env.PROD);                        // Set the environment (e.g., DEV, STAGE, SANDBOX)
+        vaultConfig.setCredentials(credentials);             // Associate credentials with the vault
 
         // Step 3: Set up credentials for the Skyflow client
         Credentials skyflowCredentials = new Credentials();
@@ -41,11 +41,11 @@ public class InsertExample {
         // Step 4: Create a Skyflow client and add vault configurations
         Skyflow skyflowClient = Skyflow.builder()
                 .setLogLevel(LogLevel.ERROR)               // Set log level to ERROR to limit output
-                .addVaultConfig(primaryVaultConfig)        // Add the vault configuration
+                .addVaultConfig(vaultConfig)        // Add the vault configuration
                 .addSkyflowCredentials(skyflowCredentials) // Add general Skyflow credentials
                 .build();
 
-        // Example 1: Insert records into the first vault with TokenMode enabled
+        // Example 1: Insert records into the vault with TokenMode enabled
         try {
             ArrayList<HashMap<String, Object>> values1 = new ArrayList<>();
             HashMap<String, Object> value1 = new HashMap<>();
@@ -73,7 +73,7 @@ public class InsertExample {
             System.out.println("Error during insertion with TokenMode enabled:" + e);
         }
 
-        // Example 2: Insert records into the first vault with TokenMode disabled and upsert enabled
+        // Example 2: Insert records into the vault with TokenMode disabled and upsert enabled
         try {
             ArrayList<HashMap<String, Object>> values2 = new ArrayList<>();
             HashMap<String, Object> value2 = new HashMap<>();

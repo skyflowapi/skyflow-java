@@ -26,12 +26,12 @@ public class FileUploadExample {
         Credentials credentials = new Credentials();
         credentials.setApiKey("<YOUR_API_KEY>"); // Replace with the actual API key
 
-        // Step 2: Configure the vault connection
-        VaultConfig primaryVaultConfig = new VaultConfig();
-        primaryVaultConfig.setVaultId("<VAULT_ID>");         // Replace with your vault ID
-        primaryVaultConfig.setClusterId("<CLUSTER_ID>");     // Replace with your vault cluster ID
-        primaryVaultConfig.setEnv(Env.PROD);                        // Set the environment (e.g., DEV, STAGE, SANDBOX)
-        primaryVaultConfig.setCredentials(credentials);             // Associate credentials with the vault configuration
+        // Step 2: Configure the vault
+        VaultConfig vaultConfig = new VaultConfig();
+        vaultConfig.setVaultId("<VAULT_ID>");         // Replace with your vault ID
+        vaultConfig.setClusterId("<CLUSTER_ID>");     // Replace with your vault cluster ID
+        vaultConfig.setEnv(Env.PROD);                        // Set the environment (e.g., DEV, STAGE, SANDBOX)
+        vaultConfig.setCredentials(credentials);             // Associate credentials with the vault configuration
 
         // Step 3: Set up general Skyflow client credentials
         Credentials skyflowCredentials = new Credentials();
@@ -40,7 +40,7 @@ public class FileUploadExample {
         // Step 4: Create the Skyflow client and add vault configurations
         Skyflow skyflowClient = Skyflow.builder()
                 .setLogLevel(LogLevel.ERROR)               // Set log level to ERROR to limit output
-                .addVaultConfig(primaryVaultConfig)        // Add the vault configuration
+                .addVaultConfig(vaultConfig)        // Add the vault configuration
                 .addSkyflowCredentials(skyflowCredentials) // Add general Skyflow credentials
                 .build();
 

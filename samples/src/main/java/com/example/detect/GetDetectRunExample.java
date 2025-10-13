@@ -34,7 +34,7 @@ public class GetDetectRunExample {
 
         // Step 3: Create a Skyflow client
         Skyflow skyflowClient = Skyflow.builder()
-                .setLogLevel(LogLevel.DEBUG)               // Enable debugging for detailed logs
+                .setLogLevel(LogLevel.ERROR)               // Set log level to ERROR
                 .addVaultConfig(vaultConfig)               // Add the vault configuration
                 .build();
 

@@ -25,12 +25,12 @@ public class GetExample {
         Credentials credentials = new Credentials();
         credentials.setCredentialsString("<YOUR_CREDENTIALS_STRING_1>"); // Replace with the actual credentials string
 
-        // Step 2: Configure the first vault
-        VaultConfig primaryVaultConfig = new VaultConfig();
-        primaryVaultConfig.setVaultId("<YOUR_VAULT_ID_1>");         // Replace with the ID of the first vault
-        primaryVaultConfig.setClusterId("<YOUR_CLUSTER_ID_1>");     // Replace with the cluster ID of the first vault
-        primaryVaultConfig.setEnv(Env.PROD);                        // Set the environment (e.g., DEV, STAGE, PROD)
-        primaryVaultConfig.setCredentials(credentials);            // Associate the credentials with the vault
+        // Step 2: Configure the vault
+        VaultConfig vaultConfig = new VaultConfig();
+        vaultConfig.setVaultId("<YOUR_VAULT_ID_1>");         // Replace with the ID of the first vault
+        vaultConfig.setClusterId("<YOUR_CLUSTER_ID_1>");     // Replace with the cluster ID of the first vault
+        vaultConfig.setEnv(Env.PROD);                        // Set the environment (e.g., DEV, STAGE, PROD)
+        vaultConfig.setCredentials(credentials);            // Associate the credentials with the vault
 
         // Step 3: Set up credentials for the Skyflow client
         Credentials skyflowCredentials = new Credentials();
@@ -39,11 +39,11 @@ public class GetExample {
         // Step 4: Create a Skyflow client and add vault configurations
         Skyflow skyflowClient = Skyflow.builder()
                 .setLogLevel(LogLevel.ERROR)               // Set log level to ERROR to minimize log output
-                .addVaultConfig(primaryVaultConfig)        // Add the first vault configuration
+                .addVaultConfig(vaultConfig)        // Add the first vault configuration
                 .addSkyflowCredentials(skyflowCredentials) // Add general Skyflow credentials
                 .build();
 
-        // Example 1: Fetch records by Skyflow IDs from the first vault
+        // Example 1: Fetch records by Skyflow IDs from the vault
         try {
             ArrayList<String> ids = new ArrayList<>();
             ids.add("<YOUR_SKYFLOW_ID>");                  // Replace with the Skyflow ID to fetch the record
@@ -60,7 +60,7 @@ public class GetExample {
             e.printStackTrace();
         }
 
-        // Example 2: Fetch records by column values from the second vault
+        // Example 2: Fetch records by column values from the vault
         try {
             ArrayList<String> columnValues = new ArrayList<>();
             columnValues.add("<YOUR_COLUMN_VALUE>");       // Replace with the column value to fetch the record

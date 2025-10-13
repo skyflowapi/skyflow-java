@@ -36,7 +36,7 @@ public class DeidentifyTextExample {
         VaultConfig blitzConfig = new VaultConfig();
         blitzConfig.setVaultId("<YOUR_VAULT_ID_1>");         // Replace with the ID of the first vault
         blitzConfig.setClusterId("<YOUR_CLUSTER_ID_1>");     // Replace with the cluster ID of the first vault
-        blitzConfig.setEnv(Env.DEV);                        // Set the environment (e.g., DEV, STAGE, PROD)
+        blitzConfig.setEnv(Env.PROD);                        // Set the environment (e.g., DEV, STAGE, PROD)
         blitzConfig.setCredentials(credentials);            // Associate the credentials with the vault
 
         // Step 3: Configure the second vault (Stage)
@@ -51,7 +51,7 @@ public class DeidentifyTextExample {
 
         // Step 5: Create a Skyflow client and add vault configurations
         Skyflow skyflowClient = Skyflow.builder()
-                .setLogLevel(LogLevel.DEBUG)               // Enable debugging for detailed logs
+                .setLogLevel(LogLevel.ERROR)               // Set log level to ERROR
                 .addVaultConfig(blitzConfig)               // Add the first vault configuration
                 .addVaultConfig(stageConfig)               // Add the second vault configuration
                 .addSkyflowCredentials(skyflowCredentials) // Add general Skyflow credentials

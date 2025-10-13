@@ -25,12 +25,12 @@ public class UpdateExample {
         Credentials credentials = new Credentials();
         credentials.setApiKey("<YOUR_API_KEY>"); // Replace with the actual API key
 
-        // Step 2: Configure the first vault
-        VaultConfig primaryVaultConfig = new VaultConfig();
-        primaryVaultConfig.setVaultId("<YOUR_VAULT_ID_1>"); // Replace with the ID of the first vault
-        primaryVaultConfig.setClusterId("<YOUR_CLUSTER_ID_1>"); // Replace with the cluster ID of the first vault
-        primaryVaultConfig.setEnv(Env.PROD); // Set the environment (e.g., DEV, STAGE, PROD)
-        primaryVaultConfig.setCredentials(credentials); // Associate the credentials with the vault
+        // Step 2: Configure the vault
+        VaultConfig vaultConfig = new VaultConfig();
+        vaultConfig.setVaultId("<YOUR_VAULT_ID_1>"); // Replace with the ID of the vault
+        vaultConfig.setClusterId("<YOUR_CLUSTER_ID_1>"); // Replace with the cluster ID of the vault
+        vaultConfig.setEnv(Env.PROD); // Set the environment (e.g., DEV, STAGE, PROD)
+        vaultConfig.setCredentials(credentials); // Associate the credentials with the vault
 
         // Step 3: Set up credentials for the Skyflow client
         Credentials skyflowCredentials = new Credentials();
@@ -39,7 +39,7 @@ public class UpdateExample {
         // Step 4: Create a Skyflow client and add vault configurations
         Skyflow skyflowClient = Skyflow.builder()
                 .setLogLevel(LogLevel.ERROR) // Enable debugging for detailed logs
-                .addVaultConfig(primaryVaultConfig) // Add the first vault configuration
+                .addVaultConfig(vaultConfig)      // Add the vault configuration
                 .addSkyflowCredentials(skyflowCredentials) // Add general Skyflow credentials
                 .build();
 
