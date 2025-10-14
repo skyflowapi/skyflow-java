@@ -1,6 +1,6 @@
 name: PR CI Checks
 
-on: [ pull_request ]
+on: [pull_request]
 
 jobs:
   check-commit-message:
@@ -11,18 +11,18 @@ jobs:
         uses: gsactions/commit-message-checker@v1
         with:
           pattern: '(\[?[A-Z]{1,5}-[1-9][0-9]*)|(\[AUTOMATED\])|(Merge)|(Release).+$'
-          flags: 'gm'
-          excludeDescription: 'true'
-          checkAllCommitMessages: 'true'
+          flags: "gm"
+          excludeDescription: "true"
+          checkAllCommitMessages: "true"
           accessToken: ${{ secrets.PAT_ACTIONS }}
-          error: 'One of your your commit messages is not matching the format with JIRA ID Ex: ( SDK-123 commit message )'
+          error: "One of your your commit messages is not matching the format with JIRA ID Ex: ( SDK-123 commit message )"
   Test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
       - uses: actions/setup-java@v1
         with:
-          java-version: '1.8'
+          java-version: "11"
 
       - name: create-json
         id: create-json
@@ -31,8 +31,16 @@ jobs:
           name: "credentials.json"
           json: ${{ secrets.TEST_CREDENTIALS_FILE_STRING }}
 
+      - name: create env
+        id: create-env
+        run: |
+          touch .env
+          echo SKYFLOW_CREDENTIALS=${{ secrets.SKYFLOW_CREDENTIALS }} >> .env
+          echo TEST_EXPIRED_TOKEN=${{ secrets.TEST_EXPIRED_TOKEN }} >> .env
+          echo TEST_REUSABLE_TOKEN=${{ secrets.TEST_REUSABLE_TOKEN }} >> .env
+
       - name: Build & Run tests with Maven
-        run: mvn -B package -DTEST_EXPIRED_TOKEN=${{ secrets.TEST_EXPIRED_TOKEN }} -DTEST_DATA_CREDENTIALS_FILE=${{ secrets.TEST_DATA_CREDENTIALS_FILE }} -f pom.xml
+        run: mvn -B package -f pom.xml -Dmaven.javadoc.skip=true
 
       - name: Codecov
         uses: codecov/codecov-action@v2.1.0
