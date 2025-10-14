@@ -22,6 +22,14 @@ jobs:
           name: "credentials.json"
           json: ${{ secrets.TEST_CREDENTIALS_FILE_STRING }}
 
+      - name: create env
+        id: create-env
+        run: |
+          touch .env
+          echo SKYFLOW_CREDENTIALS=${{ secrets.SKYFLOW_CREDENTIALS }} >> .env
+          echo TEST_EXPIRED_TOKEN=${{ secrets.TEST_EXPIRED_TOKEN }} >> .env
+          echo TEST_REUSABLE_TOKEN=${{ secrets.TEST_REUSABLE_TOKEN }} >> .env
+
       - name: Build & Run tests with Maven
         run: mvn -B package -f pom.xml -Dmaven.javadoc.skip=true
 
