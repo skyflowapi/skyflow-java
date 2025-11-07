@@ -12,7 +12,6 @@ import com.skyflow.generated.rest.core.ApiClientApiException;
 import com.skyflow.generated.rest.resources.files.requests.*;
 import com.skyflow.generated.rest.resources.strings.requests.DeidentifyStringRequest;
 import com.skyflow.generated.rest.resources.strings.requests.ReidentifyStringRequest;
-//import com.skyflow.generated.rest.types.DeidentifyStatusResponseOutputType;
 import com.skyflow.generated.rest.types.*;
 import com.skyflow.logs.ErrorLogs;
 import com.skyflow.logs.InfoLogs;
@@ -301,7 +300,8 @@ public final class DetectController extends VaultClient {
                 .orElse(DetectRunsResponseStatus.UNKNOWN.toString());
 
         String fileExtension = firstOutput.getProcessedFileExtension().get().toString();
-
+        Float sizeInKb = response.getSize().orElse(null);
+        Float durationInSeconds = response.getDuration().orElse(null);
         DeidentifyFileResponse deidentifyFileResponse = new DeidentifyFileResponse(
                 fileInfo,
                 firstOutput.getProcessedFile().orElse(null),
@@ -309,8 +309,8 @@ public final class DetectController extends VaultClient {
                 fileExtension,
                 wordCount,
                 charCount,
-                response.getSize().get(),
-                response.getDuration().get(),
+                sizeInKb,
+                durationInSeconds,
                 response.getPages().orElse(null),
                 response.getSlides().orElse(null),
                 getEntities(response),
