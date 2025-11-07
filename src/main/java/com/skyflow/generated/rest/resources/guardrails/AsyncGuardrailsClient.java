@@ -5,8 +5,8 @@ package com.skyflow.generated.rest.resources.guardrails;
 
 import com.skyflow.generated.rest.core.ClientOptions;
 import com.skyflow.generated.rest.core.RequestOptions;
-import com.skyflow.generated.rest.resources.guardrails.requests.CheckGuardrailsRequest;
-import com.skyflow.generated.rest.types.CheckGuardrailsResponse;
+import com.skyflow.generated.rest.resources.guardrails.requests.DetectGuardrailsRequest;
+import com.skyflow.generated.rest.types.DetectGuardrailsResponse;
 import java.util.concurrent.CompletableFuture;
 
 public class AsyncGuardrailsClient {
@@ -29,15 +29,15 @@ public class AsyncGuardrailsClient {
     /**
      * Preserve safety and compliance with usage policies.
      */
-    public CompletableFuture<CheckGuardrailsResponse> checkGuardrails(CheckGuardrailsRequest request) {
+    public CompletableFuture<DetectGuardrailsResponse> checkGuardrails(DetectGuardrailsRequest request) {
         return this.rawClient.checkGuardrails(request).thenApply(response -> response.body());
     }
 
     /**
      * Preserve safety and compliance with usage policies.
      */
-    public CompletableFuture<CheckGuardrailsResponse> checkGuardrails(
-            CheckGuardrailsRequest request, RequestOptions requestOptions) {
+    public CompletableFuture<DetectGuardrailsResponse> checkGuardrails(
+            DetectGuardrailsRequest request, RequestOptions requestOptions) {
         return this.rawClient.checkGuardrails(request, requestOptions).thenApply(response -> response.body());
     }
 }

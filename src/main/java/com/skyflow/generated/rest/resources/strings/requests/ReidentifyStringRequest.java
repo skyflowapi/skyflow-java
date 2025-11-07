@@ -12,28 +12,27 @@ import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.Nulls;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.skyflow.generated.rest.core.ObjectMappers;
-import com.skyflow.generated.rest.resources.strings.types.ReidentifyStringRequestFormat;
+import com.skyflow.generated.rest.types.Format;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import org.jetbrains.annotations.NotNull;
 
 @JsonInclude(JsonInclude.Include.NON_ABSENT)
 @JsonDeserialize(builder = ReidentifyStringRequest.Builder.class)
 public final class ReidentifyStringRequest {
-    private final String text;
+    private final Optional<String> text;
 
-    private final String vaultId;
+    private final Optional<String> vaultId;
 
-    private final Optional<ReidentifyStringRequestFormat> format;
+    private final Optional<Format> format;
 
     private final Map<String, Object> additionalProperties;
 
     private ReidentifyStringRequest(
-            String text,
-            String vaultId,
-            Optional<ReidentifyStringRequestFormat> format,
+            Optional<String> text,
+            Optional<String> vaultId,
+            Optional<Format> format,
             Map<String, Object> additionalProperties) {
         this.text = text;
         this.vaultId = vaultId;
@@ -42,10 +41,10 @@ public final class ReidentifyStringRequest {
     }
 
     /**
-     * @return String to re-identify.
+     * @return Text to reidentify.
      */
     @JsonProperty("text")
-    public String getText() {
+    public Optional<String> getText() {
         return text;
     }
 
@@ -53,15 +52,12 @@ public final class ReidentifyStringRequest {
      * @return ID of the vault where the entities are stored.
      */
     @JsonProperty("vault_id")
-    public String getVaultId() {
+    public Optional<String> getVaultId() {
         return vaultId;
     }
 
-    /**
-     * @return Mapping of perferred data formatting options to entity types. Returned values are dependent on the configuration of the vault storing the data and the permissions of the user or account making the request.
-     */
     @JsonProperty("format")
-    public Optional<ReidentifyStringRequestFormat> getFormat() {
+    public Optional<Format> getFormat() {
         return format;
     }
 
@@ -90,51 +86,23 @@ public final class ReidentifyStringRequest {
         return ObjectMappers.stringify(this);
     }
 
-    public static TextStage builder() {
+    public static Builder builder() {
         return new Builder();
     }
 
-    public interface TextStage {
-        /**
-         * String to re-identify.
-         */
-        VaultIdStage text(@NotNull String text);
-
-        Builder from(ReidentifyStringRequest other);
-    }
-
-    public interface VaultIdStage {
-        /**
-         * ID of the vault where the entities are stored.
-         */
-        _FinalStage vaultId(@NotNull String vaultId);
-    }
-
-    public interface _FinalStage {
-        ReidentifyStringRequest build();
-
-        /**
-         * <p>Mapping of perferred data formatting options to entity types. Returned values are dependent on the configuration of the vault storing the data and the permissions of the user or account making the request.</p>
-         */
-        _FinalStage format(Optional<ReidentifyStringRequestFormat> format);
-
-        _FinalStage format(ReidentifyStringRequestFormat format);
-    }
-
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static final class Builder implements TextStage, VaultIdStage, _FinalStage {
-        private String text;
+    public static final class Builder {
+        private Optional<String> text = Optional.empty();
 
-        private String vaultId;
+        private Optional<String> vaultId = Optional.empty();
 
-        private Optional<ReidentifyStringRequestFormat> format = Optional.empty();
+        private Optional<Format> format = Optional.empty();
 
         @JsonAnySetter
         private Map<String, Object> additionalProperties = new HashMap<>();
 
         private Builder() {}
 
-        @java.lang.Override
         public Builder from(ReidentifyStringRequest other) {
             text(other.getText());
             vaultId(other.getVaultId());
@@ -143,48 +111,44 @@ public final class ReidentifyStringRequest {
         }
 
         /**
-         * String to re-identify.<p>String to re-identify.</p>
-         * @return Reference to {@code this} so that method calls can be chained together.
+         * <p>Text to reidentify.</p>
          */
-        @java.lang.Override
-        @JsonSetter("text")
-        public VaultIdStage text(@NotNull String text) {
-            this.text = Objects.requireNonNull(text, "text must not be null");
+        @JsonSetter(value = "text", nulls = Nulls.SKIP)
+        public Builder text(Optional<String> text) {
+            this.text = text;
+            return this;
+        }
+
+        public Builder text(String text) {
+            this.text = Optional.ofNullable(text);
             return this;
         }
 
         /**
-         * ID of the vault where the entities are stored.<p>ID of the vault where the entities are stored.</p>
-         * @return Reference to {@code this} so that method calls can be chained together.
+         * <p>ID of the vault where the entities are stored.</p>
          */
-        @java.lang.Override
-        @JsonSetter("vault_id")
-        public _FinalStage vaultId(@NotNull String vaultId) {
-            this.vaultId = Objects.requireNonNull(vaultId, "vaultId must not be null");
+        @JsonSetter(value = "vault_id", nulls = Nulls.SKIP)
+        public Builder vaultId(Optional<String> vaultId) {
+            this.vaultId = vaultId;
             return this;
         }
 
-        /**
-         * <p>Mapping of perferred data formatting options to entity types. Returned values are dependent on the configuration of the vault storing the data and the permissions of the user or account making the request.</p>
-         * @return Reference to {@code this} so that method calls can be chained together.
-         */
-        @java.lang.Override
-        public _FinalStage format(ReidentifyStringRequestFormat format) {
-            this.format = Optional.ofNullable(format);
+        public Builder vaultId(String vaultId) {
+            this.vaultId = Optional.ofNullable(vaultId);
             return this;
         }
 
-        /**
-         * <p>Mapping of perferred data formatting options to entity types. Returned values are dependent on the configuration of the vault storing the data and the permissions of the user or account making the request.</p>
-         */
-        @java.lang.Override
         @JsonSetter(value = "format", nulls = Nulls.SKIP)
-        public _FinalStage format(Optional<ReidentifyStringRequestFormat> format) {
+        public Builder format(Optional<Format> format) {
             this.format = format;
             return this;
         }
 
-        @java.lang.Override
+        public Builder format(Format format) {
+            this.format = Optional.ofNullable(format);
+            return this;
+        }
+
         public ReidentifyStringRequest build() {
             return new ReidentifyStringRequest(text, vaultId, format, additionalProperties);
         }

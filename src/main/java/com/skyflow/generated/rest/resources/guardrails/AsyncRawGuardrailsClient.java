@@ -14,8 +14,8 @@ import com.skyflow.generated.rest.core.RequestOptions;
 import com.skyflow.generated.rest.errors.BadRequestError;
 import com.skyflow.generated.rest.errors.InternalServerError;
 import com.skyflow.generated.rest.errors.UnauthorizedError;
-import com.skyflow.generated.rest.resources.guardrails.requests.CheckGuardrailsRequest;
-import com.skyflow.generated.rest.types.CheckGuardrailsResponse;
+import com.skyflow.generated.rest.resources.guardrails.requests.DetectGuardrailsRequest;
+import com.skyflow.generated.rest.types.DetectGuardrailsResponse;
 import com.skyflow.generated.rest.types.ErrorResponse;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
@@ -40,16 +40,16 @@ public class AsyncRawGuardrailsClient {
     /**
      * Preserve safety and compliance with usage policies.
      */
-    public CompletableFuture<ApiClientHttpResponse<CheckGuardrailsResponse>> checkGuardrails(
-            CheckGuardrailsRequest request) {
+    public CompletableFuture<ApiClientHttpResponse<DetectGuardrailsResponse>> checkGuardrails(
+            DetectGuardrailsRequest request) {
         return checkGuardrails(request, null);
     }
 
     /**
      * Preserve safety and compliance with usage policies.
      */
-    public CompletableFuture<ApiClientHttpResponse<CheckGuardrailsResponse>> checkGuardrails(
-            CheckGuardrailsRequest request, RequestOptions requestOptions) {
+    public CompletableFuture<ApiClientHttpResponse<DetectGuardrailsResponse>> checkGuardrails(
+            DetectGuardrailsRequest request, RequestOptions requestOptions) {
         HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
                 .newBuilder()
                 .addPathSegments("v1/detect/guardrails")
@@ -72,7 +72,7 @@ public class AsyncRawGuardrailsClient {
         if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
             client = clientOptions.httpClientWithTimeout(requestOptions);
         }
-        CompletableFuture<ApiClientHttpResponse<CheckGuardrailsResponse>> future = new CompletableFuture<>();
+        CompletableFuture<ApiClientHttpResponse<DetectGuardrailsResponse>> future = new CompletableFuture<>();
         client.newCall(okhttpRequest).enqueue(new Callback() {
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
@@ -80,7 +80,7 @@ public class AsyncRawGuardrailsClient {
                     if (response.isSuccessful()) {
                         future.complete(new ApiClientHttpResponse<>(
                                 ObjectMappers.JSON_MAPPER.readValue(
-                                        responseBody.string(), CheckGuardrailsResponse.class),
+                                        responseBody.string(), DetectGuardrailsResponse.class),
                                 response));
                         return;
                     }

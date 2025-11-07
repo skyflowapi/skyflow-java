@@ -1,11 +1,11 @@
 package com.skyflow.vault.detect;
 
-import com.skyflow.generated.rest.types.DeidentifyFileOutputProcessedFileType;
+import com.skyflow.generated.rest.types.DeidentifiedFileOutputProcessedFileExtension;
+import com.skyflow.generated.rest.types.DeidentifiedFileOutputProcessedFileType;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.Collections;
 
 public class DeidentifyFileResponseTest {
@@ -18,11 +18,11 @@ public class DeidentifyFileResponseTest {
         String extension = ".pdf";
         Integer wordCount = 100;
         Integer charCount = 500;
-        Double sizeInKb = 123.45;
-        Double durationInSeconds = 12.3;
+        Float sizeInKb = 123.45F;
+        Float durationInSeconds = 12.3F;
         Integer pageCount = 5;
         Integer slideCount = 0;
-        FileEntityInfo entityInfo = new FileEntityInfo("PERSON", DeidentifyFileOutputProcessedFileType.ENTITIES, "John Doe");
+        FileEntityInfo entityInfo = new FileEntityInfo("PERSON", DeidentifiedFileOutputProcessedFileType.ENTITIES, DeidentifiedFileOutputProcessedFileExtension.PDF);
         java.util.List<FileEntityInfo> entities = Collections.singletonList(entityInfo);
         String runId = "run-123";
         String status = "SUCCESS";

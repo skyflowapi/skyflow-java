@@ -9,30 +9,31 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.annotation.Nulls;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.skyflow.generated.rest.core.ObjectMappers;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import org.jetbrains.annotations.NotNull;
+import java.util.Optional;
 
 @JsonInclude(JsonInclude.Include.NON_ABSENT)
 @JsonDeserialize(builder = DeidentifyFileResponse.Builder.class)
 public final class DeidentifyFileResponse {
-    private final String runId;
+    private final Optional<String> runId;
 
     private final Map<String, Object> additionalProperties;
 
-    private DeidentifyFileResponse(String runId, Map<String, Object> additionalProperties) {
+    private DeidentifyFileResponse(Optional<String> runId, Map<String, Object> additionalProperties) {
         this.runId = runId;
         this.additionalProperties = additionalProperties;
     }
 
     /**
-     * @return Status URL for the detect run.
+     * @return Status URL for the Detect run.
      */
     @JsonProperty("run_id")
-    public String getRunId() {
+    public Optional<String> getRunId() {
         return runId;
     }
 
@@ -61,50 +62,38 @@ public final class DeidentifyFileResponse {
         return ObjectMappers.stringify(this);
     }
 
-    public static RunIdStage builder() {
+    public static Builder builder() {
         return new Builder();
     }
 
-    public interface RunIdStage {
-        /**
-         * Status URL for the detect run.
-         */
-        _FinalStage runId(@NotNull String runId);
-
-        Builder from(DeidentifyFileResponse other);
-    }
-
-    public interface _FinalStage {
-        DeidentifyFileResponse build();
-    }
-
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static final class Builder implements RunIdStage, _FinalStage {
-        private String runId;
+    public static final class Builder {
+        private Optional<String> runId = Optional.empty();
 
         @JsonAnySetter
         private Map<String, Object> additionalProperties = new HashMap<>();
 
         private Builder() {}
 
-        @java.lang.Override
         public Builder from(DeidentifyFileResponse other) {
             runId(other.getRunId());
             return this;
         }
 
         /**
-         * Status URL for the detect run.<p>Status URL for the detect run.</p>
-         * @return Reference to {@code this} so that method calls can be chained together.
+         * <p>Status URL for the Detect run.</p>
          */
-        @java.lang.Override
-        @JsonSetter("run_id")
-        public _FinalStage runId(@NotNull String runId) {
-            this.runId = Objects.requireNonNull(runId, "runId must not be null");
+        @JsonSetter(value = "run_id", nulls = Nulls.SKIP)
+        public Builder runId(Optional<String> runId) {
+            this.runId = runId;
             return this;
         }
 
-        @java.lang.Override
+        public Builder runId(String runId) {
+            this.runId = Optional.ofNullable(runId);
+            return this;
+        }
+
         public DeidentifyFileResponse build() {
             return new DeidentifyFileResponse(runId, additionalProperties);
         }

@@ -9,28 +9,29 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.annotation.Nulls;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.skyflow.generated.rest.core.ObjectMappers;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import org.jetbrains.annotations.NotNull;
+import java.util.Optional;
 
 @JsonInclude(JsonInclude.Include.NON_ABSENT)
 @JsonDeserialize(builder = ReidentifyFileResponse.Builder.class)
 public final class ReidentifyFileResponse {
-    private final ReidentifyFileResponseStatus status;
+    private final Optional<ReidentifyFileResponseStatus> status;
 
-    private final ReidentifyFileResponseOutputType outputType;
+    private final Optional<ReidentifyFileResponseOutputType> outputType;
 
-    private final ReidentifyFileResponseOutput output;
+    private final Optional<ReidentifiedFileOutput> output;
 
     private final Map<String, Object> additionalProperties;
 
     private ReidentifyFileResponse(
-            ReidentifyFileResponseStatus status,
-            ReidentifyFileResponseOutputType outputType,
-            ReidentifyFileResponseOutput output,
+            Optional<ReidentifyFileResponseStatus> status,
+            Optional<ReidentifyFileResponseOutputType> outputType,
+            Optional<ReidentifiedFileOutput> output,
             Map<String, Object> additionalProperties) {
         this.status = status;
         this.outputType = outputType;
@@ -39,10 +40,10 @@ public final class ReidentifyFileResponse {
     }
 
     /**
-     * @return Status of the re-identify operation.
+     * @return Status of the operation.
      */
     @JsonProperty("status")
-    public ReidentifyFileResponseStatus getStatus() {
+    public Optional<ReidentifyFileResponseStatus> getStatus() {
         return status;
     }
 
@@ -50,12 +51,12 @@ public final class ReidentifyFileResponse {
      * @return Format of the output file.
      */
     @JsonProperty("output_type")
-    public ReidentifyFileResponseOutputType getOutputType() {
+    public Optional<ReidentifyFileResponseOutputType> getOutputType() {
         return outputType;
     }
 
     @JsonProperty("output")
-    public ReidentifyFileResponseOutput getOutput() {
+    public Optional<ReidentifiedFileOutput> getOutput() {
         return output;
     }
 
@@ -84,48 +85,23 @@ public final class ReidentifyFileResponse {
         return ObjectMappers.stringify(this);
     }
 
-    public static StatusStage builder() {
+    public static Builder builder() {
         return new Builder();
     }
 
-    public interface StatusStage {
-        /**
-         * Status of the re-identify operation.
-         */
-        OutputTypeStage status(@NotNull ReidentifyFileResponseStatus status);
-
-        Builder from(ReidentifyFileResponse other);
-    }
-
-    public interface OutputTypeStage {
-        /**
-         * Format of the output file.
-         */
-        OutputStage outputType(@NotNull ReidentifyFileResponseOutputType outputType);
-    }
-
-    public interface OutputStage {
-        _FinalStage output(@NotNull ReidentifyFileResponseOutput output);
-    }
-
-    public interface _FinalStage {
-        ReidentifyFileResponse build();
-    }
-
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static final class Builder implements StatusStage, OutputTypeStage, OutputStage, _FinalStage {
-        private ReidentifyFileResponseStatus status;
+    public static final class Builder {
+        private Optional<ReidentifyFileResponseStatus> status = Optional.empty();
 
-        private ReidentifyFileResponseOutputType outputType;
+        private Optional<ReidentifyFileResponseOutputType> outputType = Optional.empty();
 
-        private ReidentifyFileResponseOutput output;
+        private Optional<ReidentifiedFileOutput> output = Optional.empty();
 
         @JsonAnySetter
         private Map<String, Object> additionalProperties = new HashMap<>();
 
         private Builder() {}
 
-        @java.lang.Override
         public Builder from(ReidentifyFileResponse other) {
             status(other.getStatus());
             outputType(other.getOutputType());
@@ -134,35 +110,44 @@ public final class ReidentifyFileResponse {
         }
 
         /**
-         * Status of the re-identify operation.<p>Status of the re-identify operation.</p>
-         * @return Reference to {@code this} so that method calls can be chained together.
+         * <p>Status of the operation.</p>
          */
-        @java.lang.Override
-        @JsonSetter("status")
-        public OutputTypeStage status(@NotNull ReidentifyFileResponseStatus status) {
-            this.status = Objects.requireNonNull(status, "status must not be null");
+        @JsonSetter(value = "status", nulls = Nulls.SKIP)
+        public Builder status(Optional<ReidentifyFileResponseStatus> status) {
+            this.status = status;
+            return this;
+        }
+
+        public Builder status(ReidentifyFileResponseStatus status) {
+            this.status = Optional.ofNullable(status);
             return this;
         }
 
         /**
-         * Format of the output file.<p>Format of the output file.</p>
-         * @return Reference to {@code this} so that method calls can be chained together.
+         * <p>Format of the output file.</p>
          */
-        @java.lang.Override
-        @JsonSetter("output_type")
-        public OutputStage outputType(@NotNull ReidentifyFileResponseOutputType outputType) {
-            this.outputType = Objects.requireNonNull(outputType, "outputType must not be null");
+        @JsonSetter(value = "output_type", nulls = Nulls.SKIP)
+        public Builder outputType(Optional<ReidentifyFileResponseOutputType> outputType) {
+            this.outputType = outputType;
             return this;
         }
 
-        @java.lang.Override
-        @JsonSetter("output")
-        public _FinalStage output(@NotNull ReidentifyFileResponseOutput output) {
-            this.output = Objects.requireNonNull(output, "output must not be null");
+        public Builder outputType(ReidentifyFileResponseOutputType outputType) {
+            this.outputType = Optional.ofNullable(outputType);
             return this;
         }
 
-        @java.lang.Override
+        @JsonSetter(value = "output", nulls = Nulls.SKIP)
+        public Builder output(Optional<ReidentifiedFileOutput> output) {
+            this.output = output;
+            return this;
+        }
+
+        public Builder output(ReidentifiedFileOutput output) {
+            this.output = Optional.ofNullable(output);
+            return this;
+        }
+
         public ReidentifyFileResponse build() {
             return new ReidentifyFileResponse(status, outputType, output, additionalProperties);
         }

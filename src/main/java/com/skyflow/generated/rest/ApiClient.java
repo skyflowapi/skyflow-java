@@ -31,11 +31,11 @@ public class ApiClient {
 
     protected final Supplier<AuthenticationClient> authenticationClient;
 
-    protected final Supplier<GuardrailsClient> guardrailsClient;
+    protected final Supplier<FilesClient> filesClient;
 
     protected final Supplier<StringsClient> stringsClient;
 
-    protected final Supplier<FilesClient> filesClient;
+    protected final Supplier<GuardrailsClient> guardrailsClient;
 
     public ApiClient(ClientOptions clientOptions) {
         this.clientOptions = clientOptions;
@@ -45,9 +45,9 @@ public class ApiClient {
         this.tokensClient = Suppliers.memoize(() -> new TokensClient(clientOptions));
         this.queryClient = Suppliers.memoize(() -> new QueryClient(clientOptions));
         this.authenticationClient = Suppliers.memoize(() -> new AuthenticationClient(clientOptions));
-        this.guardrailsClient = Suppliers.memoize(() -> new GuardrailsClient(clientOptions));
-        this.stringsClient = Suppliers.memoize(() -> new StringsClient(clientOptions));
         this.filesClient = Suppliers.memoize(() -> new FilesClient(clientOptions));
+        this.stringsClient = Suppliers.memoize(() -> new StringsClient(clientOptions));
+        this.guardrailsClient = Suppliers.memoize(() -> new GuardrailsClient(clientOptions));
     }
 
     public AuditClient audit() {
@@ -74,16 +74,16 @@ public class ApiClient {
         return this.authenticationClient.get();
     }
 
-    public GuardrailsClient guardrails() {
-        return this.guardrailsClient.get();
+    public FilesClient files() {
+        return this.filesClient.get();
     }
 
     public StringsClient strings() {
         return this.stringsClient.get();
     }
 
-    public FilesClient files() {
-        return this.filesClient.get();
+    public GuardrailsClient guardrails() {
+        return this.guardrailsClient.get();
     }
 
     public static ApiClientBuilder builder() {

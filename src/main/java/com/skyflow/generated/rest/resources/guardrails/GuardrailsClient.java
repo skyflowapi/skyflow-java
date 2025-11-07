@@ -5,8 +5,8 @@ package com.skyflow.generated.rest.resources.guardrails;
 
 import com.skyflow.generated.rest.core.ClientOptions;
 import com.skyflow.generated.rest.core.RequestOptions;
-import com.skyflow.generated.rest.resources.guardrails.requests.CheckGuardrailsRequest;
-import com.skyflow.generated.rest.types.CheckGuardrailsResponse;
+import com.skyflow.generated.rest.resources.guardrails.requests.DetectGuardrailsRequest;
+import com.skyflow.generated.rest.types.DetectGuardrailsResponse;
 
 public class GuardrailsClient {
     protected final ClientOptions clientOptions;
@@ -28,14 +28,14 @@ public class GuardrailsClient {
     /**
      * Preserve safety and compliance with usage policies.
      */
-    public CheckGuardrailsResponse checkGuardrails(CheckGuardrailsRequest request) {
+    public DetectGuardrailsResponse checkGuardrails(DetectGuardrailsRequest request) {
         return this.rawClient.checkGuardrails(request).body();
     }
 
     /**
      * Preserve safety and compliance with usage policies.
      */
-    public CheckGuardrailsResponse checkGuardrails(CheckGuardrailsRequest request, RequestOptions requestOptions) {
+    public DetectGuardrailsResponse checkGuardrails(DetectGuardrailsRequest request, RequestOptions requestOptions) {
         return this.rawClient.checkGuardrails(request, requestOptions).body();
     }
 }

@@ -18,7 +18,7 @@ import com.skyflow.generated.rest.resources.strings.requests.DeidentifyStringReq
 import com.skyflow.generated.rest.resources.strings.requests.ReidentifyStringRequest;
 import com.skyflow.generated.rest.types.DeidentifyStringResponse;
 import com.skyflow.generated.rest.types.ErrorResponse;
-import com.skyflow.generated.rest.types.ReidentifyStringResponse;
+import com.skyflow.generated.rest.types.IdentifyResponse;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 import okhttp3.Call;
@@ -130,7 +130,14 @@ public class AsyncRawStringsClient {
     /**
      * Re-identifies tokens in a string.
      */
-    public CompletableFuture<ApiClientHttpResponse<ReidentifyStringResponse>> reidentifyString(
+    public CompletableFuture<ApiClientHttpResponse<IdentifyResponse>> reidentifyString() {
+        return reidentifyString(ReidentifyStringRequest.builder().build());
+    }
+
+    /**
+     * Re-identifies tokens in a string.
+     */
+    public CompletableFuture<ApiClientHttpResponse<IdentifyResponse>> reidentifyString(
             ReidentifyStringRequest request) {
         return reidentifyString(request, null);
     }
@@ -138,7 +145,7 @@ public class AsyncRawStringsClient {
     /**
      * Re-identifies tokens in a string.
      */
-    public CompletableFuture<ApiClientHttpResponse<ReidentifyStringResponse>> reidentifyString(
+    public CompletableFuture<ApiClientHttpResponse<IdentifyResponse>> reidentifyString(
             ReidentifyStringRequest request, RequestOptions requestOptions) {
         HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
                 .newBuilder()
@@ -162,15 +169,14 @@ public class AsyncRawStringsClient {
         if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
             client = clientOptions.httpClientWithTimeout(requestOptions);
         }
-        CompletableFuture<ApiClientHttpResponse<ReidentifyStringResponse>> future = new CompletableFuture<>();
+        CompletableFuture<ApiClientHttpResponse<IdentifyResponse>> future = new CompletableFuture<>();
         client.newCall(okhttpRequest).enqueue(new Callback() {
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
                 try (ResponseBody responseBody = response.body()) {
                     if (response.isSuccessful()) {
                         future.complete(new ApiClientHttpResponse<>(
-                                ObjectMappers.JSON_MAPPER.readValue(
-                                        responseBody.string(), ReidentifyStringResponse.class),
+                                ObjectMappers.JSON_MAPPER.readValue(responseBody.string(), IdentifyResponse.class),
                                 response));
                         return;
                     }
