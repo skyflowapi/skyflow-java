@@ -4,7 +4,6 @@ import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.DetectEntities;
 import com.skyflow.enums.DetectOutputTranscriptions;
-import com.skyflow.enums.TokenType;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
@@ -18,17 +17,15 @@ import com.skyflow.generated.rest.resources.records.RecordsClient;
 import com.skyflow.generated.rest.resources.records.requests.RecordServiceBatchOperationBody;
 import com.skyflow.generated.rest.resources.records.requests.RecordServiceInsertRecordBody;
 import com.skyflow.generated.rest.resources.records.requests.RecordServiceUpdateRecordBody;
-//import com.skyflow.generated.rest.resources.records.requests.UploadFileV2Request;
 import com.skyflow.generated.rest.resources.strings.StringsClient;
 import com.skyflow.generated.rest.resources.strings.requests.DeidentifyStringRequest;
 import com.skyflow.generated.rest.resources.strings.requests.ReidentifyStringRequest;
-//import com.skyflow.generated.rest.resources.strings.types.ReidentifyStringRequestFormat;
 import com.skyflow.generated.rest.resources.strings.types.DeidentifyStringRequestEntityTypesItem;
 import com.skyflow.generated.rest.resources.tokens.TokensClient;
 import com.skyflow.generated.rest.resources.tokens.requests.V1DetokenizePayload;
 import com.skyflow.generated.rest.resources.tokens.requests.V1TokenizePayload;
-import com.skyflow.generated.rest.types.*;
 import com.skyflow.generated.rest.types.Transformations;
+import com.skyflow.generated.rest.types.*;
 import com.skyflow.logs.InfoLogs;
 import com.skyflow.serviceaccount.util.Token;
 import com.skyflow.utils.Constants;
@@ -38,9 +35,8 @@ import com.skyflow.utils.validations.Validations;
 import com.skyflow.vault.data.FileUploadRequest;
 import com.skyflow.vault.data.InsertRequest;
 import com.skyflow.vault.data.UpdateRequest;
-import com.skyflow.vault.detect.*;
 import com.skyflow.vault.detect.DeidentifyFileRequest;
-import com.skyflow.vault.detect.DeidentifyTextRequest;
+import com.skyflow.vault.detect.*;
 import com.skyflow.vault.tokens.ColumnValue;
 import com.skyflow.vault.tokens.DetokenizeData;
 import com.skyflow.vault.tokens.DetokenizeRequest;
@@ -51,7 +47,6 @@ import io.github.cdimascio.dotenv.DotenvException;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -86,7 +81,7 @@ public class VaultClient {
         return this.apiClient.strings();
     }
 
-    protected FilesClient getDetectFileAPi(){
+    protected FilesClient getDetectFileAPi() {
         return this.apiClient.files();
     }
 
@@ -220,14 +215,12 @@ public class VaultClient {
     protected File getFileForFileUpload(FileUploadRequest fileUploadRequest) throws IOException {
         if (fileUploadRequest.getFilePath() != null) {
             return new File(fileUploadRequest.getFilePath());
-        }
-        else if (fileUploadRequest.getBase64() != null) {
+        } else if (fileUploadRequest.getBase64() != null) {
             byte[] decodedBytes = Base64.getDecoder().decode(fileUploadRequest.getBase64());
             File file = new File(fileUploadRequest.getFileName());
             Files.write(file.toPath(), decodedBytes);
             return file;
-        }
-        else if (fileUploadRequest.getFileObject() != null) {
+        } else if (fileUploadRequest.getFileObject() != null) {
             return fileUploadRequest.getFileObject();
         }
         return null;
@@ -238,7 +231,7 @@ public class VaultClient {
         Validations.validateCredentials(this.finalCredentials);
         if (this.finalCredentials.getApiKey() != null) {
             LogUtil.printInfoLog(InfoLogs.REUSE_API_KEY.getLog());
-            token=this.finalCredentials.getApiKey();
+            token = this.finalCredentials.getApiKey();
         } else if (Token.isExpired(token)) {
             LogUtil.printInfoLog(InfoLogs.BEARER_TOKEN_EXPIRED.getLog());
             token = Utils.generateBearerToken(this.finalCredentials);
@@ -433,7 +426,7 @@ public class VaultClient {
     }
 
 
-    protected com.skyflow.generated.rest.resources.files.requests.DeidentifyFileRequestDeidentifyText getDeidentifyTextFileRequest(DeidentifyFileRequest request, String vaultId, String base64Content){
+    protected com.skyflow.generated.rest.resources.files.requests.DeidentifyFileRequestDeidentifyText getDeidentifyTextFileRequest(DeidentifyFileRequest request, String vaultId, String base64Content) {
         List<DeidentifyFileRequestDeidentifyTextEntityTypesItem> mappedEntityTypes = getEntityTypes(request.getEntities(), DeidentifyFileRequestDeidentifyTextEntityTypesItem.class);
 
         TokenFormat tokenFormat = request.getTokenFormat();
@@ -589,8 +582,6 @@ public class VaultClient {
         return DeidentifyFileDocumentPdfRequestDeidentifyPdf.builder()
                 .file(file)
                 .vaultId(vaultId)
-//                .density(request.getPixelDensity() != null ? request.getPixelDensity().doubleValue() : null)
-//                .maxResolution(request.getMaxResolution() != null ? request.getMaxResolution().doubleValue() : null)
                 .entityTypes(mappedEntityTypes)
                 .tokenType(tokenType)
                 .allowRegex(allowRegex)
