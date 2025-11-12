@@ -9,6 +9,7 @@ import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.generated.rest.core.ApiClientApiException;
+import com.skyflow.generated.rest.core.RequestOptions;
 import com.skyflow.generated.rest.resources.files.requests.*;
 import com.skyflow.generated.rest.resources.strings.requests.DeidentifyStringRequest;
 import com.skyflow.generated.rest.resources.strings.requests.ReidentifyStringRequest;
@@ -16,6 +17,7 @@ import com.skyflow.generated.rest.types.*;
 import com.skyflow.logs.ErrorLogs;
 import com.skyflow.logs.InfoLogs;
 import com.skyflow.utils.Constants;
+import com.skyflow.utils.Utils;
 import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.utils.validations.Validations;
 import com.skyflow.vault.detect.*;
@@ -33,6 +35,7 @@ public final class DetectController extends VaultClient {
                     src.map(context::serialize).orElse(null))
             .serializeNulls()
             .create();
+    private static final JsonObject skyMetadata = Utils.getMetrics();
 
     public DetectController(VaultConfig vaultConfig, Credentials credentials) {
         super(vaultConfig, credentials);
@@ -52,8 +55,9 @@ public final class DetectController extends VaultClient {
             String vaultId = super.getVaultConfig().getVaultId();
             DeidentifyStringRequest request = getDeidentifyStringRequest(deidentifyTextRequest, vaultId);
 
-            // Call the API to de-identify the string
-            deidentifyStringResponse = super.getDetectTextApi().deidentifyString(request);
+            // get SDK metrics and call the API to de-identify the string
+            RequestOptions requestOptions = RequestOptions.builder().addHeader(Constants.SDK_METRICS_HEADER_KEY, skyMetadata.toString()).build();
+            deidentifyStringResponse = super.getDetectTextApi().deidentifyString(request, requestOptions);
 
             // Parse the response to DeIdentifyTextResponse
             deidentifyTextResponse = getDeIdentifyTextResponse(deidentifyStringResponse);
@@ -79,8 +83,9 @@ public final class DetectController extends VaultClient {
             String vaultId = super.getVaultConfig().getVaultId();
             ReidentifyStringRequest request = getReidentifyStringRequest(reidentifyTextRequest, vaultId);
 
-            // Call the API to re-identify the string
-            IdentifyResponse reidentifyStringResponse = super.getDetectTextApi().reidentifyString(request);
+            // Get SDK metrics and call the API to re-identify the string
+            RequestOptions requestOptions = RequestOptions.builder().addHeader(Constants.SDK_METRICS_HEADER_KEY, skyMetadata.toString()).build();
+            IdentifyResponse reidentifyStringResponse = super.getDetectTextApi().reidentifyString(request, requestOptions);
 
             // Parse the response to ReidentifyTextResponse
             reidentifyTextResponse = new ReidentifyTextResponse(reidentifyStringResponse.getText());
@@ -134,7 +139,7 @@ public final class DetectController extends VaultClient {
                 if (base64File != null) {
                     byte[] decodedBytes = Base64.getDecoder().decode(base64File);
                     String outputDir = request.getOutputDirectory();
-                    String outputFileName = Constants.PROCESSED_FILE_NAME_PREFIX + fileName.substring(0, fileName.lastIndexOf('.')) + "."+response.getExtension();
+                    String outputFileName = Constants.PROCESSED_FILE_NAME_PREFIX + fileName.substring(0, fileName.lastIndexOf('.')) + "." + response.getExtension();
                     File outputFile;
                     if (outputDir != null && !outputDir.isEmpty()) {
                         outputFile = new File(outputDir, outputFileName);
@@ -156,7 +161,7 @@ public final class DetectController extends VaultClient {
                     String outputDir = request.getOutputDirectory();
                     if (entityBase64 != null) {
                         byte[] entityDecodedBytes = Base64.getDecoder().decode(entityBase64);
-                        String entityFileName = Constants.PROCESSED_FILE_NAME_PREFIX +  fileName.substring(0, fileName.lastIndexOf('.')) + ".json";
+                        String entityFileName = Constants.PROCESSED_FILE_NAME_PREFIX + fileName.substring(0, fileName.lastIndexOf('.')) + ".json";
                         File entityFile;
                         if (outputDir != null && !outputDir.isEmpty()) {
                             entityFile = new File(outputDir, entityFileName);
@@ -199,8 +204,10 @@ public final class DetectController extends VaultClient {
                 GetRunRequest getRunRequest = GetRunRequest.builder()
                         .vaultId(super.getVaultConfig().getVaultId())
                         .build();
+
+                RequestOptions requestOptions = RequestOptions.builder().addHeader(Constants.SDK_METRICS_HEADER_KEY, skyMetadata.toString()).build();
                 response = super.getDetectFileAPi()
-                        .getRun(runId, getRunRequest);
+                        .getRun(runId, getRunRequest, requestOptions);
 
                 DetectRunsResponseStatus status = response.getStatus().get();
 
@@ -258,22 +265,13 @@ public final class DetectController extends VaultClient {
             );
         }
 
-
-
-        Object wordCharObj = response.getAdditionalProperties().get("word_character_count");
         Integer wordCount = null;
         Integer charCount = null;
 
-        if (wordCharObj instanceof Map) {
-            Map<?, ?> wordCharMap = (Map<?, ?>) wordCharObj;
-            Object wc = wordCharMap.get("word_count");
-            Object cc = wordCharMap.get("character_count");
-            if (wc instanceof Number) {
-                wordCount = ((Number) wc).intValue();
-            }
-            if (cc instanceof Number) {
-                charCount = ((Number) cc).intValue();
-            }
+        WordCharacterCount wordCharacterCount = response.getWordCharacterCount().orElse(null);
+        if (wordCharacterCount != null) {
+            wordCount = wordCharacterCount.getWordCount().orElse(null);
+            charCount = wordCharacterCount.getCharacterCount().orElse(null);
         }
 
         File processedFileObject = null;
@@ -350,7 +348,7 @@ public final class DetectController extends VaultClient {
     }
 
 
-    private com.skyflow.generated.rest.types.DeidentifyFileResponse processFileByType(String fileExtension, String base64Content,                                                                         DeidentifyFileRequest request, String vaultId) throws SkyflowException {
+    private com.skyflow.generated.rest.types.DeidentifyFileResponse processFileByType(String fileExtension, String base64Content, DeidentifyFileRequest request, String vaultId) throws SkyflowException {
         switch (fileExtension.toLowerCase()) {
             case "txt":
                 com.skyflow.generated.rest.resources.files.requests.DeidentifyFileRequestDeidentifyText textFileRequest =
