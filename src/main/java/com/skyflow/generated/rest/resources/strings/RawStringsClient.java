@@ -18,7 +18,7 @@ import com.skyflow.generated.rest.resources.strings.requests.DeidentifyStringReq
 import com.skyflow.generated.rest.resources.strings.requests.ReidentifyStringRequest;
 import com.skyflow.generated.rest.types.DeidentifyStringResponse;
 import com.skyflow.generated.rest.types.ErrorResponse;
-import com.skyflow.generated.rest.types.ReidentifyStringResponse;
+import com.skyflow.generated.rest.types.IdentifyResponse;
 import java.io.IOException;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
@@ -105,14 +105,21 @@ public class RawStringsClient {
     /**
      * Re-identifies tokens in a string.
      */
-    public ApiClientHttpResponse<ReidentifyStringResponse> reidentifyString(ReidentifyStringRequest request) {
+    public ApiClientHttpResponse<IdentifyResponse> reidentifyString() {
+        return reidentifyString(ReidentifyStringRequest.builder().build());
+    }
+
+    /**
+     * Re-identifies tokens in a string.
+     */
+    public ApiClientHttpResponse<IdentifyResponse> reidentifyString(ReidentifyStringRequest request) {
         return reidentifyString(request, null);
     }
 
     /**
      * Re-identifies tokens in a string.
      */
-    public ApiClientHttpResponse<ReidentifyStringResponse> reidentifyString(
+    public ApiClientHttpResponse<IdentifyResponse> reidentifyString(
             ReidentifyStringRequest request, RequestOptions requestOptions) {
         HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
                 .newBuilder()
@@ -140,8 +147,7 @@ public class RawStringsClient {
             ResponseBody responseBody = response.body();
             if (response.isSuccessful()) {
                 return new ApiClientHttpResponse<>(
-                        ObjectMappers.JSON_MAPPER.readValue(responseBody.string(), ReidentifyStringResponse.class),
-                        response);
+                        ObjectMappers.JSON_MAPPER.readValue(responseBody.string(), IdentifyResponse.class), response);
             }
             String responseBodyString = responseBody != null ? responseBody.string() : "{}";
             try {

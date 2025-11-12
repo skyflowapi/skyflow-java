@@ -12,9 +12,9 @@ import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.Nulls;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.skyflow.generated.rest.core.ObjectMappers;
-import com.skyflow.generated.rest.resources.files.types.DeidentifyFileRequestFile;
-import com.skyflow.generated.rest.types.EntityType;
-import com.skyflow.generated.rest.types.TokenTypeWithoutVault;
+import com.skyflow.generated.rest.resources.files.types.DeidentifyFileRequestEntityTypesItem;
+import com.skyflow.generated.rest.types.FileData;
+import com.skyflow.generated.rest.types.TokenTypeMapping;
 import com.skyflow.generated.rest.types.Transformations;
 import java.util.HashMap;
 import java.util.List;
@@ -26,15 +26,13 @@ import org.jetbrains.annotations.NotNull;
 @JsonInclude(JsonInclude.Include.NON_ABSENT)
 @JsonDeserialize(builder = DeidentifyFileRequest.Builder.class)
 public final class DeidentifyFileRequest {
+    private final FileData file;
+
     private final String vaultId;
 
-    private final DeidentifyFileRequestFile file;
+    private final Optional<List<DeidentifyFileRequestEntityTypesItem>> entityTypes;
 
-    private final Optional<String> configurationId;
-
-    private final Optional<List<EntityType>> entityTypes;
-
-    private final Optional<TokenTypeWithoutVault> tokenType;
+    private final Optional<TokenTypeMapping> tokenType;
 
     private final Optional<List<String>> allowRegex;
 
@@ -42,62 +40,68 @@ public final class DeidentifyFileRequest {
 
     private final Optional<Transformations> transformations;
 
+    private final Optional<String> configurationId;
+
     private final Map<String, Object> additionalProperties;
 
     private DeidentifyFileRequest(
+            FileData file,
             String vaultId,
-            DeidentifyFileRequestFile file,
-            Optional<String> configurationId,
-            Optional<List<EntityType>> entityTypes,
-            Optional<TokenTypeWithoutVault> tokenType,
+            Optional<List<DeidentifyFileRequestEntityTypesItem>> entityTypes,
+            Optional<TokenTypeMapping> tokenType,
             Optional<List<String>> allowRegex,
             Optional<List<String>> restrictRegex,
             Optional<Transformations> transformations,
+            Optional<String> configurationId,
             Map<String, Object> additionalProperties) {
-        this.vaultId = vaultId;
         this.file = file;
-        this.configurationId = configurationId;
+        this.vaultId = vaultId;
         this.entityTypes = entityTypes;
         this.tokenType = tokenType;
         this.allowRegex = allowRegex;
         this.restrictRegex = restrictRegex;
         this.transformations = transformations;
+        this.configurationId = configurationId;
         this.additionalProperties = additionalProperties;
     }
 
+    @JsonProperty("file")
+    public FileData getFile() {
+        return file;
+    }
+
+    /**
+     * @return ID of a vault that you have Detect Invoker or Vault Owner permissions for.
+     */
     @JsonProperty("vault_id")
     public String getVaultId() {
         return vaultId;
     }
 
     /**
-     * @return File to de-identify. Files are specified as Base64-encoded data.
+     * @return Entities to detect and de-identify.
      */
-    @JsonProperty("file")
-    public DeidentifyFileRequestFile getFile() {
-        return file;
-    }
-
-    @JsonProperty("configuration_id")
-    public Optional<String> getConfigurationId() {
-        return configurationId;
-    }
-
     @JsonProperty("entity_types")
-    public Optional<List<EntityType>> getEntityTypes() {
+    public Optional<List<DeidentifyFileRequestEntityTypesItem>> getEntityTypes() {
         return entityTypes;
     }
 
     @JsonProperty("token_type")
-    public Optional<TokenTypeWithoutVault> getTokenType() {
+    public Optional<TokenTypeMapping> getTokenType() {
         return tokenType;
     }
 
+    /**
+     * @return Regular expressions to display in plaintext. Entities appear in plaintext if an expression matches either the entirety of a detected entity or a substring of it. Expressions don't match across entity boundaries. If a string or entity matches both <code>allow_regex</code> and <code>restrict_regex</code>, the entity is displayed in plaintext.
+     */
     @JsonProperty("allow_regex")
     public Optional<List<String>> getAllowRegex() {
         return allowRegex;
     }
 
+    /**
+     * @return Regular expressions to replace with '[RESTRICTED]'. Expressions must match the entirety of a detected entity, not just a substring, for the entity to be restricted. Expressions don't match across entity boundaries. If a string or entity matches both <code>allow_regex</code> and <code>restrict_regex</code>, the entity is displayed in plaintext. If a string is detected as an entity and a <code>restrict_regex</code> pattern matches the entire detected entity, the entity is replaced with '[RESTRICTED]'. If a string is detected as an entity but a <code>restrict_regex</code> pattern only matches a substring of it, the <code>restrict_regex</code> pattern is ignored, and the entity is processed according to the specified tokenization and transformation settings.
+     */
     @JsonProperty("restrict_regex")
     public Optional<List<String>> getRestrictRegex() {
         return restrictRegex;
@@ -106,6 +110,14 @@ public final class DeidentifyFileRequest {
     @JsonProperty("transformations")
     public Optional<Transformations> getTransformations() {
         return transformations;
+    }
+
+    /**
+     * @return ID of the Detect configuration to use for de-identification. Can't be specified with fields other than <code>vault_id</code>, <code>text</code>, and <code>file</code>.
+     */
+    @JsonProperty("configuration_id")
+    public Optional<String> getConfigurationId() {
+        return configurationId;
     }
 
     @java.lang.Override
@@ -120,27 +132,27 @@ public final class DeidentifyFileRequest {
     }
 
     private boolean equalTo(DeidentifyFileRequest other) {
-        return vaultId.equals(other.vaultId)
-                && file.equals(other.file)
-                && configurationId.equals(other.configurationId)
+        return file.equals(other.file)
+                && vaultId.equals(other.vaultId)
                 && entityTypes.equals(other.entityTypes)
                 && tokenType.equals(other.tokenType)
                 && allowRegex.equals(other.allowRegex)
                 && restrictRegex.equals(other.restrictRegex)
-                && transformations.equals(other.transformations);
+                && transformations.equals(other.transformations)
+                && configurationId.equals(other.configurationId);
     }
 
     @java.lang.Override
     public int hashCode() {
         return Objects.hash(
-                this.vaultId,
                 this.file,
-                this.configurationId,
+                this.vaultId,
                 this.entityTypes,
                 this.tokenType,
                 this.allowRegex,
                 this.restrictRegex,
-                this.transformations);
+                this.transformations,
+                this.configurationId);
     }
 
     @java.lang.Override
@@ -148,42 +160,47 @@ public final class DeidentifyFileRequest {
         return ObjectMappers.stringify(this);
     }
 
-    public static VaultIdStage builder() {
+    public static FileStage builder() {
         return new Builder();
     }
 
-    public interface VaultIdStage {
-        FileStage vaultId(@NotNull String vaultId);
+    public interface FileStage {
+        VaultIdStage file(@NotNull FileData file);
 
         Builder from(DeidentifyFileRequest other);
     }
 
-    public interface FileStage {
+    public interface VaultIdStage {
         /**
-         * File to de-identify. Files are specified as Base64-encoded data.
+         * ID of a vault that you have Detect Invoker or Vault Owner permissions for.
          */
-        _FinalStage file(@NotNull DeidentifyFileRequestFile file);
+        _FinalStage vaultId(@NotNull String vaultId);
     }
 
     public interface _FinalStage {
         DeidentifyFileRequest build();
 
-        _FinalStage configurationId(Optional<String> configurationId);
+        /**
+         * <p>Entities to detect and de-identify.</p>
+         */
+        _FinalStage entityTypes(Optional<List<DeidentifyFileRequestEntityTypesItem>> entityTypes);
 
-        _FinalStage configurationId(String configurationId);
+        _FinalStage entityTypes(List<DeidentifyFileRequestEntityTypesItem> entityTypes);
 
-        _FinalStage entityTypes(Optional<List<EntityType>> entityTypes);
+        _FinalStage tokenType(Optional<TokenTypeMapping> tokenType);
 
-        _FinalStage entityTypes(List<EntityType> entityTypes);
+        _FinalStage tokenType(TokenTypeMapping tokenType);
 
-        _FinalStage tokenType(Optional<TokenTypeWithoutVault> tokenType);
-
-        _FinalStage tokenType(TokenTypeWithoutVault tokenType);
-
+        /**
+         * <p>Regular expressions to display in plaintext. Entities appear in plaintext if an expression matches either the entirety of a detected entity or a substring of it. Expressions don't match across entity boundaries. If a string or entity matches both <code>allow_regex</code> and <code>restrict_regex</code>, the entity is displayed in plaintext.</p>
+         */
         _FinalStage allowRegex(Optional<List<String>> allowRegex);
 
         _FinalStage allowRegex(List<String> allowRegex);
 
+        /**
+         * <p>Regular expressions to replace with '[RESTRICTED]'. Expressions must match the entirety of a detected entity, not just a substring, for the entity to be restricted. Expressions don't match across entity boundaries. If a string or entity matches both <code>allow_regex</code> and <code>restrict_regex</code>, the entity is displayed in plaintext. If a string is detected as an entity and a <code>restrict_regex</code> pattern matches the entire detected entity, the entity is replaced with '[RESTRICTED]'. If a string is detected as an entity but a <code>restrict_regex</code> pattern only matches a substring of it, the <code>restrict_regex</code> pattern is ignored, and the entity is processed according to the specified tokenization and transformation settings.</p>
+         */
         _FinalStage restrictRegex(Optional<List<String>> restrictRegex);
 
         _FinalStage restrictRegex(List<String> restrictRegex);
@@ -191,13 +208,22 @@ public final class DeidentifyFileRequest {
         _FinalStage transformations(Optional<Transformations> transformations);
 
         _FinalStage transformations(Transformations transformations);
+
+        /**
+         * <p>ID of the Detect configuration to use for de-identification. Can't be specified with fields other than <code>vault_id</code>, <code>text</code>, and <code>file</code>.</p>
+         */
+        _FinalStage configurationId(Optional<String> configurationId);
+
+        _FinalStage configurationId(String configurationId);
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static final class Builder implements VaultIdStage, FileStage, _FinalStage {
+    public static final class Builder implements FileStage, VaultIdStage, _FinalStage {
+        private FileData file;
+
         private String vaultId;
 
-        private DeidentifyFileRequestFile file;
+        private Optional<String> configurationId = Optional.empty();
 
         private Optional<Transformations> transformations = Optional.empty();
 
@@ -205,11 +231,9 @@ public final class DeidentifyFileRequest {
 
         private Optional<List<String>> allowRegex = Optional.empty();
 
-        private Optional<TokenTypeWithoutVault> tokenType = Optional.empty();
+        private Optional<TokenTypeMapping> tokenType = Optional.empty();
 
-        private Optional<List<EntityType>> entityTypes = Optional.empty();
-
-        private Optional<String> configurationId = Optional.empty();
+        private Optional<List<DeidentifyFileRequestEntityTypesItem>> entityTypes = Optional.empty();
 
         @JsonAnySetter
         private Map<String, Object> additionalProperties = new HashMap<>();
@@ -218,32 +242,52 @@ public final class DeidentifyFileRequest {
 
         @java.lang.Override
         public Builder from(DeidentifyFileRequest other) {
-            vaultId(other.getVaultId());
             file(other.getFile());
-            configurationId(other.getConfigurationId());
+            vaultId(other.getVaultId());
             entityTypes(other.getEntityTypes());
             tokenType(other.getTokenType());
             allowRegex(other.getAllowRegex());
             restrictRegex(other.getRestrictRegex());
             transformations(other.getTransformations());
+            configurationId(other.getConfigurationId());
             return this;
         }
 
         @java.lang.Override
+        @JsonSetter("file")
+        public VaultIdStage file(@NotNull FileData file) {
+            this.file = Objects.requireNonNull(file, "file must not be null");
+            return this;
+        }
+
+        /**
+         * ID of a vault that you have Detect Invoker or Vault Owner permissions for.<p>ID of a vault that you have Detect Invoker or Vault Owner permissions for.</p>
+         * @return Reference to {@code this} so that method calls can be chained together.
+         */
+        @java.lang.Override
         @JsonSetter("vault_id")
-        public FileStage vaultId(@NotNull String vaultId) {
+        public _FinalStage vaultId(@NotNull String vaultId) {
             this.vaultId = Objects.requireNonNull(vaultId, "vaultId must not be null");
             return this;
         }
 
         /**
-         * File to de-identify. Files are specified as Base64-encoded data.<p>File to de-identify. Files are specified as Base64-encoded data.</p>
+         * <p>ID of the Detect configuration to use for de-identification. Can't be specified with fields other than <code>vault_id</code>, <code>text</code>, and <code>file</code>.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
         @java.lang.Override
-        @JsonSetter("file")
-        public _FinalStage file(@NotNull DeidentifyFileRequestFile file) {
-            this.file = Objects.requireNonNull(file, "file must not be null");
+        public _FinalStage configurationId(String configurationId) {
+            this.configurationId = Optional.ofNullable(configurationId);
+            return this;
+        }
+
+        /**
+         * <p>ID of the Detect configuration to use for de-identification. Can't be specified with fields other than <code>vault_id</code>, <code>text</code>, and <code>file</code>.</p>
+         */
+        @java.lang.Override
+        @JsonSetter(value = "configuration_id", nulls = Nulls.SKIP)
+        public _FinalStage configurationId(Optional<String> configurationId) {
+            this.configurationId = configurationId;
             return this;
         }
 
@@ -260,12 +304,19 @@ public final class DeidentifyFileRequest {
             return this;
         }
 
+        /**
+         * <p>Regular expressions to replace with '[RESTRICTED]'. Expressions must match the entirety of a detected entity, not just a substring, for the entity to be restricted. Expressions don't match across entity boundaries. If a string or entity matches both <code>allow_regex</code> and <code>restrict_regex</code>, the entity is displayed in plaintext. If a string is detected as an entity and a <code>restrict_regex</code> pattern matches the entire detected entity, the entity is replaced with '[RESTRICTED]'. If a string is detected as an entity but a <code>restrict_regex</code> pattern only matches a substring of it, the <code>restrict_regex</code> pattern is ignored, and the entity is processed according to the specified tokenization and transformation settings.</p>
+         * @return Reference to {@code this} so that method calls can be chained together.
+         */
         @java.lang.Override
         public _FinalStage restrictRegex(List<String> restrictRegex) {
             this.restrictRegex = Optional.ofNullable(restrictRegex);
             return this;
         }
 
+        /**
+         * <p>Regular expressions to replace with '[RESTRICTED]'. Expressions must match the entirety of a detected entity, not just a substring, for the entity to be restricted. Expressions don't match across entity boundaries. If a string or entity matches both <code>allow_regex</code> and <code>restrict_regex</code>, the entity is displayed in plaintext. If a string is detected as an entity and a <code>restrict_regex</code> pattern matches the entire detected entity, the entity is replaced with '[RESTRICTED]'. If a string is detected as an entity but a <code>restrict_regex</code> pattern only matches a substring of it, the <code>restrict_regex</code> pattern is ignored, and the entity is processed according to the specified tokenization and transformation settings.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "restrict_regex", nulls = Nulls.SKIP)
         public _FinalStage restrictRegex(Optional<List<String>> restrictRegex) {
@@ -273,12 +324,19 @@ public final class DeidentifyFileRequest {
             return this;
         }
 
+        /**
+         * <p>Regular expressions to display in plaintext. Entities appear in plaintext if an expression matches either the entirety of a detected entity or a substring of it. Expressions don't match across entity boundaries. If a string or entity matches both <code>allow_regex</code> and <code>restrict_regex</code>, the entity is displayed in plaintext.</p>
+         * @return Reference to {@code this} so that method calls can be chained together.
+         */
         @java.lang.Override
         public _FinalStage allowRegex(List<String> allowRegex) {
             this.allowRegex = Optional.ofNullable(allowRegex);
             return this;
         }
 
+        /**
+         * <p>Regular expressions to display in plaintext. Entities appear in plaintext if an expression matches either the entirety of a detected entity or a substring of it. Expressions don't match across entity boundaries. If a string or entity matches both <code>allow_regex</code> and <code>restrict_regex</code>, the entity is displayed in plaintext.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "allow_regex", nulls = Nulls.SKIP)
         public _FinalStage allowRegex(Optional<List<String>> allowRegex) {
@@ -287,55 +345,49 @@ public final class DeidentifyFileRequest {
         }
 
         @java.lang.Override
-        public _FinalStage tokenType(TokenTypeWithoutVault tokenType) {
+        public _FinalStage tokenType(TokenTypeMapping tokenType) {
             this.tokenType = Optional.ofNullable(tokenType);
             return this;
         }
 
         @java.lang.Override
         @JsonSetter(value = "token_type", nulls = Nulls.SKIP)
-        public _FinalStage tokenType(Optional<TokenTypeWithoutVault> tokenType) {
+        public _FinalStage tokenType(Optional<TokenTypeMapping> tokenType) {
             this.tokenType = tokenType;
             return this;
         }
 
+        /**
+         * <p>Entities to detect and de-identify.</p>
+         * @return Reference to {@code this} so that method calls can be chained together.
+         */
         @java.lang.Override
-        public _FinalStage entityTypes(List<EntityType> entityTypes) {
+        public _FinalStage entityTypes(List<DeidentifyFileRequestEntityTypesItem> entityTypes) {
             this.entityTypes = Optional.ofNullable(entityTypes);
             return this;
         }
 
+        /**
+         * <p>Entities to detect and de-identify.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "entity_types", nulls = Nulls.SKIP)
-        public _FinalStage entityTypes(Optional<List<EntityType>> entityTypes) {
+        public _FinalStage entityTypes(Optional<List<DeidentifyFileRequestEntityTypesItem>> entityTypes) {
             this.entityTypes = entityTypes;
-            return this;
-        }
-
-        @java.lang.Override
-        public _FinalStage configurationId(String configurationId) {
-            this.configurationId = Optional.ofNullable(configurationId);
-            return this;
-        }
-
-        @java.lang.Override
-        @JsonSetter(value = "configuration_id", nulls = Nulls.SKIP)
-        public _FinalStage configurationId(Optional<String> configurationId) {
-            this.configurationId = configurationId;
             return this;
         }
 
         @java.lang.Override
         public DeidentifyFileRequest build() {
             return new DeidentifyFileRequest(
-                    vaultId,
                     file,
-                    configurationId,
+                    vaultId,
                     entityTypes,
                     tokenType,
                     allowRegex,
                     restrictRegex,
                     transformations,
+                    configurationId,
                     additionalProperties);
         }
     }

@@ -641,8 +641,10 @@ public class RawRecordsClient {
                         "file", file.get().getName(), RequestBody.create(file.get(), fileMimeTypeMediaType));
             }
             if (request.getColumnName().isPresent()) {
-                QueryStringMapper.addFormDataPart(
-                        body, "columnName", request.getColumnName().get(), false);
+                body.addFormDataPart(
+                        "columnName",
+                        ObjectMappers.JSON_MAPPER.writeValueAsString(
+                                request.getColumnName().get()));
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -821,21 +823,22 @@ public class RawRecordsClient {
                 .build();
         MultipartBody.Builder body = new MultipartBody.Builder().setType(MultipartBody.FORM);
         try {
-            QueryStringMapper.addFormDataPart(body, "tableName", request.getTableName(), false);
-            QueryStringMapper.addFormDataPart(body, "columnName", request.getColumnName(), false);
+            body.addFormDataPart("tableName", ObjectMappers.JSON_MAPPER.writeValueAsString(request.getTableName()));
+            body.addFormDataPart("columnName", ObjectMappers.JSON_MAPPER.writeValueAsString(request.getColumnName()));
             String fileMimeType = Files.probeContentType(file.toPath());
             MediaType fileMimeTypeMediaType = fileMimeType != null ? MediaType.parse(fileMimeType) : null;
             body.addFormDataPart("file", file.getName(), RequestBody.create(file, fileMimeTypeMediaType));
             if (request.getSkyflowId().isPresent()) {
-                QueryStringMapper.addFormDataPart(
-                        body, "skyflowID", request.getSkyflowId().get(), false);
+                body.addFormDataPart(
+                        "skyflowID",
+                        ObjectMappers.JSON_MAPPER.writeValueAsString(
+                                request.getSkyflowId().get()));
             }
             if (request.getReturnFileMetadata().isPresent()) {
-                QueryStringMapper.addFormDataPart(
-                        body,
+                body.addFormDataPart(
                         "returnFileMetadata",
-                        request.getReturnFileMetadata().get(),
-                        false);
+                        ObjectMappers.JSON_MAPPER.writeValueAsString(
+                                request.getReturnFileMetadata().get()));
             }
         } catch (Exception e) {
             throw new RuntimeException(e);

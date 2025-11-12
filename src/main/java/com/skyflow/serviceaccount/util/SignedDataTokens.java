@@ -12,7 +12,6 @@ import com.skyflow.logs.InfoLogs;
 import com.skyflow.utils.Utils;
 import com.skyflow.utils.logger.LogUtil;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -143,8 +142,8 @@ public class SignedDataTokens {
                     .claim("sub", clientID)
                     .claim("ctx", context)
                     .claim("tok", dataToken)
-                    .setExpiration(expirationDate)
-                    .signWith(SignatureAlgorithm.RS256, pvtKey)
+                    .expiration(expirationDate)
+                    .signWith(pvtKey, Jwts.SIG.RS256)
                     .compact();
             SignedDataTokenResponse responseObject = new SignedDataTokenResponse(dataToken, eachSignedDataToken);
             list.add(responseObject);

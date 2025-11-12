@@ -9,30 +9,28 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.annotation.Nulls;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.skyflow.generated.rest.core.ObjectMappers;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import org.jetbrains.annotations.NotNull;
+import java.util.Optional;
 
 @JsonInclude(JsonInclude.Include.NON_ABSENT)
 @JsonDeserialize(builder = GetRunRequest.Builder.class)
 public final class GetRunRequest {
-    private final String vaultId;
+    private final Optional<String> vaultId;
 
     private final Map<String, Object> additionalProperties;
 
-    private GetRunRequest(String vaultId, Map<String, Object> additionalProperties) {
+    private GetRunRequest(Optional<String> vaultId, Map<String, Object> additionalProperties) {
         this.vaultId = vaultId;
         this.additionalProperties = additionalProperties;
     }
 
-    /**
-     * @return ID of the vault.
-     */
     @JsonProperty("vault_id")
-    public String getVaultId() {
+    public Optional<String> getVaultId() {
         return vaultId;
     }
 
@@ -61,50 +59,35 @@ public final class GetRunRequest {
         return ObjectMappers.stringify(this);
     }
 
-    public static VaultIdStage builder() {
+    public static Builder builder() {
         return new Builder();
     }
 
-    public interface VaultIdStage {
-        /**
-         * ID of the vault.
-         */
-        _FinalStage vaultId(@NotNull String vaultId);
-
-        Builder from(GetRunRequest other);
-    }
-
-    public interface _FinalStage {
-        GetRunRequest build();
-    }
-
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static final class Builder implements VaultIdStage, _FinalStage {
-        private String vaultId;
+    public static final class Builder {
+        private Optional<String> vaultId = Optional.empty();
 
         @JsonAnySetter
         private Map<String, Object> additionalProperties = new HashMap<>();
 
         private Builder() {}
 
-        @java.lang.Override
         public Builder from(GetRunRequest other) {
             vaultId(other.getVaultId());
             return this;
         }
 
-        /**
-         * ID of the vault.<p>ID of the vault.</p>
-         * @return Reference to {@code this} so that method calls can be chained together.
-         */
-        @java.lang.Override
-        @JsonSetter("vault_id")
-        public _FinalStage vaultId(@NotNull String vaultId) {
-            this.vaultId = Objects.requireNonNull(vaultId, "vaultId must not be null");
+        @JsonSetter(value = "vault_id", nulls = Nulls.SKIP)
+        public Builder vaultId(Optional<String> vaultId) {
+            this.vaultId = vaultId;
             return this;
         }
 
-        @java.lang.Override
+        public Builder vaultId(String vaultId) {
+            this.vaultId = Optional.ofNullable(vaultId);
+            return this;
+        }
+
         public GetRunRequest build() {
             return new GetRunRequest(vaultId, additionalProperties);
         }

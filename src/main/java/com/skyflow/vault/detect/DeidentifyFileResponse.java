@@ -3,7 +3,6 @@ package com.skyflow.vault.detect;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import java.io.File;
 import java.util.List;
 
 public class DeidentifyFileResponse {
@@ -13,8 +12,8 @@ public class DeidentifyFileResponse {
     private final String extension;
     private final Integer wordCount;
     private final Integer charCount;
-    private final Double sizeInKb;
-    private final Double durationInSeconds;
+    private final Float sizeInKb;
+    private final Float durationInSeconds;
     private final Integer pageCount;
     private final Integer slideCount;
     private final List<FileEntityInfo> entities;
@@ -23,8 +22,8 @@ public class DeidentifyFileResponse {
 
 
     public DeidentifyFileResponse(FileInfo file, String fileBase64, String type, String extension,
-                                  Integer wordCount, Integer charCount, Double sizeInKb,
-                                  Double durationInSeconds, Integer pageCount, Integer slideCount,
+                                  Integer wordCount, Integer charCount, Float sizeInKb,
+                                  Float durationInSeconds, Integer pageCount, Integer slideCount,
                                   List<FileEntityInfo> entities, String runId, String status) {
         this.file = file;
         this.fileBase64 = fileBase64;
@@ -69,11 +68,11 @@ public class DeidentifyFileResponse {
         return charCount;
     }
 
-    public Double getSizeInKb() {
+    public Float getSizeInKb() {
         return sizeInKb;
     }
 
-    public Double getDurationInSeconds() {
+    public Float getDurationInSeconds() {
         return durationInSeconds;
     }
 

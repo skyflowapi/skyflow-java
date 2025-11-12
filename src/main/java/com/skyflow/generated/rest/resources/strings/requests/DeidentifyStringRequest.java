@@ -12,8 +12,8 @@ import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.Nulls;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.skyflow.generated.rest.core.ObjectMappers;
-import com.skyflow.generated.rest.types.EntityType;
-import com.skyflow.generated.rest.types.TokenType;
+import com.skyflow.generated.rest.resources.strings.types.DeidentifyStringRequestEntityTypesItem;
+import com.skyflow.generated.rest.types.TokenTypeMapping;
 import com.skyflow.generated.rest.types.Transformations;
 import java.util.HashMap;
 import java.util.List;
@@ -25,15 +25,13 @@ import org.jetbrains.annotations.NotNull;
 @JsonInclude(JsonInclude.Include.NON_ABSENT)
 @JsonDeserialize(builder = DeidentifyStringRequest.Builder.class)
 public final class DeidentifyStringRequest {
-    private final String vaultId;
-
     private final String text;
 
-    private final Optional<String> configurationId;
+    private final String vaultId;
 
-    private final Optional<List<EntityType>> entityTypes;
+    private final Optional<List<DeidentifyStringRequestEntityTypesItem>> entityTypes;
 
-    private final Optional<TokenType> tokenType;
+    private final Optional<TokenTypeMapping> tokenType;
 
     private final Optional<List<String>> allowRegex;
 
@@ -41,62 +39,71 @@ public final class DeidentifyStringRequest {
 
     private final Optional<Transformations> transformations;
 
+    private final Optional<String> configurationId;
+
     private final Map<String, Object> additionalProperties;
 
     private DeidentifyStringRequest(
-            String vaultId,
             String text,
-            Optional<String> configurationId,
-            Optional<List<EntityType>> entityTypes,
-            Optional<TokenType> tokenType,
+            String vaultId,
+            Optional<List<DeidentifyStringRequestEntityTypesItem>> entityTypes,
+            Optional<TokenTypeMapping> tokenType,
             Optional<List<String>> allowRegex,
             Optional<List<String>> restrictRegex,
             Optional<Transformations> transformations,
+            Optional<String> configurationId,
             Map<String, Object> additionalProperties) {
-        this.vaultId = vaultId;
         this.text = text;
-        this.configurationId = configurationId;
+        this.vaultId = vaultId;
         this.entityTypes = entityTypes;
         this.tokenType = tokenType;
         this.allowRegex = allowRegex;
         this.restrictRegex = restrictRegex;
         this.transformations = transformations;
+        this.configurationId = configurationId;
         this.additionalProperties = additionalProperties;
     }
 
-    @JsonProperty("vault_id")
-    public String getVaultId() {
-        return vaultId;
-    }
-
     /**
-     * @return String to de-identify.
+     * @return Text to de-identify.
      */
     @JsonProperty("text")
     public String getText() {
         return text;
     }
 
-    @JsonProperty("configuration_id")
-    public Optional<String> getConfigurationId() {
-        return configurationId;
+    /**
+     * @return ID of a vault that you have Detect Invoker or Vault Owner permissions for.
+     */
+    @JsonProperty("vault_id")
+    public String getVaultId() {
+        return vaultId;
     }
 
+    /**
+     * @return Entities to detect and de-identify.
+     */
     @JsonProperty("entity_types")
-    public Optional<List<EntityType>> getEntityTypes() {
+    public Optional<List<DeidentifyStringRequestEntityTypesItem>> getEntityTypes() {
         return entityTypes;
     }
 
     @JsonProperty("token_type")
-    public Optional<TokenType> getTokenType() {
+    public Optional<TokenTypeMapping> getTokenType() {
         return tokenType;
     }
 
+    /**
+     * @return Regular expressions to display in plaintext. Entities appear in plaintext if an expression matches either the entirety of a detected entity or a substring of it. Expressions don't match across entity boundaries. If a string or entity matches both <code>allow_regex</code> and <code>restrict_regex</code>, the entity is displayed in plaintext.
+     */
     @JsonProperty("allow_regex")
     public Optional<List<String>> getAllowRegex() {
         return allowRegex;
     }
 
+    /**
+     * @return Regular expressions to replace with '[RESTRICTED]'. Expressions must match the entirety of a detected entity, not just a substring, for the entity to be restricted. Expressions don't match across entity boundaries. If a string or entity matches both <code>allow_regex</code> and <code>restrict_regex</code>, the entity is displayed in plaintext. If a string is detected as an entity and a <code>restrict_regex</code> pattern matches the entire detected entity, the entity is replaced with '[RESTRICTED]'. If a string is detected as an entity but a <code>restrict_regex</code> pattern only matches a substring of it, the <code>restrict_regex</code> pattern is ignored, and the entity is processed according to the specified tokenization and transformation settings.
+     */
     @JsonProperty("restrict_regex")
     public Optional<List<String>> getRestrictRegex() {
         return restrictRegex;
@@ -105,6 +112,14 @@ public final class DeidentifyStringRequest {
     @JsonProperty("transformations")
     public Optional<Transformations> getTransformations() {
         return transformations;
+    }
+
+    /**
+     * @return ID of the Detect configuration to use for de-identification. Can't be specified with fields other than <code>vault_id</code>, <code>text</code>, and <code>file</code>.
+     */
+    @JsonProperty("configuration_id")
+    public Optional<String> getConfigurationId() {
+        return configurationId;
     }
 
     @java.lang.Override
@@ -119,27 +134,27 @@ public final class DeidentifyStringRequest {
     }
 
     private boolean equalTo(DeidentifyStringRequest other) {
-        return vaultId.equals(other.vaultId)
-                && text.equals(other.text)
-                && configurationId.equals(other.configurationId)
+        return text.equals(other.text)
+                && vaultId.equals(other.vaultId)
                 && entityTypes.equals(other.entityTypes)
                 && tokenType.equals(other.tokenType)
                 && allowRegex.equals(other.allowRegex)
                 && restrictRegex.equals(other.restrictRegex)
-                && transformations.equals(other.transformations);
+                && transformations.equals(other.transformations)
+                && configurationId.equals(other.configurationId);
     }
 
     @java.lang.Override
     public int hashCode() {
         return Objects.hash(
-                this.vaultId,
                 this.text,
-                this.configurationId,
+                this.vaultId,
                 this.entityTypes,
                 this.tokenType,
                 this.allowRegex,
                 this.restrictRegex,
-                this.transformations);
+                this.transformations,
+                this.configurationId);
     }
 
     @java.lang.Override
@@ -147,42 +162,50 @@ public final class DeidentifyStringRequest {
         return ObjectMappers.stringify(this);
     }
 
-    public static VaultIdStage builder() {
+    public static TextStage builder() {
         return new Builder();
-    }
-
-    public interface VaultIdStage {
-        TextStage vaultId(@NotNull String vaultId);
-
-        Builder from(DeidentifyStringRequest other);
     }
 
     public interface TextStage {
         /**
-         * String to de-identify.
+         * Text to de-identify.
          */
-        _FinalStage text(@NotNull String text);
+        VaultIdStage text(@NotNull String text);
+
+        Builder from(DeidentifyStringRequest other);
+    }
+
+    public interface VaultIdStage {
+        /**
+         * ID of a vault that you have Detect Invoker or Vault Owner permissions for.
+         */
+        _FinalStage vaultId(@NotNull String vaultId);
     }
 
     public interface _FinalStage {
         DeidentifyStringRequest build();
 
-        _FinalStage configurationId(Optional<String> configurationId);
+        /**
+         * <p>Entities to detect and de-identify.</p>
+         */
+        _FinalStage entityTypes(Optional<List<DeidentifyStringRequestEntityTypesItem>> entityTypes);
 
-        _FinalStage configurationId(String configurationId);
+        _FinalStage entityTypes(List<DeidentifyStringRequestEntityTypesItem> entityTypes);
 
-        _FinalStage entityTypes(Optional<List<EntityType>> entityTypes);
+        _FinalStage tokenType(Optional<TokenTypeMapping> tokenType);
 
-        _FinalStage entityTypes(List<EntityType> entityTypes);
+        _FinalStage tokenType(TokenTypeMapping tokenType);
 
-        _FinalStage tokenType(Optional<TokenType> tokenType);
-
-        _FinalStage tokenType(TokenType tokenType);
-
+        /**
+         * <p>Regular expressions to display in plaintext. Entities appear in plaintext if an expression matches either the entirety of a detected entity or a substring of it. Expressions don't match across entity boundaries. If a string or entity matches both <code>allow_regex</code> and <code>restrict_regex</code>, the entity is displayed in plaintext.</p>
+         */
         _FinalStage allowRegex(Optional<List<String>> allowRegex);
 
         _FinalStage allowRegex(List<String> allowRegex);
 
+        /**
+         * <p>Regular expressions to replace with '[RESTRICTED]'. Expressions must match the entirety of a detected entity, not just a substring, for the entity to be restricted. Expressions don't match across entity boundaries. If a string or entity matches both <code>allow_regex</code> and <code>restrict_regex</code>, the entity is displayed in plaintext. If a string is detected as an entity and a <code>restrict_regex</code> pattern matches the entire detected entity, the entity is replaced with '[RESTRICTED]'. If a string is detected as an entity but a <code>restrict_regex</code> pattern only matches a substring of it, the <code>restrict_regex</code> pattern is ignored, and the entity is processed according to the specified tokenization and transformation settings.</p>
+         */
         _FinalStage restrictRegex(Optional<List<String>> restrictRegex);
 
         _FinalStage restrictRegex(List<String> restrictRegex);
@@ -190,13 +213,22 @@ public final class DeidentifyStringRequest {
         _FinalStage transformations(Optional<Transformations> transformations);
 
         _FinalStage transformations(Transformations transformations);
+
+        /**
+         * <p>ID of the Detect configuration to use for de-identification. Can't be specified with fields other than <code>vault_id</code>, <code>text</code>, and <code>file</code>.</p>
+         */
+        _FinalStage configurationId(Optional<String> configurationId);
+
+        _FinalStage configurationId(String configurationId);
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static final class Builder implements VaultIdStage, TextStage, _FinalStage {
+    public static final class Builder implements TextStage, VaultIdStage, _FinalStage {
+        private String text;
+
         private String vaultId;
 
-        private String text;
+        private Optional<String> configurationId = Optional.empty();
 
         private Optional<Transformations> transformations = Optional.empty();
 
@@ -204,11 +236,9 @@ public final class DeidentifyStringRequest {
 
         private Optional<List<String>> allowRegex = Optional.empty();
 
-        private Optional<TokenType> tokenType = Optional.empty();
+        private Optional<TokenTypeMapping> tokenType = Optional.empty();
 
-        private Optional<List<EntityType>> entityTypes = Optional.empty();
-
-        private Optional<String> configurationId = Optional.empty();
+        private Optional<List<DeidentifyStringRequestEntityTypesItem>> entityTypes = Optional.empty();
 
         @JsonAnySetter
         private Map<String, Object> additionalProperties = new HashMap<>();
@@ -217,32 +247,56 @@ public final class DeidentifyStringRequest {
 
         @java.lang.Override
         public Builder from(DeidentifyStringRequest other) {
-            vaultId(other.getVaultId());
             text(other.getText());
-            configurationId(other.getConfigurationId());
+            vaultId(other.getVaultId());
             entityTypes(other.getEntityTypes());
             tokenType(other.getTokenType());
             allowRegex(other.getAllowRegex());
             restrictRegex(other.getRestrictRegex());
             transformations(other.getTransformations());
+            configurationId(other.getConfigurationId());
             return this;
         }
 
+        /**
+         * Text to de-identify.<p>Text to de-identify.</p>
+         * @return Reference to {@code this} so that method calls can be chained together.
+         */
+        @java.lang.Override
+        @JsonSetter("text")
+        public VaultIdStage text(@NotNull String text) {
+            this.text = Objects.requireNonNull(text, "text must not be null");
+            return this;
+        }
+
+        /**
+         * ID of a vault that you have Detect Invoker or Vault Owner permissions for.<p>ID of a vault that you have Detect Invoker or Vault Owner permissions for.</p>
+         * @return Reference to {@code this} so that method calls can be chained together.
+         */
         @java.lang.Override
         @JsonSetter("vault_id")
-        public TextStage vaultId(@NotNull String vaultId) {
+        public _FinalStage vaultId(@NotNull String vaultId) {
             this.vaultId = Objects.requireNonNull(vaultId, "vaultId must not be null");
             return this;
         }
 
         /**
-         * String to de-identify.<p>String to de-identify.</p>
+         * <p>ID of the Detect configuration to use for de-identification. Can't be specified with fields other than <code>vault_id</code>, <code>text</code>, and <code>file</code>.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
         @java.lang.Override
-        @JsonSetter("text")
-        public _FinalStage text(@NotNull String text) {
-            this.text = Objects.requireNonNull(text, "text must not be null");
+        public _FinalStage configurationId(String configurationId) {
+            this.configurationId = Optional.ofNullable(configurationId);
+            return this;
+        }
+
+        /**
+         * <p>ID of the Detect configuration to use for de-identification. Can't be specified with fields other than <code>vault_id</code>, <code>text</code>, and <code>file</code>.</p>
+         */
+        @java.lang.Override
+        @JsonSetter(value = "configuration_id", nulls = Nulls.SKIP)
+        public _FinalStage configurationId(Optional<String> configurationId) {
+            this.configurationId = configurationId;
             return this;
         }
 
@@ -259,12 +313,19 @@ public final class DeidentifyStringRequest {
             return this;
         }
 
+        /**
+         * <p>Regular expressions to replace with '[RESTRICTED]'. Expressions must match the entirety of a detected entity, not just a substring, for the entity to be restricted. Expressions don't match across entity boundaries. If a string or entity matches both <code>allow_regex</code> and <code>restrict_regex</code>, the entity is displayed in plaintext. If a string is detected as an entity and a <code>restrict_regex</code> pattern matches the entire detected entity, the entity is replaced with '[RESTRICTED]'. If a string is detected as an entity but a <code>restrict_regex</code> pattern only matches a substring of it, the <code>restrict_regex</code> pattern is ignored, and the entity is processed according to the specified tokenization and transformation settings.</p>
+         * @return Reference to {@code this} so that method calls can be chained together.
+         */
         @java.lang.Override
         public _FinalStage restrictRegex(List<String> restrictRegex) {
             this.restrictRegex = Optional.ofNullable(restrictRegex);
             return this;
         }
 
+        /**
+         * <p>Regular expressions to replace with '[RESTRICTED]'. Expressions must match the entirety of a detected entity, not just a substring, for the entity to be restricted. Expressions don't match across entity boundaries. If a string or entity matches both <code>allow_regex</code> and <code>restrict_regex</code>, the entity is displayed in plaintext. If a string is detected as an entity and a <code>restrict_regex</code> pattern matches the entire detected entity, the entity is replaced with '[RESTRICTED]'. If a string is detected as an entity but a <code>restrict_regex</code> pattern only matches a substring of it, the <code>restrict_regex</code> pattern is ignored, and the entity is processed according to the specified tokenization and transformation settings.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "restrict_regex", nulls = Nulls.SKIP)
         public _FinalStage restrictRegex(Optional<List<String>> restrictRegex) {
@@ -272,12 +333,19 @@ public final class DeidentifyStringRequest {
             return this;
         }
 
+        /**
+         * <p>Regular expressions to display in plaintext. Entities appear in plaintext if an expression matches either the entirety of a detected entity or a substring of it. Expressions don't match across entity boundaries. If a string or entity matches both <code>allow_regex</code> and <code>restrict_regex</code>, the entity is displayed in plaintext.</p>
+         * @return Reference to {@code this} so that method calls can be chained together.
+         */
         @java.lang.Override
         public _FinalStage allowRegex(List<String> allowRegex) {
             this.allowRegex = Optional.ofNullable(allowRegex);
             return this;
         }
 
+        /**
+         * <p>Regular expressions to display in plaintext. Entities appear in plaintext if an expression matches either the entirety of a detected entity or a substring of it. Expressions don't match across entity boundaries. If a string or entity matches both <code>allow_regex</code> and <code>restrict_regex</code>, the entity is displayed in plaintext.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "allow_regex", nulls = Nulls.SKIP)
         public _FinalStage allowRegex(Optional<List<String>> allowRegex) {
@@ -286,55 +354,49 @@ public final class DeidentifyStringRequest {
         }
 
         @java.lang.Override
-        public _FinalStage tokenType(TokenType tokenType) {
+        public _FinalStage tokenType(TokenTypeMapping tokenType) {
             this.tokenType = Optional.ofNullable(tokenType);
             return this;
         }
 
         @java.lang.Override
         @JsonSetter(value = "token_type", nulls = Nulls.SKIP)
-        public _FinalStage tokenType(Optional<TokenType> tokenType) {
+        public _FinalStage tokenType(Optional<TokenTypeMapping> tokenType) {
             this.tokenType = tokenType;
             return this;
         }
 
+        /**
+         * <p>Entities to detect and de-identify.</p>
+         * @return Reference to {@code this} so that method calls can be chained together.
+         */
         @java.lang.Override
-        public _FinalStage entityTypes(List<EntityType> entityTypes) {
+        public _FinalStage entityTypes(List<DeidentifyStringRequestEntityTypesItem> entityTypes) {
             this.entityTypes = Optional.ofNullable(entityTypes);
             return this;
         }
 
+        /**
+         * <p>Entities to detect and de-identify.</p>
+         */
         @java.lang.Override
         @JsonSetter(value = "entity_types", nulls = Nulls.SKIP)
-        public _FinalStage entityTypes(Optional<List<EntityType>> entityTypes) {
+        public _FinalStage entityTypes(Optional<List<DeidentifyStringRequestEntityTypesItem>> entityTypes) {
             this.entityTypes = entityTypes;
-            return this;
-        }
-
-        @java.lang.Override
-        public _FinalStage configurationId(String configurationId) {
-            this.configurationId = Optional.ofNullable(configurationId);
-            return this;
-        }
-
-        @java.lang.Override
-        @JsonSetter(value = "configuration_id", nulls = Nulls.SKIP)
-        public _FinalStage configurationId(Optional<String> configurationId) {
-            this.configurationId = configurationId;
             return this;
         }
 
         @java.lang.Override
         public DeidentifyStringRequest build() {
             return new DeidentifyStringRequest(
-                    vaultId,
                     text,
-                    configurationId,
+                    vaultId,
                     entityTypes,
                     tokenType,
                     allowRegex,
                     restrictRegex,
                     transformations,
+                    configurationId,
                     additionalProperties);
         }
     }

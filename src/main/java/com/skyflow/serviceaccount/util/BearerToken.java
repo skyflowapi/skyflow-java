@@ -16,7 +16,6 @@ import com.skyflow.utils.Constants;
 import com.skyflow.utils.Utils;
 import com.skyflow.utils.logger.LogUtil;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -155,8 +154,8 @@ public class BearerToken {
                 .claim("aud", tokenURI)
                 .claim("sub", clientID)
                 .claim("ctx", context)
-                .setExpiration(expirationDate)
-                .signWith(SignatureAlgorithm.RS256, pvtKey)
+                .expiration(expirationDate)
+                .signWith(pvtKey, Jwts.SIG.RS256)
                 .compact();
     }
 

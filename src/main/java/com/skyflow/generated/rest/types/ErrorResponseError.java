@@ -57,17 +57,11 @@ public final class ErrorResponseError {
         return grpcCode;
     }
 
-    /**
-     * @return HTTP status codes. See https://developer.mozilla.org/en-US/docs/Web/HTTP/Status.
-     */
     @JsonProperty("http_code")
     public int getHttpCode() {
         return httpCode;
     }
 
-    /**
-     * @return HTTP status message.
-     */
     @JsonProperty("http_status")
     public String getHttpStatus() {
         return httpStatus;
@@ -126,16 +120,10 @@ public final class ErrorResponseError {
     }
 
     public interface HttpCodeStage {
-        /**
-         * HTTP status codes. See https://developer.mozilla.org/en-US/docs/Web/HTTP/Status.
-         */
         HttpStatusStage httpCode(int httpCode);
     }
 
     public interface HttpStatusStage {
-        /**
-         * HTTP status message.
-         */
         MessageStage httpStatus(@NotNull String httpStatus);
     }
 
@@ -190,10 +178,6 @@ public final class ErrorResponseError {
             return this;
         }
 
-        /**
-         * HTTP status codes. See https://developer.mozilla.org/en-US/docs/Web/HTTP/Status.<p>HTTP status codes. See https://developer.mozilla.org/en-US/docs/Web/HTTP/Status.</p>
-         * @return Reference to {@code this} so that method calls can be chained together.
-         */
         @java.lang.Override
         @JsonSetter("http_code")
         public HttpStatusStage httpCode(int httpCode) {
@@ -201,10 +185,6 @@ public final class ErrorResponseError {
             return this;
         }
 
-        /**
-         * HTTP status message.<p>HTTP status message.</p>
-         * @return Reference to {@code this} so that method calls can be chained together.
-         */
         @java.lang.Override
         @JsonSetter("http_status")
         public MessageStage httpStatus(@NotNull String httpStatus) {

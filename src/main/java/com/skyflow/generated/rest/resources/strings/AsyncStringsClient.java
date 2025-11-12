@@ -8,7 +8,7 @@ import com.skyflow.generated.rest.core.RequestOptions;
 import com.skyflow.generated.rest.resources.strings.requests.DeidentifyStringRequest;
 import com.skyflow.generated.rest.resources.strings.requests.ReidentifyStringRequest;
 import com.skyflow.generated.rest.types.DeidentifyStringResponse;
-import com.skyflow.generated.rest.types.ReidentifyStringResponse;
+import com.skyflow.generated.rest.types.IdentifyResponse;
 import java.util.concurrent.CompletableFuture;
 
 public class AsyncStringsClient {
@@ -46,14 +46,21 @@ public class AsyncStringsClient {
     /**
      * Re-identifies tokens in a string.
      */
-    public CompletableFuture<ReidentifyStringResponse> reidentifyString(ReidentifyStringRequest request) {
+    public CompletableFuture<IdentifyResponse> reidentifyString() {
+        return this.rawClient.reidentifyString().thenApply(response -> response.body());
+    }
+
+    /**
+     * Re-identifies tokens in a string.
+     */
+    public CompletableFuture<IdentifyResponse> reidentifyString(ReidentifyStringRequest request) {
         return this.rawClient.reidentifyString(request).thenApply(response -> response.body());
     }
 
     /**
      * Re-identifies tokens in a string.
      */
-    public CompletableFuture<ReidentifyStringResponse> reidentifyString(
+    public CompletableFuture<IdentifyResponse> reidentifyString(
             ReidentifyStringRequest request, RequestOptions requestOptions) {
         return this.rawClient.reidentifyString(request, requestOptions).thenApply(response -> response.body());
     }
