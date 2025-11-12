@@ -18,15 +18,13 @@ import com.skyflow.generated.rest.resources.strings.requests.ReidentifyStringReq
 import com.skyflow.generated.rest.resources.tokens.TokensClient;
 import com.skyflow.generated.rest.resources.tokens.requests.V1DetokenizePayload;
 import com.skyflow.generated.rest.resources.tokens.requests.V1TokenizePayload;
-import com.skyflow.generated.rest.types.DeidentifyStringResponse;
-import com.skyflow.generated.rest.types.DetectedEntity;
-import com.skyflow.generated.rest.types.EntityLocation;
-import com.skyflow.generated.rest.types.V1Byot;
+import com.skyflow.generated.rest.types.*;
 import com.skyflow.vault.data.InsertRequest;
 import com.skyflow.vault.data.UpdateRequest;
 import com.skyflow.vault.detect.*;
 import com.skyflow.vault.detect.DeidentifyFileRequest;
 import com.skyflow.vault.detect.DeidentifyTextRequest;
+import com.skyflow.vault.detect.Transformations;
 import com.skyflow.vault.tokens.ColumnValue;
 import com.skyflow.vault.tokens.DetokenizeData;
 import com.skyflow.vault.tokens.DetokenizeRequest;
@@ -351,15 +349,15 @@ public class VaultClientTests {
 
     @Test
     public void testGetDeIdentifyTextResponse() {
-        List<DetectedEntity> entities = new ArrayList<>();
-        EntityLocation location = EntityLocation.builder()
+        List<StringResponseEntities> entities = new ArrayList<>();
+        Locations location = Locations.builder()
                 .startIndex(2)
                 .endIndex(10)
                 .startIndexProcessed(3)
                 .endIndexProcessed(8)
                 .build();
 
-        DetectedEntity detectedEntity = DetectedEntity.builder()
+        StringResponseEntities detectedEntity = StringResponseEntities.builder()
                 .token("token123")
                 .value("value123")
                 .location(location)
@@ -528,7 +526,7 @@ public class VaultClientTests {
         String base64Content = "base64string";
         String format = "jpg";
 
-        DeidentifyImageRequest imageRequest = vaultClient.getDeidentifyImageRequest(request, vaultId, base64Content, format);
+        DeidentifyFileImageRequestDeidentifyImage imageRequest = vaultClient.getDeidentifyImageRequest(request, vaultId, base64Content, format);
 
         Assert.assertEquals(vaultId, imageRequest.getVaultId());
         Assert.assertEquals(base64Content, imageRequest.getFile().getBase64());
@@ -552,7 +550,7 @@ public class VaultClientTests {
         String base64Content = "base64string";
         String format = "pptx";
 
-        DeidentifyPresentationRequest presRequest = vaultClient.getDeidentifyPresentationRequest(request, vaultId, base64Content, format);
+        DeidentifyFileRequestDeidentifyPresentation presRequest = vaultClient.getDeidentifyPresentationRequest(request, vaultId, base64Content, format);
 
         Assert.assertEquals(vaultId, presRequest.getVaultId());
         Assert.assertEquals(base64Content, presRequest.getFile().getBase64());
@@ -576,7 +574,7 @@ public class VaultClientTests {
         String base64Content = "base64string";
         String format = "csv";
 
-        DeidentifySpreadsheetRequest spreadsheetRequest = vaultClient.getDeidentifySpreadsheetRequest(request, vaultId, base64Content, format);
+        DeidentifyFileRequestDeidentifySpreadsheet spreadsheetRequest = vaultClient.getDeidentifySpreadsheetRequest(request, vaultId, base64Content, format);
 
         Assert.assertEquals(vaultId, spreadsheetRequest.getVaultId());
         Assert.assertEquals(base64Content, spreadsheetRequest.getFile().getBase64());
@@ -600,7 +598,7 @@ public class VaultClientTests {
         String base64Content = "base64string";
         String format = "json";
 
-        DeidentifyStructuredTextRequest structuredTextRequest = vaultClient.getDeidentifyStructuredTextRequest(request, vaultId, base64Content, format);
+        DeidentifyFileRequestDeidentifyStructuredText structuredTextRequest = vaultClient.getDeidentifyStructuredTextRequest(request, vaultId, base64Content, format);
 
         Assert.assertEquals(vaultId, structuredTextRequest.getVaultId());
         Assert.assertEquals(base64Content, structuredTextRequest.getFile().getBase64());
@@ -624,7 +622,7 @@ public class VaultClientTests {
         String base64Content = "base64string";
         String format = "docx";
 
-        DeidentifyDocumentRequest documentRequest = vaultClient.getDeidentifyDocumentRequest(request, vaultId, base64Content, format);
+        DeidentifyFileRequestDeidentifyDocument documentRequest = vaultClient.getDeidentifyDocumentRequest(request, vaultId, base64Content, format);
 
         Assert.assertEquals(vaultId, documentRequest.getVaultId());
         Assert.assertEquals(base64Content, documentRequest.getFile().getBase64());
@@ -649,7 +647,7 @@ public class VaultClientTests {
         String vaultId = "vault123";
         String base64Content = "base64string";
 
-        DeidentifyPdfRequest pdfRequest = vaultClient.getDeidentifyPdfRequest(request, vaultId, base64Content);
+        DeidentifyFileDocumentPdfRequestDeidentifyPdf pdfRequest = vaultClient.getDeidentifyPdfRequest(request, vaultId, base64Content);
 
         Assert.assertEquals(vaultId, pdfRequest.getVaultId());
         Assert.assertEquals(base64Content, pdfRequest.getFile().getBase64());
@@ -669,14 +667,14 @@ public class VaultClientTests {
                 .tokenFormat(tokenFormat)
                 .bleep(bleep)
                 .outputProcessedAudio(true)
-                .outputTranscription(DetectOutputTranscriptions.PLAINTEXT_TRANSCRIPTION)
+                .outputTranscription(DetectOutputTranscriptions.TRANSCRIPTION)
                 .build();
 
         String vaultId = "vault123";
         String base64Content = "base64string";
         String dataFormat = "mp3";
 
-        DeidentifyAudioRequest audioRequest = vaultClient.getDeidentifyAudioRequest(request, vaultId, base64Content, dataFormat);
+        DeidentifyFileAudioRequestDeidentifyAudio audioRequest = vaultClient.getDeidentifyAudioRequest(request, vaultId, base64Content, dataFormat);
 
         Assert.assertEquals(vaultId, audioRequest.getVaultId());
         Assert.assertEquals(base64Content, audioRequest.getFile().getBase64());
@@ -699,7 +697,7 @@ public class VaultClientTests {
         String vaultId = "vault123";
         String base64Content = "base64string";
 
-        com.skyflow.generated.rest.resources.files.requests.DeidentifyTextRequest textRequest =
+        com.skyflow.generated.rest.resources.files.requests.DeidentifyFileRequestDeidentifyText textRequest =
                 vaultClient.getDeidentifyTextFileRequest(request, vaultId, base64Content);
 
         Assert.assertEquals(vaultId, textRequest.getVaultId());
@@ -770,8 +768,8 @@ public class VaultClientTests {
 
         ReidentifyStringRequest result = vaultClient.getReidentifyStringRequest(req, "vaultId");
         Assert.assertNotNull(result);
-        Assert.assertEquals("vaultId", result.getVaultId());
-        Assert.assertEquals("Sensitive data", result.getText());
+        Assert.assertEquals("vaultId", result.getVaultId().get());
+        Assert.assertEquals("Sensitive data", result.getText().get());
         Assert.assertNotNull(result.getFormat());
     }
 
@@ -783,8 +781,8 @@ public class VaultClientTests {
 
         ReidentifyStringRequest result = vaultClient.getReidentifyStringRequest(req, "vaultId");
         Assert.assertNotNull(result);
-        Assert.assertEquals("vaultId", result.getVaultId());
-        Assert.assertEquals("No entities", result.getText());
+        Assert.assertEquals("vaultId", result.getVaultId().get());
+        Assert.assertEquals("No entities", result.getText().get());
         Assert.assertNotNull(result.getFormat());
     }
 
@@ -867,7 +865,7 @@ public class VaultClientTests {
         java.lang.reflect.Method method = VaultClient.class.getDeclaredMethod("mapAudioDataFormat", String.class);
         method.setAccessible(true);
         Object result = method.invoke(vaultClient, "mp3");
-        Assert.assertEquals(com.skyflow.generated.rest.resources.files.types.DeidentifyAudioRequestFileDataFormat.MP_3, result);
+        Assert.assertEquals(FileDataDeidentifyAudioDataFormat.MP_3, result);
     }
 
     @Test
@@ -875,7 +873,7 @@ public class VaultClientTests {
         java.lang.reflect.Method method = VaultClient.class.getDeclaredMethod("mapAudioDataFormat", String.class);
         method.setAccessible(true);
         Object result = method.invoke(vaultClient, "wav");
-        Assert.assertEquals(com.skyflow.generated.rest.resources.files.types.DeidentifyAudioRequestFileDataFormat.WAV, result);
+        Assert.assertEquals(FileDataDeidentifyAudioDataFormat.WAV, result);
     }
 
     @Test

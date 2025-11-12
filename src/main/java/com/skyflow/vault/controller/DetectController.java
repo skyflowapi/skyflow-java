@@ -9,14 +9,15 @@ import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.generated.rest.core.ApiClientApiException;
+import com.skyflow.generated.rest.core.RequestOptions;
 import com.skyflow.generated.rest.resources.files.requests.*;
 import com.skyflow.generated.rest.resources.strings.requests.DeidentifyStringRequest;
 import com.skyflow.generated.rest.resources.strings.requests.ReidentifyStringRequest;
-import com.skyflow.generated.rest.types.DeidentifyStatusResponseOutputType;
 import com.skyflow.generated.rest.types.*;
 import com.skyflow.logs.ErrorLogs;
 import com.skyflow.logs.InfoLogs;
 import com.skyflow.utils.Constants;
+import com.skyflow.utils.Utils;
 import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.utils.validations.Validations;
 import com.skyflow.vault.detect.*;
@@ -34,6 +35,7 @@ public final class DetectController extends VaultClient {
                     src.map(context::serialize).orElse(null))
             .serializeNulls()
             .create();
+    private static final JsonObject skyMetadata = Utils.getMetrics();
 
     public DetectController(VaultConfig vaultConfig, Credentials credentials) {
         super(vaultConfig, credentials);
@@ -53,8 +55,9 @@ public final class DetectController extends VaultClient {
             String vaultId = super.getVaultConfig().getVaultId();
             DeidentifyStringRequest request = getDeidentifyStringRequest(deidentifyTextRequest, vaultId);
 
-            // Call the API to de-identify the string
-            deidentifyStringResponse = super.getDetectTextApi().deidentifyString(request);
+            // get SDK metrics and call the API to de-identify the string
+            RequestOptions requestOptions = RequestOptions.builder().addHeader(Constants.SDK_METRICS_HEADER_KEY, skyMetadata.toString()).build();
+            deidentifyStringResponse = super.getDetectTextApi().deidentifyString(request, requestOptions);
 
             // Parse the response to DeIdentifyTextResponse
             deidentifyTextResponse = getDeIdentifyTextResponse(deidentifyStringResponse);
@@ -80,11 +83,12 @@ public final class DetectController extends VaultClient {
             String vaultId = super.getVaultConfig().getVaultId();
             ReidentifyStringRequest request = getReidentifyStringRequest(reidentifyTextRequest, vaultId);
 
-            // Call the API to re-identify the string
-            ReidentifyStringResponse reidentifyStringResponse = super.getDetectTextApi().reidentifyString(request);
+            // Get SDK metrics and call the API to re-identify the string
+            RequestOptions requestOptions = RequestOptions.builder().addHeader(Constants.SDK_METRICS_HEADER_KEY, skyMetadata.toString()).build();
+            IdentifyResponse reidentifyStringResponse = super.getDetectTextApi().reidentifyString(request, requestOptions);
 
             // Parse the response to ReidentifyTextResponse
-            reidentifyTextResponse = new ReidentifyTextResponse(reidentifyStringResponse.getText().orElse(null));
+            reidentifyTextResponse = new ReidentifyTextResponse(reidentifyStringResponse.getText());
             LogUtil.printInfoLog(InfoLogs.REIDENTIFY_TEXT_REQUEST_RESOLVED.getLog());
         } catch (ApiClientApiException ex) {
             String bodyString = extractBodyAsString(ex);
@@ -124,7 +128,7 @@ public final class DetectController extends VaultClient {
 
             com.skyflow.generated.rest.types.DeidentifyFileResponse apiResponse = processFileByType(fileExtension, base64Content, request, vaultId);
             try {
-                response = pollForResults(apiResponse.getRunId(), request.getWaitTime());
+                response = pollForResults(apiResponse.getRunId().get(), request.getWaitTime());
             } catch (Exception ex) {
                 throw new SkyflowException(ErrorCode.SERVER_ERROR.getCode(), ErrorMessage.PollingForResultsFailed.getMessage());
             }
@@ -135,7 +139,7 @@ public final class DetectController extends VaultClient {
                 if (base64File != null) {
                     byte[] decodedBytes = Base64.getDecoder().decode(base64File);
                     String outputDir = request.getOutputDirectory();
-                    String outputFileName = Constants.PROCESSED_FILE_NAME_PREFIX + fileName.substring(0, fileName.lastIndexOf('.')) + "."+response.getExtension();
+                    String outputFileName = Constants.PROCESSED_FILE_NAME_PREFIX + fileName.substring(0, fileName.lastIndexOf('.')) + "." + response.getExtension();
                     File outputFile;
                     if (outputDir != null && !outputDir.isEmpty()) {
                         outputFile = new File(outputDir, outputFileName);
@@ -157,7 +161,7 @@ public final class DetectController extends VaultClient {
                     String outputDir = request.getOutputDirectory();
                     if (entityBase64 != null) {
                         byte[] entityDecodedBytes = Base64.getDecoder().decode(entityBase64);
-                        String entityFileName = Constants.PROCESSED_FILE_NAME_PREFIX +  fileName.substring(0, fileName.lastIndexOf('.')) + ".json";
+                        String entityFileName = Constants.PROCESSED_FILE_NAME_PREFIX + fileName.substring(0, fileName.lastIndexOf('.')) + ".json";
                         File entityFile;
                         if (outputDir != null && !outputDir.isEmpty()) {
                             entityFile = new File(outputDir, entityFileName);
@@ -193,17 +197,19 @@ public final class DetectController extends VaultClient {
         int currentWaitTime = 1;
         maxWaitTime = maxWaitTime == null ? 64 : maxWaitTime;
 
-        DeidentifyStatusResponse response = null;
+        DetectRunsResponse response = null;
 
         while (true) {
             try {
                 GetRunRequest getRunRequest = GetRunRequest.builder()
                         .vaultId(super.getVaultConfig().getVaultId())
                         .build();
-                response = super.getDetectFileAPi()
-                        .getRun(runId, getRunRequest);
 
-                DeidentifyStatusResponseStatus status = response.getStatus();
+                RequestOptions requestOptions = RequestOptions.builder().addHeader(Constants.SDK_METRICS_HEADER_KEY, skyMetadata.toString()).build();
+                response = super.getDetectFileAPi()
+                        .getRun(runId, getRunRequest, requestOptions);
+
+                DetectRunsResponseStatus status = response.getStatus().get();
 
                 if (DeidentifyFileStatus.IN_PROGRESS.value().equalsIgnoreCase(String.valueOf(status))) {
                     if (currentWaitTime >= maxWaitTime) {
@@ -223,8 +229,8 @@ public final class DetectController extends VaultClient {
 
                     Thread.sleep(waitTime * 1000);
 
-                } else if (status == DeidentifyStatusResponseStatus.SUCCESS ||
-                        status == DeidentifyStatusResponseStatus.FAILED) {
+                } else if (status == DetectRunsResponseStatus.SUCCESS ||
+                        status == DetectRunsResponseStatus.FAILED) {
                     return parseDeidentifyFileResponse(response, runId, status.toString());
                 }
             } catch (ApiClientApiException e) {
@@ -236,48 +242,43 @@ public final class DetectController extends VaultClient {
 
     }
 
-    private static synchronized DeidentifyFileResponse parseDeidentifyFileResponse(DeidentifyStatusResponse response,
+    private static synchronized DeidentifyFileResponse parseDeidentifyFileResponse(DetectRunsResponse response,
                                                                                    String runId, String status) throws SkyflowException {
-        DeidentifyFileOutput firstOutput = getFirstOutput(response);
+
+        DeidentifiedFileOutput firstOutput = getFirstOutput(response);
 
         if (firstOutput == null) {
             return new DeidentifyFileResponse(
                     null,
                     null,
-                    response.getOutputType().name(),
+                    response.getOutputType().get().toString(),
                     null,
                     null,
                     null,
-                    response.getSize().orElse(null),
-                    response.getDuration().orElse(null),
+                    response.getSize().get(),
+                    response.getDuration().get(),
                     response.getPages().orElse(null),
                     response.getSlides().orElse(null),
                     getEntities(response),
                     runId,
-                    response.getStatus().name()
+                    response.getStatus().get().name()
             );
         }
 
-        Object wordCharObj = response.getAdditionalProperties().get("word_character_count");
         Integer wordCount = null;
         Integer charCount = null;
 
-        if (wordCharObj instanceof Map) {
-            Map<?, ?> wordCharMap = (Map<?, ?>) wordCharObj;
-            Object wc = wordCharMap.get("word_count");
-            Object cc = wordCharMap.get("character_count");
-            if (wc instanceof Number) {
-                wordCount = ((Number) wc).intValue();
-            }
-            if (cc instanceof Number) {
-                charCount = ((Number) cc).intValue();
-            }
+        WordCharacterCount wordCharacterCount = response.getWordCharacterCount().orElse(null);
+        if (wordCharacterCount != null) {
+            wordCount = wordCharacterCount.getWordCount().orElse(null);
+            charCount = wordCharacterCount.getCharacterCount().orElse(null);
         }
 
         File processedFileObject = null;
         FileInfo fileInfo = null;
-        Optional<String> processedFileBase64 = Optional.of(firstOutput).flatMap(DeidentifyFileOutput::getProcessedFile);
-        Optional<String> processedFileExtension = Optional.of(firstOutput).flatMap(DeidentifyFileOutput::getProcessedFileExtension);
+        Optional<String> processedFileBase64 = Optional.of(firstOutput).flatMap(DeidentifiedFileOutput::getProcessedFile);
+        Optional<DeidentifiedFileOutputProcessedFileExtension>
+                processedFileExtension = Optional.of(firstOutput).flatMap(DeidentifiedFileOutput::getProcessedFileExtension);
         if (processedFileBase64.isPresent() && processedFileExtension.isPresent()) {
             try {
                 byte[] decodedBytes = Base64.getDecoder().decode(processedFileBase64.get());
@@ -294,38 +295,40 @@ public final class DetectController extends VaultClient {
 
         String processedFileType = firstOutput.getProcessedFileType()
                 .map(Object::toString)
-                .orElse(DeidentifyStatusResponseOutputType.UNKNOWN.toString());
+                .orElse(DetectRunsResponseStatus.UNKNOWN.toString());
 
-        String fileExtension = firstOutput.getProcessedFileExtension()
-                .orElse(DeidentifyStatusResponseOutputType.UNKNOWN.toString());
-
-        return new DeidentifyFileResponse(
+        String fileExtension = firstOutput.getProcessedFileExtension().get().toString();
+        Float sizeInKb = response.getSize().orElse(null);
+        Float durationInSeconds = response.getDuration().orElse(null);
+        DeidentifyFileResponse deidentifyFileResponse = new DeidentifyFileResponse(
                 fileInfo,
                 firstOutput.getProcessedFile().orElse(null),
                 processedFileType,
                 fileExtension,
                 wordCount,
                 charCount,
-                response.getSize().orElse(null),
-                response.getDuration().orElse(null),
+                sizeInKb,
+                durationInSeconds,
                 response.getPages().orElse(null),
                 response.getSlides().orElse(null),
                 getEntities(response),
                 runId,
                 status
         );
+
+        return deidentifyFileResponse;
     }
 
-    private static synchronized DeidentifyFileOutput getFirstOutput(DeidentifyStatusResponse response) {
-        List<DeidentifyFileOutput> outputs = response.getOutput();
+    private static synchronized DeidentifiedFileOutput getFirstOutput(DetectRunsResponse response) {
+        List<DeidentifiedFileOutput> outputs = response.getOutput().get();
         return outputs != null && !outputs.isEmpty() ? outputs.get(0) : null;
     }
 
-    private static synchronized List<FileEntityInfo> getEntities(DeidentifyStatusResponse response) {
+    private static synchronized List<FileEntityInfo> getEntities(DetectRunsResponse response) {
         List<FileEntityInfo> entities = new ArrayList<>();
 
-        List<DeidentifyFileOutput> outputs = response.getOutput();
-        DeidentifyFileOutput deidentifyFileOutput = outputs != null && !outputs.isEmpty() ? outputs.get(1) : null;
+        Optional<List<DeidentifiedFileOutput>> outputs = response.getOutput();
+        DeidentifiedFileOutput deidentifyFileOutput = outputs.isPresent() ? outputs.get().get(0) : null;
 
         if (deidentifyFileOutput != null) {
             entities.add(new FileEntityInfo(
@@ -345,21 +348,21 @@ public final class DetectController extends VaultClient {
     }
 
 
-    private com.skyflow.generated.rest.types.DeidentifyFileResponse processFileByType(String fileExtension, String base64Content,                                                                         DeidentifyFileRequest request, String vaultId) throws SkyflowException {
+    private com.skyflow.generated.rest.types.DeidentifyFileResponse processFileByType(String fileExtension, String base64Content, DeidentifyFileRequest request, String vaultId) throws SkyflowException {
         switch (fileExtension.toLowerCase()) {
             case "txt":
-                com.skyflow.generated.rest.resources.files.requests.DeidentifyTextRequest textFileRequest =
+                com.skyflow.generated.rest.resources.files.requests.DeidentifyFileRequestDeidentifyText textFileRequest =
                         super.getDeidentifyTextFileRequest(request, vaultId, base64Content);
                 return super.getDetectFileAPi().deidentifyText(textFileRequest);
 
             case "mp3":
             case "wav":
-                DeidentifyAudioRequest audioRequest =
+                DeidentifyFileAudioRequestDeidentifyAudio audioRequest =
                         super.getDeidentifyAudioRequest(request, vaultId, base64Content, fileExtension);
                 return super.getDetectFileAPi().deidentifyAudio(audioRequest);
 
             case "pdf":
-                DeidentifyPdfRequest pdfRequest =
+                DeidentifyFileDocumentPdfRequestDeidentifyPdf pdfRequest =
                         super.getDeidentifyPdfRequest(request, vaultId, base64Content);
 
                 return super.getDetectFileAPi().deidentifyPdf(pdfRequest);
@@ -370,32 +373,32 @@ public final class DetectController extends VaultClient {
             case "bmp":
             case "tif":
             case "tiff":
-                DeidentifyImageRequest imageRequest =
+                DeidentifyFileImageRequestDeidentifyImage imageRequest =
                         super.getDeidentifyImageRequest(request, vaultId, base64Content, fileExtension);
                 return super.getDetectFileAPi().deidentifyImage(imageRequest);
 
             case "ppt":
             case "pptx":
-                DeidentifyPresentationRequest presentationRequest =
+                DeidentifyFileRequestDeidentifyPresentation presentationRequest =
                         super.getDeidentifyPresentationRequest(request, vaultId, base64Content, fileExtension);
                 return super.getDetectFileAPi().deidentifyPresentation(presentationRequest);
 
             case "csv":
             case "xls":
             case "xlsx":
-                DeidentifySpreadsheetRequest spreadsheetRequest =
+                DeidentifyFileRequestDeidentifySpreadsheet spreadsheetRequest =
                         super.getDeidentifySpreadsheetRequest(request, vaultId, base64Content, fileExtension);
                 return super.getDetectFileAPi().deidentifySpreadsheet(spreadsheetRequest);
 
             case "doc":
             case "docx":
-                DeidentifyDocumentRequest documentRequest =
+                DeidentifyFileRequestDeidentifyDocument documentRequest =
                         super.getDeidentifyDocumentRequest(request, vaultId, base64Content, fileExtension);
                 return super.getDetectFileAPi().deidentifyDocument(documentRequest);
 
             case "json":
             case "xml":
-                DeidentifyStructuredTextRequest structuredTextRequest =
+                DeidentifyFileRequestDeidentifyStructuredText structuredTextRequest =
                         super.getDeidentifyStructuredTextRequest(request, vaultId, base64Content, fileExtension);
                 return super.getDetectFileAPi().deidentifyStructuredText(structuredTextRequest);
 
@@ -420,7 +423,7 @@ public final class DetectController extends VaultClient {
                             .vaultId(vaultId)
                             .build();
 
-            com.skyflow.generated.rest.types.DeidentifyStatusResponse apiResponse =
+            com.skyflow.generated.rest.types.DetectRunsResponse apiResponse =
                     super.getDetectFileAPi().getRun(runId, getRunRequest);
 
             return parseDeidentifyFileResponse(apiResponse, runId, apiResponse.getStatus().toString());

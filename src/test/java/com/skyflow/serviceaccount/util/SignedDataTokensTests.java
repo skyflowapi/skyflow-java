@@ -109,18 +109,14 @@ public class SignedDataTokensTests {
         try {
             SignedDataTokens signedTokens = SignedDataTokens.builder().setCredentials("").build();
             signedTokens.getSignedDataTokens();
-            System.out.println("in try block");
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            System.out.println("caught skyflow exception");
-            System.out.println(e);
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
                     Utils.parameterizedString(ErrorMessage.InvalidCredentials.getMessage(), invalidJsonFilePath),
                     e.getMessage()
             );
         } catch (Exception e) {
-            System.out.println("catching exception");
             System.out.println(e);
         }
     }

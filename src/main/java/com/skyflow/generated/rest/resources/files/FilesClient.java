@@ -5,19 +5,19 @@ package com.skyflow.generated.rest.resources.files;
 
 import com.skyflow.generated.rest.core.ClientOptions;
 import com.skyflow.generated.rest.core.RequestOptions;
-import com.skyflow.generated.rest.resources.files.requests.DeidentifyAudioRequest;
-import com.skyflow.generated.rest.resources.files.requests.DeidentifyDocumentRequest;
+import com.skyflow.generated.rest.resources.files.requests.DeidentifyFileAudioRequestDeidentifyAudio;
+import com.skyflow.generated.rest.resources.files.requests.DeidentifyFileDocumentPdfRequestDeidentifyPdf;
+import com.skyflow.generated.rest.resources.files.requests.DeidentifyFileImageRequestDeidentifyImage;
 import com.skyflow.generated.rest.resources.files.requests.DeidentifyFileRequest;
-import com.skyflow.generated.rest.resources.files.requests.DeidentifyImageRequest;
-import com.skyflow.generated.rest.resources.files.requests.DeidentifyPdfRequest;
-import com.skyflow.generated.rest.resources.files.requests.DeidentifyPresentationRequest;
-import com.skyflow.generated.rest.resources.files.requests.DeidentifySpreadsheetRequest;
-import com.skyflow.generated.rest.resources.files.requests.DeidentifyStructuredTextRequest;
-import com.skyflow.generated.rest.resources.files.requests.DeidentifyTextRequest;
+import com.skyflow.generated.rest.resources.files.requests.DeidentifyFileRequestDeidentifyDocument;
+import com.skyflow.generated.rest.resources.files.requests.DeidentifyFileRequestDeidentifyPresentation;
+import com.skyflow.generated.rest.resources.files.requests.DeidentifyFileRequestDeidentifySpreadsheet;
+import com.skyflow.generated.rest.resources.files.requests.DeidentifyFileRequestDeidentifyStructuredText;
+import com.skyflow.generated.rest.resources.files.requests.DeidentifyFileRequestDeidentifyText;
 import com.skyflow.generated.rest.resources.files.requests.GetRunRequest;
-import com.skyflow.generated.rest.resources.files.requests.ReidentifyFileRequest;
+import com.skyflow.generated.rest.resources.files.requests.ReidentifyFileRequestReidentifyFile;
 import com.skyflow.generated.rest.types.DeidentifyFileResponse;
-import com.skyflow.generated.rest.types.DeidentifyStatusResponse;
+import com.skyflow.generated.rest.types.DetectRunsResponse;
 import com.skyflow.generated.rest.types.ReidentifyFileResponse;
 
 public class FilesClient {
@@ -52,95 +52,69 @@ public class FilesClient {
     }
 
     /**
+     * De-identifies sensitive data from an audio file. This operation includes options applicable to all supported audio file types.&lt;br/&gt;&lt;br/&gt;For broader file type support, see &lt;a href='#deidentify_file'&gt;De-identify File&lt;/a&gt;.
+     */
+    public DeidentifyFileResponse deidentifyAudio(DeidentifyFileAudioRequestDeidentifyAudio request) {
+        return this.rawClient.deidentifyAudio(request).body();
+    }
+
+    /**
+     * De-identifies sensitive data from an audio file. This operation includes options applicable to all supported audio file types.&lt;br/&gt;&lt;br/&gt;For broader file type support, see &lt;a href='#deidentify_file'&gt;De-identify File&lt;/a&gt;.
+     */
+    public DeidentifyFileResponse deidentifyAudio(
+            DeidentifyFileAudioRequestDeidentifyAudio request, RequestOptions requestOptions) {
+        return this.rawClient.deidentifyAudio(request, requestOptions).body();
+    }
+
+    /**
      * De-identifies sensitive data from a document file. This operation includes options applicable to all supported document file types.&lt;br/&gt;&lt;br/&gt;For more specific options, see the file type-specific opertions (like &lt;a href='#deidentify_pdf'&gt;De-identify PDF&lt;/a&gt;) where they're available. For broader file type support, see &lt;a href='#deidentify_file'&gt;De-identify File&lt;/a&gt;.
      */
-    public DeidentifyFileResponse deidentifyDocument(DeidentifyDocumentRequest request) {
+    public DeidentifyFileResponse deidentifyDocument(DeidentifyFileRequestDeidentifyDocument request) {
         return this.rawClient.deidentifyDocument(request).body();
     }
 
     /**
      * De-identifies sensitive data from a document file. This operation includes options applicable to all supported document file types.&lt;br/&gt;&lt;br/&gt;For more specific options, see the file type-specific opertions (like &lt;a href='#deidentify_pdf'&gt;De-identify PDF&lt;/a&gt;) where they're available. For broader file type support, see &lt;a href='#deidentify_file'&gt;De-identify File&lt;/a&gt;.
      */
-    public DeidentifyFileResponse deidentifyDocument(DeidentifyDocumentRequest request, RequestOptions requestOptions) {
+    public DeidentifyFileResponse deidentifyDocument(
+            DeidentifyFileRequestDeidentifyDocument request, RequestOptions requestOptions) {
         return this.rawClient.deidentifyDocument(request, requestOptions).body();
     }
 
     /**
      * De-identifies sensitive data from a PDF file. This operation includes options specific to PDF files.&lt;br/&gt;&lt;br/&gt;For broader file type support, see &lt;a href='#deidentify_document'&gt;De-identify Document&lt;/a&gt; and &lt;a href='#deidentify_file'&gt;De-identify File&lt;/a&gt;.
      */
-    public DeidentifyFileResponse deidentifyPdf(DeidentifyPdfRequest request) {
+    public DeidentifyFileResponse deidentifyPdf(DeidentifyFileDocumentPdfRequestDeidentifyPdf request) {
         return this.rawClient.deidentifyPdf(request).body();
     }
 
     /**
      * De-identifies sensitive data from a PDF file. This operation includes options specific to PDF files.&lt;br/&gt;&lt;br/&gt;For broader file type support, see &lt;a href='#deidentify_document'&gt;De-identify Document&lt;/a&gt; and &lt;a href='#deidentify_file'&gt;De-identify File&lt;/a&gt;.
      */
-    public DeidentifyFileResponse deidentifyPdf(DeidentifyPdfRequest request, RequestOptions requestOptions) {
+    public DeidentifyFileResponse deidentifyPdf(
+            DeidentifyFileDocumentPdfRequestDeidentifyPdf request, RequestOptions requestOptions) {
         return this.rawClient.deidentifyPdf(request, requestOptions).body();
     }
 
     /**
      * De-identifies sensitive data from an image file. This operation includes options applicable to all supported image file types.&lt;br/&gt;&lt;br/&gt;For broader file type support, see &lt;a href='#deidentify_file'&gt;De-identify File&lt;/a&gt;.
      */
-    public DeidentifyFileResponse deidentifyImage(DeidentifyImageRequest request) {
+    public DeidentifyFileResponse deidentifyImage(DeidentifyFileImageRequestDeidentifyImage request) {
         return this.rawClient.deidentifyImage(request).body();
     }
 
     /**
      * De-identifies sensitive data from an image file. This operation includes options applicable to all supported image file types.&lt;br/&gt;&lt;br/&gt;For broader file type support, see &lt;a href='#deidentify_file'&gt;De-identify File&lt;/a&gt;.
      */
-    public DeidentifyFileResponse deidentifyImage(DeidentifyImageRequest request, RequestOptions requestOptions) {
+    public DeidentifyFileResponse deidentifyImage(
+            DeidentifyFileImageRequestDeidentifyImage request, RequestOptions requestOptions) {
         return this.rawClient.deidentifyImage(request, requestOptions).body();
-    }
-
-    /**
-     * De-identifies sensitive data from a text file. This operation includes options applicable to all supported image text types.&lt;br/&gt;&lt;br/&gt;For broader file type support, see &lt;a href='#deidentify_file'&gt;De-identify File&lt;/a&gt;.
-     */
-    public DeidentifyFileResponse deidentifyText(DeidentifyTextRequest request) {
-        return this.rawClient.deidentifyText(request).body();
-    }
-
-    /**
-     * De-identifies sensitive data from a text file. This operation includes options applicable to all supported image text types.&lt;br/&gt;&lt;br/&gt;For broader file type support, see &lt;a href='#deidentify_file'&gt;De-identify File&lt;/a&gt;.
-     */
-    public DeidentifyFileResponse deidentifyText(DeidentifyTextRequest request, RequestOptions requestOptions) {
-        return this.rawClient.deidentifyText(request, requestOptions).body();
-    }
-
-    /**
-     * De-identifies sensitive data from a structured text file. This operation includes options applicable to all supported structured text file types.&lt;br/&gt;&lt;br/&gt;For broader file type support, see &lt;a href='#deidentify_file'&gt;De-identify File&lt;/a&gt;.
-     */
-    public DeidentifyFileResponse deidentifyStructuredText(DeidentifyStructuredTextRequest request) {
-        return this.rawClient.deidentifyStructuredText(request).body();
-    }
-
-    /**
-     * De-identifies sensitive data from a structured text file. This operation includes options applicable to all supported structured text file types.&lt;br/&gt;&lt;br/&gt;For broader file type support, see &lt;a href='#deidentify_file'&gt;De-identify File&lt;/a&gt;.
-     */
-    public DeidentifyFileResponse deidentifyStructuredText(
-            DeidentifyStructuredTextRequest request, RequestOptions requestOptions) {
-        return this.rawClient.deidentifyStructuredText(request, requestOptions).body();
-    }
-
-    /**
-     * De-identifies sensitive data from a spreadsheet file. This operation includes options applicable to all supported spreadsheet file types.&lt;br/&gt;&lt;br/&gt;For broader file type support, see &lt;a href='#deidentify_file'&gt;De-identify File&lt;/a&gt;.
-     */
-    public DeidentifyFileResponse deidentifySpreadsheet(DeidentifySpreadsheetRequest request) {
-        return this.rawClient.deidentifySpreadsheet(request).body();
-    }
-
-    /**
-     * De-identifies sensitive data from a spreadsheet file. This operation includes options applicable to all supported spreadsheet file types.&lt;br/&gt;&lt;br/&gt;For broader file type support, see &lt;a href='#deidentify_file'&gt;De-identify File&lt;/a&gt;.
-     */
-    public DeidentifyFileResponse deidentifySpreadsheet(
-            DeidentifySpreadsheetRequest request, RequestOptions requestOptions) {
-        return this.rawClient.deidentifySpreadsheet(request, requestOptions).body();
     }
 
     /**
      * De-identifies sensitive data from a presentation file. This operation includes options applicable to all supported presentation file types.&lt;br/&gt;&lt;br/&gt;For broader file type support, see &lt;a href='#deidentify_file'&gt;De-identify File&lt;/a&gt;.
      */
-    public DeidentifyFileResponse deidentifyPresentation(DeidentifyPresentationRequest request) {
+    public DeidentifyFileResponse deidentifyPresentation(DeidentifyFileRequestDeidentifyPresentation request) {
         return this.rawClient.deidentifyPresentation(request).body();
     }
 
@@ -148,49 +122,88 @@ public class FilesClient {
      * De-identifies sensitive data from a presentation file. This operation includes options applicable to all supported presentation file types.&lt;br/&gt;&lt;br/&gt;For broader file type support, see &lt;a href='#deidentify_file'&gt;De-identify File&lt;/a&gt;.
      */
     public DeidentifyFileResponse deidentifyPresentation(
-            DeidentifyPresentationRequest request, RequestOptions requestOptions) {
+            DeidentifyFileRequestDeidentifyPresentation request, RequestOptions requestOptions) {
         return this.rawClient.deidentifyPresentation(request, requestOptions).body();
     }
 
     /**
-     * De-identifies sensitive data from an audio file. This operation includes options applicable to all supported audio file types.&lt;br/&gt;&lt;br/&gt;For broader file type support, see &lt;a href='#deidentify_file'&gt;De-identify File&lt;/a&gt;.
+     * De-identifies sensitive data from a spreadsheet file. This operation includes options applicable to all supported spreadsheet file types.&lt;br/&gt;&lt;br/&gt;For broader file type support, see &lt;a href='#deidentify_file'&gt;De-identify File&lt;/a&gt;.
      */
-    public DeidentifyFileResponse deidentifyAudio(DeidentifyAudioRequest request) {
-        return this.rawClient.deidentifyAudio(request).body();
+    public DeidentifyFileResponse deidentifySpreadsheet(DeidentifyFileRequestDeidentifySpreadsheet request) {
+        return this.rawClient.deidentifySpreadsheet(request).body();
     }
 
     /**
-     * De-identifies sensitive data from an audio file. This operation includes options applicable to all supported audio file types.&lt;br/&gt;&lt;br/&gt;For broader file type support, see &lt;a href='#deidentify_file'&gt;De-identify File&lt;/a&gt;.
+     * De-identifies sensitive data from a spreadsheet file. This operation includes options applicable to all supported spreadsheet file types.&lt;br/&gt;&lt;br/&gt;For broader file type support, see &lt;a href='#deidentify_file'&gt;De-identify File&lt;/a&gt;.
      */
-    public DeidentifyFileResponse deidentifyAudio(DeidentifyAudioRequest request, RequestOptions requestOptions) {
-        return this.rawClient.deidentifyAudio(request, requestOptions).body();
+    public DeidentifyFileResponse deidentifySpreadsheet(
+            DeidentifyFileRequestDeidentifySpreadsheet request, RequestOptions requestOptions) {
+        return this.rawClient.deidentifySpreadsheet(request, requestOptions).body();
     }
 
     /**
-     * Returns the status of the detect run.
+     * De-identifies sensitive data from a structured text file. This operation includes options applicable to all supported structured text file types.&lt;br/&gt;&lt;br/&gt;For broader file type support, see &lt;a href='#deidentify_file'&gt;De-identify File&lt;/a&gt;.
      */
-    public DeidentifyStatusResponse getRun(String runId, GetRunRequest request) {
-        return this.rawClient.getRun(runId, request).body();
+    public DeidentifyFileResponse deidentifyStructuredText(DeidentifyFileRequestDeidentifyStructuredText request) {
+        return this.rawClient.deidentifyStructuredText(request).body();
     }
 
     /**
-     * Returns the status of the detect run.
+     * De-identifies sensitive data from a structured text file. This operation includes options applicable to all supported structured text file types.&lt;br/&gt;&lt;br/&gt;For broader file type support, see &lt;a href='#deidentify_file'&gt;De-identify File&lt;/a&gt;.
      */
-    public DeidentifyStatusResponse getRun(String runId, GetRunRequest request, RequestOptions requestOptions) {
-        return this.rawClient.getRun(runId, request, requestOptions).body();
+    public DeidentifyFileResponse deidentifyStructuredText(
+            DeidentifyFileRequestDeidentifyStructuredText request, RequestOptions requestOptions) {
+        return this.rawClient.deidentifyStructuredText(request, requestOptions).body();
+    }
+
+    /**
+     * De-identifies sensitive data from a text file. This operation includes options applicable to all supported image text types.&lt;br/&gt;&lt;br/&gt;For broader file type support, see &lt;a href='#deidentify_file'&gt;De-identify File&lt;/a&gt;.
+     */
+    public DeidentifyFileResponse deidentifyText(DeidentifyFileRequestDeidentifyText request) {
+        return this.rawClient.deidentifyText(request).body();
+    }
+
+    /**
+     * De-identifies sensitive data from a text file. This operation includes options applicable to all supported image text types.&lt;br/&gt;&lt;br/&gt;For broader file type support, see &lt;a href='#deidentify_file'&gt;De-identify File&lt;/a&gt;.
+     */
+    public DeidentifyFileResponse deidentifyText(
+            DeidentifyFileRequestDeidentifyText request, RequestOptions requestOptions) {
+        return this.rawClient.deidentifyText(request, requestOptions).body();
     }
 
     /**
      * Re-identifies tokens in a file.
      */
-    public ReidentifyFileResponse reidentifyFile(ReidentifyFileRequest request) {
+    public ReidentifyFileResponse reidentifyFile(ReidentifyFileRequestReidentifyFile request) {
         return this.rawClient.reidentifyFile(request).body();
     }
 
     /**
      * Re-identifies tokens in a file.
      */
-    public ReidentifyFileResponse reidentifyFile(ReidentifyFileRequest request, RequestOptions requestOptions) {
+    public ReidentifyFileResponse reidentifyFile(
+            ReidentifyFileRequestReidentifyFile request, RequestOptions requestOptions) {
         return this.rawClient.reidentifyFile(request, requestOptions).body();
+    }
+
+    /**
+     * Returns the status of a detect run.
+     */
+    public DetectRunsResponse getRun(String runId) {
+        return this.rawClient.getRun(runId).body();
+    }
+
+    /**
+     * Returns the status of a detect run.
+     */
+    public DetectRunsResponse getRun(String runId, GetRunRequest request) {
+        return this.rawClient.getRun(runId, request).body();
+    }
+
+    /**
+     * Returns the status of a detect run.
+     */
+    public DetectRunsResponse getRun(String runId, GetRunRequest request, RequestOptions requestOptions) {
+        return this.rawClient.getRun(runId, request, requestOptions).body();
     }
 }

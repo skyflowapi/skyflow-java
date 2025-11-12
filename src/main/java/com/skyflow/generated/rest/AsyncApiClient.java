@@ -31,11 +31,11 @@ public class AsyncApiClient {
 
     protected final Supplier<AsyncAuthenticationClient> authenticationClient;
 
-    protected final Supplier<AsyncGuardrailsClient> guardrailsClient;
+    protected final Supplier<AsyncFilesClient> filesClient;
 
     protected final Supplier<AsyncStringsClient> stringsClient;
 
-    protected final Supplier<AsyncFilesClient> filesClient;
+    protected final Supplier<AsyncGuardrailsClient> guardrailsClient;
 
     public AsyncApiClient(ClientOptions clientOptions) {
         this.clientOptions = clientOptions;
@@ -45,9 +45,9 @@ public class AsyncApiClient {
         this.tokensClient = Suppliers.memoize(() -> new AsyncTokensClient(clientOptions));
         this.queryClient = Suppliers.memoize(() -> new AsyncQueryClient(clientOptions));
         this.authenticationClient = Suppliers.memoize(() -> new AsyncAuthenticationClient(clientOptions));
-        this.guardrailsClient = Suppliers.memoize(() -> new AsyncGuardrailsClient(clientOptions));
-        this.stringsClient = Suppliers.memoize(() -> new AsyncStringsClient(clientOptions));
         this.filesClient = Suppliers.memoize(() -> new AsyncFilesClient(clientOptions));
+        this.stringsClient = Suppliers.memoize(() -> new AsyncStringsClient(clientOptions));
+        this.guardrailsClient = Suppliers.memoize(() -> new AsyncGuardrailsClient(clientOptions));
     }
 
     public AsyncAuditClient audit() {
@@ -74,16 +74,16 @@ public class AsyncApiClient {
         return this.authenticationClient.get();
     }
 
-    public AsyncGuardrailsClient guardrails() {
-        return this.guardrailsClient.get();
+    public AsyncFilesClient files() {
+        return this.filesClient.get();
     }
 
     public AsyncStringsClient strings() {
         return this.stringsClient.get();
     }
 
-    public AsyncFilesClient files() {
-        return this.filesClient.get();
+    public AsyncGuardrailsClient guardrails() {
+        return this.guardrailsClient.get();
     }
 
     public static AsyncApiClientBuilder builder() {

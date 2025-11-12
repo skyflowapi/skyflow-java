@@ -20,20 +20,17 @@ import java.util.Optional;
 @JsonInclude(JsonInclude.Include.NON_ABSENT)
 @JsonDeserialize(builder = Transformations.Builder.class)
 public final class Transformations {
-    private final Optional<TransformationsShiftDates> shiftDates;
+    private final Optional<ShiftDates> shiftDates;
 
     private final Map<String, Object> additionalProperties;
 
-    private Transformations(Optional<TransformationsShiftDates> shiftDates, Map<String, Object> additionalProperties) {
+    private Transformations(Optional<ShiftDates> shiftDates, Map<String, Object> additionalProperties) {
         this.shiftDates = shiftDates;
         this.additionalProperties = additionalProperties;
     }
 
-    /**
-     * @return Shift dates by a specified number of days.
-     */
     @JsonProperty("shift_dates")
-    public Optional<TransformationsShiftDates> getShiftDates() {
+    public Optional<ShiftDates> getShiftDates() {
         return shiftDates;
     }
 
@@ -68,7 +65,7 @@ public final class Transformations {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static final class Builder {
-        private Optional<TransformationsShiftDates> shiftDates = Optional.empty();
+        private Optional<ShiftDates> shiftDates = Optional.empty();
 
         @JsonAnySetter
         private Map<String, Object> additionalProperties = new HashMap<>();
@@ -80,16 +77,13 @@ public final class Transformations {
             return this;
         }
 
-        /**
-         * <p>Shift dates by a specified number of days.</p>
-         */
         @JsonSetter(value = "shift_dates", nulls = Nulls.SKIP)
-        public Builder shiftDates(Optional<TransformationsShiftDates> shiftDates) {
+        public Builder shiftDates(Optional<ShiftDates> shiftDates) {
             this.shiftDates = shiftDates;
             return this;
         }
 
-        public Builder shiftDates(TransformationsShiftDates shiftDates) {
+        public Builder shiftDates(ShiftDates shiftDates) {
             this.shiftDates = Optional.ofNullable(shiftDates);
             return this;
         }

@@ -14,8 +14,8 @@ import com.skyflow.generated.rest.core.RequestOptions;
 import com.skyflow.generated.rest.errors.BadRequestError;
 import com.skyflow.generated.rest.errors.InternalServerError;
 import com.skyflow.generated.rest.errors.UnauthorizedError;
-import com.skyflow.generated.rest.resources.guardrails.requests.CheckGuardrailsRequest;
-import com.skyflow.generated.rest.types.CheckGuardrailsResponse;
+import com.skyflow.generated.rest.resources.guardrails.requests.DetectGuardrailsRequest;
+import com.skyflow.generated.rest.types.DetectGuardrailsResponse;
 import com.skyflow.generated.rest.types.ErrorResponse;
 import java.io.IOException;
 import okhttp3.Headers;
@@ -36,15 +36,15 @@ public class RawGuardrailsClient {
     /**
      * Preserve safety and compliance with usage policies.
      */
-    public ApiClientHttpResponse<CheckGuardrailsResponse> checkGuardrails(CheckGuardrailsRequest request) {
+    public ApiClientHttpResponse<DetectGuardrailsResponse> checkGuardrails(DetectGuardrailsRequest request) {
         return checkGuardrails(request, null);
     }
 
     /**
      * Preserve safety and compliance with usage policies.
      */
-    public ApiClientHttpResponse<CheckGuardrailsResponse> checkGuardrails(
-            CheckGuardrailsRequest request, RequestOptions requestOptions) {
+    public ApiClientHttpResponse<DetectGuardrailsResponse> checkGuardrails(
+            DetectGuardrailsRequest request, RequestOptions requestOptions) {
         HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
                 .newBuilder()
                 .addPathSegments("v1/detect/guardrails")
@@ -71,7 +71,7 @@ public class RawGuardrailsClient {
             ResponseBody responseBody = response.body();
             if (response.isSuccessful()) {
                 return new ApiClientHttpResponse<>(
-                        ObjectMappers.JSON_MAPPER.readValue(responseBody.string(), CheckGuardrailsResponse.class),
+                        ObjectMappers.JSON_MAPPER.readValue(responseBody.string(), DetectGuardrailsResponse.class),
                         response);
             }
             String responseBodyString = responseBody != null ? responseBody.string() : "{}";

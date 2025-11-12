@@ -5,9 +5,11 @@ import com.skyflow.VaultClient;
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.RedactionType;
+import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.generated.rest.core.ApiClientApiException;
 import com.skyflow.generated.rest.core.ApiClientHttpResponse;
+import com.skyflow.generated.rest.core.RequestOptions;
 import com.skyflow.generated.rest.resources.query.requests.QueryServiceExecuteQueryBody;
 import com.skyflow.generated.rest.resources.records.requests.*;
 import com.skyflow.generated.rest.resources.records.types.RecordServiceBulkGetRecordRequestOrderBy;
@@ -18,6 +20,7 @@ import com.skyflow.generated.rest.types.*;
 import com.skyflow.logs.ErrorLogs;
 import com.skyflow.logs.InfoLogs;
 import com.skyflow.utils.Constants;
+import com.skyflow.utils.Utils;
 import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.utils.validations.Validations;
 import com.skyflow.vault.data.*;
@@ -29,6 +32,7 @@ import java.util.*;
 
 public final class VaultController extends VaultClient {
     private static final Gson gson = new GsonBuilder().serializeNulls().create();
+    private static final JsonObject skyMetadata = Utils.getMetrics();
 
     public VaultController(VaultConfig vaultConfig, Credentials credentials) {
         super(vaultConfig, credentials);
@@ -118,7 +122,8 @@ public final class VaultController extends VaultClient {
             setBearerToken();
             if (continueOnError) {
                 RecordServiceBatchOperationBody insertBody = super.getBatchInsertRequestBody(insertRequest);
-                batchInsertResult = super.getRecordsApi().withRawResponse().recordServiceBatchOperation(super.getVaultConfig().getVaultId(), insertBody);
+                RequestOptions requestOptions = RequestOptions.builder().addHeader(Constants.SDK_METRICS_HEADER_KEY, skyMetadata.toString()).build();
+                batchInsertResult = super.getRecordsApi().withRawResponse().recordServiceBatchOperation(super.getVaultConfig().getVaultId(), insertBody, requestOptions);
                 LogUtil.printInfoLog(InfoLogs.INSERT_REQUEST_RESOLVED.getLog());
                 Optional<List<Map<String, Object>>> records = batchInsertResult.body().getResponses();
 
@@ -132,8 +137,8 @@ public final class VaultController extends VaultClient {
                         if (insertRecord.containsKey("skyflowId")) {
                             insertedFields.add(insertRecord);
                         } else {
-                            insertRecord.put("requestId", batchInsertResult.headers().get("x-request-id").get(0));
-                            insertRecord.put("httpCode", 400);
+                            insertRecord.put("requestId", batchInsertResult.headers().get(Constants.REQUEST_ID_HEADER_KEY).get(0));
+                            insertRecord.put("httpCode", ErrorCode.INVALID_INPUT.getCode());
                             errorFields.add(insertRecord);
                         }
                     }
@@ -176,7 +181,8 @@ public final class VaultController extends VaultClient {
             Validations.validateDetokenizeRequest(detokenizeRequest);
             setBearerToken();
             V1DetokenizePayload payload = super.getDetokenizePayload(detokenizeRequest);
-            result = super.getTokensApi().withRawResponse().recordServiceDetokenize(super.getVaultConfig().getVaultId(), payload);
+            RequestOptions requestOptions = RequestOptions.builder().addHeader(Constants.SDK_METRICS_HEADER_KEY, skyMetadata.toString()).build();
+            result = super.getTokensApi().withRawResponse().recordServiceDetokenize(super.getVaultConfig().getVaultId(), payload, requestOptions);
             LogUtil.printInfoLog(InfoLogs.DETOKENIZE_REQUEST_RESOLVED.getLog());
             Map<String, List<String>> responseHeaders = result.headers();
             String requestId = responseHeaders.get(Constants.REQUEST_ID_HEADER_KEY).get(0);
@@ -238,11 +244,12 @@ public final class VaultController extends VaultClient {
                     .orderBy(RecordServiceBulkGetRecordRequestOrderBy.valueOf(getRequest.getOrderBy()))
                     .build();
 
-
+            RequestOptions requestOptions = RequestOptions.builder().addHeader(Constants.SDK_METRICS_HEADER_KEY, skyMetadata.toString()).build();
             result = super.getRecordsApi().recordServiceBulkGetRecord(
                     super.getVaultConfig().getVaultId(),
                     getRequest.getTable(),
-                    recordServiceBulkGetRecordRequest
+                    recordServiceBulkGetRecordRequest,
+                    requestOptions
             );
             LogUtil.printInfoLog(InfoLogs.GET_REQUEST_RESOLVED.getLog());
             List<V1FieldRecords> records = result.getRecords().get();
@@ -270,11 +277,13 @@ public final class VaultController extends VaultClient {
             Validations.validateUpdateRequest(updateRequest);
             setBearerToken();
             RecordServiceUpdateRecordBody updateBody = super.getUpdateRequestBody(updateRequest);
+            RequestOptions requestOptions = RequestOptions.builder().addHeader(Constants.SDK_METRICS_HEADER_KEY, skyMetadata.toString()).build();
             result = super.getRecordsApi().recordServiceUpdateRecord(
                     super.getVaultConfig().getVaultId(),
                     updateRequest.getTable(),
                     updateRequest.getData().remove("skyflow_id").toString(),
-                    updateBody
+                    updateBody,
+                    requestOptions
             );
             LogUtil.printInfoLog(InfoLogs.UPDATE_REQUEST_RESOLVED.getLog());
             skyflowId = String.valueOf(result.getSkyflowId());
@@ -298,8 +307,9 @@ public final class VaultController extends VaultClient {
             RecordServiceBulkDeleteRecordBody deleteBody = RecordServiceBulkDeleteRecordBody.builder().skyflowIds(deleteRequest.getIds())
                     .build();
 
+            RequestOptions requestOptions = RequestOptions.builder().addHeader(Constants.SDK_METRICS_HEADER_KEY, skyMetadata.toString()).build();
             result = super.getRecordsApi().recordServiceBulkDeleteRecord(
-                    super.getVaultConfig().getVaultId(), deleteRequest.getTable(), deleteBody);
+                    super.getVaultConfig().getVaultId(), deleteRequest.getTable(), deleteBody, requestOptions);
             LogUtil.printInfoLog(InfoLogs.DELETE_REQUEST_RESOLVED.getLog());
         } catch (ApiClientApiException e) {
             String bodyString = gson.toJson(e.body());
@@ -318,8 +328,12 @@ public final class VaultController extends VaultClient {
             LogUtil.printInfoLog(InfoLogs.VALIDATING_QUERY_REQUEST.getLog());
             Validations.validateQueryRequest(queryRequest);
             setBearerToken();
+            RequestOptions requestOptions = RequestOptions.builder().addHeader(Constants.SDK_METRICS_HEADER_KEY, skyMetadata.toString()).build();
             result = super.getQueryApi().queryServiceExecuteQuery(
-                    super.getVaultConfig().getVaultId(), QueryServiceExecuteQueryBody.builder().query(queryRequest.getQuery()).build());
+                    super.getVaultConfig().getVaultId(),
+                    QueryServiceExecuteQueryBody.builder().query(queryRequest.getQuery()).build(),
+                    requestOptions
+            );
             LogUtil.printInfoLog(InfoLogs.QUERY_REQUEST_RESOLVED.getLog());
             if (result.getRecords().isPresent()) {
                 List<V1FieldRecords> records = result.getRecords().get(); // Extract the List from Optional
@@ -345,7 +359,8 @@ public final class VaultController extends VaultClient {
             Validations.validateTokenizeRequest(tokenizeRequest);
             setBearerToken();
             V1TokenizePayload payload = super.getTokenizePayload(tokenizeRequest);
-            result = super.getTokensApi().recordServiceTokenize(super.getVaultConfig().getVaultId(), payload);
+            RequestOptions requestOptions = RequestOptions.builder().addHeader(Constants.SDK_METRICS_HEADER_KEY, skyMetadata.toString()).build();
+            result = super.getTokensApi().recordServiceTokenize(super.getVaultConfig().getVaultId(), payload, requestOptions);
             LogUtil.printInfoLog(InfoLogs.TOKENIZE_REQUEST_RESOLVED.getLog());
             if (result != null && result.getRecords().isPresent() && !result.getRecords().get().isEmpty()) {
                 for (V1TokenizeRecordResponse response : result.getRecords().get()) {
@@ -380,7 +395,13 @@ public final class VaultController extends VaultClient {
                     .returnFileMetadata(false)
                     .build();
 
-            UploadFileV2Response uploadFileV2Response = super.getRecordsApi().uploadFileV2(super.getVaultConfig().getVaultId(), file, uploadFileV2Request);
+            RequestOptions requestOptions = RequestOptions.builder().addHeader(Constants.SDK_METRICS_HEADER_KEY, skyMetadata.toString()).build();
+            UploadFileV2Response uploadFileV2Response = super.getRecordsApi().uploadFileV2(
+                    super.getVaultConfig().getVaultId(),
+                    file,
+                    uploadFileV2Request,
+                    requestOptions
+            );
 
             fileUploadResponse = new FileUploadResponse(
                     uploadFileV2Response.getSkyflowId().orElse(null),
@@ -392,7 +413,7 @@ public final class VaultController extends VaultClient {
             LogUtil.printErrorLog(ErrorLogs.UPLOAD_FILE_REQUEST_REJECTED.getLog());
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
         } catch (IOException e) {
-            LogUtil.printErrorLog(ErrorLogs.UPLOAD_FILE_REQUEST_REJECTED.getLog()); 
+            LogUtil.printErrorLog(ErrorLogs.UPLOAD_FILE_REQUEST_REJECTED.getLog());
             throw new SkyflowException(e.getMessage(), e);
         }
         LogUtil.printInfoLog(InfoLogs.FILE_UPLOAD_SUCCESS.getLog());

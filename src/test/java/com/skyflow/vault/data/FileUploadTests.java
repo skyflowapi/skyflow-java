@@ -89,7 +89,6 @@ public class FileUploadTests {
             Validations.validateFileUploadRequest(request);
             Assert.assertEquals(fileObject, request.getFileObject());
         } catch (SkyflowException e) {
-            System.out.println("## e:" + e.getMessage());
             Assert.fail(INVALID_EXCEPTION_THROWN);
         }
     }

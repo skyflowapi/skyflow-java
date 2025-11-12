@@ -12,31 +12,30 @@ import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.Nulls;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.skyflow.generated.rest.core.ObjectMappers;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import org.jetbrains.annotations.NotNull;
+import java.util.Optional;
 
 @JsonInclude(JsonInclude.Include.NON_ABSENT)
 @JsonDeserialize(builder = DeidentifyStringResponse.Builder.class)
 public final class DeidentifyStringResponse {
-    private final String processedText;
+    private final Optional<String> processedText;
 
-    private final List<DetectedEntity> entities;
+    private final Optional<List<StringResponseEntities>> entities;
 
-    private final int wordCount;
+    private final Optional<Integer> wordCount;
 
-    private final int characterCount;
+    private final Optional<Integer> characterCount;
 
     private final Map<String, Object> additionalProperties;
 
     private DeidentifyStringResponse(
-            String processedText,
-            List<DetectedEntity> entities,
-            int wordCount,
-            int characterCount,
+            Optional<String> processedText,
+            Optional<List<StringResponseEntities>> entities,
+            Optional<Integer> wordCount,
+            Optional<Integer> characterCount,
             Map<String, Object> additionalProperties) {
         this.processedText = processedText;
         this.entities = entities;
@@ -49,7 +48,7 @@ public final class DeidentifyStringResponse {
      * @return De-identified text.
      */
     @JsonProperty("processed_text")
-    public String getProcessedText() {
+    public Optional<String> getProcessedText() {
         return processedText;
     }
 
@@ -57,7 +56,7 @@ public final class DeidentifyStringResponse {
      * @return Detected entities.
      */
     @JsonProperty("entities")
-    public List<DetectedEntity> getEntities() {
+    public Optional<List<StringResponseEntities>> getEntities() {
         return entities;
     }
 
@@ -65,7 +64,7 @@ public final class DeidentifyStringResponse {
      * @return Number of words from the input text.
      */
     @JsonProperty("word_count")
-    public int getWordCount() {
+    public Optional<Integer> getWordCount() {
         return wordCount;
     }
 
@@ -73,7 +72,7 @@ public final class DeidentifyStringResponse {
      * @return Number of characters from the input text.
      */
     @JsonProperty("character_count")
-    public int getCharacterCount() {
+    public Optional<Integer> getCharacterCount() {
         return characterCount;
     }
 
@@ -91,8 +90,8 @@ public final class DeidentifyStringResponse {
     private boolean equalTo(DeidentifyStringResponse other) {
         return processedText.equals(other.processedText)
                 && entities.equals(other.entities)
-                && wordCount == other.wordCount
-                && characterCount == other.characterCount;
+                && wordCount.equals(other.wordCount)
+                && characterCount.equals(other.characterCount);
     }
 
     @java.lang.Override
@@ -105,62 +104,25 @@ public final class DeidentifyStringResponse {
         return ObjectMappers.stringify(this);
     }
 
-    public static ProcessedTextStage builder() {
+    public static Builder builder() {
         return new Builder();
     }
 
-    public interface ProcessedTextStage {
-        /**
-         * De-identified text.
-         */
-        WordCountStage processedText(@NotNull String processedText);
-
-        Builder from(DeidentifyStringResponse other);
-    }
-
-    public interface WordCountStage {
-        /**
-         * Number of words from the input text.
-         */
-        CharacterCountStage wordCount(int wordCount);
-    }
-
-    public interface CharacterCountStage {
-        /**
-         * Number of characters from the input text.
-         */
-        _FinalStage characterCount(int characterCount);
-    }
-
-    public interface _FinalStage {
-        DeidentifyStringResponse build();
-
-        /**
-         * <p>Detected entities.</p>
-         */
-        _FinalStage entities(List<DetectedEntity> entities);
-
-        _FinalStage addEntities(DetectedEntity entities);
-
-        _FinalStage addAllEntities(List<DetectedEntity> entities);
-    }
-
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static final class Builder implements ProcessedTextStage, WordCountStage, CharacterCountStage, _FinalStage {
-        private String processedText;
+    public static final class Builder {
+        private Optional<String> processedText = Optional.empty();
 
-        private int wordCount;
+        private Optional<List<StringResponseEntities>> entities = Optional.empty();
 
-        private int characterCount;
+        private Optional<Integer> wordCount = Optional.empty();
 
-        private List<DetectedEntity> entities = new ArrayList<>();
+        private Optional<Integer> characterCount = Optional.empty();
 
         @JsonAnySetter
         private Map<String, Object> additionalProperties = new HashMap<>();
 
         private Builder() {}
 
-        @java.lang.Override
         public Builder from(DeidentifyStringResponse other) {
             processedText(other.getProcessedText());
             entities(other.getEntities());
@@ -170,70 +132,61 @@ public final class DeidentifyStringResponse {
         }
 
         /**
-         * De-identified text.<p>De-identified text.</p>
-         * @return Reference to {@code this} so that method calls can be chained together.
+         * <p>De-identified text.</p>
          */
-        @java.lang.Override
-        @JsonSetter("processed_text")
-        public WordCountStage processedText(@NotNull String processedText) {
-            this.processedText = Objects.requireNonNull(processedText, "processedText must not be null");
+        @JsonSetter(value = "processed_text", nulls = Nulls.SKIP)
+        public Builder processedText(Optional<String> processedText) {
+            this.processedText = processedText;
+            return this;
+        }
+
+        public Builder processedText(String processedText) {
+            this.processedText = Optional.ofNullable(processedText);
             return this;
         }
 
         /**
-         * Number of words from the input text.<p>Number of words from the input text.</p>
-         * @return Reference to {@code this} so that method calls can be chained together.
+         * <p>Detected entities.</p>
          */
-        @java.lang.Override
-        @JsonSetter("word_count")
-        public CharacterCountStage wordCount(int wordCount) {
+        @JsonSetter(value = "entities", nulls = Nulls.SKIP)
+        public Builder entities(Optional<List<StringResponseEntities>> entities) {
+            this.entities = entities;
+            return this;
+        }
+
+        public Builder entities(List<StringResponseEntities> entities) {
+            this.entities = Optional.ofNullable(entities);
+            return this;
+        }
+
+        /**
+         * <p>Number of words from the input text.</p>
+         */
+        @JsonSetter(value = "word_count", nulls = Nulls.SKIP)
+        public Builder wordCount(Optional<Integer> wordCount) {
             this.wordCount = wordCount;
             return this;
         }
 
+        public Builder wordCount(Integer wordCount) {
+            this.wordCount = Optional.ofNullable(wordCount);
+            return this;
+        }
+
         /**
-         * Number of characters from the input text.<p>Number of characters from the input text.</p>
-         * @return Reference to {@code this} so that method calls can be chained together.
+         * <p>Number of characters from the input text.</p>
          */
-        @java.lang.Override
-        @JsonSetter("character_count")
-        public _FinalStage characterCount(int characterCount) {
+        @JsonSetter(value = "character_count", nulls = Nulls.SKIP)
+        public Builder characterCount(Optional<Integer> characterCount) {
             this.characterCount = characterCount;
             return this;
         }
 
-        /**
-         * <p>Detected entities.</p>
-         * @return Reference to {@code this} so that method calls can be chained together.
-         */
-        @java.lang.Override
-        public _FinalStage addAllEntities(List<DetectedEntity> entities) {
-            this.entities.addAll(entities);
+        public Builder characterCount(Integer characterCount) {
+            this.characterCount = Optional.ofNullable(characterCount);
             return this;
         }
 
-        /**
-         * <p>Detected entities.</p>
-         * @return Reference to {@code this} so that method calls can be chained together.
-         */
-        @java.lang.Override
-        public _FinalStage addEntities(DetectedEntity entities) {
-            this.entities.add(entities);
-            return this;
-        }
-
-        /**
-         * <p>Detected entities.</p>
-         */
-        @java.lang.Override
-        @JsonSetter(value = "entities", nulls = Nulls.SKIP)
-        public _FinalStage entities(List<DetectedEntity> entities) {
-            this.entities.clear();
-            this.entities.addAll(entities);
-            return this;
-        }
-
-        @java.lang.Override
         public DeidentifyStringResponse build() {
             return new DeidentifyStringResponse(
                     processedText, entities, wordCount, characterCount, additionalProperties);

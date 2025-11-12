@@ -8,7 +8,7 @@ import com.skyflow.generated.rest.core.RequestOptions;
 import com.skyflow.generated.rest.resources.strings.requests.DeidentifyStringRequest;
 import com.skyflow.generated.rest.resources.strings.requests.ReidentifyStringRequest;
 import com.skyflow.generated.rest.types.DeidentifyStringResponse;
-import com.skyflow.generated.rest.types.ReidentifyStringResponse;
+import com.skyflow.generated.rest.types.IdentifyResponse;
 
 public class StringsClient {
     protected final ClientOptions clientOptions;
@@ -44,14 +44,21 @@ public class StringsClient {
     /**
      * Re-identifies tokens in a string.
      */
-    public ReidentifyStringResponse reidentifyString(ReidentifyStringRequest request) {
+    public IdentifyResponse reidentifyString() {
+        return this.rawClient.reidentifyString().body();
+    }
+
+    /**
+     * Re-identifies tokens in a string.
+     */
+    public IdentifyResponse reidentifyString(ReidentifyStringRequest request) {
         return this.rawClient.reidentifyString(request).body();
     }
 
     /**
      * Re-identifies tokens in a string.
      */
-    public ReidentifyStringResponse reidentifyString(ReidentifyStringRequest request, RequestOptions requestOptions) {
+    public IdentifyResponse reidentifyString(ReidentifyStringRequest request, RequestOptions requestOptions) {
         return this.rawClient.reidentifyString(request, requestOptions).body();
     }
 }

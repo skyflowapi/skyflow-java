@@ -6,9 +6,9 @@ package com.skyflow.generated.rest.types;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum ReidentifyFileResponseOutputType {
-    BASE_64("BASE64"),
+    UNKNOWN("UNKNOWN"),
 
-    UNKNOWN("UNKNOWN");
+    BASE_64("BASE64");
 
     private final String value;
 
