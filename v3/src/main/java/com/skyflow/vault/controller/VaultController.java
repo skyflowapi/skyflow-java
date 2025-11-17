@@ -2,11 +2,13 @@ package com.skyflow.vault.controller;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import com.skyflow.VaultClient;
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.generated.rest.core.ApiClientApiException;
+import com.skyflow.generated.rest.core.RequestOptions;
 import com.skyflow.generated.rest.types.InsertRecordData;
 import com.skyflow.generated.rest.types.InsertResponse;
 import com.skyflow.generated.rest.types.Upsert;
@@ -31,6 +33,7 @@ import java.util.concurrent.Executors;
 
 public final class VaultController extends VaultClient {
     private static final Gson gson = new GsonBuilder().serializeNulls().create();
+    private JsonObject metrics = Utils.getMetrics();
     private int insertBatchSize;
     private int insertConcurrencyLimit;
     private int detokenizeBatchSize;
@@ -262,7 +265,10 @@ public final class VaultController extends VaultClient {
     }
 
     private com.skyflow.generated.rest.types.DetokenizeResponse processDetokenizeBatch(com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest batch) {
-        return this.getRecordsApi().detokenize(batch);
+        RequestOptions requestOptions = RequestOptions.builder()
+                .addHeader(Constants.SDK_METRICS_HEADER_KEY, metrics.toString())
+                .build();
+        return this.getRecordsApi().detokenize(batch, requestOptions);
     }
 
     private List<CompletableFuture<com.skyflow.vault.data.InsertResponse>>
@@ -305,7 +311,10 @@ public final class VaultController extends VaultClient {
             req.tableName(tableName);
         }
         com.skyflow.generated.rest.resources.recordservice.requests.InsertRequest request = req.build();
-        return this.getRecordsApi().insert(request);
+        RequestOptions requestOptions = RequestOptions.builder()
+                .addHeader(Constants.SDK_METRICS_HEADER_KEY, metrics.toString())
+                .build();
+        return this.getRecordsApi().insert(request, requestOptions);
     }
 
     private void configureInsertConcurrencyAndBatchSize(int totalRequests) {
