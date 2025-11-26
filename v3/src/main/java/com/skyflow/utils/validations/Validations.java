@@ -182,17 +182,31 @@ public class Validations extends BaseValidations {
     public static void validateVaultConfiguration(VaultConfig vaultConfig) throws SkyflowException {
         String vaultId = vaultConfig.getVaultId();
         String clusterId = vaultConfig.getClusterId();
+        String vaultURL = vaultConfig.getVaultURL();
         Credentials credentials = vaultConfig.getCredentials();
+
         if (vaultId == null) {
             LogUtil.printErrorLog(ErrorLogs.VAULT_ID_IS_REQUIRED.getLog());
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidVaultId.getMessage());
         } else if (vaultId.trim().isEmpty()) {
             LogUtil.printErrorLog(ErrorLogs.EMPTY_VAULT_ID.getLog());
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyVaultId.getMessage());
+        } else if (credentials != null) {
+            validateCredentials(credentials);
+        }
+
+        if (vaultURL != null) {
+            if (vaultURL.trim().isEmpty()) {
+                LogUtil.printErrorLog(ErrorLogs.EMPTY_VAULT_URL.getLog());
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyVaultUrl.getMessage());
+            } else if (!Utils.isValidURL(vaultURL)) {
+                LogUtil.printErrorLog(ErrorLogs.INVALID_VAULT_URL_FORMAT.getLog());
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidVaultUrlFormat.getMessage());
+            }
         } else if (Utils.getEnvVaultURL() == null) {
             if (clusterId == null) {
-                LogUtil.printErrorLog(ErrorLogs.CLUSTER_ID_IS_REQUIRED.getLog());
-                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidClusterId.getMessage());
+                LogUtil.printErrorLog(ErrorLogs.EITHER_VAULT_URL_OR_CLUSTER_ID_REQUIRED.getLog());
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EitherVaultUrlOrClusterIdRequired.getMessage());
             } else if (clusterId.trim().isEmpty()) {
                 LogUtil.printErrorLog(ErrorLogs.EMPTY_CLUSTER_ID.getLog());
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyClusterId.getMessage());

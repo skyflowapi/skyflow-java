@@ -80,7 +80,15 @@ public class VaultClient {
     }
 
     private void updateVaultURL() throws SkyflowException {
-        String vaultURL = Utils.getEnvVaultURL();
+        // Fetch vaultURL from vault config
+        String vaultURL = this.vaultConfig.getVaultURL();
+
+        // If vaultURL from config is null or empty, fetch vaultURL from ENV variable
+        if (vaultURL == null || vaultURL.isEmpty()) {
+            vaultURL = Utils.getEnvVaultURL();
+        }
+
+        // If vaultURL from ENV variable is also null or empty, construct vaultURL from clusterId passed in vault config
         if (vaultURL == null || vaultURL.isEmpty()) {
             vaultURL = Utils.getVaultURL(this.vaultConfig.getClusterId(), this.vaultConfig.getEnv());
         }
