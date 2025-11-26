@@ -17,18 +17,11 @@ class BaseSkyflow {
         return this.builder.logLevel;
     }
 
-//    public VaultConfig getVaultConfig() {
-//        Object[] array = this.builder.vaultConfigMap.values().toArray();
-//        return (VaultConfig) array[0];
-//    }
-
     static class BaseSkyflowClientBuilder {
-        //        protected final LinkedHashMap<String, VaultConfig> vaultConfigMap;
         protected Credentials skyflowCredentials;
         protected LogLevel logLevel;
 
         protected BaseSkyflowClientBuilder() {
-//            this.vaultConfigMap = new LinkedHashMap<>();
             this.skyflowCredentials = null;
             this.logLevel = LogLevel.ERROR;
         }
