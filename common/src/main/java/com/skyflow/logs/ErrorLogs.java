@@ -8,6 +8,7 @@ public enum ErrorLogs {
     EMPTY_VAULT_ID("Invalid vault config. Vault ID can not be empty."),
     CLUSTER_ID_IS_REQUIRED("Invalid vault config. Cluster ID is required."),
     EMPTY_CLUSTER_ID("Invalid vault config. Cluster ID can not be empty."),
+    EITHER_VAULT_URL_OR_CLUSTER_ID_REQUIRED("Invalid vault config. At least one of \"clusterId\" or \"vaultURL\" must be provided."),
     CONNECTION_CONFIG_EXISTS("Connection config with connection ID %s1 already exists."),
     CONNECTION_CONFIG_DOES_NOT_EXIST("Connection config with connection ID %s1 doesn't exist."),
     CONNECTION_ID_IS_REQUIRED("Invalid connection config. Connection ID is required."),
