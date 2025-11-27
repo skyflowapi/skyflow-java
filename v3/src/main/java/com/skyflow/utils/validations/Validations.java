@@ -211,8 +211,6 @@ public class Validations extends BaseValidations {
                 LogUtil.printErrorLog(ErrorLogs.EMPTY_CLUSTER_ID.getLog());
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyClusterId.getMessage());
             }
-        } else if (credentials != null) {
-            validateCredentials(credentials);
         }
     }
 }
