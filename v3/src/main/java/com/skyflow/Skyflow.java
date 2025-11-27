@@ -31,6 +31,11 @@ public final class Skyflow extends BaseSkyflow {
         return new SkyflowClientBuilder();
     }
 
+    public VaultConfig getVaultConfig() {
+        Object[] array = this.builder.vaultConfigMap.values().toArray();
+        return (VaultConfig) array[0];
+    }
+
     public VaultController vault() throws SkyflowException {
         Object[] array = this.builder.vaultClientsMap.keySet().toArray();
         if (array.length < 1) {
@@ -48,9 +53,11 @@ public final class Skyflow extends BaseSkyflow {
     }
 
     public static final class SkyflowClientBuilder extends BaseSkyflowClientBuilder {
+        private final LinkedHashMap<String, VaultConfig> vaultConfigMap;
         private final LinkedHashMap<String, VaultController> vaultClientsMap;
 
         public SkyflowClientBuilder() {
+            this.vaultConfigMap = new LinkedHashMap<>();
             this.vaultClientsMap = new LinkedHashMap<>();
         }
 

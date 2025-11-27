@@ -3,6 +3,8 @@ package com.skyflow.utils.validations;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.skyflow.config.ConnectionConfig;
+import com.skyflow.config.Credentials;
+import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.InterfaceName;
 import com.skyflow.enums.RedactionType;
 import com.skyflow.enums.TokenMode;
@@ -33,6 +35,27 @@ import java.util.Map;
 public class Validations extends BaseValidations {
     private Validations() {
         super();
+    }
+
+    public static void validateVaultConfig(VaultConfig vaultConfig) throws SkyflowException {
+        String vaultId = vaultConfig.getVaultId();
+        String clusterId = vaultConfig.getClusterId();
+        Credentials credentials = vaultConfig.getCredentials();
+        if (vaultId == null) {
+            LogUtil.printErrorLog(ErrorLogs.VAULT_ID_IS_REQUIRED.getLog());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidVaultId.getMessage());
+        } else if (vaultId.trim().isEmpty()) {
+            LogUtil.printErrorLog(ErrorLogs.EMPTY_VAULT_ID.getLog());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyVaultId.getMessage());
+        } else if (clusterId == null) {
+            LogUtil.printErrorLog(ErrorLogs.CLUSTER_ID_IS_REQUIRED.getLog());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidClusterId.getMessage());
+        } else if (clusterId.trim().isEmpty()) {
+            LogUtil.printErrorLog(ErrorLogs.EMPTY_CLUSTER_ID.getLog());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyClusterId.getMessage());
+        } else if (credentials != null) {
+            validateCredentials(credentials);
+        }
     }
 
     public static void validateConnectionConfig(ConnectionConfig connectionConfig) throws SkyflowException {

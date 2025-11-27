@@ -20,6 +20,8 @@ import com.skyflow.vault.data.Token;
 import io.github.cdimascio.dotenv.Dotenv;
 import io.github.cdimascio.dotenv.DotenvException;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -54,7 +56,7 @@ public final class Utils extends BaseUtils {
             // Create a sublist for the current batch
             List<String> batchTokens = tokens.subList(i, Math.min(i + batchSize, tokens.size()));
             List<TokenGroupRedactions> tokenGroupRedactions = null;
-            if (request.getTokenGroupRedactions().isPresent() && !request.getTokenGroupRedactions().get().isEmpty()){
+            if (request.getTokenGroupRedactions().isPresent() && !request.getTokenGroupRedactions().get().isEmpty()) {
                 tokenGroupRedactions = request.getTokenGroupRedactions().get();
             }
             // Build a new DetokenizeRequest for the current batch
@@ -256,7 +258,7 @@ public final class Utils extends BaseUtils {
             if (vaultURL != null && vaultURL.trim().isEmpty()) {
                 LogUtil.printErrorLog(ErrorLogs.EMPTY_VAULT_URL.getLog());
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyVaultUrl.getMessage());
-            } else if (vaultURL != null && !vaultURL.startsWith(BaseConstants.SECURE_PROTOCOL)) {
+            } else if (vaultURL != null && !isValidURL(vaultURL)) {
                 LogUtil.printErrorLog(ErrorLogs.INVALID_VAULT_URL_FORMAT.getLog());
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidVaultUrlFormat.getMessage());
             }
@@ -266,4 +268,18 @@ public final class Utils extends BaseUtils {
         }
     }
 
+    public static boolean isValidURL(String url) {
+        URL parsedUrl;
+        try {
+            parsedUrl = new URL(url);
+        } catch (MalformedURLException e) {
+            return false;
+        }
+
+        if (!parsedUrl.getProtocol().equalsIgnoreCase("https")) {
+            return false;
+        } else {
+            return parsedUrl.getHost() != null && !parsedUrl.getHost().isEmpty();
+        }
+    }
 }
