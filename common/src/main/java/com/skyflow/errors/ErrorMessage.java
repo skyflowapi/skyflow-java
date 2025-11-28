@@ -21,6 +21,7 @@ public enum ErrorMessage {
     EmptyClusterId("%s0 Initialization failed. Invalid cluster ID. Specify a valid cluster ID."),
     EmptyVaultUrl("%s0 Initialization failed. Vault URL is empty. Specify a valid vault URL."),
     InvalidVaultUrlFormat("%s0 Initialization failed. Vault URL must start with 'https://'."),
+    EitherVaultUrlOrClusterIdRequired("%s0 Initialization failed. Specify either 'clusterId' or 'vaultURL'."),
 
     // Connection config
     InvalidConnectionId("%s0 Initialization failed. Invalid connection ID. Specify a valid connection ID."),
@@ -173,7 +174,7 @@ public enum ErrorMessage {
     NullTokenGroupNameInTokenGroup("%s0 Validation error. TokenGroupName in TokenGroupRedactions is null or empty. Specify a valid tokenGroupName."),
     InvalidRecord("%s0 Validation error. InsertRecord object in the list is invalid. Specify a valid InsertRecord object."),
     ;
-    ;
+
     private final String message;
 
     ErrorMessage(String message) {
