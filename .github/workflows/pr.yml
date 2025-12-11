@@ -27,7 +27,7 @@ jobs:
 
       - uses: actions/setup-java@v3
         with:
-          java-version: "8"
+          java-version: "17"
           distribution: "temurin"
           cache: "maven"
 
@@ -47,7 +47,7 @@ jobs:
           echo TEST_REUSABLE_TOKEN=${{ secrets.TEST_REUSABLE_TOKEN }} >> .env
 
       - name: Build & Run tests with Maven
-        run: mvn -B clean test jacoco:report -pl v3 -am -Dmaven.javadoc.skip=true
+        run: mvn -B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn clean test jacoco:report -pl v3 -am -Dmaven.javadoc.skip=true
 
       - name: Codecov
         uses: codecov/codecov-action@v3
