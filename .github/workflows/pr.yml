@@ -1,6 +1,9 @@
 name: PR CI Checks
 
-on: [pull_request]
+on:
+  pull_request:
+  push:
+    branches: [ "v3" ]
 
 jobs:
   check-commit-message:
@@ -15,14 +18,16 @@ jobs:
           excludeDescription: "true"
           checkAllCommitMessages: "true"
           accessToken: ${{ secrets.PAT_ACTIONS }}
-          error: "One of your your commit messages is not matching the format with JIRA ID Ex: ( SDK-123 commit message )"
+          error: "One of your commit messages is not matching the format with JIRA ID Ex: ( SDK-123 commit message )"
+
   Test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
+
       - uses: actions/setup-java@v1
         with:
-          java-version: "1.8"
+          java-version: "11"
 
       - name: create-json
         id: create-json
@@ -34,18 +39,21 @@ jobs:
       - name: create env
         id: create-env
         run: |
-          touch .env
-          echo SKYFLOW_CREDENTIALS=${{ secrets.SKYFLOW_CREDENTIALS }} >> .env
-          echo TEST_EXPIRED_TOKEN=${{ secrets.TEST_EXPIRED_TOKEN }} >> .env
-          echo TEST_REUSABLE_TOKEN=${{ secrets.TEST_REUSABLE_TOKEN }} >> .env
+          touch v3/.env
+          echo SKYFLOW_CREDENTIALS=${{ secrets.SKYFLOW_CREDENTIALS }} >> v3/.env
+          echo TEST_EXPIRED_TOKEN=${{ secrets.TEST_EXPIRED_TOKEN }} >> v3/.env
+          echo TEST_REUSABLE_TOKEN=${{ secrets.TEST_REUSABLE_TOKEN }} >> v3/.env
 
       - name: Build & Run tests with Maven
-        run: mvn -B package -f pom.xml -Dmaven.javadoc.skip=true
+        run: mvn -B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn clean test jacoco:report -pl v3 -am -Dmaven.javadoc.skip=true
 
       - name: Codecov
-        uses: codecov/codecov-action@v2.1.0
+        uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_REPO_UPLOAD_TOKEN }}
-          files: target/site/jacoco/jacoco.xml
+          files: v3/target/site/jacoco/jacoco.xml
+          flags: unittests
+
           name: codecov-skyflow-java
+          fail_ci_if_error: true
           verbose: true
