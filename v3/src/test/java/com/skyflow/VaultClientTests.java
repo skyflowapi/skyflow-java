@@ -116,7 +116,10 @@ public class VaultClientTests {
             vaultClient.setBearerToken();
 
             // Credentials at ENV level should be prioritised
-            Assert.assertEquals(credentials, getPrivateField(vaultClient, "finalCredentials"));
+            Assert.assertEquals(
+                    credentials.getCredentialsString(),
+                    ((Credentials) getPrivateField(vaultClient, "finalCredentials")).getCredentialsString()
+            );
 
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), 400);
