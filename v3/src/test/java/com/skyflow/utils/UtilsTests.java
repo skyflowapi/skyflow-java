@@ -18,7 +18,7 @@ import org.junit.Test;
 
 import java.util.*;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.Assert.assertEquals;
 
 public class UtilsTests {
     private static final String INVALID_EXCEPTION_THROWN = "Should not have thrown any exception";
