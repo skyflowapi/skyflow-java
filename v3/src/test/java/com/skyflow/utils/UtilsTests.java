@@ -12,10 +12,21 @@ import com.skyflow.generated.rest.types.InsertResponse;
 import com.skyflow.generated.rest.types.RecordResponseObject;
 import com.skyflow.utils.validations.Validations;
 import com.skyflow.vault.data.*;
-import org.junit.Assert;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Assume;
 import org.junit.Test;
+import org.junit.Assert;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 import static org.junit.Assert.assertEquals;
@@ -990,4 +1001,217 @@ public class UtilsTests {
         Assert.assertEquals(400, errors.get(0).getCode());
     }
 
+    @Test
+    public void testHandleBatchExceptionWithRecordsListUsesCreateErrorRecord() {
+        List<InsertRecordData> batch = Arrays.asList(
+                InsertRecordData.builder().build(),
+                InsertRecordData.builder().build()
+        );
+
+        Map<String, Object> record1 = new HashMap<>();
+        record1.put("error", "Err1");
+        record1.put("http_code", 401);
+        Map<String, Object> record2 = new HashMap<>();
+        record2.put("message", "Err2");
+        record2.put("statusCode", 402);
+        List<Map<String, Object>> records = Arrays.asList(record1, record2);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("records", records);
+
+        Throwable cause = new com.skyflow.generated.rest.core.ApiClientApiException("Error", 400, response);
+        Exception exception = new Exception("Outer", cause);
+
+        List<ErrorRecord> errors = Utils.handleBatchException(exception, batch, 0, 2);
+
+        Assert.assertEquals(2, errors.size());
+        Assert.assertEquals("Err1", errors.get(0).getError());
+        Assert.assertEquals(401, errors.get(0).getCode());
+        Assert.assertEquals("Err2", errors.get(1).getError());
+        Assert.assertEquals(402, errors.get(1).getCode());
+    }
+
+    @Test
+    public void testHandleDetokenizeBatchExceptionWithResponseList() {
+        List<String> tokens = Arrays.asList("t1", "t2");
+        com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest batch =
+                com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest.builder()
+                        .tokens(tokens)
+                        .vaultId("vault")
+                        .build();
+
+        Map<String, Object> record1 = new HashMap<>();
+        record1.put("error", "A");
+        record1.put("http_code", 400);
+        Map<String, Object> record2 = new HashMap<>();
+        record2.put("message", "B");
+        record2.put("statusCode", 401);
+        List<Map<String, Object>> responseList = Arrays.asList(record1, record2);
+        Map<String, Object> response = new HashMap<>();
+        response.put("response", responseList);
+
+        Throwable cause = new com.skyflow.generated.rest.core.ApiClientApiException("Error", 400, response);
+        Exception exception = new Exception("Outer", cause);
+
+        List<ErrorRecord> errors = Utils.handleDetokenizeBatchException(exception, batch, 0, 2);
+
+        Assert.assertEquals(2, errors.size());
+        Assert.assertEquals("A", errors.get(0).getError());
+        Assert.assertEquals(400, errors.get(0).getCode());
+        Assert.assertEquals("B", errors.get(1).getError());
+        Assert.assertEquals(401, errors.get(1).getCode());
+    }
+
+    @Test
+    public void testHandleDetokenizeBatchExceptionWithErrorField() {
+        List<String> tokens = Arrays.asList("t1", "t2");
+        com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest batch =
+                com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest.builder()
+                        .tokens(tokens)
+                        .vaultId("vault")
+                        .build();
+
+        Map<String, Object> errorBody = new HashMap<>();
+        errorBody.put("error", "all bad");
+        errorBody.put("http_code", 403);
+        Map<String, Object> response = new HashMap<>();
+        response.put("error", errorBody);
+
+        Throwable cause = new com.skyflow.generated.rest.core.ApiClientApiException("Error", 403, response);
+        Exception exception = new Exception("Outer", cause);
+
+        List<ErrorRecord> errors = Utils.handleDetokenizeBatchException(exception, batch, 1, 2);
+
+        Assert.assertEquals(2, errors.size());
+        Assert.assertEquals(2, errors.get(0).getIndex());
+        Assert.assertEquals("all bad", errors.get(0).getError());
+        Assert.assertEquals(403, errors.get(0).getCode());
+    }
+
+    @Test
+    public void testHandleDetokenizeBatchExceptionWithNonApiCause() {
+        List<String> tokens = Arrays.asList("t1", "t2");
+        com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest batch =
+                com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest.builder()
+                        .tokens(tokens)
+                        .vaultId("vault")
+                        .build();
+
+        RuntimeException exception = new RuntimeException("plain failure");
+
+        List<ErrorRecord> errors = Utils.handleDetokenizeBatchException(exception, batch, 0, 2);
+
+        Assert.assertEquals(2, errors.size());
+        Assert.assertEquals("plain failure", errors.get(0).getError());
+        Assert.assertEquals(500, errors.get(0).getCode());
+    }
+
+    @Test
+    public void testIsValidURLVariants() {
+        Assert.assertTrue(Utils.isValidURL("https://example.com"));
+        Assert.assertFalse(Utils.isValidURL("http://example.com"));
+        Assert.assertFalse(Utils.isValidURL("https://"));
+    }
+
+    @Test
+    public void testGetEnvVaultURLWithValidEnv() {
+        Assume.assumeTrue(System.getenv("VAULT_URL") == null);
+
+        String userDir = System.getProperty("user.dir");
+        Path envPath = Paths.get(userDir, ".env");
+        byte[] original = null;
+        boolean existed = Files.exists(envPath);
+        try {
+            if (existed) {
+                original = Files.readAllBytes(envPath);
+            }
+            Files.write(envPath,
+                    Collections.singletonList("VAULT_URL=https://vault.example.com"),
+                    StandardCharsets.UTF_8);
+
+            String url = Utils.getEnvVaultURL();
+            Assert.assertEquals("https://vault.example.com", url);
+        } catch (Exception e) {
+            Assert.fail("Unexpected exception: " + e.getMessage());
+        } finally {
+            try {
+                if (existed) {
+                    Files.write(envPath, original);
+                } else {
+                    Files.deleteIfExists(envPath);
+                }
+            } catch (Exception ignored) {
+            }
+        }
+    }
+
+    @Test
+    public void testGetEnvVaultURLEmpty() {
+        Assume.assumeTrue(System.getenv("VAULT_URL") == null);
+
+        String userDir = System.getProperty("user.dir");
+        Path envPath = Paths.get(userDir, ".env");
+        byte[] original = null;
+        boolean existed = Files.exists(envPath);
+        try {
+            if (existed) {
+                original = Files.readAllBytes(envPath);
+            }
+            Files.write(envPath,
+                    Collections.singletonList("VAULT_URL=   "),
+                    StandardCharsets.UTF_8);
+
+            Utils.getEnvVaultURL();
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(ErrorMessage.EmptyVaultUrl.getMessage(), e.getMessage());
+        } catch (Exception e) {
+            Assert.fail("Unexpected exception: " + e.getMessage());
+        } finally {
+            try {
+                if (existed) {
+                    Files.write(envPath, original);
+                } else {
+                    Files.deleteIfExists(envPath);
+                }
+            } catch (Exception ignored) {
+            }
+        }
+    }
+
+    @Test
+    public void testGetEnvVaultURLInvalidFormat() {
+        Assume.assumeTrue(System.getenv("VAULT_URL") == null);
+
+        String userDir = System.getProperty("user.dir");
+        Path envPath = Paths.get(userDir, ".env");
+        byte[] original = null;
+        boolean existed = Files.exists(envPath);
+        try {
+            if (existed) {
+                original = Files.readAllBytes(envPath);
+            }
+            Files.write(envPath,
+                    Collections.singletonList("VAULT_URL=http://bad.example.com"),
+                    StandardCharsets.UTF_8);
+
+            Utils.getEnvVaultURL();
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(ErrorMessage.InvalidVaultUrlFormat.getMessage(), e.getMessage());
+        } catch (Exception e) {
+            Assert.fail("Unexpected exception: " + e.getMessage());
+        } finally {
+            try {
+                if (existed) {
+                    Files.write(envPath, original);
+                } else {
+                    Files.deleteIfExists(envPath);
+                }
+            } catch (Exception ignored) {
+            }
+        }
+    }
 }
