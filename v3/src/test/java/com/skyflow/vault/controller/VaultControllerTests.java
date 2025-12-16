@@ -37,6 +37,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.*;
+
+import org.junit.runner.RunWith;
+import org.powermock.core.classloader.annotations.PowerMockIgnore; // Import this
+import org.powermock.modules.junit4.PowerMockRunner;
+
+@RunWith(PowerMockRunner.class)
+@PowerMockIgnore({"javax.management.*", "java.nio.*", "com.sun.*", "jdk.internal.reflect.*", "javax.crypto.*"})
 public class VaultControllerTests {
     private static final String ENV_PATH = "./.env";
 
@@ -636,7 +643,7 @@ public class VaultControllerTests {
         writeEnv("INSERT_BATCH_SIZE=1\nINSERT_CONCURRENCY_LIMIT=2");
 
         AtomicInteger requestCount = new AtomicInteger(0);
-        HttpServer server = HttpServer.create(new InetSocketAddress("localhost", 0), 0);
+        HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
         server.createContext("/v2/records/insert", exchange -> {
             int count = requestCount.getAndIncrement();
             String body;
@@ -659,7 +666,7 @@ public class VaultControllerTests {
             cfg.setVaultId("vault123");
             cfg.setClusterId("cluster123");
             cfg.setEnv(Env.DEV);
-            cfg.setVaultURL("http://localhost:" + port);
+            cfg.setVaultURL("http://127.0.0.1:" + port);
 
             Credentials creds = new Credentials();
             creds.setApiKey("sky-ab123-abcd1234cdef1234abcd4321cdef4321");
@@ -697,7 +704,7 @@ public class VaultControllerTests {
         writeEnv("INSERT_BATCH_SIZE=1\nINSERT_CONCURRENCY_LIMIT=2");
 
         AtomicInteger requestCount = new AtomicInteger(0);
-        HttpServer server = HttpServer.create(new InetSocketAddress("localhost", 0), 0);
+        HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
         server.createContext("/v2/records/insert", exchange -> {
             int count = requestCount.getAndIncrement();
             String body;
@@ -720,7 +727,7 @@ public class VaultControllerTests {
             cfg.setVaultId("vault123");
             cfg.setClusterId("cluster123");
             cfg.setEnv(Env.DEV);
-            cfg.setVaultURL("http://localhost:" + port);
+            cfg.setVaultURL("http://127.0.0.1:" + port);
 
             Credentials creds = new Credentials();
             creds.setApiKey("sky-ab123-abcd1234cdef1234abcd4321cdef4321");
@@ -755,7 +762,7 @@ public class VaultControllerTests {
     public void testBulkInsertProcessSyncHandlesExceptionalFuturesAndReturnsErrors() throws Exception {
         writeEnv("INSERT_BATCH_SIZE=1\nINSERT_CONCURRENCY_LIMIT=2");
 
-        HttpServer server = HttpServer.create(new InetSocketAddress("localhost", 0), 0);
+        HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
         server.createContext("/v2/records/insert", exchange -> {
             String body = "{\"error\":{\"error\":\"bad\",\"httpCode\":500}}";
             byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
@@ -772,7 +779,7 @@ public class VaultControllerTests {
             cfg.setVaultId("vault123");
             cfg.setClusterId("cluster123");
             cfg.setEnv(Env.DEV);
-            cfg.setVaultURL("http://localhost:" + port);
+            cfg.setVaultURL("http://127.0.0.1:" + port);
 
             Credentials creds = new Credentials();
             creds.setApiKey("sky-ab123-abcd1234cdef1234abcd4321cdef4321");
@@ -807,7 +814,7 @@ public class VaultControllerTests {
     public void testBulkInsertAsyncCollectsErrorsFromExceptionalFutures() throws Exception {
         writeEnv("INSERT_BATCH_SIZE=1\nINSERT_CONCURRENCY_LIMIT=2");
 
-        HttpServer server = HttpServer.create(new InetSocketAddress("localhost", 0), 0);
+        HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
         server.createContext("/v2/records/insert", exchange -> {
             String body = "{\"error\":{\"error\":\"bad\",\"httpCode\":500}}";
             byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
@@ -824,7 +831,7 @@ public class VaultControllerTests {
             cfg.setVaultId("vault123");
             cfg.setClusterId("cluster123");
             cfg.setEnv(Env.DEV);
-            cfg.setVaultURL("http://localhost:" + port);
+            cfg.setVaultURL("http://127.0.0.1:" + port);
 
             Credentials creds = new Credentials();
             creds.setApiKey("sky-ab123-abcd1234cdef1234abcd4321cdef4321");
@@ -862,7 +869,7 @@ public class VaultControllerTests {
         writeEnv("DETOKENIZE_BATCH_SIZE=1\nDETOKENIZE_CONCURRENCY_LIMIT=2");
 
         AtomicInteger requestCount = new AtomicInteger(0);
-        HttpServer server = HttpServer.create(new InetSocketAddress("localhost", 0), 0);
+        HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
         server.createContext("/v2/tokens/detokenize", exchange -> {
             int count = requestCount.getAndIncrement();
             String body;
@@ -885,7 +892,7 @@ public class VaultControllerTests {
             cfg.setVaultId("vault123");
             cfg.setClusterId("cluster123");
             cfg.setEnv(Env.DEV);
-            cfg.setVaultURL("http://localhost:" + port);
+            cfg.setVaultURL("http://127.0.0.1:" + port);
 
             Credentials creds = new Credentials();
             creds.setApiKey("sky-ab123-abcd1234cdef1234abcd4321cdef4321");
@@ -919,7 +926,7 @@ public class VaultControllerTests {
     public void testBulkDetokenizeAsyncCollectsErrorsFromExceptionalFutures() throws Exception {
         writeEnv("DETOKENIZE_BATCH_SIZE=1\nDETOKENIZE_CONCURRENCY_LIMIT=2");
 
-        HttpServer server = HttpServer.create(new InetSocketAddress("localhost", 0), 0);
+        HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
         server.createContext("/v2/tokens/detokenize", exchange -> {
             String body = "{\"error\":{\"error\":\"bad\",\"httpCode\":500}}";
             byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
@@ -936,7 +943,7 @@ public class VaultControllerTests {
             cfg.setVaultId("vault123");
             cfg.setClusterId("cluster123");
             cfg.setEnv(Env.DEV);
-            cfg.setVaultURL("http://localhost:" + port);
+            cfg.setVaultURL("http://127.0.0.1:" + port);
 
             Credentials creds = new Credentials();
             creds.setApiKey("sky-ab123-abcd1234cdef1234abcd4321cdef4321");
