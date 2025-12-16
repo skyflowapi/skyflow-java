@@ -43,7 +43,16 @@ import org.powermock.core.classloader.annotations.PowerMockIgnore; // Import thi
 import org.powermock.modules.junit4.PowerMockRunner;
 
 @RunWith(PowerMockRunner.class)
-@PowerMockIgnore({"javax.management.", "java.nio.", "com.sun.", "jdk.internal.reflect.", "javax.crypto.", "javax.net.ssl."})
+@PowerMockIgnore({
+    "javax.management.*",
+    "java.nio.*",
+    "com.sun.net.httpserver.*",
+    "sun.net.httpserver.*",
+    "sun.nio.ch.*",
+    "jdk.internal.reflect.*",
+    "javax.crypto.*",
+    "javax.net.ssl.*"
+})
 public class VaultControllerTests {
     private static final String ENV_PATH = "./.env";
 
