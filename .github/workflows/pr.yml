@@ -47,9 +47,11 @@ jobs:
 
       - name: Build & Run tests with Maven
         run: mvn -B \
-            -Djava.net.preferIPv4Stack=true \
-            clean test jacoco:report \
-            -pl v3 -am -Dmaven.javadoc.skip=true
+          -Djava.net.preferIPv4Stack=true \
+          -Dssl.TrustManagerFactory.algorithm=SunX509 \
+          clean test jacoco:report \
+          -pl v3 -am -Dmaven.javadoc.skip=true
+
 
       - name: Codecov
         uses: codecov/codecov-action@v3
