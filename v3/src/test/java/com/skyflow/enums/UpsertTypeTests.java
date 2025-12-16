@@ -24,4 +24,9 @@ public class UpsertTypeTests {
 		assertEquals(UpsertType.REPLACE, UpsertType.valueOf("REPLACE"));
 	}
 
+    @Test
+	public void testUpsertTypeValueOfCase2() {
+		assertEquals(UpsertType.UPDATE, UpsertType.valueOf("UPDATE"));
+	}
+
 }
