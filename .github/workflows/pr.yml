@@ -46,7 +46,10 @@ jobs:
           echo TEST_REUSABLE_TOKEN=${{ secrets.TEST_REUSABLE_TOKEN }} >> v3/.env
 
       - name: Build & Run tests with Maven
-        run: mvn -B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn clean test jacoco:report -pl v3 -am -Dmaven.javadoc.skip=true
+        run: mvn -B \
+            -Djava.net.preferIPv4Stack=true \
+            clean test jacoco:report \
+            -pl v3 -am -Dmaven.javadoc.skip=true
 
       - name: Codecov
         uses: codecov/codecov-action@v3
