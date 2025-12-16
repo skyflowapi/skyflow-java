@@ -37,13 +37,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.*;
-
-import org.junit.runner.RunWith;
-import org.powermock.core.classloader.annotations.PowerMockIgnore; // Import this
-import org.powermock.modules.junit4.PowerMockRunner;
-
-@RunWith(PowerMockRunner.class)
-@PowerMockIgnore({"javax.management.*", "java.nio.*", "com.sun.*", "jdk.internal.reflect.*", "javax.crypto.*"})
 public class VaultControllerTests {
     private static final String ENV_PATH = "./.env";
 
@@ -620,7 +613,8 @@ public class VaultControllerTests {
                 (List<CompletableFuture<DetokenizeResponse>>) method.invoke(controller, executor, batches, errors);
 
         Assert.assertTrue(errors.size() == 1);
-        Assert.assertNotNull(errors.get(0).getError());
+        Assert.assertEquals(0, errors.get(0).getIndex());
+        Assert.assertEquals(500, errors.get(0).getCode());
         executor.shutdownNow();
     }
 
@@ -1051,7 +1045,8 @@ public class VaultControllerTests {
         @SuppressWarnings("unchecked")
         List<CompletableFuture<DetokenizeResponse>> futures = (List<CompletableFuture<DetokenizeResponse>>) detokenizeBatchFutures.invoke(controller, executor, batches, errors);
         assertTrue(errors.size() == 1);
-        assertNotNull(errors.get(0).getError());
+        assertEquals(0, errors.get(0).getIndex());
+        assertEquals(500, errors.get(0).getCode());
         executor.shutdownNow();
     }
 }
