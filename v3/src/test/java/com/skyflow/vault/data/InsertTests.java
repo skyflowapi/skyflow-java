@@ -274,6 +274,39 @@ public class InsertTests {
             Assert.fail(INVALID_EXCEPTION_THROWN);
         }
     }
+
+    @Test
+    public void testGetRecordsToRetry_Only5xxErrorsExcept529() {
+        ArrayList<InsertRecord> originalPayload = new ArrayList<>();
+        originalPayload.add(InsertRecord.builder().data(valueMap).table("t").build());
+        originalPayload.add(InsertRecord.builder().data(valueMap).table("t").build());
+        originalPayload.add(InsertRecord.builder().data(valueMap).table("t").build());
+        originalPayload.add(InsertRecord.builder().data(valueMap).table("t").build());
+
+        List<Success> success = new ArrayList<>();
+        List<ErrorRecord> errors = new ArrayList<>();
+        errors.add(new ErrorRecord(0, "e1", 500)); // retry
+        errors.add(new ErrorRecord(1, "e2", 503)); // retry
+        errors.add(new ErrorRecord(2, "e3", 529)); // do NOT retry
+        errors.add(new ErrorRecord(3, "e4", 400)); // do NOT retry
+
+        InsertResponse response = new InsertResponse(success, errors, originalPayload);
+        ArrayList<InsertRecord> toRetry = response.getRecordsToRetry();
+
+        Assert.assertEquals(2, toRetry.size());
+        Assert.assertSame(originalPayload.get(0), toRetry.get(0));
+        Assert.assertSame(originalPayload.get(1), toRetry.get(1));
+    }
+
+    @Test
+    public void testGetRecordsToRetry_EmptyErrors() {
+        ArrayList<InsertRecord> originalPayload = new ArrayList<>();
+        originalPayload.add(InsertRecord.builder().data(valueMap).table("t").build());
+        originalPayload.add(InsertRecord.builder().data(valueMap).table("t").build());
+
+        InsertResponse response = new InsertResponse(new ArrayList<>(), new ArrayList<>(), originalPayload);
+        Assert.assertTrue(response.getRecordsToRetry().isEmpty());
+    }
 // Java
 
    @Test

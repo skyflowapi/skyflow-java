@@ -1,1 +1,8 @@
 comment: false
+
+fixes:
+  - "v3/src/main/java/::src/main/java/"
+  - "v3/src/test/java/::src/test/java/"
+
+ignore:
+  - "**/generated/**"

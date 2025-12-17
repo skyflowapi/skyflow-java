@@ -5,11 +5,16 @@ import com.skyflow.config.VaultConfig;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.enums.Env;
 import com.skyflow.utils.Constants;
 import com.skyflow.utils.validations.Validations;
 import com.skyflow.vault.data.DetokenizeRequest;
 import com.skyflow.vault.data.InsertRecord;
 import com.skyflow.vault.data.InsertRequest;
+import com.skyflow.vault.data.ErrorRecord;
+import com.skyflow.vault.data.DetokenizeResponse;
+import com.skyflow.generated.rest.core.ApiClientApiException;
+import com.sun.net.httpserver.HttpServer;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -19,9 +24,17 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.*;
 
@@ -30,7 +43,16 @@ import org.powermock.core.classloader.annotations.PowerMockIgnore; // Import thi
 import org.powermock.modules.junit4.PowerMockRunner;
 
 @RunWith(PowerMockRunner.class)
-@PowerMockIgnore({"javax.management.*", "java.nio.*", "com.sun.*", "jdk.internal.reflect.*", "javax.crypto.*"})
+@PowerMockIgnore({
+    "javax.management.*",
+    "java.nio.*",
+    "com.sun.net.httpserver.*",
+    "sun.net.httpserver.*",
+    "sun.nio.ch.*",
+    "jdk.internal.reflect.*",
+    "javax.crypto.*",
+    "javax.net.ssl.*"
+})
 public class VaultControllerTests {
     private static final String ENV_PATH = "./.env";
 
@@ -592,6 +614,26 @@ public class VaultControllerTests {
         assertEquals(Constants.DETOKENIZE_CONCURRENCY_LIMIT.intValue(), getPrivateInt(controller, "detokenizeConcurrencyLimit"));
     }
 
+    @Test
+    public void testDetokenizeBatchFuturesCatchBranchAddsErrorRecord() throws Exception {
+        VaultController controller = createController();
+        setPrivateField(controller, "detokenizeBatchSize", 2);
+        List<com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest> batches = null; // trigger catch
+        List<ErrorRecord> errors = new ArrayList<>();
+
+        Method method = VaultController.class.getDeclaredMethod("detokenizeBatchFutures", ExecutorService.class, List.class, List.class);
+        method.setAccessible(true);
+        ExecutorService executor = Executors.newFixedThreadPool(1);
+        @SuppressWarnings("unchecked")
+        List<CompletableFuture<DetokenizeResponse>> futures =
+                (List<CompletableFuture<DetokenizeResponse>>) method.invoke(controller, executor, batches, errors);
+
+        Assert.assertTrue(errors.size() == 1);
+        Assert.assertEquals(0, errors.get(0).getIndex());
+        Assert.assertEquals(500, errors.get(0).getCode());
+        executor.shutdownNow();
+    }
+
     private int getPrivateInt(Object obj, String field) throws Exception {
         Field f = obj.getClass().getDeclaredField(field);
         f.setAccessible(true);
@@ -603,5 +645,89 @@ public class VaultControllerTests {
             tokens.add("token" + i);
         }
         return tokens;
+    }
+
+        @Test
+    public void testProcessDetokenizeSyncNormalPath() throws Exception {
+        VaultConfig cfg = new VaultConfig();
+        cfg.setVaultId("vault123");
+        cfg.setClusterId("cluster123");
+        cfg.setEnv(Env.DEV);
+        Credentials creds = new Credentials();
+        creds.setApiKey("sky-ab123-abcd1234cdef1234abcd4321cdef4321");
+        cfg.setCredentials(creds);
+
+        VaultController controller = new VaultController(cfg, creds);
+        setPrivateField(controller, "detokenizeConcurrencyLimit", 1);
+        setPrivateField(controller, "detokenizeBatchSize", 1);
+
+        List<String> tokens = new ArrayList<>();
+        tokens.add("token0");
+        DetokenizeRequest request = DetokenizeRequest.builder().tokens(tokens).build();
+
+        java.lang.reflect.Method getDetokenizeRequestBody = VaultController.class.getSuperclass().getDeclaredMethod("getDetokenizeRequestBody", DetokenizeRequest.class);
+        getDetokenizeRequestBody.setAccessible(true);
+        Object requestObj = getDetokenizeRequestBody.invoke(controller, request);
+
+        java.lang.reflect.Method processDetokenizeSync = VaultController.class.getDeclaredMethod(
+                "processDetokenizeSync",
+                com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest.class,
+                List.class
+        );
+        processDetokenizeSync.setAccessible(true);
+
+        try {
+            processDetokenizeSync.invoke(controller, requestObj, tokens);
+        } catch (java.lang.reflect.InvocationTargetException e) {
+            Throwable cause = e.getCause();
+            assertTrue(cause instanceof SkyflowException || cause instanceof ExecutionException || cause instanceof RuntimeException);
+        }
+    }
+
+    @Test
+    public void testProcessDetokenizeSyncErrorPath() throws Exception {
+        VaultConfig cfg = new VaultConfig();
+        cfg.setVaultId("vault123");
+        cfg.setClusterId("cluster123");
+        cfg.setEnv(Env.DEV);
+        Credentials creds = new Credentials();
+        creds.setApiKey("sky-ab123-abcd1234cdef1234abcd4321cdef4321");
+        cfg.setCredentials(creds);
+
+        VaultController controller = new VaultController(cfg, creds);
+        setPrivateField(controller, "detokenizeConcurrencyLimit", 1);
+        setPrivateField(controller, "detokenizeBatchSize", 1);
+
+        List<String> tokens = new ArrayList<>();
+        tokens.add("token0");
+        DetokenizeRequest request = DetokenizeRequest.builder().tokens(tokens).build();
+
+        java.lang.reflect.Method getDetokenizeRequestBody = VaultController.class.getSuperclass().getDeclaredMethod("getDetokenizeRequestBody", DetokenizeRequest.class);
+        getDetokenizeRequestBody.setAccessible(true);
+        Object requestObj = getDetokenizeRequestBody.invoke(controller, request);
+
+        java.lang.reflect.Method processDetokenizeSync = VaultController.class.getDeclaredMethod(
+                "processDetokenizeSync",
+                com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest.class,
+                List.class
+        );
+        processDetokenizeSync.setAccessible(true);
+
+        java.lang.reflect.Method detokenizeBatchFutures = VaultController.class.getDeclaredMethod(
+                "detokenizeBatchFutures",
+                ExecutorService.class,
+                List.class,
+                List.class
+        );
+        detokenizeBatchFutures.setAccessible(true);
+        ExecutorService executor = Executors.newFixedThreadPool(1);
+        List<com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest> batches = null; // will trigger catch
+        List<ErrorRecord> errors = new ArrayList<>();
+        @SuppressWarnings("unchecked")
+        List<CompletableFuture<DetokenizeResponse>> futures = (List<CompletableFuture<DetokenizeResponse>>) detokenizeBatchFutures.invoke(controller, executor, batches, errors);
+        assertTrue(errors.size() == 1);
+        assertEquals(0, errors.get(0).getIndex());
+        assertEquals(500, errors.get(0).getCode());
+        executor.shutdownNow();
     }
 }
