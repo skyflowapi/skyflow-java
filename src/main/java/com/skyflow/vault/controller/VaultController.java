@@ -31,8 +31,8 @@ import java.io.IOException;
 import java.util.*;
 
 public final class VaultController extends VaultClient {
-    private static final Gson gson = new GsonBuilder().serializeNulls().create();
-    private static final JsonObject skyMetadata = Utils.getMetrics();
+    private static final Gson GSON = new GsonBuilder().serializeNulls().create();
+    private static final JsonObject SKY_METADATA = Utils.getMetrics();
 
     public VaultController(VaultConfig vaultConfig, Credentials credentials) {
         super(vaultConfig, credentials);
@@ -40,7 +40,7 @@ public final class VaultController extends VaultClient {
 
     private static synchronized HashMap<String, Object> getFormattedBatchInsertRecord(Object record, Integer requestIndex) {
         HashMap<String, Object> insertRecord = new HashMap<>();
-        String jsonString = gson.toJson(record);
+        String jsonString = GSON.toJson(record);
         JsonObject bodyObject = JsonParser.parseString(jsonString).getAsJsonObject().get("Body").getAsJsonObject();
         JsonArray records = bodyObject.getAsJsonArray("records");
         JsonPrimitive error = bodyObject.getAsJsonPrimitive("error");
@@ -122,7 +122,7 @@ public final class VaultController extends VaultClient {
             setBearerToken();
             if (continueOnError) {
                 RecordServiceBatchOperationBody insertBody = super.getBatchInsertRequestBody(insertRequest);
-                RequestOptions requestOptions = RequestOptions.builder().addHeader(Constants.SDK_METRICS_HEADER_KEY, skyMetadata.toString()).build();
+                RequestOptions requestOptions = RequestOptions.builder().addHeader(Constants.SDK_METRICS_HEADER_KEY, SKY_METADATA.toString()).build();
                 batchInsertResult = super.getRecordsApi().withRawResponse().recordServiceBatchOperation(super.getVaultConfig().getVaultId(), insertBody, requestOptions);
                 LogUtil.printInfoLog(InfoLogs.INSERT_REQUEST_RESOLVED.getLog());
                 Optional<List<Map<String, Object>>> records = batchInsertResult.body().getResponses();
@@ -157,7 +157,7 @@ public final class VaultController extends VaultClient {
                 }
             }
         } catch (ApiClientApiException e) {
-            String bodyString = gson.toJson(e.body());
+            String bodyString = GSON.toJson(e.body());
             LogUtil.printErrorLog(ErrorLogs.INSERT_RECORDS_REJECTED.getLog());
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
         }
@@ -181,7 +181,7 @@ public final class VaultController extends VaultClient {
             Validations.validateDetokenizeRequest(detokenizeRequest);
             setBearerToken();
             V1DetokenizePayload payload = super.getDetokenizePayload(detokenizeRequest);
-            RequestOptions requestOptions = RequestOptions.builder().addHeader(Constants.SDK_METRICS_HEADER_KEY, skyMetadata.toString()).build();
+            RequestOptions requestOptions = RequestOptions.builder().addHeader(Constants.SDK_METRICS_HEADER_KEY, SKY_METADATA.toString()).build();
             result = super.getTokensApi().withRawResponse().recordServiceDetokenize(super.getVaultConfig().getVaultId(), payload, requestOptions);
             LogUtil.printInfoLog(InfoLogs.DETOKENIZE_REQUEST_RESOLVED.getLog());
             Map<String, List<String>> responseHeaders = result.headers();
@@ -202,7 +202,7 @@ public final class VaultController extends VaultClient {
                 }
             }
         } catch (ApiClientApiException e) {
-            String bodyString = gson.toJson(e.body());
+            String bodyString = GSON.toJson(e.body());
             LogUtil.printErrorLog(ErrorLogs.DETOKENIZE_REQUEST_REJECTED.getLog());
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
         }
@@ -244,7 +244,7 @@ public final class VaultController extends VaultClient {
                     .orderBy(RecordServiceBulkGetRecordRequestOrderBy.valueOf(getRequest.getOrderBy()))
                     .build();
 
-            RequestOptions requestOptions = RequestOptions.builder().addHeader(Constants.SDK_METRICS_HEADER_KEY, skyMetadata.toString()).build();
+            RequestOptions requestOptions = RequestOptions.builder().addHeader(Constants.SDK_METRICS_HEADER_KEY, SKY_METADATA.toString()).build();
             result = super.getRecordsApi().recordServiceBulkGetRecord(
                     super.getVaultConfig().getVaultId(),
                     getRequest.getTable(),
@@ -259,7 +259,7 @@ public final class VaultController extends VaultClient {
                 }
             }
         } catch (ApiClientApiException e) {
-            String bodyString = gson.toJson(e.body());
+            String bodyString = GSON.toJson(e.body());
             LogUtil.printErrorLog(ErrorLogs.GET_REQUEST_REJECTED.getLog());
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
         }
@@ -277,7 +277,7 @@ public final class VaultController extends VaultClient {
             Validations.validateUpdateRequest(updateRequest);
             setBearerToken();
             RecordServiceUpdateRecordBody updateBody = super.getUpdateRequestBody(updateRequest);
-            RequestOptions requestOptions = RequestOptions.builder().addHeader(Constants.SDK_METRICS_HEADER_KEY, skyMetadata.toString()).build();
+            RequestOptions requestOptions = RequestOptions.builder().addHeader(Constants.SDK_METRICS_HEADER_KEY, SKY_METADATA.toString()).build();
             result = super.getRecordsApi().recordServiceUpdateRecord(
                     super.getVaultConfig().getVaultId(),
                     updateRequest.getTable(),
@@ -289,7 +289,7 @@ public final class VaultController extends VaultClient {
             skyflowId = String.valueOf(result.getSkyflowId());
             tokensMap = getFormattedUpdateRecord(result);
         } catch (ApiClientApiException e) {
-            String bodyString = gson.toJson(e.body());
+            String bodyString = GSON.toJson(e.body());
             LogUtil.printErrorLog(ErrorLogs.UPDATE_REQUEST_REJECTED.getLog());
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
         }
@@ -307,12 +307,12 @@ public final class VaultController extends VaultClient {
             RecordServiceBulkDeleteRecordBody deleteBody = RecordServiceBulkDeleteRecordBody.builder().skyflowIds(deleteRequest.getIds())
                     .build();
 
-            RequestOptions requestOptions = RequestOptions.builder().addHeader(Constants.SDK_METRICS_HEADER_KEY, skyMetadata.toString()).build();
+            RequestOptions requestOptions = RequestOptions.builder().addHeader(Constants.SDK_METRICS_HEADER_KEY, SKY_METADATA.toString()).build();
             result = super.getRecordsApi().recordServiceBulkDeleteRecord(
                     super.getVaultConfig().getVaultId(), deleteRequest.getTable(), deleteBody, requestOptions);
             LogUtil.printInfoLog(InfoLogs.DELETE_REQUEST_RESOLVED.getLog());
         } catch (ApiClientApiException e) {
-            String bodyString = gson.toJson(e.body());
+            String bodyString = GSON.toJson(e.body());
             LogUtil.printErrorLog(ErrorLogs.DELETE_REQUEST_REJECTED.getLog());
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
         }
@@ -328,7 +328,7 @@ public final class VaultController extends VaultClient {
             LogUtil.printInfoLog(InfoLogs.VALIDATING_QUERY_REQUEST.getLog());
             Validations.validateQueryRequest(queryRequest);
             setBearerToken();
-            RequestOptions requestOptions = RequestOptions.builder().addHeader(Constants.SDK_METRICS_HEADER_KEY, skyMetadata.toString()).build();
+            RequestOptions requestOptions = RequestOptions.builder().addHeader(Constants.SDK_METRICS_HEADER_KEY, SKY_METADATA.toString()).build();
             result = super.getQueryApi().queryServiceExecuteQuery(
                     super.getVaultConfig().getVaultId(),
                     QueryServiceExecuteQueryBody.builder().query(queryRequest.getQuery()).build(),
@@ -342,7 +342,7 @@ public final class VaultController extends VaultClient {
                 }
             }
         } catch (ApiClientApiException e) {
-            String bodyString = gson.toJson(e.body());
+            String bodyString = GSON.toJson(e.body());
             LogUtil.printErrorLog(ErrorLogs.QUERY_REQUEST_REJECTED.getLog());
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
         }
@@ -359,7 +359,7 @@ public final class VaultController extends VaultClient {
             Validations.validateTokenizeRequest(tokenizeRequest);
             setBearerToken();
             V1TokenizePayload payload = super.getTokenizePayload(tokenizeRequest);
-            RequestOptions requestOptions = RequestOptions.builder().addHeader(Constants.SDK_METRICS_HEADER_KEY, skyMetadata.toString()).build();
+            RequestOptions requestOptions = RequestOptions.builder().addHeader(Constants.SDK_METRICS_HEADER_KEY, SKY_METADATA.toString()).build();
             result = super.getTokensApi().recordServiceTokenize(super.getVaultConfig().getVaultId(), payload, requestOptions);
             LogUtil.printInfoLog(InfoLogs.TOKENIZE_REQUEST_RESOLVED.getLog());
             if (result != null && result.getRecords().isPresent() && !result.getRecords().get().isEmpty()) {
@@ -370,7 +370,7 @@ public final class VaultController extends VaultClient {
                 }
             }
         } catch (ApiClientApiException e) {
-            String bodyString = gson.toJson(e.body());
+            String bodyString = GSON.toJson(e.body());
             LogUtil.printErrorLog(ErrorLogs.TOKENIZE_REQUEST_REJECTED.getLog());
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
         }
@@ -395,7 +395,7 @@ public final class VaultController extends VaultClient {
                     .returnFileMetadata(false)
                     .build();
 
-            RequestOptions requestOptions = RequestOptions.builder().addHeader(Constants.SDK_METRICS_HEADER_KEY, skyMetadata.toString()).build();
+            RequestOptions requestOptions = RequestOptions.builder().addHeader(Constants.SDK_METRICS_HEADER_KEY, SKY_METADATA.toString()).build();
             UploadFileV2Response uploadFileV2Response = super.getRecordsApi().uploadFileV2(
                     super.getVaultConfig().getVaultId(),
                     file,
@@ -409,7 +409,7 @@ public final class VaultController extends VaultClient {
             );
 
         } catch (ApiClientApiException e) {
-            String bodyString = gson.toJson(e.body());
+            String bodyString = GSON.toJson(e.body());
             LogUtil.printErrorLog(ErrorLogs.UPLOAD_FILE_REQUEST_REJECTED.getLog());
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
         } catch (IOException e) {

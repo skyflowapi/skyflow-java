@@ -27,8 +27,8 @@ import java.util.Date;
 import java.util.Objects;
 
 public class BearerToken {
-    private static final Gson gson = new GsonBuilder().serializeNulls().create();
-    private static final ApiClientBuilder apiClientBuilder = new ApiClientBuilder();
+    private static final Gson GSON = new GsonBuilder().serializeNulls().create();
+    private static final ApiClientBuilder API_CLIENT_BUILDER = new ApiClientBuilder();
     private final File credentialsFile;
     private final String credentialsString;
     private final String ctx;
@@ -122,8 +122,8 @@ public class BearerToken {
             );
 
             String basePath = Utils.getBaseURL(tokenURI.getAsString());
-            apiClientBuilder.url(basePath);
-            ApiClient apiClient = apiClientBuilder.token("token").build();
+            API_CLIENT_BUILDER.url(basePath);
+            ApiClient apiClient = API_CLIENT_BUILDER.token("token").build();
             AuthenticationClient authenticationApi = apiClient.authentication();
 
             V1GetAuthTokenRequest._FinalStage authTokenBuilder = V1GetAuthTokenRequest.builder().grantType(Constants.GRANT_TYPE).assertion(signedUserJWT);
@@ -137,7 +137,7 @@ public class BearerToken {
             LogUtil.printErrorLog(ErrorLogs.INVALID_TOKEN_URI.getLog());
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidTokenUri.getMessage());
         } catch (ApiClientApiException e) {
-            String bodyString = gson.toJson(e.body());
+            String bodyString = GSON.toJson(e.body());
             LogUtil.printErrorLog(ErrorLogs.BEARER_TOKEN_REJECTED.getLog());
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
         }
