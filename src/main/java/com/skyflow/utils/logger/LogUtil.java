@@ -9,10 +9,10 @@ import java.util.logging.*;
 public final class LogUtil {
     private static final Logger LOGGER = Logger.getLogger(LogUtil.class.getName());
     private static final String SDK_LOG_PREFIX = "[" + Constants.SDK_PREFIX + "] ";
-    private static boolean IS_LOGGER_SETUP_DONE = false;
+    private static boolean isLoggerSetupDone = false;
 
     synchronized public static void setupLogger(LogLevel logLevel) {
-        IS_LOGGER_SETUP_DONE = true;
+        isLoggerSetupDone = true;
         LogManager.getLogManager().reset();
         LOGGER.setUseParentHandlers(false);
         Formatter formatter = new SimpleFormatter() {
@@ -38,7 +38,7 @@ public final class LogUtil {
     }
 
     public static void printErrorLog(String message) {
-        if (IS_LOGGER_SETUP_DONE)
+        if (isLoggerSetupDone)
             LOGGER.severe(SDK_LOG_PREFIX + message);
         else {
             setupLogger(LogLevel.ERROR);
@@ -47,17 +47,17 @@ public final class LogUtil {
     }
 
     public static void printDebugLog(String message) {
-        if (IS_LOGGER_SETUP_DONE)
+        if (isLoggerSetupDone)
             LOGGER.config(SDK_LOG_PREFIX + message);
     }
 
     public static void printWarningLog(String message) {
-        if (IS_LOGGER_SETUP_DONE)
+        if (isLoggerSetupDone)
             LOGGER.warning(SDK_LOG_PREFIX + message);
     }
 
     public static void printInfoLog(String message) {
-        if (IS_LOGGER_SETUP_DONE)
+        if (isLoggerSetupDone)
             LOGGER.info(SDK_LOG_PREFIX + message);
     }
 

@@ -35,7 +35,7 @@ public final class DetectController extends VaultClient {
                     src.map(context::serialize).orElse(null))
             .serializeNulls()
             .create();
-    private static final JsonObject skyMetadata = Utils.getMetrics();
+    private static final JsonObject SKY_METADATA = Utils.getMetrics();
 
     public DetectController(VaultConfig vaultConfig, Credentials credentials) {
         super(vaultConfig, credentials);
@@ -56,7 +56,7 @@ public final class DetectController extends VaultClient {
             DeidentifyStringRequest request = getDeidentifyStringRequest(deidentifyTextRequest, vaultId);
 
             // get SDK metrics and call the API to de-identify the string
-            RequestOptions requestOptions = RequestOptions.builder().addHeader(Constants.SDK_METRICS_HEADER_KEY, skyMetadata.toString()).build();
+            RequestOptions requestOptions = RequestOptions.builder().addHeader(Constants.SDK_METRICS_HEADER_KEY, SKY_METADATA.toString()).build();
             deidentifyStringResponse = super.getDetectTextApi().deidentifyString(request, requestOptions);
 
             // Parse the response to DeIdentifyTextResponse
@@ -84,7 +84,7 @@ public final class DetectController extends VaultClient {
             ReidentifyStringRequest request = getReidentifyStringRequest(reidentifyTextRequest, vaultId);
 
             // Get SDK metrics and call the API to re-identify the string
-            RequestOptions requestOptions = RequestOptions.builder().addHeader(Constants.SDK_METRICS_HEADER_KEY, skyMetadata.toString()).build();
+            RequestOptions requestOptions = RequestOptions.builder().addHeader(Constants.SDK_METRICS_HEADER_KEY, SKY_METADATA.toString()).build();
             IdentifyResponse reidentifyStringResponse = super.getDetectTextApi().reidentifyString(request, requestOptions);
 
             // Parse the response to ReidentifyTextResponse
@@ -205,7 +205,7 @@ public final class DetectController extends VaultClient {
                         .vaultId(super.getVaultConfig().getVaultId())
                         .build();
 
-                RequestOptions requestOptions = RequestOptions.builder().addHeader(Constants.SDK_METRICS_HEADER_KEY, skyMetadata.toString()).build();
+                RequestOptions requestOptions = RequestOptions.builder().addHeader(Constants.SDK_METRICS_HEADER_KEY, SKY_METADATA.toString()).build();
                 response = super.getDetectFileAPi()
                         .getRun(runId, getRunRequest, requestOptions);
 

@@ -68,7 +68,9 @@ public final class Utils {
     }
 
     public static PrivateKey getPrivateKeyFromPem(String pemKey) throws SkyflowException {
+        @SuppressWarnings("checkstyle:LocalVariableName")
         String PKCS8PrivateHeader = Constants.PKCS8_PRIVATE_HEADER;
+        @SuppressWarnings("checkstyle:LocalVariableName")
         String PKCS8PrivateFooter = Constants.PKCS8_PRIVATE_FOOTER;
 
         String privateKeyContent = pemKey;
