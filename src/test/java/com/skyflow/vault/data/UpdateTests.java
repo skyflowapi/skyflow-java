@@ -248,25 +248,6 @@ public class UpdateTests {
     }
 
     @Test
-    public void testNullValueInValuesInUpdateRequestValidations() {
-        dataMap.put("skyflow_id", skyflowID);
-        dataMap.put("test_column_1", "test_value_1");
-        dataMap.put("test_column_2", "test_value_2");
-        dataMap.put("test_column_3", null);
-        UpdateRequest request = UpdateRequest.builder().table(table).data(dataMap).build();
-        try {
-            Validations.validateUpdateRequest(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(
-                    Utils.parameterizedString(ErrorMessage.EmptyValueInValues.getMessage(), Constants.SDK_PREFIX),
-                    e.getMessage()
-            );
-        }
-    }
-
-    @Test
     public void testEmptyValueInValuesInUpdateRequestValidations() {
         dataMap.put("skyflow_id", skyflowID);
         dataMap.put("test_column_1", "test_value_1");
@@ -275,13 +256,26 @@ public class UpdateTests {
         UpdateRequest request = UpdateRequest.builder().table(table).data(dataMap).build();
         try {
             Validations.validateUpdateRequest(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
+            Assert.assertEquals(table, request.getTable());
+            Assert.assertEquals(4, request.getData().size());
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(
-                    Utils.parameterizedString(ErrorMessage.EmptyValueInValues.getMessage(), Constants.SDK_PREFIX),
-                    e.getMessage()
-            );
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testNullValueInValuesInUpdateRequestValidations() {
+        dataMap.put("skyflow_id", skyflowID);
+        dataMap.put("test_column_1", "test_value_1");
+        dataMap.put("test_column_2", "test_value_2");
+        dataMap.put("test_column_3", null);
+        UpdateRequest request = UpdateRequest.builder().table(table).data(dataMap).build();
+        try {
+            Validations.validateUpdateRequest(request);
+            Assert.assertEquals(table, request.getTable());
+            Assert.assertEquals(4, request.getData().size());
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
         }
     }
 
