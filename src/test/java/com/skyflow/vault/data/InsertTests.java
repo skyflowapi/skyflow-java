@@ -210,13 +210,24 @@ public class InsertTests {
         InsertRequest request = InsertRequest.builder().table(table).values(values).build();
         try {
             Validations.validateInsertRequest(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
+            Assert.assertEquals(table, request.getTable());
+            Assert.assertEquals(1, request.getValues().size());
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(
-                    Utils.parameterizedString(ErrorMessage.EmptyValueInValues.getMessage(), Constants.SDK_PREFIX),
-                    e.getMessage()
-            );
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testNullValueInValuesInInsertRequestValidations() {
+        valueMap.put("test_column_3", null);
+        values.add(valueMap);
+        InsertRequest request = InsertRequest.builder().table(table).values(values).build();
+        try {
+            Validations.validateInsertRequest(request);
+            Assert.assertEquals(table, request.getTable());
+            Assert.assertEquals(1, request.getValues().size());
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
         }
     }
 
