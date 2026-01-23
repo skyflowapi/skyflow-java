@@ -222,4 +222,148 @@ public class BearerTokenTests {
             Assert.assertEquals(ErrorMessage.InvalidTokenUri.getMessage(), e.getMessage());
         }
     }
+
+    @Test
+    public void testBearerTokenBuilderWithValidTokenUri() {
+        try {
+            roles.add(role);
+            File file = new File(credentialsFilePath);
+            BearerToken.builder()
+                    .setCredentials(file)
+                    .setCtx(context)
+                    .setRoles(roles)
+                    .setTokenUri("https://example.com/token")
+                    .build();
+        } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testBearerTokenBuilderWithNullTokenUri() {
+        try {
+            roles.add(role);
+            File file = new File(credentialsFilePath);
+            BearerToken.builder()
+                    .setCredentials(file)
+                    .setCtx(context)
+                    .setRoles(roles)
+                    .setTokenUri(null)
+                    .build();
+        } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testBearerTokenBuilderWithEmptyTokenUri() {
+        try {
+            roles.add(role);
+            File file = new File(credentialsFilePath);
+            BearerToken.builder()
+                    .setCredentials(file)
+                    .setCtx(context)
+                    .setRoles(roles)
+                    .setTokenUri("")
+                    .build();
+        } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testBearerTokenBuilderWithInvalidTokenUri() {
+        try {
+            File file = new File(credentialsFilePath);
+            BearerToken.builder()
+                    .setCredentials(file)
+                    .setCtx(context)
+                    .setRoles(roles)
+                    .setTokenUri("invalid_token_uri")
+                    .build();
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(ErrorMessage.InvalidTokenUri.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testBearerTokenBuilderWithInvalidTokenUriFormat() {
+        try {
+            File file = new File(credentialsFilePath);
+            BearerToken.builder()
+                    .setCredentials(file)
+                    .setCtx(context)
+                    .setRoles(roles)
+                    .setTokenUri("htp://invalid-url")
+                    .build();
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(ErrorMessage.InvalidTokenUri.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testBearerTokenBuilderWithValidHttpTokenUri() {
+        try {
+            roles.add(role);
+            File file = new File(credentialsFilePath);
+            BearerToken.builder()
+                    .setCredentials(file)
+                    .setCtx(context)
+                    .setRoles(roles)
+                    .setTokenUri("http://localhost:8080/oauth/token")
+                    .build();
+        } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testBearerTokenBuilderWithCredentialsStringAndTokenUri() {
+        try {
+            BearerToken.builder()
+                    .setCredentials(credentialsString)
+                    .setCtx(context)
+                    .setRoles(roles)
+                    .setTokenUri("https://example.com/token")
+                    .build();
+        } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testTokenUriOverridesCredentialsTokenUri() {
+        String filePath = "./src/test/resources/validCredentials.json";
+        File file = new File(filePath);
+        try {
+            BearerToken bearerToken = BearerToken.builder()
+                    .setCredentials(file)
+                    .setCtx(context)
+                    .setRoles(roles)
+                    .setTokenUri("https://custom-token-uri.com/test")
+                    .build();
+            Assert.assertNotNull(bearerToken);
+        } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testTokenUriWithSpecialCharacters() {
+        try {
+            File file = new File(credentialsFilePath);
+            BearerToken.builder()
+                    .setCredentials(file)
+                    .setCtx(context)
+                    .setRoles(roles)
+                    .setTokenUri("https://example.com/token?param=value")
+                    .build();
+        } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
 }

@@ -9,11 +9,13 @@ public class Credentials {
     private String credentialsString;
     private String token;
     private String apiKey;
+    private String tokenUri;
 
     public Credentials() {
         this.path = null;
         this.context = null;
         this.credentialsString = null;
+        this.tokenUri = null;
     }
 
     public String getPath() {
@@ -62,5 +64,13 @@ public class Credentials {
 
     public void setApiKey(String apiKey) {
         this.apiKey = apiKey;
+    }
+
+    public String getTokenUri() {
+        return tokenUri;
+    }
+
+    public void setTokenUri(String tokenUri) {
+        this.tokenUri = tokenUri;
     }
 }

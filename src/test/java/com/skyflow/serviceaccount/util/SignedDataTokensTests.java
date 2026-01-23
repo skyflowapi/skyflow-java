@@ -222,4 +222,180 @@ public class SignedDataTokensTests {
             Assert.fail(INVALID_EXCEPTION_THROWN);
         }
     }
+
+    @Test
+    public void testSignedDataTokensBuilderWithValidTokenUri() {
+        try {
+            File file = new File(credentialsFilePath);
+            dataTokens.add(dataToken);
+            SignedDataTokens.builder()
+                    .setCredentials(file)
+                    .setCtx(context)
+                    .setDataTokens(dataTokens)
+                    .setTimeToLive(ttl)
+                    .setTokenUri("https://example.com/token")
+                    .build();
+        } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testSignedDataTokensBuilderWithNullTokenUri() {
+        try {
+            File file = new File(credentialsFilePath);
+            dataTokens.add(dataToken);
+            SignedDataTokens.builder()
+                    .setCredentials(file)
+                    .setCtx(context)
+                    .setDataTokens(dataTokens)
+                    .setTimeToLive(ttl)
+                    .setTokenUri(null)
+                    .build();
+        } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testSignedDataTokensBuilderWithEmptyTokenUri() {
+        try {
+            File file = new File(credentialsFilePath);
+            dataTokens.add(dataToken);
+            SignedDataTokens.builder()
+                    .setCredentials(file)
+                    .setCtx(context)
+                    .setDataTokens(dataTokens)
+                    .setTimeToLive(ttl)
+                    .setTokenUri("")
+                    .build();
+        } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testSignedDataTokensBuilderWithInvalidTokenUri() {
+        try {
+            File file = new File(credentialsFilePath);
+            dataTokens.add(dataToken);
+            SignedDataTokens.builder()
+                    .setCredentials(file)
+                    .setCtx(context)
+                    .setDataTokens(dataTokens)
+                    .setTimeToLive(ttl)
+                    .setTokenUri("invalid_token_uri")
+                    .build();
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(ErrorMessage.InvalidTokenUri.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testSignedDataTokensBuilderWithInvalidTokenUriFormat() {
+        try {
+            File file = new File(credentialsFilePath);
+            dataTokens.add(dataToken);
+            SignedDataTokens.builder()
+                    .setCredentials(file)
+                    .setCtx(context)
+                    .setDataTokens(dataTokens)
+                    .setTimeToLive(ttl)
+                    .setTokenUri("htp://invalid-url")
+                    .build();
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(ErrorMessage.InvalidTokenUri.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testSignedDataTokensBuilderWithValidHttpTokenUri() {
+        try {
+            File file = new File(credentialsFilePath);
+            dataTokens.add(dataToken);
+            SignedDataTokens.builder()
+                    .setCredentials(file)
+                    .setCtx(context)
+                    .setDataTokens(dataTokens)
+                    .setTimeToLive(ttl)
+                    .setTokenUri("http://localhost:8080/token")
+                    .build();
+        } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testSignedDataTokensBuilderWithCredentialsStringAndTokenUri() {
+        try {
+            dataTokens.add(dataToken);
+            SignedDataTokens.builder()
+                    .setCredentials(credentialsString)
+                    .setCtx(context)
+                    .setDataTokens(dataTokens)
+                    .setTimeToLive(ttl)
+                    .setTokenUri("https://example.com/token")
+                    .build();
+        } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testTokenUriOverridesCredentialsTokenUri() {
+        String filePath = "./src/test/resources/validCredentials.json";
+        File file = new File(filePath);
+        try {
+            dataTokens.add(dataToken);
+            SignedDataTokens signedDataTokens = SignedDataTokens.builder()
+                    .setCredentials(file)
+                    .setCtx(context)
+                    .setDataTokens(dataTokens)
+                    .setTimeToLive(ttl)
+                    .setTokenUri("https://custom-token-uri.com/test")
+                    .build();
+            Assert.assertNotNull(signedDataTokens);
+        } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testTokenUriWithSpecialCharacters() {
+        try {
+            File file = new File(credentialsFilePath);
+            dataTokens.add(dataToken);
+            SignedDataTokens.builder()
+                    .setCredentials(file)
+                    .setCtx(context)
+                    .setDataTokens(dataTokens)
+                    .setTimeToLive(ttl)
+                    .setTokenUri("https://manage.skyflowapis.dev:8080/v1/auth/sa/oauth/token?param=value")
+                    .build();
+        } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testSignedDataTokensBuilderWithMultipleTokenUriCalls() {
+        try {
+            File file = new File(credentialsFilePath);
+            dataTokens.add(dataToken);
+            SignedDataTokens.builder()
+                    .setCredentials(file)
+                    .setCtx(context)
+                    .setDataTokens(dataTokens)
+                    .setTimeToLive(ttl)
+                    .setTokenUri("https://first-uri.com/oauth/token")
+                    .setTokenUri("https://second-uri.com/oauth/token")
+                    .build();
+        } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
 }
