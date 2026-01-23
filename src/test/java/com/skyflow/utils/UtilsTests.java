@@ -216,4 +216,124 @@ public class UtilsTests {
             Assert.fail(INVALID_EXCEPTION_THROWN);
         }
     }
+
+    @Test
+    public void testGenerateBearerTokenWithCredentialsFileAndValidTokenUri() {
+        try {
+            Credentials credentials = new Credentials();
+            credentials.setPath(filePath);
+            credentials.setContext(context);
+            credentials.setRoles(roles);
+            credentials.setTokenUri("https://example.com/token");
+            Utils.generateBearerToken(credentials);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(
+                    Utils.parameterizedString(ErrorMessage.FileNotFound.getMessage(), filePath),
+                    e.getMessage()
+            );
+        }
+    }
+
+    @Test
+    public void testGenerateBearerTokenWithCredentialsFileAndNullTokenUri() {
+        try {
+            Credentials credentials = new Credentials();
+            credentials.setPath(filePath);
+            credentials.setContext(context);
+            credentials.setRoles(roles);
+            credentials.setTokenUri(null);
+            Utils.generateBearerToken(credentials);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(
+                    Utils.parameterizedString(ErrorMessage.FileNotFound.getMessage(), filePath),
+                    e.getMessage()
+            );
+        }
+    }
+
+    @Test
+    public void testGenerateBearerTokenWithCredentialsStringAndValidTokenUri() {
+        try {
+            Credentials credentials = new Credentials();
+            credentials.setCredentialsString(credentialsString);
+            credentials.setContext(context);
+            credentials.setRoles(roles);
+            credentials.setTokenUri("https://example.com/token");
+            Utils.generateBearerToken(credentials);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(ErrorMessage.CredentialsStringInvalidJson.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testGenerateBearerTokenWithCredentialsStringAndNullTokenUri() {
+        try {
+            Credentials credentials = new Credentials();
+            credentials.setCredentialsString(credentialsString);
+            credentials.setContext(context);
+            credentials.setRoles(roles);
+            credentials.setTokenUri(null);
+            Utils.generateBearerToken(credentials);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(ErrorMessage.CredentialsStringInvalidJson.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testGenerateBearerTokenWithTokenAndValidTokenUri() {
+        try {
+            Credentials credentials = new Credentials();
+            credentials.setToken(token);
+            credentials.setContext(context);
+            credentials.setRoles(roles);
+            credentials.setTokenUri("https://example.com/token");
+            String bearerToken = Utils.generateBearerToken(credentials);
+            Assert.assertEquals(token, bearerToken);
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testGenerateBearerTokenWithCredentialsFileAndEmptyTokenUri() {
+        try {
+            Credentials credentials = new Credentials();
+            credentials.setPath(filePath);
+            credentials.setContext(context);
+            credentials.setRoles(roles);
+            credentials.setTokenUri("");
+            Utils.generateBearerToken(credentials);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(
+                    Utils.parameterizedString(ErrorMessage.FileNotFound.getMessage(), filePath),
+                    e.getMessage()
+            );
+        }
+    }
+
+    @Test
+    public void testGenerateBearerTokenWithCredentialsStringAndHttpTokenUri() {
+        try {
+            Credentials credentials = new Credentials();
+            credentials.setCredentialsString(credentialsString);
+            credentials.setContext(context);
+            credentials.setRoles(roles);
+            credentials.setTokenUri("http://localhost:8080/oauth/token");
+            Utils.generateBearerToken(credentials);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(ErrorMessage.CredentialsStringInvalidJson.getMessage(), e.getMessage());
+        }
+    }
 }
