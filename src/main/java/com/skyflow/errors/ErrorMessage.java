@@ -44,7 +44,7 @@ public enum ErrorMessage {
     MissingClientId("%s0 Initialization failed. Unable to read client ID in credentials. Verify your client ID."),
     MissingKeyId("%s0 Initialization failed. Unable to read key ID in credentials. Verify your key ID."),
     MissingTokenUri("%s0 Initialization failed. Unable to read token URI in credentials. Verify your token URI."),
-    InvalidTokenUri("%s0 Initialization failed. Token URI in not a valid URL in credentials. Verify your token URI."),
+    InvalidTokenUri("%s0 Initialization failed. Invalid Skyflow credentials. The token URI must be a string and a valid URL."),
     JwtInvalidFormat("%s0 Initialization failed. Invalid private key format. Verify your credentials."),
     InvalidAlgorithm("%s0 Initialization failed. Invalid algorithm to parse private key. Specify valid algorithm."),
     InvalidKeySpec("%s0 Initialization failed. Unable to parse RSA private key. Verify your credentials."),

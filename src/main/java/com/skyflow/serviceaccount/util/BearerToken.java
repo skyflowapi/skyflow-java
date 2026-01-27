@@ -34,6 +34,7 @@ public class BearerToken {
     private final String ctx;
     private final ArrayList<String> roles;
     private final String credentialsType;
+    private final String tokenUri;
 
     private BearerToken(BearerTokenBuilder builder) {
         this.credentialsFile = builder.credentialsFile;
@@ -41,6 +42,7 @@ public class BearerToken {
         this.ctx = builder.ctx;
         this.roles = builder.roles;
         this.credentialsType = builder.credentialsType;
+        this.tokenUri = builder.tokenUri;
     }
 
     public static BearerTokenBuilder builder() {
@@ -48,7 +50,7 @@ public class BearerToken {
     }
 
     private static V1GetAuthTokenResponse generateBearerTokenFromCredentials(
-            File credentialsFile, String context, ArrayList<String> roles
+            File credentialsFile, String context, ArrayList<String> roles, String overrideTokenUri
     ) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.GENERATE_BEARER_TOKEN_FROM_CREDENTIALS_TRIGGERED.getLog());
         try {
@@ -58,7 +60,7 @@ public class BearerToken {
             }
             FileReader reader = new FileReader(String.valueOf(credentialsFile));
             JsonObject serviceAccountCredentials = JsonParser.parseReader(reader).getAsJsonObject();
-            return getBearerTokenFromCredentials(serviceAccountCredentials, context, roles);
+            return getBearerTokenFromCredentials(serviceAccountCredentials, context, roles, overrideTokenUri);
         } catch (JsonSyntaxException e) {
             LogUtil.printErrorLog(ErrorLogs.INVALID_CREDENTIALS_FILE_FORMAT.getLog());
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), Utils.parameterizedString(
@@ -71,7 +73,7 @@ public class BearerToken {
     }
 
     private static V1GetAuthTokenResponse generateBearerTokenFromCredentialString(
-            String credentials, String context, ArrayList<String> roles
+            String credentials, String context, ArrayList<String> roles, String overrideTokenUri
     ) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.GENERATE_BEARER_TOKEN_FROM_CREDENTIALS_STRING_TRIGGERED.getLog());
         try {
@@ -80,7 +82,7 @@ public class BearerToken {
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidCredentials.getMessage());
             }
             JsonObject serviceAccountCredentials = JsonParser.parseString(credentials).getAsJsonObject();
-            return getBearerTokenFromCredentials(serviceAccountCredentials, context, roles);
+            return getBearerTokenFromCredentials(serviceAccountCredentials, context, roles, overrideTokenUri);
         } catch (JsonSyntaxException e) {
             LogUtil.printErrorLog(ErrorLogs.INVALID_CREDENTIALS_STRING_FORMAT.getLog());
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(),
@@ -89,7 +91,7 @@ public class BearerToken {
     }
 
     private static V1GetAuthTokenResponse getBearerTokenFromCredentials(
-            JsonObject credentials, String context, ArrayList<String> roles
+            JsonObject credentials, String context, ArrayList<String> roles, String overrideTokenUri
     ) throws SkyflowException {
         try {
             JsonElement privateKey = credentials.get("privateKey");
@@ -111,17 +113,19 @@ public class BearerToken {
             }
 
             JsonElement tokenURI = credentials.get("tokenURI");
-            if (tokenURI == null) {
+            if (tokenURI == null && overrideTokenUri == null) {
                 LogUtil.printErrorLog(ErrorLogs.TOKEN_URI_IS_REQUIRED.getLog());
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.MissingTokenUri.getMessage());
             }
 
+            String finalTokenUri = (overrideTokenUri != null) ? overrideTokenUri : tokenURI.getAsString();
+
             PrivateKey pvtKey = Utils.getPrivateKeyFromPem(privateKey.getAsString());
             String signedUserJWT = getSignedToken(
-                    clientID.getAsString(), keyID.getAsString(), tokenURI.getAsString(), pvtKey, context
+                    clientID.getAsString(), keyID.getAsString(), finalTokenUri, pvtKey, context
             );
 
-            String basePath = Utils.getBaseURL(tokenURI.getAsString());
+            String basePath = Utils.getBaseURL(finalTokenUri);
             API_CLIENT_BUILDER.url(basePath);
             ApiClient apiClient = API_CLIENT_BUILDER.token("token").build();
             AuthenticationClient authenticationApi = apiClient.authentication();
@@ -174,10 +178,10 @@ public class BearerToken {
         V1GetAuthTokenResponse response;
         String accessToken = null;
         if (this.credentialsFile != null && Objects.equals(this.credentialsType, "FILE")) {
-            response = generateBearerTokenFromCredentials(this.credentialsFile, this.ctx, this.roles);
+            response = generateBearerTokenFromCredentials(this.credentialsFile, this.ctx, this.roles, this.tokenUri);
             accessToken = response.getAccessToken().get();
         } else if (this.credentialsString != null && Objects.equals(this.credentialsType, "STRING")) {
-            response = generateBearerTokenFromCredentialString(this.credentialsString, this.ctx, this.roles);
+            response = generateBearerTokenFromCredentialString(this.credentialsString, this.ctx, this.roles, this.tokenUri);
             accessToken = response.getAccessToken().get();
         }
         LogUtil.printInfoLog(InfoLogs.GET_BEARER_TOKEN_SUCCESS.getLog());
@@ -191,6 +195,7 @@ public class BearerToken {
         private String ctx;
         private ArrayList<String> roles;
         private String credentialsType;
+        private String tokenUri;
 
         private BearerTokenBuilder() {
         }
@@ -218,6 +223,19 @@ public class BearerToken {
 
         public BearerTokenBuilder setRoles(ArrayList<String> roles) {
             this.roles = roles;
+            return this;
+        }
+
+        public BearerTokenBuilder setTokenUri(String tokenUri) throws SkyflowException {
+            if (tokenUri != null && !tokenUri.isEmpty()) {
+                try {
+                    new java.net.URL(tokenUri);
+                    this.tokenUri = tokenUri;
+                } catch (MalformedURLException e) {
+                    LogUtil.printErrorLog(ErrorLogs.INVALID_TOKEN_URI.getLog());
+                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidTokenUri.getMessage());
+                }
+            }
             return this;
         }
 

@@ -49,19 +49,23 @@ public final class Utils {
 
     public static String generateBearerToken(Credentials credentials) throws SkyflowException {
         if (credentials.getPath() != null) {
-            return BearerToken.builder()
+            BearerToken.BearerTokenBuilder builder = BearerToken.builder()
                     .setCredentials(new File(credentials.getPath()))
                     .setRoles(credentials.getRoles())
-                    .setCtx(credentials.getContext())
-                    .build()
-                    .getBearerToken();
+                    .setCtx(credentials.getContext());
+            if (credentials.getTokenUri() != null) {
+                builder.setTokenUri(credentials.getTokenUri());
+            }
+            return builder.build().getBearerToken();
         } else if (credentials.getCredentialsString() != null) {
-            return BearerToken.builder()
+            BearerToken.BearerTokenBuilder builder = BearerToken.builder()
                     .setCredentials(credentials.getCredentialsString())
                     .setRoles(credentials.getRoles())
-                    .setCtx(credentials.getContext())
-                    .build()
-                    .getBearerToken();
+                    .setCtx(credentials.getContext());
+            if (credentials.getTokenUri() != null) {
+                builder.setTokenUri(credentials.getTokenUri());
+            }
+            return builder.build().getBearerToken();
         } else {
             return credentials.getToken();
         }

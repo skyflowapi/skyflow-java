@@ -154,6 +154,7 @@ public class Validations {
         String token = credentials.getToken();
         String apiKey = credentials.getApiKey();
         String context = credentials.getContext();
+        String tokenUri = credentials.getTokenUri();
         ArrayList<String> roles = credentials.getRoles();
 
         if (path != null) nonNullMembers++;
@@ -211,6 +212,11 @@ public class Validations {
         if (context != null && context.trim().isEmpty()) {
             LogUtil.printErrorLog(ErrorLogs.EMPTY_OR_NULL_CONTEXT.getLog());
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyContext.getMessage());
+        }
+        
+        if (tokenUri != null && isInvalidURL(tokenUri)) {
+            LogUtil.printErrorLog(ErrorLogs.INVALID_TOKEN_URI.getLog());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidTokenUri.getMessage());
         }
     }
 
