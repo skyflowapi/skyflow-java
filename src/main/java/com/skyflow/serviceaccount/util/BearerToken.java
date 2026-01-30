@@ -92,25 +92,25 @@ public class BearerToken {
             JsonObject credentials, String context, ArrayList<String> roles
     ) throws SkyflowException {
         try {
-            JsonElement privateKey = credentials.get("privateKey");
+            JsonElement privateKey = credentials.get(Constants.CredentialFields.PRIVATE_KEY);
             if (privateKey == null) {
                 LogUtil.printErrorLog(ErrorLogs.PRIVATE_KEY_IS_REQUIRED.getLog());
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.MissingPrivateKey.getMessage());
             }
 
-            JsonElement clientID = credentials.get("clientID");
+            JsonElement clientID = credentials.get(Constants.CredentialFields.CLIENT_ID);
             if (clientID == null) {
                 LogUtil.printErrorLog(ErrorLogs.CLIENT_ID_IS_REQUIRED.getLog());
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.MissingClientId.getMessage());
             }
 
-            JsonElement keyID = credentials.get("keyID");
+            JsonElement keyID = credentials.get(Constants.CredentialFields.KEY_ID);
             if (keyID == null) {
                 LogUtil.printErrorLog(ErrorLogs.KEY_ID_IS_REQUIRED.getLog());
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.MissingKeyId.getMessage());
             }
 
-            JsonElement tokenURI = credentials.get("tokenURI");
+            JsonElement tokenURI = credentials.get(Constants.CredentialFields.TOKEN_URI);
             if (tokenURI == null) {
                 LogUtil.printErrorLog(ErrorLogs.TOKEN_URI_IS_REQUIRED.getLog());
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.MissingTokenUri.getMessage());
@@ -123,7 +123,7 @@ public class BearerToken {
 
             String basePath = Utils.getBaseURL(tokenURI.getAsString());
             API_CLIENT_BUILDER.url(basePath);
-            ApiClient apiClient = API_CLIENT_BUILDER.token("token").build();
+            ApiClient apiClient = API_CLIENT_BUILDER.token(Constants.ApiToken.TOKEN).build();
             AuthenticationClient authenticationApi = apiClient.authentication();
 
             V1GetAuthTokenRequest._FinalStage authTokenBuilder = V1GetAuthTokenRequest.builder().grantType(Constants.GRANT_TYPE).assertion(signedUserJWT);
@@ -149,11 +149,11 @@ public class BearerToken {
         final Date createdDate = new Date();
         final Date expirationDate = new Date(createdDate.getTime() + (3600 * 1000));
         return Jwts.builder()
-                .claim("iss", clientID)
-                .claim("key", keyID)
-                .claim("aud", tokenURI)
-                .claim("sub", clientID)
-                .claim("ctx", context)
+                .claim(Constants.JwtClaims.ISS, clientID)
+                .claim(Constants.JwtClaims.KEY, keyID)
+                .claim(Constants.JwtClaims.AUD, tokenURI)
+                .claim(Constants.JwtClaims.SUB, clientID)
+                .claim(Constants.JwtClaims.CTX, context)
                 .expiration(expirationDate)
                 .signWith(pvtKey, Jwts.SIG.RS256)
                 .compact();
@@ -163,7 +163,7 @@ public class BearerToken {
         StringBuilder scope = new StringBuilder();
         if (roles != null) {
             for (String role : roles) {
-                scope.append(" role:").append(role);
+                scope.append(Constants.ApiToken.ROLE_PREFIX).append(role);
             }
         }
         return scope.toString();
@@ -173,10 +173,10 @@ public class BearerToken {
         LogUtil.printInfoLog(InfoLogs.GET_BEARER_TOKEN_TRIGGERED.getLog());
         V1GetAuthTokenResponse response;
         String accessToken = null;
-        if (this.credentialsFile != null && Objects.equals(this.credentialsType, "FILE")) {
+        if (this.credentialsFile != null && Objects.equals(this.credentialsType, Constants.CredentialTypeValues.FILE)) {
             response = generateBearerTokenFromCredentials(this.credentialsFile, this.ctx, this.roles);
             accessToken = response.getAccessToken().get();
-        } else if (this.credentialsString != null && Objects.equals(this.credentialsType, "STRING")) {
+        } else if (this.credentialsString != null && Objects.equals(this.credentialsType, Constants.CredentialTypeValues.STRING)) {
             response = generateBearerTokenFromCredentialString(this.credentialsString, this.ctx, this.roles);
             accessToken = response.getAccessToken().get();
         }
@@ -200,13 +200,13 @@ public class BearerToken {
         }
 
         public BearerTokenBuilder setCredentials(File credentialsFile) {
-            setCredentialsType("FILE");
+            setCredentialsType(Constants.CredentialTypeValues.FILE);
             this.credentialsFile = credentialsFile;
             return this;
         }
 
         public BearerTokenBuilder setCredentials(String credentialsString) {
-            setCredentialsType("STRING");
+            setCredentialsType(Constants.CredentialTypeValues.STRING);
             this.credentialsString = credentialsString;
             return this;
         }

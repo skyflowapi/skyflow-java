@@ -41,15 +41,15 @@ public final class VaultController extends VaultClient {
     private static synchronized HashMap<String, Object> getFormattedBatchInsertRecord(Object record, Integer requestIndex) {
         HashMap<String, Object> insertRecord = new HashMap<>();
         String jsonString = GSON.toJson(record);
-        JsonObject bodyObject = JsonParser.parseString(jsonString).getAsJsonObject().get("Body").getAsJsonObject();
-        JsonArray records = bodyObject.getAsJsonArray("records");
-        JsonPrimitive error = bodyObject.getAsJsonPrimitive("error");
+        JsonObject bodyObject = JsonParser.parseString(jsonString).getAsJsonObject().get(Constants.JsonFieldNames.BODY).getAsJsonObject();
+        JsonArray records = bodyObject.getAsJsonArray(Constants.JsonFieldNames.RECORDS);
+        JsonPrimitive error = bodyObject.getAsJsonPrimitive(Constants.JsonFieldNames.ERROR);
 
         if (records != null) {
             for (JsonElement recordElement : records) {
                 JsonObject recordObject = recordElement.getAsJsonObject();
-                insertRecord.put("skyflowId", recordObject.get("skyflow_id").getAsString());
-                JsonElement tokensElement = recordObject.get("tokens");
+                insertRecord.put(Constants.FieldNames.SKYFLOW_ID_CAMEL, recordObject.get(Constants.JsonFieldNames.SKYFLOW_ID).getAsString());
+                JsonElement tokensElement = recordObject.get(Constants.JsonFieldNames.TOKENS);
                 if (tokensElement != null) {
                     insertRecord.putAll(tokensElement.getAsJsonObject().asMap());
                 }
@@ -57,16 +57,16 @@ public final class VaultController extends VaultClient {
         }
 
         if (error != null) {
-            insertRecord.put("error", error.getAsString());
+            insertRecord.put(Constants.JsonFieldNames.ERROR, error.getAsString());
         }
-        insertRecord.put("requestIndex", requestIndex);
+        insertRecord.put(Constants.JsonFieldNames.REQUEST_INDEX, requestIndex);
         return insertRecord;
     }
 
     private static synchronized HashMap<String, Object> getFormattedBulkInsertRecord(V1RecordMetaProperties record) {
         HashMap<String, Object> insertRecord = new HashMap<>();
         if (record.getSkyflowId().isPresent()) {
-            insertRecord.put("skyflowId", record.getSkyflowId().get());
+            insertRecord.put(Constants.FieldNames.SKYFLOW_ID_CAMEL, record.getSkyflowId().get());
         }
 
         if (record.getTokens().isPresent()) {
@@ -93,7 +93,7 @@ public final class VaultController extends VaultClient {
     private static synchronized HashMap<String, Object> getFormattedUpdateRecord(V1UpdateRecordResponse record) {
         HashMap<String, Object> updateTokens = new HashMap<>();
 
-        record.getSkyflowId().ifPresent(skyflowId -> updateTokens.put("skyflowId", skyflowId));
+        record.getSkyflowId().ifPresent(skyflowId -> updateTokens.put(Constants.FieldNames.SKYFLOW_ID_CAMEL, skyflowId));
 
         record.getTokens().ifPresent(tokensMap -> updateTokens.putAll(tokensMap));
 
@@ -134,11 +134,11 @@ public final class VaultController extends VaultClient {
                         Map<String, Object> record = recordList.get(index);
                         HashMap<String, Object> insertRecord = getFormattedBatchInsertRecord(record, index);
 
-                        if (insertRecord.containsKey("skyflowId")) {
+                        if (insertRecord.containsKey(Constants.FieldNames.SKYFLOW_ID_CAMEL)) {
                             insertedFields.add(insertRecord);
                         } else {
-                            insertRecord.put("requestId", batchInsertResult.headers().get(Constants.REQUEST_ID_HEADER_KEY).get(0));
-                            insertRecord.put("httpCode", ErrorCode.INVALID_INPUT.getCode());
+                            insertRecord.put(Constants.JsonFieldNames.REQUEST_ID, batchInsertResult.headers().get(Constants.REQUEST_ID_HEADER_KEY).get(0));
+                            insertRecord.put(Constants.JsonFieldNames.HTTP_CODE, ErrorCode.INVALID_INPUT.getCode());
                             errorFields.add(insertRecord);
                         }
                     }
@@ -281,7 +281,7 @@ public final class VaultController extends VaultClient {
             result = super.getRecordsApi().recordServiceUpdateRecord(
                     super.getVaultConfig().getVaultId(),
                     updateRequest.getTable(),
-                    updateRequest.getData().remove("skyflow_id").toString(),
+                    updateRequest.getData().remove(Constants.JsonFieldNames.SKYFLOW_ID).toString(),
                     updateBody,
                     requestOptions
             );

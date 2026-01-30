@@ -16,5 +16,48 @@
     <module name="StaticVariableName"/>
     <module name="ConstantName"/>
     <module name="TypeName"/>
+
+    <module name="MultipleStringLiterals">
+      <property name="allowedDuplicates" value="1"/>
+      <property name="ignoreOccurrenceContext" value="ANNOTATION"/>
+      <property name="ignoreStringsRegexp" value='^""$|^"."$'/>
+    </module>
+
+    <module name="StringLiteralEquality"/>
+
+    <module name="MagicNumber">
+      <property name="ignoreNumbers" value="-1,0,1,2,3,64,200,201,204,299,400,401,403,404,500,1000,60000"/>
+      <property name="ignoreFieldDeclaration" value="true"/>
+      <property name="ignoreAnnotation" value="true"/>
+    </module>
+
+    <!-- Detect common hardcoded JSON field names in .get() calls -->
+    <module name="RegexpSinglelineJava">
+      <property name="format" value='\.get\("(error|message|tokens|records|fields|details|grpc_code|http_status|Body|exp|skyflow_id|privateKey|clientID|keyID|tokenURI)"\)'/>
+      <property name="message" value="Use Constants.JsonFieldNames or Constants.CredentialFields instead of hardcoded field names. Use IDE search-replace for: error, message, tokens, records, fields, details, grpc_code, http_status, Body, exp, skyflow_id, privateKey, clientID, keyID, tokenURI"/>
+      <property name="ignoreComments" value="true"/>
+    </module>
+
+    <!-- Detect common hardcoded JSON field names in .put() calls -->
+    <module name="RegexpSinglelineJava">
+      <property name="format" value='\.put\("(error|value|token|type|requestIndex|requestId)"\s*,'/>
+      <property name="message" value="Use Constants.JsonFieldNames instead of hardcoded field names. Use IDE search-replace for: error, value, token, type, requestIndex, requestId"/>
+      <property name="ignoreComments" value="true"/>
+    </module>
+
+    <!-- Detect common hardcoded JSON field names in .add() and .addProperty() calls -->
+    <module name="RegexpSinglelineJava">
+      <property name="format" value='\.(add|addProperty)\("(errors|tokens|value|token|type|error|updatedField)"\s*,'/>
+      <property name="message" value="Use Constants.JsonFieldNames instead of hardcoded field names. Use IDE search-replace for: errors, tokens, value, token, type, error, updatedField"/>
+      <property name="ignoreComments" value="true"/>
+    </module>
+
+    <!-- Detect hardcoded RSA algorithm -->
+    <module name="RegexpSinglelineJava">
+      <property name="format" value='getInstance\("RSA"\)'/>
+      <property name="message" value="Use Constants.CryptoAlgorithm.RSA instead of hardcoded 'RSA'"/>
+      <property name="ignoreComments" value="true"/>
+    </module>
+
   </module>
 </module>

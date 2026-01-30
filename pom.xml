@@ -200,7 +200,7 @@
                     <failsOnError>false</failsOnError>
                     <consoleOutput>true</consoleOutput>
                     
-                    <excludes>**/generated/**</excludes>
+                    <excludes>**/generated/**,**/logs/**</excludes>
                 </configuration>
                 <executions>
                     <execution>

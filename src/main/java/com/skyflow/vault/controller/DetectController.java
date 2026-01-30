@@ -161,7 +161,7 @@ public final class DetectController extends VaultClient {
                     String outputDir = request.getOutputDirectory();
                     if (entityBase64 != null) {
                         byte[] entityDecodedBytes = Base64.getDecoder().decode(entityBase64);
-                        String entityFileName = Constants.PROCESSED_FILE_NAME_PREFIX + fileName.substring(0, fileName.lastIndexOf('.')) + ".json";
+                        String entityFileName = Constants.PROCESSED_FILE_NAME_PREFIX + fileName.substring(0, fileName.lastIndexOf('.')) + Constants.FileExtension.JSON;
                         File entityFile;
                         if (outputDir != null && !outputDir.isEmpty()) {
                             entityFile = new File(outputDir, entityFileName);
@@ -284,7 +284,7 @@ public final class DetectController extends VaultClient {
                 byte[] decodedBytes = Base64.getDecoder().decode(processedFileBase64.get());
                 String suffix = "." + processedFileExtension.get();
                 String fileName = Constants.DEIDENTIFIED_FILE_PREFIX + suffix;
-                processedFileObject = new File(System.getProperty("java.io.tmpdir"), fileName);
+                processedFileObject = new File(System.getProperty(Constants.SystemProperty.JAVA_TEMP_DIR), fileName);
                 Files.write(processedFileObject.toPath(), decodedBytes);
                  fileInfo = new FileInfo(processedFileObject);
                 processedFileObject.deleteOnExit();
@@ -350,54 +350,54 @@ public final class DetectController extends VaultClient {
 
     private com.skyflow.generated.rest.types.DeidentifyFileResponse processFileByType(String fileExtension, String base64Content, DeidentifyFileRequest request, String vaultId) throws SkyflowException {
         switch (fileExtension.toLowerCase()) {
-            case "txt":
+            case Constants.FileFormatType.TXT:
                 com.skyflow.generated.rest.resources.files.requests.DeidentifyFileRequestDeidentifyText textFileRequest =
                         super.getDeidentifyTextFileRequest(request, vaultId, base64Content);
                 return super.getDetectFileAPi().deidentifyText(textFileRequest);
 
-            case "mp3":
-            case "wav":
+            case Constants.FileFormatType.MP3:
+            case Constants.FileFormatType.WAV:
                 DeidentifyFileAudioRequestDeidentifyAudio audioRequest =
                         super.getDeidentifyAudioRequest(request, vaultId, base64Content, fileExtension);
                 return super.getDetectFileAPi().deidentifyAudio(audioRequest);
 
-            case "pdf":
+            case Constants.FileFormatType.PDF:
                 DeidentifyFileDocumentPdfRequestDeidentifyPdf pdfRequest =
                         super.getDeidentifyPdfRequest(request, vaultId, base64Content);
 
                 return super.getDetectFileAPi().deidentifyPdf(pdfRequest);
 
-            case "jpg":
-            case "jpeg":
-            case "png":
-            case "bmp":
-            case "tif":
-            case "tiff":
+            case Constants.FileFormatType.JPG:
+            case Constants.FileFormatType.JPEG:
+            case Constants.FileFormatType.PNG:
+            case Constants.FileFormatType.BMP:
+            case Constants.FileFormatType.TIF:
+            case Constants.FileFormatType.TIFF:
                 DeidentifyFileImageRequestDeidentifyImage imageRequest =
                         super.getDeidentifyImageRequest(request, vaultId, base64Content, fileExtension);
                 return super.getDetectFileAPi().deidentifyImage(imageRequest);
 
-            case "ppt":
-            case "pptx":
+            case Constants.FileFormatType.PPT:
+            case Constants.FileFormatType.PPTX:
                 DeidentifyFileRequestDeidentifyPresentation presentationRequest =
                         super.getDeidentifyPresentationRequest(request, vaultId, base64Content, fileExtension);
                 return super.getDetectFileAPi().deidentifyPresentation(presentationRequest);
 
-            case "csv":
-            case "xls":
-            case "xlsx":
+            case Constants.FileFormatType.CSV:
+            case Constants.FileFormatType.XLS:
+            case Constants.FileFormatType.XLSX:
                 DeidentifyFileRequestDeidentifySpreadsheet spreadsheetRequest =
                         super.getDeidentifySpreadsheetRequest(request, vaultId, base64Content, fileExtension);
                 return super.getDetectFileAPi().deidentifySpreadsheet(spreadsheetRequest);
 
-            case "doc":
-            case "docx":
+            case Constants.FileFormatType.DOC:
+            case Constants.FileFormatType.DOCX:
                 DeidentifyFileRequestDeidentifyDocument documentRequest =
                         super.getDeidentifyDocumentRequest(request, vaultId, base64Content, fileExtension);
                 return super.getDetectFileAPi().deidentifyDocument(documentRequest);
 
-            case "json":
-            case "xml":
+            case Constants.FileFormatType.JSON:
+            case Constants.FileFormatType.XML:
                 DeidentifyFileRequestDeidentifyStructuredText structuredTextRequest =
                         super.getDeidentifyStructuredTextRequest(request, vaultId, base64Content, fileExtension);
                 return super.getDetectFileAPi().deidentifyStructuredText(structuredTextRequest);
