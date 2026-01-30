@@ -808,9 +808,9 @@ public class VaultClient {
 
     private FileDataDeidentifyAudioDataFormat mapAudioDataFormat(String dataFormat) throws SkyflowException {
         switch (dataFormat) {
-            case "mp3":
+            case Constants.FileFormatType.MP3:
                 return FileDataDeidentifyAudioDataFormat.MP_3;
-            case "wav":
+            case Constants.FileFormatType.WAV:
                 return FileDataDeidentifyAudioDataFormat.WAV;
             default:
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidAudioFileType.getMessage());

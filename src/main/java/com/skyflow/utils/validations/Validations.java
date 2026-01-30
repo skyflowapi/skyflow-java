@@ -513,17 +513,17 @@ public class Validations {
                     ErrorLogs.EMPTY_DATA.getLog(), InterfaceName.UPDATE.getName()
             ));
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyData.getMessage());
-        } else if (!data.containsKey("skyflow_id")) {
+        } else if (!data.containsKey(Constants.JsonFieldNames.SKYFLOW_ID)) {
             LogUtil.printErrorLog(Utils.parameterizedString(
                     ErrorLogs.SKYFLOW_ID_IS_REQUIRED.getLog(), InterfaceName.UPDATE.getName()
             ));
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.SkyflowIdKeyError.getMessage());
-        } else if (!(data.get("skyflow_id") instanceof String)) {
+        } else if (!(data.get(Constants.JsonFieldNames.SKYFLOW_ID) instanceof String)) {
             LogUtil.printErrorLog(Utils.parameterizedString(
                     ErrorLogs.INVALID_SKYFLOW_ID_TYPE.getLog(), InterfaceName.UPDATE.getName()
             ));
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidSkyflowIdType.getMessage());
-        } else if (data.get("skyflow_id").toString().trim().isEmpty()) {
+        } else if (data.get(Constants.JsonFieldNames.SKYFLOW_ID).toString().trim().isEmpty()) {
             LogUtil.printErrorLog(Utils.parameterizedString(
                     ErrorLogs.EMPTY_SKYFLOW_ID.getLog(), InterfaceName.UPDATE.getName()
             ));
@@ -800,7 +800,7 @@ public class Validations {
     private static boolean isInvalidURL(String configURL) {
         try {
             URL url = new URL(configURL);
-            if (!url.getProtocol().equals("https")) throw new Exception();
+            if (!url.getProtocol().equals(Constants.HTTPS_PROTOCOL)) throw new Exception();
         } catch (Exception e) {
             return true;
         }

@@ -66,7 +66,7 @@ public final class ConnectionController extends ConnectionClient {
             String response = HttpUtility.sendRequest(requestMethod.name(), new URL(filledURL), requestBody, headers);
             JsonObject data = JsonParser.parseString(response).getAsJsonObject();
             HashMap<String, String> metadata = new HashMap<>();
-            metadata.put("requestId", HttpUtility.getRequestID());
+            metadata.put(Constants.JsonFieldNames.REQUEST_ID, HttpUtility.getRequestID());
             connectionResponse = new InvokeConnectionResponse(data, metadata, null);
             LogUtil.printInfoLog(InfoLogs.INVOKE_CONNECTION_REQUEST_RESOLVED.getLog());
         } catch (IOException e) {
@@ -84,7 +84,7 @@ public final class ConnectionController extends ConnectionClient {
             return jsonElement.getAsJsonObject();
         } else {
             JsonObject wrapper = new JsonObject();
-            wrapper.add("value", jsonElement);
+            wrapper.add(Constants.JsonFieldNames.VALUE, jsonElement);
             return wrapper;
         }
     }

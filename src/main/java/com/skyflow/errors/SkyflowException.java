@@ -57,7 +57,7 @@ public class SkyflowException extends Exception {
 
     private void setResponseBody(String responseBody, Map<String, List<String>> responseHeaders) {
         this.responseBody = JsonParser.parseString(responseBody).getAsJsonObject();
-        if (this.responseBody.get("error") != null) {
+        if (this.responseBody.get(Constants.JsonFieldNames.ERROR) != null) {
             setGrpcCode();
             setHttpStatus();
             setMessage();
@@ -75,17 +75,17 @@ public class SkyflowException extends Exception {
     }
 
     private void setMessage() {
-        JsonElement messageElement = ((JsonObject) responseBody.get("error")).get("message");
+        JsonElement messageElement = ((JsonObject) responseBody.get(Constants.JsonFieldNames.ERROR)).get(Constants.JsonFieldNames.MESSAGE);
         this.message = messageElement == null ? null : messageElement.getAsString();
     }
 
     private void setGrpcCode() {
-        JsonElement grpcElement = ((JsonObject) responseBody.get("error")).get("grpc_code");
+        JsonElement grpcElement = ((JsonObject) responseBody.get(Constants.JsonFieldNames.ERROR)).get(Constants.JsonFieldNames.GRPC_CODE);
         this.grpcCode = grpcElement == null ? null : grpcElement.getAsInt();
     }
 
     private void setHttpStatus() {
-        JsonElement statusElement = ((JsonObject) responseBody.get("error")).get("http_status");
+        JsonElement statusElement = ((JsonObject) responseBody.get(Constants.JsonFieldNames.ERROR)).get(Constants.JsonFieldNames.HTTP_STATUS);
         this.httpStatus = statusElement == null ? null : statusElement.getAsString();
     }
 
@@ -98,7 +98,7 @@ public class SkyflowException extends Exception {
     }
 
     private void setDetails(Map<String, List<String>> responseHeaders) {
-        JsonElement detailsElement = ((JsonObject) responseBody.get("error")).get("details");
+        JsonElement detailsElement = ((JsonObject) responseBody.get(Constants.JsonFieldNames.ERROR)).get(Constants.JsonFieldNames.DETAILS);
         List<String> errorFromClientHeader = responseHeaders.get(Constants.ERROR_FROM_CLIENT_HEADER_KEY);
         if (detailsElement != null) {
             this.details = detailsElement.getAsJsonArray();
