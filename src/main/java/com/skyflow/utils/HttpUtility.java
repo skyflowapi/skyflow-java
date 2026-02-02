@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 
 public final class HttpUtility {
 
@@ -79,7 +80,7 @@ public final class HttpUtility {
             if (requestID != null) {
                 HttpUtility.requestID = requestID.split(",")[0];
             } else {
-                HttpUtility.requestID = "Internal-SDK-" + UUID.randomUUID();
+                HttpUtility.requestID = "SDK-Generated-" + UUID.randomUUID();
             }
             Map<String, List<String>> responseHeaders = connection.getHeaderFields();
             Reader streamReader;

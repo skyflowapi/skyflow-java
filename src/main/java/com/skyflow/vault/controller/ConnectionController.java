@@ -52,12 +52,12 @@ public final class ConnectionController extends ConnectionClient {
 
             RequestMethod requestMethod = invokeConnectionRequest.getMethod();
             Object requestBodyObject = invokeConnectionRequest.getRequestBody();
-            String contentType = headers
+            String requestContentType = headers
                     .getOrDefault("content-type", "application/json")
                     .toLowerCase();
-            boolean isJsonRequest = contentType.contains("application/json");
+            boolean isJsonRequest = requestContentType.contains("application/json");
 
-            Object finalPayload;
+            Object processedRequestBody;
 
             try {
                 if (requestBodyObject instanceof String) {
@@ -67,25 +67,25 @@ public final class ConnectionController extends ConnectionClient {
                                 "__raw_body__",
                                 (String) requestBodyObject
                         );
-                        finalPayload = jsonWrapper;
+                        processedRequestBody = jsonWrapper;
                     } else {
-                        finalPayload = requestBodyObject;
+                        processedRequestBody = requestBodyObject;
                     }
                 } else if (requestBodyObject instanceof JsonObject || requestBodyObject == null) {
-                    finalPayload = requestBodyObject;
+                    processedRequestBody = requestBodyObject;
                 } else {
-                    finalPayload = convertObjectToJson(requestBodyObject);
+                    processedRequestBody = convertObjectToJson(requestBodyObject);
                 }
             } catch (Exception e) {
                 LogUtil.printErrorLog(ErrorLogs.INVALID_REQUEST_HEADERS.getLog());
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidRequestBody.getMessage());
             }
             JsonObject payloadToSend;
-            if (finalPayload instanceof JsonObject || finalPayload == null) {
-                payloadToSend = (JsonObject) finalPayload;
+            if (processedRequestBody instanceof JsonObject || processedRequestBody == null) {
+                payloadToSend = (JsonObject) processedRequestBody;
             } else {
                 payloadToSend = new JsonObject();
-                payloadToSend.addProperty("__raw_body__", finalPayload.toString());
+                payloadToSend.addProperty("__raw_body__", processedRequestBody.toString());
             }
 
             String response = HttpUtility.sendRequest(requestMethod.name(), new URL(filledURL), payloadToSend, headers);
