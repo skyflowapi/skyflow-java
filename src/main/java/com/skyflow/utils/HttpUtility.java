@@ -7,6 +7,7 @@ import com.skyflow.errors.SkyflowException;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
@@ -32,8 +33,13 @@ public final class HttpUtility {
         try {
             connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod(method);
-            connection.setRequestProperty("content-type", "application/json");
             connection.setRequestProperty("Accept", "*/*");
+
+            // Set default content-type if not provided in headers
+            boolean hasContentType = headers != null && headers.containsKey("content-type");
+            if (!hasContentType && params != null && !params.isEmpty()) {
+                connection.setRequestProperty("content-type", "application/json");
+            }
 
             if (headers != null && !headers.isEmpty()) {
                 for (Map.Entry<String, String> entry : headers.entrySet())
@@ -52,9 +58,12 @@ public final class HttpUtility {
                     byte[] input = null;
                     String requestContentType = connection.getRequestProperty("content-type");
 
-                    if (requestContentType.contains("application/x-www-form-urlencoded")) {
+                    // Check if this is a raw body (XML, plain text, etc.)
+                    if (params.has("__raw_body__") && params.size() == 1) {
+                        input = params.get("__raw_body__").getAsString().getBytes(StandardCharsets.UTF_8);
+                    } else if (requestContentType != null && requestContentType.contains("application/x-www-form-urlencoded")) {
                         input = formatJsonToFormEncodedString(params).getBytes(StandardCharsets.UTF_8);
-                    } else if (requestContentType.contains("multipart/form-data")) {
+                    } else if (requestContentType != null && requestContentType.contains("multipart/form-data")) {
                         input = formatJsonToMultiPartFormDataString(params, boundary).getBytes(StandardCharsets.UTF_8);
                     } else {
                         input = params.toString().getBytes(StandardCharsets.UTF_8);
@@ -159,7 +168,13 @@ public final class HttpUtility {
     }
 
     private static String makeFormEncodeKeyValuePair(String key, String value) {
-        return key + "=" + value + "&";
+        try {
+            String encodedKey = URLEncoder.encode(key, StandardCharsets.UTF_8.toString());
+            String encodedValue = URLEncoder.encode(value, StandardCharsets.UTF_8.toString());
+            return encodedKey + "=" + encodedValue + "&";
+        } catch (Exception e) {
+            return key + "=" + value + "&";
+        }
     }
 
 }

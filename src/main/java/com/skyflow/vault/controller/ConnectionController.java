@@ -51,20 +51,48 @@ public final class ConnectionController extends ConnectionClient {
             headers.put(Constants.SDK_METRICS_HEADER_KEY, Utils.getMetrics().toString());
 
             RequestMethod requestMethod = invokeConnectionRequest.getMethod();
-            JsonObject requestBody = null;
             Object requestBodyObject = invokeConnectionRequest.getRequestBody();
+            String contentType = headers
+                    .getOrDefault("content-type", "application/json")
+                    .toLowerCase();
+            boolean isJsonRequest = contentType.contains("application/json");
 
-            if (requestBodyObject != null) {
-                try {
-                    requestBody = convertObjectToJson(requestBodyObject);
-                } catch (Exception e) {
-                    LogUtil.printErrorLog(ErrorLogs.INVALID_REQUEST_HEADERS.getLog());
-                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidRequestBody.getMessage());
+            Object finalPayload;
+
+            try {
+                if (requestBodyObject instanceof String) {
+                    if (isJsonRequest) {
+                        JsonObject jsonWrapper = new JsonObject();
+                        jsonWrapper.addProperty(
+                                "__raw_body__",
+                                (String) requestBodyObject
+                        );
+                        finalPayload = jsonWrapper;
+                    } else {
+                        finalPayload = requestBodyObject;
+                    }
+                } else if (requestBodyObject instanceof JsonObject || requestBodyObject == null) {
+                    finalPayload = requestBodyObject;
+                } else {
+                    finalPayload = convertObjectToJson(requestBodyObject);
                 }
+            } catch (Exception e) {
+                LogUtil.printErrorLog(ErrorLogs.INVALID_REQUEST_HEADERS.getLog());
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidRequestBody.getMessage());
+            }
+            JsonObject payloadToSend;
+            if (finalPayload instanceof JsonObject || finalPayload == null) {
+                payloadToSend = (JsonObject) finalPayload;
+            } else {
+                payloadToSend = new JsonObject();
+                payloadToSend.addProperty("__raw_body__", finalPayload.toString());
             }
 
-            String response = HttpUtility.sendRequest(requestMethod.name(), new URL(filledURL), requestBody, headers);
-            JsonObject data = JsonParser.parseString(response).getAsJsonObject();
+            String response = HttpUtility.sendRequest(requestMethod.name(), new URL(filledURL), payloadToSend, headers);
+            Object data = response;
+            try {
+                data = JsonParser.parseString(response).getAsJsonObject();
+            } catch (Exception ignored) {}
             HashMap<String, String> metadata = new HashMap<>();
             metadata.put("requestId", HttpUtility.getRequestID());
             connectionResponse = new InvokeConnectionResponse(data, metadata, null);
