@@ -245,7 +245,7 @@ public class ConnectionControllerTests {
     @Test
     public void testInvokeConnectionWithNullRequestBody() throws Exception {
         String jsonResponse = "{\"status\":\"success\"}";
-        when(HttpUtility.sendRequest(anyString(), any(URL.class), any(JsonObject.class), anyMap()))
+        when(HttpUtility.sendRequest(anyString(), any(URL.class), isNull(), anyMap()))
                 .thenReturn(jsonResponse);
 
         Skyflow client = Skyflow.builder()
