@@ -76,14 +76,18 @@ public final class HttpUtility {
 
             int httpCode = connection.getResponseCode();
             String requestID = connection.getHeaderField("x-request-id");
-            HttpUtility.requestID = requestID.split(",")[0];
+            if (requestID != null) {
+                HttpUtility.requestID = requestID.split(",")[0];
+            } else {
+                HttpUtility.requestID = "Internal-SDK-" + UUID.randomUUID();
+            }
             Map<String, List<String>> responseHeaders = connection.getHeaderFields();
             Reader streamReader;
             if (httpCode > 299) {
                 if (connection.getErrorStream() != null)
                     streamReader = new InputStreamReader(connection.getErrorStream());
                 else {
-                    String description = appendRequestId("replace with description", requestID);
+                    String description = appendRequestId("Server returned error", requestID);
                     throw new SkyflowException(description);
                 }
             } else {

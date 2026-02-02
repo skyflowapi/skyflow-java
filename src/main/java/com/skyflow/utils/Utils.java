@@ -113,7 +113,7 @@ public final class Utils {
                 String key = entry.getKey();
                 String value = entry.getValue();
                 try {
-                    String encodedValue = URLEncoder.encode(value, StandardCharsets.UTF_8.toString());
+                    String encodedValue = URLEncoder.encode(value, StandardCharsets.UTF_8.name());
                     filledURL = new StringBuilder(filledURL.toString().replace(String.format("{%s}", key), encodedValue));
                 } catch (Exception e) {
                     filledURL = new StringBuilder(filledURL.toString().replace(String.format("{%s}", key), value));
@@ -127,8 +127,8 @@ public final class Utils {
                 String key = entry.getKey();
                 String value = entry.getValue();
                 try {
-                    String encodedKey = URLEncoder.encode(key, StandardCharsets.UTF_8.toString());
-                    String encodedValue = URLEncoder.encode(value, StandardCharsets.UTF_8.toString());
+                    String encodedKey = URLEncoder.encode(key, StandardCharsets.UTF_8.name());
+                    String encodedValue = URLEncoder.encode(value, StandardCharsets.UTF_8.name());
                     filledURL.append(encodedKey).append("=").append(encodedValue).append("&");
                 } catch (Exception e) {
                     filledURL.append(key).append("=").append(value).append("&");
