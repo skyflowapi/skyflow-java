@@ -9,6 +9,7 @@ import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.logs.ErrorLogs;
 import com.skyflow.logs.InfoLogs;
+import com.skyflow.utils.Constants;
 import com.skyflow.utils.Utils;
 import com.skyflow.utils.logger.LogUtil;
 import io.jsonwebtoken.Jwts;
@@ -93,19 +94,19 @@ public class SignedDataTokens {
     ) throws SkyflowException {
         List<SignedDataTokenResponse> signedDataTokens = null;
         try {
-            JsonElement privateKey = credentials.get("privateKey");
+            JsonElement privateKey = credentials.get(Constants.CredentialFields.PRIVATE_KEY);
             if (privateKey == null) {
                 LogUtil.printErrorLog(ErrorLogs.PRIVATE_KEY_IS_REQUIRED.getLog());
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.MissingPrivateKey.getMessage());
             }
 
-            JsonElement clientID = credentials.get("clientID");
+            JsonElement clientID = credentials.get(Constants.CredentialFields.CLIENT_ID);
             if (clientID == null) {
                 LogUtil.printErrorLog(ErrorLogs.CLIENT_ID_IS_REQUIRED.getLog());
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.MissingClientId.getMessage());
             }
 
-            JsonElement keyID = credentials.get("keyID");
+            JsonElement keyID = credentials.get(Constants.CredentialFields.KEY_ID);
             if (keyID == null) {
                 LogUtil.printErrorLog(ErrorLogs.KEY_ID_IS_REQUIRED.getLog());
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.MissingKeyId.getMessage());
@@ -136,12 +137,12 @@ public class SignedDataTokens {
         List<SignedDataTokenResponse> list = new ArrayList<>();
         for (String dataToken : dataTokens) {
             String eachSignedDataToken = Jwts.builder()
-                    .claim("iss", "sdk")
-                    .claim("iat", (createdDate.getTime() / 1000))
-                    .claim("key", keyID)
-                    .claim("sub", clientID)
-                    .claim("ctx", context)
-                    .claim("tok", dataToken)
+                    .claim(Constants.JwtClaims.ISS, Constants.JwtClaims.SDK)
+                    .claim(Constants.JwtClaims.IAT, (createdDate.getTime() / 1000))
+                    .claim(Constants.JwtClaims.KEY, keyID)
+                    .claim(Constants.JwtClaims.SUB, clientID)
+                    .claim(Constants.JwtClaims.CTX, context)
+                    .claim(Constants.JwtClaims.TOK, dataToken)
                     .expiration(expirationDate)
                     .signWith(pvtKey, Jwts.SIG.RS256)
                     .compact();
@@ -154,9 +155,9 @@ public class SignedDataTokens {
     public synchronized List<SignedDataTokenResponse> getSignedDataTokens() throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.GET_SIGNED_DATA_TOKENS_TRIGGERED.getLog());
         List<SignedDataTokenResponse> signedToken = new ArrayList<>();
-        if (this.credentialsFile != null && Objects.equals(this.credentialsType, "FILE")) {
+        if (this.credentialsFile != null && Objects.equals(this.credentialsType, Constants.CredentialTypeValues.FILE)) {
             signedToken = generateSignedTokenFromCredentialsFile(this.credentialsFile, this.dataTokens, this.timeToLive, this.ctx);
-        } else if (this.credentialsString != null && Objects.equals(this.credentialsType, "STRING")) {
+        } else if (this.credentialsString != null && Objects.equals(this.credentialsType, Constants.CredentialTypeValues.STRING)) {
             signedToken = generateSignedTokensFromCredentialsString(this.credentialsString, this.dataTokens, this.timeToLive, this.ctx);
         }
         LogUtil.printInfoLog(InfoLogs.GET_SIGNED_DATA_TOKEN_SUCCESS.getLog());
@@ -179,13 +180,13 @@ public class SignedDataTokens {
         }
 
         public SignedDataTokensBuilder setCredentials(File credentialsFile) {
-            setCredentialsType("FILE");
+            setCredentialsType(Constants.CredentialTypeValues.FILE);
             this.credentialsFile = credentialsFile;
             return this;
         }
 
         public SignedDataTokensBuilder setCredentials(String credentialsString) {
-            setCredentialsType("STRING");
+            setCredentialsType(Constants.CredentialTypeValues.STRING);
             this.credentialsString = credentialsString;
             return this;
         }

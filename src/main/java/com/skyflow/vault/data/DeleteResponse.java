@@ -1,6 +1,7 @@
 package com.skyflow.vault.data;
 
 import com.google.gson.Gson;
+import com.skyflow.utils.Constants;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
@@ -21,7 +22,7 @@ public class DeleteResponse {
     public String toString() {
         Gson gson = new Gson();
         JsonObject responseObject = JsonParser.parseString(gson.toJson(this)).getAsJsonObject();
-        responseObject.add("errors", null);
+        responseObject.add(Constants.JsonFieldNames.ERRORS, null);
         return responseObject.toString();
     }
 }

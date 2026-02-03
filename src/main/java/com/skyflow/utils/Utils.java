@@ -95,7 +95,7 @@ public final class Utils {
         URL parsedUrl = new URL(url);
         String protocol = parsedUrl.getProtocol();
         String host = parsedUrl.getHost();
-        return String.format("%s://%s", protocol, host);
+        return String.format(Constants.UrlFormat.PROTOCOL_HOST_FORMAT, protocol, host);
     }
 
     public static String parameterizedString(String base, String... args) {
@@ -158,7 +158,7 @@ public final class Utils {
         String javaVersion;
         // Retrieve device model
         try {
-            deviceModel = System.getProperty("os.name");
+            deviceModel = System.getProperty(Constants.SystemProperty.OS_NAME);
             if (deviceModel == null) throw new Exception();
         } catch (Exception e) {
             LogUtil.printInfoLog(parameterizedString(
@@ -170,7 +170,7 @@ public final class Utils {
 
         // Retrieve OS details
         try {
-            osDetails = System.getProperty("os.version");
+            osDetails = System.getProperty(Constants.SystemProperty.OS_VERSION);
             if (osDetails == null) throw new Exception();
         } catch (Exception e) {
             LogUtil.printInfoLog(parameterizedString(
@@ -182,7 +182,7 @@ public final class Utils {
 
         // Retrieve Java version details
         try {
-            javaVersion = System.getProperty("java.version");
+            javaVersion = System.getProperty(Constants.SystemProperty.JAVA_VERSION);
             if (javaVersion == null) throw new Exception();
         } catch (Exception e) {
             LogUtil.printInfoLog(parameterizedString(
@@ -203,7 +203,7 @@ public final class Utils {
         PrivateKey privateKey = null;
         try {
             PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(pkcs8Bytes);
-            keyFactory = KeyFactory.getInstance("RSA");
+            keyFactory = KeyFactory.getInstance(Constants.CryptoAlgorithm.RSA);
             privateKey = keyFactory.generatePrivate(keySpec);
         } catch (NoSuchAlgorithmException e) {
             LogUtil.printErrorLog(ErrorLogs.INVALID_ALGORITHM.getLog());

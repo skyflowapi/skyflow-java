@@ -2,6 +2,7 @@ package com.skyflow.errors;
 
 import com.skyflow.utils.Constants;
 
+@SuppressWarnings("checkstyle:MultipleStringLiterals")
 public enum ErrorMessage {
     // Client initialization
     VaultIdAlreadyInConfigList("%s0 Validation error. VaultId is present in an existing config. Specify a new vaultId in config."),
