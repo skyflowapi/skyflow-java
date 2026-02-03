@@ -174,7 +174,7 @@ public final class HttpUtility {
         try {
             String encodedKey = URLEncoder.encode(key, StandardCharsets.UTF_8.toString());
             String encodedValue = URLEncoder.encode(value, StandardCharsets.UTF_8.toString());
-            return encodedKey + "=" + encodedValue + "&";
+            return encodedKey + Constants.HttpUtility.FORM_ENCODE_SEPARATOR + encodedValue + Constants.HttpUtility.FORM_ENCODE_DELIMITER;
         } catch (Exception e) {
             return key + Constants.HttpUtility.FORM_ENCODE_SEPARATOR + value + Constants.HttpUtility.FORM_ENCODE_DELIMITER;
         }

@@ -52,10 +52,10 @@ public final class ConnectionController extends ConnectionClient {
 
             RequestMethod requestMethod = invokeConnectionRequest.getMethod();
             Object requestBodyObject = invokeConnectionRequest.getRequestBody();
-            String requestContentType = headers
-                    .getOrDefault("content-type", "application/json")
+                String requestContentType = headers
+                    .getOrDefault(Constants.HttpHeader.CONTENT_TYPE, Constants.HttpHeader.CONTENT_TYPE_JSON)
                     .toLowerCase();
-            boolean isJsonRequest = requestContentType.contains("application/json");
+                boolean isJsonRequest = requestContentType.contains(Constants.HttpHeader.CONTENT_TYPE_JSON);
 
             Object processedRequestBody;
 
@@ -64,8 +64,8 @@ public final class ConnectionController extends ConnectionClient {
                     if (isJsonRequest) {
                         JsonObject jsonWrapper = new JsonObject();
                         jsonWrapper.addProperty(
-                                "__raw_body__",
-                                (String) requestBodyObject
+                            Constants.HttpUtilityExtra.RAW_BODY_KEY,
+                            (String) requestBodyObject
                         );
                         processedRequestBody = jsonWrapper;
                     } else {
@@ -85,7 +85,7 @@ public final class ConnectionController extends ConnectionClient {
                 payloadToSend = (JsonObject) processedRequestBody;
             } else {
                 payloadToSend = new JsonObject();
-                payloadToSend.addProperty("__raw_body__", processedRequestBody.toString());
+                payloadToSend.addProperty(Constants.HttpUtilityExtra.RAW_BODY_KEY, processedRequestBody.toString());
             }
 
             String response = HttpUtility.sendRequest(requestMethod.name(), new URL(filledURL), payloadToSend, headers);

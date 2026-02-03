@@ -60,6 +60,13 @@ public final class Constants {
             // Utility class constructor
         }
     }
+    public static final String EMPTY_STRING = "";
+        public static final String QUOTE = "\"";
+        public static final class HttpUtilityExtra {
+            public static final String RAW_BODY_KEY = "__raw_body__";
+            public static final String SDK_GENERATED_PREFIX = "SDK-Generated-";
+            private HttpUtilityExtra() {}
+        }
     
     public static final class FileFormatType {
         public static final String TXT = "txt";

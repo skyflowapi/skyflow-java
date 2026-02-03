@@ -79,10 +79,10 @@ public final class Utils {
         PrivateKey privateKey = null;
 
         if (pemKey.contains(PKCS8PrivateHeader)) {
-            privateKeyContent = privateKeyContent.replace(PKCS8PrivateHeader, "");
-            privateKeyContent = privateKeyContent.replace(PKCS8PrivateFooter, "");
-            privateKeyContent = privateKeyContent.replace("\n", "");
-            privateKeyContent = privateKeyContent.replace("\r\n", "");
+            privateKeyContent = privateKeyContent.replace(PKCS8PrivateHeader, Constants.EMPTY_STRING);
+            privateKeyContent = privateKeyContent.replace(PKCS8PrivateFooter, Constants.EMPTY_STRING);
+            privateKeyContent = privateKeyContent.replace("\n", Constants.EMPTY_STRING);
+            privateKeyContent = privateKeyContent.replace("\r\n", Constants.EMPTY_STRING);
             privateKey = parsePkcs8PrivateKey(Base64.decodeBase64(privateKeyContent));
         } else {
             LogUtil.printErrorLog(ErrorLogs.JWT_INVALID_FORMAT.getLog());
@@ -122,16 +122,16 @@ public final class Utils {
         }
 
         if (invokeConnectionRequest.getQueryParams() != null && !invokeConnectionRequest.getQueryParams().isEmpty()) {
-            filledURL.append("?");
+            filledURL.append(Constants.HttpUtility.FORM_ENCODE_DELIMITER); // "?"
             for (Map.Entry<String, String> entry : invokeConnectionRequest.getQueryParams().entrySet()) {
                 String key = entry.getKey();
                 String value = entry.getValue();
                 try {
                     String encodedKey = URLEncoder.encode(key, StandardCharsets.UTF_8.name());
                     String encodedValue = URLEncoder.encode(value, StandardCharsets.UTF_8.name());
-                    filledURL.append(encodedKey).append("=").append(encodedValue).append("&");
+                    filledURL.append(encodedKey).append(Constants.HttpUtility.FORM_ENCODE_SEPARATOR).append(encodedValue).append(Constants.HttpUtility.FORM_ENCODE_DELIMITER);
                 } catch (Exception e) {
-                    filledURL.append(key).append("=").append(value).append("&");
+                    filledURL.append(key).append(Constants.HttpUtility.FORM_ENCODE_SEPARATOR).append(value).append(Constants.HttpUtility.FORM_ENCODE_DELIMITER);
                 }
             }
             filledURL = new StringBuilder(filledURL.substring(0, filledURL.length() - 1));
@@ -165,7 +165,7 @@ public final class Utils {
                     InfoLogs.UNABLE_TO_GENERATE_SDK_METRIC.getLog(),
                     Constants.SDK_METRIC_CLIENT_DEVICE_MODEL
             ));
-            deviceModel = "";
+            deviceModel = Constants.EMPTY_STRING;
         }
 
         // Retrieve OS details
@@ -177,7 +177,7 @@ public final class Utils {
                     InfoLogs.UNABLE_TO_GENERATE_SDK_METRIC.getLog(),
                     Constants.SDK_METRIC_CLIENT_OS_DETAILS
             ));
-            osDetails = "";
+            osDetails = Constants.EMPTY_STRING;
         }
 
         // Retrieve Java version details
@@ -189,7 +189,7 @@ public final class Utils {
                     InfoLogs.UNABLE_TO_GENERATE_SDK_METRIC.getLog(),
                     Constants.SDK_METRIC_RUNTIME_DETAILS
             ));
-            javaVersion = "";
+            javaVersion = Constants.EMPTY_STRING;
         }
         details.addProperty(Constants.SDK_METRIC_NAME_VERSION, Constants.SDK_METRIC_NAME_VERSION_PREFIX + sdkVersion);
         details.addProperty(Constants.SDK_METRIC_CLIENT_DEVICE_MODEL, deviceModel);
