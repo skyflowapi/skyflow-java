@@ -122,7 +122,7 @@ public final class Utils {
         }
 
         if (invokeConnectionRequest.getQueryParams() != null && !invokeConnectionRequest.getQueryParams().isEmpty()) {
-            filledURL.append(Constants.HttpUtility.FORM_ENCODE_DELIMITER); // "?"
+            filledURL.append("?");
             for (Map.Entry<String, String> entry : invokeConnectionRequest.getQueryParams().entrySet()) {
                 String key = entry.getKey();
                 String value = entry.getValue();
