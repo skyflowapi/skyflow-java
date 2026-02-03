@@ -114,9 +114,9 @@ public final class Utils {
                 String value = entry.getValue();
                 try {
                     String encodedValue = URLEncoder.encode(value, StandardCharsets.UTF_8.name());
-                    filledURL = new StringBuilder(filledURL.toString().replace(String.format("{%s}", key), encodedValue));
+                    filledURL = new StringBuilder(filledURL.toString().replace(String.format(Constants.CURLY_PLACEHOLDER, key), encodedValue));
                 } catch (Exception e) {
-                    filledURL = new StringBuilder(filledURL.toString().replace(String.format("{%s}", key), value));
+                    filledURL = new StringBuilder(filledURL.toString().replace(String.format(Constants.CURLY_PLACEHOLDER, key), value));
                 }
             }
         }

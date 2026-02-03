@@ -58,8 +58,8 @@ public final class HttpUtility {
                     String requestContentType = connection.getRequestProperty(Constants.HttpHeader.CONTENT_TYPE);
 
                     // Check if this is a raw body (XML, plain text, etc.)
-                    if (params.has("__raw_body__") && params.size() == 1) {
-                        input = params.get("__raw_body__").getAsString().getBytes(StandardCharsets.UTF_8);
+                    if (params.has(Constants.HttpUtilityExtra.RAW_BODY_KEY,) && params.size() == 1) {
+                        input = params.get(Constants.HttpUtilityExtra.RAW_BODY_KEY,).getAsString().getBytes(StandardCharsets.UTF_8);
                     } else if (requestContentType != null && requestContentType.contains(Constants.HttpHeader.CONTENT_TYPE_FORM_URLENCODED)) {
                         input = formatJsonToFormEncodedString(params).getBytes(StandardCharsets.UTF_8);
                     } else if (requestContentType != null && requestContentType.contains(Constants.HttpHeader.CONTENT_TYPE_MULTIPART)) {
