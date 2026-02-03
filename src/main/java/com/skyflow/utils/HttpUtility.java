@@ -35,9 +35,9 @@ public final class HttpUtility {
             connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod(method);
             connection.setRequestProperty(Constants.HttpHeader.ACCEPT, Constants.HttpHeader.ACCEPT_ALL);
-
+            boolean hasContentType = headers != null && headers.containsKey(Constants.HttpHeader.CONTENT_TYPE);
             if (!hasContentType && params != null && !params.isEmpty()) {
-                connection.setRequestProperty("content-type", "application/json");
+                connection.setRequestProperty(Constants.HttpHeader.CONTENT_TYPE, Constants.HttpHeader.CONTENT_TYPE_JSON);
             }
 
             if (headers != null && !headers.isEmpty()) {
@@ -58,8 +58,8 @@ public final class HttpUtility {
                     String requestContentType = connection.getRequestProperty(Constants.HttpHeader.CONTENT_TYPE);
 
                     // Check if this is a raw body (XML, plain text, etc.)
-                    if (params.has(Constants.HttpUtilityExtra.RAW_BODY_KEY,) && params.size() == 1) {
-                        input = params.get(Constants.HttpUtilityExtra.RAW_BODY_KEY,).getAsString().getBytes(StandardCharsets.UTF_8);
+                    if (params.has(Constants.HttpUtilityExtra.RAW_BODY_KEY) && params.size() == 1) {
+                        input = params.get(Constants.HttpUtilityExtra.RAW_BODY_KEY).getAsString().getBytes(StandardCharsets.UTF_8);
                     } else if (requestContentType != null && requestContentType.contains(Constants.HttpHeader.CONTENT_TYPE_FORM_URLENCODED)) {
                         input = formatJsonToFormEncodedString(params).getBytes(StandardCharsets.UTF_8);
                     } else if (requestContentType != null && requestContentType.contains(Constants.HttpHeader.CONTENT_TYPE_MULTIPART)) {
@@ -78,7 +78,7 @@ public final class HttpUtility {
             if (requestID != null) {
                 HttpUtility.requestID = requestID.split(Constants.HttpUtility.REQUEST_ID_DELIMITER)[0];
             } else {
-                HttpUtility.requestID = "SDK-Generated-" + UUID.randomUUID();
+                HttpUtility.requestID = Constants.HttpUtilityExtra.SDK_GENERATED_PREFIX + UUID.randomUUID();
             }
             Map<String, List<String>> responseHeaders = connection.getHeaderFields();
             Reader streamReader;
