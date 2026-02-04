@@ -51,20 +51,50 @@ public final class ConnectionController extends ConnectionClient {
             headers.put(Constants.SDK_METRICS_HEADER_KEY, Utils.getMetrics().toString());
 
             RequestMethod requestMethod = invokeConnectionRequest.getMethod();
-            JsonObject requestBody = null;
             Object requestBodyObject = invokeConnectionRequest.getRequestBody();
+                String requestContentType = headers
+                    .getOrDefault(Constants.HttpHeader.CONTENT_TYPE, Constants.HttpHeader.CONTENT_TYPE_JSON)
+                    .toLowerCase();
+                boolean isJsonRequest = requestContentType.contains(Constants.HttpHeader.CONTENT_TYPE_JSON);
 
-            if (requestBodyObject != null) {
-                try {
-                    requestBody = convertObjectToJson(requestBodyObject);
-                } catch (Exception e) {
-                    LogUtil.printErrorLog(ErrorLogs.INVALID_REQUEST_HEADERS.getLog());
-                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidRequestBody.getMessage());
+            Object processedRequestBody;
+
+            try {
+                if (requestBodyObject instanceof String) {
+                    if (isJsonRequest) {
+                        JsonObject jsonWrapper = new JsonObject();
+                        jsonWrapper.addProperty(
+                            Constants.HttpUtilityExtra.RAW_BODY_KEY,
+                            (String) requestBodyObject
+                        );
+                        processedRequestBody = jsonWrapper;
+                    } else {
+                        processedRequestBody = requestBodyObject;
+                    }
+                } else if (requestBodyObject instanceof JsonObject || requestBodyObject == null) {
+                    processedRequestBody = requestBodyObject;
+                } else {
+                    processedRequestBody = convertObjectToJson(requestBodyObject);
                 }
+            } catch (Exception e) {
+                LogUtil.printErrorLog(ErrorLogs.INVALID_REQUEST_HEADERS.getLog());
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidRequestBody.getMessage());
+            }
+            JsonObject payloadToSend;
+            if (processedRequestBody instanceof JsonObject || processedRequestBody == null) {
+                payloadToSend = (JsonObject) processedRequestBody;
+            } else {
+                payloadToSend = new JsonObject();
+                payloadToSend.addProperty(Constants.HttpUtilityExtra.RAW_BODY_KEY, processedRequestBody.toString());
             }
 
-            String response = HttpUtility.sendRequest(requestMethod.name(), new URL(filledURL), requestBody, headers);
-            JsonObject data = JsonParser.parseString(response).getAsJsonObject();
+            String response = HttpUtility.sendRequest(requestMethod.name(), new URL(filledURL), payloadToSend, headers);
+            Object data = response;
+            try {
+                data = JsonParser.parseString(response).getAsJsonObject();
+            } catch (Exception e) {
+                LogUtil.printErrorLog(ErrorLogs.INVOKE_CONNECTION_REQUEST_REJECTED.getLog());
+            }
             HashMap<String, String> metadata = new HashMap<>();
             metadata.put(Constants.JsonFieldNames.REQUEST_ID, HttpUtility.getRequestID());
             connectionResponse = new InvokeConnectionResponse(data, metadata, null);

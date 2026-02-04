@@ -34,6 +34,8 @@ public final class Constants {
     public static final String ERROR_FROM_CLIENT_HEADER_KEY = "error-from-client";
     public static final String PROCESSED_FILE_NAME_PREFIX = "processed-";
     public static final String DEIDENTIFIED_FILE_PREFIX = "deidentified";
+    public static final String CURLY_PLACEHOLDER = "{%s}";
+
     public static final class HttpHeader {
         public static final String CONTENT_TYPE = "content-type";
         public static final String CONTENT_TYPE_JSON = "application/json";
@@ -60,6 +62,13 @@ public final class Constants {
             // Utility class constructor
         }
     }
+    public static final String EMPTY_STRING = "";
+        public static final String QUOTE = "\"";
+        public static final class HttpUtilityExtra {
+            public static final String RAW_BODY_KEY = "__raw_body__";
+            public static final String SDK_GENERATED_PREFIX = "SDK-Generated-";
+            private HttpUtilityExtra() {}
+        }
     
     public static final class FileFormatType {
         public static final String TXT = "txt";

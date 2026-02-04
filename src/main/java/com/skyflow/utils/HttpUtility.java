@@ -7,11 +7,13 @@ import com.skyflow.errors.SkyflowException;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 
 public final class HttpUtility {
 
@@ -32,8 +34,11 @@ public final class HttpUtility {
         try {
             connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod(method);
-            connection.setRequestProperty(Constants.HttpHeader.CONTENT_TYPE, Constants.HttpHeader.CONTENT_TYPE_JSON);
             connection.setRequestProperty(Constants.HttpHeader.ACCEPT, Constants.HttpHeader.ACCEPT_ALL);
+            boolean hasContentType = headers != null && headers.containsKey(Constants.HttpHeader.CONTENT_TYPE);
+            if (!hasContentType && params != null && !params.isEmpty()) {
+                connection.setRequestProperty(Constants.HttpHeader.CONTENT_TYPE, Constants.HttpHeader.CONTENT_TYPE_JSON);
+            }
 
             if (headers != null && !headers.isEmpty()) {
                 for (Map.Entry<String, String> entry : headers.entrySet())
@@ -52,9 +57,12 @@ public final class HttpUtility {
                     byte[] input = null;
                     String requestContentType = connection.getRequestProperty(Constants.HttpHeader.CONTENT_TYPE);
 
-                    if (requestContentType.contains(Constants.HttpHeader.CONTENT_TYPE_FORM_URLENCODED)) {
+                    // Check if this is a raw body (XML, plain text, etc.)
+                    if (params.has(Constants.HttpUtilityExtra.RAW_BODY_KEY) && params.size() == 1) {
+                        input = params.get(Constants.HttpUtilityExtra.RAW_BODY_KEY).getAsString().getBytes(StandardCharsets.UTF_8);
+                    } else if (requestContentType != null && requestContentType.contains(Constants.HttpHeader.CONTENT_TYPE_FORM_URLENCODED)) {
                         input = formatJsonToFormEncodedString(params).getBytes(StandardCharsets.UTF_8);
-                    } else if (requestContentType.contains(Constants.HttpHeader.CONTENT_TYPE_MULTIPART)) {
+                    } else if (requestContentType != null && requestContentType.contains(Constants.HttpHeader.CONTENT_TYPE_MULTIPART)) {
                         input = formatJsonToMultiPartFormDataString(params, boundary).getBytes(StandardCharsets.UTF_8);
                     } else {
                         input = params.toString().getBytes(StandardCharsets.UTF_8);
@@ -67,7 +75,11 @@ public final class HttpUtility {
 
             int httpCode = connection.getResponseCode();
             String requestID = connection.getHeaderField(Constants.REQUEST_ID_HEADER_KEY);
-            HttpUtility.requestID = requestID.split(Constants.HttpUtility.REQUEST_ID_DELIMITER)[0];
+            if (requestID != null) {
+                HttpUtility.requestID = requestID.split(Constants.HttpUtility.REQUEST_ID_DELIMITER)[0];
+            } else {
+                HttpUtility.requestID = Constants.HttpUtilityExtra.SDK_GENERATED_PREFIX + UUID.randomUUID();
+            }
             Map<String, List<String>> responseHeaders = connection.getHeaderFields();
             Reader streamReader;
             if (httpCode > 299) {
@@ -159,7 +171,13 @@ public final class HttpUtility {
     }
 
     private static String makeFormEncodeKeyValuePair(String key, String value) {
-        return key + Constants.HttpUtility.FORM_ENCODE_SEPARATOR + value + Constants.HttpUtility.FORM_ENCODE_DELIMITER;
+        try {
+            String encodedKey = URLEncoder.encode(key, StandardCharsets.UTF_8.toString());
+            String encodedValue = URLEncoder.encode(value, StandardCharsets.UTF_8.toString());
+            return encodedKey + Constants.HttpUtility.FORM_ENCODE_SEPARATOR + encodedValue + Constants.HttpUtility.FORM_ENCODE_DELIMITER;
+        } catch (Exception e) {
+            return key + Constants.HttpUtility.FORM_ENCODE_SEPARATOR + value + Constants.HttpUtility.FORM_ENCODE_DELIMITER;
+        }
     }
 
 }

@@ -124,4 +124,71 @@ public class HttpUtilityTests {
             fail(INVALID_EXCEPTION_THROWN);
         }
     }
+
+    // New test cases for content-type handling changes
+    
+    @Test
+    @PrepareForTest({URL.class, HttpURLConnection.class})
+    public void testSendRequestWithRawBody() {
+        try {
+            given(mockConnection.getRequestProperty("content-type")).willReturn("application/xml");
+            Map<String, String> headers = new HashMap<>();
+            headers.put("content-type", "application/xml");
+            JsonObject params = new JsonObject();
+            params.addProperty("__raw_body__", "<xml>test</xml>");
+            String response = httpUtility.sendRequest("POST", url, params, headers);
+            Assert.assertEquals(expected, response);
+        } catch (Exception e) {
+            fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    @PrepareForTest({URL.class, HttpURLConnection.class})
+    public void testSendRequestWithoutContentTypeHeader() {
+        try {
+            given(mockConnection.getRequestProperty("content-type")).willReturn("application/json");
+            JsonObject params = new JsonObject();
+            params.addProperty("key", "value");
+            String response = httpUtility.sendRequest("POST", url, params, null);
+            Assert.assertEquals(expected, response);
+        } catch (Exception e) {
+            fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    @PrepareForTest({URL.class, HttpURLConnection.class})
+    public void testSendRequestWithNullRequestId() {
+        try {
+            given(mockConnection.getHeaderField(anyString())).willReturn(null);
+            given(mockConnection.getRequestProperty("content-type")).willReturn("application/json");
+            Map<String, String> headers = new HashMap<>();
+            headers.put("content-type", "application/json");
+            JsonObject params = new JsonObject();
+            params.addProperty("key", "value");
+            String response = httpUtility.sendRequest("GET", url, params, headers);
+            Assert.assertEquals(expected, response);
+            Assert.assertNotNull(HttpUtility.getRequestID());
+        } catch (Exception e) {
+            fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    @PrepareForTest({URL.class, HttpURLConnection.class})
+    public void testSendRequestFormURLEncodedWithSpecialCharacters() {
+        try {
+            given(mockConnection.getRequestProperty("content-type")).willReturn("application/x-www-form-urlencoded");
+            Map<String, String> headers = new HashMap<>();
+            headers.put("content-type", "application/x-www-form-urlencoded");
+            JsonObject params = new JsonObject();
+            params.addProperty("key", "value with spaces");
+            params.addProperty("special", "test@email.com");
+            String response = httpUtility.sendRequest("POST", url, params, headers);
+            Assert.assertEquals(expected, response);
+        } catch (Exception e) {
+            fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
 }
