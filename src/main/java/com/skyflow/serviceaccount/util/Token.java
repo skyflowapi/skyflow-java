@@ -8,6 +8,7 @@ import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.logs.ErrorLogs;
 import com.skyflow.logs.InfoLogs;
+import com.skyflow.utils.Constants;
 import com.skyflow.utils.logger.LogUtil;
 import org.apache.commons.codec.binary.Base64;
 
@@ -25,7 +26,7 @@ public class Token {
             }
 
             currentTime = new Date().getTime() / 1000;
-            expiryTime = decoded(token).get("exp").getAsLong();
+            expiryTime = decoded(token).get(Constants.JsonFieldNames.EXP).getAsLong();
 
         } catch (JsonSyntaxException | SkyflowException e) {
             LogUtil.printErrorLog(ErrorLogs.INVALID_BEARER_TOKEN.getLog());

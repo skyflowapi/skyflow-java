@@ -437,4 +437,145 @@ public class InvokeConnectionTests {
             Assert.fail(INVALID_EXCEPTION_THROWN);
         }
     }
+
+    // New test cases for content-type handling changes
+
+    @Test
+    public void testValidStringRequestBodyInInvokeConnectionRequestValidations() {
+        try {
+            String xmlBody = "<xml><data>test</data></xml>";
+            requestHeaders.put("Content-Type", "application/xml");
+            InvokeConnectionRequest request = InvokeConnectionRequest.builder()
+                    .method(RequestMethod.POST)
+                    .requestHeaders(requestHeaders)
+                    .requestBody(xmlBody)
+                    .build();
+            Validations.validateInvokeConnectionRequest(request);
+            Assert.assertTrue(request.getRequestBody() instanceof String);
+            Assert.assertEquals(xmlBody, request.getRequestBody());
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testEmptyStringRequestBodyInInvokeConnectionRequestValidations() {
+        try {
+            String emptyBody = "";
+            requestHeaders.put("Content-Type", "application/xml");
+            InvokeConnectionRequest request = InvokeConnectionRequest.builder()
+                    .method(RequestMethod.POST)
+                    .requestHeaders(requestHeaders)
+                    .requestBody(emptyBody)
+                    .build();
+            Validations.validateInvokeConnectionRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(ErrorMessage.EmptyRequestBody.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testWhitespaceOnlyStringRequestBodyInInvokeConnectionRequestValidations() {
+        try {
+            String whitespaceBody = "   \n\t  ";
+            requestHeaders.put("Content-Type", "application/xml");
+            InvokeConnectionRequest request = InvokeConnectionRequest.builder()
+                    .method(RequestMethod.POST)
+                    .requestHeaders(requestHeaders)
+                    .requestBody(whitespaceBody)
+                    .build();
+            Validations.validateInvokeConnectionRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(ErrorMessage.EmptyRequestBody.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testXMLStringRequestBodyInInvokeConnectionRequestValidations() {
+        try {
+            String xmlBody = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><payment_method><card_number>4111111111111111</card_number></payment_method>";
+            requestHeaders.put("Content-Type", "application/xml");
+            InvokeConnectionRequest request = InvokeConnectionRequest.builder()
+                    .method(RequestMethod.POST)
+                    .requestHeaders(requestHeaders)
+                    .requestBody(xmlBody)
+                    .build();
+            Validations.validateInvokeConnectionRequest(request);
+            Assert.assertTrue(request.getRequestBody() instanceof String);
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testPlainTextRequestBodyInInvokeConnectionRequestValidations() {
+        try {
+            String plainText = "This is a plain text request body with some data";
+            requestHeaders.put("Content-Type", "text/plain");
+            InvokeConnectionRequest request = InvokeConnectionRequest.builder()
+                    .method(RequestMethod.POST)
+                    .requestHeaders(requestHeaders)
+                    .requestBody(plainText)
+                    .build();
+            Validations.validateInvokeConnectionRequest(request);
+            Assert.assertTrue(request.getRequestBody() instanceof String);
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testHTMLRequestBodyInInvokeConnectionRequestValidations() {
+        try {
+            String htmlBody = "<html><body><h1>Processing Payment</h1></body></html>";
+            requestHeaders.put("Content-Type", "text/html");
+            InvokeConnectionRequest request = InvokeConnectionRequest.builder()
+                    .method(RequestMethod.POST)
+                    .requestHeaders(requestHeaders)
+                    .requestBody(htmlBody)
+                    .build();
+            Validations.validateInvokeConnectionRequest(request);
+            Assert.assertTrue(request.getRequestBody() instanceof String);
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testInvokeConnectionResponseWithStringData() {
+        try {
+            String xmlData = "<response><status>success</status></response>";
+            HashMap<String, String> metadata = new HashMap<>();
+            metadata.put("requestId", "xml-12345");
+            InvokeConnectionResponse connectionResponse = new InvokeConnectionResponse(xmlData, metadata, null);
+
+            Assert.assertNotNull(connectionResponse.getData());
+            Assert.assertTrue(connectionResponse.getData() instanceof String);
+            Assert.assertEquals(xmlData, connectionResponse.getData());
+            Assert.assertEquals("xml-12345", connectionResponse.getMetadata().get("requestId"));
+        } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testRequestBodyWithSpecialCharacters() {
+        try {
+            String bodyWithSpecialChars = "card_number=4111111111111111&exp_month=12&exp_year=2025&cvv=123";
+            requestHeaders.put("Content-Type", "application/x-www-form-urlencoded");
+            InvokeConnectionRequest request = InvokeConnectionRequest.builder()
+                    .method(RequestMethod.POST)
+                    .requestHeaders(requestHeaders)
+                    .requestBody(bodyWithSpecialChars)
+                    .build();
+            Validations.validateInvokeConnectionRequest(request);
+            Assert.assertTrue(request.getRequestBody() instanceof String);
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
 }

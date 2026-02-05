@@ -17,6 +17,8 @@ import org.apache.commons.codec.binary.Base64;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
@@ -77,10 +79,10 @@ public final class Utils {
         PrivateKey privateKey = null;
 
         if (pemKey.contains(PKCS8PrivateHeader)) {
-            privateKeyContent = privateKeyContent.replace(PKCS8PrivateHeader, "");
-            privateKeyContent = privateKeyContent.replace(PKCS8PrivateFooter, "");
-            privateKeyContent = privateKeyContent.replace("\n", "");
-            privateKeyContent = privateKeyContent.replace("\r\n", "");
+            privateKeyContent = privateKeyContent.replace(PKCS8PrivateHeader, Constants.EMPTY_STRING);
+            privateKeyContent = privateKeyContent.replace(PKCS8PrivateFooter, Constants.EMPTY_STRING);
+            privateKeyContent = privateKeyContent.replace("\n", Constants.EMPTY_STRING);
+            privateKeyContent = privateKeyContent.replace("\r\n", Constants.EMPTY_STRING);
             privateKey = parsePkcs8PrivateKey(Base64.decodeBase64(privateKeyContent));
         } else {
             LogUtil.printErrorLog(ErrorLogs.JWT_INVALID_FORMAT.getLog());
@@ -93,7 +95,7 @@ public final class Utils {
         URL parsedUrl = new URL(url);
         String protocol = parsedUrl.getProtocol();
         String host = parsedUrl.getHost();
-        return String.format("%s://%s", protocol, host);
+        return String.format(Constants.UrlFormat.PROTOCOL_HOST_FORMAT, protocol, host);
     }
 
     public static String parameterizedString(String base, String... args) {
@@ -110,7 +112,12 @@ public final class Utils {
             for (Map.Entry<String, String> entry : invokeConnectionRequest.getPathParams().entrySet()) {
                 String key = entry.getKey();
                 String value = entry.getValue();
-                filledURL = new StringBuilder(filledURL.toString().replace(String.format("{%s}", key), value));
+                try {
+                    String encodedValue = URLEncoder.encode(value, StandardCharsets.UTF_8.name());
+                    filledURL = new StringBuilder(filledURL.toString().replace(String.format(Constants.CURLY_PLACEHOLDER, key), encodedValue));
+                } catch (Exception e) {
+                    filledURL = new StringBuilder(filledURL.toString().replace(String.format(Constants.CURLY_PLACEHOLDER, key), value));
+                }
             }
         }
 
@@ -119,7 +126,13 @@ public final class Utils {
             for (Map.Entry<String, String> entry : invokeConnectionRequest.getQueryParams().entrySet()) {
                 String key = entry.getKey();
                 String value = entry.getValue();
-                filledURL.append(key).append("=").append(value).append("&");
+                try {
+                    String encodedKey = URLEncoder.encode(key, StandardCharsets.UTF_8.name());
+                    String encodedValue = URLEncoder.encode(value, StandardCharsets.UTF_8.name());
+                    filledURL.append(encodedKey).append(Constants.HttpUtility.FORM_ENCODE_SEPARATOR).append(encodedValue).append(Constants.HttpUtility.FORM_ENCODE_DELIMITER);
+                } catch (Exception e) {
+                    filledURL.append(key).append(Constants.HttpUtility.FORM_ENCODE_SEPARATOR).append(value).append(Constants.HttpUtility.FORM_ENCODE_DELIMITER);
+                }
             }
             filledURL = new StringBuilder(filledURL.substring(0, filledURL.length() - 1));
         }
@@ -145,38 +158,38 @@ public final class Utils {
         String javaVersion;
         // Retrieve device model
         try {
-            deviceModel = System.getProperty("os.name");
+            deviceModel = System.getProperty(Constants.SystemProperty.OS_NAME);
             if (deviceModel == null) throw new Exception();
         } catch (Exception e) {
             LogUtil.printInfoLog(parameterizedString(
                     InfoLogs.UNABLE_TO_GENERATE_SDK_METRIC.getLog(),
                     Constants.SDK_METRIC_CLIENT_DEVICE_MODEL
             ));
-            deviceModel = "";
+            deviceModel = Constants.EMPTY_STRING;
         }
 
         // Retrieve OS details
         try {
-            osDetails = System.getProperty("os.version");
+            osDetails = System.getProperty(Constants.SystemProperty.OS_VERSION);
             if (osDetails == null) throw new Exception();
         } catch (Exception e) {
             LogUtil.printInfoLog(parameterizedString(
                     InfoLogs.UNABLE_TO_GENERATE_SDK_METRIC.getLog(),
                     Constants.SDK_METRIC_CLIENT_OS_DETAILS
             ));
-            osDetails = "";
+            osDetails = Constants.EMPTY_STRING;
         }
 
         // Retrieve Java version details
         try {
-            javaVersion = System.getProperty("java.version");
+            javaVersion = System.getProperty(Constants.SystemProperty.JAVA_VERSION);
             if (javaVersion == null) throw new Exception();
         } catch (Exception e) {
             LogUtil.printInfoLog(parameterizedString(
                     InfoLogs.UNABLE_TO_GENERATE_SDK_METRIC.getLog(),
                     Constants.SDK_METRIC_RUNTIME_DETAILS
             ));
-            javaVersion = "";
+            javaVersion = Constants.EMPTY_STRING;
         }
         details.addProperty(Constants.SDK_METRIC_NAME_VERSION, Constants.SDK_METRIC_NAME_VERSION_PREFIX + sdkVersion);
         details.addProperty(Constants.SDK_METRIC_CLIENT_DEVICE_MODEL, deviceModel);
@@ -190,7 +203,7 @@ public final class Utils {
         PrivateKey privateKey = null;
         try {
             PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(pkcs8Bytes);
-            keyFactory = KeyFactory.getInstance("RSA");
+            keyFactory = KeyFactory.getInstance(Constants.CryptoAlgorithm.RSA);
             privateKey = keyFactory.generatePrivate(keySpec);
         } catch (NoSuchAlgorithmException e) {
             LogUtil.printErrorLog(ErrorLogs.INVALID_ALGORITHM.getLog());

@@ -1,6 +1,7 @@
 package com.skyflow.utils.validations;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.skyflow.config.ConnectionConfig;
 import com.skyflow.config.Credentials;
@@ -137,12 +138,27 @@ public class Validations {
         }
 
         if (requestBody != null) {
-            Gson gson = new Gson();
-            JsonObject bodyObject = gson.toJsonTree(requestBody).getAsJsonObject();
-            if (bodyObject.isEmpty()) {
-                LogUtil.printErrorLog(Utils.parameterizedString(
-                        ErrorLogs.EMPTY_REQUEST_BODY.getLog(), InterfaceName.INVOKE_CONNECTION.getName()));
-                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyRequestBody.getMessage());
+            if (requestBody.getClass().equals(Object.class)) {
+                return;
+            }
+            if (requestBody instanceof String) {
+                String bodyStr = (String) requestBody;
+                if (bodyStr.trim().isEmpty()) {
+                    LogUtil.printErrorLog(Utils.parameterizedString(
+                            ErrorLogs.EMPTY_REQUEST_BODY.getLog(), InterfaceName.INVOKE_CONNECTION.getName()));
+                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyRequestBody.getMessage());
+                }
+            } else {
+                Gson gson = new Gson();
+                JsonElement bodyElement = gson.toJsonTree(requestBody);
+                if (bodyElement.isJsonObject()) {
+                    JsonObject bodyObject = bodyElement.getAsJsonObject();
+                    if (bodyObject.isEmpty()) {
+                        LogUtil.printErrorLog(Utils.parameterizedString(
+                                ErrorLogs.EMPTY_REQUEST_BODY.getLog(), InterfaceName.INVOKE_CONNECTION.getName()));
+                        throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyRequestBody.getMessage());
+                    }
+                }
             }
         }
     }
@@ -513,17 +529,17 @@ public class Validations {
                     ErrorLogs.EMPTY_DATA.getLog(), InterfaceName.UPDATE.getName()
             ));
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyData.getMessage());
-        } else if (!data.containsKey("skyflow_id")) {
+        } else if (!data.containsKey(Constants.JsonFieldNames.SKYFLOW_ID)) {
             LogUtil.printErrorLog(Utils.parameterizedString(
                     ErrorLogs.SKYFLOW_ID_IS_REQUIRED.getLog(), InterfaceName.UPDATE.getName()
             ));
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.SkyflowIdKeyError.getMessage());
-        } else if (!(data.get("skyflow_id") instanceof String)) {
+        } else if (!(data.get(Constants.JsonFieldNames.SKYFLOW_ID) instanceof String)) {
             LogUtil.printErrorLog(Utils.parameterizedString(
                     ErrorLogs.INVALID_SKYFLOW_ID_TYPE.getLog(), InterfaceName.UPDATE.getName()
             ));
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidSkyflowIdType.getMessage());
-        } else if (data.get("skyflow_id").toString().trim().isEmpty()) {
+        } else if (data.get(Constants.JsonFieldNames.SKYFLOW_ID).toString().trim().isEmpty()) {
             LogUtil.printErrorLog(Utils.parameterizedString(
                     ErrorLogs.EMPTY_SKYFLOW_ID.getLog(), InterfaceName.UPDATE.getName()
             ));
@@ -800,7 +816,7 @@ public class Validations {
     private static boolean isInvalidURL(String configURL) {
         try {
             URL url = new URL(configURL);
-            if (!url.getProtocol().equals("https")) throw new Exception();
+            if (!url.getProtocol().equals(Constants.HTTPS_PROTOCOL)) throw new Exception();
         } catch (Exception e) {
             return true;
         }

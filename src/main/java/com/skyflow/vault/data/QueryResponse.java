@@ -1,6 +1,7 @@
 package com.skyflow.vault.data;
 
 import com.google.gson.*;
+import com.skyflow.utils.Constants;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,12 +22,12 @@ public class QueryResponse {
     public String toString() {
         Gson gson = new GsonBuilder().serializeNulls().create();
         JsonObject responseObject = gson.toJsonTree(this).getAsJsonObject();
-        JsonArray fieldsArray = responseObject.get("fields").getAsJsonArray();
+        JsonArray fieldsArray = responseObject.get(Constants.JsonFieldNames.FIELDS).getAsJsonArray();
         for (JsonElement fieldElement : fieldsArray) {
-            fieldElement.getAsJsonObject().add("tokenizedData", new JsonObject());
+            fieldElement.getAsJsonObject().add(Constants.FieldNames.TOKENIZED_DATA, new JsonObject());
         }
-        responseObject.add("errors", null);
-        responseObject.remove("tokenizedData");
+        responseObject.add(Constants.JsonFieldNames.ERRORS, null);
+        responseObject.remove(Constants.FieldNames.TOKENIZED_DATA);
         return responseObject.toString();
     }
 }

@@ -7,11 +7,13 @@ import com.skyflow.errors.SkyflowException;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 
 public final class HttpUtility {
 
@@ -32,17 +34,20 @@ public final class HttpUtility {
         try {
             connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod(method);
-            connection.setRequestProperty("content-type", "application/json");
-            connection.setRequestProperty("Accept", "*/*");
+            connection.setRequestProperty(Constants.HttpHeader.ACCEPT, Constants.HttpHeader.ACCEPT_ALL);
+            boolean hasContentType = headers != null && headers.containsKey(Constants.HttpHeader.CONTENT_TYPE);
+            if (!hasContentType && params != null && !params.isEmpty()) {
+                connection.setRequestProperty(Constants.HttpHeader.CONTENT_TYPE, Constants.HttpHeader.CONTENT_TYPE_JSON);
+            }
 
             if (headers != null && !headers.isEmpty()) {
                 for (Map.Entry<String, String> entry : headers.entrySet())
                     connection.setRequestProperty(entry.getKey(), entry.getValue());
 
                 // append dynamic boundary if content-type is multipart/form-data
-                if (headers.containsKey("content-type")) {
-                    if (Objects.equals(headers.get("content-type"), "multipart/form-data")) {
-                        connection.setRequestProperty("content-type", "multipart/form-data; boundary=" + boundary);
+                if (headers.containsKey(Constants.HttpHeader.CONTENT_TYPE)) {
+                    if (Objects.equals(headers.get(Constants.HttpHeader.CONTENT_TYPE), Constants.HttpHeader.CONTENT_TYPE_MULTIPART)) {
+                        connection.setRequestProperty(Constants.HttpHeader.CONTENT_TYPE, Constants.HttpHeader.CONTENT_TYPE_MULTIPART + Constants.HttpHeader.BOUNDARY_SEPARATOR + boundary);
                     }
                 }
             }
@@ -50,11 +55,14 @@ public final class HttpUtility {
                 connection.setDoOutput(true);
                 try (DataOutputStream wr = new DataOutputStream(connection.getOutputStream())) {
                     byte[] input = null;
-                    String requestContentType = connection.getRequestProperty("content-type");
+                    String requestContentType = connection.getRequestProperty(Constants.HttpHeader.CONTENT_TYPE);
 
-                    if (requestContentType.contains("application/x-www-form-urlencoded")) {
+                    // Check if this is a raw body (XML, plain text, etc.)
+                    if (params.has(Constants.HttpUtilityExtra.RAW_BODY_KEY) && params.size() == 1) {
+                        input = params.get(Constants.HttpUtilityExtra.RAW_BODY_KEY).getAsString().getBytes(StandardCharsets.UTF_8);
+                    } else if (requestContentType != null && requestContentType.contains(Constants.HttpHeader.CONTENT_TYPE_FORM_URLENCODED)) {
                         input = formatJsonToFormEncodedString(params).getBytes(StandardCharsets.UTF_8);
-                    } else if (requestContentType.contains("multipart/form-data")) {
+                    } else if (requestContentType != null && requestContentType.contains(Constants.HttpHeader.CONTENT_TYPE_MULTIPART)) {
                         input = formatJsonToMultiPartFormDataString(params, boundary).getBytes(StandardCharsets.UTF_8);
                     } else {
                         input = params.toString().getBytes(StandardCharsets.UTF_8);
@@ -66,15 +74,19 @@ public final class HttpUtility {
             }
 
             int httpCode = connection.getResponseCode();
-            String requestID = connection.getHeaderField("x-request-id");
-            HttpUtility.requestID = requestID.split(",")[0];
+            String requestID = connection.getHeaderField(Constants.REQUEST_ID_HEADER_KEY);
+            if (requestID != null) {
+                HttpUtility.requestID = requestID.split(Constants.HttpUtility.REQUEST_ID_DELIMITER)[0];
+            } else {
+                HttpUtility.requestID = Constants.HttpUtilityExtra.SDK_GENERATED_PREFIX + UUID.randomUUID();
+            }
             Map<String, List<String>> responseHeaders = connection.getHeaderFields();
             Reader streamReader;
             if (httpCode > 299) {
                 if (connection.getErrorStream() != null)
                     streamReader = new InputStreamReader(connection.getErrorStream());
                 else {
-                    String description = appendRequestId("replace with description", requestID);
+                    String description = appendRequestId(Constants.HttpUtility.ERROR_DESCRIPTION, requestID);
                     throw new SkyflowException(description);
                 }
             } else {
@@ -121,7 +133,7 @@ public final class HttpUtility {
             formEncodeString.append(makeFormDataKeyValuePair(currentEntry.getKey(), currentEntry.getValue(), boundary));
 
         formEncodeString.append(LINE_FEED);
-        formEncodeString.append("--").append(boundary).append("--").append(LINE_FEED);
+        formEncodeString.append(Constants.FormData.BOUNDARY_SEPARATOR).append(boundary).append(Constants.FormData.BOUNDARY_SEPARATOR).append(LINE_FEED);
 
         return formEncodeString.toString();
     }
@@ -143,8 +155,8 @@ public final class HttpUtility {
 
     private static String makeFormDataKeyValuePair(String key, String value, String boundary) {
         StringBuilder formDataTextField = new StringBuilder();
-        formDataTextField.append("--").append(boundary).append(LINE_FEED);
-        formDataTextField.append("Content-Disposition: form-data; name=\"").append(key).append("\"").append(LINE_FEED);
+        formDataTextField.append(Constants.FormData.BOUNDARY_SEPARATOR).append(boundary).append(LINE_FEED);
+        formDataTextField.append(Constants.HttpHeader.CONTENT_DISPOSITION).append(Constants.HttpHeader.FORM_DATA_HEADER).append(key).append("\"").append(LINE_FEED);
         formDataTextField.append(LINE_FEED);
         formDataTextField.append(value).append(LINE_FEED);
 
@@ -153,13 +165,19 @@ public final class HttpUtility {
 
     public static String appendRequestId(String message, String requestId) {
         if (requestId != null && !requestId.isEmpty()) {
-            message = message + " - requestId: " + requestId;
+            message = message + Constants.HttpUtility.REQUEST_ID_PREFIX + requestId;
         }
         return message;
     }
 
     private static String makeFormEncodeKeyValuePair(String key, String value) {
-        return key + "=" + value + "&";
+        try {
+            String encodedKey = URLEncoder.encode(key, StandardCharsets.UTF_8.toString());
+            String encodedValue = URLEncoder.encode(value, StandardCharsets.UTF_8.toString());
+            return encodedKey + Constants.HttpUtility.FORM_ENCODE_SEPARATOR + encodedValue + Constants.HttpUtility.FORM_ENCODE_DELIMITER;
+        } catch (Exception e) {
+            return key + Constants.HttpUtility.FORM_ENCODE_SEPARATOR + value + Constants.HttpUtility.FORM_ENCODE_DELIMITER;
+        }
     }
 
 }
