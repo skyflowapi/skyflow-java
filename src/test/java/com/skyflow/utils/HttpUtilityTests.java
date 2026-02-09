@@ -9,8 +9,7 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -26,8 +25,7 @@ import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({URL.class, HttpURLConnection.class})
+@RunWith(MockitoJUnitRunner.class)
 public class HttpUtilityTests {
 
     private static String INVALID_EXCEPTION_THROWN = "Should not have thrown any exception";
@@ -60,7 +58,6 @@ public class HttpUtilityTests {
     }
 
     @Test
-    @PrepareForTest({URL.class, HttpURLConnection.class})
     public void testSendRequest() {
         try {
             given(mockConnection.getRequestProperty("content-type")).willReturn("application/json");
@@ -77,7 +74,6 @@ public class HttpUtilityTests {
 
 
     @Test
-    @PrepareForTest({URL.class, HttpURLConnection.class})
     public void testSendRequestFormData() {
         try {
             given(mockConnection.getRequestProperty("content-type")).willReturn("multipart/form-data");
@@ -93,7 +89,6 @@ public class HttpUtilityTests {
     }
 
     @Test
-    @PrepareForTest({URL.class, HttpURLConnection.class})
     public void testSendRequestFormURLEncoded() {
         try {
             given(mockConnection.getRequestProperty("content-type")).willReturn("application/x-www-form-urlencoded");
@@ -109,7 +104,6 @@ public class HttpUtilityTests {
     }
 
     @Test
-    @PrepareForTest({URL.class, HttpURLConnection.class})
     public void testSendRequestError() {
         try {
             given(mockConnection.getResponseCode()).willReturn(500);
