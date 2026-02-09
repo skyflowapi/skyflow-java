@@ -29,8 +29,6 @@ import static org.mockito.BDDMockito.given;
 public class HttpUtilityTests {
 
     private static String INVALID_EXCEPTION_THROWN = "Should not have thrown any exception";
-    @InjectMocks
-    HttpUtility httpUtility;
     @Mock
     OutputStream outputStream;
     private String expected;
@@ -65,7 +63,7 @@ public class HttpUtilityTests {
             headers.put("content-type", "application/json");
             JsonObject params = new JsonObject();
             params.addProperty("key", "value");
-            String response = httpUtility.sendRequest("GET", url, params, headers);
+            String response = HttpUtility.sendRequest("GET", url, params, headers);
             Assert.assertEquals(expected, response);
         } catch (Exception e) {
             fail(INVALID_EXCEPTION_THROWN);
@@ -81,7 +79,7 @@ public class HttpUtilityTests {
             headers.put("content-type", "multipart/form-data");
             JsonObject params = new JsonObject();
             params.addProperty("key", "value");
-            String response = httpUtility.sendRequest("GET", url, params, headers);
+            String response = HttpUtility.sendRequest("GET", url, params, headers);
             Assert.assertEquals(expected, response);
         } catch (Exception e) {
             fail(INVALID_EXCEPTION_THROWN);
@@ -96,7 +94,7 @@ public class HttpUtilityTests {
             headers.put("content-type", "application/x-www-form-urlencoded");
             JsonObject params = new JsonObject();
             params.addProperty("key", "value");
-            String response = httpUtility.sendRequest("GET", url, params, headers);
+            String response = HttpUtility.sendRequest("GET", url, params, headers);
             Assert.assertEquals(expected, response);
         } catch (Exception e) {
             fail(INVALID_EXCEPTION_THROWN);
@@ -107,7 +105,7 @@ public class HttpUtilityTests {
     public void testSendRequestError() {
         try {
             given(mockConnection.getResponseCode()).willReturn(500);
-            String response = httpUtility.sendRequest("GET", url, null, null);
+            String response = HttpUtility.sendRequest("GET", url, null, null);
         } catch (SkyflowException e) {
             Assert.assertEquals(500, e.getHttpCode());
             Assert.assertEquals(new Integer(123), e.getGrpcCode());
