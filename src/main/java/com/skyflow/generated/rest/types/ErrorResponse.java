@@ -33,7 +33,7 @@ public final class ErrorResponse {
         return error;
     }
 
-    @java.lang.Override
+    @Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof ErrorResponse && equalTo((ErrorResponse) other);
@@ -48,12 +48,12 @@ public final class ErrorResponse {
         return error.equals(other.error);
     }
 
-    @java.lang.Override
+    @Override
     public int hashCode() {
         return Objects.hash(this.error);
     }
 
-    @java.lang.Override
+    @Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }
@@ -81,20 +81,20 @@ public final class ErrorResponse {
 
         private Builder() {}
 
-        @java.lang.Override
+        @Override
         public Builder from(ErrorResponse other) {
             error(other.getError());
             return this;
         }
 
-        @java.lang.Override
+        @Override
         @JsonSetter("error")
         public _FinalStage error(@NotNull ErrorResponseError error) {
             this.error = Objects.requireNonNull(error, "error must not be null");
             return this;
         }
 
-        @java.lang.Override
+        @Override
         public ErrorResponse build() {
             return new ErrorResponse(error, additionalProperties);
         }

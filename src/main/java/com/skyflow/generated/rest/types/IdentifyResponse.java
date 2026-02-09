@@ -36,7 +36,7 @@ public final class IdentifyResponse {
         return text;
     }
 
-    @java.lang.Override
+    @Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof IdentifyResponse && equalTo((IdentifyResponse) other);
@@ -51,12 +51,12 @@ public final class IdentifyResponse {
         return text.equals(other.text);
     }
 
-    @java.lang.Override
+    @Override
     public int hashCode() {
         return Objects.hash(this.text);
     }
 
-    @java.lang.Override
+    @Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }
@@ -87,7 +87,7 @@ public final class IdentifyResponse {
 
         private Builder() {}
 
-        @java.lang.Override
+        @Override
         public Builder from(IdentifyResponse other) {
             text(other.getText());
             return this;
@@ -97,14 +97,14 @@ public final class IdentifyResponse {
          * Re-identified text.<p>Re-identified text.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @java.lang.Override
+        @Override
         @JsonSetter("text")
         public _FinalStage text(@NotNull String text) {
             this.text = Objects.requireNonNull(text, "text must not be null");
             return this;
         }
 
-        @java.lang.Override
+        @Override
         public IdentifyResponse build() {
             return new IdentifyResponse(text, additionalProperties);
         }

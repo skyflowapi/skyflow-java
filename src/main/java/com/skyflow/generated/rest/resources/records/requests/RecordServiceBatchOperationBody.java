@@ -63,7 +63,7 @@ public final class RecordServiceBatchOperationBody {
         return byot;
     }
 
-    @java.lang.Override
+    @Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof RecordServiceBatchOperationBody && equalTo((RecordServiceBatchOperationBody) other);
@@ -80,12 +80,12 @@ public final class RecordServiceBatchOperationBody {
                 && byot.equals(other.byot);
     }
 
-    @java.lang.Override
+    @Override
     public int hashCode() {
         return Objects.hash(this.records, this.continueOnError, this.byot);
     }
 
-    @java.lang.Override
+    @Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }
