@@ -76,7 +76,7 @@ public final class UploadFileV2Request {
         return returnFileMetadata;
     }
 
-    @java.lang.Override
+    @Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof UploadFileV2Request && equalTo((UploadFileV2Request) other);
@@ -94,12 +94,12 @@ public final class UploadFileV2Request {
                 && returnFileMetadata.equals(other.returnFileMetadata);
     }
 
-    @java.lang.Override
+    @Override
     public int hashCode() {
         return Objects.hash(this.tableName, this.columnName, this.skyflowId, this.returnFileMetadata);
     }
 
-    @java.lang.Override
+    @Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }
@@ -157,7 +157,7 @@ public final class UploadFileV2Request {
 
         private Builder() {}
 
-        @java.lang.Override
+        @Override
         public Builder from(UploadFileV2Request other) {
             tableName(other.getTableName());
             columnName(other.getColumnName());
@@ -170,7 +170,7 @@ public final class UploadFileV2Request {
          * Name of the table to upload the file to.<p>Name of the table to upload the file to.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @java.lang.Override
+        @Override
         @JsonSetter("tableName")
         public ColumnNameStage tableName(@NotNull String tableName) {
             this.tableName = Objects.requireNonNull(tableName, "tableName must not be null");
@@ -181,7 +181,7 @@ public final class UploadFileV2Request {
          * Name of the column to upload the file to. The column must have a `file` data type.<p>Name of the column to upload the file to. The column must have a <code>file</code> data type.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @java.lang.Override
+        @Override
         @JsonSetter("columnName")
         public _FinalStage columnName(@NotNull String columnName) {
             this.columnName = Objects.requireNonNull(columnName, "columnName must not be null");
@@ -192,7 +192,7 @@ public final class UploadFileV2Request {
          * <p>If <code>true</code>, returns metadata about the uploaded file.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @java.lang.Override
+        @Override
         public _FinalStage returnFileMetadata(Boolean returnFileMetadata) {
             this.returnFileMetadata = Optional.ofNullable(returnFileMetadata);
             return this;
@@ -201,7 +201,7 @@ public final class UploadFileV2Request {
         /**
          * <p>If <code>true</code>, returns metadata about the uploaded file.</p>
          */
-        @java.lang.Override
+        @Override
         @JsonSetter(value = "returnFileMetadata", nulls = Nulls.SKIP)
         public _FinalStage returnFileMetadata(Optional<Boolean> returnFileMetadata) {
             this.returnFileMetadata = returnFileMetadata;
@@ -212,7 +212,7 @@ public final class UploadFileV2Request {
          * <p>Skyflow ID of the record to upload the file to. If <code>skyflowID</code> isn't specified, a new record will be created.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @java.lang.Override
+        @Override
         public _FinalStage skyflowId(String skyflowId) {
             this.skyflowId = Optional.ofNullable(skyflowId);
             return this;
@@ -221,14 +221,14 @@ public final class UploadFileV2Request {
         /**
          * <p>Skyflow ID of the record to upload the file to. If <code>skyflowID</code> isn't specified, a new record will be created.</p>
          */
-        @java.lang.Override
+        @Override
         @JsonSetter(value = "skyflowID", nulls = Nulls.SKIP)
         public _FinalStage skyflowId(Optional<String> skyflowId) {
             this.skyflowId = skyflowId;
             return this;
         }
 
-        @java.lang.Override
+        @Override
         public UploadFileV2Request build() {
             return new UploadFileV2Request(tableName, columnName, skyflowId, returnFileMetadata, additionalProperties);
         }

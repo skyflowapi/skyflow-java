@@ -25,7 +25,7 @@ public final class UnauthorizedError extends ApiClientApiException {
     /**
      * @return the body
      */
-    @java.lang.Override
+    @Override
     public Object body() {
         return this.body;
     }

@@ -77,7 +77,7 @@ public final class DetectGuardrailsRequest {
         return vaultId;
     }
 
-    @java.lang.Override
+    @Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof DetectGuardrailsRequest && equalTo((DetectGuardrailsRequest) other);
@@ -95,12 +95,12 @@ public final class DetectGuardrailsRequest {
                 && vaultId.equals(other.vaultId);
     }
 
-    @java.lang.Override
+    @Override
     public int hashCode() {
         return Objects.hash(this.text, this.checkToxicity, this.denyTopics, this.vaultId);
     }
 
-    @java.lang.Override
+    @Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }
@@ -158,7 +158,7 @@ public final class DetectGuardrailsRequest {
 
         private Builder() {}
 
-        @java.lang.Override
+        @Override
         public Builder from(DetectGuardrailsRequest other) {
             text(other.getText());
             checkToxicity(other.getCheckToxicity());
@@ -171,7 +171,7 @@ public final class DetectGuardrailsRequest {
          * Text to check against guardrails.<p>Text to check against guardrails.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @java.lang.Override
+        @Override
         @JsonSetter("text")
         public VaultIdStage text(@NotNull String text) {
             this.text = Objects.requireNonNull(text, "text must not be null");
@@ -182,7 +182,7 @@ public final class DetectGuardrailsRequest {
          * ID of the vault.<p>ID of the vault.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @java.lang.Override
+        @Override
         @JsonSetter("vault_id")
         public _FinalStage vaultId(@NotNull String vaultId) {
             this.vaultId = Objects.requireNonNull(vaultId, "vaultId must not be null");
@@ -193,7 +193,7 @@ public final class DetectGuardrailsRequest {
          * <p>List of topics to deny.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @java.lang.Override
+        @Override
         public _FinalStage denyTopics(List<String> denyTopics) {
             this.denyTopics = Optional.ofNullable(denyTopics);
             return this;
@@ -202,7 +202,7 @@ public final class DetectGuardrailsRequest {
         /**
          * <p>List of topics to deny.</p>
          */
-        @java.lang.Override
+        @Override
         @JsonSetter(value = "deny_topics", nulls = Nulls.SKIP)
         public _FinalStage denyTopics(Optional<List<String>> denyTopics) {
             this.denyTopics = denyTopics;
@@ -213,7 +213,7 @@ public final class DetectGuardrailsRequest {
          * <p>If <code>true</code>, checks for toxicity in the text.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @java.lang.Override
+        @Override
         public _FinalStage checkToxicity(Boolean checkToxicity) {
             this.checkToxicity = Optional.ofNullable(checkToxicity);
             return this;
@@ -222,14 +222,14 @@ public final class DetectGuardrailsRequest {
         /**
          * <p>If <code>true</code>, checks for toxicity in the text.</p>
          */
-        @java.lang.Override
+        @Override
         @JsonSetter(value = "check_toxicity", nulls = Nulls.SKIP)
         public _FinalStage checkToxicity(Optional<Boolean> checkToxicity) {
             this.checkToxicity = checkToxicity;
             return this;
         }
 
-        @java.lang.Override
+        @Override
         public DetectGuardrailsRequest build() {
             return new DetectGuardrailsRequest(text, checkToxicity, denyTopics, vaultId, additionalProperties);
         }

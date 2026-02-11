@@ -63,7 +63,7 @@ public final class V1VaultFieldMapping {
         return cardExpiry;
     }
 
-    @java.lang.Override
+    @Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof V1VaultFieldMapping && equalTo((V1VaultFieldMapping) other);
@@ -80,12 +80,12 @@ public final class V1VaultFieldMapping {
                 && cardExpiry.equals(other.cardExpiry);
     }
 
-    @java.lang.Override
+    @Override
     public int hashCode() {
         return Objects.hash(this.cardNumber, this.cardLastFourDigits, this.cardExpiry);
     }
 
-    @java.lang.Override
+    @Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }

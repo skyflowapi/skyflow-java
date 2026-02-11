@@ -1,5 +1,14 @@
 package com.skyflow.utils.validations;
 
+import java.io.File;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.skyflow.config.ConnectionConfig;
@@ -16,21 +25,21 @@ import com.skyflow.utils.Constants;
 import com.skyflow.utils.Utils;
 import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.vault.connection.InvokeConnectionRequest;
-import com.skyflow.vault.data.*;
-import com.skyflow.vault.detect.*;
+import com.skyflow.vault.data.DeleteRequest;
+import com.skyflow.vault.data.FileUploadRequest;
+import com.skyflow.vault.data.GetRequest;
+import com.skyflow.vault.data.InsertRequest;
+import com.skyflow.vault.data.QueryRequest;
+import com.skyflow.vault.data.UpdateRequest;
+import com.skyflow.vault.detect.DeidentifyFileRequest;
+import com.skyflow.vault.detect.DeidentifyTextRequest;
+import com.skyflow.vault.detect.GetDetectRunRequest;
+import com.skyflow.vault.detect.ReidentifyTextRequest;
+import com.skyflow.vault.detect.TokenFormat;
 import com.skyflow.vault.tokens.ColumnValue;
 import com.skyflow.vault.tokens.DetokenizeData;
 import com.skyflow.vault.tokens.DetokenizeRequest;
 import com.skyflow.vault.tokens.TokenizeRequest;
-
-import java.io.File;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class Validations {
     private Validations() {
@@ -701,19 +710,6 @@ public class Validations {
                     ErrorLogs.EMPTY_TABLE_NAME.getLog(), InterfaceName.FILE_UPLOAD.getName()
             ));
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyTable.getMessage());
-        }
-
-        String skyflowId = fileUploadRequest.getSkyflowId();
-        if (skyflowId == null) {
-            LogUtil.printErrorLog(Utils.parameterizedString(
-                    ErrorLogs.SKYFLOW_ID_IS_REQUIRED.getLog(), InterfaceName.FILE_UPLOAD.getName()
-            ));
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.SkyflowIdKeyError.getMessage());
-        } else if (skyflowId.trim().isEmpty()) {
-            LogUtil.printErrorLog(Utils.parameterizedString(
-                    ErrorLogs.EMPTY_SKYFLOW_ID.getLog(), InterfaceName.FILE_UPLOAD.getName()
-            ));
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptySkyflowId.getMessage());
         }
 
         String columnName = fileUploadRequest.getColumnName();

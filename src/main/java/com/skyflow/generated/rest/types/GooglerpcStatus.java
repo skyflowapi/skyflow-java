@@ -55,7 +55,7 @@ public final class GooglerpcStatus {
         return details;
     }
 
-    @java.lang.Override
+    @Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof GooglerpcStatus && equalTo((GooglerpcStatus) other);
@@ -70,12 +70,12 @@ public final class GooglerpcStatus {
         return code.equals(other.code) && message.equals(other.message) && details.equals(other.details);
     }
 
-    @java.lang.Override
+    @Override
     public int hashCode() {
         return Objects.hash(this.code, this.message, this.details);
     }
 
-    @java.lang.Override
+    @Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }

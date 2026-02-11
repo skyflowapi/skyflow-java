@@ -76,7 +76,7 @@ public final class DetectGuardrailsResponse {
         return validation;
     }
 
-    @java.lang.Override
+    @Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof DetectGuardrailsResponse && equalTo((DetectGuardrailsResponse) other);
@@ -94,12 +94,12 @@ public final class DetectGuardrailsResponse {
                 && validation.equals(other.validation);
     }
 
-    @java.lang.Override
+    @Override
     public int hashCode() {
         return Objects.hash(this.text, this.toxic, this.deniedTopic, this.validation);
     }
 
-    @java.lang.Override
+    @Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }
@@ -157,7 +157,7 @@ public final class DetectGuardrailsResponse {
 
         private Builder() {}
 
-        @java.lang.Override
+        @Override
         public Builder from(DetectGuardrailsResponse other) {
             text(other.getText());
             toxic(other.getToxic());
@@ -170,7 +170,7 @@ public final class DetectGuardrailsResponse {
          * Text that was checked against guardrails.<p>Text that was checked against guardrails.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @java.lang.Override
+        @Override
         @JsonSetter("text")
         public ValidationStage text(@NotNull String text) {
             this.text = Objects.requireNonNull(text, "text must not be null");
@@ -181,7 +181,7 @@ public final class DetectGuardrailsResponse {
          * Whether the text passed validation.<p>Whether the text passed validation.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @java.lang.Override
+        @Override
         @JsonSetter("validation")
         public _FinalStage validation(@NotNull DetectGuardrailsResponseValidation validation) {
             this.validation = Objects.requireNonNull(validation, "validation must not be null");
@@ -192,7 +192,7 @@ public final class DetectGuardrailsResponse {
          * <p>Whether the text included a denied topic.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @java.lang.Override
+        @Override
         public _FinalStage deniedTopic(Boolean deniedTopic) {
             this.deniedTopic = Optional.ofNullable(deniedTopic);
             return this;
@@ -201,7 +201,7 @@ public final class DetectGuardrailsResponse {
         /**
          * <p>Whether the text included a denied topic.</p>
          */
-        @java.lang.Override
+        @Override
         @JsonSetter(value = "denied_topic", nulls = Nulls.SKIP)
         public _FinalStage deniedTopic(Optional<Boolean> deniedTopic) {
             this.deniedTopic = deniedTopic;
@@ -212,7 +212,7 @@ public final class DetectGuardrailsResponse {
          * <p>Whether the text is toxic.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @java.lang.Override
+        @Override
         public _FinalStage toxic(Boolean toxic) {
             this.toxic = Optional.ofNullable(toxic);
             return this;
@@ -221,14 +221,14 @@ public final class DetectGuardrailsResponse {
         /**
          * <p>Whether the text is toxic.</p>
          */
-        @java.lang.Override
+        @Override
         @JsonSetter(value = "toxic", nulls = Nulls.SKIP)
         public _FinalStage toxic(Optional<Boolean> toxic) {
             this.toxic = toxic;
             return this;
         }
 
-        @java.lang.Override
+        @Override
         public DetectGuardrailsResponse build() {
             return new DetectGuardrailsResponse(text, toxic, deniedTopic, validation, additionalProperties);
         }

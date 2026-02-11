@@ -76,7 +76,7 @@ public final class DeidentifyStringResponse {
         return characterCount;
     }
 
-    @java.lang.Override
+    @Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof DeidentifyStringResponse && equalTo((DeidentifyStringResponse) other);
@@ -94,12 +94,12 @@ public final class DeidentifyStringResponse {
                 && characterCount.equals(other.characterCount);
     }
 
-    @java.lang.Override
+    @Override
     public int hashCode() {
         return Objects.hash(this.processedText, this.entities, this.wordCount, this.characterCount);
     }
 
-    @java.lang.Override
+    @Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }
