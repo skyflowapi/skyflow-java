@@ -64,7 +64,7 @@ public final class Format {
         return plaintext;
     }
 
-    @java.lang.Override
+    @Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof Format && equalTo((Format) other);
@@ -79,12 +79,12 @@ public final class Format {
         return redacted.equals(other.redacted) && masked.equals(other.masked) && plaintext.equals(other.plaintext);
     }
 
-    @java.lang.Override
+    @Override
     public int hashCode() {
         return Objects.hash(this.redacted, this.masked, this.plaintext);
     }
 
-    @java.lang.Override
+    @Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }

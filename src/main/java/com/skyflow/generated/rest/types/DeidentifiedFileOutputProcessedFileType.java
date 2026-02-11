@@ -27,7 +27,7 @@ public enum DeidentifiedFileOutputProcessedFileType {
     }
 
     @JsonValue
-    @java.lang.Override
+    @Override
     public String toString() {
         return this.value;
     }

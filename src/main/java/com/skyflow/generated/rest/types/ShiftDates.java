@@ -64,7 +64,7 @@ public final class ShiftDates {
         return entityTypes;
     }
 
-    @java.lang.Override
+    @Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof ShiftDates && equalTo((ShiftDates) other);
@@ -79,12 +79,12 @@ public final class ShiftDates {
         return minDays.equals(other.minDays) && maxDays.equals(other.maxDays) && entityTypes.equals(other.entityTypes);
     }
 
-    @java.lang.Override
+    @Override
     public int hashCode() {
         return Objects.hash(this.minDays, this.maxDays, this.entityTypes);
     }
 
-    @java.lang.Override
+    @Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }

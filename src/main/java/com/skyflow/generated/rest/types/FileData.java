@@ -47,7 +47,7 @@ public final class FileData {
         return dataFormat;
     }
 
-    @java.lang.Override
+    @Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof FileData && equalTo((FileData) other);
@@ -62,12 +62,12 @@ public final class FileData {
         return base64.equals(other.base64) && dataFormat.equals(other.dataFormat);
     }
 
-    @java.lang.Override
+    @Override
     public int hashCode() {
         return Objects.hash(this.base64, this.dataFormat);
     }
 
-    @java.lang.Override
+    @Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }
@@ -107,7 +107,7 @@ public final class FileData {
 
         private Builder() {}
 
-        @java.lang.Override
+        @Override
         public Builder from(FileData other) {
             base64(other.getBase64());
             dataFormat(other.getDataFormat());
@@ -118,7 +118,7 @@ public final class FileData {
          * Base64-encoded data of the file.<p>Base64-encoded data of the file.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @java.lang.Override
+        @Override
         @JsonSetter("base64")
         public DataFormatStage base64(@NotNull String base64) {
             this.base64 = Objects.requireNonNull(base64, "base64 must not be null");
@@ -129,14 +129,14 @@ public final class FileData {
          * Format of the file.<p>Format of the file.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @java.lang.Override
+        @Override
         @JsonSetter("data_format")
         public _FinalStage dataFormat(@NotNull FileDataDataFormat dataFormat) {
             this.dataFormat = Objects.requireNonNull(dataFormat, "dataFormat must not be null");
             return this;
         }
 
-        @java.lang.Override
+        @Override
         public FileData build() {
             return new FileData(base64, dataFormat, additionalProperties);
         }

@@ -39,7 +39,7 @@ public final class V1BulkDeleteRecordResponse {
         return recordIdResponse;
     }
 
-    @java.lang.Override
+    @Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof V1BulkDeleteRecordResponse && equalTo((V1BulkDeleteRecordResponse) other);
@@ -54,12 +54,12 @@ public final class V1BulkDeleteRecordResponse {
         return recordIdResponse.equals(other.recordIdResponse);
     }
 
-    @java.lang.Override
+    @Override
     public int hashCode() {
         return Objects.hash(this.recordIdResponse);
     }
 
-    @java.lang.Override
+    @Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }

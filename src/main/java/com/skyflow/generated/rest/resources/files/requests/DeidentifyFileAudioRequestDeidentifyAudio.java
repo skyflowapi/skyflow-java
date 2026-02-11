@@ -193,7 +193,7 @@ public final class DeidentifyFileAudioRequestDeidentifyAudio {
         return configurationId;
     }
 
-    @java.lang.Override
+    @Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof DeidentifyFileAudioRequestDeidentifyAudio
@@ -222,7 +222,7 @@ public final class DeidentifyFileAudioRequestDeidentifyAudio {
                 && configurationId.equals(other.configurationId);
     }
 
-    @java.lang.Override
+    @Override
     public int hashCode() {
         return Objects.hash(
                 this.file,
@@ -241,7 +241,7 @@ public final class DeidentifyFileAudioRequestDeidentifyAudio {
                 this.configurationId);
     }
 
-    @java.lang.Override
+    @Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }
@@ -383,7 +383,7 @@ public final class DeidentifyFileAudioRequestDeidentifyAudio {
 
         private Builder() {}
 
-        @java.lang.Override
+        @Override
         public Builder from(DeidentifyFileAudioRequestDeidentifyAudio other) {
             file(other.getFile());
             vaultId(other.getVaultId());
@@ -402,7 +402,7 @@ public final class DeidentifyFileAudioRequestDeidentifyAudio {
             return this;
         }
 
-        @java.lang.Override
+        @Override
         @JsonSetter("file")
         public VaultIdStage file(@NotNull FileDataDeidentifyAudio file) {
             this.file = Objects.requireNonNull(file, "file must not be null");
@@ -413,7 +413,7 @@ public final class DeidentifyFileAudioRequestDeidentifyAudio {
          * ID of a vault that you have Detect Invoker or Vault Owner permissions for.<p>ID of a vault that you have Detect Invoker or Vault Owner permissions for.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @java.lang.Override
+        @Override
         @JsonSetter("vault_id")
         public _FinalStage vaultId(@NotNull String vaultId) {
             this.vaultId = Objects.requireNonNull(vaultId, "vaultId must not be null");
@@ -424,7 +424,7 @@ public final class DeidentifyFileAudioRequestDeidentifyAudio {
          * <p>ID of the Detect configuration to use for de-identification. Can't be specified with fields other than <code>vault_id</code>, <code>text</code>, and <code>file</code>.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @java.lang.Override
+        @Override
         public _FinalStage configurationId(String configurationId) {
             this.configurationId = Optional.ofNullable(configurationId);
             return this;
@@ -433,20 +433,20 @@ public final class DeidentifyFileAudioRequestDeidentifyAudio {
         /**
          * <p>ID of the Detect configuration to use for de-identification. Can't be specified with fields other than <code>vault_id</code>, <code>text</code>, and <code>file</code>.</p>
          */
-        @java.lang.Override
+        @Override
         @JsonSetter(value = "configuration_id", nulls = Nulls.SKIP)
         public _FinalStage configurationId(Optional<String> configurationId) {
             this.configurationId = configurationId;
             return this;
         }
 
-        @java.lang.Override
+        @Override
         public _FinalStage transformations(Transformations transformations) {
             this.transformations = Optional.ofNullable(transformations);
             return this;
         }
 
-        @java.lang.Override
+        @Override
         @JsonSetter(value = "transformations", nulls = Nulls.SKIP)
         public _FinalStage transformations(Optional<Transformations> transformations) {
             this.transformations = transformations;
@@ -457,7 +457,7 @@ public final class DeidentifyFileAudioRequestDeidentifyAudio {
          * <p>Regular expressions to replace with '[RESTRICTED]'. Expressions must match the entirety of a detected entity, not just a substring, for the entity to be restricted. Expressions don't match across entity boundaries. If a string or entity matches both <code>allow_regex</code> and <code>restrict_regex</code>, the entity is displayed in plaintext. If a string is detected as an entity and a <code>restrict_regex</code> pattern matches the entire detected entity, the entity is replaced with '[RESTRICTED]'. If a string is detected as an entity but a <code>restrict_regex</code> pattern only matches a substring of it, the <code>restrict_regex</code> pattern is ignored, and the entity is processed according to the specified tokenization and transformation settings.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @java.lang.Override
+        @Override
         public _FinalStage restrictRegex(List<String> restrictRegex) {
             this.restrictRegex = Optional.ofNullable(restrictRegex);
             return this;
@@ -466,7 +466,7 @@ public final class DeidentifyFileAudioRequestDeidentifyAudio {
         /**
          * <p>Regular expressions to replace with '[RESTRICTED]'. Expressions must match the entirety of a detected entity, not just a substring, for the entity to be restricted. Expressions don't match across entity boundaries. If a string or entity matches both <code>allow_regex</code> and <code>restrict_regex</code>, the entity is displayed in plaintext. If a string is detected as an entity and a <code>restrict_regex</code> pattern matches the entire detected entity, the entity is replaced with '[RESTRICTED]'. If a string is detected as an entity but a <code>restrict_regex</code> pattern only matches a substring of it, the <code>restrict_regex</code> pattern is ignored, and the entity is processed according to the specified tokenization and transformation settings.</p>
          */
-        @java.lang.Override
+        @Override
         @JsonSetter(value = "restrict_regex", nulls = Nulls.SKIP)
         public _FinalStage restrictRegex(Optional<List<String>> restrictRegex) {
             this.restrictRegex = restrictRegex;
@@ -477,7 +477,7 @@ public final class DeidentifyFileAudioRequestDeidentifyAudio {
          * <p>Regular expressions to display in plaintext. Entities appear in plaintext if an expression matches either the entirety of a detected entity or a substring of it. Expressions don't match across entity boundaries. If a string or entity matches both <code>allow_regex</code> and <code>restrict_regex</code>, the entity is displayed in plaintext.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @java.lang.Override
+        @Override
         public _FinalStage allowRegex(List<String> allowRegex) {
             this.allowRegex = Optional.ofNullable(allowRegex);
             return this;
@@ -486,20 +486,20 @@ public final class DeidentifyFileAudioRequestDeidentifyAudio {
         /**
          * <p>Regular expressions to display in plaintext. Entities appear in plaintext if an expression matches either the entirety of a detected entity or a substring of it. Expressions don't match across entity boundaries. If a string or entity matches both <code>allow_regex</code> and <code>restrict_regex</code>, the entity is displayed in plaintext.</p>
          */
-        @java.lang.Override
+        @Override
         @JsonSetter(value = "allow_regex", nulls = Nulls.SKIP)
         public _FinalStage allowRegex(Optional<List<String>> allowRegex) {
             this.allowRegex = allowRegex;
             return this;
         }
 
-        @java.lang.Override
+        @Override
         public _FinalStage tokenType(TokenTypeMapping tokenType) {
             this.tokenType = Optional.ofNullable(tokenType);
             return this;
         }
 
-        @java.lang.Override
+        @Override
         @JsonSetter(value = "token_type", nulls = Nulls.SKIP)
         public _FinalStage tokenType(Optional<TokenTypeMapping> tokenType) {
             this.tokenType = tokenType;
@@ -510,7 +510,7 @@ public final class DeidentifyFileAudioRequestDeidentifyAudio {
          * <p>Entities to detect and de-identify.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @java.lang.Override
+        @Override
         public _FinalStage entityTypes(List<DeidentifyFileAudioRequestDeidentifyAudioEntityTypesItem> entityTypes) {
             this.entityTypes = Optional.ofNullable(entityTypes);
             return this;
@@ -519,7 +519,7 @@ public final class DeidentifyFileAudioRequestDeidentifyAudio {
         /**
          * <p>Entities to detect and de-identify.</p>
          */
-        @java.lang.Override
+        @Override
         @JsonSetter(value = "entity_types", nulls = Nulls.SKIP)
         public _FinalStage entityTypes(
                 Optional<List<DeidentifyFileAudioRequestDeidentifyAudioEntityTypesItem>> entityTypes) {
@@ -531,7 +531,7 @@ public final class DeidentifyFileAudioRequestDeidentifyAudio {
          * <p>Relative loudness of the bleep in dB. Positive values increase its loudness, and negative values decrease it.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @java.lang.Override
+        @Override
         public _FinalStage bleepGain(Integer bleepGain) {
             this.bleepGain = Optional.ofNullable(bleepGain);
             return this;
@@ -540,7 +540,7 @@ public final class DeidentifyFileAudioRequestDeidentifyAudio {
         /**
          * <p>Relative loudness of the bleep in dB. Positive values increase its loudness, and negative values decrease it.</p>
          */
-        @java.lang.Override
+        @Override
         @JsonSetter(value = "bleep_gain", nulls = Nulls.SKIP)
         public _FinalStage bleepGain(Optional<Integer> bleepGain) {
             this.bleepGain = bleepGain;
@@ -551,7 +551,7 @@ public final class DeidentifyFileAudioRequestDeidentifyAudio {
          * <p>The pitch of the bleep sound, in Hz. The higher the number, the higher the pitch.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @java.lang.Override
+        @Override
         public _FinalStage bleepFrequency(Integer bleepFrequency) {
             this.bleepFrequency = Optional.ofNullable(bleepFrequency);
             return this;
@@ -560,7 +560,7 @@ public final class DeidentifyFileAudioRequestDeidentifyAudio {
         /**
          * <p>The pitch of the bleep sound, in Hz. The higher the number, the higher the pitch.</p>
          */
-        @java.lang.Override
+        @Override
         @JsonSetter(value = "bleep_frequency", nulls = Nulls.SKIP)
         public _FinalStage bleepFrequency(Optional<Integer> bleepFrequency) {
             this.bleepFrequency = bleepFrequency;
@@ -571,7 +571,7 @@ public final class DeidentifyFileAudioRequestDeidentifyAudio {
          * <p>Padding added to the end of a bleep, in seconds.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @java.lang.Override
+        @Override
         public _FinalStage bleepStopPadding(Float bleepStopPadding) {
             this.bleepStopPadding = Optional.ofNullable(bleepStopPadding);
             return this;
@@ -580,7 +580,7 @@ public final class DeidentifyFileAudioRequestDeidentifyAudio {
         /**
          * <p>Padding added to the end of a bleep, in seconds.</p>
          */
-        @java.lang.Override
+        @Override
         @JsonSetter(value = "bleep_stop_padding", nulls = Nulls.SKIP)
         public _FinalStage bleepStopPadding(Optional<Float> bleepStopPadding) {
             this.bleepStopPadding = bleepStopPadding;
@@ -591,7 +591,7 @@ public final class DeidentifyFileAudioRequestDeidentifyAudio {
          * <p>Padding added to the beginning of a bleep, in seconds.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @java.lang.Override
+        @Override
         public _FinalStage bleepStartPadding(Float bleepStartPadding) {
             this.bleepStartPadding = Optional.ofNullable(bleepStartPadding);
             return this;
@@ -600,7 +600,7 @@ public final class DeidentifyFileAudioRequestDeidentifyAudio {
         /**
          * <p>Padding added to the beginning of a bleep, in seconds.</p>
          */
-        @java.lang.Override
+        @Override
         @JsonSetter(value = "bleep_start_padding", nulls = Nulls.SKIP)
         public _FinalStage bleepStartPadding(Optional<Float> bleepStartPadding) {
             this.bleepStartPadding = bleepStartPadding;
@@ -611,7 +611,7 @@ public final class DeidentifyFileAudioRequestDeidentifyAudio {
          * <p>Whether to include the processed audio file in the response.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @java.lang.Override
+        @Override
         public _FinalStage outputProcessedAudio(Boolean outputProcessedAudio) {
             this.outputProcessedAudio = Optional.ofNullable(outputProcessedAudio);
             return this;
@@ -620,7 +620,7 @@ public final class DeidentifyFileAudioRequestDeidentifyAudio {
         /**
          * <p>Whether to include the processed audio file in the response.</p>
          */
-        @java.lang.Override
+        @Override
         @JsonSetter(value = "output_processed_audio", nulls = Nulls.SKIP)
         public _FinalStage outputProcessedAudio(Optional<Boolean> outputProcessedAudio) {
             this.outputProcessedAudio = outputProcessedAudio;
@@ -631,7 +631,7 @@ public final class DeidentifyFileAudioRequestDeidentifyAudio {
          * <p>Type of transcription to output.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @java.lang.Override
+        @Override
         public _FinalStage outputTranscription(
                 DeidentifyFileAudioRequestDeidentifyAudioOutputTranscription outputTranscription) {
             this.outputTranscription = Optional.ofNullable(outputTranscription);
@@ -641,7 +641,7 @@ public final class DeidentifyFileAudioRequestDeidentifyAudio {
         /**
          * <p>Type of transcription to output.</p>
          */
-        @java.lang.Override
+        @Override
         @JsonSetter(value = "output_transcription", nulls = Nulls.SKIP)
         public _FinalStage outputTranscription(
                 Optional<DeidentifyFileAudioRequestDeidentifyAudioOutputTranscription> outputTranscription) {
@@ -649,7 +649,7 @@ public final class DeidentifyFileAudioRequestDeidentifyAudio {
             return this;
         }
 
-        @java.lang.Override
+        @Override
         public DeidentifyFileAudioRequestDeidentifyAudio build() {
             return new DeidentifyFileAudioRequestDeidentifyAudio(
                     file,

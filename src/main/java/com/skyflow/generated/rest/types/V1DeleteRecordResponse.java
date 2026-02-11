@@ -49,7 +49,7 @@ public final class V1DeleteRecordResponse {
         return deleted;
     }
 
-    @java.lang.Override
+    @Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof V1DeleteRecordResponse && equalTo((V1DeleteRecordResponse) other);
@@ -64,12 +64,12 @@ public final class V1DeleteRecordResponse {
         return skyflowId.equals(other.skyflowId) && deleted.equals(other.deleted);
     }
 
-    @java.lang.Override
+    @Override
     public int hashCode() {
         return Objects.hash(this.skyflowId, this.deleted);
     }
 
-    @java.lang.Override
+    @Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }

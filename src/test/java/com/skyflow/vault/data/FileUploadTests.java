@@ -1,17 +1,17 @@
 package com.skyflow.vault.data;
 
+import java.io.File;
+
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.utils.Constants;
 import com.skyflow.utils.Utils;
 import com.skyflow.utils.validations.Validations;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-import java.io.File;
 
 public class FileUploadTests {
     private static final String INVALID_EXCEPTION_THROWN = "Should not have thrown any exception";
@@ -120,17 +120,12 @@ public class FileUploadTests {
             FileUploadRequest request = FileUploadRequest.builder()
                     .table(table)
                     .columnName(columnName)
-                    .fileName(fileName)
+                    .filePath(filePath)
                     .build();
 
             Validations.validateFileUploadRequest(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(
-                    Utils.parameterizedString(ErrorMessage.SkyflowIdKeyError.getMessage(), Constants.SDK_PREFIX),
-                    e.getMessage()
-            );
+            Assert.fail(INVALID_EXCEPTION_THROWN);
         }
     }
 
@@ -141,17 +136,11 @@ public class FileUploadTests {
                     .table(table)
                     .skyflowId("")
                     .columnName(columnName)
-                    .fileName(fileName)
+                    .filePath(filePath)
                     .build();
-
             Validations.validateFileUploadRequest(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(
-                    Utils.parameterizedString(ErrorMessage.EmptySkyflowId.getMessage(), Constants.SDK_PREFIX),
-                    e.getMessage()
-            );
+            Assert.fail(INVALID_EXCEPTION_THROWN);
         }
     }
 

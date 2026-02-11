@@ -37,7 +37,7 @@ public final class DeidentifyFileResponse {
         return runId;
     }
 
-    @java.lang.Override
+    @Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof DeidentifyFileResponse && equalTo((DeidentifyFileResponse) other);
@@ -52,12 +52,12 @@ public final class DeidentifyFileResponse {
         return runId.equals(other.runId);
     }
 
-    @java.lang.Override
+    @Override
     public int hashCode() {
         return Objects.hash(this.runId);
     }
 
-    @java.lang.Override
+    @Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }

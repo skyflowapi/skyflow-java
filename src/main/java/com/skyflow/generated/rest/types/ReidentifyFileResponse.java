@@ -60,7 +60,7 @@ public final class ReidentifyFileResponse {
         return output;
     }
 
-    @java.lang.Override
+    @Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof ReidentifyFileResponse && equalTo((ReidentifyFileResponse) other);
@@ -75,12 +75,12 @@ public final class ReidentifyFileResponse {
         return status.equals(other.status) && outputType.equals(other.outputType) && output.equals(other.output);
     }
 
-    @java.lang.Override
+    @Override
     public int hashCode() {
         return Objects.hash(this.status, this.outputType, this.output);
     }
 
-    @java.lang.Override
+    @Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }

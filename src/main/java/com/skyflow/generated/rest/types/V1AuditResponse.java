@@ -49,7 +49,7 @@ public final class V1AuditResponse {
         return nextOps;
     }
 
-    @java.lang.Override
+    @Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof V1AuditResponse && equalTo((V1AuditResponse) other);
@@ -64,12 +64,12 @@ public final class V1AuditResponse {
         return event.equals(other.event) && nextOps.equals(other.nextOps);
     }
 
-    @java.lang.Override
+    @Override
     public int hashCode() {
         return Objects.hash(this.event, this.nextOps);
     }
 
-    @java.lang.Override
+    @Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }

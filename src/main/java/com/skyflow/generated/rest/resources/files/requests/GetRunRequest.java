@@ -34,7 +34,7 @@ public final class GetRunRequest {
         return vaultId;
     }
 
-    @java.lang.Override
+    @Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof GetRunRequest && equalTo((GetRunRequest) other);
@@ -49,12 +49,12 @@ public final class GetRunRequest {
         return vaultId.equals(other.vaultId);
     }
 
-    @java.lang.Override
+    @Override
     public int hashCode() {
         return Objects.hash(this.vaultId);
     }
 
-    @java.lang.Override
+    @Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }

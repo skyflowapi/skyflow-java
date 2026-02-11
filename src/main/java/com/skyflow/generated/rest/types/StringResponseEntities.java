@@ -84,7 +84,7 @@ public final class StringResponseEntities {
         return entityScores;
     }
 
-    @java.lang.Override
+    @Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof StringResponseEntities && equalTo((StringResponseEntities) other);
@@ -103,12 +103,12 @@ public final class StringResponseEntities {
                 && entityScores.equals(other.entityScores);
     }
 
-    @java.lang.Override
+    @Override
     public int hashCode() {
         return Objects.hash(this.token, this.value, this.location, this.entityType, this.entityScores);
     }
 
-    @java.lang.Override
+    @Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }

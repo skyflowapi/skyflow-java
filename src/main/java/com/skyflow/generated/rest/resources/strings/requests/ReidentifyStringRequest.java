@@ -61,7 +61,7 @@ public final class ReidentifyStringRequest {
         return format;
     }
 
-    @java.lang.Override
+    @Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof ReidentifyStringRequest && equalTo((ReidentifyStringRequest) other);
@@ -76,12 +76,12 @@ public final class ReidentifyStringRequest {
         return text.equals(other.text) && vaultId.equals(other.vaultId) && format.equals(other.format);
     }
 
-    @java.lang.Override
+    @Override
     public int hashCode() {
         return Objects.hash(this.text, this.vaultId, this.format);
     }
 
-    @java.lang.Override
+    @Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }

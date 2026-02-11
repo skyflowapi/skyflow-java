@@ -60,7 +60,7 @@ public final class ReidentifyFileRequestReidentifyFile {
         return format;
     }
 
-    @java.lang.Override
+    @Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof ReidentifyFileRequestReidentifyFile
@@ -76,12 +76,12 @@ public final class ReidentifyFileRequestReidentifyFile {
         return file.equals(other.file) && vaultId.equals(other.vaultId) && format.equals(other.format);
     }
 
-    @java.lang.Override
+    @Override
     public int hashCode() {
         return Objects.hash(this.file, this.vaultId, this.format);
     }
 
-    @java.lang.Override
+    @Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }
@@ -124,7 +124,7 @@ public final class ReidentifyFileRequestReidentifyFile {
 
         private Builder() {}
 
-        @java.lang.Override
+        @Override
         public Builder from(ReidentifyFileRequestReidentifyFile other) {
             file(other.getFile());
             vaultId(other.getVaultId());
@@ -132,7 +132,7 @@ public final class ReidentifyFileRequestReidentifyFile {
             return this;
         }
 
-        @java.lang.Override
+        @Override
         @JsonSetter("file")
         public VaultIdStage file(@NotNull FileDataReidentifyFile file) {
             this.file = Objects.requireNonNull(file, "file must not be null");
@@ -143,27 +143,27 @@ public final class ReidentifyFileRequestReidentifyFile {
          * ID of the vault where the entities are stored.<p>ID of the vault where the entities are stored.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @java.lang.Override
+        @Override
         @JsonSetter("vault_id")
         public _FinalStage vaultId(@NotNull String vaultId) {
             this.vaultId = Objects.requireNonNull(vaultId, "vaultId must not be null");
             return this;
         }
 
-        @java.lang.Override
+        @Override
         public _FinalStage format(Format format) {
             this.format = Optional.ofNullable(format);
             return this;
         }
 
-        @java.lang.Override
+        @Override
         @JsonSetter(value = "format", nulls = Nulls.SKIP)
         public _FinalStage format(Optional<Format> format) {
             this.format = format;
             return this;
         }
 
-        @java.lang.Override
+        @Override
         public ReidentifyFileRequestReidentifyFile build() {
             return new ReidentifyFileRequestReidentifyFile(file, vaultId, format, additionalProperties);
         }

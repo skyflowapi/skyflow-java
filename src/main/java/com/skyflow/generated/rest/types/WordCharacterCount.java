@@ -49,7 +49,7 @@ public final class WordCharacterCount {
         return characterCount;
     }
 
-    @java.lang.Override
+    @Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof WordCharacterCount && equalTo((WordCharacterCount) other);
@@ -64,12 +64,12 @@ public final class WordCharacterCount {
         return wordCount.equals(other.wordCount) && characterCount.equals(other.characterCount);
     }
 
-    @java.lang.Override
+    @Override
     public int hashCode() {
         return Objects.hash(this.wordCount, this.characterCount);
     }
 
-    @java.lang.Override
+    @Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }

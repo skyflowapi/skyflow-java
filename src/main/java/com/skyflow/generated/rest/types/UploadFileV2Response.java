@@ -46,7 +46,7 @@ public final class UploadFileV2Response {
         return fileMetadata;
     }
 
-    @java.lang.Override
+    @Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof UploadFileV2Response && equalTo((UploadFileV2Response) other);
@@ -61,12 +61,12 @@ public final class UploadFileV2Response {
         return skyflowId.equals(other.skyflowId) && fileMetadata.equals(other.fileMetadata);
     }
 
-    @java.lang.Override
+    @Override
     public int hashCode() {
         return Objects.hash(this.skyflowId, this.fileMetadata);
     }
 
-    @java.lang.Override
+    @Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }

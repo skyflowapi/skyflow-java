@@ -76,7 +76,7 @@ public final class TokenTypeMapping {
         return default_;
     }
 
-    @java.lang.Override
+    @Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof TokenTypeMapping && equalTo((TokenTypeMapping) other);
@@ -94,12 +94,12 @@ public final class TokenTypeMapping {
                 && default_.equals(other.default_);
     }
 
-    @java.lang.Override
+    @Override
     public int hashCode() {
         return Objects.hash(this.vaultToken, this.entityOnly, this.entityUnqCounter, this.default_);
     }
 
-    @java.lang.Override
+    @Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }

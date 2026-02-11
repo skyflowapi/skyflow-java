@@ -133,7 +133,7 @@ public final class DetectRunsResponse {
         return slides;
     }
 
-    @java.lang.Override
+    @Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof DetectRunsResponse && equalTo((DetectRunsResponse) other);
@@ -156,7 +156,7 @@ public final class DetectRunsResponse {
                 && slides.equals(other.slides);
     }
 
-    @java.lang.Override
+    @Override
     public int hashCode() {
         return Objects.hash(
                 this.status,
@@ -170,7 +170,7 @@ public final class DetectRunsResponse {
                 this.slides);
     }
 
-    @java.lang.Override
+    @Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }
