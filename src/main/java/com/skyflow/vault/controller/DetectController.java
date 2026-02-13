@@ -9,6 +9,7 @@ import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.generated.rest.core.ApiClientApiException;
+import com.skyflow.generated.rest.core.ApiClientException;
 import com.skyflow.generated.rest.core.RequestOptions;
 import com.skyflow.generated.rest.resources.files.requests.*;
 import com.skyflow.generated.rest.resources.strings.requests.DeidentifyStringRequest;
@@ -66,6 +67,9 @@ public final class DetectController extends VaultClient {
             String bodyString = extractBodyAsString(ex);
             LogUtil.printErrorLog(ErrorLogs.DEIDENTIFY_TEXT_REQUEST_REJECTED.getLog());
             throw new SkyflowException(ex.statusCode(), ex, ex.headers(), bodyString);
+        }  catch (ApiClientException e) {
+            LogUtil.printErrorLog(ErrorLogs.DEIDENTIFY_TEXT_REQUEST_REJECTED.getLog());
+            throw new SkyflowException(e.getMessage(), e.getCause());
         }
         LogUtil.printInfoLog(InfoLogs.DEIDENTIFY_TEXT_SUCCESS.getLog());
         return deidentifyTextResponse;
@@ -94,6 +98,9 @@ public final class DetectController extends VaultClient {
             String bodyString = extractBodyAsString(ex);
             LogUtil.printErrorLog(ErrorLogs.REIDENTIFY_TEXT_REQUEST_REJECTED.getLog());
             throw new SkyflowException(ex.statusCode(), ex, ex.headers(), bodyString);
+        }  catch (ApiClientException e) {
+            LogUtil.printErrorLog(ErrorLogs.REIDENTIFY_TEXT_REQUEST_REJECTED.getLog());
+            throw new SkyflowException(e.getMessage(), e.getCause());
         }
         LogUtil.printInfoLog(InfoLogs.REIDENTIFY_TEXT_SUCCESS.getLog());
         return reidentifyTextResponse;
@@ -180,6 +187,9 @@ public final class DetectController extends VaultClient {
             String bodyString = extractBodyAsString(e);
             LogUtil.printErrorLog(ErrorLogs.DEIDENTIFY_FILE_REQUEST_REJECTED.getLog());
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
+        }  catch (ApiClientException e) {
+            LogUtil.printErrorLog(ErrorLogs.DEIDENTIFY_FILE_REQUEST_REJECTED.getLog());
+            throw new SkyflowException(e.getMessage(), e.getCause());
         }
         return response;
     }
@@ -431,6 +441,9 @@ public final class DetectController extends VaultClient {
             String bodyString = extractBodyAsString(e);
             LogUtil.printErrorLog(ErrorLogs.GET_DETECT_RUN_REQUEST_REJECTED.getLog());
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
+        }  catch (ApiClientException e) {
+            LogUtil.printErrorLog(ErrorLogs.GET_DETECT_RUN_REQUEST_REJECTED.getLog());
+            throw new SkyflowException(e.getMessage(), e.getCause());
         }
     }
 }
