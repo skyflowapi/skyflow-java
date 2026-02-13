@@ -205,7 +205,7 @@ public final class VaultController extends VaultClient {
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
         }  catch (ApiClientException e) {
             LogUtil.printErrorLog(ErrorLogs.INSERT_RECORDS_REJECTED.getLog());
-            throw new SkyflowException(e.getMessage(), e.getCause());
+            throw new SkyflowException(e.getMessage(), e.getCause(), ErrorCode.INVALID_INPUT.getCode());
         }
         LogUtil.printInfoLog(InfoLogs.INSERT_SUCCESS.getLog());
         if (insertedFields.isEmpty()) {
@@ -253,7 +253,7 @@ public final class VaultController extends VaultClient {
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
         }  catch (ApiClientException e) {
             LogUtil.printErrorLog(ErrorLogs.DETOKENIZE_REQUEST_REJECTED.getLog());
-            throw new SkyflowException(e.getMessage(), e.getCause());
+            throw new SkyflowException(e.getMessage(), e.getCause(), ErrorCode.INVALID_INPUT.getCode());
         }
 
         if (!errorRecords.isEmpty()) {
@@ -313,7 +313,7 @@ public final class VaultController extends VaultClient {
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
         }  catch (ApiClientException e) {
             LogUtil.printErrorLog(ErrorLogs.GET_REQUEST_REJECTED.getLog());
-            throw new SkyflowException(e.getMessage(), e.getCause());
+            throw new SkyflowException(e.getMessage(), e.getCause(), ErrorCode.INVALID_INPUT.getCode());
         }
         LogUtil.printInfoLog(InfoLogs.GET_SUCCESS.getLog());
         return new GetResponse(data, null);
@@ -346,7 +346,7 @@ public final class VaultController extends VaultClient {
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
         }  catch (ApiClientException e) {
             LogUtil.printErrorLog(ErrorLogs.UPDATE_REQUEST_REJECTED.getLog());
-            throw new SkyflowException(e.getMessage(), e.getCause());
+            throw new SkyflowException(e.getMessage(), e.getCause(), ErrorCode.INVALID_INPUT.getCode());
         }
         LogUtil.printInfoLog(InfoLogs.UPDATE_SUCCESS.getLog());
         return new UpdateResponse(skyflowId, tokensMap);
@@ -372,7 +372,7 @@ public final class VaultController extends VaultClient {
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
         }  catch (ApiClientException e) {
             LogUtil.printErrorLog(ErrorLogs.DELETE_REQUEST_REJECTED.getLog());
-            throw new SkyflowException(e.getMessage(), e.getCause());
+            throw new SkyflowException(e.getMessage(), e.getCause(), ErrorCode.INVALID_INPUT.getCode());
         }
         LogUtil.printInfoLog(InfoLogs.DELETE_SUCCESS.getLog());
         return new DeleteResponse(result.getRecordIdResponse().get());
@@ -405,7 +405,7 @@ public final class VaultController extends VaultClient {
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
         }  catch (ApiClientException e) {
             LogUtil.printErrorLog(ErrorLogs.QUERY_REQUEST_REJECTED.getLog());
-            throw new SkyflowException(e.getMessage(), e.getCause());
+            throw new SkyflowException(e.getMessage(), e.getCause(), ErrorCode.INVALID_INPUT.getCode());
         }
         LogUtil.printInfoLog(InfoLogs.QUERY_SUCCESS.getLog());
         return new QueryResponse(fields);
@@ -436,7 +436,7 @@ public final class VaultController extends VaultClient {
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
         }  catch (ApiClientException e) {
             LogUtil.printErrorLog(ErrorLogs.TOKENIZE_REQUEST_REJECTED.getLog());
-            throw new SkyflowException(e.getMessage(), e.getCause());
+            throw new SkyflowException(e.getMessage(), e.getCause(), ErrorCode.INVALID_INPUT.getCode());
         }
         LogUtil.printInfoLog(InfoLogs.TOKENIZE_SUCCESS.getLog());
         return new TokenizeResponse(list);
@@ -478,7 +478,7 @@ public final class VaultController extends VaultClient {
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
         } catch (ApiClientException e) {
             LogUtil.printErrorLog(ErrorLogs.UPLOAD_FILE_REQUEST_REJECTED.getLog());
-            throw new SkyflowException(e.getMessage(), e.getCause());
+            throw new SkyflowException(e.getMessage(), e.getCause(), ErrorCode.INVALID_INPUT.getCode());
         } catch (IOException e) {
             LogUtil.printErrorLog(ErrorLogs.UPLOAD_FILE_REQUEST_REJECTED.getLog());
             throw new SkyflowException(e.getMessage(), e);

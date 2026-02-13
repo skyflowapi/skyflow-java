@@ -69,7 +69,7 @@ public final class DetectController extends VaultClient {
             throw new SkyflowException(ex.statusCode(), ex, ex.headers(), bodyString);
         }  catch (ApiClientException e) {
             LogUtil.printErrorLog(ErrorLogs.DEIDENTIFY_TEXT_REQUEST_REJECTED.getLog());
-            throw new SkyflowException(e.getMessage(), e.getCause());
+            throw new SkyflowException(e.getMessage(), e.getCause(), ErrorCode.INVALID_INPUT.getCode());
         }
         LogUtil.printInfoLog(InfoLogs.DEIDENTIFY_TEXT_SUCCESS.getLog());
         return deidentifyTextResponse;
@@ -100,7 +100,7 @@ public final class DetectController extends VaultClient {
             throw new SkyflowException(ex.statusCode(), ex, ex.headers(), bodyString);
         }  catch (ApiClientException e) {
             LogUtil.printErrorLog(ErrorLogs.REIDENTIFY_TEXT_REQUEST_REJECTED.getLog());
-            throw new SkyflowException(e.getMessage(), e.getCause());
+            throw new SkyflowException(e.getMessage(), e.getCause(), ErrorCode.INVALID_INPUT.getCode());
         }
         LogUtil.printInfoLog(InfoLogs.REIDENTIFY_TEXT_SUCCESS.getLog());
         return reidentifyTextResponse;
@@ -189,7 +189,7 @@ public final class DetectController extends VaultClient {
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
         }  catch (ApiClientException e) {
             LogUtil.printErrorLog(ErrorLogs.DEIDENTIFY_FILE_REQUEST_REJECTED.getLog());
-            throw new SkyflowException(e.getMessage(), e.getCause());
+            throw new SkyflowException(e.getMessage(), e.getCause(), ErrorCode.INVALID_INPUT.getCode());
         }
         return response;
     }
@@ -443,7 +443,7 @@ public final class DetectController extends VaultClient {
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
         }  catch (ApiClientException e) {
             LogUtil.printErrorLog(ErrorLogs.GET_DETECT_RUN_REQUEST_REJECTED.getLog());
-            throw new SkyflowException(e.getMessage(), e.getCause());
+            throw new SkyflowException(e.getMessage(), e.getCause(), ErrorCode.INVALID_INPUT.getCode());
         }
     }
 }

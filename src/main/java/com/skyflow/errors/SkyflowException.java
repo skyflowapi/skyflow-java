@@ -32,6 +32,11 @@ public class SkyflowException extends Exception {
         super(message, cause);
         this.message = message;
     }
+    public SkyflowException(String message, Throwable cause, int httpCode) {
+        super(message, cause);
+        this.message = message;
+        this.httpCode = httpCode;
+    }
 
     public SkyflowException(int code, String message) {
         super(message);
