@@ -406,4 +406,36 @@ public class DetectControllerFileTests {
             dir.delete();
         }
     }
+
+    @Test
+    public void testApiClientExceptionInDeidentifyFileMethod() throws Exception {
+        try {
+            File file = File.createTempFile("test", ".txt");
+            FileInput fileInput = FileInput.builder().file(file).build();
+            DeidentifyFileRequest request = DeidentifyFileRequest.builder().file(fileInput).waitTime(1).build();
+            detectController.deidentifyFile(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals("Network error executing HTTP request", e.getMessage());
+            Assert.assertNull(e.getRequestId());
+            Assert.assertNull(e.getGrpcCode());
+            Assert.assertNull(e.getDetails());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+        }
+    }
+
+    @Test
+    public void testApiClientExceptionInGetDetectRunMethod() {
+        try {
+            GetDetectRunRequest request = GetDetectRunRequest.builder().runId("dummy-run-id").build();
+            detectController.getDetectRun(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals("Network error executing HTTP request", e.getMessage());
+            Assert.assertNull(e.getRequestId());
+            Assert.assertNull(e.getGrpcCode());
+            Assert.assertNull(e.getDetails());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+        }
+    }
 }

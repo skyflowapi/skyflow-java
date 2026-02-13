@@ -117,5 +117,36 @@ public class DetectControllerTests {
         }
     }
 
-}
+    @Test
+    public void testApiClientExceptionInDeidentifyTextMethod() {
+        try {
+            DeidentifyTextRequest request = DeidentifyTextRequest.builder().text("Sensitive text").build();
+            skyflowClient = Skyflow.builder().setLogLevel(LogLevel.DEBUG).addVaultConfig(vaultConfig).build();
+            skyflowClient.detect(vaultID).deidentifyText(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals("Network error executing HTTP request", e.getMessage());
+            Assert.assertNull(e.getRequestId());
+            Assert.assertNull(e.getGrpcCode());
+            Assert.assertNull(e.getDetails());
+            Assert.assertEquals(com.skyflow.errors.ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+        }
+    }
 
+    @Test
+    public void testApiClientExceptionInReidentifyTextMethod() {
+        try {
+            ReidentifyTextRequest request = ReidentifyTextRequest.builder().text("Deidentified text").build();
+            skyflowClient = Skyflow.builder().setLogLevel(LogLevel.DEBUG).addVaultConfig(vaultConfig).build();
+            skyflowClient.detect(vaultID).reidentifyText(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals("Network error executing HTTP request", e.getMessage());
+            Assert.assertNull(e.getRequestId());
+            Assert.assertNull(e.getGrpcCode());
+            Assert.assertNull(e.getDetails());
+            Assert.assertEquals(com.skyflow.errors.ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+        }
+    }
+
+}
