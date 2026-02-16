@@ -6,9 +6,11 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -24,10 +26,13 @@ import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(PowerMockRunner.class)
+@PrepareForTest({URL.class, HttpURLConnection.class})
 public class HttpUtilityTests {
 
     private static String INVALID_EXCEPTION_THROWN = "Should not have thrown any exception";
+    @InjectMocks
+    HttpUtility httpUtility;
     @Mock
     OutputStream outputStream;
     private String expected;
@@ -55,6 +60,7 @@ public class HttpUtilityTests {
     }
 
     @Test
+    @PrepareForTest({URL.class, HttpURLConnection.class})
     public void testSendRequest() {
         try {
             given(mockConnection.getRequestProperty("content-type")).willReturn("application/json");
@@ -62,7 +68,7 @@ public class HttpUtilityTests {
             headers.put("content-type", "application/json");
             JsonObject params = new JsonObject();
             params.addProperty("key", "value");
-            String response = HttpUtility.sendRequest("GET", url, params, headers);
+            String response = httpUtility.sendRequest("GET", url, params, headers);
             Assert.assertEquals(expected, response);
         } catch (Exception e) {
             fail(INVALID_EXCEPTION_THROWN);
@@ -71,6 +77,7 @@ public class HttpUtilityTests {
 
 
     @Test
+    @PrepareForTest({URL.class, HttpURLConnection.class})
     public void testSendRequestFormData() {
         try {
             given(mockConnection.getRequestProperty("content-type")).willReturn("multipart/form-data");
@@ -78,7 +85,7 @@ public class HttpUtilityTests {
             headers.put("content-type", "multipart/form-data");
             JsonObject params = new JsonObject();
             params.addProperty("key", "value");
-            String response = HttpUtility.sendRequest("GET", url, params, headers);
+            String response = httpUtility.sendRequest("GET", url, params, headers);
             Assert.assertEquals(expected, response);
         } catch (Exception e) {
             fail(INVALID_EXCEPTION_THROWN);
@@ -86,6 +93,7 @@ public class HttpUtilityTests {
     }
 
     @Test
+    @PrepareForTest({URL.class, HttpURLConnection.class})
     public void testSendRequestFormURLEncoded() {
         try {
             given(mockConnection.getRequestProperty("content-type")).willReturn("application/x-www-form-urlencoded");
@@ -93,7 +101,7 @@ public class HttpUtilityTests {
             headers.put("content-type", "application/x-www-form-urlencoded");
             JsonObject params = new JsonObject();
             params.addProperty("key", "value");
-            String response = HttpUtility.sendRequest("GET", url, params, headers);
+            String response = httpUtility.sendRequest("GET", url, params, headers);
             Assert.assertEquals(expected, response);
         } catch (Exception e) {
             fail(INVALID_EXCEPTION_THROWN);
@@ -101,10 +109,11 @@ public class HttpUtilityTests {
     }
 
     @Test
+    @PrepareForTest({URL.class, HttpURLConnection.class})
     public void testSendRequestError() {
         try {
             given(mockConnection.getResponseCode()).willReturn(500);
-            String response = HttpUtility.sendRequest("GET", url, null, null);
+            String response = httpUtility.sendRequest("GET", url, null, null);
         } catch (SkyflowException e) {
             Assert.assertEquals(500, e.getHttpCode());
             Assert.assertEquals(new Integer(123), e.getGrpcCode());
