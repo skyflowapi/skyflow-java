@@ -74,7 +74,8 @@
     "prioritise",
     "Prioritise",
     "Timeto",
-    "Wdex"
+    "Wdex",
+    "jacoco"
   ],
   "languageSettings": [
     {
