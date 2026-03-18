@@ -18,7 +18,7 @@ Test the SDK by adding `VAULT-ID`, `VAULT-URL`, and `SERVICE-ACCOUNT` details in
 
 ## The samples
 ### Detokenize
-Detokenize a data token from the vault. Make sure the specified token is for data that exists in the vault. If you need a valid token, use [InsertEample.java](src/main/java/com/example/InsertExample.java) to insert the data, then use this data's token for detokenization.
+Detokenize a data token from the vault. Make sure the specified token is for data that exists in the vault. If you need a valid token, use [InsertExample.java](src/main/java/com/example/InsertExample.java) to insert the data, then use this data's token for detokenization.
 #### [Configure](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/DetokenizeExample.java)
 1. Replace **<your_vaultID>** with **VAULT ID**
 2. Replace **<your_vaultURL>** with **VAULT URL**
@@ -65,7 +65,7 @@ Skyflow Connections is a gateway service that uses Skyflow's underlying tokeniza
 7. Replace **<query_param_key>** with **Query param key**.
 8. Replace **<query_param_value>** with **Query param value**.
 9. Replace **<request_header_key>** with **Request header key**.
-10. Replace **<request_header_vaule>** with **Request header value**.
+10. Replace **<request_header_value>** with **Request header value**.
 11. Replace **<request_body_key>** with **Request body key**.
 12. Replace **<request_body_value>** with **Request body value**.
 #### Run the sample

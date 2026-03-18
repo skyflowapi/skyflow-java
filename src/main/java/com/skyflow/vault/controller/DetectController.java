@@ -149,7 +149,7 @@ public final class DetectController extends VaultClient {
                     try {
                         java.nio.file.Files.write(outputFile.toPath(), decodedBytes);
                     } catch (IOException ioe) {
-                        throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.FailedtoSaveProcessedFile.getMessage());
+                        throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.FailedToSaveProcessedFile.getMessage());
                     }
 
                 }
@@ -171,7 +171,7 @@ public final class DetectController extends VaultClient {
                         try {
                             java.nio.file.Files.write(entityFile.toPath(), entityDecodedBytes);
                         } catch (IOException ioe) {
-                            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.FailedtoSaveProcessedFile.getMessage());
+                            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.FailedToSaveProcessedFile.getMessage());
                         }
                     }
                 }
