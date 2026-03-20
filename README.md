@@ -702,7 +702,7 @@ Sample response:
   "errors": [
     {
       "request_index": "1",
-      "error": "Insert failed. Column card_numbe is invalid. Specify a valid column."
+      "error": "Insert failed. Column card_number is invalid. Specify a valid column."
     }
   ]
 }
@@ -1883,7 +1883,7 @@ public class DeidentifyTextSchema {
 
     public static void main(String[] args) {
 
-        // Step 1: Initialise the Skyflow client by configuring the credentials & vault config.
+        // Step 1: Initialize the Skyflow client by configuring the credentials & vault config.
 
         // Step 2: Configure the options for deidentify text
         
@@ -1973,7 +1973,7 @@ import com.skyflow.vault.detect.Transformations;
 public class DeidentifyTextExample {
     public static void main(String[] args) throws SkyflowException {
 
-        // Step 1: Initialise the Skyflow client by configuring the credentials & vault config.
+        // Step 1: Initialize the Skyflow client by configuring the credentials & vault config.
 
         // Step 2: Configuring the different options for deidentify
 
@@ -2008,7 +2008,7 @@ public class DeidentifyTextExample {
                     .tokenFormat(tokenFormat)
                     .transformations(transformations)
                     .build();
-            // Replace `9f27764a10f7946fe56b3258e117` with the acutal vault id
+            // Replace `9f27764a10f7946fe56b3258e117` with the actual vault id
             DeidentifyTextResponse deidentifyTextResponse = skyflowClient.detect("9f27764a10f7946fe56b3258e117").deidentifyText(deidentifyTextRequest);
 
             System.out.println("Deidentify text Response: " + deidentifyTextResponse);
@@ -2081,7 +2081,7 @@ import java.util.List;
  */
 public class ReidentifyTextSchema {
     public static void main(String[] args) {
-        // Step 1: Initialise the Skyflow client by configuring the credentials & vault config.
+        // Step 1: Initialize the Skyflow client by configuring the credentials & vault config.
 
         // Step 2: Configuring the different options for reidentify
         List<DetectEntities> maskedEntity = new ArrayList<>();
@@ -2133,7 +2133,7 @@ import java.util.List;
 
 public class ReidentifyTextExample {
     public static void main(String[] args) throws SkyflowException {
-        // Step 1: Initialise the Skyflow client by configuring the credentials & vault config.
+        // Step 1: Initialize the Skyflow client by configuring the credentials & vault config.
 
         // Step 2: Configuring the different options for reidentify
         List<DetectEntities> maskedEntity = new ArrayList<>();
@@ -2151,7 +2151,7 @@ public class ReidentifyTextExample {
                     .build();
 
             // Step 4: Invoke Reidentify text on the vault
-            // Replace `9f27764a10f7946fe56b3258e117` with the acutal vault id
+            // Replace `9f27764a10f7946fe56b3258e117` with the actual vault id
             ReidentifyTextResponse reidentifyTextResponse = skyflowClient.detect("9f27764a10f7946fe56b3258e117").reidentifyText(reidentifyTextRequest);
 
             // Handle the response from the reidentify text request
@@ -2196,7 +2196,7 @@ import java.io.File;
 public class DeidentifyFileSchema {
 
     public static void main(String[] args) {
-        // Step 1: Initialise the Skyflow client by configuring the credentials & vault config.
+        // Step 1: Initialize the Skyflow client by configuring the credentials & vault config.
 
         // Step 2: Create a deidentify file request with all options
 
@@ -2286,7 +2286,7 @@ import com.skyflow.vault.detect.DeidentifyFileResponse;
 public class DeidentifyFileExample {
 
     public static void main(String[] args) throws SkyflowException {
-        // Step 1: Initialise the Skyflow client by configuring the credentials & vault config.
+        // Step 1: Initialize the Skyflow client by configuring the credentials & vault config.
         try {
             // Step 2: Create a deidentify file request with all options
 
@@ -2419,7 +2419,7 @@ public class GetDetectRunSchema {
 
     public static void main(String[] args) {
         try {
-            // Step 1: Initialise the Skyflow client by configuring the credentials & vault config.
+            // Step 1: Initialize the Skyflow client by configuring the credentials & vault config.
 
             // Step 2: Create a get detect run request
             GetDetectRunRequest getDetectRunRequest = GetDetectRunRequest.builder()
@@ -2461,7 +2461,7 @@ import com.skyflow.vault.detect.GetDetectRunRequest;
  */
 public class GetDetectRunExample {
     public static void main(String[] args) throws SkyflowException {
-    // Step 1: Initialise the Skyflow client by configuring the credentials & vault config.
+    // Step 1: Initialize the Skyflow client by configuring the credentials & vault config.
         try {
 
             // Step 2: Create a get detect run request
@@ -2470,7 +2470,7 @@ public class GetDetectRunExample {
                     .build();
 
             // Step 3: Call getDetectRun to poll for file processing results
-            // Replace `9f27764a10f7946fe56b3258e117` with the acutal vault id
+            // Replace `9f27764a10f7946fe56b3258e117` with the actual vault id
             DeidentifyFileResponse deidentifyFileResponse = skyflowClient.detect("9f27764a10f7946fe56b3258e117").getDetectRun(getDetectRunRequest);
             System.out.println("Get Detect Run Response: " + deidentifyFileResponse);
         } catch (SkyflowException e) {

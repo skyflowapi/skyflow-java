@@ -7,7 +7,7 @@ All notable changes to this project will be documented in this file.
 
 ## [1.14.0] - 2024-02-01
 ### Fixed
-- handling of detokenize response to aviod breaking changes.
+- handling of detokenize response to avoid breaking changes.
 
 ## [1.13.0] - 2024-01-10
 ### Added
@@ -66,7 +66,7 @@ All notable changes to this project will be documented in this file.
 ## [1.4.1] - 2022-03-29
 
 ### Fixed 
-- Request headers not getting overriden due to case sensitivity
+- Request headers not getting overridden due to case sensitivity
 
 ## [1.4.0] - 2022-03-15
 
