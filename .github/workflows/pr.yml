@@ -49,3 +49,15 @@ jobs:
           files: target/site/jacoco/jacoco.xml
           name: codecov-skyflow-java
           verbose: true
+
+  spellcheck:
+    name: Run spellcheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: streetsidesoftware/cspell-action@v8
+        with:
+          config: .cspell.json
+          strict: true
+          inline: error
+          incremental_files_only: false
