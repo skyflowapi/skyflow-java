@@ -30,6 +30,13 @@
 
     <build>
         <plugins>
+            <!-- Run samples: mvn compile exec:java -Dexec.mainClass="com.skyflow.loadtest.samples.RunAllSamples" -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.1.0</version>
+            </plugin>
+
             <!-- Fat jar so it runs standalone -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

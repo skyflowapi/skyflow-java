@@ -52,6 +52,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadMXBean;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -69,7 +70,7 @@ public class WrapperServer {
     static final String VAULT_URL    = env("VAULT_URL",     "http://localhost:3015");
     static final int    PORT         = Integer.parseInt(env("WRAPPER_PORT", "8080"));
 //    static final String API_KEY      = env("API_KEY",       "mock-api-key");
-    static final String TOKEN        = "Token";
+    static final String TOKEN        = "<token>";
     // Default test data (overridable per-request)
     static final String DEFAULT_TABLE = "load_test_table";
     static final String DEFAULT_TOKEN = "mock-token-0000-0000-0000-000000000001";
@@ -79,12 +80,100 @@ public class WrapperServer {
     static final AtomicLong reqSuccess = new AtomicLong();
     static final AtomicLong reqError   = new AtomicLong();
 
+    // -- Per-operation latency tracking --------------------------------------
+    static final OpMetrics insertMetrics     = new OpMetrics();
+    static final OpMetrics detokenizeMetrics = new OpMetrics();
+
+    /**
+     *
+     * Thread-safe per-operation metrics: latency list + counters + wall-clock start.
+     * Latency list is bounded to the last 100 000 samples to avoid unbounded growth.
+     */
+    static class OpMetrics {
+        final AtomicLong       total      = new AtomicLong();
+        final AtomicLong       success    = new AtomicLong();
+        final AtomicLong       error      = new AtomicLong();
+        final List<Long>       latencies  = Collections.synchronizedList(new ArrayList<>());
+        static final int       MAX_SAMPLES = 100_000;
+
+        // firstCallTime: set exactly once (CAS); lastCallTime: updated on every call.
+        final AtomicLong firstCallTime = new AtomicLong(0);
+        final AtomicLong lastCallTime  = new AtomicLong(0);
+
+        long startCall() { return System.currentTimeMillis(); }
+
+        void record(long startMs, boolean ok) {
+            long now     = System.currentTimeMillis();
+            long latency = now - startMs;
+            total.incrementAndGet();
+            if (ok) success.incrementAndGet(); else error.incrementAndGet();
+            synchronized (latencies) {
+                if (latencies.size() < MAX_SAMPLES) latencies.add(latency);
+            }
+            firstCallTime.compareAndSet(0, startMs);  // set once, race-free
+            lastCallTime.set(now);
+        }
+
+        void reset() {
+            total.set(0);
+            success.set(0);
+            error.set(0);
+            synchronized (latencies) { latencies.clear(); }
+            firstCallTime.set(0);
+            lastCallTime.set(0);
+        }
+
+        /** Return a sorted copy for percentile calculation. */
+        long[] sortedLatencies() {
+            long[] arr;
+            synchronized (latencies) {
+                arr = new long[latencies.size()];
+                for (int i = 0; i < arr.length; i++) arr[i] = latencies.get(i);
+            }
+            java.util.Arrays.sort(arr);
+            return arr;
+        }
+
+        long percentile(long[] sorted, double pct) {
+            if (sorted.length == 0) return 0;
+            int idx = (int) Math.ceil(pct / 100.0 * sorted.length) - 1;
+            return sorted[Math.max(0, Math.min(idx, sorted.length - 1))];
+        }
+
+        long avg(long[] sorted) {
+            if (sorted.length == 0) return 0;
+            long sum = 0;
+            for (long v : sorted) sum += v;
+            return sum / sorted.length;
+        }
+
+        double rps() {
+            long first = firstCallTime.get();
+            if (first == 0) return 0;                        // no calls yet
+            long last  = lastCallTime.get();
+            long now   = System.currentTimeMillis();
+            // Use 'now' while test is running; use lastCallTime after test ends.
+            // Test is considered running if the last call was within the past 2s.
+            long end   = (now - last < 2000) ? now : last;
+            double elapsedSec = (end - first) / 1000.0;
+            return elapsedSec > 0 ? total.get() / elapsedSec : 0;
+        }
+
+        String toJson(String op) {
+            long[] s = sortedLatencies();
+            return String.format(
+                "\"%s\":{\"total\":%d,\"success\":%d,\"error\":%d,"
+              + "\"rps\":%.1f,\"avg_ms\":%d,\"p50_ms\":%d,\"p95_ms\":%d,\"p99_ms\":%d}",
+                op, total.get(), success.get(), error.get(),
+                rps(), avg(s), percentile(s, 50), percentile(s, 95), percentile(s, 99));
+        }
+    }
+
     // -- Shared SDK client ---------------------------------------------------
     static Skyflow skyflowClient;
 
     public static void main(String[] args) throws Exception {
         Credentials credentials = new Credentials();
-        // Using apiKey avoids JWT generation — the SDK passes it directly as Bearer token.
         credentials.setToken(TOKEN);
 
         VaultConfig config = new VaultConfig();
@@ -93,24 +182,22 @@ public class WrapperServer {
         config.setCredentials(credentials);
 
         skyflowClient = Skyflow.builder()
-                .setLogLevel(LogLevel.ERROR)   // suppress SDK info logs during load test
+                .setLogLevel(LogLevel.ERROR)
                 .addVaultConfig(config)
                 .build();
 
+        int httpThreads = Integer.parseInt(env("HTTP_THREADS", "200"));
         HttpServer server = HttpServer.create(new InetSocketAddress(PORT), 0);
         server.createContext("/insert",     new InsertHandler());
         server.createContext("/detokenize", new DetokenizeHandler());
         server.createContext("/health",     new HealthHandler());
         server.createContext("/metrics",    new MetricsHandler());
-        server.setExecutor(Executors.newFixedThreadPool(200));
+        server.createContext("/reset",      new ResetHandler());
+        server.setExecutor(Executors.newFixedThreadPool(httpThreads));
         server.start();
 
         System.out.printf("[WrapperServer-v3] port=%d  vault=%s  echo=%s%n",
                 PORT, VAULT_ID, VAULT_URL);
-    }
-
-    public static String getTOKEN() {
-        return TOKEN;
     }
 
     // =========================================================================
@@ -122,7 +209,8 @@ public class WrapperServer {
             reqTotal.incrementAndGet();
             JSONObject params  = parseBody(ex);
             String table       = str(params, "table",       DEFAULT_TABLE);
-            int    numRecords  = (int) longVal(params, "num_records", 1);
+            int numRecords  = 10000;
+                    /// (int) longVal(params, "num_records", 1);
 
             ArrayList<InsertRecord> records = new ArrayList<>();
             for (int i = 0; i < numRecords; i++) {
@@ -140,12 +228,16 @@ public class WrapperServer {
                     .records(records)
                     .build();
 
+            long t = insertMetrics.startCall();
             try {
                 com.skyflow.vault.data.InsertResponse response =
                         skyflowClient.vault().bulkInsert(request);
-                reqSuccess.incrementAndGet();
+                boolean ok = response.getErrors() == null || response.getErrors().isEmpty();
+                insertMetrics.record(t, ok);
+                if (ok) { reqSuccess.incrementAndGet(); } else { reqError.incrementAndGet(); }
                 sendJson(ex, 200, toJson(response));
-            } catch (SkyflowException e) {
+            } catch (Exception e) {
+                insertMetrics.record(t, false);
                 reqError.incrementAndGet();
                 sendJson(ex, 500, errorJson(e.getMessage()));
             }
@@ -171,12 +263,16 @@ public class WrapperServer {
                     .tokens(tokens)
                     .build();
 
+            long t = detokenizeMetrics.startCall();
             try {
                 com.skyflow.vault.data.DetokenizeResponse response =
                         skyflowClient.vault().bulkDetokenize(request);
-                reqSuccess.incrementAndGet();
+                boolean ok = response.getErrors() == null || response.getErrors().isEmpty();
+                detokenizeMetrics.record(t, ok);
+                if (ok) { reqSuccess.incrementAndGet(); } else { reqError.incrementAndGet(); }
                 sendJson(ex, 200, toJson(response));
-            } catch (SkyflowException e) {
+            } catch (Exception e) {
+                detokenizeMetrics.record(t, false);
                 reqError.incrementAndGet();
                 sendJson(ex, 500, errorJson(e.getMessage()));
             }
@@ -195,9 +291,32 @@ public class WrapperServer {
         }
     }
 
+    /** POST /reset — clears all counters and timestamps so RPS is correct across multiple runs. */
+    static class ResetHandler implements HttpHandler {
+        public void handle(HttpExchange ex) throws IOException {
+            reqTotal.set(0);
+            reqSuccess.set(0);
+            reqError.set(0);
+            insertMetrics.reset();
+            detokenizeMetrics.reset();
+            sendJson(ex, 200, "{\"status\":\"reset\"}");
+        }
+    }
+
     /**
-     * GET /metrics — JVM heap, GC stats, thread count, and SDK call counters.
-     * Poll this during load tests to detect memory leaks or thread pool saturation.
+     * GET /metrics — JVM heap, GC stats, thread count, SDK call counters,
+     * and per-operation latency metrics (p50/p95/p99/avg, RPS).
+     *
+     * Response shape:
+     * {
+     *   "sdk_calls": { "total", "success", "error" },
+     *   "insert":     { "total", "success", "error", "rps", "avg_ms", "p50_ms", "p95_ms", "p99_ms" },
+     *   "detokenize": { ... same fields ... },
+     *   "jvm":        { "heap_used_mb", "heap_total_mb", "heap_max_mb",
+     *                   "threads_current", "threads_peak",
+     *                   "threads_total_started", "threads_daemon",
+     *                   "gc_count", "gc_time_ms" }
+     * }
      */
     static class MetricsHandler implements HttpHandler {
         public void handle(HttpExchange ex) throws IOException {
@@ -205,7 +324,12 @@ public class WrapperServer {
             long usedMb   = (rt.totalMemory() - rt.freeMemory()) / (1024 * 1024);
             long totalMb  = rt.totalMemory() / (1024 * 1024);
             long maxMb    = rt.maxMemory()   / (1024 * 1024);
-            int  threads  = Thread.activeCount();
+
+            ThreadMXBean tmx        = ManagementFactory.getThreadMXBean();
+            int  threadsCurrent     = tmx.getThreadCount();
+            int  threadsDaemon      = tmx.getDaemonThreadCount();
+            int  threadsPeak        = tmx.getPeakThreadCount();
+            long threadsTotalStarted = tmx.getTotalStartedThreadCount();
 
             long gcCount = 0, gcTimeMs = 0;
             List<GarbageCollectorMXBean> gcBeans = ManagementFactory.getGarbageCollectorMXBeans();
@@ -216,10 +340,18 @@ public class WrapperServer {
 
             String body = String.format(
                     "{\"sdk_calls\":{\"total\":%d,\"success\":%d,\"error\":%d},"
+                  + "%s,%s,"
                   + "\"jvm\":{\"heap_used_mb\":%d,\"heap_total_mb\":%d,\"heap_max_mb\":%d,"
-                  + "\"active_threads\":%d,\"gc_count\":%d,\"gc_time_ms\":%d}}",
+                  + "\"threads_current\":%d,\"threads_peak\":%d,"
+                  + "\"threads_total_started\":%d,\"threads_daemon\":%d,"
+                  + "\"gc_count\":%d,\"gc_time_ms\":%d}}",
                     reqTotal.get(), reqSuccess.get(), reqError.get(),
-                    usedMb, totalMb, maxMb, threads, gcCount, gcTimeMs);
+                    insertMetrics.toJson("insert"),
+                    detokenizeMetrics.toJson("detokenize"),
+                    usedMb, totalMb, maxMb,
+                    threadsCurrent, threadsPeak,
+                    threadsTotalStarted, threadsDaemon,
+                    gcCount, gcTimeMs);
             sendJson(ex, 200, body);
         }
     }

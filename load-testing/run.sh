@@ -3,19 +3,24 @@
 # Skyflow Java SDK v3 Load Testing - Orchestration Script
 #
 # Usage:
-#   ./load-testing/run.sh [insert|detokenize|all]  [extra k6 flags]
+#   ./load-testing/run.sh [insert|detokenize|all|benchmark]  [extra k6 flags]
 #
 # Examples:
 #   ./load-testing/run.sh insert
 #   ./load-testing/run.sh detokenize --env VUS=100 --env NUM_TOKENS=5
 #   ./load-testing/run.sh all --env DURATION=180
+#   ./load-testing/run.sh benchmark
+#   BENCH_DURATION=60 BENCH_OP=detokenize ./load-testing/run.sh benchmark
 #
 # Environment variables (override defaults):
-#   ECHO_PORT     Echo server port          (default: 3015)
-#   WRAPPER_PORT  Wrapper server port       (default: 8080)
-#   ECHO_WAIT_MS  Simulated vault latency   (default: 0)
-#   ECHO_ERR_PCT  Random error rate %       (default: 0)
-#   VAULT_ID      Vault ID for SDK          (default: mock-vault-id)
+#   ECHO_PORT      Echo server port            (default: 3015)
+#   WRAPPER_PORT   Wrapper server port         (default: 8080)
+#   ECHO_WAIT_MS   Simulated vault latency ms  (default: 0)
+#   ECHO_ERR_PCT   Random error rate %         (default: 0)
+#   VAULT_ID       Vault ID for SDK            (default: mock-vault-id)
+#   BENCH_DURATION Benchmark seconds per tier  (default: 30)
+#   BENCH_OP       Benchmark operation         (default: insert)
+#   BENCH_BATCH    Records/tokens per SDK call (default: 1)
 # =============================================================================
 set -euo pipefail
 
@@ -27,15 +32,20 @@ WRAPPER_PORT="${WRAPPER_PORT:-8080}"
 ECHO_WAIT_MS="${ECHO_WAIT_MS:-0}"
 ECHO_ERR_PCT="${ECHO_ERR_PCT:-0}"
 VAULT_ID="${VAULT_ID:-mock-vault-id}"
+BENCH_DURATION="${BENCH_DURATION:-30}"
+BENCH_OP="${BENCH_OP:-insert}"
+BENCH_BATCH="${BENCH_BATCH:-1}"
 TEST="${1:-all}"
 shift || true   # remaining args passed through to k6
 
 ECHO_PID=""
 WRAPPER_PID=""
+POLLER_PID=""
 
 cleanup() {
     echo ""
     echo "[run.sh] Stopping servers..."
+    [ -n "$POLLER_PID" ]  && kill "$POLLER_PID"  2>/dev/null || true
     [ -n "$ECHO_PID" ]    && kill "$ECHO_PID"    2>/dev/null || true
     [ -n "$WRAPPER_PID" ] && kill "$WRAPPER_PID" 2>/dev/null || true
     wait 2>/dev/null || true
@@ -93,7 +103,16 @@ curl -sf "http://localhost:$WRAPPER_PORT/health" > /dev/null \
 echo "[run.sh] Wrapper server running (pid=$WRAPPER_PID)."
 
 # ---------------------------------------------------------------------------
-# 6. Run k6 test(s)
+# 6. Start metrics poller in background
+# ---------------------------------------------------------------------------
+echo "[run.sh] Starting metrics poller (INTERVAL=${INTERVAL:-5}s)..."
+WRAPPER_PORT="$WRAPPER_PORT" RESULTS_DIR="$SCRIPT_DIR/results" \
+    bash "$SCRIPT_DIR/poll-metrics.sh" &
+POLLER_PID=$!
+echo "[run.sh] Metrics poller running (pid=$POLLER_PID)."
+
+# ---------------------------------------------------------------------------
+# 7. Run k6 test(s)
 # ---------------------------------------------------------------------------
 run_k6() {
     local script="$1"; shift
@@ -116,8 +135,20 @@ case "$TEST" in
         run_k6 insert.js     "$@"
         run_k6 detokenize.js "$@"
         ;;
+    benchmark)
+        echo ""
+        echo "[run.sh] ===== Running SDK Benchmark (op=${BENCH_OP} duration=${BENCH_DURATION}s batch=${BENCH_BATCH}) ====="
+        mvn compile exec:java \
+            -f "$SCRIPT_DIR/wrapper/pom.xml" \
+            -Dexec.mainClass="com.skyflow.loadtest.samples.BenchmarkSample" \
+            -Dbench.duration="$BENCH_DURATION" \
+            -Dbench.op="$BENCH_OP" \
+            -Dbench.batch="$BENCH_BATCH" \
+            -Dgpg.skip=true \
+            2>/dev/null
+        ;;
     *)
-        echo "[run.sh] Unknown test '$TEST'. Use: insert | detokenize | all"
+        echo "[run.sh] Unknown test '$TEST'. Use: insert | detokenize | all | benchmark"
         exit 1
         ;;
 esac

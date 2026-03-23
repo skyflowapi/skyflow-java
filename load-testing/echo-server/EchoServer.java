@@ -56,7 +56,8 @@ public class EchoServer {
         server.createContext("/v2/tokens/detokenize", new DetokenizeHandler());
         server.createContext("/metrics",              new MetricsHandler());
         server.createContext("/health",               new HealthHandler());
-        server.setExecutor(Executors.newFixedThreadPool(200));
+//        int echoThreads = defaultWaitMs > 0 ? 500 : 100;
+        server.setExecutor(Executors.newFixedThreadPool(10));
         server.start();
 
         System.out.printf("[EchoServer-v3] port=%d  wait=%dms  error_rate=%d%%%n",
@@ -104,6 +105,8 @@ public class EchoServer {
                       .append("\"httpCode\":200}");
                 }
                 sb.append("]}");
+                // add logs here
+                System.out.println("Insert call received with record count: " + count);
                 sendJson(ex, 200, sb.toString());
 
             } catch (InterruptedException e) {
