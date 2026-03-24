@@ -222,4 +222,487 @@ public class BearerTokenTests {
             Assert.assertEquals(ErrorMessage.InvalidTokenUri.getMessage(), e.getMessage());
         }
     }
+
+    @Test
+    public void testBearerTokenBuilderWithValidTokenUri() {
+        try {
+            roles.add(role);
+            File file = new File(credentialsFilePath);
+            BearerToken.builder()
+                    .setCredentials(file)
+                    .setCtx(context)
+                    .setRoles(roles)
+                    .setTokenUri("https://example.com/token")
+                    .build();
+        } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testBearerTokenBuilderWithNullTokenUri() {
+        try {
+            roles.add(role);
+            File file = new File(credentialsFilePath);
+            BearerToken.builder()
+                    .setCredentials(file)
+                    .setCtx(context)
+                    .setRoles(roles)
+                    .setTokenUri(null)
+                    .build();
+        } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testBearerTokenBuilderWithEmptyTokenUri() {
+        try {
+            roles.add(role);
+            File file = new File(credentialsFilePath);
+            BearerToken.builder()
+                    .setCredentials(file)
+                    .setCtx(context)
+                    .setRoles(roles)
+                    .setTokenUri("")
+                    .build();
+        } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testBearerTokenBuilderWithInvalidTokenUri() {
+        try {
+            File file = new File(credentialsFilePath);
+            BearerToken.builder()
+                    .setCredentials(file)
+                    .setCtx(context)
+                    .setRoles(roles)
+                    .setTokenUri("invalid_token_uri")
+                    .build();
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(ErrorMessage.InvalidTokenUri.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testBearerTokenBuilderWithInvalidTokenUriFormat() {
+        try {
+            File file = new File(credentialsFilePath);
+            BearerToken.builder()
+                    .setCredentials(file)
+                    .setCtx(context)
+                    .setRoles(roles)
+                    .setTokenUri("htp://invalid-url")
+                    .build();
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(ErrorMessage.InvalidTokenUri.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testBearerTokenBuilderWithValidHttpTokenUri() {
+        try {
+            roles.add(role);
+            File file = new File(credentialsFilePath);
+            BearerToken.builder()
+                    .setCredentials(file)
+                    .setCtx(context)
+                    .setRoles(roles)
+                    .setTokenUri("http://localhost:8080/oauth/token")
+                    .build();
+        } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testBearerTokenBuilderWithCredentialsStringAndTokenUri() {
+        try {
+            BearerToken.builder()
+                    .setCredentials(credentialsString)
+                    .setCtx(context)
+                    .setRoles(roles)
+                    .setTokenUri("https://example.com/token")
+                    .build();
+        } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testTokenUriOverridesCredentialsTokenUri() {
+        String filePath = "./src/test/resources/validCredentials.json";
+        File file = new File(filePath);
+        try {
+            BearerToken bearerToken = BearerToken.builder()
+                    .setCredentials(file)
+                    .setCtx(context)
+                    .setRoles(roles)
+                    .setTokenUri("https://custom-token-uri.com/test")
+                    .build();
+            Assert.assertNotNull(bearerToken);
+        } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testTokenUriWithSpecialCharacters() {
+        try {
+            File file = new File(credentialsFilePath);
+            BearerToken.builder()
+                    .setCredentials(file)
+                    .setCtx(context)
+                    .setRoles(roles)
+                    .setTokenUri("https://example.com/token?param=value")
+                    .build();
+        } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testBearerTokenWithOverrideTokenUriFromFile() {
+        String filePath = "./src/test/resources/validCredentials.json";
+        File file = new File(filePath);
+        try {
+            BearerToken bearerToken = BearerToken.builder()
+                    .setCredentials(file)
+                    .setCtx(context)
+                    .setRoles(roles)
+                    .setTokenUri("https://override-token-uri.com/token")
+                    .build();
+            bearerToken.getBearerToken();
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+        }
+    }
+
+    @Test
+    public void testBearerTokenWithoutOverrideTokenUriFromFile() {
+        String filePath = "./src/test/resources/validCredentials.json";
+        File file = new File(filePath);
+        try {
+            BearerToken bearerToken = BearerToken.builder()
+                    .setCredentials(file)
+                    .setCtx(context)
+                    .setRoles(roles)
+                    .build();
+            bearerToken.getBearerToken();
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+        }
+    }
+    private static final String MOCK_PRIVATE_KEY = "mock-private-key";
+    private static final String MOCK_CLIENT_ID = "test_client_id";
+    private static final String MOCK_KEY_ID = "test_key_id";
+    private static final String MOCK_TOKEN_URI = "https://example.com/token";
+
+    private static String createMockCredentialsJson(String privateKey, String clientId, String keyId, String tokenUri) {
+        StringBuilder json = new StringBuilder("{");
+        json.append("\"privateKey\": \"").append(privateKey).append("\",");
+        json.append("\"clientID\": \"").append(clientId).append("\",");
+        json.append("\"keyID\": \"").append(keyId).append("\"");
+        if (tokenUri != null) {
+            json.append(",\"tokenURI\": \"").append(tokenUri).append("\"");
+        }
+        json.append("}");
+        return json.toString();
+    }
+
+    @Test
+    public void testBearerTokenWithOverrideTokenUriFromString() {
+        String mockCredentialsJson = createMockCredentialsJson(MOCK_PRIVATE_KEY, MOCK_CLIENT_ID, MOCK_KEY_ID, MOCK_TOKEN_URI);
+        try {
+            BearerToken bearerToken = BearerToken.builder()
+                    .setCredentials(mockCredentialsJson)
+                    .setCtx(context)
+                    .setRoles(roles)
+                    .setTokenUri("https://override-token-uri.com/token")
+                    .build();
+            bearerToken.getBearerToken();
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+        }
+    }
+
+    @Test
+    public void testBearerTokenWithoutOverrideTokenUriFromString() {
+        String mockCredentialsJson = createMockCredentialsJson(MOCK_PRIVATE_KEY, MOCK_CLIENT_ID, MOCK_KEY_ID, MOCK_TOKEN_URI);
+        try {
+            BearerToken bearerToken = BearerToken.builder()
+                    .setCredentials(mockCredentialsJson)
+                    .setCtx(context)
+                    .setRoles(roles)
+                    .build();
+            bearerToken.getBearerToken();
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+        }
+    }
+
+    @Test
+    public void testBearerTokenWithOverrideTokenUriWhenCredentialsHaveTokenUri() {
+        String mockCredentialsJson = createMockCredentialsJson(MOCK_PRIVATE_KEY, MOCK_CLIENT_ID, MOCK_KEY_ID, MOCK_TOKEN_URI);
+        try {
+            BearerToken bearerToken = BearerToken.builder()
+                    .setCredentials(mockCredentialsJson)
+                    .setCtx(context)
+                    .setRoles(roles)
+                    .setTokenUri("https://override-token-uri.com/token")
+                    .build();
+            bearerToken.getBearerToken();
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+        }
+    }
+
+    @Test
+    public void testBearerTokenWhenTokenURIIsNullAndOverrideIsNull() {
+        String mockCredentialsJson = createMockCredentialsJson(MOCK_PRIVATE_KEY, MOCK_CLIENT_ID, MOCK_KEY_ID, null);
+        try {
+            BearerToken bearerToken = BearerToken.builder()
+                    .setCredentials(mockCredentialsJson)
+                    .build();
+            bearerToken.getBearerToken();
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(ErrorMessage.MissingTokenUri.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testBearerTokenWhenTokenURIIsNullButOverrideIsProvided() {
+        String mockCredentialsJson = createMockCredentialsJson(MOCK_PRIVATE_KEY, MOCK_CLIENT_ID, MOCK_KEY_ID, null);
+        try {
+            BearerToken bearerToken = BearerToken.builder()
+                    .setCredentials(mockCredentialsJson)
+                    .setCtx(context)
+                    .setRoles(roles)
+                    .setTokenUri("https://override-uri.com/token")
+                    .build();
+            bearerToken.getBearerToken();
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+        }
+    }
+
+    @Test
+    public void testBearerTokenWhenBothTokenURIAndOverrideAreProvided() {
+        String mockCredentialsJson = createMockCredentialsJson(MOCK_PRIVATE_KEY, MOCK_CLIENT_ID, MOCK_KEY_ID, MOCK_TOKEN_URI);
+        try {
+            BearerToken bearerToken = BearerToken.builder()
+                    .setCredentials(mockCredentialsJson)
+                    .setCtx(context)
+                    .setRoles(roles)
+                    .setTokenUri("https://override-uri.com/token")
+                    .build();
+            bearerToken.getBearerToken();
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+        }
+    }
+
+    @Test
+    public void testBearerTokenLineAudClaimWithOverrideTokenUri() {
+        String mockCredentialsJson = createMockCredentialsJson(MOCK_PRIVATE_KEY, MOCK_CLIENT_ID, MOCK_KEY_ID, MOCK_TOKEN_URI);
+        try {
+            BearerToken bearerToken = BearerToken.builder()
+                    .setCredentials(mockCredentialsJson)
+                    .setCtx(context)
+                    .setRoles(roles)
+                    .setTokenUri("https://override-uri.com/token")
+                    .build();
+            bearerToken.getBearerToken();
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+        }
+    }
+
+    @Test
+    public void testBearerTokenLineAudClaimWithCredentialsTokenUri() {
+        String mockCredentialsJson = createMockCredentialsJson(MOCK_PRIVATE_KEY, MOCK_CLIENT_ID, MOCK_KEY_ID, MOCK_TOKEN_URI);
+        try {
+            BearerToken bearerToken = BearerToken.builder()
+                    .setCredentials(mockCredentialsJson)
+                    .setCtx(context)
+                    .setRoles(roles)
+                    .build();
+            bearerToken.getBearerToken();
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+        }
+    }
+
+    @Test
+    public void testBearerTokenFinalTokenUriSelection() {
+        String mockCredentialsJson = createMockCredentialsJson(MOCK_PRIVATE_KEY, MOCK_CLIENT_ID, MOCK_KEY_ID, "https://credentials-uri.com/token");
+        try {
+            BearerToken bearerToken = BearerToken.builder()
+                    .setCredentials(mockCredentialsJson)
+                    .setCtx(context)
+                    .setRoles(roles)
+                    .setTokenUri("https://override-uri.com/token")
+                    .build();
+            bearerToken.getBearerToken();
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+        }
+    }
+
+    @Test
+    public void testGetBearerTokenFromCredentialsFilePathCovered() {
+
+        String filePath = "./src/test/resources/validCredentials.json";
+        File file = new File(filePath);
+        try {
+            BearerToken bearerToken = BearerToken.builder()
+                    .setCredentials(file)
+                    .setCtx(context)
+                    .setRoles(roles)
+                    .build();
+            bearerToken.getBearerToken();
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+        }
+    }
+
+    @Test
+    public void testGetBearerTokenFromCredentialsFilePathWithOverrideTokenUri() {
+        String filePath = "./src/test/resources/validCredentials.json";
+        File file = new File(filePath);
+        try {
+            BearerToken bearerToken = BearerToken.builder()
+                    .setCredentials(file)
+                    .setCtx(context)
+                    .setRoles(roles)
+                    .setTokenUri("https://override-uri.com/token")
+                    .build();
+            bearerToken.getBearerToken();
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+        }
+    }
+
+    @Test
+    public void testGetBearerTokenFromCredentialsStringPathCovered() {
+        String mockCredentialsJson = createMockCredentialsJson(MOCK_PRIVATE_KEY, MOCK_CLIENT_ID, MOCK_KEY_ID, MOCK_TOKEN_URI);
+        try {
+            BearerToken bearerToken = BearerToken.builder()
+                    .setCredentials(mockCredentialsJson)
+                    .setCtx(context)
+                    .setRoles(roles)
+                    .build();
+            bearerToken.getBearerToken();
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+        }
+    }
+
+    @Test
+    public void testGetBearerTokenFromCredentialsStringPathWithOverrideTokenUri() {
+        String mockCredentialsJson = createMockCredentialsJson(MOCK_PRIVATE_KEY, MOCK_CLIENT_ID, MOCK_KEY_ID, MOCK_TOKEN_URI);
+        try {
+            BearerToken bearerToken = BearerToken.builder()
+                    .setCredentials(mockCredentialsJson)
+                    .setCtx(context)
+                    .setRoles(roles)
+                    .setTokenUri("https://override-uri.com/token")
+                    .build();
+            bearerToken.getBearerToken();
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+        }
+    }
+
+    @Test
+    public void testGetBearerTokenWithApiClientInitialization() {
+
+        String filePath = "./src/test/resources/validCredentials.json";
+        File file = new File(filePath);
+        try {
+            BearerToken bearerToken = BearerToken.builder()
+                    .setCredentials(file)
+                    .setCtx(context)
+                    .setRoles(roles)
+                    .build();
+            bearerToken.getBearerToken();
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+        }
+    }
+
+    @Test
+    public void testGetBearerTokenWithApiClientInitializationAndOverrideTokenUri() {
+        String mockCredentialsJson = createMockCredentialsJson(MOCK_PRIVATE_KEY, MOCK_CLIENT_ID, MOCK_KEY_ID, MOCK_TOKEN_URI);
+        try {
+            BearerToken bearerToken = BearerToken.builder()
+                    .setCredentials(mockCredentialsJson)
+                    .setCtx(context)
+                    .setRoles(roles)
+                    .setTokenUri("https://override-uri.com/token")
+                    .build();
+            bearerToken.getBearerToken();
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+        }
+    }
+
+    @Test
+    public void testGetBearerTokenApiClientWithRoles() {
+        String filePath = "./src/test/resources/validCredentials.json";
+        File file = new File(filePath);
+        try {
+            roles.add("admin");
+            BearerToken bearerToken = BearerToken.builder()
+                    .setCredentials(file)
+                    .setCtx(context)
+                    .setRoles(roles)
+                    .build();
+            bearerToken.getBearerToken();
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+        }
+    }
+
+    @Test
+    public void testGetBearerTokenApiClientWithoutRoles() {
+        String filePath = "./src/test/resources/validCredentials.json";
+        File file = new File(filePath);
+        try {
+            BearerToken bearerToken = BearerToken.builder()
+                    .setCredentials(file)
+                    .setCtx(context)
+                    .build();
+            bearerToken.getBearerToken();
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+        }
+    }
 }

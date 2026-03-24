@@ -566,4 +566,203 @@ public class SkyflowTests {
             Assert.assertEquals(ErrorMessage.VaultIdNotInConfigList.getMessage(), e.getMessage());
         }
     }
+
+    @Test
+    public void testAddingSkyflowCredentialsWithValidTokenUri() {
+        try {
+            Credentials credentials = new Credentials();
+            credentials.setToken(token);
+            credentials.setTokenUri("https://example.com/token");
+            Skyflow.builder().addSkyflowCredentials(credentials).build();
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testAddingSkyflowCredentialsWithNullTokenUri() {
+        try {
+            Credentials credentials = new Credentials();
+            credentials.setToken(token);
+            credentials.setTokenUri(null);
+            Skyflow.builder().addSkyflowCredentials(credentials).build();
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testAddingSkyflowCredentialsWithEmptyTokenUri() {
+        try {
+            Credentials credentials = new Credentials();
+            credentials.setToken(token);
+            credentials.setTokenUri("");
+            Skyflow.builder().addSkyflowCredentials(credentials).build();
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+        }
+    }
+
+    @Test
+    public void testAddingSkyflowCredentialsWithInvalidTokenUri() {
+        try {
+            Credentials credentials = new Credentials();
+            credentials.setToken(token);
+            credentials.setTokenUri("invalid_token_uri");
+            Skyflow.builder().addSkyflowCredentials(credentials).build();
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(ErrorMessage.InvalidTokenUri.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testAddingSkyflowCredentialsWithMalformedTokenUri() {
+        try {
+            Credentials credentials = new Credentials();
+            credentials.setToken(token);
+            credentials.setTokenUri("htp://invalid-url");
+            Skyflow.builder().addSkyflowCredentials(credentials).build();
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(ErrorMessage.InvalidTokenUri.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testAddingSkyflowCredentialsWithHttpTokenUri() {
+        try {
+            Credentials credentials = new Credentials();
+            credentials.setToken(token);
+            credentials.setTokenUri("http://localhost:8080/oauth/token");
+            Skyflow.builder().addSkyflowCredentials(credentials).build();
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            // HTTP is not allowed, only HTTPS is allowed
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(ErrorMessage.InvalidTokenUri.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testAddingSkyflowCredentialsWithValidHttpsTokenUri() {
+        try {
+            Credentials credentials = new Credentials();
+            credentials.setToken(token);
+            credentials.setTokenUri("https://custom.oauth.endpoint.com/token");
+            Skyflow.builder().addSkyflowCredentials(credentials).build();
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testAddingSkyflowCredentialsWithTokenUriWithPort() {
+        try {
+            Credentials credentials = new Credentials();
+            credentials.setToken(token);
+            credentials.setTokenUri("https://example.com/token");
+            Skyflow.builder().addSkyflowCredentials(credentials).build();
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testAddingSkyflowCredentialsWithTokenUriWithQueryParams() {
+        try {
+            Credentials credentials = new Credentials();
+            credentials.setToken(token);
+            credentials.setTokenUri("https://example.com/token?clientId=test");
+            Skyflow.builder().addSkyflowCredentials(credentials).build();
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testUpdatingSkyflowCredentialsWithValidTokenUri() {
+        try {
+            VaultConfig vaultConfig = new VaultConfig();
+            vaultConfig.setVaultId(vaultID);
+            vaultConfig.setClusterId(clusterID);
+
+            ConnectionConfig connectionConfig = new ConnectionConfig();
+            connectionConfig.setConnectionId(connectionID);
+            connectionConfig.setConnectionUrl(connectionURL);
+
+            Credentials credentials = new Credentials();
+            credentials.setToken(token);
+            credentials.setTokenUri("https://example.com/token");
+            Skyflow skyflowClient = Skyflow.builder().addVaultConfig(vaultConfig).addConnectionConfig(connectionConfig).build();
+            skyflowClient.updateSkyflowCredentials(credentials);
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testUpdatingSkyflowCredentialsWithInvalidTokenUri() {
+        try {
+            VaultConfig vaultConfig = new VaultConfig();
+            vaultConfig.setVaultId(vaultID);
+            vaultConfig.setClusterId(clusterID);
+
+            ConnectionConfig connectionConfig = new ConnectionConfig();
+            connectionConfig.setConnectionId(connectionID);
+            connectionConfig.setConnectionUrl(connectionURL);
+
+            Credentials credentials = new Credentials();
+            credentials.setToken(token);
+            credentials.setTokenUri("not_a_valid_url");
+            Skyflow skyflowClient = Skyflow.builder().addVaultConfig(vaultConfig).addConnectionConfig(connectionConfig).build();
+            skyflowClient.updateSkyflowCredentials(credentials);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(ErrorMessage.InvalidTokenUri.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testAddingVaultConfigWithCredentialsHavingValidTokenUri() {
+        try {
+            VaultConfig config = new VaultConfig();
+            config.setVaultId(vaultID);
+            config.setClusterId(clusterID);
+            config.setEnv(Env.SANDBOX);
+
+            Credentials credentials = new Credentials();
+            credentials.setToken(token);
+            credentials.setTokenUri("https://example.com/token");
+            config.setCredentials(credentials);
+
+            Skyflow.builder().addVaultConfig(config).build();
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testAddingVaultConfigWithCredentialsHavingInvalidTokenUri() {
+        try {
+            VaultConfig config = new VaultConfig();
+            config.setVaultId(vaultID);
+            config.setClusterId(clusterID);
+            config.setEnv(Env.SANDBOX);
+
+            Credentials credentials = new Credentials();
+            credentials.setToken(token);
+            credentials.setTokenUri("invalid_uri_format");
+            config.setCredentials(credentials);
+
+            Skyflow.builder().addVaultConfig(config).build();
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(ErrorMessage.InvalidTokenUri.getMessage(), e.getMessage());
+        }
+    }
 }

@@ -17,6 +17,7 @@ import io.jsonwebtoken.Jwts;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.net.MalformedURLException;
 import java.security.PrivateKey;
 import java.util.ArrayList;
 import java.util.Date;
@@ -30,6 +31,7 @@ public class SignedDataTokens {
     private final String ctx;
     private final ArrayList<String> dataTokens;
     private final Integer timeToLive;
+    private final String tokenUri;
 
     private SignedDataTokens(SignedDataTokensBuilder builder) {
         this.credentialsFile = builder.credentialsFile;
@@ -38,6 +40,7 @@ public class SignedDataTokens {
         this.ctx = builder.ctx;
         this.dataTokens = builder.dataTokens;
         this.timeToLive = builder.timeToLive;
+        this.tokenUri = builder.tokenUri;
     }
 
     public static SignedDataTokensBuilder builder() {
@@ -45,7 +48,7 @@ public class SignedDataTokens {
     }
 
     private static List<SignedDataTokenResponse> generateSignedTokenFromCredentialsFile(
-            File credentialsFile, ArrayList<String> dataTokens, Integer timeToLive, String context
+            File credentialsFile, ArrayList<String> dataTokens, Integer timeToLive, String context, String overrideTokenUri
     ) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.GENERATE_SIGNED_TOKENS_FROM_CREDENTIALS_FILE_TRIGGERED.getLog());
         List<SignedDataTokenResponse> responseToken;
@@ -56,7 +59,7 @@ public class SignedDataTokens {
             }
             FileReader reader = new FileReader(String.valueOf(credentialsFile));
             JsonObject serviceAccountCredentials = JsonParser.parseReader(reader).getAsJsonObject();
-            responseToken = generateSignedTokensFromCredentials(serviceAccountCredentials, dataTokens, timeToLive, context);
+            responseToken = generateSignedTokensFromCredentials(serviceAccountCredentials, dataTokens, timeToLive, context, overrideTokenUri);
         } catch (JsonSyntaxException e) {
             LogUtil.printErrorLog(ErrorLogs.INVALID_CREDENTIALS_FILE_FORMAT.getLog());
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), Utils.parameterizedString(
@@ -70,7 +73,7 @@ public class SignedDataTokens {
     }
 
     private static List<SignedDataTokenResponse> generateSignedTokensFromCredentialsString(
-            String credentials, ArrayList<String> dataTokens, Integer timeToLive, String context
+            String credentials, ArrayList<String> dataTokens, Integer timeToLive, String context, String overrideTokenUri
     ) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.GENERATE_SIGNED_TOKENS_FROM_CREDENTIALS_STRING_TRIGGERED.getLog());
         List<SignedDataTokenResponse> responseToken;
@@ -80,7 +83,7 @@ public class SignedDataTokens {
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidCredentials.getMessage());
             }
             JsonObject serviceAccountCredentials = JsonParser.parseString(credentials).getAsJsonObject();
-            responseToken = generateSignedTokensFromCredentials(serviceAccountCredentials, dataTokens, timeToLive, context);
+            responseToken = generateSignedTokensFromCredentials(serviceAccountCredentials, dataTokens, timeToLive, context, overrideTokenUri);
         } catch (JsonSyntaxException e) {
             LogUtil.printErrorLog(ErrorLogs.INVALID_CREDENTIALS_STRING_FORMAT.getLog());
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(),
@@ -90,7 +93,7 @@ public class SignedDataTokens {
     }
 
     private static List<SignedDataTokenResponse> generateSignedTokensFromCredentials(
-            JsonObject credentials, ArrayList<String> dataTokens, Integer timeToLive, String context
+            JsonObject credentials, ArrayList<String> dataTokens, Integer timeToLive, String context, String overrideTokenUri
     ) throws SkyflowException {
         List<SignedDataTokenResponse> signedDataTokens = null;
         try {
@@ -113,7 +116,7 @@ public class SignedDataTokens {
             }
             PrivateKey pvtKey = Utils.getPrivateKeyFromPem(privateKey.getAsString());
             signedDataTokens = getSignedToken(
-                    clientID.getAsString(), keyID.getAsString(), pvtKey, dataTokens, timeToLive, context);
+                    clientID.getAsString(), keyID.getAsString(), pvtKey, dataTokens, timeToLive, context, overrideTokenUri);
         } catch (RuntimeException e) {
             LogUtil.printErrorLog(ErrorLogs.SIGNED_DATA_TOKENS_REJECTED.getLog());
             throw new SkyflowException(e);
@@ -123,7 +126,7 @@ public class SignedDataTokens {
 
     private static List<SignedDataTokenResponse> getSignedToken(
             String clientID, String keyID, PrivateKey pvtKey,
-            ArrayList<String> dataTokens, Integer timeToLive, String context
+            ArrayList<String> dataTokens, Integer timeToLive, String context, String overrideTokenUri
     ) {
         final Date createdDate = new Date();
         final Date expirationDate;
@@ -134,15 +137,21 @@ public class SignedDataTokens {
             expirationDate = new Date(createdDate.getTime() + 60000); // Valid for 60 seconds
         }
 
+        String finalTokenUri = null;
+        if (overrideTokenUri != null && !overrideTokenUri.isEmpty()) {
+            finalTokenUri = overrideTokenUri;
+        }
+
         List<SignedDataTokenResponse> list = new ArrayList<>();
         for (String dataToken : dataTokens) {
             String eachSignedDataToken = Jwts.builder()
-                    .claim(Constants.JwtClaims.ISS, Constants.JwtClaims.SDK)
+                    .claim(Constants.JwtClaims.ISS, "sdk")
                     .claim(Constants.JwtClaims.IAT, (createdDate.getTime() / 1000))
                     .claim(Constants.JwtClaims.KEY, keyID)
                     .claim(Constants.JwtClaims.SUB, clientID)
                     .claim(Constants.JwtClaims.CTX, context)
                     .claim(Constants.JwtClaims.TOK, dataToken)
+                    .claim(Constants.JwtClaims.AUD, finalTokenUri)
                     .expiration(expirationDate)
                     .signWith(pvtKey, Jwts.SIG.RS256)
                     .compact();
@@ -156,9 +165,9 @@ public class SignedDataTokens {
         LogUtil.printInfoLog(InfoLogs.GET_SIGNED_DATA_TOKENS_TRIGGERED.getLog());
         List<SignedDataTokenResponse> signedToken = new ArrayList<>();
         if (this.credentialsFile != null && Objects.equals(this.credentialsType, Constants.CredentialTypeValues.FILE)) {
-            signedToken = generateSignedTokenFromCredentialsFile(this.credentialsFile, this.dataTokens, this.timeToLive, this.ctx);
+            signedToken = generateSignedTokenFromCredentialsFile(this.credentialsFile, this.dataTokens, this.timeToLive, this.ctx, this.tokenUri);
         } else if (this.credentialsString != null && Objects.equals(this.credentialsType, Constants.CredentialTypeValues.STRING)) {
-            signedToken = generateSignedTokensFromCredentialsString(this.credentialsString, this.dataTokens, this.timeToLive, this.ctx);
+            signedToken = generateSignedTokensFromCredentialsString(this.credentialsString, this.dataTokens, this.timeToLive, this.ctx, this.tokenUri);
         }
         LogUtil.printInfoLog(InfoLogs.GET_SIGNED_DATA_TOKEN_SUCCESS.getLog());
         return signedToken;
@@ -171,6 +180,7 @@ public class SignedDataTokens {
         private String credentialsString;
         private String ctx;
         private String credentialsType;
+        private String tokenUri;
 
         private SignedDataTokensBuilder() {
         }
@@ -203,6 +213,19 @@ public class SignedDataTokens {
 
         public SignedDataTokensBuilder setTimeToLive(Integer timeToLive) {
             this.timeToLive = timeToLive;
+            return this;
+        }
+
+        public SignedDataTokensBuilder setTokenUri(String tokenUri) throws SkyflowException {
+            if (tokenUri != null && !tokenUri.isEmpty()) {
+                try {
+                    new java.net.URL(tokenUri);
+                    this.tokenUri = tokenUri;
+                } catch (MalformedURLException e) {
+                    LogUtil.printErrorLog(ErrorLogs.INVALID_TOKEN_URI.getLog());
+                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidTokenUri.getMessage());
+                }
+            }
             return this;
         }
 
