@@ -10,6 +10,8 @@ import org.junit.Test;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class SignedDataTokensTests {
     private static final String INVALID_EXCEPTION_THROWN = "Should not have thrown any exception";
@@ -57,7 +59,21 @@ public class SignedDataTokensTests {
         } catch (Exception e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
         }
+    }
 
+    @Test
+    public void testSignedDataTokensBuilderWithMapContext() {
+        try {
+            Map<String, Object> ctxMap = new HashMap<>();
+            ctxMap.put("role", "admin");
+            ctxMap.put("department", "finance");
+            File file = new File(credentialsFilePath);
+            SignedDataTokens.builder()
+                    .setCredentials(file).setCtx(ctxMap).setDataTokens(dataTokens).setTimeToLive(ttl)
+                    .build();
+        } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
     }
 
     @Test

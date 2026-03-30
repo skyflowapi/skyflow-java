@@ -47,21 +47,30 @@ public final class Utils {
         return sb.toString();
     }
 
+    @SuppressWarnings("unchecked")
     public static String generateBearerToken(Credentials credentials) throws SkyflowException {
         if (credentials.getPath() != null) {
-            return BearerToken.builder()
+            BearerToken.BearerTokenBuilder builder = BearerToken.builder()
                     .setCredentials(new File(credentials.getPath()))
-                    .setRoles(credentials.getRoles())
-                    .setCtx(credentials.getContext())
-                    .build()
-                    .getBearerToken();
+                    .setRoles(credentials.getRoles());
+            Object ctx = credentials.getContext();
+            if (ctx instanceof String) {
+                builder.setCtx((String) ctx);
+            } else if (ctx instanceof Map) {
+                builder.setCtx((Map<String, Object>) ctx);
+            }
+            return builder.build().getBearerToken();
         } else if (credentials.getCredentialsString() != null) {
-            return BearerToken.builder()
+            BearerToken.BearerTokenBuilder builder = BearerToken.builder()
                     .setCredentials(credentials.getCredentialsString())
-                    .setRoles(credentials.getRoles())
-                    .setCtx(credentials.getContext())
-                    .build()
-                    .getBearerToken();
+                    .setRoles(credentials.getRoles());
+            Object ctx = credentials.getContext();
+            if (ctx instanceof String) {
+                builder.setCtx((String) ctx);
+            } else if (ctx instanceof Map) {
+                builder.setCtx((Map<String, Object>) ctx);
+            }
+            return builder.build().getBearerToken();
         } else {
             return credentials.getToken();
         }

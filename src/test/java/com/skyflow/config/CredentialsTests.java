@@ -10,6 +10,10 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+
+import com.skyflow.utils.Utils;
 
 public class CredentialsTests {
     private static final String INVALID_EXCEPTION_THROWN = "Should not have thrown any exception";
@@ -263,6 +267,88 @@ public class CredentialsTests {
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.EmptyContext.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidMapContextInCredentials() {
+        try {
+            Credentials credentials = new Credentials();
+            credentials.setPath(path);
+            Map<String, Object> ctxMap = new HashMap<>();
+            ctxMap.put("role", "admin");
+            ctxMap.put("department", "finance");
+            ctxMap.put("user_id", "user_12345");
+            credentials.setContext(ctxMap);
+            Validations.validateCredentials(credentials);
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testEmptyMapContextInCredentials() {
+        try {
+            Credentials credentials = new Credentials();
+            credentials.setPath(path);
+            Map<String, Object> ctxMap = new HashMap<>();
+            credentials.setContext(ctxMap);
+            Validations.validateCredentials(credentials);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(ErrorMessage.EmptyContext.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testInvalidMapKeyInContextCredentials() {
+        try {
+            Credentials credentials = new Credentials();
+            credentials.setPath(path);
+            Map<String, Object> ctxMap = new HashMap<>();
+            ctxMap.put("valid_key", "value");
+            ctxMap.put("invalid-key", "value");
+            credentials.setContext(ctxMap);
+            Validations.validateCredentials(credentials);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertTrue(e.getMessage().contains("invalid-key"));
+        }
+    }
+
+    @Test
+    public void testMapContextWithNestedObjects() {
+        try {
+            Credentials credentials = new Credentials();
+            credentials.setPath(path);
+            Map<String, Object> nested = new HashMap<>();
+            nested.put("level", 2);
+            Map<String, Object> ctxMap = new HashMap<>();
+            ctxMap.put("role", "admin");
+            ctxMap.put("metadata", nested);
+            credentials.setContext(ctxMap);
+            Validations.validateCredentials(credentials);
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testMapContextWithMixedValueTypes() {
+        try {
+            Credentials credentials = new Credentials();
+            credentials.setPath(path);
+            Map<String, Object> ctxMap = new HashMap<>();
+            ctxMap.put("role", "admin");
+            ctxMap.put("level", 3);
+            ctxMap.put("active", true);
+            ctxMap.put("timestamp", "2025-12-25T10:30:00Z");
+            credentials.setContext(ctxMap);
+            Validations.validateCredentials(credentials);
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
         }
     }
 
