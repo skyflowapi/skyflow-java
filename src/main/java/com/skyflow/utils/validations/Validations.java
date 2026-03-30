@@ -162,7 +162,7 @@ public class Validations {
         String credentialsString = credentials.getCredentialsString();
         String token = credentials.getToken();
         String apiKey = credentials.getApiKey();
-        String context = credentials.getContext();
+        Object context = credentials.getContext();
         ArrayList<String> roles = credentials.getRoles();
 
         if (path != null) nonNullMembers++;
@@ -217,9 +217,33 @@ public class Validations {
                 }
             }
         }
-        if (context != null && context.trim().isEmpty()) {
-            LogUtil.printErrorLog(ErrorLogs.EMPTY_OR_NULL_CONTEXT.getLog());
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyContext.getMessage());
+        if (context != null) {
+            if (context instanceof String) {
+                String ctxStr = (String) context;
+                if (ctxStr.trim().isEmpty()) {
+                    LogUtil.printErrorLog(ErrorLogs.EMPTY_OR_NULL_CONTEXT.getLog());
+                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyContext.getMessage());
+                }
+            } else if (context instanceof Map) {
+                Map<?, ?> ctxMap = (Map<?, ?>) context;
+                if (ctxMap.isEmpty()) {
+                    LogUtil.printErrorLog(ErrorLogs.EMPTY_OR_NULL_CONTEXT.getLog());
+                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyContext.getMessage());
+                }
+                Pattern ctxKeyPattern = Pattern.compile("^[a-zA-Z0-9_]+$");
+                for (Object key : ctxMap.keySet()) {
+                    if (key == null || !ctxKeyPattern.matcher(key.toString()).matches()) {
+                        String keyStr = key == null ? "null" : key.toString();
+                        LogUtil.printErrorLog(Utils.parameterizedString(
+                                ErrorLogs.INVALID_CONTEXT_MAP_KEY.getLog(), keyStr));
+                        throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(),
+                                Utils.parameterizedString(ErrorMessage.InvalidContextMapKey.getMessage(), keyStr));
+                    }
+                }
+            } else {
+                LogUtil.printErrorLog(ErrorLogs.INVALID_CONTEXT_TYPE.getLog());
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidContextType.getMessage());
+            }
         }
     }
 

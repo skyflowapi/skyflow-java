@@ -10,6 +10,8 @@ import org.junit.Test;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class BearerTokenTests {
     private static final String INVALID_EXCEPTION_THROWN = "Should not have thrown any exception";
@@ -51,7 +53,32 @@ public class BearerTokenTests {
         } catch (Exception e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
         }
+    }
 
+    @Test
+    public void testBearerTokenBuilderWithMapContext() {
+        try {
+            Map<String, Object> ctxMap = new HashMap<>();
+            ctxMap.put("role", "admin");
+            ctxMap.put("department", "finance");
+            ctxMap.put("user_id", "user_12345");
+            File file = new File(credentialsFilePath);
+            BearerToken.builder().setCredentials(file).setCtx(ctxMap).build();
+        } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testBearerTokenBuilderWithMapContextFromString() {
+        try {
+            Map<String, Object> ctxMap = new HashMap<>();
+            ctxMap.put("role", "analyst");
+            ctxMap.put("level", 3);
+            BearerToken.builder().setCredentials(credentialsString).setCtx(ctxMap).build();
+        } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
     }
 
     @Test
