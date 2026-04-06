@@ -618,7 +618,7 @@ public class VaultControllerTests {
     public void testDetokenizeBatchFuturesCatchBranchAddsErrorRecord() throws Exception {
         VaultController controller = createController();
         setPrivateField(controller, "detokenizeBatchSize", 2);
-        List<com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest> batches = null; // trigger catch
+        List<com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest> batches = null; // trigger catch
         List<ErrorRecord> errors = new ArrayList<>();
 
         Method method = VaultController.class.getDeclaredMethod("detokenizeBatchFutures", ExecutorService.class, List.class, List.class);
@@ -671,7 +671,7 @@ public class VaultControllerTests {
 
         java.lang.reflect.Method processDetokenizeSync = VaultController.class.getDeclaredMethod(
                 "processDetokenizeSync",
-                com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest.class,
+                com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest.class,
                 List.class
         );
         processDetokenizeSync.setAccessible(true);
@@ -708,7 +708,7 @@ public class VaultControllerTests {
 
         java.lang.reflect.Method processDetokenizeSync = VaultController.class.getDeclaredMethod(
                 "processDetokenizeSync",
-                com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest.class,
+                com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest.class,
                 List.class
         );
         processDetokenizeSync.setAccessible(true);
@@ -721,7 +721,7 @@ public class VaultControllerTests {
         );
         detokenizeBatchFutures.setAccessible(true);
         ExecutorService executor = Executors.newFixedThreadPool(1);
-        List<com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest> batches = null; // will trigger catch
+        List<com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest> batches = null; // will trigger catch
         List<ErrorRecord> errors = new ArrayList<>();
         @SuppressWarnings("unchecked")
         List<CompletableFuture<DetokenizeResponse>> futures = (List<CompletableFuture<DetokenizeResponse>>) detokenizeBatchFutures.invoke(controller, executor, batches, errors);

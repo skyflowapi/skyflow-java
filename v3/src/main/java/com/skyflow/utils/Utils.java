@@ -6,11 +6,11 @@ import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.generated.rest.core.ApiClientApiException;
-import com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest;
-import com.skyflow.generated.rest.types.InsertRecordData;
-import com.skyflow.generated.rest.types.InsertResponse;
-import com.skyflow.generated.rest.types.RecordResponseObject;
-import com.skyflow.generated.rest.types.TokenGroupRedactions;
+import com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest;
+import com.skyflow.generated.rest.types.V1InsertRecordData;
+import com.skyflow.generated.rest.types.V1InsertResponse;
+import com.skyflow.generated.rest.types.V1RecordResponseObject;
+import com.skyflow.generated.rest.types.V1TokenGroupRedactions;
 import com.skyflow.logs.ErrorLogs;
 import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.vault.data.DetokenizeResponse;
@@ -40,27 +40,27 @@ public final class Utils extends BaseUtils {
         return details;
     }
 
-    public static List<List<InsertRecordData>> createBatches(List<InsertRecordData> records, int batchSize) {
-        List<List<InsertRecordData>> batches = new ArrayList<>();
+    public static List<List<V1InsertRecordData>> createBatches(List<V1InsertRecordData> records, int batchSize) {
+        List<List<V1InsertRecordData>> batches = new ArrayList<>();
         for (int i = 0; i < records.size(); i += batchSize) {
             batches.add(records.subList(i, Math.min(i + batchSize, records.size())));
         }
         return batches;
     }
 
-    public static List<DetokenizeRequest> createDetokenizeBatches(DetokenizeRequest request, int batchSize) {
-        List<DetokenizeRequest> detokenizeRequests = new ArrayList<>();
+    public static List<V1FlowDetokenizeRequest> createDetokenizeBatches(V1FlowDetokenizeRequest request, int batchSize) {
+        List<V1FlowDetokenizeRequest> detokenizeRequests = new ArrayList<>();
         List<String> tokens = request.getTokens().get();
 
         for (int i = 0; i < tokens.size(); i += batchSize) {
             // Create a sublist for the current batch
             List<String> batchTokens = tokens.subList(i, Math.min(i + batchSize, tokens.size()));
-            List<TokenGroupRedactions> tokenGroupRedactions = null;
+            List<V1TokenGroupRedactions> tokenGroupRedactions = null;
             if (request.getTokenGroupRedactions().isPresent() && !request.getTokenGroupRedactions().get().isEmpty()) {
                 tokenGroupRedactions = request.getTokenGroupRedactions().get();
             }
             // Build a new DetokenizeRequest for the current batch
-            DetokenizeRequest batchRequest = DetokenizeRequest.builder()
+            V1FlowDetokenizeRequest batchRequest = V1FlowDetokenizeRequest.builder()
                     .vaultId(request.getVaultId())
                     .tokens(new ArrayList<>(batchTokens))
                     .tokenGroupRedactions(tokenGroupRedactions)
@@ -94,7 +94,7 @@ public final class Utils extends BaseUtils {
     }
 
     public static List<ErrorRecord> handleBatchException(
-            Throwable ex, List<InsertRecordData> batch, int batchNumber, int batchSize
+            Throwable ex, List<V1InsertRecordData> batch, int batchNumber, int batchSize
     ) {
         List<ErrorRecord> errorRecords = new ArrayList<>();
         Throwable cause = ex.getCause();
@@ -137,7 +137,7 @@ public final class Utils extends BaseUtils {
     }
 
     public static List<ErrorRecord> handleDetokenizeBatchException(
-            Throwable ex, DetokenizeRequest batch, int batchNumber, int batchSize
+            Throwable ex, V1FlowDetokenizeRequest batch, int batchNumber, int batchSize
     ) {
         List<ErrorRecord> errorRecords = new ArrayList<>();
         Throwable cause = ex.getCause();
@@ -179,9 +179,9 @@ public final class Utils extends BaseUtils {
         return errorRecords;
     }
 
-    public static DetokenizeResponse formatDetokenizeResponse(com.skyflow.generated.rest.types.DetokenizeResponse response, int batch, int batchSize) {
+    public static DetokenizeResponse formatDetokenizeResponse(com.skyflow.generated.rest.types.V1FlowDetokenizeResponse response, int batch, int batchSize) {
         if (response != null) {
-            List<com.skyflow.generated.rest.types.DetokenizeResponseObject> record = response.getResponse().get();
+            List<com.skyflow.generated.rest.types.V1FlowDetokenizeResponseObject> record = response.getResponse().get();
             List<ErrorRecord> errorRecords = new ArrayList<>();
             List<com.skyflow.vault.data.DetokenizeResponseObject> successRecords = new ArrayList<>();
             int indexNumber = batch * batchSize;
@@ -202,12 +202,12 @@ public final class Utils extends BaseUtils {
         return null;
     }
 
-    public static com.skyflow.vault.data.InsertResponse formatResponse(InsertResponse response, int batch, int batchSize) {
+    public static com.skyflow.vault.data.InsertResponse formatResponse(V1InsertResponse response, int batch, int batchSize) {
         com.skyflow.vault.data.InsertResponse formattedResponse = null;
         List<Success> successRecords = new ArrayList<>();
         List<ErrorRecord> errorRecords = new ArrayList<>();
         if (response != null) {
-            List<RecordResponseObject> record = response.getRecords().get();
+            List<V1RecordResponseObject> record = response.getRecords().get();
             int indexNumber = batch * batchSize;
             int recordsSize = response.getRecords().get().size();
             for (int index = 0; index < recordsSize; index++) {

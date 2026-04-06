@@ -7,9 +7,9 @@ import com.skyflow.enums.Env;
 import com.skyflow.enums.UpsertType;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.SkyflowException;
-import com.skyflow.generated.rest.resources.recordservice.RecordserviceClient;
-import com.skyflow.generated.rest.resources.recordservice.requests.InsertRequest;
-import com.skyflow.generated.rest.types.InsertRecordData;
+import com.skyflow.generated.rest.resources.flowservice.FlowserviceClient;
+import com.skyflow.generated.rest.resources.flowservice.requests.V1InsertRequest;
+import com.skyflow.generated.rest.types.V1InsertRecordData;
 import com.skyflow.utils.Constants;
 import com.skyflow.utils.SdkVersion;
 import com.skyflow.vault.data.DetokenizeRequest;
@@ -49,7 +49,7 @@ public class VaultClientTests {
     @Test
     public void testVaultClientGetRecordsAPI() {
         try {
-            RecordserviceClient recordsClient = vaultClient.getRecordsApi();
+            FlowserviceClient recordsClient = vaultClient.getRecordsApi();
             Assert.assertNotNull(recordsClient);
         } catch (Exception e) {
             e.printStackTrace();
@@ -167,7 +167,7 @@ public class VaultClientTests {
     public void testEmptyRecords() {
         com.skyflow.vault.data.InsertRequest request =
                 com.skyflow.vault.data.InsertRequest.builder().records(new ArrayList<>()).build();
-        InsertRequest result = vaultClient.getBulkInsertRequestBody(request, vaultConfig);
+        V1InsertRequest result = vaultClient.getBulkInsertRequestBody(request, vaultConfig);
         Assert.assertTrue(result.getRecords().get().isEmpty());
     }
 
@@ -185,9 +185,9 @@ public class VaultClientTests {
                         .records(records)
                         .build();
 
-        InsertRequest result = vaultClient.getBulkInsertRequestBody(request, vaultConfig);
+        V1InsertRequest result = vaultClient.getBulkInsertRequestBody(request, vaultConfig);
         Assert.assertEquals("table1", result.getTableName().get());
-        List<InsertRecordData> recordData = result.getRecords().get();
+        List<V1InsertRecordData> recordData = result.getRecords().get();
         Assert.assertEquals("value", recordData.get(0).getData().get().get("key"));
     }
 
@@ -205,7 +205,7 @@ public class VaultClientTests {
                         .records(records)
                         .build();
 
-        InsertRequest result = vaultClient.getBulkInsertRequestBody(request, vaultConfig);
+        V1InsertRequest result = vaultClient.getBulkInsertRequestBody(request, vaultConfig);
         Assert.assertEquals("table2", result.getRecords().get().get(0).getTableName().get());
     }
 
@@ -226,7 +226,7 @@ public class VaultClientTests {
                         .upsertType(UpsertType.REPLACE)
                         .build();
 
-        InsertRequest result = vaultClient.getBulkInsertRequestBody(request, vaultConfig);
+        V1InsertRequest result = vaultClient.getBulkInsertRequestBody(request, vaultConfig);
         Assert.assertNotNull(result.getUpsert());
         Assert.assertEquals("col1", result.getUpsert().get().getUniqueColumns().get().get(0));
         Assert.assertEquals("REPLACE", result.getUpsert().get().getUpdateType().get().name());
@@ -246,7 +246,7 @@ public class VaultClientTests {
                         .records(records)
                         .build();
 
-        InsertRequest result = vaultClient.getBulkInsertRequestBody(request, vaultConfig);
+        V1InsertRequest result = vaultClient.getBulkInsertRequestBody(request, vaultConfig);
         Assert.assertNotNull(result.getRecords().get().get(0).getUpsert());
         Assert.assertEquals("col2", result.getRecords().get().get(0).getUpsert().get().getUniqueColumns().get().get(0));
         Assert.assertEquals("UPDATE", result.getRecords().get().get(0).getUpsert().get().getUpdateType().get().name());
@@ -269,7 +269,7 @@ public class VaultClientTests {
                         .records(records)
                         .build();
 
-        InsertRequest result = vaultClient.getBulkInsertRequestBody(request, vaultConfig);
+        V1InsertRequest result = vaultClient.getBulkInsertRequestBody(request, vaultConfig);
         Assert.assertEquals("table4", result.getTableName().get());
         Assert.assertEquals("table3", result.getRecords().get().get(0).getTableName().get());
         Assert.assertEquals("col3", result.getRecords().get().get(0).getUpsert().get().getUniqueColumns().get().get(0));
@@ -407,7 +407,7 @@ public class VaultClientTests {
                 .tokens(tokens)
                 .build();
 
-            com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest result =
+            com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest result =
                 vaultClient.getDetokenizeRequestBody(request);
 
             Assert.assertNotNull(result);
@@ -442,7 +442,7 @@ public class VaultClientTests {
             .tokens(tokens)
             .tokenGroupRedactions(redactions)
             .build();
-        com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest result = 
+        com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest result =
             vaultClient.getDetokenizeRequestBody(request);
         Assert.assertNotNull(result);
         Assert.assertNotNull(result.getVaultId());
@@ -451,7 +451,7 @@ public class VaultClientTests {
         Assert.assertTrue(result.getTokens().isPresent());
         Assert.assertEquals(2, result.getTokens().get().size());
         Assert.assertTrue(result.getTokenGroupRedactions().isPresent());
-        List<com.skyflow.generated.rest.types.TokenGroupRedactions> resultRedactions = 
+        List<com.skyflow.generated.rest.types.V1TokenGroupRedactions> resultRedactions =
             result.getTokenGroupRedactions().get();
         Assert.assertEquals(2, resultRedactions.size());
         Assert.assertEquals("group1", resultRedactions.get(0).getTokenGroupName().get());
@@ -473,7 +473,7 @@ public class VaultClientTests {
         VaultClient client = new VaultClient(config, credentials);
         client.setBearerToken();
         
-        RecordserviceClient recordsApi = client.getRecordsApi();
+        FlowserviceClient recordsApi = client.getRecordsApi();
         Assert.assertNotNull(recordsApi);
     }
 
