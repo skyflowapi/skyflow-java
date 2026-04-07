@@ -58,6 +58,12 @@ public enum InfoLogs {
     DELETE_REQUEST_RESOLVED("Delete request resolved."),
     DELETE_SUCCESS("Data deleted."),
 
+    // Delete Tokens interface
+    DELETE_TOKENS_TRIGGERED("DeleteTokens method triggered."),
+    VALIDATE_DELETE_TOKENS_REQUEST("Validating delete tokens request."),
+    DELETE_TOKENS_REQUEST_RESOLVED("DeleteTokens request resolved."),
+    DELETE_TOKENS_SUCCESS("Tokens deleted."),
+
     // Query interface
     QUERY_TRIGGERED("Query method triggered."),
     VALIDATING_QUERY_REQUEST("Validating query request."),

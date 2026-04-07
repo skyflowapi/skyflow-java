@@ -92,6 +92,12 @@ public enum ErrorMessage {
     EmptyTokenInDetokenizeData("%s0 Validation error. Invalid data tokens. Specify a valid data token."),
     TokensSizeExceedError("%s0 Maximum number of tokens exceeded. The limit is 10000."),
 
+    // Delete Tokens
+    DeleteTokensRequestNull("%s0 Validation error. DeleteTokensRequest object is null. Specify a valid DeleteTokensRequest object."),
+    EmptyDeleteTokensData("%s0 Validation error. Tokens list is empty. Specify at least one token to delete."),
+    EmptyTokenInDeleteTokensData("%s0 Validation error. Invalid token in delete tokens request. Specify a valid token."),
+    DeleteTokensSizeExceedError("%s0 Maximum number of tokens exceeded. The limit is 10000."),
+
     // Get
     IdsKeyError("%s0 Validation error. 'ids' key is missing from the payload. Specify an 'ids' key."),
     EmptyIds("%s0 Validation error. 'ids' can't be empty. Specify at least one id."),
@@ -128,6 +134,13 @@ public enum ErrorMessage {
     // Tokenize
     ColumnValuesKeyErrorTokenize("%s0 Validation error. 'columnValues' key is missing from the payload. Specify a 'columnValues' key."),
     EmptyColumnGroupInColumnValue("%s0 Validation error. Invalid column group in column value. Specify a valid column group."),
+    TokenizeRequestNull("%s0 Validation error. TokenizeRequest object is null. Specify a valid TokenizeRequest object."),
+    EmptyTokenizeData("%s0 Validation error. Tokenize data is empty. Specify at least one tokenize record."),
+    TokenizeRecordNull("%s0 Validation error. TokenizeRecord in the list is null. Specify a valid TokenizeRecord object."),
+    EmptyValueInTokenizeRecord("%s0 Validation error. Value in TokenizeRecord is null or empty. Specify a valid value."),
+    EmptyTokenGroupNamesInTokenizeRecord("%s0 Validation error. TokenGroupNames in TokenizeRecord is null or empty. Specify at least one token group name."),
+    EmptyTokenGroupNameInTokenizeRecord("%s0 Validation error. Token group name in TokenizeRecord is null or empty. Specify a valid token group name."),
+    TokenizeDataSizeExceedError("%s0 Maximum number of tokenize records exceeded. The limit is 10000."),
 
     // Connection
     InvalidRequestHeaders("%s0 Validation error. Request headers aren't valid. Specify valid request headers."),

@@ -21,6 +21,9 @@ import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.utils.validations.Validations;
 import com.skyflow.vault.data.DetokenizeRequest;
 import com.skyflow.vault.data.InsertRecord;
+import com.skyflow.vault.data.DeleteTokensRequest;
+import com.skyflow.vault.data.TokenizeRequest;
+import com.skyflow.vault.data.TokenizeRecord;
 import io.github.cdimascio.dotenv.Dotenv;
 import io.github.cdimascio.dotenv.DotenvException;
 import okhttp3.OkHttpClient;
@@ -215,5 +218,28 @@ public class VaultClient {
             builder.tokenGroupRedactions(tokenGroupRedactionsList);
         }
         return builder.build();
+    }
+
+    protected com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDeleteTokenRequest getDeleteTokensRequestBody(DeleteTokensRequest request) {
+        return com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDeleteTokenRequest.builder()
+                .vaultId(this.vaultConfig.getVaultId())
+                .tokens(request.getTokens())
+                .build();
+    }
+
+    protected com.skyflow.generated.rest.resources.flowservice.requests.V1FlowTokenizeRequest getTokenizeRequestBody(TokenizeRequest request) {
+        List<com.skyflow.generated.rest.types.V1FlowTokenizeRequestObject> dataList = new ArrayList<>();
+        for (TokenizeRecord record : request.getData()) {
+            com.skyflow.generated.rest.types.V1FlowTokenizeRequestObject obj =
+                    com.skyflow.generated.rest.types.V1FlowTokenizeRequestObject.builder()
+                            .value(record.getValue())
+                            .tokenGroupNames(record.getTokenGroupNames())
+                            .build();
+            dataList.add(obj);
+        }
+        return com.skyflow.generated.rest.resources.flowservice.requests.V1FlowTokenizeRequest.builder()
+                .vaultId(this.vaultConfig.getVaultId())
+                .data(dataList)
+                .build();
     }
 }
