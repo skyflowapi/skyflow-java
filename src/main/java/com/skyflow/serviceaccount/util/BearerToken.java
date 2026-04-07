@@ -17,6 +17,8 @@ import com.skyflow.utils.Utils;
 import com.skyflow.utils.logger.LogUtil;
 import io.jsonwebtoken.Jwts;
 
+import com.skyflow.utils.validations.Validations;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -24,6 +26,7 @@ import java.net.MalformedURLException;
 import java.security.PrivateKey;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Map;
 import java.util.Objects;
 
 public class BearerToken {
@@ -31,7 +34,7 @@ public class BearerToken {
     private static final ApiClientBuilder API_CLIENT_BUILDER = new ApiClientBuilder();
     private final File credentialsFile;
     private final String credentialsString;
-    private final String ctx;
+    private final Object ctx;
     private final ArrayList<String> roles;
     private final String credentialsType;
 
@@ -48,7 +51,7 @@ public class BearerToken {
     }
 
     private static V1GetAuthTokenResponse generateBearerTokenFromCredentials(
-            File credentialsFile, String context, ArrayList<String> roles
+            File credentialsFile, Object context, ArrayList<String> roles
     ) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.GENERATE_BEARER_TOKEN_FROM_CREDENTIALS_TRIGGERED.getLog());
         try {
@@ -71,7 +74,7 @@ public class BearerToken {
     }
 
     private static V1GetAuthTokenResponse generateBearerTokenFromCredentialString(
-            String credentials, String context, ArrayList<String> roles
+            String credentials, Object context, ArrayList<String> roles
     ) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.GENERATE_BEARER_TOKEN_FROM_CREDENTIALS_STRING_TRIGGERED.getLog());
         try {
@@ -89,7 +92,7 @@ public class BearerToken {
     }
 
     private static V1GetAuthTokenResponse getBearerTokenFromCredentials(
-            JsonObject credentials, String context, ArrayList<String> roles
+            JsonObject credentials, Object context, ArrayList<String> roles
     ) throws SkyflowException {
         try {
             JsonElement privateKey = credentials.get("privateKey");
@@ -144,8 +147,19 @@ public class BearerToken {
     }
 
     private static String getSignedToken(
-            String clientID, String keyID, String tokenURI, PrivateKey pvtKey, String context
-    ) {
+            String clientID, String keyID, String tokenURI, PrivateKey pvtKey, Object context
+    ) throws SkyflowException {
+        // Validate and normalize context
+        Object validatedContext = context;
+        if (context instanceof Map) {
+            Map<?, ?> ctxMap = (Map<?, ?>) context;
+            if (ctxMap.isEmpty()) {
+                validatedContext = null;
+            } else {
+                Validations.validateCtxMapKeys(ctxMap);
+            }
+        }
+
         final Date createdDate = new Date();
         final Date expirationDate = new Date(createdDate.getTime() + (3600 * 1000));
         return Jwts.builder()
@@ -153,7 +167,7 @@ public class BearerToken {
                 .claim("key", keyID)
                 .claim("aud", tokenURI)
                 .claim("sub", clientID)
-                .claim("ctx", context)
+                .claim("ctx", validatedContext)
                 .expiration(expirationDate)
                 .signWith(pvtKey, Jwts.SIG.RS256)
                 .compact();
@@ -188,7 +202,7 @@ public class BearerToken {
     public static class BearerTokenBuilder {
         private File credentialsFile;
         private String credentialsString;
-        private String ctx;
+        private Object ctx;
         private ArrayList<String> roles;
         private String credentialsType;
 
@@ -212,6 +226,14 @@ public class BearerToken {
         }
 
         public BearerTokenBuilder setCtx(String ctx) {
+            this.ctx = ctx;
+            return this;
+        }
+
+        public BearerTokenBuilder setCtx(Map<String, Object> ctx) throws SkyflowException {
+            if (ctx != null && !ctx.isEmpty()) {
+                Validations.validateCtxMapKeys(ctx);
+            }
             this.ctx = ctx;
             return this;
         }

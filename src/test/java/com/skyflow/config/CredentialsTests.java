@@ -3,6 +3,7 @@ package com.skyflow.config;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.utils.Utils;
 import com.skyflow.utils.validations.Validations;
 import org.junit.Assert;
 import org.junit.Before;
@@ -10,6 +11,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class CredentialsTests {
     private static final String INVALID_EXCEPTION_THROWN = "Should not have thrown any exception";
@@ -258,6 +261,94 @@ public class CredentialsTests {
             Credentials credentials = new Credentials();
             credentials.setPath(path);
             credentials.setContext("");
+            Validations.validateCredentials(credentials);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(ErrorMessage.EmptyContext.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidCredentialsWithMapContext() {
+        try {
+            Map<String, Object> mapContext = new HashMap<>();
+            mapContext.put("role", "admin");
+            mapContext.put("department", "engineering");
+            Credentials credentials = new Credentials();
+            credentials.setApiKey(validApiKey);
+            credentials.setContext(mapContext);
+            Validations.validateCredentials(credentials);
+            Assert.assertNull(credentials.getContext());
+            Assert.assertEquals(mapContext, credentials.getContextAsObject());
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testInvalidCtxMapKeyWithHyphenInCredentials() {
+        try {
+            Map<String, Object> mapContext = new HashMap<>();
+            mapContext.put("invalid-key", "value");
+            Credentials credentials = new Credentials();
+            credentials.setPath(path);
+            credentials.setContext(mapContext);
+            Validations.validateCredentials(credentials);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(
+                    Utils.parameterizedString(ErrorMessage.InvalidCtxMapKey.getMessage(), "invalid-key"),
+                    e.getMessage()
+            );
+        }
+    }
+
+    @Test
+    public void testInvalidCtxMapKeyWithDotInCredentials() {
+        try {
+            Map<String, Object> mapContext = new HashMap<>();
+            mapContext.put("invalid.key", "value");
+            Credentials credentials = new Credentials();
+            credentials.setPath(path);
+            credentials.setContext(mapContext);
+            Validations.validateCredentials(credentials);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(
+                    Utils.parameterizedString(ErrorMessage.InvalidCtxMapKey.getMessage(), "invalid.key"),
+                    e.getMessage()
+            );
+        }
+    }
+
+    @Test
+    public void testInvalidCtxMapKeyWithSpaceInCredentials() {
+        try {
+            Map<String, Object> mapContext = new HashMap<>();
+            mapContext.put("invalid key", "value");
+            Credentials credentials = new Credentials();
+            credentials.setPath(path);
+            credentials.setContext(mapContext);
+            Validations.validateCredentials(credentials);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(
+                    Utils.parameterizedString(ErrorMessage.InvalidCtxMapKey.getMessage(), "invalid key"),
+                    e.getMessage()
+            );
+        }
+    }
+
+    @Test
+    public void testEmptyMapContextInCredentials() {
+        try {
+            Credentials credentials = new Credentials();
+            credentials.setPath(path);
+            credentials.setContext(new HashMap<>());
             Validations.validateCredentials(credentials);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {

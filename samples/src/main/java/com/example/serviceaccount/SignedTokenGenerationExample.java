@@ -6,12 +6,15 @@ import com.skyflow.serviceaccount.util.SignedDataTokens;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
- * This example demonstrates how to generate Signed Data Tokens using two methods:
- * 1. Specifying the path to a credentials JSON file.
- * 2. Providing the credentials JSON as a string.
+ * This example demonstrates how to generate Signed Data Tokens using three methods:
+ * 1. Specifying the path to a credentials JSON file with a string context.
+ * 2. Providing the credentials JSON as a string with a string context.
+ * 3. Using a JSON object context for Conditional Data Access.
  * <p>
  * Signed data tokens are used to verify and securely transmit data with a specified context and TTL.
  */
@@ -68,6 +71,37 @@ public class SignedTokenGenerationExample {
             System.out.println("Signed Tokens (using credentials string): " + signedTokenValues);
         } catch (SkyflowException e) {
             System.out.println("Error occurred while generating signed tokens using credentials string:");
+            e.printStackTrace();
+        }
+
+        // Example 3: Generate Signed Data Token with a JSON object context for Conditional Data Access
+        // Use this approach when your Skyflow policy uses CEL expressions that reference nested
+        // context fields, such as: request.context.role == 'admin'
+        try {
+            // Step 1: Specify the path to the service account credentials JSON file
+            String filePath = "<YOUR_CREDENTIALS_FILE_PATH>"; // Replace with the actual file path
+
+            // Step 2: Create a context map with key-value pairs matching your Conditional Data Access policy
+            Map<String, Object> context = new HashMap<>();
+            context.put("role", "admin");              // Evaluated as request.context.role
+            context.put("project_id", "proj_123");     // Evaluated as request.context.project_id
+
+            ArrayList<String> dataTokens = new ArrayList<>();
+            dataTokens.add("YOUR_DATA_TOKEN_1"); // Replace with your actual data token(s)
+
+            // Step 3: Build the SignedDataTokens object with the JSON object context
+            SignedDataTokens signedToken = SignedDataTokens.builder()
+                    .setCredentials(new File(filePath)) // Provide the credentials file
+                    .setCtx(context)                    // Set context as a JSON object
+                    .setTimeToLive(30)                  // Set the TTL (in seconds)
+                    .setDataTokens(dataTokens)          // Set the data tokens to sign
+                    .build();
+
+            // Step 4: Retrieve and print the signed data tokens
+            signedTokenValues = signedToken.getSignedDataTokens();
+            System.out.println("Signed Tokens (using JSON object context): " + signedTokenValues);
+        } catch (SkyflowException e) {
+            System.out.println("Error occurred while generating signed tokens with JSON object context:");
             e.printStackTrace();
         }
     }

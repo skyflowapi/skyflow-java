@@ -1,11 +1,12 @@
 package com.skyflow.config;
 
 import java.util.ArrayList;
+import java.util.Map;
 
 public class Credentials {
     private String path;
     private ArrayList<String> roles;
-    private String context;
+    private Object context;
     private String credentialsString;
     private String token;
     private String apiKey;
@@ -33,10 +34,18 @@ public class Credentials {
     }
 
     public String getContext() {
+        return context instanceof String ? (String) context : null;
+    }
+
+    public Object getContextAsObject() {
         return context;
     }
 
     public void setContext(String context) {
+        this.context = context;
+    }
+
+    public void setContext(Map<String, Object> context) {
         this.context = context;
     }
 

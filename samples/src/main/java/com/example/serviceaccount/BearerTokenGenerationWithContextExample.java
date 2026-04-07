@@ -4,12 +4,15 @@ import com.skyflow.errors.SkyflowException;
 import com.skyflow.serviceaccount.util.BearerToken;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Example program to generate a Bearer Token using Skyflow's BearerToken utility.
- * The token is generated using two approaches:
- * 1. By providing the credentials.json file path.
- * 2. By providing the contents of credentials.json as a string.
+ * The token is generated using three approaches:
+ * 1. By providing the credentials.json file path with a string context.
+ * 2. By providing the contents of credentials.json as a string with a string context.
+ * 3. By providing a JSON object context for Conditional Data Access.
  */
 public class BearerTokenGenerationWithContextExample {
     public static void main(String[] args) {
@@ -47,6 +50,34 @@ public class BearerTokenGenerationWithContextExample {
                     .setCredentials(fileContents) // Set credentials using a string representation of the file
                     .setCtx("abc") // Set context string (example: "abc")
                     .build(); // Build the BearerToken object
+
+            // Retrieve the Bearer Token as a string
+            bearerToken = token.getBearerToken();
+
+            // Print the generated Bearer Token to the console
+            System.out.println(bearerToken);
+        } catch (SkyflowException e) {
+            // Handle exceptions specific to Skyflow operations
+            e.printStackTrace();
+        }
+
+        // Approach 3: Generate Bearer Token with a JSON object context for Conditional Data Access
+        // Use this approach when your Skyflow policy uses CEL expressions that reference nested
+        // context fields, such as: request.context.role == 'admin'
+        try {
+            // Replace <YOUR_CREDENTIALS_FILE_PATH> with the full path to your credentials.json file
+            String filePath = "<YOUR_CREDENTIALS_FILE_PATH>";
+
+            // Create a context map with key-value pairs matching your Conditional Data Access policy
+            Map<String, Object> context = new HashMap<>();
+            context.put("role", "admin");              // Evaluated as request.context.role
+            context.put("project_id", "proj_123");     // Evaluated as request.context.project_id
+
+            // Create a BearerToken object with the JSON object context
+            BearerToken token = BearerToken.builder()
+                    .setCredentials(new File(filePath)) // Set credentials using a File object
+                    .setCtx(context)                    // Set context as a JSON object
+                    .build();                           // Build the BearerToken object
 
             // Retrieve the Bearer Token as a string
             bearerToken = token.getBearerToken();

@@ -13,6 +13,8 @@ import com.skyflow.utils.Utils;
 import com.skyflow.utils.logger.LogUtil;
 import io.jsonwebtoken.Jwts;
 
+import com.skyflow.utils.validations.Validations;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -20,13 +22,14 @@ import java.security.PrivateKey;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 public class SignedDataTokens {
     private final File credentialsFile;
     private final String credentialsString;
     private final String credentialsType;
-    private final String ctx;
+    private final Object ctx;
     private final ArrayList<String> dataTokens;
     private final Integer timeToLive;
 
@@ -44,7 +47,7 @@ public class SignedDataTokens {
     }
 
     private static List<SignedDataTokenResponse> generateSignedTokenFromCredentialsFile(
-            File credentialsFile, ArrayList<String> dataTokens, Integer timeToLive, String context
+            File credentialsFile, ArrayList<String> dataTokens, Integer timeToLive, Object context
     ) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.GENERATE_SIGNED_TOKENS_FROM_CREDENTIALS_FILE_TRIGGERED.getLog());
         List<SignedDataTokenResponse> responseToken;
@@ -69,7 +72,7 @@ public class SignedDataTokens {
     }
 
     private static List<SignedDataTokenResponse> generateSignedTokensFromCredentialsString(
-            String credentials, ArrayList<String> dataTokens, Integer timeToLive, String context
+            String credentials, ArrayList<String> dataTokens, Integer timeToLive, Object context
     ) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.GENERATE_SIGNED_TOKENS_FROM_CREDENTIALS_STRING_TRIGGERED.getLog());
         List<SignedDataTokenResponse> responseToken;
@@ -89,7 +92,7 @@ public class SignedDataTokens {
     }
 
     private static List<SignedDataTokenResponse> generateSignedTokensFromCredentials(
-            JsonObject credentials, ArrayList<String> dataTokens, Integer timeToLive, String context
+            JsonObject credentials, ArrayList<String> dataTokens, Integer timeToLive, Object context
     ) throws SkyflowException {
         List<SignedDataTokenResponse> signedDataTokens = null;
         try {
@@ -122,8 +125,19 @@ public class SignedDataTokens {
 
     private static List<SignedDataTokenResponse> getSignedToken(
             String clientID, String keyID, PrivateKey pvtKey,
-            ArrayList<String> dataTokens, Integer timeToLive, String context
-    ) {
+            ArrayList<String> dataTokens, Integer timeToLive, Object context
+    ) throws SkyflowException {
+        // Validate and normalize context
+        Object validatedContext = context;
+        if (context instanceof Map) {
+            Map<?, ?> ctxMap = (Map<?, ?>) context;
+            if (ctxMap.isEmpty()) {
+                validatedContext = null;
+            } else {
+                Validations.validateCtxMapKeys(ctxMap);
+            }
+        }
+
         final Date createdDate = new Date();
         final Date expirationDate;
 
@@ -140,7 +154,7 @@ public class SignedDataTokens {
                     .claim("iat", (createdDate.getTime() / 1000))
                     .claim("key", keyID)
                     .claim("sub", clientID)
-                    .claim("ctx", context)
+                    .claim("ctx", validatedContext)
                     .claim("tok", dataToken)
                     .expiration(expirationDate)
                     .signWith(pvtKey, Jwts.SIG.RS256)
@@ -168,7 +182,7 @@ public class SignedDataTokens {
         private Integer timeToLive;
         private File credentialsFile;
         private String credentialsString;
-        private String ctx;
+        private Object ctx;
         private String credentialsType;
 
         private SignedDataTokensBuilder() {
@@ -191,6 +205,14 @@ public class SignedDataTokens {
         }
 
         public SignedDataTokensBuilder setCtx(String ctx) {
+            this.ctx = ctx;
+            return this;
+        }
+
+        public SignedDataTokensBuilder setCtx(Map<String, Object> ctx) throws SkyflowException {
+            if (ctx != null && !ctx.isEmpty()) {
+                Validations.validateCtxMapKeys(ctx);
+            }
             this.ctx = ctx;
             return this;
         }

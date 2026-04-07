@@ -42,7 +42,34 @@ import com.skyflow.vault.tokens.DetokenizeRequest;
 import com.skyflow.vault.tokens.TokenizeRequest;
 
 public class Validations {
+    private static final Pattern CTX_MAP_KEY_PATTERN = Pattern.compile("^[a-zA-Z0-9_]+$");
+
     private Validations() {
+    }
+
+    public static void validateCtxMapKeys(Map<?, ?> ctxMap) throws SkyflowException {
+        for (Object key : ctxMap.keySet()) {
+            if (key == null) {
+                LogUtil.printErrorLog(Utils.parameterizedString(
+                        ErrorLogs.INVALID_CTX_MAP_KEY.getLog(), "null"
+                ));
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(),
+                        Utils.parameterizedString(ErrorMessage.InvalidCtxMapKey.getMessage(), "null"));
+            }
+            String keyStr = key.toString();
+            if (!CTX_MAP_KEY_PATTERN.matcher(keyStr).matches()) {
+                LogUtil.printErrorLog(Utils.parameterizedString(
+                        ErrorLogs.INVALID_CTX_MAP_KEY.getLog(), keyStr
+                ));
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(),
+                        Utils.parameterizedString(ErrorMessage.InvalidCtxMapKey.getMessage(), keyStr));
+            }
+            // Recursively validate nested maps
+            Object value = ctxMap.get(key);
+            if (value instanceof Map) {
+                validateCtxMapKeys((Map<?, ?>) value);
+            }
+        }
     }
 
     public static void validateVaultConfig(VaultConfig vaultConfig) throws SkyflowException {
@@ -162,7 +189,7 @@ public class Validations {
         String credentialsString = credentials.getCredentialsString();
         String token = credentials.getToken();
         String apiKey = credentials.getApiKey();
-        String context = credentials.getContext();
+        Object context = credentials.getContextAsObject();
         ArrayList<String> roles = credentials.getRoles();
 
         if (path != null) nonNullMembers++;
@@ -217,9 +244,16 @@ public class Validations {
                 }
             }
         }
-        if (context != null && context.trim().isEmpty()) {
-            LogUtil.printErrorLog(ErrorLogs.EMPTY_OR_NULL_CONTEXT.getLog());
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyContext.getMessage());
+        if (context != null) {
+            if (context instanceof String && ((String) context).trim().isEmpty()) {
+                LogUtil.printErrorLog(ErrorLogs.EMPTY_OR_NULL_CONTEXT.getLog());
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyContext.getMessage());
+            } else if (context instanceof Map && ((Map<?, ?>) context).isEmpty()) {
+                LogUtil.printErrorLog(ErrorLogs.EMPTY_OR_NULL_CONTEXT.getLog());
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyContext.getMessage());
+            } else if (context instanceof Map) {
+                validateCtxMapKeys((Map<?, ?>) context);
+            }
         }
     }
 

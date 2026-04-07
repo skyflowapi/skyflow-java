@@ -34,6 +34,8 @@ public enum ErrorMessage {
     EmptyRoles("%s0 Initialization failed. Invalid roles. Specify at least one role."),
     EmptyRoleInRoles("%s0 Initialization failed. Invalid role. Specify a valid role."),
     EmptyContext("%s0 Initialization failed. Invalid context. Specify a valid context."),
+    InvalidCtxType("%s0 Initialization failed. Invalid context type. Context must be a string or a map."),
+    InvalidCtxMapKey("%s0 Initialization failed. Invalid context map key '%s1'. Context map keys must contain only alphanumeric characters and underscores."),
 
     // Bearer token generation
     FileNotFound("%s0 Initialization failed. Credential file not found at %s1. Verify the file path."),
