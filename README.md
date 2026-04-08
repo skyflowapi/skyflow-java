@@ -21,6 +21,8 @@ The Skyflow Java SDK is designed to help with integrating Skyflow into a Java ba
 - [Vault](#vault)
   - [Bulk insert data into the vault](#bulk-insert-data-into-the-vault)
   - [Bulk Detokenize](#bulk-detokenize)
+  - [Bulk Tokenize](#bulk-tokenize)
+  - [Bulk Delete Tokens](#bulk-delete-tokens)
 - [Authenticate with bearer tokens](#authenticate-with-bearer-tokens)
   - [Generate a bearer token](#generate-a-bearer-token)
   - [Generate bearer tokens with context](#generate-bearer-tokens-with-context)
@@ -33,7 +35,7 @@ The Skyflow Java SDK is designed to help with integrating Skyflow into a Java ba
 # Overview
 
 - Authenticate using a Skyflow service account and generate bearer tokens for secure access.
-- Perform Vault API operations such as inserting, and detokenizing sensitive data with ease.
+- Perform Vault API operations such as inserting, detokenizing, tokenizing sensitive data, and deleting tokens with ease.
 
 # Install
 
@@ -971,6 +973,491 @@ Sample response:
       "error": "Detokenize failed. Token 6ffb412b-a79d is invalid. Specify a valid token.",       
     }
   ]
+}
+```
+
+## Bulk tokenize
+
+To tokenize sensitive values in a schemaless vault, use the `bulkTokenize` or `bulkTokenizeAsync` methods. Each `TokenizeRecord` contains a value to tokenize and a list of token group names that determine how the token is generated.
+
+### Construct a tokenize request
+
+```java
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.data.TokenizeRecord;
+import com.skyflow.vault.data.TokenizeRequest;
+import com.skyflow.vault.data.TokenizeResponse;
+
+import java.util.ArrayList;
+
+/**
+ * This example demonstrates how to tokenize sensitive values in a Skyflow schemaless vault,
+ * along with the corresponding TokenizeRequest schema.
+ */
+public class TokenizeSchema {
+    public static void main(String[] args) {
+        try {
+            // Initialize Skyflow client
+
+            // Step 1: Specify the token group names to tokenize the value against
+            ArrayList<String> tokenGroupNames = new ArrayList<>();
+            tokenGroupNames.add("<YOUR_TOKEN_GROUP_NAME_1>");
+            tokenGroupNames.add("<YOUR_TOKEN_GROUP_NAME_2>");
+
+            // Step 2: Build tokenize records, each with a value and one or more token group names
+            // The value can be a String, boolean, or number
+            TokenizeRecord record1 = TokenizeRecord.builder()
+                    .value("<YOUR_VALUE_1>")
+                    .tokenGroupNames(tokenGroupNames)
+                    .build();
+
+            TokenizeRecord record2 = TokenizeRecord.builder()
+                    .value("<YOUR_VALUE_2>")
+                    .tokenGroupNames(tokenGroupNames)
+                    .build();
+
+            ArrayList<TokenizeRecord> records = new ArrayList<>();
+            records.add(record1);
+            records.add(record2);
+
+            // Step 3: Build the tokenize request
+            TokenizeRequest tokenizeRequest = TokenizeRequest.builder()
+                    .data(records)
+                    .build();
+
+            // Step 4: Call the Skyflow vault to tokenize the values
+            TokenizeResponse tokenizeResponse = skyflowClient.vault().bulkTokenize(tokenizeRequest);
+            System.out.println(tokenizeResponse);
+        } catch (SkyflowException e) {
+            // Step 5: Handle any errors that occur during the process
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### An [example](https://github.com/skyflowapi/skyflow-java/blob/v3/samples/src/main/java/com/example/vault/BulkTokenizeSync.java) of a sync bulkTokenize call
+
+```java
+import com.skyflow.Skyflow;
+import com.skyflow.config.Credentials;
+import com.skyflow.config.VaultConfig;
+import com.skyflow.enums.Env;
+import com.skyflow.enums.LogLevel;
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.data.TokenizeRecord;
+import com.skyflow.vault.data.TokenizeRequest;
+import com.skyflow.vault.data.TokenizeResponse;
+
+import java.util.ArrayList;
+
+/**
+ * This sample demonstrates how to perform a synchronous bulk tokenize operation using the Skyflow Java SDK.
+ */
+public class BulkTokenizeSync {
+    public static void main(String[] args) {
+        try {
+            // Step 1: Initialize credentials with the path to your service account key file
+            String filePath = "<YOUR_CREDENTIALS_FILE_PATH>";
+            Credentials credentials = new Credentials();
+            credentials.setPath(filePath);
+
+            // Step 2: Configure the vault with required parameters
+            VaultConfig vaultConfig = new VaultConfig();
+            vaultConfig.setVaultId("<YOUR_VAULT_ID>");
+            vaultConfig.setClusterId("<YOUR_CLUSTER_ID>");
+            vaultConfig.setEnv(Env.PROD);
+            vaultConfig.setCredentials(credentials);
+
+            // Step 3: Create Skyflow client instance
+            Skyflow skyflowClient = Skyflow.builder()
+                    .setLogLevel(LogLevel.ERROR)
+                    .addVaultConfig(vaultConfig)
+                    .build();
+
+            // Step 4: Specify token group names
+            ArrayList<String> tokenGroupNames = new ArrayList<>();
+            tokenGroupNames.add("<YOUR_TOKEN_GROUP_NAME_1>");
+            tokenGroupNames.add("<YOUR_TOKEN_GROUP_NAME_2>");
+
+            // Step 5: Build tokenize records
+            TokenizeRecord record1 = TokenizeRecord.builder()
+                    .value("<YOUR_VALUE_1>")
+                    .tokenGroupNames(tokenGroupNames)
+                    .build();
+
+            TokenizeRecord record2 = TokenizeRecord.builder()
+                    .value("<YOUR_VALUE_2>")
+                    .tokenGroupNames(tokenGroupNames)
+                    .build();
+
+            ArrayList<TokenizeRecord> records = new ArrayList<>();
+            records.add(record1);
+            records.add(record2);
+
+            // Step 6: Build and execute the tokenize request
+            TokenizeRequest tokenizeRequest = TokenizeRequest.builder()
+                    .data(records)
+                    .build();
+
+            TokenizeResponse tokenizeResponse = skyflowClient.vault().bulkTokenize(tokenizeRequest);
+            System.out.println(tokenizeResponse);
+        } catch (SkyflowException e) {
+            System.err.println("Error in Skyflow operations: " + e.getMessage());
+        }
+    }
+}
+```
+
+Sample response:
+
+```json
+{
+  "summary": {
+    "totalTokens": 2,
+    "totalTokenized": 2,
+    "totalPartial": 0,
+    "totalFailed": 0
+  },
+  "success": [
+    {
+      "index": 0,
+      "tokens": {
+        "<YOUR_TOKEN_GROUP_NAME_1>": "<GENERATED_TOKEN_1>",
+        "<YOUR_TOKEN_GROUP_NAME_2>": "<GENERATED_TOKEN_2>"
+      }
+    },
+    {
+      "index": 1,
+      "tokens": {
+        "<YOUR_TOKEN_GROUP_NAME_1>": "<GENERATED_TOKEN_3>",
+        "<YOUR_TOKEN_GROUP_NAME_2>": "<GENERATED_TOKEN_4>"
+      }
+    }
+  ],
+  "errors": []
+}
+```
+
+### An [example](https://github.com/skyflowapi/skyflow-java/blob/v3/samples/src/main/java/com/example/vault/BulkTokenizeAsync.java) of an async bulkTokenize call
+
+```java
+import com.skyflow.Skyflow;
+import com.skyflow.config.Credentials;
+import com.skyflow.config.VaultConfig;
+import com.skyflow.enums.Env;
+import com.skyflow.enums.LogLevel;
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.data.TokenizeRecord;
+import com.skyflow.vault.data.TokenizeRequest;
+import com.skyflow.vault.data.TokenizeResponse;
+
+import java.util.ArrayList;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+
+/**
+ * This sample demonstrates how to perform an asynchronous bulk tokenize operation using the Skyflow Java SDK.
+ */
+public class BulkTokenizeAsync {
+    public static void main(String[] args) {
+        try {
+            // Step 1: Initialize credentials with the path to your service account key file
+            String filePath = "<YOUR_CREDENTIALS_FILE_PATH>";
+            Credentials credentials = new Credentials();
+            credentials.setPath(filePath);
+
+            // Step 2: Configure the vault with required parameters
+            VaultConfig vaultConfig = new VaultConfig();
+            vaultConfig.setVaultId("<YOUR_VAULT_ID>");
+            vaultConfig.setClusterId("<YOUR_CLUSTER_ID>");
+            vaultConfig.setEnv(Env.PROD);
+            vaultConfig.setCredentials(credentials);
+
+            // Step 3: Create Skyflow client instance
+            Skyflow skyflowClient = Skyflow.builder()
+                    .setLogLevel(LogLevel.ERROR)
+                    .addVaultConfig(vaultConfig)
+                    .build();
+
+            // Step 4: Specify token group names
+            ArrayList<String> tokenGroupNames = new ArrayList<>();
+            tokenGroupNames.add("<YOUR_TOKEN_GROUP_NAME_1>");
+            tokenGroupNames.add("<YOUR_TOKEN_GROUP_NAME_2>");
+
+            // Step 5: Build tokenize records
+            TokenizeRecord record1 = TokenizeRecord.builder()
+                    .value("<YOUR_VALUE_1>")
+                    .tokenGroupNames(tokenGroupNames)
+                    .build();
+
+            TokenizeRecord record2 = TokenizeRecord.builder()
+                    .value("<YOUR_VALUE_2>")
+                    .tokenGroupNames(tokenGroupNames)
+                    .build();
+
+            ArrayList<TokenizeRecord> records = new ArrayList<>();
+            records.add(record1);
+            records.add(record2);
+
+            // Step 6: Build the tokenize request
+            TokenizeRequest tokenizeRequest = TokenizeRequest.builder()
+                    .data(records)
+                    .build();
+
+            // Step 7: Execute the async bulk tokenize operation and handle response using callbacks
+            CompletableFuture<TokenizeResponse> future = skyflowClient.vault().bulkTokenizeAsync(tokenizeRequest);
+            future.thenAccept(response -> {
+                System.out.println("Async bulk tokenize resolved with response:\t" + response);
+            }).exceptionally(throwable -> {
+                System.err.println("Async bulk tokenize rejected with error:\t" + throwable.getMessage());
+                throw new CompletionException(throwable);
+            });
+        } catch (SkyflowException e) {
+            System.err.println("Error in Skyflow operations: " + e.getMessage());
+        }
+    }
+}
+```
+
+Sample response:
+
+```json
+{
+  "summary": {
+    "totalTokens": 2,
+    "totalTokenized": 2,
+    "totalPartial": 0,
+    "totalFailed": 0
+  },
+  "success": [
+    {
+      "index": 0,
+      "tokens": {
+        "<YOUR_TOKEN_GROUP_NAME_1>": "<GENERATED_TOKEN_1>",
+        "<YOUR_TOKEN_GROUP_NAME_2>": "<GENERATED_TOKEN_2>"
+      }
+    },
+    {
+      "index": 1,
+      "tokens": {
+        "<YOUR_TOKEN_GROUP_NAME_1>": "<GENERATED_TOKEN_3>",
+        "<YOUR_TOKEN_GROUP_NAME_2>": "<GENERATED_TOKEN_4>"
+      }
+    }
+  ],
+  "errors": []
+}
+```
+
+## Bulk delete tokens
+
+To delete tokens from your vault, use the `bulkDeleteTokens` or `bulkDeleteTokensAsync` methods. Pass a list of token values to be deleted.
+
+### Construct a delete tokens request
+
+```java
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.data.DeleteTokensRequest;
+import com.skyflow.vault.data.DeleteTokensResponse;
+
+import java.util.ArrayList;
+
+/**
+ * This example demonstrates how to delete tokens from a Skyflow vault,
+ * along with the corresponding DeleteTokensRequest schema.
+ */
+public class DeleteTokensSchema {
+    public static void main(String[] args) {
+        try {
+            // Initialize Skyflow client
+
+            // Step 1: Prepare the list of tokens to delete
+            ArrayList<String> tokens = new ArrayList<>();
+            tokens.add("<YOUR_TOKEN_VALUE_1>");
+            tokens.add("<YOUR_TOKEN_VALUE_2>");
+
+            // Step 2: Build the delete tokens request
+            DeleteTokensRequest deleteTokensRequest = DeleteTokensRequest.builder()
+                    .tokens(tokens)
+                    .build();
+
+            // Step 3: Call the Skyflow vault to delete the tokens
+            DeleteTokensResponse deleteTokensResponse = skyflowClient.vault().bulkDeleteTokens(deleteTokensRequest);
+            System.out.println(deleteTokensResponse);
+        } catch (SkyflowException e) {
+            // Step 4: Handle any errors that occur during the process
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### An [example](https://github.com/skyflowapi/skyflow-java/blob/v3/samples/src/main/java/com/example/vault/BulkDeleteTokensSync.java) of a sync bulkDeleteTokens call
+
+```java
+import com.skyflow.Skyflow;
+import com.skyflow.config.Credentials;
+import com.skyflow.config.VaultConfig;
+import com.skyflow.enums.Env;
+import com.skyflow.enums.LogLevel;
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.data.DeleteTokensRequest;
+import com.skyflow.vault.data.DeleteTokensResponse;
+
+import java.util.ArrayList;
+
+/**
+ * This sample demonstrates how to perform a synchronous bulk delete tokens operation using the Skyflow Java SDK.
+ */
+public class BulkDeleteTokensSync {
+    public static void main(String[] args) {
+        try {
+            // Step 1: Initialize credentials with the path to your service account key file
+            String filePath = "<YOUR_CREDENTIALS_FILE_PATH>";
+            Credentials credentials = new Credentials();
+            credentials.setPath(filePath);
+
+            // Step 2: Configure the vault with required parameters
+            VaultConfig vaultConfig = new VaultConfig();
+            vaultConfig.setVaultId("<YOUR_VAULT_ID>");
+            vaultConfig.setClusterId("<YOUR_CLUSTER_ID>");
+            vaultConfig.setEnv(Env.PROD);
+            vaultConfig.setCredentials(credentials);
+
+            // Step 3: Create Skyflow client instance
+            Skyflow skyflowClient = Skyflow.builder()
+                    .setLogLevel(LogLevel.ERROR)
+                    .addVaultConfig(vaultConfig)
+                    .build();
+
+            // Step 4: Prepare the list of tokens to delete
+            ArrayList<String> tokens = new ArrayList<>();
+            tokens.add("<YOUR_TOKEN_VALUE_1>");
+            tokens.add("<YOUR_TOKEN_VALUE_2>");
+
+            // Step 5: Build and execute the delete tokens request
+            DeleteTokensRequest deleteTokensRequest = DeleteTokensRequest.builder()
+                    .tokens(tokens)
+                    .build();
+
+            DeleteTokensResponse deleteTokensResponse = skyflowClient.vault().bulkDeleteTokens(deleteTokensRequest);
+            System.out.println(deleteTokensResponse);
+        } catch (SkyflowException e) {
+            System.err.println("Error in Skyflow operations: " + e.getMessage());
+        }
+    }
+}
+```
+
+Sample response:
+
+```json
+{
+  "summary": {
+    "totalTokens": 2,
+    "totalDeleted": 2,
+    "totalFailed": 0
+  },
+  "success": [
+    {
+      "index": 0,
+      "token": "<YOUR_TOKEN_VALUE_1>"
+    },
+    {
+      "index": 1,
+      "token": "<YOUR_TOKEN_VALUE_2>"
+    }
+  ],
+  "errors": []
+}
+```
+
+### An [example](https://github.com/skyflowapi/skyflow-java/blob/v3/samples/src/main/java/com/example/vault/BulkDeleteTokensAsync.java) of an async bulkDeleteTokens call
+
+```java
+import com.skyflow.Skyflow;
+import com.skyflow.config.Credentials;
+import com.skyflow.config.VaultConfig;
+import com.skyflow.enums.Env;
+import com.skyflow.enums.LogLevel;
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.data.DeleteTokensRequest;
+import com.skyflow.vault.data.DeleteTokensResponse;
+
+import java.util.ArrayList;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+
+/**
+ * This sample demonstrates how to perform an asynchronous bulk delete tokens operation using the Skyflow Java SDK.
+ */
+public class BulkDeleteTokensAsync {
+    public static void main(String[] args) {
+        try {
+            // Step 1: Initialize credentials with the path to your service account key file
+            String filePath = "<YOUR_CREDENTIALS_FILE_PATH>";
+            Credentials credentials = new Credentials();
+            credentials.setPath(filePath);
+
+            // Step 2: Configure the vault with required parameters
+            VaultConfig vaultConfig = new VaultConfig();
+            vaultConfig.setVaultId("<YOUR_VAULT_ID>");
+            vaultConfig.setClusterId("<YOUR_CLUSTER_ID>");
+            vaultConfig.setEnv(Env.PROD);
+            vaultConfig.setCredentials(credentials);
+
+            // Step 3: Create Skyflow client instance
+            Skyflow skyflowClient = Skyflow.builder()
+                    .setLogLevel(LogLevel.ERROR)
+                    .addVaultConfig(vaultConfig)
+                    .build();
+
+            // Step 4: Prepare the list of tokens to delete
+            ArrayList<String> tokens = new ArrayList<>();
+            tokens.add("<YOUR_TOKEN_VALUE_1>");
+            tokens.add("<YOUR_TOKEN_VALUE_2>");
+
+            // Step 5: Build the delete tokens request
+            DeleteTokensRequest deleteTokensRequest = DeleteTokensRequest.builder()
+                    .tokens(tokens)
+                    .build();
+
+            // Step 6: Execute the async bulk delete tokens operation and handle response using callbacks
+            CompletableFuture<DeleteTokensResponse> future = skyflowClient.vault().bulkDeleteTokensAsync(deleteTokensRequest);
+            future.thenAccept(response -> {
+                System.out.println("Async bulk delete tokens resolved with response:\t" + response);
+            }).exceptionally(throwable -> {
+                System.err.println("Async bulk delete tokens rejected with error:\t" + throwable.getMessage());
+                throw new CompletionException(throwable);
+            });
+        } catch (SkyflowException e) {
+            System.err.println("Error in Skyflow operations: " + e.getMessage());
+        }
+    }
+}
+```
+
+Sample response:
+
+```json
+{
+  "summary": {
+    "totalTokens": 2,
+    "totalDeleted": 2,
+    "totalFailed": 0
+  },
+  "success": [
+    {
+      "index": 0,
+      "token": "<YOUR_TOKEN_VALUE_1>"
+    },
+    {
+      "index": 1,
+      "token": "<YOUR_TOKEN_VALUE_2>"
+    }
+  ],
+  "errors": []
 }
 ```
 
