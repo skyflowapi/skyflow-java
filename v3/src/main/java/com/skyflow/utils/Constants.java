@@ -17,6 +17,14 @@ public final class Constants extends BaseConstants {
     public static final Integer DETOKENIZE_CONCURRENCY_LIMIT = 1;
     public static final Integer MAX_DETOKENIZE_BATCH_SIZE = 1000;
     public static final Integer MAX_DETOKENIZE_CONCURRENCY_LIMIT = 10;
+    public static final Integer DELETE_TOKENS_BATCH_SIZE = 50;
+    public static final Integer DELETE_TOKENS_CONCURRENCY_LIMIT = 1;
+    public static final Integer MAX_DELETE_TOKENS_BATCH_SIZE = 1000;
+    public static final Integer MAX_DELETE_TOKENS_CONCURRENCY_LIMIT = 10;
+    public static final Integer TOKENIZE_BATCH_SIZE = 50;
+    public static final Integer TOKENIZE_CONCURRENCY_LIMIT = 1;
+    public static final Integer MAX_TOKENIZE_BATCH_SIZE = 1000;
+    public static final Integer MAX_TOKENIZE_CONCURRENCY_LIMIT = 10;
     public static final String DEFAULT_SDK_VERSION = "v3";
 
     static {

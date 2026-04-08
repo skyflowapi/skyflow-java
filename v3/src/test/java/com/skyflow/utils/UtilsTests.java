@@ -7,9 +7,9 @@ import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.generated.auth.rest.core.ApiClientApiException;
-import com.skyflow.generated.rest.types.InsertRecordData;
-import com.skyflow.generated.rest.types.InsertResponse;
-import com.skyflow.generated.rest.types.RecordResponseObject;
+import com.skyflow.generated.rest.types.V1InsertRecordData;
+import com.skyflow.generated.rest.types.V1InsertResponse;
+import com.skyflow.generated.rest.types.V1RecordResponseObject;
 import com.skyflow.utils.validations.Validations;
 import com.skyflow.vault.data.*;
 import org.junit.After;
@@ -52,19 +52,19 @@ public class UtilsTests {
         SdkVersion.setSdkPrefix(Constants.SDK_PREFIX);
     }
 
-    public static List<com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest> createDetokenizeBatches(com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest request, int batchSize) {
-        List<com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest> detokenizeRequests = new ArrayList<>();
+    public static List<com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest> createDetokenizeBatches(com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest request, int batchSize) {
+        List<com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest> detokenizeRequests = new ArrayList<>();
         List<String> tokens = request.getTokens().get();
 
         for (int i = 0; i < tokens.size(); i += batchSize) {
             // Create a sublist for the current batch
             List<String> batchTokens = tokens.subList(i, Math.min(i + batchSize, tokens.size()));
-            List<com.skyflow.generated.rest.types.TokenGroupRedactions> tokenGroupRedactions = null;
+            List<com.skyflow.generated.rest.types.V1TokenGroupRedactions> tokenGroupRedactions = null;
             if (request.getTokenGroupRedactions().isPresent() && !request.getTokenGroupRedactions().get().isEmpty() && i < request.getTokenGroupRedactions().get().size()) {
                 tokenGroupRedactions = request.getTokenGroupRedactions().get().subList(i, Math.min(i + batchSize, request.getTokenGroupRedactions().get().size()));
             }
             // Build a new DetokenizeRequest for the current batch
-            com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest batchRequest = com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest.builder()
+            com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest batchRequest = com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest.builder()
                     .vaultId(request.getVaultId())
                     .tokens(new ArrayList<>(batchTokens))
                     .tokenGroupRedactions(tokenGroupRedactions)
@@ -187,11 +187,11 @@ public class UtilsTests {
 
     @Test
     public void testCreateBatchesMultipleBatches() {
-        List<InsertRecordData> records = new ArrayList<>();
+        List<V1InsertRecordData> records = new ArrayList<>();
         for (int i = 0; i < 125; i++) {
-            records.add(InsertRecordData.builder().build());
+            records.add(V1InsertRecordData.builder().build());
         }
-        List<List<InsertRecordData>> batches = Utils.createBatches(records, 50);
+        List<List<V1InsertRecordData>> batches = Utils.createBatches(records, 50);
 
         Assert.assertEquals(3, batches.size());
         Assert.assertEquals(50, batches.get(0).size());
@@ -201,18 +201,18 @@ public class UtilsTests {
 
     @Test
     public void testCreateBatchesWithEmptyList() {
-        List<InsertRecordData> records = new ArrayList<>();
-        List<List<InsertRecordData>> batches = Utils.createBatches(records, 50);
+        List<V1InsertRecordData> records = new ArrayList<>();
+        List<List<V1InsertRecordData>> batches = Utils.createBatches(records, 50);
         Assert.assertTrue("Batches should be empty for empty input", batches.isEmpty());
     }
 
     @Test
     public void testCreateBatchesWithSmallerSizeThanBatch() {
-        List<InsertRecordData> records = new ArrayList<>();
+        List<V1InsertRecordData> records = new ArrayList<>();
         for (int i = 0; i < 25; i++) {
-            records.add(InsertRecordData.builder().build());
+            records.add(V1InsertRecordData.builder().build());
         }
-        List<List<InsertRecordData>> batches = Utils.createBatches(records, 50);
+        List<List<V1InsertRecordData>> batches = Utils.createBatches(records, 50);
 
         Assert.assertEquals("Should create single batch", 1, batches.size());
         Assert.assertEquals("Batch should contain all records", 25, batches.get(0).size());
@@ -220,11 +220,11 @@ public class UtilsTests {
 
     @Test
     public void testCreateBatchesWithExactBatchSize() {
-        List<InsertRecordData> records = new ArrayList<>();
+        List<V1InsertRecordData> records = new ArrayList<>();
         for (int i = 0; i < 50; i++) {
-            records.add(InsertRecordData.builder().build());
+            records.add(V1InsertRecordData.builder().build());
         }
-        List<List<InsertRecordData>> batches = Utils.createBatches(records, 50);
+        List<List<V1InsertRecordData>> batches = Utils.createBatches(records, 50);
 
         Assert.assertEquals("Should create single batch", 1, batches.size());
         Assert.assertEquals("Batch should have exact size", 50, batches.get(0).size());
@@ -232,15 +232,15 @@ public class UtilsTests {
 
     @Test
     public void testCreateBatchesPreservesOrder() {
-        List<InsertRecordData> records = new ArrayList<>();
+        List<V1InsertRecordData> records = new ArrayList<>();
         for (int i = 0; i < 75; i++) {
-            InsertRecordData record = InsertRecordData.builder()
+            V1InsertRecordData record = V1InsertRecordData.builder()
                     .data(Optional.of(Collections.singletonMap("id", String.valueOf(i))))
                     .build();
             records.add(record);
         }
 
-        List<List<InsertRecordData>> batches = Utils.createBatches(records, 50);
+        List<List<V1InsertRecordData>> batches = Utils.createBatches(records, 50);
 
         Assert.assertEquals("Should create two batches", 2, batches.size());
         Assert.assertEquals("First record in first batch should be 0",
@@ -270,8 +270,8 @@ public class UtilsTests {
 
     @Test
     public void testHandleBatchExceptionApiClientExceptionWithSingleError() {
-        List<InsertRecordData> batch = Arrays.asList(InsertRecordData.builder().build(), InsertRecordData.builder().build());
-        List<List<InsertRecordData>> batches = Collections.singletonList(batch);
+        List<V1InsertRecordData> batch = Arrays.asList(V1InsertRecordData.builder().build(), V1InsertRecordData.builder().build());
+        List<List<V1InsertRecordData>> batches = Collections.singletonList(batch);
 
         Map<String, Object> errorMap = new HashMap<>();
         errorMap.put("error", "Common error");
@@ -294,8 +294,8 @@ public class UtilsTests {
 
     @Test
     public void testHandleBatchExceptionWithNonApiClientException() {
-        List<InsertRecordData> batch = Arrays.asList(InsertRecordData.builder().build(), InsertRecordData.builder().build());
-        List<List<InsertRecordData>> batches = Collections.singletonList(batch);
+        List<V1InsertRecordData> batch = Arrays.asList(V1InsertRecordData.builder().build(), V1InsertRecordData.builder().build());
+        List<List<V1InsertRecordData>> batches = Collections.singletonList(batch);
 
         RuntimeException exception = new RuntimeException("Unexpected error");
 
@@ -310,8 +310,8 @@ public class UtilsTests {
 
     @Test
     public void testHandleBatchExceptionWithNonZeroBatchNumber() {
-        List<InsertRecordData> batch = Arrays.asList(InsertRecordData.builder().build(), InsertRecordData.builder().build());
-        List<List<InsertRecordData>> batches = Arrays.asList(new ArrayList<>(), batch);
+        List<V1InsertRecordData> batch = Arrays.asList(V1InsertRecordData.builder().build(), V1InsertRecordData.builder().build());
+        List<List<V1InsertRecordData>> batches = Arrays.asList(new ArrayList<>(), batch);
 
         RuntimeException exception = new RuntimeException("Batch error");
 
@@ -323,8 +323,8 @@ public class UtilsTests {
 
     @Test
     public void testHandleBatchExceptionWithNullResponseBody1() {
-        List<InsertRecordData> batch = Arrays.asList(InsertRecordData.builder().build(), InsertRecordData.builder().build());
-        List<List<InsertRecordData>> batches = Collections.singletonList(batch);
+        List<V1InsertRecordData> batch = Arrays.asList(V1InsertRecordData.builder().build(), V1InsertRecordData.builder().build());
+        List<List<V1InsertRecordData>> batches = Collections.singletonList(batch);
 
         ApiClientApiException apiException = new ApiClientApiException("Bad Request", 400, null);
         Exception exception = new Exception("Test exception", apiException);
@@ -335,16 +335,16 @@ public class UtilsTests {
 
     @Test
     public void testFormatResponseWithSuccessAndErrorRecords() {
-        RecordResponseObject successRecord = RecordResponseObject.builder()
+        V1RecordResponseObject successRecord = V1RecordResponseObject.builder()
                 .skyflowId(Optional.of("testId1"))
                 .error(Optional.empty())
                 .build();
-        RecordResponseObject errorRecord = RecordResponseObject.builder()
+        V1RecordResponseObject errorRecord = V1RecordResponseObject.builder()
                 .error(Optional.of("Test error"))
                 .httpCode(Optional.of(400))
                 .build();
 
-        InsertResponse response = InsertResponse.builder()
+        V1InsertResponse response = V1InsertResponse.builder()
                 .records(Optional.of(Arrays.asList(successRecord, errorRecord)))
                 .build();
 
@@ -368,16 +368,16 @@ public class UtilsTests {
 
     @Test
     public void testFormatResponseWithSuccessRecordsOnly() {
-        RecordResponseObject successRecord1 = RecordResponseObject.builder()
+        V1RecordResponseObject successRecord1 = V1RecordResponseObject.builder()
                 .skyflowId(Optional.of("id1"))
                 .error(Optional.empty())
                 .build();
-        RecordResponseObject successRecord2 = RecordResponseObject.builder()
+        V1RecordResponseObject successRecord2 = V1RecordResponseObject.builder()
                 .skyflowId(Optional.of("id2"))
                 .error(Optional.empty())
                 .build();
 
-        InsertResponse response = InsertResponse.builder()
+        V1InsertResponse response = V1InsertResponse.builder()
                 .records(Optional.of(Arrays.asList(successRecord1, successRecord2)))
                 .build();
 
@@ -392,16 +392,16 @@ public class UtilsTests {
 
     @Test
     public void testFormatResponseWithErrorRecordsOnly() {
-        RecordResponseObject errorRecord1 = RecordResponseObject.builder()
+        V1RecordResponseObject errorRecord1 = V1RecordResponseObject.builder()
                 .error(Optional.of("Error 1"))
                 .httpCode(Optional.of(400))
                 .build();
-        RecordResponseObject errorRecord2 = RecordResponseObject.builder()
+        V1RecordResponseObject errorRecord2 = V1RecordResponseObject.builder()
                 .error(Optional.of("Error 2"))
                 .httpCode(Optional.of(500))
                 .build();
 
-        InsertResponse response = InsertResponse.builder()
+        V1InsertResponse response = V1InsertResponse.builder()
                 .records(Optional.of(Arrays.asList(errorRecord1, errorRecord2)))
                 .build();
 
@@ -418,16 +418,16 @@ public class UtilsTests {
 
     @Test
     public void testFormatResponseWithBatchOffset() {
-        RecordResponseObject successRecord = RecordResponseObject.builder()
+        V1RecordResponseObject successRecord = V1RecordResponseObject.builder()
                 .skyflowId(Optional.of("id1"))
                 .error(Optional.empty())
                 .build();
-        RecordResponseObject errorRecord = RecordResponseObject.builder()
+        V1RecordResponseObject errorRecord = V1RecordResponseObject.builder()
                 .error(Optional.of("Error"))
                 .httpCode(Optional.of(400))
                 .build();
 
-        InsertResponse response = InsertResponse.builder()
+        V1InsertResponse response = V1InsertResponse.builder()
                 .records(Optional.of(Arrays.asList(successRecord, errorRecord)))
                 .build();
 
@@ -439,7 +439,7 @@ public class UtilsTests {
 
     @Test
     public void testFormatResponseWithEmptyRecords() {
-        InsertResponse response = InsertResponse.builder()
+        V1InsertResponse response = V1InsertResponse.builder()
                 .records(Optional.of(new ArrayList<>()))
                 .build();
 
@@ -456,13 +456,13 @@ public class UtilsTests {
         tokens.put("field1", "token1");
         tokens.put("field2", "token2");
 
-        RecordResponseObject successRecord = RecordResponseObject.builder()
+        V1RecordResponseObject successRecord = V1RecordResponseObject.builder()
                 .skyflowId(Optional.of("id1"))
                 .tokens(Optional.of(tokens))
                 .error(Optional.empty())
                 .build();
 
-        InsertResponse response = InsertResponse.builder()
+        V1InsertResponse response = V1InsertResponse.builder()
                 .records(Optional.of(Collections.singletonList(successRecord)))
                 .build();
 
@@ -485,14 +485,14 @@ public class UtilsTests {
         tokenData.put("field1", tokenList);
 
         // Create success record with tokens
-        RecordResponseObject successRecord = RecordResponseObject.builder()
+        V1RecordResponseObject successRecord = V1RecordResponseObject.builder()
                 .skyflowId(Optional.of("id1"))
                 .tokens(Optional.of(tokenData))
                 .error(Optional.empty())
                 .build();
 
         // Create response object
-        InsertResponse response = InsertResponse.builder()
+        V1InsertResponse response = V1InsertResponse.builder()
                 .records(Optional.of(Collections.singletonList(successRecord)))
                 .build();
 
@@ -519,11 +519,11 @@ public class UtilsTests {
     @Test
     public void testHandleBatchExceptionWithRecordsInResponseBody() {
         // Prepare test data
-        List<InsertRecordData> batch = Arrays.asList(
-                InsertRecordData.builder().build(),
-                InsertRecordData.builder().build()
+        List<V1InsertRecordData> batch = Arrays.asList(
+                V1InsertRecordData.builder().build(),
+                V1InsertRecordData.builder().build()
         );
-        List<List<InsertRecordData>> batches = Collections.singletonList(batch);
+        List<List<V1InsertRecordData>> batches = Collections.singletonList(batch);
 
         // Create nested records with errors
         List<Map<String, Object>> recordsList = new ArrayList<>();
@@ -772,15 +772,15 @@ public class UtilsTests {
     @Test
     public void testFormatDetokenizeResponseValidResponse() {
         // Arrange
-        List<com.skyflow.generated.rest.types.DetokenizeResponseObject> responseObjectsGen = new ArrayList<>();
+        List<com.skyflow.generated.rest.types.V1FlowDetokenizeResponseObject> responseObjectsGen = new ArrayList<>();
         Map<String, Object> tokens = new HashMap<>();
         tokens.put("token1", "value1");
         tokens.put("token2", "value2");
-        com.skyflow.generated.rest.types.DetokenizeResponseObject object = com.skyflow.generated.rest.types.DetokenizeResponseObject.builder().token("token1").value("value1").tokenGroupName("demo").build();
+        com.skyflow.generated.rest.types.V1FlowDetokenizeResponseObject object = com.skyflow.generated.rest.types.V1FlowDetokenizeResponseObject.builder().token("token1").value("value1").tokenGroupName("demo").build();
         responseObjectsGen.add(object);
         responseObjectsGen.add(object);
 
-        com.skyflow.generated.rest.types.DetokenizeResponse response = com.skyflow.generated.rest.types.DetokenizeResponse.builder().response(Optional.of(responseObjectsGen)).build();
+        com.skyflow.generated.rest.types.V1FlowDetokenizeResponse response = com.skyflow.generated.rest.types.V1FlowDetokenizeResponse.builder().response(Optional.of(responseObjectsGen)).build();
 
         int batch = 0;
         int batchSize = 2;
@@ -798,14 +798,14 @@ public class UtilsTests {
     public void testFormatDetokenizeResponseResponseWithErrors() {
 
 
-        List<com.skyflow.generated.rest.types.DetokenizeResponseObject> responseObjectsGen = new ArrayList<>();
-        com.skyflow.generated.rest.types.DetokenizeResponseObject object = com.skyflow.generated.rest.types.DetokenizeResponseObject.builder().error("Error occurred").httpCode(400).build();
-        com.skyflow.generated.rest.types.DetokenizeResponseObject object2 = com.skyflow.generated.rest.types.DetokenizeResponseObject.builder().token("token1").tokenGroupName("demo").value("hello").build();
+        List<com.skyflow.generated.rest.types.V1FlowDetokenizeResponseObject> responseObjectsGen = new ArrayList<>();
+        com.skyflow.generated.rest.types.V1FlowDetokenizeResponseObject object = com.skyflow.generated.rest.types.V1FlowDetokenizeResponseObject.builder().error("Error occurred").httpCode(400).build();
+        com.skyflow.generated.rest.types.V1FlowDetokenizeResponseObject object2 = com.skyflow.generated.rest.types.V1FlowDetokenizeResponseObject.builder().token("token1").tokenGroupName("demo").value("hello").build();
 
         responseObjectsGen.add(object);
         responseObjectsGen.add(object2);
 
-        com.skyflow.generated.rest.types.DetokenizeResponse response = com.skyflow.generated.rest.types.DetokenizeResponse.builder().response(Optional.of(responseObjectsGen)).build();
+        com.skyflow.generated.rest.types.V1FlowDetokenizeResponse response = com.skyflow.generated.rest.types.V1FlowDetokenizeResponse.builder().response(Optional.of(responseObjectsGen)).build();
 
         int batch = 1;
         int batchSize = 2;
@@ -831,19 +831,19 @@ public class UtilsTests {
     @Test
     public void testCreateDetokenizeBatchesWithTokenGroupRedactions() {
         List<String> tokens = Arrays.asList("token1", "token2", "token3");
-        List<com.skyflow.generated.rest.types.TokenGroupRedactions> groupRedactions = Arrays.asList(
-                com.skyflow.generated.rest.types.TokenGroupRedactions.builder().tokenGroupName("group1").redaction("MASK").build(),
-                com.skyflow.generated.rest.types.TokenGroupRedactions.builder().tokenGroupName("group2").redaction("PLAIN_TEXT").build(),
-                com.skyflow.generated.rest.types.TokenGroupRedactions.builder().tokenGroupName("group3").redaction("REDACTED").build()
+        List<com.skyflow.generated.rest.types.V1TokenGroupRedactions> groupRedactions = Arrays.asList(
+                com.skyflow.generated.rest.types.V1TokenGroupRedactions.builder().tokenGroupName("group1").redaction("MASK").build(),
+                com.skyflow.generated.rest.types.V1TokenGroupRedactions.builder().tokenGroupName("group2").redaction("PLAIN_TEXT").build(),
+                com.skyflow.generated.rest.types.V1TokenGroupRedactions.builder().tokenGroupName("group3").redaction("REDACTED").build()
         );
 
-        com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest request = com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest.builder()
+        com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest request = com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest.builder()
                 .vaultId("vaultId")
                 .tokens(tokens)
                 .tokenGroupRedactions(groupRedactions)
                 .build();
 
-        List<com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest> batches = Utils.createDetokenizeBatches(request, 2);
+        List<com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest> batches = Utils.createDetokenizeBatches(request, 2);
 
         Assert.assertEquals(2, batches.size());
         Assert.assertEquals(Arrays.asList("token1", "token2"), batches.get(0).getTokens().get());
@@ -854,13 +854,13 @@ public class UtilsTests {
     @Test
     public void testCreateDetokenizeBatchesWithEmptyTokenGroupRedactions() {
         List<String> tokens = Arrays.asList("token1", "token2");
-        com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest request = com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest.builder()
+        com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest request = com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest.builder()
                 .vaultId("vaultId")
                 .tokens(tokens)
                 .tokenGroupRedactions(new ArrayList<>())
                 .build();
 
-        List<com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest> batches = Utils.createDetokenizeBatches(request, 1);
+        List<com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest> batches = Utils.createDetokenizeBatches(request, 1);
 
         Assert.assertEquals(2, batches.size());
 //        List<com.skyflow.generated.rest.types.TokenGroupRedactions> redactions = batches.get(0).getTokenGroupRedactions().get();
@@ -870,14 +870,14 @@ public class UtilsTests {
     @Test
     public void testCreateDetokenizeBatchesWithNullTokenGroupRedactions() {
         List<String> tokens = Arrays.asList("token1", "token2");
-        List<com.skyflow.generated.rest.types.TokenGroupRedactions> groupRedactions = new ArrayList<>();
-        com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest request = com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest.builder()
+        List<com.skyflow.generated.rest.types.V1TokenGroupRedactions> groupRedactions = new ArrayList<>();
+        com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest request = com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest.builder()
                 .vaultId("vaultId")
                 .tokens(tokens)
                 .tokenGroupRedactions(groupRedactions)
                 .build();
 
-        List<com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest> batches = Utils.createDetokenizeBatches(request, 1);
+        List<com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest> batches = Utils.createDetokenizeBatches(request, 1);
 
         Assert.assertEquals(2, batches.size());
         Assert.assertFalse(batches.get(0).getTokenGroupRedactions().isPresent());
@@ -886,12 +886,12 @@ public class UtilsTests {
     @Test
     public void testCreateDetokenizeBatchesWithBatchSizeGreaterThanTokens() {
         List<String> tokens = Arrays.asList("token1");
-        com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest request = com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest.builder()
+        com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest request = com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest.builder()
                 .vaultId("vaultId")
                 .tokens(tokens)
                 .build();
 
-        List<com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest> batches = Utils.createDetokenizeBatches(request, 5);
+        List<com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest> batches = Utils.createDetokenizeBatches(request, 5);
 
         Assert.assertEquals(1, batches.size());
         Assert.assertEquals(Arrays.asList("token1"), batches.get(0).getTokens().get());
@@ -948,7 +948,7 @@ public class UtilsTests {
 
     @Test
     public void testHandleBatchExceptionWithNullResponseBody() {
-        List<InsertRecordData> batch = Arrays.asList(InsertRecordData.builder().build());
+        List<V1InsertRecordData> batch = Arrays.asList(V1InsertRecordData.builder().build());
         ApiClientApiException apiException = new ApiClientApiException("Error", 500, null);
         Exception exception = new Exception("Test", apiException);
 
@@ -960,7 +960,7 @@ public class UtilsTests {
 
     @Test
     public void testHandleBatchExceptionWithNonListRecords() {
-        List<InsertRecordData> batch = Arrays.asList(InsertRecordData.builder().build());
+        List<V1InsertRecordData> batch = Arrays.asList(V1InsertRecordData.builder().build());
         Map<String, Object> responseBody = new HashMap<>();
         responseBody.put("records", "not_a_list");
         ApiClientApiException apiException = new ApiClientApiException("Error", 500, responseBody);
@@ -972,7 +972,7 @@ public class UtilsTests {
 
     @Test
     public void testHandleBatchExceptionWithErrorNotMap() {
-        List<InsertRecordData> batch = Arrays.asList(InsertRecordData.builder().build());
+        List<V1InsertRecordData> batch = Arrays.asList(V1InsertRecordData.builder().build());
         Map<String, Object> responseBody = new HashMap<>();
         responseBody.put("error", "not_a_map");
         ApiClientApiException apiException = new ApiClientApiException("Error", 500, responseBody);
@@ -984,7 +984,7 @@ public class UtilsTests {
 
     @Test
     public void testHandleBatchExceptionWithApiClientApiExceptionCause() {
-        List<InsertRecordData> batch = Arrays.asList(InsertRecordData.builder().build());
+        List<V1InsertRecordData> batch = Arrays.asList(V1InsertRecordData.builder().build());
         Map<String, Object> responseBody = new HashMap<>();
         Map<String, Object> error = new HashMap<>();
         error.put("message", "Test error");
@@ -1003,9 +1003,9 @@ public class UtilsTests {
 
     @Test
     public void testHandleBatchExceptionWithRecordsListUsesCreateErrorRecord() {
-        List<InsertRecordData> batch = Arrays.asList(
-                InsertRecordData.builder().build(),
-                InsertRecordData.builder().build()
+        List<V1InsertRecordData> batch = Arrays.asList(
+                V1InsertRecordData.builder().build(),
+                V1InsertRecordData.builder().build()
         );
 
         Map<String, Object> record1 = new HashMap<>();
@@ -1034,8 +1034,8 @@ public class UtilsTests {
     @Test
     public void testHandleDetokenizeBatchExceptionWithResponseList() {
         List<String> tokens = Arrays.asList("t1", "t2");
-        com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest batch =
-                com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest.builder()
+        com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest batch =
+                com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest.builder()
                         .tokens(tokens)
                         .vaultId("vault")
                         .build();
@@ -1065,8 +1065,8 @@ public class UtilsTests {
     @Test
     public void testHandleDetokenizeBatchExceptionWithErrorField() {
         List<String> tokens = Arrays.asList("t1", "t2");
-        com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest batch =
-                com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest.builder()
+        com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest batch =
+                com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest.builder()
                         .tokens(tokens)
                         .vaultId("vault")
                         .build();
@@ -1091,8 +1091,8 @@ public class UtilsTests {
     @Test
     public void testHandleDetokenizeBatchExceptionWithNonApiCause() {
         List<String> tokens = Arrays.asList("t1", "t2");
-        com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest batch =
-                com.skyflow.generated.rest.resources.recordservice.requests.DetokenizeRequest.builder()
+        com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest batch =
+                com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest.builder()
                         .tokens(tokens)
                         .vaultId("vault")
                         .build();

@@ -113,7 +113,18 @@ public enum ErrorLogs {
     COLUMN_VALUES_IS_REQUIRED_TOKENIZE("Invalid %s1 request. ColumnValues are required."),
     EMPTY_OR_NULL_COLUMN_GROUP_IN_COLUMN_VALUES("Invalid %s1 request. Column group can not be null or empty in column values at index %s2."),
     TOKENIZE_REQUEST_REJECTED("Tokenize request resulted in failure."),
+    TOKENIZE_REQUEST_NULL("Invalid %s1 request. Tokenize request can not be null."),
+    EMPTY_TOKENIZE_DATA("Invalid %s1 request. Tokenize data can not be empty."),
+    TOKENIZE_RECORD_NULL("Invalid %s1 request. TokenizeRecord in list can not be null."),
+    EMPTY_VALUE_IN_TOKENIZE_RECORD("Invalid %s1 request. Value in TokenizeRecord can not be null or empty."),
+    EMPTY_TOKEN_GROUP_NAMES_IN_TOKENIZE_RECORD("Invalid %s1 request. TokenGroupNames in TokenizeRecord can not be null or empty."),
+    EMPTY_TOKEN_GROUP_NAME_IN_TOKENIZE_RECORD("Invalid %s1 request. Token group name in TokenizeRecord can not be null or empty at index %s2."),
+    TOKENIZE_DATA_SIZE_EXCEED("Maximum number of tokenize records exceeded. The limit is 10000."),
     DELETE_REQUEST_REJECTED("Delete request resulted in failure."),
+    DELETE_TOKENS_REQUEST_NULL("Invalid %s1 request. DeleteTokens request can not be null."),
+    EMPTY_DELETE_TOKENS_DATA("Invalid %s1 request. Delete tokens data can not be empty."),
+    EMPTY_OR_NULL_TOKEN_IN_DELETE_TOKENS_DATA("Invalid %s1 request. Token can not be null or empty in delete tokens data at index %s2."),
+    DELETE_TOKENS_SIZE_EXCEED("Maximum number of tokens exceeded. The limit is 10000."),
 
     // invoke connection interface
     INVOKE_CONNECTION_INVALID_CONNECTION_URL("Invalid %s1 request. Connection URL is not a valid URL."),
