@@ -165,20 +165,6 @@ public class VaultControllerTokenizeTests {
     }
 
     @Test
-    public void testValidation_emptyTokenGroupNames() {
-        ArrayList<TokenizeRecord> records = new ArrayList<>();
-        records.add(TokenizeRecord.builder().value("val").tokenGroupNames(new ArrayList<>()).build());
-        TokenizeRequest req = TokenizeRequest.builder().data(records).build();
-        try {
-            Validations.validateTokenizeRequest(req);
-            fail("Expected SkyflowException for empty token group names");
-        } catch (SkyflowException e) {
-            assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            assertEquals(ErrorMessage.EmptyTokenGroupNamesInTokenizeRecord.getMessage(), e.getMessage());
-        }
-    }
-
-    @Test
     public void testValidation_emptyTokenGroupNameInList() {
         ArrayList<TokenizeRecord> records = new ArrayList<>();
         records.add(TokenizeRecord.builder().value("val").tokenGroupNames(Arrays.asList("g1", "  ")).build());

@@ -163,24 +163,21 @@ public class TokenizeRequestTests {
         TokenizeRequest req = TokenizeRequest.builder().data(records).build();
         try {
             Validations.validateTokenizeRequest(req);
-            Assert.fail("Expected SkyflowException for null tokenGroupNames");
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(ErrorMessage.EmptyTokenGroupNamesInTokenizeRecord.getMessage(), e.getMessage());
+            Assert.fail("Should not throw for null tokenGroupNames: " + e.getMessage());
         }
     }
 
     @Test
     public void testValidateTokenizeRequest_emptyTokenGroupNames() {
+        // empty tokenGroupNames list is valid — the API tokenizes against all token groups
         ArrayList<TokenizeRecord> records = new ArrayList<>();
         records.add(TokenizeRecord.builder().value("val").tokenGroupNames(new ArrayList<>()).build());
         TokenizeRequest req = TokenizeRequest.builder().data(records).build();
         try {
             Validations.validateTokenizeRequest(req);
-            Assert.fail("Expected SkyflowException for empty tokenGroupNames");
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(ErrorMessage.EmptyTokenGroupNamesInTokenizeRecord.getMessage(), e.getMessage());
+            Assert.fail("Should not throw for empty tokenGroupNames: " + e.getMessage());
         }
     }
 

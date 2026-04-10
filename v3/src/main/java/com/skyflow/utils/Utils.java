@@ -445,9 +445,6 @@ public final class Utils extends BaseUtils {
             com.skyflow.generated.rest.resources.flowservice.requests.V1FlowTokenizeRequest batchRequest,
             int batchNumber, int batchSize) {
         if (response != null && response.getResponse().isPresent()) {
-            // The API returns a flat list — one entry per (value x tokenGroupName).
-            // We group them by input record position using the request's tokenGroupNames count
-            // so that records with identical values are still treated as separate entries.
             List<com.skyflow.generated.rest.types.V1FlowTokenizeResponseObject> flatList =
                     response.getResponse().get();
             List<com.skyflow.generated.rest.types.V1FlowTokenizeRequestObject> requestData =
@@ -460,16 +457,14 @@ public final class Utils extends BaseUtils {
             for (int i = 0; i < requestData.size(); i++) {
                 int inputRecordIndex = batchNumber * batchSize + i;
                 com.skyflow.generated.rest.types.V1FlowTokenizeRequestObject reqObj = requestData.get(i);
-                List<String> groupNames = reqObj.getTokenGroupNames().isPresent()
-                        ? reqObj.getTokenGroupNames().get() : new ArrayList<>();
-                int groupCount = groupNames.size();
+                int groupCount = reqObj.getTokenGroupNames().isPresent()
+                        ? reqObj.getTokenGroupNames().get().size() : 0;
+                int entriesToConsume = groupCount > 0 ? groupCount : 1;
 
-                // Consume exactly groupCount entries from the flat response for this record
                 TokenizeSuccess successEntry = null;
-                for (int g = 0; g < groupCount && flatIndex < flatList.size(); g++, flatIndex++) {
-                    com.skyflow.generated.rest.types.V1FlowTokenizeResponseObject obj = flatList.get(flatIndex);
+                for (int j = 0; j < entriesToConsume && flatIndex < flatList.size(); j++) {
+                    com.skyflow.generated.rest.types.V1FlowTokenizeResponseObject obj = flatList.get(flatIndex++);
                     Map<String, Object> props = obj.getAdditionalProperties();
-
                     Object value = obj.getValue().isPresent() ? obj.getValue().get()
                             : (props != null ? props.get("value") : null);
                     String tokenGroupName = props != null ? (String) props.get("tokenGroupName") : null;

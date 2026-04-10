@@ -248,21 +248,17 @@ public class Validations extends BaseValidations {
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyValueInTokenizeRecord.getMessage());
             }
             List<String> tokenGroupNames = record.getTokenGroupNames();
-            if (tokenGroupNames == null || tokenGroupNames.isEmpty()) {
-                LogUtil.printErrorLog(Utils.parameterizedString(
-                        ErrorLogs.EMPTY_TOKEN_GROUP_NAMES_IN_TOKENIZE_RECORD.getLog(), InterfaceName.TOKENIZE.getName()
-                ));
-                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyTokenGroupNamesInTokenizeRecord.getMessage());
-            }
-            for (int j = 0; j < tokenGroupNames.size(); j++) {
-                String groupName = tokenGroupNames.get(j);
-                if (groupName == null || groupName.trim().isEmpty()) {
-                    LogUtil.printErrorLog(Utils.parameterizedString(
-                            ErrorLogs.EMPTY_TOKEN_GROUP_NAME_IN_TOKENIZE_RECORD.getLog(),
-                            InterfaceName.TOKENIZE.getName(),
-                            String.valueOf(j)
-                    ));
-                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyTokenGroupNameInTokenizeRecord.getMessage());
+            if (tokenGroupNames != null) {
+                for (int j = 0; j < tokenGroupNames.size(); j++) {
+                    String groupName = tokenGroupNames.get(j);
+                    if (groupName == null || groupName.trim().isEmpty()) {
+                        LogUtil.printErrorLog(Utils.parameterizedString(
+                                ErrorLogs.EMPTY_TOKEN_GROUP_NAME_IN_TOKENIZE_RECORD.getLog(),
+                                InterfaceName.TOKENIZE.getName(),
+                                String.valueOf(j)
+                        ));
+                        throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyTokenGroupNameInTokenizeRecord.getMessage());
+                    }
                 }
             }
         }
