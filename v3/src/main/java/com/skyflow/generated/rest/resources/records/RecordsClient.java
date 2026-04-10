@@ -5,8 +5,8 @@ package com.skyflow.generated.rest.resources.records;
 
 import com.skyflow.generated.rest.core.ClientOptions;
 import com.skyflow.generated.rest.core.RequestOptions;
-import com.skyflow.generated.rest.resources.records.requests.ExecuteQueryRequest;
-import com.skyflow.generated.rest.types.ExecuteQueryResponse;
+import com.skyflow.generated.rest.resources.records.requests.V1ExecuteQueryRequest;
+import com.skyflow.generated.rest.types.V1ExecuteQueryResponse;
 
 public class RecordsClient {
     protected final ClientOptions clientOptions;
@@ -28,22 +28,22 @@ public class RecordsClient {
     /**
      * Executes a query on the specified vault.
      */
-    public ExecuteQueryResponse recordServiceExecuteQuery() {
-        return this.rawClient.recordServiceExecuteQuery().body();
+    public V1ExecuteQueryResponse flowServiceExecuteQuery() {
+        return this.rawClient.flowServiceExecuteQuery().body();
     }
 
     /**
      * Executes a query on the specified vault.
      */
-    public ExecuteQueryResponse recordServiceExecuteQuery(ExecuteQueryRequest request) {
-        return this.rawClient.recordServiceExecuteQuery(request).body();
+    public V1ExecuteQueryResponse flowServiceExecuteQuery(V1ExecuteQueryRequest request) {
+        return this.rawClient.flowServiceExecuteQuery(request).body();
     }
 
     /**
      * Executes a query on the specified vault.
      */
-    public ExecuteQueryResponse recordServiceExecuteQuery(
-            ExecuteQueryRequest request, RequestOptions requestOptions) {
-        return this.rawClient.recordServiceExecuteQuery(request, requestOptions).body();
+    public V1ExecuteQueryResponse flowServiceExecuteQuery(
+            V1ExecuteQueryRequest request, RequestOptions requestOptions) {
+        return this.rawClient.flowServiceExecuteQuery(request, requestOptions).body();
     }
 }

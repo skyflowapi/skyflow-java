@@ -5,8 +5,8 @@ package com.skyflow.generated.rest;
 
 import com.skyflow.generated.rest.core.ClientOptions;
 import com.skyflow.generated.rest.core.Suppliers;
+import com.skyflow.generated.rest.resources.flowservice.FlowserviceClient;
 import com.skyflow.generated.rest.resources.records.RecordsClient;
-import com.skyflow.generated.rest.resources.recordservice.RecordserviceClient;
 import java.util.function.Supplier;
 
 public class ApiClient {
@@ -14,20 +14,20 @@ public class ApiClient {
 
     protected final Supplier<RecordsClient> recordsClient;
 
-    protected final Supplier<RecordserviceClient> recordserviceClient;
+    protected final Supplier<FlowserviceClient> flowserviceClient;
 
     public ApiClient(ClientOptions clientOptions) {
         this.clientOptions = clientOptions;
         this.recordsClient = Suppliers.memoize(() -> new RecordsClient(clientOptions));
-        this.recordserviceClient = Suppliers.memoize(() -> new RecordserviceClient(clientOptions));
+        this.flowserviceClient = Suppliers.memoize(() -> new FlowserviceClient(clientOptions));
     }
 
     public RecordsClient records() {
         return this.recordsClient.get();
     }
 
-    public RecordserviceClient recordservice() {
-        return this.recordserviceClient.get();
+    public FlowserviceClient flowservice() {
+        return this.flowserviceClient.get();
     }
 
     public static ApiClientBuilder builder() {

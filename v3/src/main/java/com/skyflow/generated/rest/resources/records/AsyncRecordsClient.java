@@ -5,8 +5,8 @@ package com.skyflow.generated.rest.resources.records;
 
 import com.skyflow.generated.rest.core.ClientOptions;
 import com.skyflow.generated.rest.core.RequestOptions;
-import com.skyflow.generated.rest.resources.records.requests.ExecuteQueryRequest;
-import com.skyflow.generated.rest.types.ExecuteQueryResponse;
+import com.skyflow.generated.rest.resources.records.requests.V1ExecuteQueryRequest;
+import com.skyflow.generated.rest.types.V1ExecuteQueryResponse;
 import java.util.concurrent.CompletableFuture;
 
 public class AsyncRecordsClient {
@@ -29,22 +29,22 @@ public class AsyncRecordsClient {
     /**
      * Executes a query on the specified vault.
      */
-    public CompletableFuture<ExecuteQueryResponse> recordServiceExecuteQuery() {
-        return this.rawClient.recordServiceExecuteQuery().thenApply(response -> response.body());
+    public CompletableFuture<V1ExecuteQueryResponse> flowServiceExecuteQuery() {
+        return this.rawClient.flowServiceExecuteQuery().thenApply(response -> response.body());
     }
 
     /**
      * Executes a query on the specified vault.
      */
-    public CompletableFuture<ExecuteQueryResponse> recordServiceExecuteQuery(ExecuteQueryRequest request) {
-        return this.rawClient.recordServiceExecuteQuery(request).thenApply(response -> response.body());
+    public CompletableFuture<V1ExecuteQueryResponse> flowServiceExecuteQuery(V1ExecuteQueryRequest request) {
+        return this.rawClient.flowServiceExecuteQuery(request).thenApply(response -> response.body());
     }
 
     /**
      * Executes a query on the specified vault.
      */
-    public CompletableFuture<ExecuteQueryResponse> recordServiceExecuteQuery(
-            ExecuteQueryRequest request, RequestOptions requestOptions) {
-        return this.rawClient.recordServiceExecuteQuery(request, requestOptions).thenApply(response -> response.body());
+    public CompletableFuture<V1ExecuteQueryResponse> flowServiceExecuteQuery(
+            V1ExecuteQueryRequest request, RequestOptions requestOptions) {
+        return this.rawClient.flowServiceExecuteQuery(request, requestOptions).thenApply(response -> response.body());
     }
 }

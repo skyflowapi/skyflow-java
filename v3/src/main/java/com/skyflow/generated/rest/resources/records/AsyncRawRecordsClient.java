@@ -11,8 +11,8 @@ import com.skyflow.generated.rest.core.ClientOptions;
 import com.skyflow.generated.rest.core.MediaTypes;
 import com.skyflow.generated.rest.core.ObjectMappers;
 import com.skyflow.generated.rest.core.RequestOptions;
-import com.skyflow.generated.rest.resources.records.requests.ExecuteQueryRequest;
-import com.skyflow.generated.rest.types.ExecuteQueryResponse;
+import com.skyflow.generated.rest.resources.records.requests.V1ExecuteQueryRequest;
+import com.skyflow.generated.rest.types.V1ExecuteQueryResponse;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 import okhttp3.Call;
@@ -36,23 +36,23 @@ public class AsyncRawRecordsClient {
     /**
      * Executes a query on the specified vault.
      */
-    public CompletableFuture<ApiClientHttpResponse<ExecuteQueryResponse>> recordServiceExecuteQuery() {
-        return recordServiceExecuteQuery(ExecuteQueryRequest.builder().build());
+    public CompletableFuture<ApiClientHttpResponse<V1ExecuteQueryResponse>> flowServiceExecuteQuery() {
+        return flowServiceExecuteQuery(V1ExecuteQueryRequest.builder().build());
     }
 
     /**
      * Executes a query on the specified vault.
      */
-    public CompletableFuture<ApiClientHttpResponse<ExecuteQueryResponse>> recordServiceExecuteQuery(
-            ExecuteQueryRequest request) {
-        return recordServiceExecuteQuery(request, null);
+    public CompletableFuture<ApiClientHttpResponse<V1ExecuteQueryResponse>> flowServiceExecuteQuery(
+            V1ExecuteQueryRequest request) {
+        return flowServiceExecuteQuery(request, null);
     }
 
     /**
      * Executes a query on the specified vault.
      */
-    public CompletableFuture<ApiClientHttpResponse<ExecuteQueryResponse>> recordServiceExecuteQuery(
-            ExecuteQueryRequest request, RequestOptions requestOptions) {
+    public CompletableFuture<ApiClientHttpResponse<V1ExecuteQueryResponse>> flowServiceExecuteQuery(
+            V1ExecuteQueryRequest request, RequestOptions requestOptions) {
         HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
                 .newBuilder()
                 .addPathSegments("v2/query")
@@ -75,7 +75,7 @@ public class AsyncRawRecordsClient {
         if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
             client = clientOptions.httpClientWithTimeout(requestOptions);
         }
-        CompletableFuture<ApiClientHttpResponse<ExecuteQueryResponse>> future = new CompletableFuture<>();
+        CompletableFuture<ApiClientHttpResponse<V1ExecuteQueryResponse>> future = new CompletableFuture<>();
         client.newCall(okhttpRequest).enqueue(new Callback() {
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
@@ -83,7 +83,7 @@ public class AsyncRawRecordsClient {
                     if (response.isSuccessful()) {
                         future.complete(new ApiClientHttpResponse<>(
                                 ObjectMappers.JSON_MAPPER.readValue(
-                                        responseBody.string(), ExecuteQueryResponse.class),
+                                        responseBody.string(), V1ExecuteQueryResponse.class),
                                 response));
                         return;
                     }

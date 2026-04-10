@@ -16,6 +16,9 @@ import com.skyflow.vault.data.DetokenizeRequest;
 import com.skyflow.vault.data.InsertRecord;
 import com.skyflow.vault.data.InsertRequest;
 import com.skyflow.vault.data.TokenGroupRedactions;
+import com.skyflow.vault.data.DeleteTokensRequest;
+import com.skyflow.vault.data.TokenizeRequest;
+import com.skyflow.vault.data.TokenizeRecord;
 
 public class Validations extends BaseValidations {
     private Validations() {
@@ -176,6 +179,88 @@ public class Validations extends BaseValidations {
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.NullRedactionInTokenGroup.getMessage());
             }
         }
+        }
+    }
+
+    public static void validateDeleteTokensRequest(DeleteTokensRequest request) throws SkyflowException {
+        if (request == null) {
+            LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.DELETE_TOKENS_REQUEST_NULL.getLog(), InterfaceName.DELETE.getName()
+            ));
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.DeleteTokensRequestNull.getMessage());
+        }
+        List<String> tokens = request.getTokens();
+        if (tokens == null || tokens.isEmpty()) {
+            LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.EMPTY_DELETE_TOKENS_DATA.getLog(), InterfaceName.DELETE.getName()
+            ));
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyDeleteTokensData.getMessage());
+        }
+        if (tokens.size() > 10000) {
+            LogUtil.printErrorLog(ErrorLogs.DELETE_TOKENS_SIZE_EXCEED.getLog());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.DeleteTokensSizeExceedError.getMessage());
+        }
+        for (int index = 0; index < tokens.size(); index++) {
+            String token = tokens.get(index);
+            if (token == null || token.trim().isEmpty()) {
+                LogUtil.printErrorLog(Utils.parameterizedString(
+                        ErrorLogs.EMPTY_OR_NULL_TOKEN_IN_DELETE_TOKENS_DATA.getLog(),
+                        InterfaceName.DELETE.getName(),
+                        String.valueOf(index)));
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyTokenInDeleteTokensData.getMessage());
+            }
+        }
+    }
+
+    public static void validateTokenizeRequest(TokenizeRequest request) throws SkyflowException {
+        if (request == null) {
+            LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.TOKENIZE_REQUEST_NULL.getLog(), InterfaceName.TOKENIZE.getName()
+            ));
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.TokenizeRequestNull.getMessage());
+        }
+        List<TokenizeRecord> data = request.getData();
+        if (data == null || data.isEmpty()) {
+            LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.EMPTY_TOKENIZE_DATA.getLog(), InterfaceName.TOKENIZE.getName()
+            ));
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyTokenizeData.getMessage());
+        }
+        if (data.size() > 10000) {
+            LogUtil.printErrorLog(ErrorLogs.TOKENIZE_DATA_SIZE_EXCEED.getLog());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.TokenizeDataSizeExceedError.getMessage());
+        }
+        for (int i = 0; i < data.size(); i++) {
+            TokenizeRecord record = data.get(i);
+            if (record == null) {
+                LogUtil.printErrorLog(Utils.parameterizedString(
+                        ErrorLogs.TOKENIZE_RECORD_NULL.getLog(), InterfaceName.TOKENIZE.getName()
+                ));
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.TokenizeRecordNull.getMessage());
+            }
+            Object value = record.getValue();
+            boolean isInvalid = value == null
+                    || (value instanceof String && ((String) value).trim().isEmpty());
+            if (isInvalid) {
+                LogUtil.printErrorLog(Utils.parameterizedString(
+                        ErrorLogs.EMPTY_VALUE_IN_TOKENIZE_RECORD.getLog(), InterfaceName.TOKENIZE.getName()
+                ));
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyValueInTokenizeRecord.getMessage());
+            }
+            List<String> tokenGroupNames = record.getTokenGroupNames();
+            if (tokenGroupNames != null) {
+                for (int j = 0; j < tokenGroupNames.size(); j++) {
+                    String groupName = tokenGroupNames.get(j);
+                    if (groupName == null || groupName.trim().isEmpty()) {
+                        LogUtil.printErrorLog(Utils.parameterizedString(
+                                ErrorLogs.EMPTY_TOKEN_GROUP_NAME_IN_TOKENIZE_RECORD.getLog(),
+                                InterfaceName.TOKENIZE.getName(),
+                                String.valueOf(j)
+                        ));
+                        throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyTokenGroupNameInTokenizeRecord.getMessage());
+                    }
+                }
+            }
         }
     }
 
