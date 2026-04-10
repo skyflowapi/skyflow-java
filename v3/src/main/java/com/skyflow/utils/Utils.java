@@ -453,7 +453,6 @@ public final class Utils extends BaseUtils {
             List<TokenizeSuccess> successRecords = new ArrayList<>();
             List<ErrorRecord> errorRecords = new ArrayList<>();
 
-
             int flatIndex = 0;
             for (int i = 0; i < requestData.size(); i++) {
                 int inputRecordIndex = batchNumber * batchSize + i;
