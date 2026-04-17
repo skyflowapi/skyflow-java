@@ -262,10 +262,11 @@ public final class Utils extends BaseUtils {
             if (vaultURL != null && vaultURL.trim().isEmpty()) {
                 LogUtil.printErrorLog(ErrorLogs.EMPTY_VAULT_URL.getLog());
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyVaultUrl.getMessage());
-            } else if (vaultURL != null && !isValidURL(vaultURL)) {
-                LogUtil.printErrorLog(ErrorLogs.INVALID_VAULT_URL_FORMAT.getLog());
-                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidVaultUrlFormat.getMessage());
             }
+//            else if (vaultURL != null && !isValidURL(vaultURL)) {
+//                LogUtil.printErrorLog(ErrorLogs.INVALID_VAULT_URL_FORMAT.getLog());
+//                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidVaultUrlFormat.getMessage());
+//            }
             return vaultURL;
         } catch (DotenvException e) {
             return null;

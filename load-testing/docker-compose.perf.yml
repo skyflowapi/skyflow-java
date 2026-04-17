@@ -1,0 +1,91 @@
+# =============================================================================
+# Skyflow SDK v3 — Two-Tier Performance Testing
+#
+# Tier 1 (sut):      WrapperServer + EchoServer  (SDK under test)
+# Tier 2 (k6):       k6 load generator
+#
+# Usage:
+#   # Phase 1 — 1 CPU / 512 MB
+#   docker compose -f load-testing/docker-compose.perf.yml up --build
+#
+#   # Override resource limits for Phase 2 / 3
+#   CPU_LIMIT=2 MEM_LIMIT=512m docker compose -f load-testing/docker-compose.perf.yml up
+#
+# Env overrides:
+#   CPU_LIMIT     default: 1        (cores)
+#   MEM_LIMIT     default: 512m
+#   MAX_RPS       default: 1000
+#   OP            default: insert   (insert | detokenize)
+#   ECHO_WAIT_MS  default: 0
+#   ECHO_ERR_PCT  default: 0
+# =============================================================================
+
+version: '3.8'
+
+x-sut-resources: &sut-resources
+  cpus:   '${CPU_LIMIT:-1}'
+  memory: '${MEM_LIMIT:-512m}'
+
+services:
+
+  # ---------------------------------------------------------------------------
+  # Tier 1: System Under Test — SDK + mock vault
+  # ---------------------------------------------------------------------------
+  sut:
+    build:
+      context: ..                          # repo root (needs common/, v3/, load-testing/)
+      dockerfile: load-testing/Dockerfile
+    container_name: skyflow-sut
+    ports:
+      - "8080:8080"   # WrapperServer (SDK)
+      - "3015:3015"   # EchoServer (mock vault) — optional, for debugging
+    environment:
+      ECHO_PORT:     3015
+      WRAPPER_PORT:  8080
+      ECHO_WAIT_MS:  "${ECHO_WAIT_MS:-0}"
+      ECHO_ERR_PCT:  "${ECHO_ERR_PCT:-0}"
+      VAULT_ID:      mock-vault-id
+    deploy:
+      resources:
+        limits:
+          <<: *sut-resources
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8080/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 30s
+    networks:
+      - perf-net
+
+  # ---------------------------------------------------------------------------
+  # Tier 2: Load Generator — k6
+  # Runs after SUT is healthy; exits when test completes.
+  # ---------------------------------------------------------------------------
+  k6:
+    image: grafana/k6:latest
+    container_name: skyflow-k6
+    depends_on:
+      sut:
+        condition: service_healthy
+    volumes:
+      - ./k6:/scripts                      # mount k6 scripts
+      - ./results:/results                 # output directory
+    environment:
+      WRAPPER_URL:    "http://sut:8080"
+      OP:             "${OP:-insert}"
+      MAX_RPS:        "${MAX_RPS:-1000}"
+      STEP_DURATION:  "${STEP_DURATION:-300}"
+      NUM_RECORDS:    "${NUM_RECORDS:-1}"
+      NUM_TOKENS:     "${NUM_TOKENS:-1}"
+    command: >
+      run
+      --out json=/results/k6-output.json
+      --summary-export /results/k6-summary.json
+      /scripts/perf.js
+    networks:
+      - perf-net
+
+networks:
+  perf-net:
+    driver: bridge
