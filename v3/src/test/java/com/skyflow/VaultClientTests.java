@@ -3,6 +3,9 @@ package com.skyflow;
 import static org.junit.Assert.*;
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
+import okhttp3.ConnectionPool;
+import okhttp3.OkHttpClient;
+import java.util.concurrent.TimeUnit;
 import com.skyflow.enums.Env;
 import com.skyflow.enums.UpsertType;
 import com.skyflow.errors.ErrorCode;
@@ -477,6 +480,71 @@ public class VaultClientTests {
         Assert.assertNotNull(recordsApi);
     }
 
+    @Test
+    public void testConnectionPoolMaxIdleConnections() throws Exception {
+        Credentials credentials = new Credentials();
+        credentials.setApiKey("sky-ab123-abcd1234cdef1234abcd4321cdef4321");
+        VaultConfig config = new VaultConfig();
+        config.setVaultId(vaultID);
+        config.setClusterId(clusterID);
+        config.setEnv(Env.PROD);
+        config.setCredentials(credentials);
+
+        VaultClient client = new VaultClient(config, credentials);
+        client.updateExecutorInHTTP();
+
+        OkHttpClient httpClient = (OkHttpClient) getPrivateField(client, "sharedHttpClient");
+        Assert.assertNotNull(httpClient);
+
+        ConnectionPool pool = httpClient.connectionPool();
+        Assert.assertNotNull(pool);
+
+        Object delegate = getPrivateField(pool, "delegate");
+        int maxIdleConnections = (int) getPrivateField(delegate, "maxIdleConnections");
+        Assert.assertEquals(10, maxIdleConnections);
+    }
+
+    @Test
+    public void testConnectionPoolKeepAliveDuration() throws Exception {
+        Credentials credentials = new Credentials();
+        credentials.setApiKey("sky-ab123-abcd1234cdef1234abcd4321cdef4321");
+        VaultConfig config = new VaultConfig();
+        config.setVaultId(vaultID);
+        config.setClusterId(clusterID);
+        config.setEnv(Env.PROD);
+        config.setCredentials(credentials);
+
+        VaultClient client = new VaultClient(config, credentials);
+        client.updateExecutorInHTTP();
+
+        OkHttpClient httpClient = (OkHttpClient) getPrivateField(client, "sharedHttpClient");
+        ConnectionPool pool = httpClient.connectionPool();
+
+        Object delegate = getPrivateField(pool, "delegate");
+        long keepAliveDurationNs = (long) getPrivateField(delegate, "keepAliveDurationNs");
+        Assert.assertEquals(TimeUnit.MINUTES.toNanos(1), keepAliveDurationNs);
+    }
+
+    @Test
+    public void testSharedHttpClientIsSingleton() throws Exception {
+        Credentials credentials = new Credentials();
+        credentials.setApiKey("sky-ab123-abcd1234cdef1234abcd4321cdef4321");
+        VaultConfig config = new VaultConfig();
+        config.setVaultId(vaultID);
+        config.setClusterId(clusterID);
+        config.setEnv(Env.PROD);
+        config.setCredentials(credentials);
+
+        VaultClient client = new VaultClient(config, credentials);
+        client.updateExecutorInHTTP();
+        OkHttpClient first = (OkHttpClient) getPrivateField(client, "sharedHttpClient");
+
+        client.updateExecutorInHTTP();
+        OkHttpClient second = (OkHttpClient) getPrivateField(client, "sharedHttpClient");
+
+        Assert.assertSame("sharedHttpClient must not be rebuilt on repeated calls", first, second);
+    }
+
     // Helper methods for reflection field access
     private Object getPrivateField(Object obj, String fieldName) throws Exception {
         java.lang.reflect.Field field = obj.getClass().getDeclaredField(fieldName);
@@ -531,6 +599,57 @@ public class VaultClientTests {
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
         }
+    }
+
+    @Test
+    public void testApiClientNotReinitializedOnSubsequentCalls() throws Exception {
+        Credentials credentials = new Credentials();
+        credentials.setApiKey("sky-ab123-abcd1234cdef1234abcd4321cdef4321");
+        VaultConfig config = new VaultConfig();
+        config.setVaultId(vaultID);
+        config.setClusterId(clusterID);
+        config.setEnv(Env.PROD);
+        config.setCredentials(credentials);
+
+        VaultClient client = new VaultClient(config, credentials);
+
+        client.setBearerToken();
+        Object apiClientFirst = getPrivateField(client, "apiClient");
+        Assert.assertNotNull(apiClientFirst);
+
+        client.setBearerToken();
+        Object apiClientSecond = getPrivateField(client, "apiClient");
+
+        Assert.assertSame("apiClient must not be rebuilt on repeated setBearerToken calls", apiClientFirst, apiClientSecond);
+    }
+
+    @Test
+    public void testTokenUpdatedWithoutReinitializingApiClient() throws Exception {
+        Credentials credentials = new Credentials();
+        credentials.setApiKey("sky-ab123-abcd1234cdef1234abcd4321cdef4321");
+        VaultConfig config = new VaultConfig();
+        config.setVaultId(vaultID);
+        config.setClusterId(clusterID);
+        config.setEnv(Env.PROD);
+        config.setCredentials(credentials);
+
+        VaultClient client = new VaultClient(config, credentials);
+        client.setBearerToken();
+        Object apiClientBefore = getPrivateField(client, "apiClient");
+        String tokenBefore = (String) getPrivateField(client, "token");
+
+        // Rotate to a different API key
+        Credentials newCredentials = new Credentials();
+        newCredentials.setApiKey("sky-ab123-1234567890abcdef1234567890abcdef");
+        config.setCredentials(newCredentials);
+
+        client.setBearerToken();
+        Object apiClientAfter = getPrivateField(client, "apiClient");
+        String tokenAfter = (String) getPrivateField(client, "token");
+
+        Assert.assertSame("apiClient must not be rebuilt after credential rotation", apiClientBefore, apiClientAfter);
+        Assert.assertNotEquals("token must reflect the new credential", tokenBefore, tokenAfter);
+        Assert.assertEquals("sky-ab123-1234567890abcdef1234567890abcdef", tokenAfter);
     }
 
     @Test
