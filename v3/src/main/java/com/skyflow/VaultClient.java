@@ -1,5 +1,9 @@
 package com.skyflow;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.UpsertType;
@@ -19,18 +23,16 @@ import com.skyflow.utils.Constants;
 import com.skyflow.utils.Utils;
 import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.utils.validations.Validations;
+import com.skyflow.vault.data.DeleteTokensRequest;
 import com.skyflow.vault.data.DetokenizeRequest;
 import com.skyflow.vault.data.InsertRecord;
-import com.skyflow.vault.data.DeleteTokensRequest;
-import com.skyflow.vault.data.TokenizeRequest;
 import com.skyflow.vault.data.TokenizeRecord;
+import com.skyflow.vault.data.TokenizeRequest;
 import io.github.cdimascio.dotenv.Dotenv;
 import io.github.cdimascio.dotenv.DotenvException;
+import okhttp3.ConnectionPool;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
-
-import java.util.ArrayList;
-import java.util.List;
 
 
 public class VaultClient {
@@ -41,6 +43,8 @@ public class VaultClient {
     private Credentials finalCredentials;
     private String token;
     private String apiKey;
+    private OkHttpClient sharedHttpClient = null;
+    private String currentVaultURL = null;
 
     protected VaultClient(VaultConfig vaultConfig, Credentials credentials) throws SkyflowException {
         super();
@@ -78,10 +82,12 @@ public class VaultClient {
         } else {
             LogUtil.printInfoLog(InfoLogs.REUSE_BEARER_TOKEN.getLog());
         }
-        updateExecutorInHTTP(); // update executor
-        this.apiClient = this.apiClientBuilder.build();
-    }
 
+        if (apiClient == null) {
+            updateExecutorInHTTP();
+            this.apiClient = this.apiClientBuilder.build();
+        }
+    }
     private void updateVaultURL() throws SkyflowException {
         // Fetch vaultURL from ENV
         String vaultURL = Utils.getEnvVaultURL();
@@ -96,6 +102,10 @@ public class VaultClient {
             vaultURL = Utils.getVaultURL(this.vaultConfig.getClusterId(), this.vaultConfig.getEnv());
         }
         this.apiClientBuilder.url(vaultURL);
+        if (!vaultURL.equals(this.currentVaultURL)) {
+            this.currentVaultURL = vaultURL;
+            this.apiClient = null;
+        }
     }
 
     private void prioritiseCredentials() throws SkyflowException {
@@ -132,16 +142,18 @@ public class VaultClient {
     }
 
     protected void updateExecutorInHTTP() {
-        OkHttpClient httpClient = new OkHttpClient.Builder()
-                .addInterceptor(chain -> {
-                    Request original = chain.request();
-                    Request requestWithAuth = original.newBuilder()
-                            .header("Authorization", "Bearer " + this.token)
-                            .build();
-                    return chain.proceed(requestWithAuth);
-                })
-                .build();
-        apiClientBuilder.httpClient(httpClient);
+        if (sharedHttpClient == null) {
+            sharedHttpClient = new OkHttpClient.Builder()
+                    .connectionPool(new ConnectionPool(10, 1, TimeUnit.MINUTES))
+                    .addInterceptor(chain -> {
+                        Request requestWithAuth = chain.request().newBuilder()
+                                .header("Authorization", "Bearer " + this.token)
+                                .build();
+                        return chain.proceed(requestWithAuth);
+                    })
+                    .build();
+            apiClientBuilder.httpClient(sharedHttpClient);
+        }
     }
 
     protected V1InsertRequest getBulkInsertRequestBody(com.skyflow.vault.data.InsertRequest request, VaultConfig config) {
