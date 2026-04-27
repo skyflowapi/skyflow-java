@@ -247,11 +247,8 @@ public class VaultClient {
             LogUtil.printInfoLog(InfoLogs.REUSE_BEARER_TOKEN.getLog());
         }
         if (apiClient == null) {
-            LogUtil.printInfoLog(InfoLogs.API_CLIENT_INITIALIZED.getLog());
             updateExecutorInHTTP();
             this.apiClient = this.apiClientBuilder.build();
-        } else {
-            LogUtil.printInfoLog(InfoLogs.REUSE_API_CLIENT.getLog());
         }
     }
 
