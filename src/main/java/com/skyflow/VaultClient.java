@@ -43,11 +43,15 @@ import com.skyflow.vault.tokens.DetokenizeRequest;
 import com.skyflow.vault.tokens.TokenizeRequest;
 import io.github.cdimascio.dotenv.Dotenv;
 import io.github.cdimascio.dotenv.DotenvException;
+import okhttp3.ConnectionPool;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 
@@ -55,6 +59,8 @@ public class VaultClient {
     private final VaultConfig vaultConfig;
     private final ApiClientBuilder apiClientBuilder;
     private ApiClient apiClient;
+    private OkHttpClient sharedHttpClient;
+    private String currentVaultURL;
     private Credentials commonCredentials;
     private Credentials finalCredentials;
     private String token;
@@ -232,14 +238,21 @@ public class VaultClient {
         if (this.finalCredentials.getApiKey() != null) {
             LogUtil.printInfoLog(InfoLogs.REUSE_API_KEY.getLog());
             token = this.finalCredentials.getApiKey();
+        } else if (token == null || token.trim().isEmpty()) {
+            token = Utils.generateBearerToken(this.finalCredentials);
         } else if (Token.isExpired(token)) {
             LogUtil.printInfoLog(InfoLogs.BEARER_TOKEN_EXPIRED.getLog());
             token = Utils.generateBearerToken(this.finalCredentials);
         } else {
             LogUtil.printInfoLog(InfoLogs.REUSE_BEARER_TOKEN.getLog());
         }
-        this.apiClientBuilder.token(token);
-        this.apiClient = this.apiClientBuilder.build();
+        if (apiClient == null) {
+            LogUtil.printInfoLog(InfoLogs.API_CLIENT_INITIALIZED.getLog());
+            updateExecutorInHTTP();
+            this.apiClient = this.apiClientBuilder.build();
+        } else {
+            LogUtil.printInfoLog(InfoLogs.REUSE_API_CLIENT.getLog());
+        }
     }
 
     protected DeidentifyTextResponse getDeIdentifyTextResponse(DeidentifyStringResponse deidentifyStringResponse) {
@@ -819,7 +832,26 @@ public class VaultClient {
 
     private void updateVaultURL() {
         String vaultURL = Utils.getVaultURL(this.vaultConfig.getClusterId(), this.vaultConfig.getEnv());
-        this.apiClientBuilder.url(vaultURL);
+        if (!vaultURL.equals(this.currentVaultURL)) {
+            this.currentVaultURL = vaultURL;
+            this.apiClientBuilder.url(vaultURL);
+            this.apiClient = null;
+        }
+    }
+
+    private void updateExecutorInHTTP() {
+        if (sharedHttpClient == null) {
+            sharedHttpClient = new OkHttpClient.Builder()
+                    .connectionPool(new ConnectionPool(10, 1, TimeUnit.MINUTES))
+                    .addInterceptor(chain -> {
+                        Request requestWithAuth = chain.request().newBuilder()
+                                .header("Authorization", "Bearer " + this.token)
+                                .build();
+                        return chain.proceed(requestWithAuth);
+                    })
+                    .build();
+            apiClientBuilder.httpClient(sharedHttpClient);
+        }
     }
 
     private void prioritiseCredentials() throws SkyflowException {

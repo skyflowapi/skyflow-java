@@ -12,6 +12,10 @@ public enum InfoLogs {
     LOGGER_SETUP_DONE("Set up logger."),
     CURRENT_LOG_LEVEL("Current log level is %s1."),
 
+    // API client lifecycle
+    API_CLIENT_INITIALIZED("Initializing API client (first build or URL changed)."),
+    REUSE_API_CLIENT("Reusing existing API client (connection pool preserved)."),
+
     // Bearer token generation
     EMPTY_BEARER_TOKEN("Bearer token is empty."),
     BEARER_TOKEN_EXPIRED("Bearer token is expired."),

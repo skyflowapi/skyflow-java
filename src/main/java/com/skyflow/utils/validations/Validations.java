@@ -162,7 +162,7 @@ public class Validations {
         String credentialsString = credentials.getCredentialsString();
         String token = credentials.getToken();
         String apiKey = credentials.getApiKey();
-        String context = credentials.getContext();
+        Object context = credentials.getContext();
         ArrayList<String> roles = credentials.getRoles();
 
         if (path != null) nonNullMembers++;
@@ -194,12 +194,12 @@ public class Validations {
                 LogUtil.printErrorLog(ErrorLogs.EMPTY_API_KEY_VALUE.getLog());
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyApikey.getMessage());
             } else {
-               Pattern pattern = Pattern.compile(Constants.API_KEY_REGEX);
-               Matcher matcher = pattern.matcher(apiKey);
-               if (!matcher.matches()) {
-                   LogUtil.printErrorLog(ErrorLogs.INVALID_API_KEY.getLog());
-                   throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidApikey.getMessage());
-               }
+                Pattern pattern = Pattern.compile(Constants.API_KEY_REGEX);
+                Matcher matcher = pattern.matcher(apiKey);
+                if (!matcher.matches()) {
+                    LogUtil.printErrorLog(ErrorLogs.INVALID_API_KEY.getLog());
+                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidApikey.getMessage());
+                }
             }
         } else if (roles != null) {
             if (roles.isEmpty()) {
@@ -217,9 +217,33 @@ public class Validations {
                 }
             }
         }
-        if (context != null && context.trim().isEmpty()) {
-            LogUtil.printErrorLog(ErrorLogs.EMPTY_OR_NULL_CONTEXT.getLog());
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyContext.getMessage());
+        if (context != null) {
+            if (context instanceof String) {
+                String ctxStr = (String) context;
+                if (ctxStr.trim().isEmpty()) {
+                    LogUtil.printErrorLog(ErrorLogs.EMPTY_OR_NULL_CONTEXT.getLog());
+                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyContext.getMessage());
+                }
+            } else if (context instanceof Map) {
+                Map<?, ?> ctxMap = (Map<?, ?>) context;
+                if (ctxMap.isEmpty()) {
+                    LogUtil.printErrorLog(ErrorLogs.EMPTY_OR_NULL_CONTEXT.getLog());
+                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyContext.getMessage());
+                }
+                Pattern ctxKeyPattern = Pattern.compile("^[a-zA-Z0-9_]+$");
+                for (Object key : ctxMap.keySet()) {
+                    if (key == null || !ctxKeyPattern.matcher(key.toString()).matches()) {
+                        String keyStr = key == null ? "null" : key.toString();
+                        LogUtil.printErrorLog(Utils.parameterizedString(
+                                ErrorLogs.INVALID_CONTEXT_MAP_KEY.getLog(), keyStr));
+                        throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(),
+                                Utils.parameterizedString(ErrorMessage.InvalidContextMapKey.getMessage(), keyStr));
+                    }
+                }
+            } else {
+                LogUtil.printErrorLog(ErrorLogs.INVALID_CONTEXT_TYPE.getLog());
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidContextType.getMessage());
+            }
         }
     }
 
@@ -927,7 +951,7 @@ public class Validations {
         if (request.getBleep() != null) {
             if (request.getBleep().getFrequency() == null || request.getBleep().getFrequency() <= 0) {
                 LogUtil.printErrorLog(Utils.parameterizedString(
-                    ErrorLogs.INVALID_BLEEP_TO_DEIDENTIFY_AUDIO.getLog(), InterfaceName.DETECT.getName()
+                        ErrorLogs.INVALID_BLEEP_TO_DEIDENTIFY_AUDIO.getLog(), InterfaceName.DETECT.getName()
                 ));
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidRequestBody.getMessage());
             }
@@ -944,13 +968,13 @@ public class Validations {
             File outDir = new File(request.getOutputDirectory());
             if (!outDir.exists() || !outDir.isDirectory()) {
                 LogUtil.printErrorLog(Utils.parameterizedString(
-                    ErrorLogs.OUTPUT_DIRECTORY_NOT_FOUND.getLog(), InterfaceName.DETECT.getName()
+                        ErrorLogs.OUTPUT_DIRECTORY_NOT_FOUND.getLog(), InterfaceName.DETECT.getName()
                 ));
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.OutputDirectoryNotFound.getMessage());
             }
             if (!outDir.canWrite()) {
                 LogUtil.printErrorLog(Utils.parameterizedString(
-                    ErrorLogs.INVALID_PERMISSIONS_FOR_OUTPUT_DIRECTORY.getLog(), InterfaceName.DETECT.getName()
+                        ErrorLogs.INVALID_PERMISSIONS_FOR_OUTPUT_DIRECTORY.getLog(), InterfaceName.DETECT.getName()
                 ));
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidPermission.getMessage());
             }
