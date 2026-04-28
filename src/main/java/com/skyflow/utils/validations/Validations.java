@@ -230,7 +230,7 @@ public class Validations {
                     LogUtil.printErrorLog(ErrorLogs.EMPTY_OR_NULL_CONTEXT.getLog());
                     throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyContext.getMessage());
                 }
-                Pattern ctxKeyPattern = Pattern.compile("^[a-zA-Z0-9_]+$");
+                Pattern ctxKeyPattern = Pattern.compile(Constants.CONTEXT_KEY_REGEX);
                 for (Object key : ctxMap.keySet()) {
                     if (key == null || !ctxKeyPattern.matcher(key.toString()).matches()) {
                         String keyStr = key == null ? "null" : key.toString();
