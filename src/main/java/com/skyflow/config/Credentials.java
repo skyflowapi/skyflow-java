@@ -33,8 +33,17 @@ public class Credentials {
         this.roles = roles;
     }
 
-    public Object getContext() {
+    public String getContext() {
+        return context instanceof String ? (String) context : null;
+    }
+
+    public Object getContextAsObject() {
         return context;
+    }
+
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> getContextAsMap() {
+        return context instanceof Map ? (Map<String, Object>) context : null;
     }
 
     public void setContext(String context) {
