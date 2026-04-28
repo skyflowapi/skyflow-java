@@ -42,7 +42,7 @@ import com.skyflow.vault.tokens.DetokenizeRequest;
 import com.skyflow.vault.tokens.TokenizeRequest;
 
 public class Validations {
-    private static final Pattern CTX_MAP_KEY_PATTERN = Pattern.compile("^[a-zA-Z0-9_]+$");
+    private static final Pattern CTX_MAP_KEY_PATTERN = Pattern.compile(Constants.CTX_MAP_KEY_REGEX);
 
     private Validations() {
     }
