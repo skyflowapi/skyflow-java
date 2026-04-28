@@ -4,57 +4,69 @@ import com.skyflow.errors.SkyflowException;
 import com.skyflow.serviceaccount.util.BearerToken;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Example program to generate a Bearer Token using Skyflow's BearerToken utility.
- * The token is generated using two approaches:
- * 1. By providing the credentials.json file path.
- * 2. By providing the contents of credentials.json as a string.
+ * The token is generated using three approaches:
+ * 1. By providing a string context.
+ * 2. By providing a JSON object context (Map) for conditional data access policies.
+ * 3. By providing the credentials as a string with context.
  */
 public class BearerTokenGenerationWithContextExample {
     public static void main(String[] args) {
-        // Variable to store the generated Bearer Token
         String bearerToken = null;
 
-        // Approach 1: Generate Bearer Token by specifying the path to the credentials.json file
+        // Approach 1: Bearer token with string context
+        // Use a simple string identifier when your policy references a single context value.
         try {
-            // Replace <YOUR_CREDENTIALS_FILE_PATH> with the full path to your credentials.json file
             String filePath = "<YOUR_CREDENTIALS_FILE_PATH>";
-
-            // Create a BearerToken object using the file path
             BearerToken token = BearerToken.builder()
-                    .setCredentials(new File(filePath)) // Set credentials using a File object
-                    .setCtx("abc") // Set context string (example: "abc")
-                    .build(); // Build the BearerToken object
+                    .setCredentials(new File(filePath))
+                    .setCtx("user_12345")
+                    .build();
 
-            // Retrieve the Bearer Token as a string
             bearerToken = token.getBearerToken();
-
-            // Print the generated Bearer Token to the console
-            System.out.println(bearerToken);
+            System.out.println("Bearer token (string context): " + bearerToken);
         } catch (SkyflowException e) {
-            // Handle exceptions specific to Skyflow operations
             e.printStackTrace();
         }
 
-        // Approach 2: Generate Bearer Token by specifying the contents of credentials.json as a string
+        // Approach 2: Bearer token with JSON object context
+        // Use a structured Map when your policy needs multiple context values.
+        // Each key maps to a Skyflow CEL policy variable under request.context.*
+        // For example, the map below enables policies like:
+        //   request.context.role == "admin" && request.context.department == "finance"
         try {
-            // Replace <YOUR_CREDENTIALS_FILE_CONTENTS_AS_STRING> with the actual contents of your credentials.json file
-            String fileContents = "<YOUR_CREDENTIALS_FILE_CONTENTS_AS_STRING>";
+            String filePath = "<YOUR_CREDENTIALS_FILE_PATH>";
+            Map<String, Object> ctx = new HashMap<>();
+            ctx.put("role", "admin");
+            ctx.put("department", "finance");
+            ctx.put("user_id", "user_12345");
 
-            // Create a BearerToken object using the file contents as a string
             BearerToken token = BearerToken.builder()
-                    .setCredentials(fileContents) // Set credentials using a string representation of the file
-                    .setCtx("abc") // Set context string (example: "abc")
-                    .build(); // Build the BearerToken object
+                    .setCredentials(new File(filePath))
+                    .setCtx(ctx)
+                    .build();
 
-            // Retrieve the Bearer Token as a string
             bearerToken = token.getBearerToken();
-
-            // Print the generated Bearer Token to the console
-            System.out.println(bearerToken);
+            System.out.println("Bearer token (object context): " + bearerToken);
         } catch (SkyflowException e) {
-            // Handle exceptions specific to Skyflow operations
+            e.printStackTrace();
+        }
+
+        // Approach 3: Bearer token with string context from credentials string
+        try {
+            String fileContents = "<YOUR_CREDENTIALS_FILE_CONTENTS_AS_STRING>";
+            BearerToken token = BearerToken.builder()
+                    .setCredentials(fileContents)
+                    .setCtx("user_12345")
+                    .build();
+
+            bearerToken = token.getBearerToken();
+            System.out.println("Bearer token (creds string): " + bearerToken);
+        } catch (SkyflowException e) {
             e.printStackTrace();
         }
     }

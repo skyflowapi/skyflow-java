@@ -25,6 +25,8 @@ public enum ErrorLogs {
     EMPTY_ROLES("Invalid credentials. Roles can not be empty."),
     EMPTY_OR_NULL_ROLE_IN_ROLES("Invalid credentials. Role can not be null or empty in roles at index %s1."),
     EMPTY_OR_NULL_CONTEXT("Invalid credentials. Context can not be empty."),
+    INVALID_CONTEXT_TYPE("Invalid credentials. Context must be a String or Map<String, Object>."),
+    INVALID_CONTEXT_MAP_KEY("Invalid credentials. Context map key '%s1' contains invalid characters."),
 
     // Bearer token generation
     INVALID_BEARER_TOKEN("Bearer token is invalid or expired."),
