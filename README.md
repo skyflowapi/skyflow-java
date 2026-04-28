@@ -2771,73 +2771,59 @@ public class BearerTokenGenerationExample {
 
 ## Generate bearer tokens with context
 
-**Context-aware authorization** embeds context values into a bearer token during its generation and so you can reference those values in your policies. This enables more flexible access controls, such as helping you track end-user identity when making API calls using service accounts, and facilitates using signed data tokens during detokenization. .
+**Context-aware authorization** embeds context values into a bearer token during its generation so you can reference those values in your policies. This enables more flexible access controls, such as helping you track end-user identity when making API calls using service accounts, and facilitates using signed data tokens during detokenization.
 
 A service account with the `context_id` identifier generates bearer tokens containing context information, represented as a JWT claim in a Skyflow-generated bearer token. Tokens generated from such service accounts include a `context_identifier` claim, are valid for 60 minutes, and can be used to make API calls to the Data and Management APIs, depending on the service account's permissions.
 
-[Example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/serviceaccount/BearerTokenGenerationWithContextExample.java):
+The `setCtx()` method accepts either a **String** or a **`Map<String, Object>`**:
+
+**String context** — use when your policy references a single context value:
 
 ```java
-import com.skyflow.errors.SkyflowException;
-import com.skyflow.serviceaccount.util.BearerToken;
-
-import java.io.File;
-
-/**
- * Example program to generate a Bearer Token using Skyflow's BearerToken utility.
- * The token is generated using two approaches:
- * 1. By providing the credentials.json file path.
- * 2. By providing the contents of credentials.json as a string.
- */
-public class BearerTokenGenerationWithContextExample {
-    public static void main(String[] args) {
-        // Variable to store the generated Bearer Token
-        String bearerToken = null;
-
-        // Approach 1: Generate Bearer Token by specifying the path to the credentials.json file
-        try {
-            // Replace <YOUR_CREDENTIALS_FILE_PATH> with the full path to your credentials.json file
-            String filePath = "<YOUR_CREDENTIALS_FILE_PATH>";
-
-            // Create a BearerToken object using the file path
-            BearerToken token = BearerToken.builder()
-                    .setCredentials(new File(filePath)) // Set credentials using a File object
-                    .setCtx("abc") // Set context string (example: "abc")
-                    .build(); // Build the BearerToken object
-
-            // Retrieve the Bearer Token as a string
-            bearerToken = token.getBearerToken();
-
-            // Print the generated Bearer Token to the console
-            System.out.println(bearerToken);
-        } catch (SkyflowException e) {
-            // Handle exceptions specific to Skyflow operations
-            e.printStackTrace();
-        }
-
-        // Approach 2: Generate Bearer Token by specifying the contents of credentials.json as a string
-        try {
-            // Replace <YOUR_CREDENTIALS_FILE_CONTENTS_AS_STRING> with the actual contents of your credentials.json file
-            String fileContents = "<YOUR_CREDENTIALS_FILE_CONTENTS_AS_STRING>";
-
-            // Create a BearerToken object using the file contents as a string
-            BearerToken token = BearerToken.builder()
-                    .setCredentials(fileContents) // Set credentials using a string representation of the file
-                    .setCtx("abc") // Set context string (example: "abc")
-                    .build(); // Build the BearerToken object
-
-            // Retrieve the Bearer Token as a string
-            bearerToken = token.getBearerToken();
-
-            // Print the generated Bearer Token to the console
-            System.out.println(bearerToken);
-        } catch (SkyflowException e) {
-            // Handle exceptions specific to Skyflow operations
-            e.printStackTrace();
-        }
-    }
-}
+BearerToken token = BearerToken.builder()
+        .setCredentials(new File(filePath))
+        .setCtx("user_12345")
+        .build();
 ```
+
+**JSON object context** — use when your policy needs multiple context values for conditional data access. Each key in the `Map` maps to a Skyflow CEL policy variable under `request.context.*`:
+
+```java
+Map<String, Object> ctx = new HashMap<>();
+ctx.put("role", "admin");
+ctx.put("department", "finance");
+ctx.put("user_id", "user_12345");
+
+BearerToken token = BearerToken.builder()
+        .setCredentials(new File(filePath))
+        .setCtx(ctx)
+        .build();
+```
+
+With the map above, your Skyflow policies can reference `request.context.role`, `request.context.department`, and `request.context.user_id` to make conditional access decisions.
+
+You can also set context on `Credentials` for automatic token generation:
+
+```java
+// String context
+Credentials credentials = new Credentials();
+credentials.setPath("path/to/credentials.json");
+credentials.setContext("user_12345");
+
+// Map context
+Map<String, Object> ctx = new HashMap<>();
+ctx.put("role", "admin");
+ctx.put("department", "finance");
+credentials.setContext(ctx);
+```
+
+> **Note:** `getContext()` returns `Object` — callers should use `instanceof` if they need to inspect the type.
+
+Context map keys must contain only alphanumeric characters and underscores (`[a-zA-Z0-9_]`). Invalid keys will throw a `SkyflowException`.
+
+[Full example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/serviceaccount/BearerTokenGenerationWithContextExample.java)
+
+See Skyflow's [context-aware authorization](https://docs.skyflow.com) and [conditional data access](https://docs.skyflow.com) docs for policy variable syntax like `request.context.*`.
 
 ## Generate scoped bearer tokens
 
@@ -2903,58 +2889,31 @@ with the private key of the service account credentials, which adds an additiona
 be detokenized by passing the signed data token and a bearer token generated from service account credentials. The
 service account must have appropriate permissions and context to detokenize the signed data tokens.
 
-[Example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/serviceaccount/SignedTokenGenerationExample.java):
+The `setCtx()` method on `SignedDataTokensBuilder` also accepts either a **String** or a **`Map<String, Object>`**, using the same format as bearer tokens:
 
 ```java
-import com.skyflow.errors.SkyflowException;
-import com.skyflow.serviceaccount.util.SignedDataTokenResponse;
-import com.skyflow.serviceaccount.util.SignedDataTokens;
+// String context
+SignedDataTokens signedToken = SignedDataTokens.builder()
+        .setCredentials(new File(filePath))
+        .setCtx("user_12345")
+        .setTimeToLive(30)
+        .setDataTokens(dataTokens)
+        .build();
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+// JSON object context
+Map<String, Object> ctx = new HashMap<>();
+ctx.put("role", "analyst");
+ctx.put("department", "research");
 
-public class SignedTokenGenerationExample {
-    public static void main(String[] args) {
-        List<SignedDataTokenResponse> signedTokenValues;
-        // Generate Signed data token with context by specifying credentials.json file path
-        try {
-            String filePath = "<YOUR_CREDENTIALS_FILE_PATH>";
-            String context = "abc";
-            ArrayList<String> dataTokens = new ArrayList<>();
-            dataTokens.add("YOUR_DATA_TOKEN_1");
-            SignedDataTokens signedToken = SignedDataTokens.builder()
-                    .setCredentials(new File(filePath))
-                    .setCtx(context)
-                    .setTimeToLive(30) // in seconds
-                    .setDataTokens(dataTokens)
-                    .build();
-            signedTokenValues = signedToken.getSignedDataTokens();
-            System.out.println(signedTokenValues);
-        } catch (SkyflowException e) {
-            e.printStackTrace();
-        }
-
-        // Generate Signed data token with context by specifying credentials.json as string
-        try {
-            String fileContents = "<YOUR_CREDENTIALS_FILE_CONTENTS_AS_STRING>";
-            String context = "abc";
-            ArrayList<String> dataTokens = new ArrayList<>();
-            dataTokens.add("YOUR_DATA_TOKEN_1");
-            SignedDataTokens signedToken = SignedDataTokens.builder()
-                    .setCredentials(fileContents)
-                    .setCtx(context)
-                    .setTimeToLive(30) // in seconds
-                    .setDataTokens(dataTokens)
-                    .build();
-            signedTokenValues = signedToken.getSignedDataTokens();
-            System.out.println(signedTokenValues);
-        } catch (SkyflowException e) {
-            e.printStackTrace();
-        }
-    }
-}
+SignedDataTokens signedToken = SignedDataTokens.builder()
+        .setCredentials(new File(filePath))
+        .setCtx(ctx)
+        .setTimeToLive(30)
+        .setDataTokens(dataTokens)
+        .build();
 ```
+
+[Full example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/serviceaccount/SignedTokenGenerationExample.java)
 
 Response:
 
