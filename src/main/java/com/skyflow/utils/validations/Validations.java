@@ -45,6 +45,19 @@ public class Validations {
     private Validations() {
     }
 
+    public static void validateCtxMapKeys(Map<?, ?> ctxMap) throws SkyflowException {
+        Pattern ctxKeyPattern = Pattern.compile(Constants.CONTEXT_KEY_REGEX);
+        for (Object key : ctxMap.keySet()) {
+            if (key == null || !ctxKeyPattern.matcher(key.toString()).matches()) {
+                String keyStr = key == null ? "null" : key.toString();
+                LogUtil.printErrorLog(Utils.parameterizedString(
+                        ErrorLogs.INVALID_CONTEXT_MAP_KEY.getLog(), keyStr));
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(),
+                        Utils.parameterizedString(ErrorMessage.InvalidContextMapKey.getMessage(), keyStr));
+            }
+        }
+    }
+
     public static void validateVaultConfig(VaultConfig vaultConfig) throws SkyflowException {
         String vaultId = vaultConfig.getVaultId();
         String clusterId = vaultConfig.getClusterId();

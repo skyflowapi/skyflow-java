@@ -238,4 +238,83 @@ public class SignedDataTokensTests {
             Assert.fail(INVALID_EXCEPTION_THROWN);
         }
     }
+
+    @Test
+    public void testSignedDataTokensBuilderWithNestedMapContext() {
+        try {
+            File file = new File(credentialsFilePath);
+            Map<String, Object> nestedContext = new HashMap<>();
+            Map<String, Object> user = new HashMap<>();
+            user.put("role", "admin");
+            user.put("level", 5);
+            nestedContext.put("user", user);
+            nestedContext.put("project_id", "proj_123");
+            SignedDataTokens.builder()
+                    .setCredentials(file).setCtx(nestedContext).setDataTokens(dataTokens).setTimeToLive(ttl)
+                    .build();
+        } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testSignedDataTokensBuilderWithMapContextAndCredentialsString() {
+        try {
+            Map<String, Object> mapContext = new HashMap<>();
+            mapContext.put("role", "admin");
+            SignedDataTokens.builder()
+                    .setCredentials(credentialsString).setCtx(mapContext).setDataTokens(dataTokens).setTimeToLive(ttl)
+                    .build();
+        } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testSignedDataTokensWithInvalidCtxMapKeyContainingHyphen() {
+        try {
+            Map<String, Object> mapContext = new HashMap<>();
+            mapContext.put("invalid-key", "value");
+            SignedDataTokens.builder().setCtx(mapContext);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(
+                    Utils.parameterizedString(ErrorMessage.InvalidContextMapKey.getMessage(), "invalid-key"),
+                    e.getMessage()
+            );
+        }
+    }
+
+    @Test
+    public void testSignedDataTokensWithInvalidCtxMapKeyContainingDot() {
+        try {
+            Map<String, Object> mapContext = new HashMap<>();
+            mapContext.put("invalid.key", "value");
+            SignedDataTokens.builder().setCtx(mapContext);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(
+                    Utils.parameterizedString(ErrorMessage.InvalidContextMapKey.getMessage(), "invalid.key"),
+                    e.getMessage()
+            );
+        }
+    }
+
+    @Test
+    public void testSignedDataTokensWithInvalidCtxMapKeyContainingSpace() {
+        try {
+            Map<String, Object> mapContext = new HashMap<>();
+            mapContext.put("invalid key", "value");
+            SignedDataTokens.builder().setCtx(mapContext);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(
+                    Utils.parameterizedString(ErrorMessage.InvalidContextMapKey.getMessage(), "invalid key"),
+                    e.getMessage()
+            );
+        }
+    }
 }

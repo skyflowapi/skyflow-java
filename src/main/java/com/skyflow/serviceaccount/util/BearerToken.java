@@ -17,6 +17,8 @@ import com.skyflow.utils.Utils;
 import com.skyflow.utils.logger.LogUtil;
 import io.jsonwebtoken.Jwts;
 
+import com.skyflow.utils.validations.Validations;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -220,7 +222,10 @@ public class BearerToken {
             return this;
         }
 
-        public BearerTokenBuilder setCtx(Map<String, Object> ctx) {
+        public BearerTokenBuilder setCtx(Map<String, Object> ctx) throws SkyflowException {
+            if (ctx != null && !ctx.isEmpty()) {
+                Validations.validateCtxMapKeys(ctx);
+            }
             this.ctx = ctx;
             return this;
         }

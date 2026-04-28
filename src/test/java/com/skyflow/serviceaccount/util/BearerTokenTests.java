@@ -249,4 +249,79 @@ public class BearerTokenTests {
             Assert.assertEquals(ErrorMessage.InvalidTokenUri.getMessage(), e.getMessage());
         }
     }
+
+    @Test
+    public void testBearerTokenBuilderWithNestedMapContext() {
+        try {
+            File file = new File(credentialsFilePath);
+            Map<String, Object> nestedContext = new HashMap<>();
+            Map<String, Object> user = new HashMap<>();
+            user.put("role", "admin");
+            user.put("level", 5);
+            nestedContext.put("user", user);
+            nestedContext.put("project_id", "proj_123");
+            BearerToken.builder().setCredentials(file).setCtx(nestedContext).build();
+        } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testBearerTokenBuilderWithMapContextAndCredentialsString() {
+        try {
+            Map<String, Object> mapContext = new HashMap<>();
+            mapContext.put("role", "admin");
+            BearerToken.builder().setCredentials(credentialsString).setCtx(mapContext).build();
+        } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testBearerTokenWithInvalidCtxMapKeyContainingHyphen() {
+        try {
+            Map<String, Object> mapContext = new HashMap<>();
+            mapContext.put("invalid-key", "value");
+            BearerToken.builder().setCtx(mapContext);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(
+                    Utils.parameterizedString(ErrorMessage.InvalidContextMapKey.getMessage(), "invalid-key"),
+                    e.getMessage()
+            );
+        }
+    }
+
+    @Test
+    public void testBearerTokenWithInvalidCtxMapKeyContainingDot() {
+        try {
+            Map<String, Object> mapContext = new HashMap<>();
+            mapContext.put("invalid.key", "value");
+            BearerToken.builder().setCtx(mapContext);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(
+                    Utils.parameterizedString(ErrorMessage.InvalidContextMapKey.getMessage(), "invalid.key"),
+                    e.getMessage()
+            );
+        }
+    }
+
+    @Test
+    public void testBearerTokenWithInvalidCtxMapKeyContainingSpace() {
+        try {
+            Map<String, Object> mapContext = new HashMap<>();
+            mapContext.put("invalid key", "value");
+            BearerToken.builder().setCtx(mapContext);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(
+                    Utils.parameterizedString(ErrorMessage.InvalidContextMapKey.getMessage(), "invalid key"),
+                    e.getMessage()
+            );
+        }
+    }
 }
