@@ -41,6 +41,11 @@ public class Credentials {
         return context;
     }
 
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> getContextAsMap() {
+        return context instanceof Map ? (Map<String, Object>) context : null;
+    }
+
     public void setContext(String context) {
         this.context = context;
     }
