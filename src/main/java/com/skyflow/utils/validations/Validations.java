@@ -175,7 +175,7 @@ public class Validations {
         String credentialsString = credentials.getCredentialsString();
         String token = credentials.getToken();
         String apiKey = credentials.getApiKey();
-        Object context = credentials.getContext();
+        Object context = credentials.getContextAsObject();
         ArrayList<String> roles = credentials.getRoles();
 
         if (path != null) nonNullMembers++;
