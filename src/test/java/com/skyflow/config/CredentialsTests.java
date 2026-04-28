@@ -281,6 +281,9 @@ public class CredentialsTests {
             ctxMap.put("user_id", "user_12345");
             credentials.setContext(ctxMap);
             Validations.validateCredentials(credentials);
+            Assert.assertNull(credentials.getContext());
+            Assert.assertEquals(ctxMap, credentials.getContextAsObject());
+            Assert.assertEquals(ctxMap, credentials.getContextAsMap());
         } catch (SkyflowException e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
         }

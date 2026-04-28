@@ -2817,7 +2817,7 @@ ctx.put("department", "finance");
 credentials.setContext(ctx);
 ```
 
-> **Note:** `getContext()` returns `Object` — callers should use `instanceof` if they need to inspect the type.
+> **Note:** `getContext()` returns the context as a `String` (or `null` if a Map was set). Use `getContextAsMap()` to retrieve a Map context, or `getContextAsObject()` to retrieve either as the underlying `Object`.
 
 Context map keys must contain only alphanumeric characters and underscores (`[a-zA-Z0-9_]`). Invalid keys will throw a `SkyflowException`.
 
