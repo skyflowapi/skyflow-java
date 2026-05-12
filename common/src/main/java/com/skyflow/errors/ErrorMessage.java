@@ -186,6 +186,8 @@ public enum ErrorMessage {
 
     NullTokenGroupNameInTokenGroup("%s0 Validation error. TokenGroupName in TokenGroupRedactions is null or empty. Specify a valid tokenGroupName."),
     InvalidRecord("%s0 Validation error. InsertRecord object in the list is invalid. Specify a valid InsertRecord object."),
+    NullCustomHeaderKey("%s0 Validation error. Custom header key must not be null. Specify a valid custom header key."),
+    EmptyValueInCustomHeaders("%s0 Validation error. Custom header value must not be null or empty. Specify a valid value."),
     ;
 
     private final String message;

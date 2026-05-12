@@ -1,6 +1,8 @@
 package com.skyflow.utils.validations;
 
 import com.skyflow.config.VaultConfig;
+import com.skyflow.enums.CustomHeaderKey;
+import com.skyflow.enums.InterfaceName;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.vault.data.DetokenizeRequest;
@@ -168,6 +170,13 @@ public class ValidationsTests {
     }
 
     @Test
+    public void validateDetokenizeRequest_nullTokens_throws() {
+        DetokenizeRequest request = DetokenizeRequest.builder().build();
+        assertSkyflowException(() -> Validations.validateDetokenizeRequest(request),
+                ErrorMessage.EmptyDetokenizeData.getMessage());
+    }
+
+    @Test
     public void validateDetokenizeRequest_emptyTokens_throws() {
         DetokenizeRequest request = DetokenizeRequest.builder()
                 .tokens(new ArrayList<>())
@@ -306,6 +315,121 @@ public class ValidationsTests {
             Validations.validateVaultConfiguration(cfg);
         } catch (Exception e) {
             Assert.fail("Should not throw for valid config: " + e.getMessage());
+        }
+    }
+
+    // ── validateCustomHeaders ─────────────────────────────────────────────────
+
+    @Test
+    public void validateCustomHeaders_nullMap_passes() {
+        try {
+            Validations.validateCustomHeaders(null, InterfaceName.INSERT);
+        } catch (Exception e) {
+            Assert.fail("Should not throw for null map: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void validateCustomHeaders_emptyMap_passes() {
+        try {
+            Validations.validateCustomHeaders(new HashMap<>(), InterfaceName.INSERT);
+        } catch (Exception e) {
+            Assert.fail("Should not throw for empty map: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void validateCustomHeaders_validEntry_passes() {
+        Map<CustomHeaderKey, String> headers = new HashMap<>();
+        headers.put(CustomHeaderKey.SkyflowAccountID, "acct-123");
+        try {
+            Validations.validateCustomHeaders(headers, InterfaceName.INSERT);
+        } catch (Exception e) {
+            Assert.fail("Should not throw for valid headers: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void validateCustomHeaders_allValidKeys_passes() {
+        Map<CustomHeaderKey, String> headers = new HashMap<>();
+        headers.put(CustomHeaderKey.SkyflowAccountID, "acct-123");
+        headers.put(CustomHeaderKey.SkyflowAccountName, "my-account");
+        headers.put(CustomHeaderKey.RequestIDHeader, "req-abc");
+        try {
+            Validations.validateCustomHeaders(headers, InterfaceName.INSERT);
+        } catch (Exception e) {
+            Assert.fail("Should not throw for all valid keys: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void validateCustomHeaders_nullKey_throws() {
+        Map<CustomHeaderKey, String> headers = new HashMap<>();
+        headers.put(null, "some-value");
+        assertSkyflowException(
+                () -> Validations.validateCustomHeaders(headers, InterfaceName.INSERT),
+                ErrorMessage.NullCustomHeaderKey.getMessage());
+    }
+
+    @Test
+    public void validateCustomHeaders_nullValue_throws() {
+        Map<CustomHeaderKey, String> headers = new HashMap<>();
+        headers.put(CustomHeaderKey.SkyflowAccountID, null);
+        assertSkyflowException(
+                () -> Validations.validateCustomHeaders(headers, InterfaceName.INSERT),
+                ErrorMessage.EmptyValueInCustomHeaders.getMessage());
+    }
+
+    @Test
+    public void validateCustomHeaders_emptyValue_throws() {
+        Map<CustomHeaderKey, String> headers = new HashMap<>();
+        headers.put(CustomHeaderKey.RequestIDHeader, "");
+        assertSkyflowException(
+                () -> Validations.validateCustomHeaders(headers, InterfaceName.DETOKENIZE),
+                ErrorMessage.EmptyValueInCustomHeaders.getMessage());
+    }
+
+    @Test
+    public void validateCustomHeaders_blankValue_throws() {
+        Map<CustomHeaderKey, String> headers = new HashMap<>();
+        headers.put(CustomHeaderKey.SkyflowAccountName, "   ");
+        assertSkyflowException(
+                () -> Validations.validateCustomHeaders(headers, InterfaceName.TOKENIZE),
+                ErrorMessage.EmptyValueInCustomHeaders.getMessage());
+    }
+
+    @Test
+    public void validateCustomHeaders_stopsAtFirstInvalidEntry() {
+        Map<CustomHeaderKey, String> headers = new HashMap<>();
+        headers.put(CustomHeaderKey.SkyflowAccountID, "valid");
+        headers.put(CustomHeaderKey.RequestIDHeader, "");   // invalid — empty
+        headers.put(CustomHeaderKey.SkyflowAccountName, "also-valid");
+        assertSkyflowException(
+                () -> Validations.validateCustomHeaders(headers, InterfaceName.INSERT),
+                ErrorMessage.EmptyValueInCustomHeaders.getMessage());
+    }
+
+    @Test
+    public void validateCustomHeaders_nullValuePrecedesNullKey_throwsHeaderError() {
+        Map<CustomHeaderKey, String> headers = new HashMap<>();
+        headers.put(CustomHeaderKey.SkyflowAccountID, null);  // null value
+        assertSkyflowException(
+                () -> Validations.validateCustomHeaders(headers, InterfaceName.DETOKENIZE),
+                ErrorMessage.EmptyValueInCustomHeaders.getMessage());
+    }
+
+    @Test
+    public void validateCustomHeaders_allInterfaceNames_doNotAffectOutcome() {
+        Map<CustomHeaderKey, String> headers = new HashMap<>();
+        headers.put(CustomHeaderKey.RequestIDHeader, "r1");
+        for (InterfaceName name : new InterfaceName[]{
+                InterfaceName.INSERT, InterfaceName.DETOKENIZE,
+                InterfaceName.TOKENIZE, InterfaceName.DELETE}) {
+            try {
+                Validations.validateCustomHeaders(headers, name);
+            } catch (Exception e) {
+                Assert.fail("Should not throw for interface " + name + ": " + e.getMessage());
+            }
         }
     }
 

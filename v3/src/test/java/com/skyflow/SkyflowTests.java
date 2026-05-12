@@ -193,6 +193,139 @@ public class SkyflowTests {
         }
     }
 
+    @Test
+    public void testSetLogLevelNullDefaultsToError() {
+        try {
+            VaultConfig config = new VaultConfig();
+            config.setVaultId(vaultID);
+            config.setClusterId(clusterID);
+            config.setEnv(Env.SANDBOX);
+
+            Skyflow skyflow = Skyflow.builder()
+                    .setLogLevel(null)
+                    .addVaultConfig(config)
+                    .build();
+
+            Assert.assertEquals(LogLevel.ERROR, skyflow.getLogLevel());
+        } catch (Exception e) {
+            Assert.fail("Unexpected exception: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void testAddSkyflowCredentials_invalidCredentials_throws() {
+        try {
+            VaultConfig config = new VaultConfig();
+            config.setVaultId(vaultID);
+            config.setClusterId(clusterID);
+            config.setEnv(Env.SANDBOX);
+
+            Credentials badCreds = new Credentials();
+            badCreds.setToken(""); // empty token — invalid
+
+            Skyflow.builder()
+                    .addVaultConfig(config)
+                    .addSkyflowCredentials(badCreds);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(ErrorMessage.EmptyToken.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testAddSkyflowCredentials_propagatesToVaultController() {
+        try {
+            VaultConfig config = new VaultConfig();
+            config.setVaultId(vaultID);
+            config.setClusterId(clusterID);
+            config.setEnv(Env.SANDBOX);
+
+            Credentials creds = new Credentials();
+            creds.setToken(token);
+
+            Skyflow skyflow = Skyflow.builder()
+                    .addVaultConfig(config)
+                    .addSkyflowCredentials(creds)
+                    .build();
+
+            VaultController controller = skyflow.vault();
+            Assert.assertNotNull(controller);
+
+            // verify that common credentials were propagated — the controller should
+            // hold the credentials we passed, not null
+            Object builder = getField(skyflow, "builder");
+            Credentials storedCreds = (Credentials) getField(builder.getClass().getSuperclass(), builder, "skyflowCredentials");
+            Assert.assertEquals(token, storedCreds.getToken());
+        } catch (Exception e) {
+            Assert.fail("Unexpected exception: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void testAddSkyflowCredentials_returnsBuilderForChaining() {
+        try {
+            VaultConfig config = new VaultConfig();
+            config.setVaultId(vaultID);
+            config.setClusterId(clusterID);
+            config.setEnv(Env.SANDBOX);
+
+            Credentials creds = new Credentials();
+            creds.setToken(token);
+
+            Skyflow.SkyflowClientBuilder builder = Skyflow.builder().addVaultConfig(config);
+            Skyflow.SkyflowClientBuilder returned = builder.addSkyflowCredentials(creds);
+            Assert.assertSame(builder, returned);
+        } catch (Exception e) {
+            Assert.fail("Unexpected exception: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void testGetVaultConfig_returnsStoredConfig() {
+        try {
+            VaultConfig config = new VaultConfig();
+            config.setVaultId(vaultID);
+            config.setClusterId(clusterID);
+            config.setEnv(Env.SANDBOX);
+
+            Skyflow skyflow = Skyflow.builder().addVaultConfig(config).build();
+            VaultConfig stored = skyflow.getVaultConfig();
+
+            Assert.assertNotNull(stored);
+            Assert.assertEquals(vaultID, stored.getVaultId());
+            Assert.assertEquals(clusterID, stored.getClusterId());
+            Assert.assertEquals(Env.SANDBOX, stored.getEnv());
+        } catch (Exception e) {
+            Assert.fail("Unexpected exception: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void testGetVaultConfig_returnsCloneNotOriginal() {
+        try {
+            VaultConfig config = new VaultConfig();
+            config.setVaultId(vaultID);
+            config.setClusterId(clusterID);
+            config.setEnv(Env.SANDBOX);
+
+            Skyflow skyflow = Skyflow.builder().addVaultConfig(config).build();
+            VaultConfig stored = skyflow.getVaultConfig();
+
+            // The stored config must be a different object from the one passed in
+            Assert.assertNotSame(config, stored);
+        } catch (Exception e) {
+            Assert.fail("Unexpected exception: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void testBuilderReturnsNewInstanceEachCall() {
+        Skyflow.SkyflowClientBuilder b1 = Skyflow.builder();
+        Skyflow.SkyflowClientBuilder b2 = Skyflow.builder();
+        Assert.assertNotSame(b1, b2);
+    }
+
     private Object getField(Object instance, String fieldName) throws Exception {
         Field f = instance.getClass().getDeclaredField(fieldName);
         f.setAccessible(true);

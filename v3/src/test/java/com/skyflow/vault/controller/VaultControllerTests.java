@@ -8,11 +8,21 @@ import com.skyflow.errors.SkyflowException;
 import com.skyflow.enums.Env;
 import com.skyflow.utils.Constants;
 import com.skyflow.utils.validations.Validations;
+import com.skyflow.enums.CustomHeaderKey;
+import com.skyflow.vault.data.DeleteTokensOptions;
+import com.skyflow.vault.data.DeleteTokensRequest;
+import com.skyflow.vault.data.DeleteTokensResponse;
+import com.skyflow.vault.data.DetokenizeOptions;
 import com.skyflow.vault.data.DetokenizeRequest;
+import com.skyflow.vault.data.DetokenizeResponse;
+import com.skyflow.vault.data.InsertOptions;
 import com.skyflow.vault.data.InsertRecord;
 import com.skyflow.vault.data.InsertRequest;
 import com.skyflow.vault.data.ErrorRecord;
-import com.skyflow.vault.data.DetokenizeResponse;
+import com.skyflow.vault.data.TokenizeOptions;
+import com.skyflow.vault.data.TokenizeRecord;
+import com.skyflow.vault.data.TokenizeRequest;
+import com.skyflow.vault.data.TokenizeResponse;
 import com.skyflow.generated.rest.core.ApiClientApiException;
 import com.sun.net.httpserver.HttpServer;
 import org.junit.After;
@@ -27,8 +37,10 @@ import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -311,6 +323,68 @@ public class VaultControllerTests {
         }
 
         assertEquals(1, getPrivateInt(controller, "insertConcurrencyLimit"));
+    }
+
+    @Test
+    public void testNonNumericInsertBatchSize_usesDefault() throws Exception {
+        writeEnv("INSERT_BATCH_SIZE=abc");
+        VaultController controller = createController();
+        InsertRequest insertRequest = InsertRequest.builder().table("table1").records(generateValues(10)).build();
+
+        try {
+            controller.bulkInsert(insertRequest);
+        } catch (Exception ignored) {
+        }
+
+        assertEquals(Constants.INSERT_BATCH_SIZE.intValue(), getPrivateInt(controller, "insertBatchSize"));
+    }
+
+    @Test
+    public void testNonNumericInsertConcurrencyLimit_usesDefault() throws Exception {
+        writeEnv("INSERT_CONCURRENCY_LIMIT=xyz");
+        VaultController controller = createController();
+        InsertRequest insertRequest = InsertRequest.builder().table("table1").records(generateValues(10)).build();
+
+        try {
+            controller.bulkInsert(insertRequest);
+        } catch (Exception ignored) {
+        }
+
+        int expected = Math.min(Constants.INSERT_CONCURRENCY_LIMIT,
+                (10 + Constants.INSERT_BATCH_SIZE - 1) / Constants.INSERT_BATCH_SIZE);
+        assertEquals(expected, getPrivateInt(controller, "insertConcurrencyLimit"));
+    }
+
+    @Test
+    public void testNonNumericDetokenizeBatchSize_usesDefault() throws Exception {
+        writeEnv("DETOKENIZE_BATCH_SIZE=abc");
+        VaultController controller = createController();
+        List<String> tokens = getTokens(10);
+        DetokenizeRequest request = DetokenizeRequest.builder().tokens(tokens).build();
+
+        try {
+            controller.bulkDetokenize(request);
+        } catch (Exception ignored) {
+        }
+
+        assertEquals(Constants.DETOKENIZE_BATCH_SIZE.intValue(), getPrivateInt(controller, "detokenizeBatchSize"));
+    }
+
+    @Test
+    public void testNonNumericDetokenizeConcurrencyLimit_usesDefault() throws Exception {
+        writeEnv("DETOKENIZE_CONCURRENCY_LIMIT=xyz");
+        VaultController controller = createController();
+        List<String> tokens = getTokens(10);
+        DetokenizeRequest request = DetokenizeRequest.builder().tokens(tokens).build();
+
+        try {
+            controller.bulkDetokenize(request);
+        } catch (Exception ignored) {
+        }
+
+        int expected = Math.min(Constants.DETOKENIZE_CONCURRENCY_LIMIT,
+                (10 + Constants.DETOKENIZE_BATCH_SIZE - 1) / Constants.DETOKENIZE_BATCH_SIZE);
+        assertEquals(expected, getPrivateInt(controller, "detokenizeConcurrencyLimit"));
     }
 
     @Test
@@ -621,12 +695,12 @@ public class VaultControllerTests {
         List<com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest> batches = null; // trigger catch
         List<ErrorRecord> errors = new ArrayList<>();
 
-        Method method = VaultController.class.getDeclaredMethod("detokenizeBatchFutures", ExecutorService.class, List.class, List.class);
+        Method method = VaultController.class.getDeclaredMethod("detokenizeBatchFutures", ExecutorService.class, List.class, List.class, Map.class);
         method.setAccessible(true);
         ExecutorService executor = Executors.newFixedThreadPool(1);
         @SuppressWarnings("unchecked")
         List<CompletableFuture<DetokenizeResponse>> futures =
-                (List<CompletableFuture<DetokenizeResponse>>) method.invoke(controller, executor, batches, errors);
+                (List<CompletableFuture<DetokenizeResponse>>) method.invoke(controller, executor, batches, errors, Collections.emptyMap());
 
         Assert.assertTrue(errors.size() == 1);
         Assert.assertEquals(0, errors.get(0).getIndex());
@@ -672,12 +746,13 @@ public class VaultControllerTests {
         java.lang.reflect.Method processDetokenizeSync = VaultController.class.getDeclaredMethod(
                 "processDetokenizeSync",
                 com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest.class,
-                List.class
+                List.class,
+                Map.class
         );
         processDetokenizeSync.setAccessible(true);
 
         try {
-            processDetokenizeSync.invoke(controller, requestObj, tokens);
+            processDetokenizeSync.invoke(controller, requestObj, tokens, Collections.emptyMap());
         } catch (java.lang.reflect.InvocationTargetException e) {
             Throwable cause = e.getCause();
             assertTrue(cause instanceof SkyflowException || cause instanceof ExecutionException || cause instanceof RuntimeException);
@@ -709,7 +784,8 @@ public class VaultControllerTests {
         java.lang.reflect.Method processDetokenizeSync = VaultController.class.getDeclaredMethod(
                 "processDetokenizeSync",
                 com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest.class,
-                List.class
+                List.class,
+                Map.class
         );
         processDetokenizeSync.setAccessible(true);
 
@@ -717,17 +793,613 @@ public class VaultControllerTests {
                 "detokenizeBatchFutures",
                 ExecutorService.class,
                 List.class,
-                List.class
+                List.class,
+                Map.class
         );
         detokenizeBatchFutures.setAccessible(true);
         ExecutorService executor = Executors.newFixedThreadPool(1);
         List<com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest> batches = null; // will trigger catch
         List<ErrorRecord> errors = new ArrayList<>();
         @SuppressWarnings("unchecked")
-        List<CompletableFuture<DetokenizeResponse>> futures = (List<CompletableFuture<DetokenizeResponse>>) detokenizeBatchFutures.invoke(controller, executor, batches, errors);
+        List<CompletableFuture<DetokenizeResponse>> futures = (List<CompletableFuture<DetokenizeResponse>>) detokenizeBatchFutures.invoke(controller, executor, batches, errors, Collections.emptyMap());
         assertTrue(errors.size() == 1);
         assertEquals(0, errors.get(0).getIndex());
         assertEquals(500, errors.get(0).getCode());
         executor.shutdownNow();
+    }
+
+    // ── Custom header options validation via VaultController ──────────────────
+
+    @Test
+    public void bulkInsert_optionsWithEmptyHeaderValue_throwsSkyflowException() throws SkyflowException {
+        VaultController controller = createController();
+        InsertRequest request = InsertRequest.builder()
+                .table("tbl")
+                .records(generateValues(1))
+                .build();
+        InsertOptions opts = InsertOptions.builder()
+                .addCustomHeader(CustomHeaderKey.SkyflowAccountID, "")
+                .build();
+        try {
+            controller.bulkInsert(request, opts);
+            fail("Expected SkyflowException for empty header value");
+        } catch (SkyflowException e) {
+            assertEquals(ErrorMessage.EmptyValueInCustomHeaders.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void bulkInsert_optionsWithBlankHeaderValue_throwsSkyflowException() throws SkyflowException {
+        VaultController controller = createController();
+        InsertRequest request = InsertRequest.builder()
+                .table("tbl")
+                .records(generateValues(1))
+                .build();
+        InsertOptions opts = InsertOptions.builder()
+                .addCustomHeader(CustomHeaderKey.RequestIDHeader, "   ")
+                .build();
+        try {
+            controller.bulkInsert(request, opts);
+            fail("Expected SkyflowException for blank header value");
+        } catch (SkyflowException e) {
+            assertEquals(ErrorMessage.EmptyValueInCustomHeaders.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void bulkInsert_nullOptions_doesNotThrowForHeaderValidation() throws SkyflowException {
+        VaultController controller = createController();
+        InsertRequest request = InsertRequest.builder()
+                .table("tbl")
+                .records(generateValues(1))
+                .build();
+        try {
+            controller.bulkInsert(request, (InsertOptions) null);
+        } catch (SkyflowException e) {
+            assertFalse("Should not throw EmptyValueInCustomHeaders for null options",
+                    e.getMessage().equals(ErrorMessage.EmptyValueInCustomHeaders.getMessage()));
+            assertFalse("Should not throw NullCustomHeaderKey for null options",
+                    e.getMessage().equals(ErrorMessage.NullCustomHeaderKey.getMessage()));
+        }
+    }
+
+    @Test
+    public void bulkDetokenize_optionsWithEmptyHeaderValue_throwsSkyflowException() throws SkyflowException {
+        VaultController controller = createController();
+        DetokenizeRequest request = DetokenizeRequest.builder()
+                .tokens(getTokens(1))
+                .build();
+        DetokenizeOptions opts = DetokenizeOptions.builder()
+                .addCustomHeader(CustomHeaderKey.SkyflowAccountName, "")
+                .build();
+        try {
+            controller.bulkDetokenize(request, opts);
+            fail("Expected SkyflowException for empty header value");
+        } catch (SkyflowException e) {
+            assertEquals(ErrorMessage.EmptyValueInCustomHeaders.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void bulkDetokenize_nullOptions_doesNotThrowForHeaderValidation() throws SkyflowException {
+        VaultController controller = createController();
+        DetokenizeRequest request = DetokenizeRequest.builder()
+                .tokens(getTokens(1))
+                .build();
+        try {
+            controller.bulkDetokenize(request, (DetokenizeOptions) null);
+        } catch (SkyflowException e) {
+            assertFalse("Should not throw header error for null options",
+                    e.getMessage().equals(ErrorMessage.EmptyValueInCustomHeaders.getMessage()));
+        }
+    }
+
+    @Test
+    public void bulkDeleteTokens_optionsWithEmptyHeaderValue_throwsSkyflowException() throws SkyflowException {
+        VaultController controller = createController();
+        DeleteTokensRequest request = DeleteTokensRequest.builder()
+                .tokens(getTokens(1))
+                .build();
+        DeleteTokensOptions opts = DeleteTokensOptions.builder()
+                .addCustomHeader(CustomHeaderKey.RequestIDHeader, "")
+                .build();
+        try {
+            controller.bulkDeleteTokens(request, opts);
+            fail("Expected SkyflowException for empty header value");
+        } catch (SkyflowException e) {
+            assertEquals(ErrorMessage.EmptyValueInCustomHeaders.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void bulkTokenize_optionsWithEmptyHeaderValue_throwsSkyflowException() throws SkyflowException {
+        VaultController controller = createController();
+        ArrayList<TokenizeRecord> data = new ArrayList<>();
+        data.add(TokenizeRecord.builder().value("val").build());
+        TokenizeRequest request = TokenizeRequest.builder().data(data).build();
+        TokenizeOptions opts = TokenizeOptions.builder()
+                .addCustomHeader(CustomHeaderKey.SkyflowAccountID, "")
+                .build();
+        try {
+            controller.bulkTokenize(request, opts);
+            fail("Expected SkyflowException for empty header value");
+        } catch (SkyflowException e) {
+            assertEquals(ErrorMessage.EmptyValueInCustomHeaders.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void bulkDeleteTokens_nullOptions_doesNotThrowForHeaderValidation() throws SkyflowException {
+        VaultController controller = createController();
+        DeleteTokensRequest request = DeleteTokensRequest.builder()
+                .tokens(getTokens(1))
+                .build();
+        try {
+            controller.bulkDeleteTokens(request, (DeleteTokensOptions) null);
+        } catch (SkyflowException e) {
+            assertFalse("Should not throw header error for null options",
+                    e.getMessage().equals(ErrorMessage.EmptyValueInCustomHeaders.getMessage()));
+            assertFalse("Should not throw NullCustomHeaderKey for null options",
+                    e.getMessage().equals(ErrorMessage.NullCustomHeaderKey.getMessage()));
+        }
+    }
+
+    @Test
+    public void bulkTokenize_nullOptions_doesNotThrowForHeaderValidation() throws SkyflowException {
+        VaultController controller = createController();
+        ArrayList<TokenizeRecord> data = new ArrayList<>();
+        data.add(TokenizeRecord.builder().value("val").build());
+        TokenizeRequest request = TokenizeRequest.builder().data(data).build();
+        try {
+            controller.bulkTokenize(request, (TokenizeOptions) null);
+        } catch (SkyflowException e) {
+            assertFalse("Should not throw header error for null options",
+                    e.getMessage().equals(ErrorMessage.EmptyValueInCustomHeaders.getMessage()));
+            assertFalse("Should not throw NullCustomHeaderKey for null options",
+                    e.getMessage().equals(ErrorMessage.NullCustomHeaderKey.getMessage()));
+        }
+    }
+
+    @Test
+    public void bulkInsertAsync_optionsWithEmptyHeaderValue_throwsSkyflowException() throws SkyflowException {
+        VaultController controller = createController();
+        InsertRequest request = InsertRequest.builder()
+                .table("tbl")
+                .records(generateValues(1))
+                .build();
+        InsertOptions opts = InsertOptions.builder()
+                .addCustomHeader(CustomHeaderKey.SkyflowAccountName, "")
+                .build();
+        try {
+            controller.bulkInsertAsync(request, opts);
+            fail("Expected SkyflowException for empty header value");
+        } catch (SkyflowException e) {
+            assertEquals(ErrorMessage.EmptyValueInCustomHeaders.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void bulkDetokenizeAsync_optionsWithEmptyHeaderValue_throwsSkyflowException() throws SkyflowException {
+        VaultController controller = createController();
+        DetokenizeRequest request = DetokenizeRequest.builder()
+                .tokens(getTokens(1))
+                .build();
+        DetokenizeOptions opts = DetokenizeOptions.builder()
+                .addCustomHeader(CustomHeaderKey.RequestIDHeader, "   ")
+                .build();
+        try {
+            controller.bulkDetokenizeAsync(request, opts);
+            fail("Expected SkyflowException for blank header value");
+        } catch (SkyflowException e) {
+            assertEquals(ErrorMessage.EmptyValueInCustomHeaders.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void bulkDeleteTokensAsync_optionsWithEmptyHeaderValue_throwsSkyflowException() throws SkyflowException {
+        VaultController controller = createController();
+        DeleteTokensRequest request = DeleteTokensRequest.builder()
+                .tokens(getTokens(1))
+                .build();
+        DeleteTokensOptions opts = DeleteTokensOptions.builder()
+                .addCustomHeader(CustomHeaderKey.SkyflowAccountID, "")
+                .build();
+        try {
+            controller.bulkDeleteTokensAsync(request, opts);
+            fail("Expected SkyflowException for empty header value");
+        } catch (SkyflowException e) {
+            assertEquals(ErrorMessage.EmptyValueInCustomHeaders.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void bulkTokenizeAsync_optionsWithEmptyHeaderValue_throwsSkyflowException() throws SkyflowException {
+        VaultController controller = createController();
+        ArrayList<TokenizeRecord> data = new ArrayList<>();
+        data.add(TokenizeRecord.builder().value("val").build());
+        TokenizeRequest request = TokenizeRequest.builder().data(data).build();
+        TokenizeOptions opts = TokenizeOptions.builder()
+                .addCustomHeader(CustomHeaderKey.SkyflowAccountName, "  ")
+                .build();
+        try {
+            controller.bulkTokenizeAsync(request, opts);
+            fail("Expected SkyflowException for blank header value");
+        } catch (SkyflowException e) {
+            assertEquals(ErrorMessage.EmptyValueInCustomHeaders.getMessage(), e.getMessage());
+        }
+    }
+
+    // ── configureDeleteTokensConcurrencyAndBatchSize ──────────────────────────
+
+    @Test
+    public void testCustomValidBatchAndConcurrency_DELETE_TOKENS() throws Exception {
+        writeEnv("DELETE_TOKENS_BATCH_SIZE=5\nDELETE_TOKENS_CONCURRENCY_LIMIT=3");
+        VaultController controller = createController();
+        DeleteTokensRequest request = DeleteTokensRequest.builder().tokens(getTokens(20)).build();
+        try { controller.bulkDeleteTokens(request); } catch (Exception ignored) {}
+        assertEquals(5, getPrivateInt(controller, "deleteTokensBatchSize"));
+        assertEquals(3, getPrivateInt(controller, "deleteTokensConcurrencyLimit"));
+    }
+
+    @Test
+    public void testBatchSizeExceedsMax_DELETE_TOKENS() throws Exception {
+        writeEnv("DELETE_TOKENS_BATCH_SIZE=1100");
+        VaultController controller = createController();
+        DeleteTokensRequest request = DeleteTokensRequest.builder().tokens(getTokens(50)).build();
+        try { controller.bulkDeleteTokens(request); } catch (Exception ignored) {}
+        assertEquals(Constants.MAX_DELETE_TOKENS_BATCH_SIZE.intValue(), getPrivateInt(controller, "deleteTokensBatchSize"));
+    }
+
+    @Test
+    public void testConcurrencyExceedsMax_DELETE_TOKENS() throws Exception {
+        writeEnv("DELETE_TOKENS_CONCURRENCY_LIMIT=110");
+        VaultController controller = createController();
+        DeleteTokensRequest request = DeleteTokensRequest.builder().tokens(getTokens(50)).build();
+        try { controller.bulkDeleteTokens(request); } catch (Exception ignored) {}
+        assertEquals(1, getPrivateInt(controller, "deleteTokensConcurrencyLimit"));
+    }
+
+    @Test
+    public void testBatchSizeZeroOrNegative_DELETE_TOKENS() throws Exception {
+        writeEnv("DELETE_TOKENS_BATCH_SIZE=0");
+        VaultController controller = createController();
+        DeleteTokensRequest request = DeleteTokensRequest.builder().tokens(getTokens(10)).build();
+        try { controller.bulkDeleteTokens(request); } catch (Exception ignored) {}
+        assertEquals(Constants.DELETE_TOKENS_BATCH_SIZE.intValue(), getPrivateInt(controller, "deleteTokensBatchSize"));
+
+        writeEnv("DELETE_TOKENS_BATCH_SIZE=-5");
+        try { controller.bulkDeleteTokens(request); } catch (Exception ignored) {}
+        assertEquals(Constants.DELETE_TOKENS_BATCH_SIZE.intValue(), getPrivateInt(controller, "deleteTokensBatchSize"));
+    }
+
+    @Test
+    public void testConcurrencyZeroOrNegative_DELETE_TOKENS() throws Exception {
+        writeEnv("DELETE_TOKENS_CONCURRENCY_LIMIT=0");
+        VaultController controller = createController();
+        DeleteTokensRequest request = DeleteTokensRequest.builder().tokens(getTokens(10)).build();
+        try { controller.bulkDeleteTokens(request); } catch (Exception ignored) {}
+        int min = Math.min(Constants.DELETE_TOKENS_CONCURRENCY_LIMIT,
+                (10 + Constants.DELETE_TOKENS_BATCH_SIZE - 1) / Constants.DELETE_TOKENS_BATCH_SIZE);
+        assertEquals(min, getPrivateInt(controller, "deleteTokensConcurrencyLimit"));
+
+        writeEnv("DELETE_TOKENS_CONCURRENCY_LIMIT=-5");
+        try { controller.bulkDeleteTokens(request); } catch (Exception ignored) {}
+        assertEquals(min, getPrivateInt(controller, "deleteTokensConcurrencyLimit"));
+    }
+
+    @Test
+    public void testNonNumericDeleteTokensBatchSize_usesDefault() throws Exception {
+        writeEnv("DELETE_TOKENS_BATCH_SIZE=abc");
+        VaultController controller = createController();
+        DeleteTokensRequest request = DeleteTokensRequest.builder().tokens(getTokens(10)).build();
+        try { controller.bulkDeleteTokens(request); } catch (Exception ignored) {}
+        assertEquals(Constants.DELETE_TOKENS_BATCH_SIZE.intValue(), getPrivateInt(controller, "deleteTokensBatchSize"));
+    }
+
+    @Test
+    public void testNonNumericDeleteTokensConcurrencyLimit_usesDefault() throws Exception {
+        writeEnv("DELETE_TOKENS_CONCURRENCY_LIMIT=xyz");
+        VaultController controller = createController();
+        DeleteTokensRequest request = DeleteTokensRequest.builder().tokens(getTokens(10)).build();
+        try { controller.bulkDeleteTokens(request); } catch (Exception ignored) {}
+        int expected = Math.min(Constants.DELETE_TOKENS_CONCURRENCY_LIMIT,
+                (10 + Constants.DELETE_TOKENS_BATCH_SIZE - 1) / Constants.DELETE_TOKENS_BATCH_SIZE);
+        assertEquals(expected, getPrivateInt(controller, "deleteTokensConcurrencyLimit"));
+    }
+
+    // ── configureTokenizeConcurrencyAndBatchSize ──────────────────────────────
+
+    @Test
+    public void testCustomValidBatchAndConcurrency_TOKENIZE() throws Exception {
+        writeEnv("TOKENIZE_BATCH_SIZE=5\nTOKENIZE_CONCURRENCY_LIMIT=3");
+        VaultController controller = createController();
+        TokenizeRequest request = TokenizeRequest.builder().data(generateTokenizeData(20)).build();
+        try { controller.bulkTokenize(request); } catch (Exception ignored) {}
+        assertEquals(5, getPrivateInt(controller, "tokenizeBatchSize"));
+        assertEquals(3, getPrivateInt(controller, "tokenizeConcurrencyLimit"));
+    }
+
+    @Test
+    public void testBatchSizeExceedsMax_TOKENIZE() throws Exception {
+        writeEnv("TOKENIZE_BATCH_SIZE=1100");
+        VaultController controller = createController();
+        TokenizeRequest request = TokenizeRequest.builder().data(generateTokenizeData(50)).build();
+        try { controller.bulkTokenize(request); } catch (Exception ignored) {}
+        assertEquals(Constants.MAX_TOKENIZE_BATCH_SIZE.intValue(), getPrivateInt(controller, "tokenizeBatchSize"));
+    }
+
+    @Test
+    public void testConcurrencyExceedsMax_TOKENIZE() throws Exception {
+        writeEnv("TOKENIZE_CONCURRENCY_LIMIT=110");
+        VaultController controller = createController();
+        TokenizeRequest request = TokenizeRequest.builder().data(generateTokenizeData(50)).build();
+        try { controller.bulkTokenize(request); } catch (Exception ignored) {}
+        assertEquals(1, getPrivateInt(controller, "tokenizeConcurrencyLimit"));
+    }
+
+    @Test
+    public void testBatchSizeZeroOrNegative_TOKENIZE() throws Exception {
+        writeEnv("TOKENIZE_BATCH_SIZE=0");
+        VaultController controller = createController();
+        TokenizeRequest request = TokenizeRequest.builder().data(generateTokenizeData(10)).build();
+        try { controller.bulkTokenize(request); } catch (Exception ignored) {}
+        assertEquals(Constants.TOKENIZE_BATCH_SIZE.intValue(), getPrivateInt(controller, "tokenizeBatchSize"));
+
+        writeEnv("TOKENIZE_BATCH_SIZE=-5");
+        try { controller.bulkTokenize(request); } catch (Exception ignored) {}
+        assertEquals(Constants.TOKENIZE_BATCH_SIZE.intValue(), getPrivateInt(controller, "tokenizeBatchSize"));
+    }
+
+    @Test
+    public void testConcurrencyZeroOrNegative_TOKENIZE() throws Exception {
+        writeEnv("TOKENIZE_CONCURRENCY_LIMIT=0");
+        VaultController controller = createController();
+        TokenizeRequest request = TokenizeRequest.builder().data(generateTokenizeData(10)).build();
+        try { controller.bulkTokenize(request); } catch (Exception ignored) {}
+        int min = Math.min(Constants.TOKENIZE_CONCURRENCY_LIMIT,
+                (10 + Constants.TOKENIZE_BATCH_SIZE - 1) / Constants.TOKENIZE_BATCH_SIZE);
+        assertEquals(min, getPrivateInt(controller, "tokenizeConcurrencyLimit"));
+
+        writeEnv("TOKENIZE_CONCURRENCY_LIMIT=-5");
+        try { controller.bulkTokenize(request); } catch (Exception ignored) {}
+        assertEquals(min, getPrivateInt(controller, "tokenizeConcurrencyLimit"));
+    }
+
+    @Test
+    public void testNonNumericTokenizeBatchSize_usesDefault() throws Exception {
+        writeEnv("TOKENIZE_BATCH_SIZE=abc");
+        VaultController controller = createController();
+        TokenizeRequest request = TokenizeRequest.builder().data(generateTokenizeData(10)).build();
+        try { controller.bulkTokenize(request); } catch (Exception ignored) {}
+        assertEquals(Constants.TOKENIZE_BATCH_SIZE.intValue(), getPrivateInt(controller, "tokenizeBatchSize"));
+    }
+
+    @Test
+    public void testNonNumericTokenizeConcurrencyLimit_usesDefault() throws Exception {
+        writeEnv("TOKENIZE_CONCURRENCY_LIMIT=xyz");
+        VaultController controller = createController();
+        TokenizeRequest request = TokenizeRequest.builder().data(generateTokenizeData(10)).build();
+        try { controller.bulkTokenize(request); } catch (Exception ignored) {}
+        int expected = Math.min(Constants.TOKENIZE_CONCURRENCY_LIMIT,
+                (10 + Constants.TOKENIZE_BATCH_SIZE - 1) / Constants.TOKENIZE_BATCH_SIZE);
+        assertEquals(expected, getPrivateInt(controller, "tokenizeConcurrencyLimit"));
+    }
+
+    // ── Null batch list early-return paths ────────────────────────────────────
+
+    @Test
+    public void deleteTokensBatchFutures_nullBatches_returnsEmptyList() throws Exception {
+        VaultController controller = createController();
+        Method method = VaultController.class.getDeclaredMethod(
+                "deleteTokensBatchFutures", ExecutorService.class, List.class, Map.class);
+        method.setAccessible(true);
+        ExecutorService executor = Executors.newFixedThreadPool(1);
+        @SuppressWarnings("unchecked")
+        List<CompletableFuture<DeleteTokensResponse>> futures =
+                (List<CompletableFuture<DeleteTokensResponse>>) method.invoke(
+                        controller, executor, null, Collections.emptyMap());
+        assertTrue("Expected empty list for null batches", futures.isEmpty());
+        executor.shutdownNow();
+    }
+
+    @Test
+    public void tokenizeBatchFutures_nullBatches_returnsEmptyList() throws Exception {
+        VaultController controller = createController();
+        Method method = VaultController.class.getDeclaredMethod(
+                "tokenizeBatchFutures", ExecutorService.class, List.class, Map.class);
+        method.setAccessible(true);
+        ExecutorService executor = Executors.newFixedThreadPool(1);
+        @SuppressWarnings("unchecked")
+        List<CompletableFuture<TokenizeResponse>> futures =
+                (List<CompletableFuture<TokenizeResponse>>) method.invoke(
+                        controller, executor, null, Collections.emptyMap());
+        assertTrue("Expected empty list for null batches", futures.isEmpty());
+        executor.shutdownNow();
+    }
+
+    // ── Async SkyflowException re-throw paths ─────────────────────────────────
+
+    @Test
+    public void bulkDeleteTokensAsync_emptyTokens_throwsSkyflowException() throws Exception {
+        VaultController controller = createController();
+        DeleteTokensRequest request = DeleteTokensRequest.builder().tokens(new ArrayList<>()).build();
+        try {
+            controller.bulkDeleteTokensAsync(request);
+            fail("Expected SkyflowException");
+        } catch (SkyflowException e) {
+            assertEquals(ErrorMessage.EmptyDeleteTokensData.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void bulkTokenizeAsync_emptyData_throwsSkyflowException() throws Exception {
+        VaultController controller = createController();
+        TokenizeRequest request = TokenizeRequest.builder().data(new ArrayList<>()).build();
+        try {
+            controller.bulkTokenizeAsync(request);
+            fail("Expected SkyflowException");
+        } catch (SkyflowException e) {
+            assertEquals(ErrorMessage.EmptyTokenizeData.getMessage(), e.getMessage());
+        }
+    }
+
+    // ── extractCustomHeaders ──────────────────────────────────────────────────
+
+    @Test
+    public void extractCustomHeaders_insertOptions_null_returnsEmptyMap() throws Exception {
+        VaultController controller = createController();
+        Method method = VaultController.class.getDeclaredMethod("extractCustomHeaders", InsertOptions.class);
+        method.setAccessible(true);
+        @SuppressWarnings("unchecked")
+        Map<String, String> result = (Map<String, String>) method.invoke(controller, (InsertOptions) null);
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    public void extractCustomHeaders_insertOptions_withHeaders_convertsToStringKeys() throws Exception {
+        VaultController controller = createController();
+        Method method = VaultController.class.getDeclaredMethod("extractCustomHeaders", InsertOptions.class);
+        method.setAccessible(true);
+        InsertOptions opts = InsertOptions.builder()
+                .addCustomHeader(CustomHeaderKey.SkyflowAccountID, "acct-val")
+                .addCustomHeader(CustomHeaderKey.RequestIDHeader, "req-123")
+                .build();
+        @SuppressWarnings("unchecked")
+        Map<String, String> result = (Map<String, String>) method.invoke(controller, opts);
+        assertEquals(2, result.size());
+        assertEquals("acct-val", result.get(CustomHeaderKey.SkyflowAccountID.toString()));
+        assertEquals("req-123", result.get(CustomHeaderKey.RequestIDHeader.toString()));
+    }
+
+    @Test
+    public void extractCustomHeaders_detokenizeOptions_null_returnsEmptyMap() throws Exception {
+        VaultController controller = createController();
+        Method method = VaultController.class.getDeclaredMethod("extractCustomHeaders", DetokenizeOptions.class);
+        method.setAccessible(true);
+        @SuppressWarnings("unchecked")
+        Map<String, String> result = (Map<String, String>) method.invoke(controller, (DetokenizeOptions) null);
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    public void extractCustomHeaders_detokenizeOptions_withHeaders_convertsToStringKeys() throws Exception {
+        VaultController controller = createController();
+        Method method = VaultController.class.getDeclaredMethod("extractCustomHeaders", DetokenizeOptions.class);
+        method.setAccessible(true);
+        DetokenizeOptions opts = DetokenizeOptions.builder()
+                .addCustomHeader(CustomHeaderKey.SkyflowAccountName, "my-account")
+                .build();
+        @SuppressWarnings("unchecked")
+        Map<String, String> result = (Map<String, String>) method.invoke(controller, opts);
+        assertEquals("my-account", result.get(CustomHeaderKey.SkyflowAccountName.toString()));
+    }
+
+    @Test
+    public void extractCustomHeaders_deleteTokensOptions_null_returnsEmptyMap() throws Exception {
+        VaultController controller = createController();
+        Method method = VaultController.class.getDeclaredMethod("extractCustomHeaders", DeleteTokensOptions.class);
+        method.setAccessible(true);
+        @SuppressWarnings("unchecked")
+        Map<String, String> result = (Map<String, String>) method.invoke(controller, (DeleteTokensOptions) null);
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    public void extractCustomHeaders_deleteTokensOptions_withHeaders_convertsToStringKeys() throws Exception {
+        VaultController controller = createController();
+        Method method = VaultController.class.getDeclaredMethod("extractCustomHeaders", DeleteTokensOptions.class);
+        method.setAccessible(true);
+        DeleteTokensOptions opts = DeleteTokensOptions.builder()
+                .addCustomHeader(CustomHeaderKey.RequestIDHeader, "del-req")
+                .build();
+        @SuppressWarnings("unchecked")
+        Map<String, String> result = (Map<String, String>) method.invoke(controller, opts);
+        assertEquals("del-req", result.get(CustomHeaderKey.RequestIDHeader.toString()));
+    }
+
+    @Test
+    public void extractCustomHeaders_tokenizeOptions_null_returnsEmptyMap() throws Exception {
+        VaultController controller = createController();
+        Method method = VaultController.class.getDeclaredMethod("extractCustomHeaders", TokenizeOptions.class);
+        method.setAccessible(true);
+        @SuppressWarnings("unchecked")
+        Map<String, String> result = (Map<String, String>) method.invoke(controller, (TokenizeOptions) null);
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    public void extractCustomHeaders_tokenizeOptions_withHeaders_convertsToStringKeys() throws Exception {
+        VaultController controller = createController();
+        Method method = VaultController.class.getDeclaredMethod("extractCustomHeaders", TokenizeOptions.class);
+        method.setAccessible(true);
+        TokenizeOptions opts = TokenizeOptions.builder()
+                .addCustomHeader(CustomHeaderKey.SkyflowAccountID, "tok-acct")
+                .build();
+        @SuppressWarnings("unchecked")
+        Map<String, String> result = (Map<String, String>) method.invoke(controller, opts);
+        assertEquals("tok-acct", result.get(CustomHeaderKey.SkyflowAccountID.toString()));
+    }
+
+    // ── buildRequestOptions ───────────────────────────────────────────────────
+
+    @Test
+    public void buildRequestOptions_noCustomHeaders_containsMetricsHeader() throws Exception {
+        VaultController controller = createController();
+        Method method = VaultController.class.getDeclaredMethod("buildRequestOptions", Map.class);
+        method.setAccessible(true);
+        com.skyflow.generated.rest.core.RequestOptions opts =
+                (com.skyflow.generated.rest.core.RequestOptions) method.invoke(controller, Collections.emptyMap());
+        Map<String, String> headers = opts.getHeaders();
+        assertTrue("Metrics header must always be present", headers.containsKey(com.skyflow.utils.Constants.SDK_METRICS_HEADER_KEY));
+    }
+
+    @Test
+    public void buildRequestOptions_withCustomHeaders_containsBothMetricsAndCustom() throws Exception {
+        VaultController controller = createController();
+        Method method = VaultController.class.getDeclaredMethod("buildRequestOptions", Map.class);
+        method.setAccessible(true);
+        Map<String, String> custom = new HashMap<>();
+        custom.put(CustomHeaderKey.SkyflowAccountID.toString(), "acct-999");
+        custom.put(CustomHeaderKey.RequestIDHeader.toString(), "req-001");
+        com.skyflow.generated.rest.core.RequestOptions opts =
+                (com.skyflow.generated.rest.core.RequestOptions) method.invoke(controller, custom);
+        Map<String, String> headers = opts.getHeaders();
+        assertTrue("Metrics header must be present", headers.containsKey(com.skyflow.utils.Constants.SDK_METRICS_HEADER_KEY));
+        assertEquals("acct-999", headers.get(CustomHeaderKey.SkyflowAccountID.toString()));
+        assertEquals("req-001", headers.get(CustomHeaderKey.RequestIDHeader.toString()));
+    }
+
+    @Test
+    public void buildRequestOptions_nullCustomHeaders_containsOnlyMetricsHeader() throws Exception {
+        VaultController controller = createController();
+        Method method = VaultController.class.getDeclaredMethod("buildRequestOptions", Map.class);
+        method.setAccessible(true);
+        com.skyflow.generated.rest.core.RequestOptions opts =
+                (com.skyflow.generated.rest.core.RequestOptions) method.invoke(controller, (Map<String, String>) null);
+        Map<String, String> headers = opts.getHeaders();
+        assertTrue("Metrics header must be present even for null custom headers",
+                headers.containsKey(com.skyflow.utils.Constants.SDK_METRICS_HEADER_KEY));
+    }
+
+    // ── Private helpers ───────────────────────────────────────────────────────
+
+    private void invokeConfigureDeleteTokensConcurrencyAndBatchSize(VaultController controller, int totalRequests) throws Exception {
+        Method method = VaultController.class.getDeclaredMethod("configureDeleteTokensConcurrencyAndBatchSize", int.class);
+        method.setAccessible(true);
+        method.invoke(controller, totalRequests);
+    }
+
+    private void invokeConfigureTokenizeConcurrencyAndBatchSize(VaultController controller, int totalRequests) throws Exception {
+        Method method = VaultController.class.getDeclaredMethod("configureTokenizeConcurrencyAndBatchSize", int.class);
+        method.setAccessible(true);
+        method.invoke(controller, totalRequests);
+    }
+
+    private ArrayList<TokenizeRecord> generateTokenizeData(int count) {
+        ArrayList<TokenizeRecord> data = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            data.add(TokenizeRecord.builder().value("val" + i).build());
+        }
+        return data;
     }
 }
