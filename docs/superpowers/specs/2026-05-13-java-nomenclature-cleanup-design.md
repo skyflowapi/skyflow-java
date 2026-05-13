@@ -78,13 +78,28 @@ Applied in both `getFormattedGetRecord` and `getFormattedQueryRecord`.
 
 ### MEDIUM: tokenizedData always present in QueryResponse
 
-**Affected:** `QueryResponse.java`
+**Affected:** `VaultController.java` (`getFormattedQueryRecord`), `QueryResponse.java`
 
-Currently `tokenizedData` is only injected inside `toString()` as a hack — it is not a real field on the object. A caller accessing the query result programmatically cannot retrieve tokenized data.
+**Why this change is valid:**
 
-**Fix:** Add `tokenizedData` as a proper field, populated during construction from the API response data. Default to an empty map when absent. Expose via `getTokenizedData()`. Remove the manual injection from `toString()`.
+The Skyflow API docs state that the Query endpoint "can't return tokens" today. However:
 
-The `toString()` override is simplified to use `serializeNulls` Gson directly on the object.
+1. The Fern-generated `V1FieldRecords` type explicitly defines a `tokens` field alongside `fields` — meaning the API contract already supports it and it may be populated in future.
+2. The spec's cross-SDK requirement is that `tokenizedData` is always present per-record (even as an empty object), so callers don't need to null-check regardless of API version.
+3. `getFormattedQueryRecord` currently ignores `record.getTokens()` entirely. The current `toString()` hack papers over this by injecting `tokenizedData: {}` into the serialized JSON string — but a caller doing `queryResponse.getFields().get(0).get("tokenizedData")` still gets `null`.
+
+**Fix:** In `getFormattedQueryRecord`, populate `tokenizedData` from `record.getTokens()` (empty map when absent):
+
+```java
+private static synchronized HashMap<String, Object> getFormattedQueryRecord(V1FieldRecords record) {
+    HashMap<String, Object> queryRecord = new HashMap<>();
+    record.getFields().ifPresent(queryRecord::putAll);
+    queryRecord.put("tokenizedData", record.getTokens().orElse(new HashMap<>()));
+    return queryRecord;
+}
+```
+
+Remove the manual `tokenizedData` injection hack from `QueryResponse.toString()`. The `toString()` override simplifies to standard Gson serialization with `serializeNulls`.
 
 ---
 
