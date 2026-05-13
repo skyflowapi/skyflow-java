@@ -110,26 +110,24 @@ for (JsonElement fieldElement : fieldsArray) {
 
 This means `response.toString()` includes `tokenizedData` but `response.getFields().get(0).get("tokenizedData")` returns `null`. Any caller working with the Java object (rather than deserialising the string) cannot access tokenized data at all.
 
-**Why tokens are relevant despite the API docs:**
+**Why `record.getTokens()` is intentionally ignored:**
 
-The Skyflow API documentation states that the Query endpoint "can't return tokens" currently. However:
+The Skyflow API documentation explicitly states the Query endpoint cannot return tokens. Ignoring `record.getTokens()` in `getFormattedQueryRecord` is therefore a deliberate design decision — not a bug. The `toString()` hack that injects `"tokenizedData": {}` confirms this intent: the author knew tokens would never be present, so they hardcoded an always-empty field for output consistency rather than trying to surface real data from the API.
 
-1. The Fern-generated `V1FieldRecords` type (auto-generated from the API spec) explicitly declares a `tokens` field alongside `fields`, proving the API contract already accommodates token data in query records. The docs may lag behind the schema, or this may be intentional forward compatibility.
-2. `getFormattedGetRecord` uses the same `V1FieldRecords` type and also ignores `record.getTokens()` — a parallel gap that should be fixed consistently.
-3. The spec's requirement is about SDK response-shape consistency across all operations, not about what the API returns today. Callers should be able to write uniform record-access code regardless of which operation produced the response.
+Populating `tokenizedData` from `record.getTokens()` would be wrong — it would imply the Query operation supports token retrieval, which it does not, and would mislead future maintainers.
 
-**Fix:** Read `record.getTokens()` in `getFormattedQueryRecord` and always add it to the record map under the `tokenizedData` key, defaulting to an empty map when absent:
+**Fix:** Promote the `toString()` hack into a real field. Always write an empty map under `tokenizedData` in the record — no dependency on `record.getTokens()`:
 
 ```java
 private static synchronized HashMap<String, Object> getFormattedQueryRecord(V1FieldRecords record) {
     HashMap<String, Object> queryRecord = new HashMap<>();
     record.getFields().ifPresent(queryRecord::putAll);
-    queryRecord.put("tokenizedData", record.getTokens().orElse(new HashMap<>()));
+    queryRecord.put("tokenizedData", new HashMap<>());  // Query API cannot return tokens; always empty
     return queryRecord;
 }
 ```
 
-The `toString()` hack in `QueryResponse.java` is removed. The `toString()` override simplifies to standard Gson serialisation with `serializeNulls`, since the data is now correctly in the map.
+The `toString()` hack in `QueryResponse.java` is removed. The `toString()` override simplifies to standard Gson serialisation with `serializeNulls`, since `tokenizedData` is now a real key in each record map.
 
 ---
 
