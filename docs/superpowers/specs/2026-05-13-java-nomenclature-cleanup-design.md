@@ -15,7 +15,7 @@
 | HIGH | `keyID` → `keyId` in credentials JSON parsing (with fallback) | `BearerToken.java`, `SignedDataTokens.java` |
 | HIGH | `tokenURI` → `tokenUri` in credentials JSON parsing (with fallback) | `BearerToken.java` |
 | MEDIUM | `skyflow_id` → `skyflowId` key in Get and Query response maps | `VaultController.java` |
-| MEDIUM | `tokenizedData` as a real field on `QueryResponse` (always present) | `QueryResponse.java` |
+| MEDIUM | `tokenizedData` per-record in QueryResponse (always present, even if empty) | `VaultController.java`, `QueryResponse.java` |
 | MEDIUM | `getErrors()` added to `QueryResponse` (field was missing entirely) | `QueryResponse.java` |
 | LOW | Audit all builder setter/getter names — confirm no `setFooID()` pattern | `VaultConfig.java`, request builders |
 
@@ -23,15 +23,21 @@
 
 ## Detailed design
 
-### HIGH: Credentials JSON field renames
+### HIGH: Credentials JSON field renames (`clientID` → `clientId`, `keyID` → `keyId`, `tokenURI` → `tokenUri`)
 
-**Affected:** `BearerToken.java` (method `getBearerTokenFromCredentials`),
-`SignedDataTokens.java` (method `generateSignedTokensFromCredentials`)
+**Affected:** `BearerToken.java` (`getBearerTokenFromCredentials`), `SignedDataTokens.java` (`generateSignedTokensFromCredentials`)
 
-The credentials JSON file (provided by users) currently uses `clientID`, `keyID`, `tokenURI`.
-The new canonical form is `clientId`, `keyId`, `tokenUri` (acronyms treated as words, per Java camelCase convention).
+**Why this change is needed:**
 
-**Strategy:** Try the new key first; fall back to the old key if null. This allows existing credentials files to keep working during migration.
+Java's naming convention treats acronyms as ordinary word components in camelCase identifiers — `Id` not `ID`, `Uri` not `URI`. The current field names `clientID`, `keyID`, `tokenURI` violate this by capitalising the acronym in full. This is inconsistent with the rest of the SDK (e.g. `setVaultId()`, `setClusterId()`) and breaks the "principle of least surprise" for Java developers who expect `clientId`.
+
+These field names are defined in the credentials JSON file that users create and pass to the SDK (either as a file path or as a credentials string). They are therefore part of the SDK's public contract — a change forces users to update their credentials files. This is a breaking change, which is why it is gated to the v3.0.0 major release.
+
+**Why a fallback is used instead of a hard cut:**
+
+A hard cut would silently break all existing integrations the moment users upgrade to v3. The try-new-first fallback gives users a transition window: credentials files with the old keys continue to work, and users can migrate at their own pace. The fallback can be removed in a future major version once the old form is fully deprecated.
+
+**Implementation strategy:** Try the new key first; fall back to the old key if null; throw if both are absent.
 
 ```java
 // clientID → clientId
@@ -48,7 +54,7 @@ if (keyId == null) {
     throw new SkyflowException(...MissingKeyId...);
 }
 
-// tokenURI → tokenUri  (BearerToken only)
+// tokenURI → tokenUri  (BearerToken only — SignedDataTokens does not use tokenURI)
 JsonElement tokenUri = credentials.get("tokenUri");
 if (tokenUri == null) tokenUri = credentials.get("tokenURI");
 if (tokenUri == null) {
@@ -56,15 +62,25 @@ if (tokenUri == null) {
 }
 ```
 
-Local variable names and private method parameter names updated to match (`clientId`, `keyId`, `tokenUri`).
+Local variable names and private method parameter names are also updated to the new form (`clientId`, `keyId`, `tokenUri`) for internal consistency, though this has no effect on the public interface.
 
 ---
 
-### MEDIUM: skyflow_id → skyflowId in Get and Query response maps
+### MEDIUM: `skyflow_id` → `skyflowId` in Get and Query response maps
 
 **Affected:** `VaultController.java` — `getFormattedGetRecord()` and `getFormattedQueryRecord()`
 
-Insert and Update responses already use `skyflowId`. Get and Query currently call `putAll(fieldsOpt.get())` which passes through the raw API field name `skyflow_id`. After the `putAll`, rename the key:
+**Why this change is needed:**
+
+The Skyflow REST API returns records with a `skyflow_id` field in snake_case — this is the wire format. The Java SDK is responsible for translating the wire format into language-idiomatic representations before handing data to callers. Java is a camelCase language, and the SDK already normalises `skyflow_id` to `skyflowId` in Insert and Update responses:
+
+- `getFormattedBatchInsertRecord`: `insertRecord.put("skyflowId", recordObject.get("skyflow_id").getAsString())`
+- `getFormattedBulkInsertRecord`: `insertRecord.put("skyflowId", record.getSkyflowId().get())`
+- `getFormattedUpdateRecord`: `updateTokens.put("skyflowId", skyflowId)`
+
+However, `getFormattedGetRecord` and `getFormattedQueryRecord` call `putAll(fieldsOpt.get())` which passes the raw API map directly through — including `skyflow_id` in snake_case. This inconsistency means that developers who write `record.get("skyflowId")` after a Get or Query call get `null`, while the same code works after an Insert or Update. It forces callers to know which operation produced the response just to read a single field.
+
+**Implementation:** After `putAll`, check for the raw API key and rename it:
 
 ```java
 if (record.containsKey("skyflow_id")) {
@@ -76,19 +92,33 @@ Applied in both `getFormattedGetRecord` and `getFormattedQueryRecord`.
 
 ---
 
-### MEDIUM: tokenizedData always present in QueryResponse
+### MEDIUM: `tokenizedData` always present per-record in QueryResponse
 
 **Affected:** `VaultController.java` (`getFormattedQueryRecord`), `QueryResponse.java`
 
-**Why this change is valid:**
+**Why this change is needed:**
 
-The Skyflow API docs state that the Query endpoint "can't return tokens" today. However:
+The cross-SDK spec requires that `tokenizedData` is always present on each record in a Query response, even when empty, to avoid nil-check boilerplate in caller code.
 
-1. The Fern-generated `V1FieldRecords` type explicitly defines a `tokens` field alongside `fields` — meaning the API contract already supports it and it may be populated in future.
-2. The spec's cross-SDK requirement is that `tokenizedData` is always present per-record (even as an empty object), so callers don't need to null-check regardless of API version.
-3. `getFormattedQueryRecord` currently ignores `record.getTokens()` entirely. The current `toString()` hack papers over this by injecting `tokenizedData: {}` into the serialized JSON string — but a caller doing `queryResponse.getFields().get(0).get("tokenizedData")` still gets `null`.
+**Current state (broken):** `getFormattedQueryRecord` only reads `record.getFields()` and completely ignores `record.getTokens()`. The `QueryResponse.toString()` method works around this with a hack — it manually injects `"tokenizedData": {}` into each record's JSON during serialisation:
 
-**Fix:** In `getFormattedQueryRecord`, populate `tokenizedData` from `record.getTokens()` (empty map when absent):
+```java
+for (JsonElement fieldElement : fieldsArray) {
+    fieldElement.getAsJsonObject().add("tokenizedData", new JsonObject());
+}
+```
+
+This means `response.toString()` includes `tokenizedData` but `response.getFields().get(0).get("tokenizedData")` returns `null`. Any caller working with the Java object (rather than deserialising the string) cannot access tokenized data at all.
+
+**Why tokens are relevant despite the API docs:**
+
+The Skyflow API documentation states that the Query endpoint "can't return tokens" currently. However:
+
+1. The Fern-generated `V1FieldRecords` type (auto-generated from the API spec) explicitly declares a `tokens` field alongside `fields`, proving the API contract already accommodates token data in query records. The docs may lag behind the schema, or this may be intentional forward compatibility.
+2. `getFormattedGetRecord` uses the same `V1FieldRecords` type and also ignores `record.getTokens()` — a parallel gap that should be fixed consistently.
+3. The spec's requirement is about SDK response-shape consistency across all operations, not about what the API returns today. Callers should be able to write uniform record-access code regardless of which operation produced the response.
+
+**Fix:** Read `record.getTokens()` in `getFormattedQueryRecord` and always add it to the record map under the `tokenizedData` key, defaulting to an empty map when absent:
 
 ```java
 private static synchronized HashMap<String, Object> getFormattedQueryRecord(V1FieldRecords record) {
@@ -99,17 +129,25 @@ private static synchronized HashMap<String, Object> getFormattedQueryRecord(V1Fi
 }
 ```
 
-Remove the manual `tokenizedData` injection hack from `QueryResponse.toString()`. The `toString()` override simplifies to standard Gson serialization with `serializeNulls`.
+The `toString()` hack in `QueryResponse.java` is removed. The `toString()` override simplifies to standard Gson serialisation with `serializeNulls`, since the data is now correctly in the map.
 
 ---
 
-### MEDIUM: errors always present in QueryResponse
+### MEDIUM: `getErrors()` added to `QueryResponse`
 
 **Affected:** `QueryResponse.java`
 
-`QueryResponse` has no `errors` field or `getErrors()` method today — errors are only referenced in `toString()` as a hardcoded `null`. A caller cannot access errors programmatically.
+**Why this change is needed:**
 
-**Fix:** Add `private final ArrayList<HashMap<String, Object>> errors` (always `null` — not converted to empty list) and a `getErrors()` accessor. Consistent with `GetResponse`, `InsertResponse`, `UpdateResponse` which all have `getErrors()` returning null when no errors.
+All other response types in the SDK (`GetResponse`, `InsertResponse`, `UpdateResponse`, `FileUploadResponse`) expose a `getErrors()` method. `QueryResponse` is the only one that does not — the `errors` field is referenced only inside `toString()` as a hardcoded literal `null`:
+
+```java
+responseObject.add("errors", null);
+```
+
+A caller who writes `queryResponse.getErrors()` gets a compile error because the method does not exist. This breaks the consistency contract that callers rely on when writing generic response-handling code across different vault operations.
+
+**Fix:** Add `private final ArrayList<HashMap<String, Object>> errors` as a constructor field (always `null` — consistent with other response types that pass `null` when there are no errors) and expose it via `getErrors()`. The field will always be `null` for QueryResponse since the Query API does not currently model partial-error responses the same way batch insert does. This is kept as `null` rather than an empty list to stay consistent with the existing pattern across other response classes.
 
 ---
 
@@ -117,15 +155,19 @@ Remove the manual `tokenizedData` injection hack from `QueryResponse.toString()`
 
 **Affected:** `VaultConfig.java`, `InsertRequest`, `UpdateRequest`, `GetRequest`, `DeleteRequest`, `FileUploadRequest`, `QueryRequest`
 
-Confirm all methods follow `setFooId()` / `getFooId()` (title-case `Id`), not `setFooID()` (all-caps `ID`).
+**Why this change is needed:**
 
-From initial review: `setVaultId()`, `setClusterId()` in `VaultConfig` are already correct. Full grep audit required to confirm no remaining violations.
+The same acronym-casing rule that applies to credentials fields applies to all Java method names. Any setter or getter using `ID` (all-caps) as a suffix — e.g. `setVaultID()`, `getSkyflowID()` — is non-idiomatic and inconsistent with Java convention. The spec item 15 calls out this as a verification task.
+
+From initial review, `setVaultId()` and `setClusterId()` in `VaultConfig` are already correct. A full grep audit across all request builder classes is required to confirm there are no remaining `setFooID()` / `getFooID()` methods that were missed.
+
+**Outcome:** If any violations are found, rename them to `setFooId()` / `getFooId()`. If none are found, this item is closed as verified-clean.
 
 ---
 
 ## What is NOT in scope
 
-- `UpdateRequest.getData()` map key convention (user passes `skyflow_id` to identify the record to update — this is an input key, not a response key, and is not addressed in the spec)
-- Any changes to generated REST client code under `com.skyflow.generated.*`
-- `SKYFLOW_CREDENTIALS` environment variable name (stays `ALL_CAPS` per OS convention)
-- Validation logic changes (null insert value handling is Python-only per spec)
+- **`UpdateRequest.getData()` map key**: Users currently pass `skyflow_id` (snake_case) in the data map to identify the record to update. This is an *input* key consumed by the SDK internally (`updateRequest.getData().remove("skyflow_id")`), not a response field surfaced to callers. The spec does not address this and changing it would require a separate design decision.
+- **Generated REST client code** under `com.skyflow.generated.*`: These files are auto-generated by Fern from the API definition. Manual edits would be overwritten on the next regeneration.
+- **`SKYFLOW_CREDENTIALS` environment variable name**: Stays `ALL_CAPS` per OS and shell convention. Only the parsed field names within the JSON value change.
+- **Validation logic for null/None insert values**: The spec marks this as Python-only (item 12). Java already throws on invalid input at the API boundary.
