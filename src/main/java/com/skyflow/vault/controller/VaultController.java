@@ -129,6 +129,11 @@ public final class VaultController extends VaultClient {
         } else if (tokensOpt.isPresent()) {
             getRecord.putAll(tokensOpt.get());
         }
+
+        if (getRecord.containsKey("skyflow_id")) {
+            getRecord.put("skyflowId", getRecord.remove("skyflow_id"));
+        }
+
         return getRecord;
     }
 
@@ -148,6 +153,11 @@ public final class VaultController extends VaultClient {
         if (fieldsOpt.isPresent()) {
             queryRecord.putAll(fieldsOpt.get());
         }
+
+        if (queryRecord.containsKey("skyflow_id")) {
+            queryRecord.put("skyflowId", queryRecord.remove("skyflow_id"));
+        }
+
         return queryRecord;
     }
 
