@@ -100,20 +100,27 @@ public class SignedDataTokens {
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.MissingPrivateKey.getMessage());
             }
 
-            JsonElement clientID = credentials.get("clientID");
-            if (clientID == null) {
+            // Accept both new-form keys (clientId/keyId) and legacy all-caps form for migration
+            JsonElement clientId = credentials.get("clientId");
+            if (clientId == null) {
+                clientId = credentials.get("clientID");
+            }
+            if (clientId == null) {
                 LogUtil.printErrorLog(ErrorLogs.CLIENT_ID_IS_REQUIRED.getLog());
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.MissingClientId.getMessage());
             }
 
-            JsonElement keyID = credentials.get("keyID");
-            if (keyID == null) {
+            JsonElement keyId = credentials.get("keyId");
+            if (keyId == null) {
+                keyId = credentials.get("keyID");
+            }
+            if (keyId == null) {
                 LogUtil.printErrorLog(ErrorLogs.KEY_ID_IS_REQUIRED.getLog());
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.MissingKeyId.getMessage());
             }
             PrivateKey pvtKey = Utils.getPrivateKeyFromPem(privateKey.getAsString());
             signedDataTokens = getSignedToken(
-                    clientID.getAsString(), keyID.getAsString(), pvtKey, dataTokens, timeToLive, context);
+                    clientId.getAsString(), keyId.getAsString(), pvtKey, dataTokens, timeToLive, context);
         } catch (RuntimeException e) {
             LogUtil.printErrorLog(ErrorLogs.SIGNED_DATA_TOKENS_REJECTED.getLog());
             throw new SkyflowException(e);
@@ -122,7 +129,7 @@ public class SignedDataTokens {
     }
 
     private static List<SignedDataTokenResponse> getSignedToken(
-            String clientID, String keyID, PrivateKey pvtKey,
+            String clientId, String keyId, PrivateKey pvtKey,
             ArrayList<String> dataTokens, Integer timeToLive, Object context
     ) {
         final Date createdDate = new Date();
@@ -139,8 +146,8 @@ public class SignedDataTokens {
             io.jsonwebtoken.JwtBuilder builder = Jwts.builder()
                     .claim("iss", "sdk")
                     .claim("iat", (createdDate.getTime() / 1000))
-                    .claim("key", keyID)
-                    .claim("sub", clientID)
+                    .claim("key", keyId)
+                    .claim("sub", clientId)
                     .claim("tok", dataToken)
                     .expiration(expirationDate);
 

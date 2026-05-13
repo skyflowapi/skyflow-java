@@ -222,6 +222,26 @@ public class SignedDataTokensTests {
     }
 
     @Test
+    public void testSignedDataTokensWithNewFormCredentialKeys() {
+        try {
+            String credentialsString = "{\"privateKey\": \"-----BEGIN PRIVATE KEY-----\\ncHJpdmF0ZV9rZXlfdmFsdWU=\\n-----END PRIVATE KEY-----\", "
+                    + "\"clientId\": \"client_id_value\", \"keyId\": \"key_id_value\"}";
+            ArrayList<String> dataTokens = new ArrayList<>();
+            dataTokens.add("test-token");
+            SignedDataTokens signedDataTokens = SignedDataTokens.builder()
+                    .setCredentials(credentialsString)
+                    .setDataTokens(dataTokens)
+                    .build();
+            signedDataTokens.getSignedDataTokens();
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            // Failure at RSA key parsing (not field lookup) confirms new-form keys clientId/keyId were found
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(ErrorMessage.InvalidKeySpec.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
     public void testSignedDataTokenResponse() {
         try {
             String signedToken = "test_signed_data_token";
