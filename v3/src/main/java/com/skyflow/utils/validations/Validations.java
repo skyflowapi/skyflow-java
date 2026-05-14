@@ -2,11 +2,9 @@ package com.skyflow.utils.validations;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
-import com.skyflow.enums.CustomHeaderKey;
 import com.skyflow.enums.InterfaceName;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
@@ -262,25 +260,6 @@ public class Validations extends BaseValidations {
                         throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyTokenGroupNameInTokenizeRecord.getMessage());
                     }
                 }
-            }
-        }
-    }
-
-    public static void validateCustomHeaders(Map<CustomHeaderKey, String> customHeaders, InterfaceName interfaceName) throws SkyflowException {
-        if (customHeaders == null || customHeaders.isEmpty()) return;
-        for (Map.Entry<CustomHeaderKey, String> entry : customHeaders.entrySet()) {
-            if (entry.getKey() == null) {
-                LogUtil.printErrorLog(Utils.parameterizedString(
-                        ErrorLogs.NULL_CUSTOM_HEADER_KEY.getLog(), interfaceName.getName()
-                ));
-                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.NullCustomHeaderKey.getMessage());
-            }
-            String value = entry.getValue();
-            if (value == null || value.trim().isEmpty()) {
-                LogUtil.printErrorLog(Utils.parameterizedString(
-                        ErrorLogs.EMPTY_OR_NULL_VALUE_IN_CUSTOM_HEADERS.getLog(), interfaceName.getName(), entry.getKey().toString()
-                ));
-                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyValueInCustomHeaders.getMessage());
             }
         }
     }

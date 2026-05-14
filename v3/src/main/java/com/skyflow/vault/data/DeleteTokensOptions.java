@@ -1,20 +1,14 @@
 package com.skyflow.vault.data;
 
-import com.skyflow.enums.CustomHeaderKey;
-
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-
 public final class DeleteTokensOptions {
-    private final Map<CustomHeaderKey, String> customHeaders;
+    private final RequestInterceptor interceptor;
 
     private DeleteTokensOptions(Builder builder) {
-        this.customHeaders = Collections.unmodifiableMap(new HashMap<>(builder.customHeaders));
+        this.interceptor = builder.interceptor;
     }
 
-    public Map<CustomHeaderKey, String> getCustomHeaders() {
-        return customHeaders;
+    public RequestInterceptor getInterceptor() {
+        return interceptor;
     }
 
     public static Builder builder() {
@@ -22,10 +16,10 @@ public final class DeleteTokensOptions {
     }
 
     public static final class Builder {
-        private final Map<CustomHeaderKey, String> customHeaders = new HashMap<>();
+        private RequestInterceptor interceptor;
 
-        public Builder addCustomHeader(CustomHeaderKey key, String value) {
-            this.customHeaders.put(key, value);
+        public Builder interceptor(RequestInterceptor interceptor) {
+            this.interceptor = interceptor;
             return this;
         }
 

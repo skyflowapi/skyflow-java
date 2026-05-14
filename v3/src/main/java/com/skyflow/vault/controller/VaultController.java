@@ -2,7 +2,6 @@ package com.skyflow.vault.controller;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -16,7 +15,6 @@ import com.google.gson.JsonObject;
 import com.skyflow.VaultClient;
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
-import com.skyflow.enums.InterfaceName;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.generated.rest.core.ApiClientApiException;
 import com.skyflow.generated.rest.core.ApiClientHttpResponse;
@@ -31,6 +29,7 @@ import com.skyflow.utils.Constants;
 import com.skyflow.utils.Utils;
 import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.utils.validations.Validations;
+import com.skyflow.enums.InterfaceName;
 import com.skyflow.vault.data.DeleteTokensOptions;
 import com.skyflow.vault.data.DeleteTokensRequest;
 import com.skyflow.vault.data.DeleteTokensResponse;
@@ -43,6 +42,8 @@ import com.skyflow.vault.data.ErrorRecord;
 import com.skyflow.vault.data.InsertOptions;
 import com.skyflow.vault.data.InsertRecord;
 import com.skyflow.vault.data.InsertRequest;
+import com.skyflow.vault.data.RequestContext;
+import com.skyflow.vault.data.RequestInterceptor;
 import com.skyflow.vault.data.Success;
 import com.skyflow.vault.data.TokenizeOptions;
 import com.skyflow.vault.data.TokenizeRequest;
@@ -87,13 +88,12 @@ public final class VaultController extends VaultClient {
         try {
             LogUtil.printInfoLog(InfoLogs.VALIDATE_INSERT_REQUEST.getLog());
             Validations.validateInsertRequest(insertRequest);
-            if (options != null) Validations.validateCustomHeaders(options.getCustomHeaders(), InterfaceName.INSERT);
             configureInsertConcurrencyAndBatchSize(insertRequest.getRecords().size());
 
             setBearerToken();
             com.skyflow.generated.rest.resources.flowservice.requests.V1InsertRequest request = super.getBulkInsertRequestBody(insertRequest, super.getVaultConfig());
-            Map<String, String> customHeaders = extractCustomHeaders(options);
-            return this.processSync(request, insertRequest.getRecords(), customHeaders);
+            RequestInterceptor interceptor = options != null ? options.getInterceptor() : null;
+            return this.processSync(request, insertRequest.getRecords(), interceptor);
         } catch (ApiClientApiException e) {
             String bodyString = gson.toJson(e.body());
             LogUtil.printErrorLog(ErrorLogs.INSERT_RECORDS_REJECTED.getLog());
@@ -118,14 +118,13 @@ public final class VaultController extends VaultClient {
         try {
             LogUtil.printInfoLog(InfoLogs.VALIDATE_INSERT_REQUEST.getLog());
             Validations.validateInsertRequest(insertRequest);
-            if (options != null) Validations.validateCustomHeaders(options.getCustomHeaders(), InterfaceName.INSERT);
             configureInsertConcurrencyAndBatchSize(insertRequest.getRecords().size());
 
             setBearerToken();
             com.skyflow.generated.rest.resources.flowservice.requests.V1InsertRequest request = super.getBulkInsertRequestBody(insertRequest, super.getVaultConfig());
-            Map<String, String> customHeaders = extractCustomHeaders(options);
+            RequestInterceptor interceptor = options != null ? options.getInterceptor() : null;
             List<ErrorRecord> errorRecords = Collections.synchronizedList(new ArrayList<>());
-            List<CompletableFuture<com.skyflow.vault.data.InsertResponse>> futures = this.insertBatchFutures(request, errorRecords, customHeaders);
+            List<CompletableFuture<com.skyflow.vault.data.InsertResponse>> futures = this.insertBatchFutures(request, errorRecords, interceptor);
 
             return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
                     .thenApply(v -> {
@@ -164,11 +163,10 @@ public final class VaultController extends VaultClient {
             configureDetokenizeConcurrencyAndBatchSize(detokenizeRequest.getTokens().size());
             LogUtil.printInfoLog(InfoLogs.VALIDATE_DETOKENIZE_REQUEST.getLog());
             Validations.validateDetokenizeRequest(detokenizeRequest);
-            if (options != null) Validations.validateCustomHeaders(options.getCustomHeaders(), InterfaceName.DETOKENIZE);
             setBearerToken();
             com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest request = super.getDetokenizeRequestBody(detokenizeRequest);
-            Map<String, String> customHeaders = extractCustomHeaders(options);
-            return this.processDetokenizeSync(request, detokenizeRequest.getTokens(), customHeaders);
+            RequestInterceptor interceptor = options != null ? options.getInterceptor() : null;
+            return this.processDetokenizeSync(request, detokenizeRequest.getTokens(), interceptor);
         } catch (ApiClientApiException e) {
             String bodyString = gson.toJson(e.body());
             LogUtil.printErrorLog(ErrorLogs.DETOKENIZE_REQUEST_REJECTED.getLog());
@@ -190,10 +188,9 @@ public final class VaultController extends VaultClient {
             configureDetokenizeConcurrencyAndBatchSize(detokenizeRequest.getTokens().size());
             LogUtil.printInfoLog(InfoLogs.VALIDATE_DETOKENIZE_REQUEST.getLog());
             Validations.validateDetokenizeRequest(detokenizeRequest);
-            if (options != null) Validations.validateCustomHeaders(options.getCustomHeaders(), InterfaceName.DETOKENIZE);
             setBearerToken();
             com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest request = super.getDetokenizeRequestBody(detokenizeRequest);
-            Map<String, String> customHeaders = extractCustomHeaders(options);
+            RequestInterceptor interceptor = options != null ? options.getInterceptor() : null;
 
             LogUtil.printInfoLog(InfoLogs.PROCESSING_BATCHES.getLog());
 
@@ -202,7 +199,7 @@ public final class VaultController extends VaultClient {
 
             List<com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest> batches = Utils.createDetokenizeBatches(request, detokenizeBatchSize);
 
-            List<CompletableFuture<DetokenizeResponse>> futures = this.detokenizeBatchFutures(executor, batches, errorTokens, customHeaders);
+            List<CompletableFuture<DetokenizeResponse>> futures = this.detokenizeBatchFutures(executor, batches, errorTokens, interceptor);
             return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
                     .thenApply(v -> {
                         for (CompletableFuture<DetokenizeResponse> future : futures) {
@@ -246,13 +243,12 @@ public final class VaultController extends VaultClient {
         try {
             LogUtil.printInfoLog(InfoLogs.VALIDATE_DELETE_TOKENS_REQUEST.getLog());
             Validations.validateDeleteTokensRequest(deleteTokensRequest);
-            if (options != null) Validations.validateCustomHeaders(options.getCustomHeaders(), InterfaceName.DELETE);
             configureDeleteTokensConcurrencyAndBatchSize(deleteTokensRequest.getTokens().size());
             setBearerToken();
             com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDeleteTokenRequest request =
                     super.getDeleteTokensRequestBody(deleteTokensRequest);
-            Map<String, String> customHeaders = extractCustomHeaders(options);
-            return this.processDeleteTokensSync(request, deleteTokensRequest.getTokens(), customHeaders);
+            RequestInterceptor interceptor = options != null ? options.getInterceptor() : null;
+            return this.processDeleteTokensSync(request, deleteTokensRequest.getTokens(), interceptor);
         } catch (ApiClientApiException e) {
             String bodyString = gson.toJson(e.body());
             LogUtil.printErrorLog(ErrorLogs.DELETE_REQUEST_REJECTED.getLog());
@@ -273,12 +269,11 @@ public final class VaultController extends VaultClient {
         try {
             LogUtil.printInfoLog(InfoLogs.VALIDATE_DELETE_TOKENS_REQUEST.getLog());
             Validations.validateDeleteTokensRequest(deleteTokensRequest);
-            if (options != null) Validations.validateCustomHeaders(options.getCustomHeaders(), InterfaceName.DELETE);
             configureDeleteTokensConcurrencyAndBatchSize(deleteTokensRequest.getTokens().size());
             setBearerToken();
             com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDeleteTokenRequest request =
                     super.getDeleteTokensRequestBody(deleteTokensRequest);
-            Map<String, String> customHeaders = extractCustomHeaders(options);
+            RequestInterceptor interceptor = options != null ? options.getInterceptor() : null;
 
             LogUtil.printInfoLog(InfoLogs.PROCESSING_BATCHES.getLog());
 
@@ -289,7 +284,7 @@ public final class VaultController extends VaultClient {
                     Utils.createDeleteTokensBatches(request, deleteTokensBatchSize);
 
             List<CompletableFuture<DeleteTokensResponse>> futures =
-                    this.deleteTokensBatchFutures(executor, batches, customHeaders);
+                    this.deleteTokensBatchFutures(executor, batches, interceptor);
 
             return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
                     .thenApply(v -> {
@@ -334,13 +329,12 @@ public final class VaultController extends VaultClient {
         try {
             LogUtil.printInfoLog(InfoLogs.VALIDATING_TOKENIZE_REQUEST.getLog());
             Validations.validateTokenizeRequest(tokenizeRequest);
-            if (options != null) Validations.validateCustomHeaders(options.getCustomHeaders(), InterfaceName.TOKENIZE);
             configureTokenizeConcurrencyAndBatchSize(tokenizeRequest.getData().size());
             setBearerToken();
             com.skyflow.generated.rest.resources.flowservice.requests.V1FlowTokenizeRequest request =
                     super.getTokenizeRequestBody(tokenizeRequest);
-            Map<String, String> customHeaders = extractCustomHeaders(options);
-            return this.processTokenizeSync(request, tokenizeRequest.getData(), customHeaders);
+            RequestInterceptor interceptor = options != null ? options.getInterceptor() : null;
+            return this.processTokenizeSync(request, tokenizeRequest.getData(), interceptor);
         } catch (ApiClientApiException e) {
             String bodyString = gson.toJson(e.body());
             LogUtil.printErrorLog(ErrorLogs.TOKENIZE_REQUEST_REJECTED.getLog());
@@ -364,12 +358,11 @@ public final class VaultController extends VaultClient {
         try {
             LogUtil.printInfoLog(InfoLogs.VALIDATING_TOKENIZE_REQUEST.getLog());
             Validations.validateTokenizeRequest(tokenizeRequest);
-            if (options != null) Validations.validateCustomHeaders(options.getCustomHeaders(), InterfaceName.TOKENIZE);
             configureTokenizeConcurrencyAndBatchSize(tokenizeRequest.getData().size());
             setBearerToken();
             com.skyflow.generated.rest.resources.flowservice.requests.V1FlowTokenizeRequest request =
                     super.getTokenizeRequestBody(tokenizeRequest);
-            Map<String, String> customHeaders = extractCustomHeaders(options);
+            RequestInterceptor interceptor = options != null ? options.getInterceptor() : null;
 
             LogUtil.printInfoLog(InfoLogs.PROCESSING_BATCHES.getLog());
 
@@ -380,7 +373,7 @@ public final class VaultController extends VaultClient {
                     Utils.createTokenizeBatches(request, tokenizeBatchSize);
 
             List<CompletableFuture<TokenizeResponse>> futures =
-                    this.tokenizeBatchFutures(executor, batches, customHeaders);
+                    this.tokenizeBatchFutures(executor, batches, interceptor);
 
             return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
                     .thenApply(v -> {
@@ -416,47 +409,17 @@ public final class VaultController extends VaultClient {
 
     // ── Private helpers ───────────────────────────────────────────────────────
 
-    private Map<String, String> extractCustomHeaders(InsertOptions options) {
-        if (options == null) return Collections.emptyMap();
-        Map<String, String> result = new HashMap<>();
-        options.getCustomHeaders().forEach((k, v) -> result.put(k.toString(), v));
-        return result;
-    }
-
-    private Map<String, String> extractCustomHeaders(DetokenizeOptions options) {
-        if (options == null) return Collections.emptyMap();
-        Map<String, String> result = new HashMap<>();
-        options.getCustomHeaders().forEach((k, v) -> result.put(k.toString(), v));
-        return result;
-    }
-
-    private Map<String, String> extractCustomHeaders(TokenizeOptions options) {
-        if (options == null) return Collections.emptyMap();
-        Map<String, String> result = new HashMap<>();
-        options.getCustomHeaders().forEach((k, v) -> result.put(k.toString(), v));
-        return result;
-    }
-
-    private Map<String, String> extractCustomHeaders(DeleteTokensOptions options) {
-        if (options == null) return Collections.emptyMap();
-        Map<String, String> result = new HashMap<>();
-        options.getCustomHeaders().forEach((k, v) -> result.put(k.toString(), v));
-        return result;
-    }
-
-    private RequestOptions buildRequestOptions(Map<String, String> customHeaders) {
+    private RequestOptions buildRequestOptions(RequestContext context) {
         RequestOptions.Builder builder = RequestOptions.builder()
                 .addHeader(Constants.SDK_METRICS_HEADER_KEY, metrics.toString());
-        if (customHeaders != null) {
-            customHeaders.forEach(builder::addHeader);
-        }
+        context.getHeaders().forEach((k, v) -> builder.addHeader(k.toString(), v));
         return builder.build();
     }
 
     private DeleteTokensResponse processDeleteTokensSync(
             com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDeleteTokenRequest deleteTokensRequest,
             List<String> originalTokens,
-            Map<String, String> customHeaders
+            RequestInterceptor interceptor
     ) throws ExecutionException, InterruptedException, SkyflowException {
         LogUtil.printInfoLog(InfoLogs.PROCESSING_BATCHES.getLog());
         List<ErrorRecord> errorRecords = Collections.synchronizedList(new ArrayList<>());
@@ -466,7 +429,7 @@ public final class VaultController extends VaultClient {
                 Utils.createDeleteTokensBatches(deleteTokensRequest, deleteTokensBatchSize);
         try {
             List<CompletableFuture<DeleteTokensResponse>> futures =
-                    this.deleteTokensBatchFutures(executor, batches, customHeaders);
+                    this.deleteTokensBatchFutures(executor, batches, interceptor);
             try {
                 CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).get();
             } catch (Exception e) {
@@ -493,14 +456,17 @@ public final class VaultController extends VaultClient {
     private List<CompletableFuture<DeleteTokensResponse>> deleteTokensBatchFutures(
             ExecutorService executor,
             List<com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDeleteTokenRequest> batches,
-            Map<String, String> customHeaders) {
+            RequestInterceptor interceptor) {
         List<CompletableFuture<DeleteTokensResponse>> futures = new ArrayList<>();
         if (batches == null) return futures;
+        int totalBatches = batches.size();
         for (int batchIndex = 0; batchIndex < batches.size(); batchIndex++) {
             final int index = batchIndex;
             com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDeleteTokenRequest batch = batches.get(index);
+            RequestContext ctx = new RequestContext("DELETE_TOKENS", batchIndex, totalBatches);
+            if (interceptor != null) interceptor.intercept(ctx);
             CompletableFuture<DeleteTokensResponse> future = CompletableFuture
-                    .supplyAsync(() -> processDeleteTokensBatch(batch, customHeaders), executor)
+                    .supplyAsync(() -> processDeleteTokensBatch(batch, ctx), executor)
                     .handle((result, ex) -> {
                         if (ex != null) {
                             List<ErrorRecord> batchErrors =
@@ -516,8 +482,8 @@ public final class VaultController extends VaultClient {
 
     private ApiClientHttpResponse<com.skyflow.generated.rest.types.V1FlowDeleteTokenResponse> processDeleteTokensBatch(
             com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDeleteTokenRequest batch,
-            Map<String, String> customHeaders) {
-        return this.getRecordsApi().withRawResponse().deletetoken(batch, buildRequestOptions(customHeaders));
+            RequestContext ctx) {
+        return this.getRecordsApi().withRawResponse().deletetoken(batch, buildRequestOptions(ctx));
     }
 
     private void configureDeleteTokensConcurrencyAndBatchSize(int totalRequests) {
@@ -588,7 +554,7 @@ public final class VaultController extends VaultClient {
     private TokenizeResponse processTokenizeSync(
             com.skyflow.generated.rest.resources.flowservice.requests.V1FlowTokenizeRequest tokenizeRequest,
             java.util.ArrayList<com.skyflow.vault.data.TokenizeRecord> originalData,
-            Map<String, String> customHeaders
+            RequestInterceptor interceptor
     ) throws ExecutionException, InterruptedException, SkyflowException {
         LogUtil.printInfoLog(InfoLogs.PROCESSING_BATCHES.getLog());
         List<ErrorRecord> errorRecords = Collections.synchronizedList(new ArrayList<>());
@@ -598,7 +564,7 @@ public final class VaultController extends VaultClient {
                 Utils.createTokenizeBatches(tokenizeRequest, tokenizeBatchSize);
         try {
             List<CompletableFuture<TokenizeResponse>> futures =
-                    this.tokenizeBatchFutures(executor, batches, customHeaders);
+                    this.tokenizeBatchFutures(executor, batches, interceptor);
             try {
                 CompletableFuture<Void> allFutures = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
                 allFutures.join();
@@ -630,14 +596,17 @@ public final class VaultController extends VaultClient {
     private List<CompletableFuture<TokenizeResponse>> tokenizeBatchFutures(
             ExecutorService executor,
             List<com.skyflow.generated.rest.resources.flowservice.requests.V1FlowTokenizeRequest> batches,
-            Map<String, String> customHeaders) {
+            RequestInterceptor interceptor) {
         List<CompletableFuture<TokenizeResponse>> futures = new ArrayList<>();
         if (batches == null) return futures;
+        int totalBatches = batches.size();
         for (int batchIndex = 0; batchIndex < batches.size(); batchIndex++) {
             final int index = batchIndex;
             com.skyflow.generated.rest.resources.flowservice.requests.V1FlowTokenizeRequest batch = batches.get(index);
+            RequestContext ctx = new RequestContext("TOKENIZE", batchIndex, totalBatches);
+            if (interceptor != null) interceptor.intercept(ctx);
             CompletableFuture<TokenizeResponse> future = CompletableFuture
-                    .supplyAsync(() -> processTokenizeBatch(batch, customHeaders), executor)
+                    .supplyAsync(() -> processTokenizeBatch(batch, ctx), executor)
                     .handle((result, ex) -> {
                         if (ex != null) {
                             List<ErrorRecord> batchErrors =
@@ -653,8 +622,8 @@ public final class VaultController extends VaultClient {
 
     private ApiClientHttpResponse<com.skyflow.generated.rest.types.V1FlowTokenizeResponse> processTokenizeBatch(
             com.skyflow.generated.rest.resources.flowservice.requests.V1FlowTokenizeRequest batch,
-            Map<String, String> customHeaders) {
-        return this.getRecordsApi().withRawResponse().tokenize(batch, buildRequestOptions(customHeaders));
+            RequestContext ctx) {
+        return this.getRecordsApi().withRawResponse().tokenize(batch, buildRequestOptions(ctx));
     }
 
     private void configureTokenizeConcurrencyAndBatchSize(int totalRequests) {
@@ -725,12 +694,12 @@ public final class VaultController extends VaultClient {
     private com.skyflow.vault.data.InsertResponse processSync(
             com.skyflow.generated.rest.resources.flowservice.requests.V1InsertRequest insertRequest,
             ArrayList<InsertRecord> originalPayload,
-            Map<String, String> customHeaders
+            RequestInterceptor interceptor
     ) throws ExecutionException, InterruptedException {
         LogUtil.printInfoLog(InfoLogs.PROCESSING_BATCHES.getLog());
         List<Success> successRecords = new ArrayList<>();
         List<ErrorRecord> errorRecords = Collections.synchronizedList(new ArrayList<>());
-        List<CompletableFuture<com.skyflow.vault.data.InsertResponse>> futures = this.insertBatchFutures(insertRequest, errorRecords, customHeaders);
+        List<CompletableFuture<com.skyflow.vault.data.InsertResponse>> futures = this.insertBatchFutures(insertRequest, errorRecords, interceptor);
 
         CompletableFuture<Void> allFutures = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
         allFutures.join();
@@ -754,7 +723,7 @@ public final class VaultController extends VaultClient {
     private DetokenizeResponse processDetokenizeSync(
             com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest detokenizeRequest,
             List<String> originalTokens,
-            Map<String, String> customHeaders
+            RequestInterceptor interceptor
     ) throws ExecutionException, InterruptedException, SkyflowException {
         LogUtil.printInfoLog(InfoLogs.PROCESSING_BATCHES.getLog());
         List<ErrorRecord> errorTokens = Collections.synchronizedList(new ArrayList<>());
@@ -762,7 +731,7 @@ public final class VaultController extends VaultClient {
         ExecutorService executor = Executors.newFixedThreadPool(detokenizeConcurrencyLimit);
         List<com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest> batches = Utils.createDetokenizeBatches(detokenizeRequest, detokenizeBatchSize);
         try {
-            List<CompletableFuture<DetokenizeResponse>> futures = this.detokenizeBatchFutures(executor, batches, errorTokens, customHeaders);
+            List<CompletableFuture<DetokenizeResponse>> futures = this.detokenizeBatchFutures(executor, batches, errorTokens, interceptor);
             try {
                 CompletableFuture<Void> allFutures = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
                 allFutures.join();
@@ -795,14 +764,17 @@ public final class VaultController extends VaultClient {
             ExecutorService executor,
             List<com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest> batches,
             List<ErrorRecord> errorTokens,
-            Map<String, String> customHeaders) {
+            RequestInterceptor interceptor) {
         List<CompletableFuture<DetokenizeResponse>> futures = new ArrayList<>();
         try {
+            int totalBatches = batches.size();
             for (int batchIndex = 0; batchIndex < batches.size(); batchIndex++) {
                 com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest batch = batches.get(batchIndex);
                 int batchNumber = batchIndex;
+                RequestContext ctx = new RequestContext("DETOKENIZE", batchIndex, totalBatches);
+                if (interceptor != null) interceptor.intercept(ctx);
                 CompletableFuture<DetokenizeResponse> future = CompletableFuture
-                        .supplyAsync(() -> processDetokenizeBatch(batch, customHeaders), executor)
+                        .supplyAsync(() -> processDetokenizeBatch(batch, ctx), executor)
                         .thenApply(response -> Utils.formatDetokenizeResponse(response.body(), batchNumber, detokenizeBatchSize, response.headers()))
                         .exceptionally(ex -> {
                             errorTokens.addAll(Utils.handleDetokenizeBatchException(ex, batch, batchNumber, detokenizeBatchSize));
@@ -819,27 +791,30 @@ public final class VaultController extends VaultClient {
 
     private ApiClientHttpResponse<com.skyflow.generated.rest.types.V1FlowDetokenizeResponse> processDetokenizeBatch(
             com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest batch,
-            Map<String, String> customHeaders) {
-        return this.getRecordsApi().withRawResponse().detokenize(batch, buildRequestOptions(customHeaders));
+            RequestContext ctx) {
+        return this.getRecordsApi().withRawResponse().detokenize(batch, buildRequestOptions(ctx));
     }
 
     private List<CompletableFuture<com.skyflow.vault.data.InsertResponse>> insertBatchFutures(
             com.skyflow.generated.rest.resources.flowservice.requests.V1InsertRequest insertRequest,
             List<ErrorRecord> errorRecords,
-            Map<String, String> customHeaders) {
+            RequestInterceptor interceptor) {
         List<V1InsertRecordData> records = insertRequest.getRecords().get();
 
         ExecutorService executor = Executors.newFixedThreadPool(insertConcurrencyLimit);
         List<List<V1InsertRecordData>> batches = Utils.createBatches(records, insertBatchSize);
         List<CompletableFuture<com.skyflow.vault.data.InsertResponse>> futures = new ArrayList<>();
         V1Upsert upsert = insertRequest.getUpsert().isPresent() ? insertRequest.getUpsert().get() : null;
+        int totalBatches = batches.size();
 
         try {
             for (int batchIndex = 0; batchIndex < batches.size(); batchIndex++) {
                 List<V1InsertRecordData> batch = batches.get(batchIndex);
                 int batchNumber = batchIndex;
+                RequestContext ctx = new RequestContext("INSERT", batchIndex, totalBatches);
+                if (interceptor != null) interceptor.intercept(ctx);
                 CompletableFuture<com.skyflow.vault.data.InsertResponse> future = CompletableFuture
-                        .supplyAsync(() -> insertBatch(batch, insertRequest.getTableName().isPresent() ? insertRequest.getTableName().get() : null, upsert, customHeaders), executor)
+                        .supplyAsync(() -> insertBatch(batch, insertRequest.getTableName().isPresent() ? insertRequest.getTableName().get() : null, upsert, ctx), executor)
                         .thenApply(response -> Utils.formatResponse(response.body(), batchNumber, insertBatchSize, response.headers()))
                         .exceptionally(ex -> {
                             errorRecords.addAll(Utils.handleBatchException(ex, batch, batchNumber, insertBatchSize));
@@ -853,7 +828,7 @@ public final class VaultController extends VaultClient {
         return futures;
     }
 
-    private ApiClientHttpResponse<V1InsertResponse> insertBatch(List<V1InsertRecordData> batch, String tableName, V1Upsert upsert, Map<String, String> customHeaders) {
+    private ApiClientHttpResponse<V1InsertResponse> insertBatch(List<V1InsertRecordData> batch, String tableName, V1Upsert upsert, RequestContext ctx) {
         com.skyflow.generated.rest.resources.flowservice.requests.V1InsertRequest.Builder req = com.skyflow.generated.rest.resources.flowservice.requests.V1InsertRequest.builder()
                 .vaultId(this.getVaultConfig().getVaultId())
                 .records(batch)
@@ -862,7 +837,7 @@ public final class VaultController extends VaultClient {
             req.tableName(tableName);
         }
         com.skyflow.generated.rest.resources.flowservice.requests.V1InsertRequest request = req.build();
-        return this.getRecordsApi().withRawResponse().insert(request, buildRequestOptions(customHeaders));
+        return this.getRecordsApi().withRawResponse().insert(request, buildRequestOptions(ctx));
     }
 
     private void configureInsertConcurrencyAndBatchSize(int totalRequests) {
