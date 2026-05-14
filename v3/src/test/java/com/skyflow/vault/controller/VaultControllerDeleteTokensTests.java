@@ -408,13 +408,14 @@ public class VaultControllerDeleteTokensTests {
         List<com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDeleteTokenRequest> batches = null;
 
         Method method = VaultController.class.getDeclaredMethod(
-                "deleteTokensBatchFutures", ExecutorService.class, List.class);
+                "deleteTokensBatchFutures", ExecutorService.class, List.class,
+                com.skyflow.vault.data.RequestInterceptor.class);
         method.setAccessible(true);
 
         ExecutorService executor = Executors.newFixedThreadPool(1);
         @SuppressWarnings("unchecked")
         List<CompletableFuture<DeleteTokensResponse>> futures =
-                (List<CompletableFuture<DeleteTokensResponse>>) method.invoke(controller, executor, batches);
+                (List<CompletableFuture<DeleteTokensResponse>>) method.invoke(controller, executor, batches, null);
 
         // errors are now returned via futures, not a shared list
         Assert.assertNotNull(futures);
@@ -448,12 +449,13 @@ public class VaultControllerDeleteTokensTests {
         Method processSync = VaultController.class.getDeclaredMethod(
                 "processDeleteTokensSync",
                 com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDeleteTokenRequest.class,
-                List.class
+                List.class,
+                com.skyflow.vault.data.RequestInterceptor.class
         );
         processSync.setAccessible(true);
 
         try {
-            processSync.invoke(controller, requestObj, tokens);
+            processSync.invoke(controller, requestObj, tokens, null);
         } catch (java.lang.reflect.InvocationTargetException e) {
             Throwable cause = e.getCause();
             assertTrue(cause instanceof SkyflowException

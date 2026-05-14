@@ -168,6 +168,13 @@ public class ValidationsTests {
     }
 
     @Test
+    public void validateDetokenizeRequest_nullTokens_throws() {
+        DetokenizeRequest request = DetokenizeRequest.builder().build();
+        assertSkyflowException(() -> Validations.validateDetokenizeRequest(request),
+                ErrorMessage.EmptyDetokenizeData.getMessage());
+    }
+
+    @Test
     public void validateDetokenizeRequest_emptyTokens_throws() {
         DetokenizeRequest request = DetokenizeRequest.builder()
                 .tokens(new ArrayList<>())
