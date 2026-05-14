@@ -21,11 +21,13 @@ src/
   main/java/com/skyflow/
     config/          # VaultConfig, Credentials, ConnectionConfig
     vault/
-      controller/    # VaultController — core SDK logic, API call orchestration
+      controller/    # VaultController, AuditController, BinLookupController,
+                     # ConnectionController, DetectController
       data/          # Request/Response objects: InsertRequest, GetResponse, etc.
       tokens/        # DetokenizeRequest/Response, TokenizeRequest/Response
       connection/    # InvokeConnectionRequest/Response
       audit/         # ListEventRequest/Response
+      bin/           # GetBinRequest/Response (BIN lookup)
       detect/        # Deidentify/Reidentify requests/responses
     serviceaccount/
       util/          # BearerToken, SignedDataTokens — credential parsing + JWT
@@ -35,7 +37,7 @@ src/
     generated/       # ← FERN-GENERATED, DO NOT EDIT
   test/java/com/skyflow/
     ...              # JUnit 4 tests mirroring the main structure
-samples/             # Standalone Maven project with usage examples
+samples/             # Standalone Maven project — com.example.vault / .serviceaccount / .detect / .connection
 docs/
   superpowers/
     specs/           # Design specs for in-progress features
@@ -78,6 +80,19 @@ The SDK reads a `credentials.json` file for service account authentication. The 
 ```
 
 The legacy all-caps forms (`clientID`, `keyID`, `tokenURI`) are accepted as fallbacks for migration.
+
+## Known Pre-existing Test Failures
+
+These failures exist on `main` and are **not regressions** — do not investigate them unless specifically asked:
+
+| Test class | Failure | Cause |
+|---|---|---|
+| `HttpUtilityTests` | `InaccessibleObject` (all tests) | JDK 21 + PowerMock incompatibility — PowerMock cannot reflect into `java.net` |
+| `TokenTests#testExpiredTokenForIsExpiredToken` | Environment error | Requires live credentials |
+| `VaultClientTests#testSetBearerTokenWithEnvCredentials` | Environment error | Requires `SKYFLOW_CREDENTIALS` env var |
+| `ConnectionClientTests#testSetBearerTokenWithEnvCredentials` | Environment error | Requires `SKYFLOW_CREDENTIALS` env var |
+
+Run `mvn test -q 2>&1 | grep -E "Tests run|FAIL|ERROR"` to see current baseline (374 tests, ~5 failures, ~4 errors).
 
 ## Active Work
 

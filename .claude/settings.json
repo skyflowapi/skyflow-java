@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 -c \"\nimport sys, json, subprocess\nd = json.load(sys.stdin)\nf = d.get('tool_input', {}).get('file_path', d.get('file_path', ''))\nif f and f.endswith('.java') and 'generated' not in f:\n    subprocess.run(['mvn', 'checkstyle:check', '-q'], capture_output=True)\n\""
+            "command": "python3 -c \"\nimport sys, json, subprocess\nd = json.load(sys.stdin)\nf = d.get('tool_input', {}).get('file_path', d.get('file_path', ''))\nif f and f.endswith('.java') and 'generated' not in f:\n    r = subprocess.run(['mvn', 'checkstyle:check', '-q'], capture_output=True, text=True)\n    out = (r.stdout + r.stderr).strip()\n    if out:\n        lines = out.splitlines()\n        print('\\n'.join(lines[-20:]))\n\""
           }
         ]
       },
