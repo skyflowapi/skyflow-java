@@ -162,9 +162,7 @@ public enum ErrorLogs {
     TABLE_SPECIFIED_AT_BOTH_PLACE("Invalid %s1 request. Table name cannot be specified at both the request and record levels. Please specify the table name at only one place."),
     TABLE_NOT_SPECIFIED_AT_BOTH_PLACE("Invalid %s1 request. Table name is missing. Table name should be specified at one place either at the request level or record level. Please specify the table name at one place."),
     UPSERT_TABLE_REQUEST_AT_RECORD_LEVEL("Invalid %s1 request. Table name should be present at each record level when upsert is present at record level."),
-    UPSERT_TABLE_REQUEST_AT_REQUEST_LEVEL("Invalid %s1 request. Upsert should be present at each record level when table name is present at record level."),
-    NULL_CUSTOM_HEADER_KEY("Invalid %s1 request. Custom header key can not be null."),
-    EMPTY_OR_NULL_VALUE_IN_CUSTOM_HEADERS("Invalid %s1 request. Custom header value can not be null or empty for key \"%s2\".");
+    UPSERT_TABLE_REQUEST_AT_REQUEST_LEVEL("Invalid %s1 request. Upsert should be present at each record level when table name is present at record level.");
     private final String log;
 
     ErrorLogs(String log) {
