@@ -523,12 +523,15 @@ Expected: compile error — `downloadUrl()` and `getDownloadUrl()` methods do no
 
 In `src/main/java/com/skyflow/vault/data/GetRequest.java`:
 
-**On the request class** — add new getter, mark old one `@Deprecated`:
+**On the request class** — add new getter, mark old one `@Deprecated(since, forRemoval)`:
+
+Using `forRemoval = true` triggers an **orange underline** in IntelliJ/VS Code (stronger than plain `@Deprecated` yellow). The `{@link}` in Javadoc creates a clickable link to the new method in the IDE autocomplete tooltip, so the developer sees the replacement inline without leaving autocomplete.
+
 ```java
     /**
      * @deprecated Use {@link #getDownloadUrl()} instead.
      */
-    @Deprecated
+    @Deprecated(since = "2.1", forRemoval = true)
     public Boolean getDownloadURL() {
         return getDownloadUrl();
     }
@@ -547,7 +550,7 @@ In `src/main/java/com/skyflow/vault/data/GetRequest.java`:
         /**
          * @deprecated Use {@link #downloadUrl(Boolean)} instead.
          */
-        @Deprecated
+        @Deprecated(since = "2.1", forRemoval = true)
         public GetRequestBuilder downloadURL(Boolean downloadURL) {
             return downloadUrl(downloadURL);
         }
@@ -581,7 +584,7 @@ Apply the identical pattern in `src/main/java/com/skyflow/vault/tokens/Detokeniz
     /**
      * @deprecated Use {@link #getDownloadUrl()} instead.
      */
-    @Deprecated
+    @Deprecated(since = "2.1", forRemoval = true)
     public Boolean getDownloadURL() {
         return getDownloadUrl();
     }
@@ -598,7 +601,7 @@ Apply the identical pattern in `src/main/java/com/skyflow/vault/tokens/Detokeniz
         /**
          * @deprecated Use {@link #downloadUrl(Boolean)} instead.
          */
-        @Deprecated
+        @Deprecated(since = "2.1", forRemoval = true)
         public DetokenizeRequestBuilder downloadURL(Boolean downloadURL) {
             return downloadUrl(downloadURL);
         }

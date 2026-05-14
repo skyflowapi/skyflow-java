@@ -14,6 +14,44 @@ A future release will remove the deprecated forms entirely. No removal date is s
 
 ---
 
+## How Deprecation Signals Work in Java IDEs
+
+Customers using modern Java IDEs (IntelliJ IDEA, VS Code, Eclipse) will see the following signals when using deprecated methods or fields. No code changes are required to see these — they appear automatically.
+
+### Method deprecation (`downloadURL` → `downloadUrl`)
+
+When a customer types `.downloadU` in their IDE, autocomplete shows both forms simultaneously. The old form is visually marked:
+
+```
+▼ Autocomplete
+──────────────────────────────────────────────────
+  downloadUrl(Boolean)                 ← new form, no marker
+  ~~downloadURL~~(Boolean)        ⚠️   ← strikethrough + warning icon
+──────────────────────────────────────────────────
+```
+
+Hovering over the deprecated method shows an inline tooltip:
+```
+⚠️ Deprecated. Use downloadUrl(Boolean) instead.
+```
+
+If a customer selects the deprecated form and uses it in their code, the IDE shows an **orange underline** at the call site — a stronger visual than a plain yellow warning — because the method is marked `forRemoval = true`.
+
+### Runtime log warnings (credential fields, `skyflow_id` key)
+
+For changes that cannot use Java annotations (map keys, JSON field names), a `[DEPRECATED]` warning is logged at runtime when the old form is used:
+
+```
+[DEPRECATED] Response key 'skyflow_id' is deprecated and will be removed
+in an upcoming release. Use 'skyflowId' instead.
+```
+
+These appear in the application log at WARN level. Customers running with `LogLevel.WARN` or higher will see them.
+
+---
+
+---
+
 ## What Is Changing
 
 ### 1. Credentials file field names
