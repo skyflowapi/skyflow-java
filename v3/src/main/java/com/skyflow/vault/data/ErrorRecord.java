@@ -10,14 +10,22 @@ public class ErrorRecord {
     private String error;
     @Expose(serialize = true)
     private int code;
-//    public ErrorRecord() {
-//    }
+    @Expose(serialize = true)
+    private String requestId;
 
     public ErrorRecord(int index, String error, int code) {
         this.index = index;
         this.error = error;
         this.code = code;
     }
+
+    public ErrorRecord(int index, String error, int code, String requestId) {
+        this.index = index;
+        this.error = error;
+        this.code = code;
+        this.requestId = requestId;
+    }
+
     public String getError() {
         return error;
     }
@@ -28,6 +36,10 @@ public class ErrorRecord {
 
     public int getIndex() {
         return index;
+    }
+
+    public String getRequestId() {
+        return requestId;
     }
 
 

@@ -391,13 +391,14 @@ public class VaultControllerTokenizeTests {
         List<com.skyflow.generated.rest.resources.flowservice.requests.V1FlowTokenizeRequest> batches = null;
 
         Method method = VaultController.class.getDeclaredMethod(
-                "tokenizeBatchFutures", ExecutorService.class, List.class);
+                "tokenizeBatchFutures", ExecutorService.class, List.class,
+                com.skyflow.vault.data.RequestInterceptor.class);
         method.setAccessible(true);
 
         ExecutorService executor = Executors.newFixedThreadPool(1);
         @SuppressWarnings("unchecked")
         List<CompletableFuture<TokenizeResponse>> futures =
-                (List<CompletableFuture<TokenizeResponse>>) method.invoke(controller, executor, batches);
+                (List<CompletableFuture<TokenizeResponse>>) method.invoke(controller, executor, batches, null);
 
         // errors are now returned via futures, not a shared list
         Assert.assertNotNull(futures);
@@ -432,12 +433,13 @@ public class VaultControllerTokenizeTests {
         Method processSync = VaultController.class.getDeclaredMethod(
                 "processTokenizeSync",
                 com.skyflow.generated.rest.resources.flowservice.requests.V1FlowTokenizeRequest.class,
-                ArrayList.class
+                ArrayList.class,
+                com.skyflow.vault.data.RequestInterceptor.class
         );
         processSync.setAccessible(true);
 
         try {
-            processSync.invoke(controller, requestObj, data);
+            processSync.invoke(controller, requestObj, data, null);
         } catch (java.lang.reflect.InvocationTargetException e) {
             Throwable cause = e.getCause();
             assertTrue(cause instanceof SkyflowException

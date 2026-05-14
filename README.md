@@ -23,6 +23,7 @@ The Skyflow Java SDK is designed to help with integrating Skyflow into a Java ba
   - [Bulk Detokenize](#bulk-detokenize)
   - [Bulk Tokenize](#bulk-tokenize)
   - [Bulk Delete Tokens](#bulk-delete-tokens)
+  - [Custom request headers](#custom-request-headers)
 - [Authenticate with bearer tokens](#authenticate-with-bearer-tokens)
   - [Generate a bearer token](#generate-a-bearer-token)
   - [Generate bearer tokens with context](#generate-bearer-tokens-with-context)
@@ -1460,6 +1461,74 @@ Sample response:
   "errors": []
 }
 ```
+
+## Custom request headers
+To include custom HTTP headers in outgoing requests, provide a `RequestInterceptor` via the options object for any vault operation. The headers you can set are defined by the `CustomHeaderKey` enum.   
+
+### Available custom header keys
+
+| `CustomHeaderKey` | HTTP header name |
+|---|---|
+| `SkyflowAccountID` | `x-skyflow-account-id` |
+| `SkyflowAccountName` | `x-skyflow-account-name` |
+| `RequestIDHeader` | `x-request-id` |
+
+### Example
+
+```java
+import com.skyflow.enums.CustomHeaderKey;
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.data.InsertOptions;
+import com.skyflow.vault.data.InsertRecord;
+import com.skyflow.vault.data.InsertRequest;
+import com.skyflow.vault.data.InsertResponse;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+
+public class BulkInsertWithHeaders {
+    public static void main(String[] args) {
+        try {
+            // Initialize Skyflow client
+
+            HashMap<String, Object> data = new HashMap<>();
+            data.put("<YOUR_COLUMN_NAME>", "<YOUR_VALUE>");
+            InsertRecord record = InsertRecord.builder()
+                    .data(data)
+                    .table("<YOUR_TABLE_NAME>")
+                    .build();
+
+            ArrayList<InsertRecord> records = new ArrayList<>();
+            records.add(record);
+
+            InsertRequest insertRequest = InsertRequest.builder()
+                    .records(records)
+                    .build();
+
+            // Pass custom headers via an interceptor in the options object
+            InsertOptions options = InsertOptions.builder()
+                    .interceptor(context -> {
+                        context.addHeader(CustomHeaderKey.RequestIDHeader, "<YOUR_REQUEST_ID>");
+                    })
+                    .build();
+
+            InsertResponse insertResponse = skyflowClient.vault().bulkInsert(insertRequest, options);
+            System.out.println(insertResponse);
+        } catch (SkyflowException e) {
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+The same pattern applies to all operations using the corresponding options class:
+
+| Operation | Options class |
+|---|---|
+| `bulkInsert` / `bulkInsertAsync` | `InsertOptions` |
+| `bulkDetokenize` / `bulkDetokenizeAsync` | `DetokenizeOptions` |
+| `bulkTokenize` / `bulkTokenizeAsync` | `TokenizeOptions` |
+| `bulkDeleteTokens` / `bulkDeleteTokensAsync` | `DeleteTokensOptions` |
 
 # Authenticate with bearer tokens
 

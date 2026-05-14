@@ -77,6 +77,10 @@ public final class Utils extends BaseUtils {
     }
 
     public static ErrorRecord createErrorRecord(Map<String, Object> recordMap, int indexNumber) {
+        return createErrorRecord(recordMap, indexNumber, null);
+    }
+
+    public static ErrorRecord createErrorRecord(Map<String, Object> recordMap, int indexNumber, String requestId) {
         ErrorRecord err = null;
         if (recordMap != null) {
             int code = 500;
@@ -84,7 +88,6 @@ public final class Utils extends BaseUtils {
                 code = (Integer) recordMap.get("http_code");
             } else if (recordMap.containsKey("httpCode")) {
                 code = (Integer) recordMap.get("httpCode");
-
             } else {
                 if (recordMap.containsKey("statusCode")) {
                     code = (Integer) recordMap.get("statusCode");
@@ -92,9 +95,15 @@ public final class Utils extends BaseUtils {
             }
             String message = recordMap.containsKey("error") ? (String) recordMap.get("error") :
                     recordMap.containsKey("message") ? (String) recordMap.get("message") : "Unknown error";
-            err = new ErrorRecord(indexNumber, message, code);
+            err = new ErrorRecord(indexNumber, message, code, requestId);
         }
         return err;
+    }
+
+    private static String extractRequestId(Map<String, List<String>> headers) {
+        if (headers == null) return null;
+        List<String> ids = headers.get(BaseConstants.REQUEST_ID_HEADER_KEY);
+        return (ids == null || ids.isEmpty()) ? null : ids.get(0);
     }
 
     public static List<ErrorRecord> handleBatchException(
@@ -104,7 +113,9 @@ public final class Utils extends BaseUtils {
         Throwable cause = ex.getCause();
         if (cause instanceof ApiClientApiException) {
             ApiClientApiException apiException = (ApiClientApiException) cause;
-            Map<String, Object> responseBody = (Map<String, Object>) apiException.body();
+            String requestId = extractRequestId(apiException.headers());
+            Object rawBody = apiException.body();
+            Map<String, Object> responseBody = (rawBody instanceof Map) ? (Map<String, Object>) rawBody : null;
             int indexNumber = batchNumber > 0 ? batchNumber * batchSize : 0;
             if (responseBody != null) {
                 if (responseBody.containsKey("records")) {
@@ -114,19 +125,29 @@ public final class Utils extends BaseUtils {
                         for (Object record : recordsList) {
                             if (record instanceof Map) {
                                 Map<String, Object> recordMap = (Map<String, Object>) record;
-                                ErrorRecord err = Utils.createErrorRecord(recordMap, indexNumber);
+                                ErrorRecord err = Utils.createErrorRecord(recordMap, indexNumber, requestId);
                                 errorRecords.add(err);
                                 indexNumber++;
                             }
                         }
                     }
                 } else if (responseBody.containsKey("error")) {
-                    Map<String, Object> recordMap = (Map<String, Object>) responseBody.get("error");
+                    Object errField = responseBody.get("error");
+                    Map<String, Object> recordMap = (errField instanceof Map) ? (Map<String, Object>) errField : null;
+                    String fallbackMsg = (errField instanceof String) ? (String) errField : null;
                     for (int j = 0; j < batch.size(); j++) {
-                        ErrorRecord err = Utils.createErrorRecord(recordMap, indexNumber);
+                        ErrorRecord err = (recordMap != null)
+                                ? Utils.createErrorRecord(recordMap, indexNumber, requestId)
+                                : new ErrorRecord(indexNumber, fallbackMsg != null ? fallbackMsg : apiException.getMessage(), apiException.statusCode(), requestId);
                         errorRecords.add(err);
                         indexNumber++;
                     }
+                }
+            }
+            if (errorRecords.isEmpty()) {
+                for (int j = 0; j < batch.size(); j++) {
+                    errorRecords.add(new ErrorRecord(indexNumber, apiException.getMessage(), apiException.statusCode(), requestId));
+                    indexNumber++;
                 }
             }
         } else {
@@ -147,7 +168,9 @@ public final class Utils extends BaseUtils {
         Throwable cause = ex.getCause();
         if (cause instanceof ApiClientApiException) {
             ApiClientApiException apiException = (ApiClientApiException) cause;
-            Map<String, Object> responseBody = (Map<String, Object>) apiException.body();
+            String requestId = extractRequestId(apiException.headers());
+            Object rawBody = apiException.body();
+            Map<String, Object> responseBody = (rawBody instanceof Map) ? (Map<String, Object>) rawBody : null;
             int indexNumber = batchNumber * batchSize;
             if (responseBody != null) {
                 if (responseBody.containsKey("response")) {
@@ -157,19 +180,31 @@ public final class Utils extends BaseUtils {
                         for (Object record : recordsList) {
                             if (record instanceof Map) {
                                 Map<String, Object> recordMap = (Map<String, Object>) record;
-                                ErrorRecord err = Utils.createErrorRecord(recordMap, indexNumber);
+                                ErrorRecord err = Utils.createErrorRecord(recordMap, indexNumber, requestId);
                                 errorRecords.add(err);
                                 indexNumber++;
                             }
                         }
                     }
                 } else if (responseBody.containsKey("error")) {
-                    Map<String, Object> recordMap = (Map<String, Object>) responseBody.get("error");
-                    for (int j = 0; j < batch.getTokens().get().size(); j++) {
-                        ErrorRecord err = Utils.createErrorRecord(recordMap, indexNumber);
+                    Object errField = responseBody.get("error");
+                    Map<String, Object> recordMap = (errField instanceof Map) ? (Map<String, Object>) errField : null;
+                    String fallbackMsg = (errField instanceof String) ? (String) errField : null;
+                    int tokenCount = batch.getTokens().isPresent() ? batch.getTokens().get().size() : 0;
+                    for (int j = 0; j < tokenCount; j++) {
+                        ErrorRecord err = (recordMap != null)
+                                ? Utils.createErrorRecord(recordMap, indexNumber, requestId)
+                                : new ErrorRecord(indexNumber, fallbackMsg != null ? fallbackMsg : apiException.getMessage(), apiException.statusCode(), requestId);
                         errorRecords.add(err);
                         indexNumber++;
                     }
+                }
+            }
+            if (errorRecords.isEmpty()) {
+                int tokenCount = batch.getTokens().isPresent() ? batch.getTokens().get().size() : 0;
+                for (int j = 0; j < tokenCount; j++) {
+                    errorRecords.add(new ErrorRecord(indexNumber, apiException.getMessage(), apiException.statusCode(), requestId));
+                    indexNumber++;
                 }
             }
         } else {
@@ -184,15 +219,20 @@ public final class Utils extends BaseUtils {
     }
 
     public static DetokenizeResponse formatDetokenizeResponse(com.skyflow.generated.rest.types.V1FlowDetokenizeResponse response, int batch, int batchSize) {
-        if (response != null) {
+        return formatDetokenizeResponse(response, batch, batchSize, null);
+    }
+
+    public static DetokenizeResponse formatDetokenizeResponse(com.skyflow.generated.rest.types.V1FlowDetokenizeResponse response, int batch, int batchSize, Map<String, List<String>> headers) {
+        if (response != null && response.getResponse().isPresent()) {
+            String requestId = extractRequestId(headers);
             List<com.skyflow.generated.rest.types.V1FlowDetokenizeResponseObject> record = response.getResponse().get();
             List<ErrorRecord> errorRecords = new ArrayList<>();
             List<com.skyflow.vault.data.DetokenizeResponseObject> successRecords = new ArrayList<>();
             int indexNumber = batch * batchSize;
-            int recordsSize = response.getResponse().get().size();
+            int recordsSize = record.size();
             for (int index = 0; index < recordsSize; index++) {
                 if (record.get(index).getError().isPresent()) {
-                    ErrorRecord errorRecord = new ErrorRecord(indexNumber, record.get(index).getError().get(), record.get(index).getHttpCode().get());
+                    ErrorRecord errorRecord = new ErrorRecord(indexNumber, record.get(index).getError().get(), record.get(index).getHttpCode().get(), requestId);
                     errorRecords.add(errorRecord);
                 } else {
                     com.skyflow.vault.data.DetokenizeResponseObject success = new com.skyflow.vault.data.DetokenizeResponseObject(indexNumber, record.get(index).getToken().orElse(null), record.get(index).getValue().orElse(null), record.get(index).getTokenGroupName().orElse(null), record.get(index).getError().orElse(null), record.get(index).getMetadata().orElse(null));
@@ -200,23 +240,27 @@ public final class Utils extends BaseUtils {
                 }
                 indexNumber++;
             }
-            DetokenizeResponse formattedResponse = new DetokenizeResponse(successRecords, errorRecords);
-            return formattedResponse;
+            return new DetokenizeResponse(successRecords, errorRecords);
         }
         return null;
     }
 
     public static com.skyflow.vault.data.InsertResponse formatResponse(V1InsertResponse response, int batch, int batchSize) {
+        return formatResponse(response, batch, batchSize, null);
+    }
+
+    public static com.skyflow.vault.data.InsertResponse formatResponse(V1InsertResponse response, int batch, int batchSize, Map<String, List<String>> headers) {
         com.skyflow.vault.data.InsertResponse formattedResponse = null;
         List<Success> successRecords = new ArrayList<>();
         List<ErrorRecord> errorRecords = new ArrayList<>();
         if (response != null) {
+            String requestId = extractRequestId(headers);
             List<V1RecordResponseObject> record = response.getRecords().get();
             int indexNumber = batch * batchSize;
             int recordsSize = response.getRecords().get().size();
             for (int index = 0; index < recordsSize; index++) {
                 if (record.get(index).getError().isPresent()) {
-                    ErrorRecord errorRecord = new ErrorRecord(indexNumber, record.get(index).getError().get(), record.get(index).getHttpCode().get());
+                    ErrorRecord errorRecord = new ErrorRecord(indexNumber, record.get(index).getError().get(), record.get(index).getHttpCode().get(), requestId);
                     errorRecords.add(errorRecord);
                 } else {
                     Map<String, List<Token>> tokensMap = null;
@@ -312,7 +356,9 @@ public final class Utils extends BaseUtils {
         Throwable cause = ex.getCause();
         if (cause instanceof ApiClientApiException) {
             ApiClientApiException apiException = (ApiClientApiException) cause;
-            Map<String, Object> responseBody = (Map<String, Object>) apiException.body();
+            String requestId = extractRequestId(apiException.headers());
+            Object rawBody = apiException.body();
+            Map<String, Object> responseBody = (rawBody instanceof Map) ? (Map<String, Object>) rawBody : null;
             int indexNumber = batchNumber * batchSize;
             if (responseBody != null) {
                 if (responseBody.containsKey("tokens")) {
@@ -322,19 +368,31 @@ public final class Utils extends BaseUtils {
                         for (Object record : recordsList) {
                             if (record instanceof Map) {
                                 Map<String, Object> recordMap = (Map<String, Object>) record;
-                                ErrorRecord err = Utils.createErrorRecord(recordMap, indexNumber);
+                                ErrorRecord err = Utils.createErrorRecord(recordMap, indexNumber, requestId);
                                 errorRecords.add(err);
                                 indexNumber++;
                             }
                         }
                     }
                 } else if (responseBody.containsKey("error")) {
-                    Map<String, Object> recordMap = (Map<String, Object>) responseBody.get("error");
-                    for (int j = 0; j < batch.getTokens().get().size(); j++) {
-                        ErrorRecord err = Utils.createErrorRecord(recordMap, indexNumber);
+                    Object errField = responseBody.get("error");
+                    Map<String, Object> recordMap = (errField instanceof Map) ? (Map<String, Object>) errField : null;
+                    String fallbackMsg = (errField instanceof String) ? (String) errField : null;
+                    int tokenCount = batch.getTokens().isPresent() ? batch.getTokens().get().size() : 0;
+                    for (int j = 0; j < tokenCount; j++) {
+                        ErrorRecord err = (recordMap != null)
+                                ? Utils.createErrorRecord(recordMap, indexNumber, requestId)
+                                : new ErrorRecord(indexNumber, fallbackMsg != null ? fallbackMsg : apiException.getMessage(), apiException.statusCode(), requestId);
                         errorRecords.add(err);
                         indexNumber++;
                     }
+                }
+            }
+            if (errorRecords.isEmpty()) {
+                int tokenCount = batch.getTokens().isPresent() ? batch.getTokens().get().size() : 0;
+                for (int j = 0; j < tokenCount; j++) {
+                    errorRecords.add(new ErrorRecord(indexNumber, apiException.getMessage(), apiException.statusCode(), requestId));
+                    indexNumber++;
                 }
             }
         } else {
@@ -350,20 +408,25 @@ public final class Utils extends BaseUtils {
 
     public static DeleteTokensResponse formatDeleteTokensResponse(
             com.skyflow.generated.rest.types.V1FlowDeleteTokenResponse response, int batch, int batchSize) {
+        return formatDeleteTokensResponse(response, batch, batchSize, null);
+    }
+
+    public static DeleteTokensResponse formatDeleteTokensResponse(
+            com.skyflow.generated.rest.types.V1FlowDeleteTokenResponse response, int batch, int batchSize, Map<String, List<String>> headers) {
         if (response != null && response.getTokens().isPresent()) {
+            String requestId = extractRequestId(headers);
             List<com.skyflow.generated.rest.types.V1DeleteTokenResponseObject> records = response.getTokens().get();
             List<ErrorRecord> errorRecords = new ArrayList<>();
             List<DeleteTokensSuccess> successRecords = new ArrayList<>();
             int indexNumber = batch * batchSize;
             for (com.skyflow.generated.rest.types.V1DeleteTokenResponseObject record : records) {
-                // The API returns the token string in "value" field regardless of success or error
                 String tokenValue = record.getValue().orElse(null);
                 if (record.getError().isPresent()
                         && record.getError().get() != null
                         && !record.getError().get().isEmpty()
                         && record.getHttpCode().orElse(200) != 200) {
                     ErrorRecord errorRecord = new ErrorRecord(indexNumber, record.getError().get(),
-                            record.getHttpCode().orElse(500));
+                            record.getHttpCode().orElse(500), requestId);
                     errorRecords.add(errorRecord);
                 } else {
                     DeleteTokensSuccess success = new DeleteTokensSuccess(indexNumber, tokenValue);
@@ -402,7 +465,9 @@ public final class Utils extends BaseUtils {
         Throwable cause = ex.getCause();
         if (cause instanceof ApiClientApiException) {
             ApiClientApiException apiException = (ApiClientApiException) cause;
-            Map<String, Object> responseBody = (Map<String, Object>) apiException.body();
+            String requestId = extractRequestId(apiException.headers());
+            Object rawBody = apiException.body();
+            Map<String, Object> responseBody = (rawBody instanceof Map) ? (Map<String, Object>) rawBody : null;
             int indexNumber = batchNumber * batchSize;
             if (responseBody != null) {
                 if (responseBody.containsKey("response")) {
@@ -412,20 +477,31 @@ public final class Utils extends BaseUtils {
                         for (Object record : recordsList) {
                             if (record instanceof Map) {
                                 Map<String, Object> recordMap = (Map<String, Object>) record;
-                                ErrorRecord err = Utils.createErrorRecord(recordMap, indexNumber);
+                                ErrorRecord err = Utils.createErrorRecord(recordMap, indexNumber, requestId);
                                 errorRecords.add(err);
                                 indexNumber++;
                             }
                         }
                     }
                 } else if (responseBody.containsKey("error")) {
-                    Map<String, Object> recordMap = (Map<String, Object>) responseBody.get("error");
+                    Object errField = responseBody.get("error");
+                    Map<String, Object> recordMap = (errField instanceof Map) ? (Map<String, Object>) errField : null;
+                    String fallbackMsg = (errField instanceof String) ? (String) errField : null;
                     int batchDataSize = batch.getData().isPresent() ? batch.getData().get().size() : 0;
                     for (int j = 0; j < batchDataSize; j++) {
-                        ErrorRecord err = Utils.createErrorRecord(recordMap, indexNumber);
+                        ErrorRecord err = (recordMap != null)
+                                ? Utils.createErrorRecord(recordMap, indexNumber, requestId)
+                                : new ErrorRecord(indexNumber, fallbackMsg != null ? fallbackMsg : apiException.getMessage(), apiException.statusCode(), requestId);
                         errorRecords.add(err);
                         indexNumber++;
                     }
+                }
+            }
+            if (errorRecords.isEmpty()) {
+                int batchDataSize = batch.getData().isPresent() ? batch.getData().get().size() : 0;
+                for (int j = 0; j < batchDataSize; j++) {
+                    errorRecords.add(new ErrorRecord(indexNumber, apiException.getMessage(), apiException.statusCode(), requestId));
+                    indexNumber++;
                 }
             }
         } else {
@@ -444,7 +520,15 @@ public final class Utils extends BaseUtils {
             com.skyflow.generated.rest.types.V1FlowTokenizeResponse response,
             com.skyflow.generated.rest.resources.flowservice.requests.V1FlowTokenizeRequest batchRequest,
             int batchNumber, int batchSize) {
+        return formatTokenizeResponse(response, batchRequest, batchNumber, batchSize, null);
+    }
+
+    public static TokenizeResponse formatTokenizeResponse(
+            com.skyflow.generated.rest.types.V1FlowTokenizeResponse response,
+            com.skyflow.generated.rest.resources.flowservice.requests.V1FlowTokenizeRequest batchRequest,
+            int batchNumber, int batchSize, Map<String, List<String>> headers) {
         if (response != null && response.getResponse().isPresent()) {
+            String requestId = extractRequestId(headers);
             List<com.skyflow.generated.rest.types.V1FlowTokenizeResponseObject> flatList =
                     response.getResponse().get();
             List<com.skyflow.generated.rest.types.V1FlowTokenizeRequestObject> requestData =
@@ -475,7 +559,7 @@ public final class Utils extends BaseUtils {
                             ? ((Number) props.get("httpCode")).intValue() : 200;
 
                     if (errorMsg != null) {
-                        errorRecords.add(new ErrorRecord(inputRecordIndex, errorMsg, httpCode));
+                        errorRecords.add(new ErrorRecord(inputRecordIndex, errorMsg, httpCode, requestId));
                     } else {
                         if (successEntry == null) {
                             successEntry = new TokenizeSuccess(inputRecordIndex, value);
