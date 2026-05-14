@@ -53,10 +53,10 @@ Open `src/main/java/com/skyflow/logs/InfoLogs.java`. Find the last enum entry be
 
 ```java
     // Deprecation warnings — v2 backward compat, to be removed in v3
-    DEPRECATED_SKYFLOW_ID_KEY("Response map key 'skyflow_id' is deprecated in v2 and will be removed in v3. Use 'skyflowId' instead."),
-    DEPRECATED_CREDENTIAL_CLIENT_ID("Credential field 'clientID' is deprecated in v2. Use 'clientId' instead."),
-    DEPRECATED_CREDENTIAL_KEY_ID("Credential field 'keyID' is deprecated in v2. Use 'keyId' instead."),
-    DEPRECATED_CREDENTIAL_TOKEN_URI("Credential field 'tokenURI' is deprecated in v2. Use 'tokenUri' instead.");
+    DEPRECATED_SKYFLOW_ID_KEY("Response map key 'skyflow_id' is deprecated and will be removed in an upcoming release. Use 'skyflowId' instead."),
+    DEPRECATED_CREDENTIAL_CLIENT_ID("Credential field 'clientID' is deprecated and will be removed in an upcoming release. Use 'clientId' instead."),
+    DEPRECATED_CREDENTIAL_KEY_ID("Credential field 'keyID' is deprecated and will be removed in an upcoming release. Use 'keyId' instead."),
+    DEPRECATED_CREDENTIAL_TOKEN_URI("Credential field 'tokenURI' is deprecated and will be removed in an upcoming release. Use 'tokenUri' instead.");
 ```
 
 Note: The last existing entry before your addition ends with a comma. Your last entry (`DEPRECATED_CREDENTIAL_TOKEN_URI`) ends with a semicolon `;` to close the enum constant list — verify you are replacing the existing semicolon, not duplicating it.
@@ -240,7 +240,7 @@ In `src/main/java/com/skyflow/vault/data/GetResponse.java`, add Javadoc above `g
      * field name/value pairs for the record.
      *
      * <p><b>Deprecation notice:</b> The {@code skyflow_id} key in each record map is
-     * deprecated as of v2 and will be removed in v3. Use {@code skyflowId} instead.
+     * deprecated and will be removed in an upcoming release. Use {@code skyflowId} instead.
      * Both keys are present simultaneously in v2 for backward compatibility.</p>
      */
     public ArrayList<HashMap<String, Object>> getData() {
@@ -258,7 +258,7 @@ In `src/main/java/com/skyflow/vault/data/QueryResponse.java`, add Javadoc above 
      * field name/value pairs for the record.
      *
      * <p><b>Deprecation notice:</b> The {@code skyflow_id} key in each record map is
-     * deprecated as of v2 and will be removed in v3. Use {@code skyflowId} instead.
+     * deprecated and will be removed in an upcoming release. Use {@code skyflowId} instead.
      * Both keys are present simultaneously in v2 for backward compatibility.</p>
      */
     public ArrayList<HashMap<String, Object>> getFields() {
