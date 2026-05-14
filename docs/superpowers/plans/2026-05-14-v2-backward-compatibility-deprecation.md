@@ -53,10 +53,10 @@ Open `src/main/java/com/skyflow/logs/InfoLogs.java`. Find the last enum entry be
 
 ```java
     // Deprecation warnings — v2 backward compat, to be removed in v3
-    DEPRECATED_SKYFLOW_ID_KEY("Response map key 'skyflow_id' is deprecated and will be removed in an upcoming release. Use 'skyflowId' instead."),
-    DEPRECATED_CREDENTIAL_CLIENT_ID("Credential field 'clientID' is deprecated and will be removed in an upcoming release. Use 'clientId' instead."),
-    DEPRECATED_CREDENTIAL_KEY_ID("Credential field 'keyID' is deprecated and will be removed in an upcoming release. Use 'keyId' instead."),
-    DEPRECATED_CREDENTIAL_TOKEN_URI("Credential field 'tokenURI' is deprecated and will be removed in an upcoming release. Use 'tokenUri' instead.");
+    DEPRECATED_SKYFLOW_ID_KEY("[DEPRECATED] Response key 'skyflow_id' is deprecated and will be removed in an upcoming release. Use 'skyflowId' instead."),
+    DEPRECATED_CREDENTIAL_CLIENT_ID("[DEPRECATED] Credential field 'clientID' is deprecated and will be removed in an upcoming release. Use 'clientId' instead."),
+    DEPRECATED_CREDENTIAL_KEY_ID("[DEPRECATED] Credential field 'keyID' is deprecated and will be removed in an upcoming release. Use 'keyId' instead."),
+    DEPRECATED_CREDENTIAL_TOKEN_URI("[DEPRECATED] Credential field 'tokenURI' is deprecated and will be removed in an upcoming release. Use 'tokenUri' instead.");
 ```
 
 Note: The last existing entry before your addition ends with a comma. Your last entry (`DEPRECATED_CREDENTIAL_TOKEN_URI`) ends with a semicolon `;` to close the enum constant list — verify you are replacing the existing semicolon, not duplicating it.
