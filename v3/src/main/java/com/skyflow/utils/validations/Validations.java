@@ -140,15 +140,15 @@ public class Validations extends BaseValidations {
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.DetokenizeRequestNull.getMessage());
         }
         List<String> tokens = request.getTokens();
-        if (tokens.size() > 10000) {
-            LogUtil.printErrorLog(ErrorLogs.TOKENS_SIZE_EXCEED.getLog());
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.TokensSizeExceedError.getMessage());
-        }
         if (tokens == null || tokens.isEmpty()) {
             LogUtil.printErrorLog(Utils.parameterizedString(
                     ErrorLogs.EMPTY_DETOKENIZE_DATA.getLog(), InterfaceName.DETOKENIZE.getName()
-        ));
-        throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyDetokenizeData.getMessage());
+            ));
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyDetokenizeData.getMessage());
+        }
+        if (tokens.size() > 10000) {
+            LogUtil.printErrorLog(ErrorLogs.TOKENS_SIZE_EXCEED.getLog());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.TokensSizeExceedError.getMessage());
         }
         for (int index = 0; index < tokens.size(); index++) {
             String token = tokens.get(index);
