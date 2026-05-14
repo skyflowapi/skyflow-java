@@ -3,7 +3,6 @@ package com.skyflow.vault.controller;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -29,7 +28,6 @@ import com.skyflow.utils.Constants;
 import com.skyflow.utils.Utils;
 import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.utils.validations.Validations;
-import com.skyflow.enums.InterfaceName;
 import com.skyflow.vault.data.DeleteTokensOptions;
 import com.skyflow.vault.data.DeleteTokensRequest;
 import com.skyflow.vault.data.DeleteTokensResponse;
@@ -171,8 +169,10 @@ public final class VaultController extends VaultClient {
             String bodyString = gson.toJson(e.body());
             LogUtil.printErrorLog(ErrorLogs.DETOKENIZE_REQUEST_REJECTED.getLog());
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
-        } catch (ExecutionException | InterruptedException e) {
-            LogUtil.printErrorLog(ErrorLogs.DETOKENIZE_REQUEST_REJECTED.getLog());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new SkyflowException(e.getMessage());
+        } catch (ExecutionException e) {
             throw new SkyflowException(e.getMessage());
         }
     }

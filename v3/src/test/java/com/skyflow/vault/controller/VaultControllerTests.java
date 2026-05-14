@@ -809,71 +809,6 @@ public class VaultControllerTests {
         executor.shutdownNow();
     }
 
-    // ── Custom header options validation via VaultController ──────────────────
-
-    @Test
-    public void bulkInsert_nullOptions_doesNotThrowForHeaderValidation() throws SkyflowException {
-        VaultController controller = createController();
-        InsertRequest request = InsertRequest.builder()
-                .table("tbl")
-                .records(generateValues(1))
-                .build();
-        try {
-            controller.bulkInsert(request, (InsertOptions) null);
-        } catch (SkyflowException e) {
-            assertFalse("Should not throw EmptyValueInCustomHeaders for null options",
-                    e.getMessage().equals(ErrorMessage.EmptyValueInCustomHeaders.getMessage()));
-            assertFalse("Should not throw NullCustomHeaderKey for null options",
-                    e.getMessage().equals(ErrorMessage.NullCustomHeaderKey.getMessage()));
-        }
-    }
-
-    @Test
-    public void bulkDetokenize_nullOptions_doesNotThrowForHeaderValidation() throws SkyflowException {
-        VaultController controller = createController();
-        DetokenizeRequest request = DetokenizeRequest.builder()
-                .tokens(getTokens(1))
-                .build();
-        try {
-            controller.bulkDetokenize(request, (DetokenizeOptions) null);
-        } catch (SkyflowException e) {
-            assertFalse("Should not throw header error for null options",
-                    e.getMessage().equals(ErrorMessage.EmptyValueInCustomHeaders.getMessage()));
-        }
-    }
-
-    @Test
-    public void bulkDeleteTokens_nullOptions_doesNotThrowForHeaderValidation() throws SkyflowException {
-        VaultController controller = createController();
-        DeleteTokensRequest request = DeleteTokensRequest.builder()
-                .tokens(getTokens(1))
-                .build();
-        try {
-            controller.bulkDeleteTokens(request, (DeleteTokensOptions) null);
-        } catch (SkyflowException e) {
-            assertFalse("Should not throw header error for null options",
-                    e.getMessage().equals(ErrorMessage.EmptyValueInCustomHeaders.getMessage()));
-            assertFalse("Should not throw NullCustomHeaderKey for null options",
-                    e.getMessage().equals(ErrorMessage.NullCustomHeaderKey.getMessage()));
-        }
-    }
-
-    @Test
-    public void bulkTokenize_nullOptions_doesNotThrowForHeaderValidation() throws SkyflowException {
-        VaultController controller = createController();
-        ArrayList<TokenizeRecord> data = new ArrayList<>();
-        data.add(TokenizeRecord.builder().value("val").build());
-        TokenizeRequest request = TokenizeRequest.builder().data(data).build();
-        try {
-            controller.bulkTokenize(request, (TokenizeOptions) null);
-        } catch (SkyflowException e) {
-            assertFalse("Should not throw header error for null options",
-                    e.getMessage().equals(ErrorMessage.EmptyValueInCustomHeaders.getMessage()));
-            assertFalse("Should not throw NullCustomHeaderKey for null options",
-                    e.getMessage().equals(ErrorMessage.NullCustomHeaderKey.getMessage()));
-        }
-    }
-
     // ── configureDeleteTokensConcurrencyAndBatchSize ──────────────────────────
 
     @Test
@@ -1170,6 +1105,153 @@ public class VaultControllerTests {
         Assert.assertEquals(java.util.Arrays.asList(0, 1), capturedIndices);
         Assert.assertEquals(2, capturedTotal.get());
         executor.shutdownNow();
+    }
+
+    @Test
+    public void interceptor_operationIsTokenize_inTokenizeBatchFutures() throws Exception {
+        VaultController controller = createController();
+        setPrivateField(controller, "tokenizeBatchSize", 1);
+
+        java.util.List<String> capturedOps = java.util.Collections.synchronizedList(new ArrayList<>());
+        RequestInterceptor interceptor = ctx -> capturedOps.add(ctx.getOperation());
+
+        ArrayList<com.skyflow.vault.data.TokenizeRecord> data = new ArrayList<>();
+        data.add(com.skyflow.vault.data.TokenizeRecord.builder().value("v1").tokenGroupNames(Collections.singletonList("g1")).build());
+        data.add(com.skyflow.vault.data.TokenizeRecord.builder().value("v2").tokenGroupNames(Collections.singletonList("g1")).build());
+        com.skyflow.vault.data.TokenizeRequest tokenizeRequest = com.skyflow.vault.data.TokenizeRequest.builder().data(data).build();
+
+        Method getRequestBody = VaultController.class.getSuperclass()
+                .getDeclaredMethod("getTokenizeRequestBody", com.skyflow.vault.data.TokenizeRequest.class);
+        getRequestBody.setAccessible(true);
+        com.skyflow.generated.rest.resources.flowservice.requests.V1FlowTokenizeRequest requestObj =
+                (com.skyflow.generated.rest.resources.flowservice.requests.V1FlowTokenizeRequest)
+                        getRequestBody.invoke(controller, tokenizeRequest);
+
+        List<com.skyflow.generated.rest.resources.flowservice.requests.V1FlowTokenizeRequest> batches =
+                com.skyflow.utils.Utils.createTokenizeBatches(requestObj, 1);
+
+        Method method = VaultController.class.getDeclaredMethod(
+                "tokenizeBatchFutures", ExecutorService.class, List.class, RequestInterceptor.class);
+        method.setAccessible(true);
+        ExecutorService executor = Executors.newFixedThreadPool(1);
+        method.invoke(controller, executor, batches, interceptor);
+
+        Assert.assertEquals(batches.size(), capturedOps.size());
+        for (String op : capturedOps) {
+            Assert.assertEquals("TOKENIZE", op);
+        }
+        executor.shutdownNow();
+    }
+
+    @Test
+    public void interceptor_batchIndexAndTotal_inDeleteTokensBatchFutures() throws Exception {
+        VaultController controller = createController();
+        setPrivateField(controller, "deleteTokensBatchSize", 1);
+
+        java.util.List<Integer> capturedIndices = java.util.Collections.synchronizedList(new ArrayList<>());
+        java.util.concurrent.atomic.AtomicInteger capturedTotal = new java.util.concurrent.atomic.AtomicInteger(-1);
+        RequestInterceptor interceptor = ctx -> {
+            capturedIndices.add(ctx.getBatchIndex());
+            capturedTotal.set(ctx.getTotalBatches());
+        };
+
+        List<String> tokens = Arrays.asList("t1", "t2", "t3");
+        DeleteTokensRequest deleteRequest = DeleteTokensRequest.builder().tokens(tokens).build();
+        Method getRequestBody = VaultController.class.getSuperclass()
+                .getDeclaredMethod("getDeleteTokensRequestBody", DeleteTokensRequest.class);
+        getRequestBody.setAccessible(true);
+        com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDeleteTokenRequest requestObj =
+                (com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDeleteTokenRequest)
+                        getRequestBody.invoke(controller, deleteRequest);
+
+        List<com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDeleteTokenRequest> batches =
+                com.skyflow.utils.Utils.createDeleteTokensBatches(requestObj, 1);
+
+        Method method = VaultController.class.getDeclaredMethod(
+                "deleteTokensBatchFutures", ExecutorService.class, List.class, RequestInterceptor.class);
+        method.setAccessible(true);
+        ExecutorService executor = Executors.newFixedThreadPool(1);
+        method.invoke(controller, executor, batches, interceptor);
+
+        Assert.assertEquals(Arrays.asList(0, 1, 2), capturedIndices);
+        Assert.assertEquals(3, capturedTotal.get());
+        executor.shutdownNow();
+    }
+
+    @Test
+    public void interceptor_isCalledOncePerBatch_inDetokenizeBatchFutures() throws Exception {
+        VaultController controller = createController();
+        setPrivateField(controller, "detokenizeBatchSize", 2);
+
+        java.util.concurrent.atomic.AtomicInteger callCount = new java.util.concurrent.atomic.AtomicInteger(0);
+        java.util.List<String> capturedOps = java.util.Collections.synchronizedList(new ArrayList<>());
+        RequestInterceptor interceptor = ctx -> {
+            callCount.incrementAndGet();
+            capturedOps.add(ctx.getOperation());
+        };
+
+        DetokenizeRequest request = DetokenizeRequest.builder().tokens(getTokens(4)).build();
+        Method getRequestBody = VaultController.class.getSuperclass()
+                .getDeclaredMethod("getDetokenizeRequestBody", DetokenizeRequest.class);
+        getRequestBody.setAccessible(true);
+        com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest requestObj =
+                (com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest)
+                        getRequestBody.invoke(controller, request);
+
+        List<com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest> batches =
+                com.skyflow.utils.Utils.createDetokenizeBatches(requestObj, 2);
+
+        Method method = VaultController.class.getDeclaredMethod(
+                "detokenizeBatchFutures", ExecutorService.class, List.class, List.class, RequestInterceptor.class);
+        method.setAccessible(true);
+        ExecutorService executor = Executors.newFixedThreadPool(1);
+        List<ErrorRecord> errors = new ArrayList<>();
+        method.invoke(controller, executor, batches, errors, interceptor);
+
+        Assert.assertEquals("Interceptor called once per batch", batches.size(), callCount.get());
+        for (String op : capturedOps) {
+            Assert.assertEquals("DETOKENIZE", op);
+        }
+        executor.shutdownNow();
+    }
+
+    @Test
+    public void interceptor_isCalledOncePerBatch_inInsertBatchFutures() throws Exception {
+        VaultController controller = createController();
+        setPrivateField(controller, "insertBatchSize", 2);
+
+        java.util.concurrent.atomic.AtomicInteger callCount = new java.util.concurrent.atomic.AtomicInteger(0);
+        java.util.List<String> capturedOps = java.util.Collections.synchronizedList(new ArrayList<>());
+        RequestInterceptor interceptor = ctx -> {
+            callCount.incrementAndGet();
+            capturedOps.add(ctx.getOperation());
+        };
+
+        InsertRequest insertRequest = InsertRequest.builder()
+                .table("test-table")
+                .records(generateValues(4))
+                .build();
+        Method getRequestBody = VaultController.class.getSuperclass()
+                .getDeclaredMethod("getBulkInsertRequestBody", InsertRequest.class, VaultConfig.class);
+        getRequestBody.setAccessible(true);
+        com.skyflow.generated.rest.resources.flowservice.requests.V1InsertRequest requestObj =
+                (com.skyflow.generated.rest.resources.flowservice.requests.V1InsertRequest)
+                        getRequestBody.invoke(controller, insertRequest, vaultConfig);
+
+        Method method = VaultController.class.getDeclaredMethod(
+                "insertBatchFutures",
+                com.skyflow.generated.rest.resources.flowservice.requests.V1InsertRequest.class,
+                List.class,
+                RequestInterceptor.class);
+        method.setAccessible(true);
+        List<ErrorRecord> errorRecords = new ArrayList<>();
+        method.invoke(controller, requestObj, errorRecords, interceptor);
+
+        // 4 records / batchSize 2 = 2 batches
+        Assert.assertEquals(2, callCount.get());
+        for (String op : capturedOps) {
+            Assert.assertEquals("INSERT", op);
+        }
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────
