@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Restore backward compatibility for v2 customers by keeping old public interface forms alongside new ones, and emit `@Deprecated`-style WARN log messages when the old forms are used.
+**Goal:** Restore backward compatibility for v2 customers by keeping old public interface forms alongside new ones, and emit deprecation signals when the old forms are used.
 
-**Architecture:** Two independent changes. (1) The `skyflow_id` response key was removed — it must be restored alongside `skyflowId` so both exist in the map simultaneously; a WARN log is emitted per response build when the old key is present. (2) The credential field fallback (`clientID`/`keyID`/`tokenURI`) already works silently — add WARN logs when the old form triggers the fallback path. All deprecation messages use `LogUtil.printWarningLog()` which already exists and respects the caller's configured `LogLevel`.
+**Architecture:** Three independent changes. (1) The `skyflow_id` response key was removed — it must be restored alongside `skyflowId` so both exist in the map simultaneously; a WARN log is emitted per response build when the old key is present. (2) The credential field fallback (`clientID`/`keyID`/`tokenURI`) already works silently — add WARN logs when the old form triggers the fallback path. (3) `downloadURL` method names on `GetRequest` and `DetokenizeRequest` violate the acronym-as-word rule — keep the old `@Deprecated` methods alongside new `downloadUrl` methods. All runtime deprecation messages use `LogUtil.printWarningLog()`; method-level deprecation uses the standard Java `@Deprecated` annotation.
 
 **Tech Stack:** Java 11+, JUnit 4, Maven (`mvn test`)
 
@@ -20,6 +20,7 @@
 | `clientID`/`keyID`/`tokenURI` replaced in BearerToken | Not breaking (fallback exists) | Add WARN log on old-form fallback |
 | `clientID`/`keyID` replaced in SignedDataTokens | Not breaking (fallback exists) | Add WARN log on old-form fallback |
 | `getErrors()` added to QueryResponse | Not breaking (additive) | No change needed |
+| `downloadURL` → `downloadUrl` in GetRequest & DetokenizeRequest | **BREAKING** | Keep `@Deprecated` old methods; add new `downloadUrl` methods |
 
 ---
 
@@ -27,7 +28,9 @@
 
 | File | Change |
 |---|---|
-| `src/main/java/com/skyflow/logs/InfoLogs.java` | Add 4 deprecation warning log entries |
+| `src/main/java/com/skyflow/logs/InfoLogs.java` | Add 5 deprecation warning log entries (4 existing + 1 for downloadURL) |
+| `src/main/java/com/skyflow/vault/data/GetRequest.java` | Add `getDownloadUrl()` + builder `downloadUrl()`; mark old `getDownloadURL()` as `@Deprecated` |
+| `src/main/java/com/skyflow/vault/tokens/DetokenizeRequest.java` | Add `getDownloadUrl()` + builder `downloadUrl()`; mark old `getDownloadURL()` as `@Deprecated` |
 | `src/main/java/com/skyflow/vault/controller/VaultController.java` | Keep `skyflow_id` key alongside `skyflowId`; emit WARN per record |
 | `src/main/java/com/skyflow/vault/data/GetResponse.java` | Add `@deprecated` Javadoc on `getData()` for `skyflow_id` key |
 | `src/main/java/com/skyflow/vault/data/QueryResponse.java` | Add `@deprecated` Javadoc on `getFields()` for `skyflow_id` key |
@@ -453,7 +456,192 @@ git commit -m "feat: emit deprecation WARN log when legacy clientID/keyID creden
 
 ---
 
-## Task 6: Final verification — full test suite
+## Task 6: Deprecate `downloadURL` → `downloadUrl` in GetRequest and DetokenizeRequest
+
+**Files:**
+- Modify: `src/main/java/com/skyflow/vault/data/GetRequest.java`
+- Modify: `src/main/java/com/skyflow/vault/tokens/DetokenizeRequest.java`
+- Modify: `src/main/java/com/skyflow/logs/InfoLogs.java` (add one entry)
+
+### Background
+`getDownloadURL()` and builder `.downloadURL()` use all-caps `URL`, violating the same acronym-as-word rule as `clientID`/`tokenURI`. Since these are Java method names (not map keys), we use the standard `@Deprecated` annotation + Javadoc, which gives callers a **compile-time warning** in their IDE. No runtime `LogUtil` log is needed — the annotation is the industry standard signal for method deprecation. Keep the old methods as delegates to the new ones so existing code compiles without changes.
+
+- [ ] **Step 1: Add `DEPRECATED_DOWNLOAD_URL` to InfoLogs.java**
+
+Open `src/main/java/com/skyflow/logs/InfoLogs.java` and add one entry to the deprecation section:
+
+```java
+    DEPRECATED_DOWNLOAD_URL("[DEPRECATED] Method 'downloadURL()' is deprecated and will be removed in an upcoming release. Use 'downloadUrl()' instead."),
+```
+
+- [ ] **Step 2: Write failing tests for new `downloadUrl` methods**
+
+Add these tests to `src/test/java/com/skyflow/vault/controller/VaultControllerTests.java` (or a new `GetRequestTest.java`):
+
+```java
+import com.skyflow.vault.data.GetRequest;
+import com.skyflow.vault.tokens.DetokenizeRequest;
+
+@Test
+public void testGetRequestDownloadUrlNewForm() {
+    GetRequest request = GetRequest.builder()
+            .table("test_table")
+            .downloadUrl(true)
+            .build();
+    Assert.assertTrue("downloadUrl(true) should be set", request.getDownloadUrl());
+}
+
+@Test
+public void testGetRequestDownloadURLOldFormStillWorks() {
+    GetRequest request = GetRequest.builder()
+            .table("test_table")
+            .downloadURL(true)
+            .build();
+    // Old method delegates to new — both accessors return the same value
+    Assert.assertTrue("old downloadURL() should still work", request.getDownloadURL());
+    Assert.assertTrue("new getDownloadUrl() should also return same value", request.getDownloadUrl());
+}
+
+@Test
+public void testDetokenizeRequestDownloadUrlNewForm() {
+    DetokenizeRequest request = DetokenizeRequest.builder()
+            .downloadUrl(true)
+            .build();
+    Assert.assertTrue("downloadUrl(true) should be set", request.getDownloadUrl());
+}
+```
+
+- [ ] **Step 3: Run tests to confirm they fail**
+
+```bash
+mvn test -pl . -Dtest=VaultControllerTests#testGetRequestDownloadUrlNewForm+testGetRequestDownloadURLOldFormStillWorks+testDetokenizeRequestDownloadUrlNewForm -q 2>&1 | tail -10
+```
+
+Expected: compile error — `downloadUrl()` and `getDownloadUrl()` methods do not exist yet.
+
+- [ ] **Step 4: Update `GetRequest.java`**
+
+In `src/main/java/com/skyflow/vault/data/GetRequest.java`:
+
+**On the request class** — add new getter, mark old one `@Deprecated`:
+```java
+    /**
+     * @deprecated Use {@link #getDownloadUrl()} instead.
+     */
+    @Deprecated
+    public Boolean getDownloadURL() {
+        return getDownloadUrl();
+    }
+
+    public Boolean getDownloadUrl() {
+        return this.builder.downloadUrl;
+    }
+```
+
+**On the builder** — rename the field and add both builder methods:
+```java
+    public static final class GetRequestBuilder {
+        // ... other fields ...
+        private Boolean downloadUrl;  // renamed from downloadURL
+
+        /**
+         * @deprecated Use {@link #downloadUrl(Boolean)} instead.
+         */
+        @Deprecated
+        public GetRequestBuilder downloadURL(Boolean downloadURL) {
+            return downloadUrl(downloadURL);
+        }
+
+        public GetRequestBuilder downloadUrl(Boolean downloadUrl) {
+            this.downloadUrl = downloadUrl;
+            return this;
+        }
+    }
+```
+
+Also update the `getDownloadURL()` accessor in the request body (the non-builder getter) to delegate:
+```java
+    public Boolean getDownloadURL() {
+        return getDownloadUrl();
+    }
+
+    public Boolean getDownloadUrl() {
+        return this.builder.downloadUrl;
+    }
+```
+
+Note: the existing `getDownloadURL()` in the request class (not the builder) currently reads `this.builder.downloadURL`. After renaming the field to `downloadUrl`, update the reference accordingly.
+
+- [ ] **Step 5: Update `DetokenizeRequest.java`**
+
+Apply the identical pattern in `src/main/java/com/skyflow/vault/tokens/DetokenizeRequest.java`:
+
+**On the request class:**
+```java
+    /**
+     * @deprecated Use {@link #getDownloadUrl()} instead.
+     */
+    @Deprecated
+    public Boolean getDownloadURL() {
+        return getDownloadUrl();
+    }
+
+    public Boolean getDownloadUrl() {
+        return this.builder.downloadUrl;
+    }
+```
+
+**On the builder:**
+```java
+        private Boolean downloadUrl;  // renamed from downloadURL
+
+        /**
+         * @deprecated Use {@link #downloadUrl(Boolean)} instead.
+         */
+        @Deprecated
+        public DetokenizeRequestBuilder downloadURL(Boolean downloadURL) {
+            return downloadUrl(downloadURL);
+        }
+
+        public DetokenizeRequestBuilder downloadUrl(Boolean downloadUrl) {
+            this.downloadUrl = downloadUrl;
+            return this;
+        }
+```
+
+- [ ] **Step 6: Run the new tests to confirm they pass**
+
+```bash
+mvn test -pl . -Dtest=VaultControllerTests#testGetRequestDownloadUrlNewForm+testGetRequestDownloadURLOldFormStillWorks+testDetokenizeRequestDownloadUrlNewForm -q 2>&1 | tail -10
+```
+
+Expected: all 3 pass.
+
+- [ ] **Step 7: Run full suite to confirm no regressions**
+
+```bash
+mvn test -q 2>&1 | grep -E "Tests run|FAIL|ERROR" | tail -5
+```
+
+Expected: baseline only (no new failures).
+
+- [ ] **Step 8: Commit**
+
+```bash
+git add src/main/java/com/skyflow/vault/data/GetRequest.java \
+        src/main/java/com/skyflow/vault/tokens/DetokenizeRequest.java \
+        src/main/java/com/skyflow/logs/InfoLogs.java \
+        src/test/java/com/skyflow/vault/controller/VaultControllerTests.java
+git commit -m "feat: deprecate downloadURL in favour of downloadUrl in GetRequest and DetokenizeRequest
+
+Old downloadURL() methods kept as @Deprecated delegates for v2 backward
+compat. New downloadUrl() methods follow the acronym-as-word convention
+consistent with skyflowId, clientId, tokenUri."
+```
+
+---
+
+## Task 8: Final verification — full test suite
 
 - [ ] **Step 1: Run full test suite**
 

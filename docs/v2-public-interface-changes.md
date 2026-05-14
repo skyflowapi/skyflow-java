@@ -54,6 +54,24 @@ When customers retrieve records from a vault using the **Get** or **Query** oper
 
 ---
 
+### 3. `downloadURL` method names in Get and Detokenize operations
+
+Two method names used when configuring Get and Detokenize requests are changing to follow the same naming convention as the other fields above (`URL` → `Url`).
+
+| Old method (deprecated) | New method | Used in |
+|---|---|---|
+| `.downloadURL(true)` builder method | `.downloadUrl(true)` | `GetRequest.builder()`, `DetokenizeRequest.builder()` |
+| `.getDownloadURL()` | `.getDownloadUrl()` | `GetRequest`, `DetokenizeRequest` |
+
+**Customer impact:** Existing code using `.downloadURL()` or `.getDownloadURL()` continues to compile and work. IDEs that support Java `@Deprecated` annotation will show a visual strikethrough on the old method name as a migration hint. No runtime behavior changes.
+
+**Example of the IDE/compiler warning customers will see:**
+```
+[DEPRECATED] Method 'downloadURL()' is deprecated and will be removed in an upcoming release. Use 'downloadUrl()' instead.
+```
+
+---
+
 ## What Is NOT Changing
 
 - The Java method names customers call (e.g. `.insert()`, `.get()`, `.query()`)
@@ -76,6 +94,24 @@ Customers can suppress deprecation warnings by updating to the new field names a
 ---
 
 ## Customer Migration Guide
+
+### Get / Detokenize `downloadURL` → `downloadUrl`
+
+```java
+// Before (deprecated — still compiles in v2, removed in upcoming release)
+GetRequest request = GetRequest.builder()
+    .table("persons")
+    .ids(ids)
+    .downloadURL(true)    // ← deprecated
+    .build();
+
+// After
+GetRequest request = GetRequest.builder()
+    .table("persons")
+    .ids(ids)
+    .downloadUrl(true)    // ← new form
+    .build();
+```
 
 ### Credentials file
 
