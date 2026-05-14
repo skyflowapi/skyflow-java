@@ -72,6 +72,26 @@ Two method names used when configuring Get and Detokenize requests are changing 
 
 ---
 
+---
+
+## Behaviour Change: Insert and Update field value validation removed
+
+**Affected operations:** Insert, Update
+
+Previously the Java SDK threw an error if a record field value was `null` or an empty string `""`. This validation was inconsistent with both the Skyflow API spec (which accepts `additionalProperties: Any type`) and with other SDKs (Node has no such validation).
+
+**The validation has been removed.** Field values of `null`, `""`, or any type are now passed through to the backend unchanged. The backend is the authoritative source for field-level validation.
+
+| Scenario | Before | After |
+|---|---|---|
+| `{"name": null}` | SDK throws `SkyflowException` | Passed to BE ✓ |
+| `{"name": ""}` | SDK throws `SkyflowException` | Passed to BE ✓ |
+| `records: []` (empty array) | SDK throws `SkyflowException` | Passed to BE ✓ |
+
+**This is a non-breaking change** — code that was previously failing will now succeed.
+
+---
+
 ## What Is NOT Changing
 
 - The Java method names customers call (e.g. `.insert()`, `.get()`, `.query()`)

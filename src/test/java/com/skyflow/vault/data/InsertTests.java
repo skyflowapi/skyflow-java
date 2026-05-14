@@ -172,21 +172,6 @@ public class InsertTests {
     }
 
     @Test
-    public void testEmptyValuesInInsertRequestValidations() {
-        InsertRequest request = InsertRequest.builder().table(table).values(values).build();
-        try {
-            Validations.validateInsertRequest(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(
-                    Utils.parameterizedString(ErrorMessage.EmptyValues.getMessage(), Constants.SDK_PREFIX),
-                    e.getMessage()
-            );
-        }
-    }
-
-    @Test
     public void testEmptyKeyInValuesInInsertRequestValidations() {
         valueMap.put("", "test_value_3");
         values.add(valueMap);
@@ -198,23 +183,6 @@ public class InsertTests {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
                     Utils.parameterizedString(ErrorMessage.EmptyKeyInValues.getMessage(), Constants.SDK_PREFIX),
-                    e.getMessage()
-            );
-        }
-    }
-
-    @Test
-    public void testEmptyValueInValuesInInsertRequestValidations() {
-        valueMap.put("test_column_3", "");
-        values.add(valueMap);
-        InsertRequest request = InsertRequest.builder().table(table).values(values).build();
-        try {
-            Validations.validateInsertRequest(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(
-                    Utils.parameterizedString(ErrorMessage.EmptyValueInValues.getMessage(), Constants.SDK_PREFIX),
                     e.getMessage()
             );
         }
@@ -385,23 +353,6 @@ public class InsertTests {
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.EmptyKeyInTokens.getMessage(), e.getMessage());
-        }
-    }
-
-    @Test
-    public void testEmptyValueInTokensInInsertRequestValidations() {
-        tokenMap.put("test_column_2", "");
-        values.add(valueMap);
-        tokens.add(tokenMap);
-        InsertRequest request = InsertRequest.builder()
-                .table(table).values(values).tokens(tokens).tokenMode(TokenMode.ENABLE_STRICT)
-                .build();
-        try {
-            Validations.validateInsertRequest(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(ErrorMessage.EmptyValueInTokens.getMessage(), e.getMessage());
         }
     }
 
