@@ -15,9 +15,10 @@ Use `$ARGUMENTS` to determine scope:
 **Skip entirely:** `src/main/java/com/skyflow/generated/` — Fern-generated REST client, read-only.
 
 ### 1. Request / Response / Options patterns
-- Request builders must validate required fields in `build()` and throw `SkyflowException` with `ErrorCode.INVALID_INPUT`
-- Response objects must expose typed getters — no raw `HashMap<String, Object>` returned without a getter
-- All response classes must have `getErrors()` returning `null` (not absent) when no errors
+- Request builders are plain data holders — validation happens in `Validations.validateXxxRequest()` inside the controller, not in `build()`. Flag if validation logic is duplicated outside `Validations`.
+- Response getters returning `ArrayList<HashMap<String, Object>>` is the established SDK pattern — do not flag these as violations.
+- All response classes must have `getErrors()` returning `null` (not absent) when no errors. `QueryResponse` is the historical exception — it now has `getErrors()` too.
+- No separate `*Options` classes exist — options are fields on the request builder itself.
 
 ### 2. Error handling
 - All public methods must declare `throws SkyflowException`

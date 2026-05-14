@@ -1,33 +1,58 @@
 Create a Skyflow Java SDK sample file demonstrating: $ARGUMENTS
 
-## Requirements
+## File placement
 
-### File placement
-- Create under `samples/src/main/java/com/example/<feature>/`
-- Name: `<FeatureName>Example.java`
-- Package: `com.example.<feature>`
+| Feature type | Package | Directory |
+|---|---|---|
+| Vault ops (insert/get/update/delete/query/tokenize) | `com.example.vault` | `samples/src/main/java/com/example/vault/` |
+| Service account auth | `com.example.serviceaccount` | `samples/src/main/java/com/example/serviceaccount/` |
+| Connection | `com.example.connection` | `samples/src/main/java/com/example/connection/` |
+| Detect | `com.example.detect` | `samples/src/main/java/com/example/detect/` |
 
-### Structure (follow this order)
+File name: `<FeatureName>Example.java`
+
+## Structure (follow this order)
+
 1. Package declaration
 2. Imports — only from `com.skyflow.*`, `java.*`; never from `com.skyflow.generated.*`
-3. Public class with `main(String[] args) throws Exception`
-4. Credentials setup using `Credentials` with `setPath()` pointing to `"credentials.json"`
-5. `VaultConfig` with `setVaultId`, `setClusterId`, `setEnv(Env.PROD)`
-6. `Skyflow` client via `Skyflow.builder().addVaultConfig(vaultConfig).build()`
-7. Request object built via the appropriate `*Request.builder()` pattern
-8. Options object if applicable (e.g. `InsertOptions`)
-9. Call the vault method inside a try/catch for `SkyflowException`
-10. Print the response using `System.out.println(response)`
+3. Public class with `main(String[] args) throws SkyflowException`
+4. Credentials setup — choose based on feature:
+   - **Vault ops:** `credentials.setApiKey("<YOUR_API_KEY>")` or `credentials.setCredentialsString("<YOUR_CREDENTIALS_STRING>")`
+   - **Service account:** `credentials.setPath("credentials.json")` (path to the service account JSON file)
+5. `VaultConfig` with `setVaultId`, `setClusterId`, `setEnv(Env.PROD)`, `setCredentials(credentials)`
+6. Build the Skyflow client:
+   ```java
+   Skyflow skyflowClient = Skyflow.builder()
+       .setLogLevel(LogLevel.DEBUG)
+       .addVaultConfig(vaultConfig)
+       .build();
+   ```
+7. Request object via `*Request.builder()` — options go directly on the builder (no separate Options class):
+   ```java
+   // Example: InsertRequest with tokenMode
+   InsertRequest request = InsertRequest.builder()
+       .table("...")
+       .values(records)
+       .tokenMode(TokenMode.ENABLE)
+       .build();
+   ```
+8. Call the vault method inside a try/catch for `SkyflowException`:
+   ```java
+   InsertResponse response = skyflowClient.vault().insert(request);
+   System.out.println(response);
+   ```
 
-### Rules
-- All vault IDs / cluster IDs use placeholder strings: `"<your-vault-id>"`, `"<your-cluster-id>"`
-- Credentials file path: `"credentials.json"` (relative — do not hardcode absolute paths)
+## Rules
+
+- Vault IDs / cluster IDs use placeholders: `"<YOUR_VAULT_ID>"`, `"<YOUR_CLUSTER_ID>"`
+- Credential values use placeholders: `"<YOUR_API_KEY>"`, `"<YOUR_CREDENTIALS_STRING>"`
+- Credentials file path: `"credentials.json"` (relative — no absolute paths)
 - Always catch `SkyflowException` and print `e.getMessage()`
+- No separate `*Options` classes — they don't exist in this SDK; use request builder methods
 - Keep under 80 lines
-- No business logic — just the minimal SDK usage pattern
 
-### After creating the file
-Run a compile check:
+## After creating the file
+
 ```bash
 cd samples && mvn compile -q 2>&1 | tail -20
 ```

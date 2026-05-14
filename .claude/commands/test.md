@@ -2,6 +2,16 @@ Run the Skyflow Java SDK quality pipeline.
 
 Use `$ARGUMENTS` to target a specific test class (e.g. `BearerTokenTests`). If empty, run the full suite.
 
+## Known Pre-existing Failures (not regressions)
+
+Before reporting failures, check against this baseline:
+- `HttpUtilityTests` — ALL tests fail (JDK 21 + PowerMock `InaccessibleObject` incompatibility)
+- `TokenTests#testExpiredTokenForIsExpiredToken` — needs live credentials
+- `VaultClientTests#testSetBearerTokenWithEnvCredentials` — needs `SKYFLOW_CREDENTIALS` env var
+- `ConnectionClientTests#testSetBearerTokenWithEnvCredentials` — needs `SKYFLOW_CREDENTIALS` env var
+
+Baseline: 374 tests, ~5 failures, ~4 errors. Only report failures **beyond** this baseline.
+
 ## Pipeline
 
 ### Step 1 — Compile
@@ -14,7 +24,7 @@ Expected: no output (clean compile). Report any errors.
 ```bash
 mvn checkstyle:check -q 2>&1 | tail -20
 ```
-Expected: BUILD SUCCESS. Report any violations (excludes `generated/` per pom.xml config).
+Note: `failsOnError=false` in pom.xml means the build will not fail even if violations exist — check the output for `[WARN]` checkstyle lines. Violations are excluded from `generated/` by pom config.
 
 ### Step 3 — Build
 ```bash
