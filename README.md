@@ -1,5 +1,12 @@
 # Skyflow Java
 
+> **This is the current, recommended version of the Skyflow Java SDK.**
+> V2 (latest: **2.0.4**) brings flexible auth, multi-vault support, builder patterns, native data types, and rich error diagnostics.
+>
+> Migrating from v1? See the **[Migration Guide](docs/migrate_to_v2.md)** for step-by-step instructions. V1 is in maintenance mode and will reach **End of Life on October 31, 2026**.
+>
+> **Coming soon:** v2.1.x will include public interface nomenclature improvements and additional deprecation signals. See [CHANGELOG](CHANGELOG.md) for details.
+
 The Skyflow Java SDK is designed to help with integrating Skyflow into a Java backend.
 
 [![CI](https://img.shields.io/static/v1?label=CI&message=passing&color=green?style=plastic&logo=github)](https://github.com/skyflowapi/skyflow-java/actions)
