@@ -100,7 +100,8 @@ See `docs/superpowers/specs/` for in-progress design specs and `docs/superpowers
 
 ## Slash Commands
 
-- `/code-review` — code review against SDK patterns (see `.claude/commands/code-review.md`)
-- `/code-security` — security audit (see `.claude/commands/code-security.md`)
+- `/code-review` — full review: SDK patterns + code smells + security checks (reads `.claude/commands/code-smell.md` and `.claude/commands/code-security.md` inline)
+- `/code-smell` — standalone structural smell analysis only (long methods, dead code, misplaced logic)
+- `/code-security` — standalone security audit only (credentials, input validation, HTTP security)
 - `/sdk-sample <feature>` — generate a sample file for a feature
 - `/test [ClassName]` — run quality pipeline (compile → checkstyle → build → test → coverage)
