@@ -95,7 +95,10 @@ public enum InfoLogs {
     GET_DETECT_RUN_TRIGGERED("Get detect run method triggered."),
     VALIDATE_GET_DETECT_RUN_REQUEST("Validating get detect run request."),
     REIDENTIFY_TEXT_SUCCESS("Text data re-identified."),
-    ;
+
+    // Deprecation warnings — v2 backward compat
+    DEPRECATED_SKYFLOW_ID_KEY("[DEPRECATED] Response key 'skyflow_id' is deprecated and will be removed in an upcoming release. Use 'skyflowId' instead.");
+
 
 
     private final String log;
