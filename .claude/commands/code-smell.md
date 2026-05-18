@@ -1,6 +1,6 @@
 ---
 name: code-smell
-description: Standalone structural smell analysis — long methods, dead code, misplaced validation, deep nesting, magic numbers. Does not check patterns or security.
+description: Structural smell analysis + spell check — long methods, dead code, misplaced validation, deep nesting, magic numbers. Does not check patterns or security.
 paths:
   - src/main/java/**/*.java
 ---
@@ -17,6 +17,18 @@ Use `$ARGUMENTS` to determine scope:
   ```
 
 **Skip entirely:** `src/main/java/com/skyflow/generated/` — Fern-generated REST client, read-only.
+
+---
+
+## Spell check
+
+Before analysing smells, run cspell on the files in scope:
+
+```bash
+npx cspell --no-progress "src/**/*.java" ".claude/**/*.md" "CLAUDE.md" "docs/**/*.md" 2>&1 | grep "Unknown word"
+```
+
+Report any spelling violations at **Smell** severity in the per-file table. The word list is in `.cspell.json` — add legitimate project-specific terms there rather than fixing them as typos.
 
 ---
 
