@@ -1,3 +1,13 @@
+---
+name: skyflow-java-sdk
+description: Skyflow Java SDK project context — naming conventions, build commands, known failures, and slash commands. Loaded for all Java source, test, and sample files.
+paths:
+  - src/**/*.java
+  - samples/**/*.java
+  - pom.xml
+  - checkstyle.xml
+---
+
 # Skyflow Java SDK — Claude Code Instructions
 
 ## Project Overview
