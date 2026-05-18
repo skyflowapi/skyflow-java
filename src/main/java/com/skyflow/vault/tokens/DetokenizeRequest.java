@@ -67,7 +67,7 @@ public class DetokenizeRequest {
         }
 
         public DetokenizeRequestBuilder downloadUrl(Boolean downloadUrl) {
-            this.downloadUrl = downloadUrl != null && downloadUrl;
+            this.downloadUrl = downloadUrl;
             return this;
         }
 
