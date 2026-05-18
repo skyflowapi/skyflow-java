@@ -73,9 +73,26 @@
     "pkcs",
     "prioritise",
     "Prioritise",
+    "prioritised",
     "Timeto",
     "Wdex",
-    "jacoco"
+    "jacoco",
+    "serialise",
+    "serialised",
+    "serialises",
+    "serialising",
+    "normalise",
+    "Normalise",
+    "normalised",
+    "normalises",
+    "Normalises",
+    "normalising",
+    "behaviour",
+    "Behaviour",
+    "behaviours",
+    "sanitisation",
+    "recognised",
+    "unrecognised"
   ],
   "languageSettings": [
     {
@@ -98,7 +115,9 @@
     "src/main/java/com/skyflow/generated/**",
     "**/*.ts",
     "**/processed-*",
-    "samples/src/main/java/com/example/credentials.json"
+    "samples/src/main/java/com/example/credentials.json",
+    "RUNNING_SAMPLES.md",
+    "docs/superpowers/**"
   ],
   "ignoreRegExpList": [
     "/\\b[A-Z][A-Z0-9_]{2,}\\b/g",
@@ -106,6 +125,7 @@
     "/(eyJ[A-Za-z0-9+/=_-]+\\.)+[A-Za-z0-9+/=_-]+/g",
     "/[A-Za-z0-9_.~-]*%[0-9A-Fa-f]{2}[A-Za-z0-9_.~%-]*/g",
     "/\\b[A-Za-z0-9_]{7,}\\b(?=])/g",
-    "/\"[A-Za-z0-9+/=]{15,}\"/g"
+    "/\"[A-Za-z0-9+/=]{15,}\"/g",
+    "/-D[A-Za-z][A-Za-z0-9.]*/g"
   ]
 }
