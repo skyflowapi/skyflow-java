@@ -291,4 +291,12 @@ public class VaultControllerTests {
         Assert.assertFalse("downloadUrl should be false by default", request.getDownloadUrl());
     }
 
+    @Test
+    public void testDetokenizeRequestDownloadUrlNullTreatedAsFalse() {
+        DetokenizeRequest request = DetokenizeRequest.builder()
+                .downloadUrl(null)
+                .build();
+        Assert.assertFalse("null downloadUrl should default to false — no NPE risk", request.getDownloadUrl());
+    }
+
 }
