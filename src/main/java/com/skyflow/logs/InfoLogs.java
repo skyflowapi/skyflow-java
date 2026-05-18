@@ -97,7 +97,8 @@ public enum InfoLogs {
     REIDENTIFY_TEXT_SUCCESS("Text data re-identified."),
 
     // Deprecation warnings — v2 backward compat
-    DEPRECATED_SKYFLOW_ID_KEY("[DEPRECATED] Response key 'skyflow_id' is deprecated and will be removed in an upcoming release. Use 'skyflowId' instead.");
+    DEPRECATED_SKYFLOW_ID_KEY("[DEPRECATED] Response key 'skyflow_id' is deprecated and will be removed in an upcoming release. Use 'skyflowId' instead."),
+    DEPRECATED_DOWNLOAD_URL("[DEPRECATED] Method 'downloadURL()' is deprecated and will be removed in an upcoming release. Use 'downloadUrl()' instead.");
 
 
 

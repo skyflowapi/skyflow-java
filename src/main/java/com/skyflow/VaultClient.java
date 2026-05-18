@@ -122,7 +122,7 @@ public class VaultClient {
 
         return V1DetokenizePayload.builder()
                 .continueOnError(request.getContinueOnError())
-                .downloadUrl(request.getDownloadURL())
+                .downloadUrl(request.getDownloadUrl())
                 .detokenizationParameters(recordRequests)
                 .build();
     }

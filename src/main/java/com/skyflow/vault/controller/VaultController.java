@@ -291,7 +291,7 @@ public final class VaultController extends VaultClient {
                     .tokenization(getRequest.getReturnTokens())
                     .offset(getRequest.getOffset())
                     .limit(getRequest.getLimit())
-                    .downloadUrl(getRequest.getDownloadURL())
+                    .downloadUrl(getRequest.getDownloadUrl())
                     .columnName(getRequest.getColumnName())
                     .columnValues(getRequest.getColumnValues())
                     .fields(getRequest.getFields())

@@ -241,4 +241,54 @@ public class VaultControllerTests {
         Assert.assertEquals("other token fields should be preserved", "tok-card-abc", result.get("card_number"));
     }
 
+    @Test
+    public void testGetRequestDownloadUrlNewForm() {
+        GetRequest request = GetRequest.builder()
+                .table("test_table")
+                .downloadUrl(true)
+                .build();
+        Assert.assertTrue("new downloadUrl(true) should be set", request.getDownloadUrl());
+    }
+
+    @Test
+    public void testGetRequestDownloadURLDeprecatedFormStillWorks() {
+        GetRequest request = GetRequest.builder()
+                .table("test_table")
+                .downloadURL(true)
+                .build();
+        Assert.assertTrue("deprecated downloadURL() should still work", request.getDownloadURL());
+        Assert.assertTrue("new getDownloadUrl() returns same value", request.getDownloadUrl());
+    }
+
+    @Test
+    public void testGetRequestDownloadUrlDefaultIsTrue() {
+        GetRequest request = GetRequest.builder()
+                .table("test_table")
+                .build();
+        Assert.assertTrue("downloadUrl should be true by default (preserved from original)", request.getDownloadUrl());
+    }
+
+    @Test
+    public void testDetokenizeRequestDownloadUrlNewForm() {
+        DetokenizeRequest request = DetokenizeRequest.builder()
+                .downloadUrl(true)
+                .build();
+        Assert.assertTrue("new downloadUrl(true) should be set", request.getDownloadUrl());
+    }
+
+    @Test
+    public void testDetokenizeRequestDownloadURLDeprecatedFormStillWorks() {
+        DetokenizeRequest request = DetokenizeRequest.builder()
+                .downloadURL(true)
+                .build();
+        Assert.assertTrue("deprecated downloadURL() should still work", request.getDownloadURL());
+        Assert.assertTrue("new getDownloadUrl() returns same value", request.getDownloadUrl());
+    }
+
+    @Test
+    public void testDetokenizeRequestDownloadUrlDefaultIsFalse() {
+        DetokenizeRequest request = DetokenizeRequest.builder().build();
+        Assert.assertFalse("downloadUrl should be false by default", request.getDownloadUrl());
+    }
+
 }
