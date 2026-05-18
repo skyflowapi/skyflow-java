@@ -8,9 +8,9 @@
 
 ## Overview
 
-As part of aligning the Skyflow Java SDK with cross-language naming standards, a set of public-facing field names and response keys are being updated. All changes are designed to be **non-breaking for existing customers** — old forms continue to work alongside new ones, with deprecation warnings logged at runtime to guide migration.
+As part of aligning the Skyflow Java SDK with cross-language naming standards, a set of public-facing field names and response keys are being updated. All changes are designed to be **non-breaking for existing customers** — old forms continue to work alongside new ones.
 
-A future release will remove the deprecated forms entirely. No removal date is set yet.
+Where applicable, deprecation warnings are logged at runtime or signalled at compile time to guide migration. Credential JSON field names (`clientID`, `keyID`, `tokenURI`) are permanently supported alongside the new forms — no migration required.
 
 ---
 
@@ -37,9 +37,9 @@ Hovering over the deprecated method shows an inline tooltip:
 
 If a customer selects the deprecated form and uses it in their code, the IDE shows an **orange underline** at the call site — a stronger visual than a plain yellow warning — because the method is marked `forRemoval = true`.
 
-### Runtime log warnings (credential fields, `skyflow_id` key)
+### Runtime log warnings (`skyflow_id` key)
 
-For changes that cannot use Java annotations (map keys, JSON field names), a `[DEPRECATED]` warning is logged at runtime when the old form is used:
+For map key changes that cannot use Java annotations, a `[DEPRECATED]` warning is logged at runtime when the old key is accessed:
 
 ```
 [DEPRECATED] Response key 'skyflow_id' is deprecated and will be removed
@@ -58,18 +58,13 @@ These appear in the application log at WARN level. Customers running with `LogLe
 
 When customers authenticate using a service account credentials JSON file, the field names inside that file are changing to follow Java naming conventions (lowercase acronyms).
 
-| Old field name (deprecated) | New field name | Used in |
+| Old field name | New field name | Used in |
 |---|---|---|
 | `clientID` | `clientId` | `credentials.json` |
 | `keyID` | `keyId` | `credentials.json` |
 | `tokenURI` | `tokenUri` | `credentials.json` |
 
-**Customer impact:** Customers with existing credentials files using the old field names (`clientID`, `keyID`, `tokenURI`) will continue to work without any changes. A deprecation warning will appear in their application logs recommending they update to the new field names.
-
-**Example of the warning customers will see in their logs:**
-```
-[DEPRECATED] Credential field 'clientID' is deprecated and will be removed in an upcoming release. Use 'clientId' instead.
-```
+**Customer impact:** Both old and new field names are permanently supported — existing credentials files require no changes. No deprecation warning is emitted. Customers may migrate to the new names at any time but are not required to.
 
 ---
 

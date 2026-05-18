@@ -17,8 +17,8 @@
 | Change | Status | Fix needed |
 |---|---|---|
 | `skyflow_id` removed from Get/Query response maps | **BREAKING** | Keep both `skyflow_id` + `skyflowId`; emit WARN |
-| `clientID`/`keyID`/`tokenURI` replaced in BearerToken | Not breaking (fallback exists) | Add WARN log on old-form fallback |
-| `clientID`/`keyID` replaced in SignedDataTokens | Not breaking (fallback exists) | Add WARN log on old-form fallback |
+| `clientID`/`keyID`/`tokenURI` in BearerToken | Not breaking — both forms supported permanently | No action needed |
+| `clientID`/`keyID` in SignedDataTokens | Not breaking — both forms supported permanently | No action needed |
 | `getErrors()` added to QueryResponse | Not breaking (additive) | No change needed |
 | `downloadURL` → `downloadUrl` in GetRequest & DetokenizeRequest | **BREAKING** | Keep `@Deprecated` old methods; add new `downloadUrl` methods |
 
@@ -28,17 +28,13 @@
 
 | File | Change |
 |---|---|
-| `src/main/java/com/skyflow/logs/InfoLogs.java` | Add 5 deprecation warning log entries (4 existing + 1 for downloadURL) |
-| `src/main/java/com/skyflow/vault/data/GetRequest.java` | Add `getDownloadUrl()` + builder `downloadUrl()`; mark old `getDownloadURL()` as `@Deprecated` |
-| `src/main/java/com/skyflow/vault/tokens/DetokenizeRequest.java` | Add `getDownloadUrl()` + builder `downloadUrl()`; mark old `getDownloadURL()` as `@Deprecated` |
+| `src/main/java/com/skyflow/logs/InfoLogs.java` | Add 2 deprecation warning log entries (`skyflow_id` key + `downloadURL` method) |
+| `src/main/java/com/skyflow/vault/data/GetRequest.java` | Add `getDownloadUrl()` + builder `downloadUrl()`; mark old `getDownloadURL()` as `@Deprecated` + WARN log |
+| `src/main/java/com/skyflow/vault/tokens/DetokenizeRequest.java` | Add `getDownloadUrl()` + builder `downloadUrl()`; mark old `getDownloadURL()` as `@Deprecated` + WARN log |
 | `src/main/java/com/skyflow/vault/controller/VaultController.java` | Keep `skyflow_id` key alongside `skyflowId`; emit WARN per record |
 | `src/main/java/com/skyflow/vault/data/GetResponse.java` | Add `@deprecated` Javadoc on `getData()` for `skyflow_id` key |
 | `src/main/java/com/skyflow/vault/data/QueryResponse.java` | Add `@deprecated` Javadoc on `getFields()` for `skyflow_id` key |
-| `src/main/java/com/skyflow/serviceaccount/util/BearerToken.java` | Add WARN log when `clientID`/`keyID`/`tokenURI` fallback fires |
-| `src/main/java/com/skyflow/serviceaccount/util/SignedDataTokens.java` | Add WARN log when `clientID`/`keyID` fallback fires |
 | `src/test/java/com/skyflow/vault/controller/VaultControllerTests.java` | Update existing tests: assert BOTH `skyflow_id` and `skyflowId` present |
-| `src/test/java/com/skyflow/serviceaccount/util/BearerTokenTests.java` | Existing tests unchanged (old-form already passes); add comment |
-| `src/test/java/com/skyflow/serviceaccount/util/SignedDataTokensTests.java` | Existing tests unchanged |
 
 ---
 
