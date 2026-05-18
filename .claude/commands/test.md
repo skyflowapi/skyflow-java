@@ -1,3 +1,11 @@
+---
+name: test
+description: Quality pipeline — compile, checkstyle, build, tests, coverage analysis. Pass a class name to target a single test class.
+paths:
+  - src/**/*.java
+  - pom.xml
+---
+
 Run the Skyflow Java SDK quality pipeline.
 
 Use `$ARGUMENTS` to target a specific test class (e.g. `BearerTokenTests`). If empty, run the full suite.

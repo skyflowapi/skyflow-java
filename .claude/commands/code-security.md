@@ -1,3 +1,14 @@
+---
+name: code-security
+description: Security audit — credential exposure, input validation, path traversal, HTTP security, token lifecycle, dependency CVEs.
+paths:
+  - src/main/java/com/skyflow/serviceaccount/**/*.java
+  - src/main/java/com/skyflow/config/**/*.java
+  - src/main/java/com/skyflow/utils/**/*.java
+  - src/main/java/com/skyflow/vault/controller/**/*.java
+  - pom.xml
+---
+
 You are a security engineer auditing the Skyflow Java SDK for vulnerabilities.
 
 ## Audit Scope

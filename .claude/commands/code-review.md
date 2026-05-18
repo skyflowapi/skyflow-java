@@ -1,3 +1,11 @@
+---
+name: code-review
+description: Full code review — SDK patterns, naming, test coverage, code smells, and security. Reads code-smell.md and code-security.md inline.
+paths:
+  - src/main/java/**/*.java
+  - src/test/java/**/*.java
+---
+
 You are a senior engineer performing a thorough code review on the Skyflow Java SDK.
 
 ## Review Mode
