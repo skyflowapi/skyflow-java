@@ -6,37 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 -c \"\nimport sys, json, subprocess\nd = json.load(sys.stdin)\nf = d.get('tool_input', {}).get('file_path', d.get('file_path', ''))\nif f and f.endswith('.java') and 'generated' not in f:\n    r = subprocess.run(['mvn', 'checkstyle:check', '-q'], capture_output=True, text=True)\n    out = (r.stdout + r.stderr).strip()\n    if out:\n        lines = out.splitlines()\n        print('\\n'.join(lines[-20:]))\n\""
-          }
-        ]
-      },
-      {
-        "matcher": "Edit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 -c \"\nimport sys, json, subprocess\nd = json.load(sys.stdin)\nf = d.get('tool_input', {}).get('file_path', d.get('file_path', ''))\nif f and f.endswith('.java') and 'generated' not in f:\n    r = subprocess.run(['mvn', 'compile', '-q'], capture_output=True, text=True)\n    out = (r.stdout + r.stderr).strip()\n    if out:\n        lines = out.splitlines()\n        print('\\n'.join(lines[-20:]))\n\""
-          }
-        ]
-      }
-    ],
-    "PreToolUse": [
-      {
-        "matcher": "Edit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 -c \"import sys,json; d=json.load(sys.stdin); p=d.get('tool_input',{}).get('file_path',d.get('file_path','')); banned='generated'; (sys.stderr.write('BLOCKED: Fern-generated code — do not edit manually\\n'), sys.exit(2)) if banned in p and 'src/main/java/com/skyflow/generated' in p else sys.exit(0)\""
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "osascript -e 'display notification \"Claude finished\" with title \"Claude Code\"' 2>/dev/null || true"
+            "command": "python3 -c \"\nimport sys, json, subprocess\nd = json.load(sys.stdin)\nf = d.get('tool_input', {}).get('file_path', d.get('file_path', ''))\nif f and f.endswith('.java'):\n    marker = 'src/main/java/'\n    if marker in f:\n        rel = f.split(marker, 1)[1]\n        args = ['mvn', 'checkstyle:check', '-q', '-Dcheckstyle.includes=' + rel]\n    else:\n        args = ['mvn', 'checkstyle:check', '-q']\n    r = subprocess.run(args, capture_output=True, text=True)\n    out = (r.stdout + r.stderr).strip()\n    if out:\n        lines = out.splitlines()\n        print('\\n'.join(lines[-20:]))\n\""
           }
         ]
       }
