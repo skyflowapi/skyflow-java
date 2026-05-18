@@ -75,7 +75,20 @@
     "Prioritise",
     "Timeto",
     "Wdex",
-    "jacoco"
+    "jacoco",
+    "serialise",
+    "serialised",
+    "serialises",
+    "serialising",
+    "normalise",
+    "normalised",
+    "normalises",
+    "normalising",
+    "behaviour",
+    "behaviours",
+    "sanitisation",
+    "prioritised",
+    "prioritise"
   ],
   "languageSettings": [
     {
@@ -106,6 +119,7 @@
     "/(eyJ[A-Za-z0-9+/=_-]+\\.)+[A-Za-z0-9+/=_-]+/g",
     "/[A-Za-z0-9_.~-]*%[0-9A-Fa-f]{2}[A-Za-z0-9_.~%-]*/g",
     "/\\b[A-Za-z0-9_]{7,}\\b(?=])/g",
-    "/\"[A-Za-z0-9+/=]{15,}\"/g"
+    "/\"[A-Za-z0-9+/=]{15,}\"/g",
+    "/-D[A-Za-z][A-Za-z0-9.]*/g"
   ]
 }
