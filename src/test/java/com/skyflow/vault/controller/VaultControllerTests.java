@@ -202,8 +202,8 @@ public class VaultControllerTests {
         @SuppressWarnings("unchecked")
         HashMap<String, Object> result = (HashMap<String, Object>) method.invoke(null, record);
 
-        Assert.assertFalse("skyflow_id (snake_case) should not be present", result.containsKey("skyflow_id"));
-        Assert.assertEquals("skyflowId should be present", "abc-123", result.get("skyflowId"));
+        Assert.assertEquals("skyflowId should be present (new form)", "abc-123", result.get("skyflowId"));
+        Assert.assertEquals("skyflow_id should still be present (v2 deprecated form)", "abc-123", result.get("skyflow_id"));
         Assert.assertEquals("other fields should be preserved", "John", result.get("name"));
     }
 
@@ -219,14 +219,13 @@ public class VaultControllerTests {
         @SuppressWarnings("unchecked")
         HashMap<String, Object> result = (HashMap<String, Object>) method.invoke(null, record);
 
-        Assert.assertFalse("skyflow_id (snake_case) should not be present", result.containsKey("skyflow_id"));
-        Assert.assertEquals("skyflowId should be present", "xyz-456", result.get("skyflowId"));
+        Assert.assertEquals("skyflowId should be present (new form)", "xyz-456", result.get("skyflowId"));
+        Assert.assertEquals("skyflow_id should still be present (v2 deprecated form)", "xyz-456", result.get("skyflow_id"));
         Assert.assertEquals("other fields should be preserved", "test@example.com", result.get("email"));
     }
 
     @Test
     public void testGetFormattedGetRecordNormalisesSkyflowIdInTokensBranch() throws Exception {
-        // tokens branch: fields absent, tokens present
         Map<String, Object> tokens = new HashMap<>();
         tokens.put("skyflow_id", "tok-789");
         tokens.put("card_number", "tok-card-abc");
@@ -237,8 +236,8 @@ public class VaultControllerTests {
         @SuppressWarnings("unchecked")
         HashMap<String, Object> result = (HashMap<String, Object>) method.invoke(null, record);
 
-        Assert.assertFalse("skyflow_id (snake_case) should not be present", result.containsKey("skyflow_id"));
-        Assert.assertEquals("skyflowId should be present", "tok-789", result.get("skyflowId"));
+        Assert.assertEquals("skyflowId should be present (new form)", "tok-789", result.get("skyflowId"));
+        Assert.assertEquals("skyflow_id should still be present (v2 deprecated form)", "tok-789", result.get("skyflow_id"));
         Assert.assertEquals("other token fields should be preserved", "tok-card-abc", result.get("card_number"));
     }
 

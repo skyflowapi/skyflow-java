@@ -131,7 +131,8 @@ public final class VaultController extends VaultClient {
         }
 
         if (getRecord.containsKey("skyflow_id")) {
-            getRecord.put("skyflowId", getRecord.remove("skyflow_id"));
+            getRecord.put("skyflowId", getRecord.get("skyflow_id"));
+            LogUtil.printWarningLog(InfoLogs.DEPRECATED_SKYFLOW_ID_KEY.getLog());
         }
 
         return getRecord;
@@ -155,7 +156,8 @@ public final class VaultController extends VaultClient {
         }
 
         if (queryRecord.containsKey("skyflow_id")) {
-            queryRecord.put("skyflowId", queryRecord.remove("skyflow_id"));
+            queryRecord.put("skyflowId", queryRecord.get("skyflow_id"));
+            LogUtil.printWarningLog(InfoLogs.DEPRECATED_SKYFLOW_ID_KEY.getLog());
         }
 
         return queryRecord;
