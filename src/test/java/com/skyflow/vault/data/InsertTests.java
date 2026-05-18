@@ -172,6 +172,43 @@ public class InsertTests {
     }
 
     @Test
+    public void testEmptyValuesArrayPassesInsertRequestValidations() {
+        // SDK no longer blocks empty values array — BE is authoritative
+        InsertRequest request = InsertRequest.builder().table(table).values(values).build();
+        try {
+            Validations.validateInsertRequest(request);
+        } catch (SkyflowException e) {
+            Assert.fail("Empty values array should pass SDK validation: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void testNullFieldValuePassesInsertRequestValidations() {
+        // SDK no longer blocks null field values — BE is authoritative per API spec
+        valueMap.put("test_column_1", null);
+        values.add(valueMap);
+        InsertRequest request = InsertRequest.builder().table(table).values(values).build();
+        try {
+            Validations.validateInsertRequest(request);
+        } catch (SkyflowException e) {
+            Assert.fail("Null field value should pass SDK validation: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void testEmptyStringFieldValuePassesInsertRequestValidations() {
+        // SDK no longer blocks empty string field values — BE is authoritative per API spec
+        valueMap.put("test_column_1", "");
+        values.add(valueMap);
+        InsertRequest request = InsertRequest.builder().table(table).values(values).build();
+        try {
+            Validations.validateInsertRequest(request);
+        } catch (SkyflowException e) {
+            Assert.fail("Empty string field value should pass SDK validation: " + e.getMessage());
+        }
+    }
+
+    @Test
     public void testEmptyKeyInValuesInInsertRequestValidations() {
         valueMap.put("", "test_value_3");
         values.add(valueMap);
