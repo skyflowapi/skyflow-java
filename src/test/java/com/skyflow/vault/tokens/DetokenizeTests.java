@@ -53,6 +53,22 @@ public class DetokenizeTests {
     }
 
     @Test
+    public void testValidInputWithNewDownloadUrlInDetokenizeRequestValidations() {
+        try {
+            detokenizeData.add(maskedRedactionRecord);
+            DetokenizeRequest request = DetokenizeRequest.builder()
+                    .detokenizeData(detokenizeData)
+                    .downloadUrl(true)   // new form
+                    .build();
+            Validations.validateDetokenizeRequest(request);
+            Assert.assertTrue("new getDownloadUrl() should return true", request.getDownloadUrl());
+            Assert.assertTrue("deprecated getDownloadURL() should return same value", request.getDownloadURL());
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
     public void testNoTokensInDetokenizeRequestValidations() {
         DetokenizeRequest request = DetokenizeRequest.builder().build();
         try {

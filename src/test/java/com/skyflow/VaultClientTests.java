@@ -169,6 +169,26 @@ public class VaultClientTests {
     }
 
     @Test
+    public void testGetDetokenizePayloadWithNewDownloadUrl() {
+        try {
+            DetokenizeData detokenizeDataRecord1 = new DetokenizeData(token);
+            detokenizeData.clear();
+            detokenizeData.add(detokenizeDataRecord1);
+            DetokenizeRequest detokenizeRequest = DetokenizeRequest.builder()
+                    .detokenizeData(detokenizeData)
+                    .downloadUrl(true)   // new form
+                    .continueOnError(false)
+                    .build();
+            V1DetokenizePayload payload = vaultClient.getDetokenizePayload(detokenizeRequest);
+            Assert.assertTrue("new downloadUrl() should be reflected in payload", payload.getDownloadUrl().get());
+            Assert.assertTrue("new getDownloadUrl() should return true", detokenizeRequest.getDownloadUrl());
+            Assert.assertTrue("deprecated getDownloadURL() should return same value", detokenizeRequest.getDownloadURL());
+        } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
     public void testGetBulkInsertRequestBody() {
         try {
             valueMap.clear();
