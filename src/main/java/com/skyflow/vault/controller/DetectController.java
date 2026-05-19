@@ -135,7 +135,6 @@ public final class DetectController extends VaultClient {
 
             if (DeidentifyFileStatus.SUCCESS.value().equalsIgnoreCase(response.getStatus())) {
                 String base64File = response.getFileBase64();
-                response.getEntities().get(0).getFile();
                 if (base64File != null) {
                     byte[] decodedBytes = Base64.getDecoder().decode(base64File);
                     String outputDir = request.getOutputDirectory();
@@ -297,7 +296,9 @@ public final class DetectController extends VaultClient {
                 .map(Object::toString)
                 .orElse(DetectRunsResponseStatus.UNKNOWN.toString());
 
-        String fileExtension = firstOutput.getProcessedFileExtension().get().toString();
+        String fileExtension = processedFileExtension
+                .map(Object::toString)
+                .orElse(DetectRunsResponseStatus.UNKNOWN.toString());
         Float sizeInKb = response.getSize().orElse(null);
         Float durationInSeconds = response.getDuration().orElse(null);
         DeidentifyFileResponse deidentifyFileResponse = new DeidentifyFileResponse(
@@ -320,7 +321,7 @@ public final class DetectController extends VaultClient {
     }
 
     private static synchronized DeidentifiedFileOutput getFirstOutput(DetectRunsResponse response) {
-        List<DeidentifiedFileOutput> outputs = response.getOutput().get();
+        List<DeidentifiedFileOutput> outputs = response.getOutput().orElse(null);
         return outputs != null && !outputs.isEmpty() ? outputs.get(0) : null;
     }
 
