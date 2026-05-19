@@ -10,6 +10,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.skyflow.config.ConnectionConfig;
 import com.skyflow.config.Credentials;
@@ -146,12 +147,27 @@ public class Validations {
         }
 
         if (requestBody != null) {
-            Gson gson = new Gson();
-            JsonObject bodyObject = gson.toJsonTree(requestBody).getAsJsonObject();
-            if (bodyObject.isEmpty()) {
-                LogUtil.printErrorLog(Utils.parameterizedString(
-                        ErrorLogs.EMPTY_REQUEST_BODY.getLog(), InterfaceName.INVOKE_CONNECTION.getName()));
-                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyRequestBody.getMessage());
+            if (requestBody.getClass().equals(Object.class)) {
+                return;
+            }
+            if (requestBody instanceof String) {
+                String bodyStr = (String) requestBody;
+                if (bodyStr.trim().isEmpty()) {
+                    LogUtil.printErrorLog(Utils.parameterizedString(
+                            ErrorLogs.EMPTY_REQUEST_BODY.getLog(), InterfaceName.INVOKE_CONNECTION.getName()));
+                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyRequestBody.getMessage());
+                }
+            } else {
+                Gson gson = new Gson();
+                JsonElement bodyElement = gson.toJsonTree(requestBody);
+                if (bodyElement.isJsonObject()) {
+                    JsonObject bodyObject = bodyElement.getAsJsonObject();
+                    if (bodyObject.isEmpty()) {
+                        LogUtil.printErrorLog(Utils.parameterizedString(
+                                ErrorLogs.EMPTY_REQUEST_BODY.getLog(), InterfaceName.INVOKE_CONNECTION.getName()));
+                        throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyRequestBody.getMessage());
+                    }
+                }
             }
         }
     }

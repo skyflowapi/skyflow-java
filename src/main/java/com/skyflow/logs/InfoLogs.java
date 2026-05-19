@@ -14,7 +14,7 @@ public enum InfoLogs {
 
     // Bearer token generation
     EMPTY_BEARER_TOKEN("Bearer token is empty."),
-    BEARER_TOKEN_EXPIRED("Bearer token is expired."),
+    BEARER_TOKEN_EXPIRED("Bearer token is invalid or expired."),
     GET_BEARER_TOKEN_TRIGGERED("getBearerToken method triggered."),
     GET_BEARER_TOKEN_SUCCESS("Bearer token generated."),
     GET_SIGNED_DATA_TOKENS_TRIGGERED("getSignedDataTokens method triggered."),
