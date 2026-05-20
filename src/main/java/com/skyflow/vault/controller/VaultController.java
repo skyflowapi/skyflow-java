@@ -3,6 +3,7 @@ package com.skyflow.vault.controller;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -129,6 +130,12 @@ public final class VaultController extends VaultClient {
         } else if (tokensOpt.isPresent()) {
             getRecord.putAll(tokensOpt.get());
         }
+
+        if (getRecord.containsKey("skyflow_id")) {
+            getRecord.put("skyflowId", getRecord.get("skyflow_id"));
+            LogUtil.printWarningLogOnce(InfoLogs.DEPRECATED_SKYFLOW_ID_KEY.getLog());
+        }
+
         return getRecord;
     }
 
@@ -148,6 +155,12 @@ public final class VaultController extends VaultClient {
         if (fieldsOpt.isPresent()) {
             queryRecord.putAll(fieldsOpt.get());
         }
+
+        if (queryRecord.containsKey("skyflow_id")) {
+            queryRecord.put("skyflowId", queryRecord.get("skyflow_id"));
+            LogUtil.printWarningLogOnce(InfoLogs.DEPRECATED_SKYFLOW_ID_KEY.getLog());
+        }
+
         return queryRecord;
     }
 
@@ -279,7 +292,7 @@ public final class VaultController extends VaultClient {
                     .tokenization(getRequest.getReturnTokens())
                     .offset(getRequest.getOffset())
                     .limit(getRequest.getLimit())
-                    .downloadUrl(getRequest.getDownloadURL())
+                    .downloadUrl(getRequest.getDownloadUrl())
                     .columnName(getRequest.getColumnName())
                     .columnValues(getRequest.getColumnValues())
                     .fields(getRequest.getFields())
@@ -359,7 +372,7 @@ public final class VaultController extends VaultClient {
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
         }
         LogUtil.printInfoLog(InfoLogs.DELETE_SUCCESS.getLog());
-        return new DeleteResponse(result.getRecordIdResponse().get());
+        return new DeleteResponse(result.getRecordIdResponse().orElse(Collections.emptyList()));
     }
 
     public QueryResponse query(QueryRequest queryRequest) throws SkyflowException {

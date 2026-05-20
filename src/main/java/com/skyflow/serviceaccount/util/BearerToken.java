@@ -20,6 +20,7 @@ import io.jsonwebtoken.Jwts;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.security.PrivateKey;
 import java.util.ArrayList;
@@ -58,8 +59,12 @@ public class BearerToken {
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidCredentials.getMessage());
             }
             FileReader reader = new FileReader(String.valueOf(credentialsFile));
-            JsonObject serviceAccountCredentials = JsonParser.parseReader(reader).getAsJsonObject();
-            return getBearerTokenFromCredentials(serviceAccountCredentials, context, roles);
+            try {
+                JsonObject serviceAccountCredentials = JsonParser.parseReader(reader).getAsJsonObject();
+                return getBearerTokenFromCredentials(serviceAccountCredentials, context, roles);
+            } finally {
+                try { reader.close(); } catch (IOException ignored) {}
+            }
         } catch (JsonSyntaxException e) {
             LogUtil.printErrorLog(ErrorLogs.INVALID_CREDENTIALS_FILE_FORMAT.getLog());
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), Utils.parameterizedString(
@@ -99,30 +104,40 @@ public class BearerToken {
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.MissingPrivateKey.getMessage());
             }
 
-            JsonElement clientID = credentials.get("clientID");
-            if (clientID == null) {
+            // Accept both new-form keys (clientId/keyId/tokenUri) and legacy all-caps form for migration
+            JsonElement clientId = credentials.get("clientId");
+            if (clientId == null) {
+                clientId = credentials.get("clientID");
+            }
+            if (clientId == null) {
                 LogUtil.printErrorLog(ErrorLogs.CLIENT_ID_IS_REQUIRED.getLog());
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.MissingClientId.getMessage());
             }
 
-            JsonElement keyID = credentials.get("keyID");
-            if (keyID == null) {
+            JsonElement keyId = credentials.get("keyId");
+            if (keyId == null) {
+                keyId = credentials.get("keyID");
+            }
+            if (keyId == null) {
                 LogUtil.printErrorLog(ErrorLogs.KEY_ID_IS_REQUIRED.getLog());
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.MissingKeyId.getMessage());
             }
 
-            JsonElement tokenURI = credentials.get("tokenURI");
-            if (tokenURI == null) {
+            JsonElement tokenUri = credentials.get("tokenUri");
+            if (tokenUri == null) {
+                tokenUri = credentials.get("tokenURI");
+            }
+            if (tokenUri == null) {
                 LogUtil.printErrorLog(ErrorLogs.TOKEN_URI_IS_REQUIRED.getLog());
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.MissingTokenUri.getMessage());
             }
 
             PrivateKey pvtKey = Utils.getPrivateKeyFromPem(privateKey.getAsString());
             String signedUserJWT = getSignedToken(
-                    clientID.getAsString(), keyID.getAsString(), tokenURI.getAsString(), pvtKey, context
+                    clientId.getAsString(), keyId.getAsString(), tokenUri.getAsString(), pvtKey, context
             );
 
-            String basePath = Utils.getBaseURL(tokenURI.getAsString());
+            String basePath = Utils.getBaseURL(tokenUri.getAsString());
             API_CLIENT_BUILDER.url(basePath);
             ApiClient apiClient = API_CLIENT_BUILDER.token("token").build();
             AuthenticationClient authenticationApi = apiClient.authentication();
@@ -145,15 +160,15 @@ public class BearerToken {
     }
 
     private static String getSignedToken(
-            String clientID, String keyID, String tokenURI, PrivateKey pvtKey, Object context
+            String clientId, String keyId, String tokenUri, PrivateKey pvtKey, Object context
     ) {
         final Date createdDate = new Date();
         final Date expirationDate = new Date(createdDate.getTime() + (3600 * 1000));
         io.jsonwebtoken.JwtBuilder builder = Jwts.builder()
-                .claim("iss", clientID)
-                .claim("key", keyID)
-                .claim("aud", tokenURI)
-                .claim("sub", clientID)
+                .claim("iss", clientId)
+                .claim("key", keyId)
+                .claim("aud", tokenUri)
+                .claim("sub", clientId)
                 .expiration(expirationDate);
 
         if (context != null) {

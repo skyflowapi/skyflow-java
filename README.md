@@ -1,5 +1,9 @@
 # Skyflow Java
 
+> **This is the current, recommended version of the Skyflow SDK.** V2.1.0 brings flexible auth, multi-vault support, builder patterns, native data types, and rich error diagnostics.
+>
+> Migrating from v1? See the **[Migration Guide](docs/migrate_to_v2.md)** for step-by-step instructions. V1 is in maintenance mode and will reach End of Life on October 31, 2026.
+
 The Skyflow Java SDK is designed to help with integrating Skyflow into a Java backend.
 
 [![CI](https://img.shields.io/static/v1?label=CI&message=passing&color=green?style=plastic&logo=github)](https://github.com/skyflowapi/skyflow-java/actions)
@@ -15,12 +19,7 @@ The Skyflow Java SDK is designed to help with integrating Skyflow into a Java ba
   - [Configuration](#configuration)
     - [Gradle users](#gradle-users)
     - [Maven users](#maven-users)
-- [Migration from v1 to v2](#migration-from-v1-to-v2)
-  - [Authentication options](#authentication-options)
-  - [Initializing the client](#initializing-the-client)
-  - [Request & response structure](#request--response-structure)
-  - [Request options](#request-options)
-  - [Error structure](#error-structure)
+- [Migration from v1 to v2](docs/migrate_to_v2.md)
 - [Quickstart](#quickstart)
   - [Authenticate](#authenticate)
   - [Initialize the client](#initialize-the-client)
@@ -94,265 +93,7 @@ Add this dependency to your project's `pom.xml` file:
 
 # Migrate from v1 to v2
 
-Below are the steps to migrate the java sdk from v1 to v2.
-
-### Authentication options
-
-In V2, we have introduced multiple authentication options. You can now provide credentials in the following ways:
-
-- Passing credentials in ENV. (`SKYFLOW_CREDENTIALS`) _(Recommended)_
-- API Key
-- Path to your credentials JSON file
-- Stringified JSON of your credentials
-- Bearer token
-
-These options allow you to choose the authentication method that best suits your use case.
-
-**V1 (Old)**
-
-```java
-static class DemoTokenProvider implements TokenProvider {
-    @Override
-    public String getBearerToken() throws Exception {
-        ResponseToken res = null;
-        try {
-            String filePath = "<YOUR_CREDENTIALS_FILE_HERE>";
-            res = Token.generateBearerToken(filePath);
-        } catch (SkyflowException e) {
-            e.printStackTrace();
-        }
-        return res.getAccessToken();
-    }
-}
-```
-
-**V2 (New): Passing one of the following:**
-
-```java
-// Option 1: API Key (Recommended)
-Credentials skyflowCredentials = new Credentials();
-skyflowCredentials.setApiKey("<YOUR_API_KEY>"); // Replace <API_KEY> with your actual API key
-
-// Option 2: Environment Variables (Recommended)
-// Set SKYFLOW_CREDENTIALS in your environment
-
-// Option 3: Credentials File
-skyflowCredentials.setPath("<YOUR_CREDENTIALS_FILE_PATH>"); // Replace with the path to credentials file
-
-// Option 4: Stringified JSON
-skyflowCredentials.setCredentialsString("<YOUR_CREDENTIALS_STRING>"); // Replace with the credentials string
-
-// Option 5: Bearer Token
-skyflowCredentials.setToken("<BEARER_TOKEN>"); // Replace <BEARER_TOKEN> with your actual authentication token.
-```
-
-Notes:
-
-- Use only ONE authentication method.
-- API Key or environment variables are recommended for production use.
-- Secure storage of credentials is essential.
-- For overriding behavior and priority order of credentials, please refer to [Initialize the client](#initialize-the-client) section in [Quickstart](#quickstart).
-
----
-
-### Initializing the client
-
-In V2, we have introduced a builder design pattern for client initialization and added support for multi-vault. This allows you to configure multiple vaults during client initialization. In V2, the log level is tied to each individual client instance. During client initialization, you can pass the following parameters:
-
-- `vaultId` and `clusterId`: These values are derived from the vault ID & vault URL.
-- `env`: Specify the environment (e.g., SANDBOX or PROD).
-- `credentials`: The necessary authentication credentials.
-
-**V1 (Old)**
-
-```java
-// DemoTokenProvider class is an implementation of the TokenProvider interface
-DemoTokenProvider demoTokenProvider = new DemoTokenProvider();
-SkyflowConfiguration skyflowConfig = new SkyflowConfiguration("<VAULT_ID>","<VAULT_URL>", demoTokenProvider);
-Skyflow skyflowClient = Skyflow.init(skyflowConfig);
-```
-
-**V2 (New)**
-
-```java
-Credentials credentials = new Credentials();
-credentials.setPath("<YOUR_CREDENTIALS_FILE_PATH_1>"); // Replace with the path to the credentials file
-
-// Configure the first vault (Blitz)
-VaultConfig config = new VaultConfig();
-config.setVaultId("<YOUR_VAULT>"); // Replace with the ID of the first vault
-config.setClusterId("<YOUR_CLUSTER>"); // Replace with the cluster ID of the first vault
-config.setEnv(Env.DEV); // Set the environment (e.g., DEV, STAGE, PROD)
-config.setCredentials(credentials); // Associate the credentials with the vault
-
-// Set up credentials for the Skyflow client
-Credentials skyflowCredentials = new Credentials();
-skyflowCredentials.setPath("<YOUR_CREDENTIALS_FILE_PATH_2>"); // Replace with the path to another credentials file
-
-// Create a Skyflow client and add vault configurations
-Skyflow skyflowClient = Skyflow.builder()
-       .setLogLevel(LogLevel.DEBUG) // Enable debugging for detailed logs
-       .addVaultConfig(config)      // Add the first vault configuration
-       .addSkyflowCredentials(skyflowCredentials) // Add general Skyflow credentials
-       .build();
-```
-
-**Key Changes:**
-
-- `vaultUrl` replaced with `clusterId`.
-- Added environment specification (`env`).
-- Instance-specific log levels.
-
----
-
-### Request & response structure
-
-In V2, we have removed the use of JSON objects from a third-party package. Instead, we have transitioned to accepting native ArrayList and HashMap data structures and adopted the builder pattern for request creation. This request needs:
-
-- `table`: The name of the table.
-- `values`: An array list of objects containing the data to be inserted.
-
-The response will be of type `InsertResponse` class, which contains `insertedFields` and `errors`.
-
-**V1 (Old):** Request building
-
-```java
-JSONObject recordsJson = new JSONObject();
-JSONArray recordsArrayJson = new JSONArray();
-
-JSONObject recordJson = new JSONObject();
-recordJson.put("table", "cards");
-
-JSONObject fieldsJson = new JSONObject();
-fields.put("cardNumber", "41111111111");
-fields.put("cvv", "123");
-
-recordJson.put("fields", fieldsJson);
-recordsArrayJson.add(record);
-recordsJson.put("records", recordsArrayJson);
-try {
-    JSONObject insertResponse = skyflowClient.insert(records);
-    System.out.println(insertResponse);
-} catch (SkyflowException exception) {
-    System.out.println(exception);
-}
-```
-
-**V2 (New):** Request building
-
-```java
-ArrayList<HashMap<String, Object>> values = new ArrayList<>();
-HashMap<String, Object> value = new HashMap<>();
-value.put("<COLUMN_NAME_1>", "<COLUMN_VALUE_1>"); // Replace with column name and value
-value.put("<COLUMN_NAME_2>", "<COLUMN_VALUE_2>"); // Replace with another column name and value
-values.add(values);
-
-ArrayList<HashMap<String, Object>> tokens = new ArrayList<>();
-HashMap<String, Object> token = new HashMap<>();
-token.put("<COLUMN_NAME_2>", "<TOKEN_VALUE_2>"); // Replace with the token for COLUMN_NAME_2
-tokens.add(token);
-
-InsertRequest insertRequest = InsertRequest.builder()
-       .table("<TABLE_NAME>") // Replace with the table name
-       .continueOnError(true) // Continue inserting even if some records fail
-       .tokenMode(TokenMode.ENABLE) // Enable BYOT for token validation
-       .values(values)        // Data to insert
-       .tokens(tokens)        // Provide tokens for BYOT columns
-       .returnTokens(true)    // Return tokens along with the response
-       .build();
-```
-
-**V1 (Old):** Response structure
-
-```json
-{
-  "records": [
-    {
-      "table": "cards",
-      "fields": {
-        "skyflow_id": "16419435-aa63-4823-aae7-19c6a2d6a19f",
-        "cardNumber": "f3907186-e7e2-466f-91e5-48e12c2bcbc1",
-        "cvv": "1989cb56-63da-4482-a2df-1f74cd0dd1a5"
-      }
-    }
-  ]
-}
-```
-
-**V2 (New):** Response structure
-
-```json
-{
-  "insertedFields": [
-    {
-      "card_number": "5484-7829-1702-9110",
-      "request_index": "0",
-      "skyflow_id": "9fac9201-7b8a-4446-93f8-5244e1213bd1",
-      "cardholder_name": "b2308e2a-c1f5-469b-97b7-1f193159399b"
-    }
-  ],
-  "errors": []
-}
-```
-
----
-
-### Request options
-
-In V2, with the introduction of the builder design pattern has made handling optional fields in Java more efficient and straightforward.
-
-**V1 (Old)**
-
-```java
-InsertOptions insertOptions = new InsertOptions(true);
-```
-
-**V2 (New)**
-
-```java
-InsertRequest upsertRequest = InsertRequest.builder()
-       .table("<TABLE_NAME>") // Replace with the table name
-       .continueOnError(false) // Stop inserting if any record fails
-       .tokenMode(TokenMode.DISABLE) // Disable BYOT
-       .values(values) // Data to insert
-       .returnTokens(false) // Do not return tokens
-       .upsert("<UPSERT_COLUMN>") // Replace with the column name used for upsert logic
-       .build();
-```
-
----
-
-### Error structure
-
-In V2, we have enriched the error details to provide better debugging capabilities.
-The error response now includes:
-
-- `httpStatus`: The HTTP status code.
-- `grpcCode`: The gRPC code associated with the error.
-- `details` & `message`: A detailed description of the error.
-- `requestId`: A unique request identifier for easier debugging.
-
-**V1 (Old):** Error structure
-
-```json
-{
-  "code": "<http_code>",
-  "description": "<description>"
-}
-```
-
-**V2 (New):** Error structure
-
-```js
-{
-  "httpStatus": "<http_status>",
-  "grpcCode": <grpc_code>,
-  "httpCode": <http_code>,
-  "message": "<message>",
-  "requestId": "<request_id>",
-  "details": ["<details>"]
-}
-```
+Upgrading from v1? See the dedicated migration guide: **[docs/migrate_to_v2.md](docs/migrate_to_v2.md)**
 
 # Quickstart
 
@@ -423,10 +164,10 @@ public class InitSkyflowClient {
         // Step 3: Create credentials as a JSON object (if a Bearer Token is not provided).
         // Demonstrates an alternate approach to authenticate with Skyflow using a credentials object.
         JsonObject credentialsObject = new JsonObject();
-        credentialsObject.addProperty("clientID", "<YOUR_CLIENT_ID>");       // Replace with your Client ID.
+        credentialsObject.addProperty("clientId", "<YOUR_CLIENT_ID>");        // Replace with your Client ID.
         credentialsObject.addProperty("clientName", "<YOUR_CLIENT_NAME>");   // Replace with your Client Name.
-        credentialsObject.addProperty("TokenURI", "<YOUR_TOKEN_URI>");       // Replace with the Token URI.
-        credentialsObject.addProperty("keyID", "<YOUR_KEY_ID>");             // Replace with your Key ID.
+        credentialsObject.addProperty("tokenUri", "<YOUR_TOKEN_URI>");       // Replace with the Token URI.
+        credentialsObject.addProperty("keyId", "<YOUR_KEY_ID>");             // Replace with your Key ID.
         credentialsObject.addProperty("privateKey", "<YOUR_PRIVATE_KEY>");   // Replace with your Private Key.
 
         // Step 4: Convert the JSON object to a string and use it as credentials.
@@ -549,14 +290,16 @@ Skyflow returns tokens for the record that was just inserted.
   "insertedFields": [
     {
       "card_number": "5484-7829-1702-9110",
-      "request_index": "0",
-      "skyflow_id": "9fac9201-7b8a-4446-93f8-5244e1213bd1",
+      "requestIndex": "0",
+      "skyflowId": "9fac9201-7b8a-4446-93f8-5244e1213bd1",
       "cardholder_name": "b2308e2a-c1f5-469b-97b7-1f193159399b"
     }
   ],
   "errors": []
 }
 ```
+
+> **Note:** The response key is `skyflowId`. The legacy `skyflow_id` key is deprecated and will be removed in an upcoming release.
 
 # Vault
 
@@ -694,19 +437,21 @@ Sample response:
   "insertedFields": [
     {
       "card_number": "5484-7829-1702-9110",
-      "request_index": "0",
-      "skyflow_id": "9fac9201-7b8a-4446-93f8-5244e1213bd1",
+      "requestIndex": "0",
+      "skyflowId": "9fac9201-7b8a-4446-93f8-5244e1213bd1",
       "cardholder_name": "b2308e2a-c1f5-469b-97b7-1f193159399b"
     }
   ],
   "errors": [
     {
-      "request_index": "1",
+      "requestIndex": "1",
       "error": "Insert failed. Column card_number is invalid. Specify a valid column."
     }
   ]
 }
 ```
+
+> **Note:** The response key is `skyflowId`. The legacy `skyflow_id` key is deprecated and will be removed in an upcoming release.
 
 ### Insert call example with `upsert` option
 
@@ -1233,18 +978,20 @@ Sample response:
       "card_number": "4555555555555553",
       "email": "john.doe@gmail.com",
       "name": "john doe",
-      "skyflow_id": "a581d205-1969-4350-acbe-a2a13eb871a6"
+      "skyflowId": "a581d205-1969-4350-acbe-a2a13eb871a6"
     },
     {
       "card_number": "4555555555555559",
       "email": "jane.doe@gmail.com",
       "name": "jane doe",
-      "skyflow_id": "5ff887c3-b334-4294-9acc-70e78ae5164a"
+      "skyflowId": "5ff887c3-b334-4294-9acc-70e78ae5164a"
     }
   ],
   "errors": []
 }
 ```
+
+> **Note:** The response key is `skyflowId`. The legacy `skyflow_id` key is deprecated and will be removed in an upcoming release.
 
 ### Get tokens
 
@@ -1309,18 +1056,20 @@ Sample response:
       "card_number": "3998-2139-0328-0697",
       "email": "c9a6c9555060@82c092e7.bd52",
       "name": "82c092e7-74c0-4e60-bd52-c9a6c9555060",
-      "skyflow_id": "a581d205-1969-4350-acbe-a2a13eb871a6"
+      "skyflowId": "a581d205-1969-4350-acbe-a2a13eb871a6"
     },
     {
       "card_number": "3562-0140-8820-7499",
       "email": "6174366e2bc6@59f82e89.93fc",
       "name": "59f82e89-138e-4f9b-93fc-6174366e2bc6",
-      "skyflow_id": "5ff887c3-b334-4294-9acc-70e78ae5164a"
+      "skyflowId": "5ff887c3-b334-4294-9acc-70e78ae5164a"
     }
   ],
   "errors": []
 }
 ```
+
+> **Note:** The response key is `skyflowId`. The legacy `skyflow_id` key is deprecated and will be removed in an upcoming release.
 
 ### Get By column name and column values
 
@@ -1387,18 +1136,20 @@ Sample response:
       "card_number": "4555555555555553",
       "email": "john.doe@gmail.com",
       "name": "john doe",
-      "skyflow_id": "a581d205-1969-4350-acbe-a2a13eb871a6"
+      "skyflowId": "a581d205-1969-4350-acbe-a2a13eb871a6"
     },
     {
       "card_number": "4555555555555559",
       "email": "jane.doe@gmail.com",
       "name": "jane doe",
-      "skyflow_id": "5ff887c3-b334-4294-9acc-70e78ae5164a"
+      "skyflowId": "5ff887c3-b334-4294-9acc-70e78ae5164a"
     }
   ],
   "errors": []
 }
 ```
+
+> **Note:** The response key is `skyflowId`. The legacy `skyflow_id` key is deprecated and will be removed in an upcoming release.
 
 ### Redaction types
 
@@ -1754,12 +1505,14 @@ Sample response:
     {
       "card_number": "XXXXXXXXXXXX1112",
       "name": "S***ar",
-      "skyflow_id": "3ea3861-x107-40w8-la98-106sp08ea83f",
+      "skyflowId": "3ea3861-x107-40w8-la98-106sp08ea83f",
       "tokenizedData": null
     }
   ]
 }
 ```
+
+> **Note:** The response key is `skyflowId`. The legacy `skyflow_id` key is deprecated and will be removed in an upcoming release.
 
 ## Upload File
 
@@ -3088,10 +2841,10 @@ public class ChangeLogLevel {
         // Step 3: Define additional Skyflow credentials (optional, if needed for credentials string)
         // Create a JSON object to hold your Skyflow credentials
         JsonObject credentialsObject = new JsonObject();
-        credentialsObject.addProperty("clientID", "<YOUR_CLIENT_ID>");  // Replace with your client ID
+        credentialsObject.addProperty("clientId", "<YOUR_CLIENT_ID>");     // Replace with your client ID
         credentialsObject.addProperty("clientName", "<YOUR_CLIENT_NAME>"); // Replace with your client name
-        credentialsObject.addProperty("TokenURI", "<YOUR_TOKEN_URI>"); // Replace with your token URI
-        credentialsObject.addProperty("keyID", "<YOUR_KEY_ID>");  // Replace with your key ID
+        credentialsObject.addProperty("tokenUri", "<YOUR_TOKEN_URI>");    // Replace with your token URI
+        credentialsObject.addProperty("keyId", "<YOUR_KEY_ID>");          // Replace with your key ID
         credentialsObject.addProperty("privateKey", "<YOUR_PRIVATE_KEY>"); // Replace with your private key
 
         // Convert the credentials object to a string format to be used for generating a Bearer Token

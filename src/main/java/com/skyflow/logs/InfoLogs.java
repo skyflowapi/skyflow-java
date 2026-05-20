@@ -14,7 +14,7 @@ public enum InfoLogs {
 
     // Bearer token generation
     EMPTY_BEARER_TOKEN("Bearer token is empty."),
-    BEARER_TOKEN_EXPIRED("Bearer token is expired."),
+    BEARER_TOKEN_EXPIRED("Bearer token is invalid or expired."),
     GET_BEARER_TOKEN_TRIGGERED("getBearerToken method triggered."),
     GET_BEARER_TOKEN_SUCCESS("Bearer token generated."),
     GET_SIGNED_DATA_TOKENS_TRIGGERED("getSignedDataTokens method triggered."),
@@ -95,7 +95,11 @@ public enum InfoLogs {
     GET_DETECT_RUN_TRIGGERED("Get detect run method triggered."),
     VALIDATE_GET_DETECT_RUN_REQUEST("Validating get detect run request."),
     REIDENTIFY_TEXT_SUCCESS("Text data re-identified."),
-    ;
+
+    // Deprecation warnings — v2 backward compat
+    DEPRECATED_SKYFLOW_ID_KEY("[DEPRECATED] Response key 'skyflow_id' is deprecated and will be removed in an upcoming release. Use 'skyflowId' instead."),
+    DEPRECATED_DOWNLOAD_URL("[DEPRECATED] Method 'downloadURL()' is deprecated and will be removed in an upcoming release. Use 'downloadUrl()' instead.");
+
 
 
     private final String log;

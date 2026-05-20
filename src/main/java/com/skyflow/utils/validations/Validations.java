@@ -10,6 +10,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.skyflow.config.ConnectionConfig;
 import com.skyflow.config.Credentials;
@@ -146,12 +147,27 @@ public class Validations {
         }
 
         if (requestBody != null) {
-            Gson gson = new Gson();
-            JsonObject bodyObject = gson.toJsonTree(requestBody).getAsJsonObject();
-            if (bodyObject.isEmpty()) {
-                LogUtil.printErrorLog(Utils.parameterizedString(
-                        ErrorLogs.EMPTY_REQUEST_BODY.getLog(), InterfaceName.INVOKE_CONNECTION.getName()));
-                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyRequestBody.getMessage());
+            if (requestBody.getClass().equals(Object.class)) {
+                return;
+            }
+            if (requestBody instanceof String) {
+                String bodyStr = (String) requestBody;
+                if (bodyStr.trim().isEmpty()) {
+                    LogUtil.printErrorLog(Utils.parameterizedString(
+                            ErrorLogs.EMPTY_REQUEST_BODY.getLog(), InterfaceName.INVOKE_CONNECTION.getName()));
+                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyRequestBody.getMessage());
+                }
+            } else {
+                Gson gson = new Gson();
+                JsonElement bodyElement = gson.toJsonTree(requestBody);
+                if (bodyElement.isJsonObject()) {
+                    JsonObject bodyObject = bodyElement.getAsJsonObject();
+                    if (bodyObject.isEmpty()) {
+                        LogUtil.printErrorLog(Utils.parameterizedString(
+                                ErrorLogs.EMPTY_REQUEST_BODY.getLog(), InterfaceName.INVOKE_CONNECTION.getName()));
+                        throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyRequestBody.getMessage());
+                    }
+                }
             }
         }
     }
@@ -296,11 +312,6 @@ public class Validations {
                     ErrorLogs.VALUES_IS_REQUIRED.getLog(), InterfaceName.INSERT.getName()
             ));
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.ValuesKeyError.getMessage());
-        } else if (values.isEmpty()) {
-            LogUtil.printErrorLog(Utils.parameterizedString(
-                    ErrorLogs.EMPTY_VALUES.getLog(), InterfaceName.INSERT.getName()
-            ));
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyValues.getMessage());
         } else if (upsert != null) {
             if (upsert.trim().isEmpty()) {
                 LogUtil.printErrorLog(Utils.parameterizedString(
@@ -324,15 +335,6 @@ public class Validations {
                             ErrorLogs.EMPTY_OR_NULL_KEY_IN_VALUES.getLog(), InterfaceName.INSERT.getName()
                     ));
                     throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyKeyInValues.getMessage());
-                } else {
-                    Object value = valuesMap.get(key);
-                    if (value == null || value.toString().trim().isEmpty()) {
-                        LogUtil.printErrorLog(Utils.parameterizedString(
-                                ErrorLogs.EMPTY_OR_NULL_VALUE_IN_VALUES.getLog(),
-                                InterfaceName.INSERT.getName(), key
-                        ));
-                        throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyValueInValues.getMessage());
-                    }
                 }
             }
         }
@@ -574,15 +576,6 @@ public class Validations {
                         ErrorLogs.EMPTY_OR_NULL_KEY_IN_VALUES.getLog(), InterfaceName.UPDATE.getName()
                 ));
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyKeyInValues.getMessage());
-            } else {
-                Object value = data.get(key);
-                if (value == null || value.toString().trim().isEmpty()) {
-                    LogUtil.printErrorLog(Utils.parameterizedString(
-                            ErrorLogs.EMPTY_OR_NULL_VALUE_IN_VALUES.getLog(), InterfaceName.UPDATE.getName(), key
-                    ));
-                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(),
-                            ErrorMessage.EmptyValueInValues.getMessage());
-                }
             }
         }
 
@@ -875,15 +868,6 @@ public class Validations {
                         ErrorLogs.MISMATCH_OF_FIELDS_AND_TOKENS.getLog(), interfaceName
                 ));
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.MismatchOfFieldsAndTokens.getMessage());
-            } else {
-                Object value = tokensMap.get(key);
-                if (value == null || value.toString().trim().isEmpty()) {
-                    LogUtil.printErrorLog(Utils.parameterizedString(
-                            ErrorLogs.EMPTY_OR_NULL_VALUE_IN_TOKENS.getLog(),
-                            interfaceName, key
-                    ));
-                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyValueInTokens.getMessage());
-                }
             }
         }
     }

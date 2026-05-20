@@ -248,44 +248,6 @@ public class UpdateTests {
     }
 
     @Test
-    public void testNullValueInValuesInUpdateRequestValidations() {
-        dataMap.put("skyflow_id", skyflowID);
-        dataMap.put("test_column_1", "test_value_1");
-        dataMap.put("test_column_2", "test_value_2");
-        dataMap.put("test_column_3", null);
-        UpdateRequest request = UpdateRequest.builder().table(table).data(dataMap).build();
-        try {
-            Validations.validateUpdateRequest(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(
-                    Utils.parameterizedString(ErrorMessage.EmptyValueInValues.getMessage(), Constants.SDK_PREFIX),
-                    e.getMessage()
-            );
-        }
-    }
-
-    @Test
-    public void testEmptyValueInValuesInUpdateRequestValidations() {
-        dataMap.put("skyflow_id", skyflowID);
-        dataMap.put("test_column_1", "test_value_1");
-        dataMap.put("test_column_2", "test_value_2");
-        dataMap.put("test_column_3", "");
-        UpdateRequest request = UpdateRequest.builder().table(table).data(dataMap).build();
-        try {
-            Validations.validateUpdateRequest(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(
-                    Utils.parameterizedString(ErrorMessage.EmptyValueInValues.getMessage(), Constants.SDK_PREFIX),
-                    e.getMessage()
-            );
-        }
-    }
-
-    @Test
     public void testTokensWithTokenModeDisableInUpdateRequestValidations() {
         dataMap.put("skyflow_id", skyflowID);
         dataMap.put("test_column_1", "test_value_1");
@@ -416,25 +378,6 @@ public class UpdateTests {
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.EmptyKeyInTokens.getMessage(), e.getMessage());
-        }
-    }
-
-    @Test
-    public void testNullValueInTokensInUpdateRequestValidations() {
-        dataMap.put("skyflow_id", skyflowID);
-        dataMap.put("test_column_1", "test_value_1");
-        dataMap.put("test_column_2", "test_value_2");
-        tokenMap.put("test_column_1", "test_token_1");
-        tokenMap.put("test_column_2", null);
-        UpdateRequest request = UpdateRequest.builder()
-                .table(table).data(dataMap).tokens(tokenMap).tokenMode(TokenMode.ENABLE_STRICT)
-                .build();
-        try {
-            Validations.validateUpdateRequest(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(ErrorMessage.EmptyValueInTokens.getMessage(), e.getMessage());
         }
     }
 

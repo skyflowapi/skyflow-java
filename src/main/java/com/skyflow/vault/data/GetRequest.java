@@ -1,7 +1,9 @@
 package com.skyflow.vault.data;
 
 import com.skyflow.enums.RedactionType;
+import com.skyflow.logs.InfoLogs;
 import com.skyflow.utils.Constants;
+import com.skyflow.utils.logger.LogUtil;
 
 import java.util.ArrayList;
 
@@ -44,8 +46,17 @@ public class GetRequest {
         return this.builder.limit;
     }
 
+    /**
+     * @deprecated Use {@link #getDownloadUrl()} instead.
+     */
+    @Deprecated(since = "2.1", forRemoval = true)
     public Boolean getDownloadURL() {
-        return this.builder.downloadURL;
+        LogUtil.printWarningLog(InfoLogs.DEPRECATED_DOWNLOAD_URL.getLog());
+        return getDownloadUrl();
+    }
+
+    public Boolean getDownloadUrl() {
+        return this.builder.downloadUrl;
     }
 
     public String getColumnName() {
@@ -68,14 +79,14 @@ public class GetRequest {
         private ArrayList<String> fields;
         private String offset;
         private String limit;
-        private Boolean downloadURL;
+        private Boolean downloadUrl;
         private String columnName;
         private ArrayList<String> columnValues;
         private String orderBy;
 
         private GetRequestBuilder() {
-            this.downloadURL = true;
             this.orderBy = Constants.ORDER_ASCENDING;
+            this.downloadUrl = true;
         }
 
         public GetRequestBuilder table(String table) {
@@ -113,8 +124,17 @@ public class GetRequest {
             return this;
         }
 
+        /**
+         * @deprecated Use {@link #downloadUrl(Boolean)} instead.
+         */
+        @Deprecated(since = "2.1", forRemoval = true)
         public GetRequestBuilder downloadURL(Boolean downloadURL) {
-            this.downloadURL = downloadURL == null || downloadURL;
+            LogUtil.printWarningLog(InfoLogs.DEPRECATED_DOWNLOAD_URL.getLog());
+            return downloadUrl(downloadURL);
+        }
+
+        public GetRequestBuilder downloadUrl(Boolean downloadUrl) {
+            this.downloadUrl = downloadUrl == null || downloadUrl;
             return this;
         }
 

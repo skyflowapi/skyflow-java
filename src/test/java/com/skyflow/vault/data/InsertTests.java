@@ -172,17 +172,39 @@ public class InsertTests {
     }
 
     @Test
-    public void testEmptyValuesInInsertRequestValidations() {
+    public void testEmptyValuesArrayPassesInsertRequestValidations() {
+        // SDK no longer blocks empty values array — BE is authoritative
         InsertRequest request = InsertRequest.builder().table(table).values(values).build();
         try {
             Validations.validateInsertRequest(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(
-                    Utils.parameterizedString(ErrorMessage.EmptyValues.getMessage(), Constants.SDK_PREFIX),
-                    e.getMessage()
-            );
+            Assert.fail("Empty values array should pass SDK validation: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void testNullFieldValuePassesInsertRequestValidations() {
+        // SDK no longer blocks null field values — BE is authoritative per API spec
+        valueMap.put("test_column_1", null);
+        values.add(valueMap);
+        InsertRequest request = InsertRequest.builder().table(table).values(values).build();
+        try {
+            Validations.validateInsertRequest(request);
+        } catch (SkyflowException e) {
+            Assert.fail("Null field value should pass SDK validation: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void testEmptyStringFieldValuePassesInsertRequestValidations() {
+        // SDK no longer blocks empty string field values — BE is authoritative per API spec
+        valueMap.put("test_column_1", "");
+        values.add(valueMap);
+        InsertRequest request = InsertRequest.builder().table(table).values(values).build();
+        try {
+            Validations.validateInsertRequest(request);
+        } catch (SkyflowException e) {
+            Assert.fail("Empty string field value should pass SDK validation: " + e.getMessage());
         }
     }
 
@@ -198,23 +220,6 @@ public class InsertTests {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
                     Utils.parameterizedString(ErrorMessage.EmptyKeyInValues.getMessage(), Constants.SDK_PREFIX),
-                    e.getMessage()
-            );
-        }
-    }
-
-    @Test
-    public void testEmptyValueInValuesInInsertRequestValidations() {
-        valueMap.put("test_column_3", "");
-        values.add(valueMap);
-        InsertRequest request = InsertRequest.builder().table(table).values(values).build();
-        try {
-            Validations.validateInsertRequest(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(
-                    Utils.parameterizedString(ErrorMessage.EmptyValueInValues.getMessage(), Constants.SDK_PREFIX),
                     e.getMessage()
             );
         }
@@ -385,23 +390,6 @@ public class InsertTests {
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.EmptyKeyInTokens.getMessage(), e.getMessage());
-        }
-    }
-
-    @Test
-    public void testEmptyValueInTokensInInsertRequestValidations() {
-        tokenMap.put("test_column_2", "");
-        values.add(valueMap);
-        tokens.add(tokenMap);
-        InsertRequest request = InsertRequest.builder()
-                .table(table).values(values).tokens(tokens).tokenMode(TokenMode.ENABLE_STRICT)
-                .build();
-        try {
-            Validations.validateInsertRequest(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(ErrorMessage.EmptyValueInTokens.getMessage(), e.getMessage());
         }
     }
 

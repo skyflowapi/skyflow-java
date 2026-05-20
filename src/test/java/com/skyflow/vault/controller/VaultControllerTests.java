@@ -10,6 +10,7 @@ import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.HttpStatus;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.generated.rest.ApiClient;
+import com.skyflow.generated.rest.types.V1FieldRecords;
 import com.skyflow.utils.Constants;
 import com.skyflow.utils.Utils;
 import com.skyflow.vault.data.*;
@@ -18,6 +19,10 @@ import com.skyflow.vault.tokens.TokenizeRequest;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.Map;
 
 public class VaultControllerTests {
     private static final String INVALID_EXCEPTION_THROWN = "Should not have thrown any exception";
@@ -183,6 +188,107 @@ public class VaultControllerTests {
             Assert.assertTrue(e.getDetails().isEmpty());
             Assert.assertEquals(HttpStatus.BAD_REQUEST.getHttpStatus(), e.getHttpStatus());
         }
+    }
+
+    @Test
+    public void testGetFormattedGetRecordNormalisesSkyflowId() throws Exception {
+        Map<String, Object> fields = new HashMap<>();
+        fields.put("skyflow_id", "abc-123");
+        fields.put("name", "John");
+        V1FieldRecords record = V1FieldRecords.builder().fields(fields).build();
+
+        Method method = VaultController.class.getDeclaredMethod("getFormattedGetRecord", V1FieldRecords.class);
+        method.setAccessible(true);
+        @SuppressWarnings("unchecked")
+        HashMap<String, Object> result = (HashMap<String, Object>) method.invoke(null, record);
+
+        Assert.assertEquals("skyflowId should be present (new form)", "abc-123", result.get("skyflowId"));
+        Assert.assertEquals("skyflow_id should still be present (v2 deprecated form)", "abc-123", result.get("skyflow_id"));
+        Assert.assertEquals("other fields should be preserved", "John", result.get("name"));
+    }
+
+    @Test
+    public void testGetFormattedQueryRecordNormalisesSkyflowId() throws Exception {
+        Map<String, Object> fields = new HashMap<>();
+        fields.put("skyflow_id", "xyz-456");
+        fields.put("email", "test@example.com");
+        V1FieldRecords record = V1FieldRecords.builder().fields(fields).build();
+
+        Method method = VaultController.class.getDeclaredMethod("getFormattedQueryRecord", V1FieldRecords.class);
+        method.setAccessible(true);
+        @SuppressWarnings("unchecked")
+        HashMap<String, Object> result = (HashMap<String, Object>) method.invoke(null, record);
+
+        Assert.assertEquals("skyflowId should be present (new form)", "xyz-456", result.get("skyflowId"));
+        Assert.assertEquals("skyflow_id should still be present (v2 deprecated form)", "xyz-456", result.get("skyflow_id"));
+        Assert.assertEquals("other fields should be preserved", "test@example.com", result.get("email"));
+    }
+
+    @Test
+    public void testGetFormattedGetRecordNormalisesSkyflowIdInTokensBranch() throws Exception {
+        Map<String, Object> tokens = new HashMap<>();
+        tokens.put("skyflow_id", "tok-789");
+        tokens.put("card_number", "tok-card-abc");
+        V1FieldRecords record = V1FieldRecords.builder().tokens(tokens).build();
+
+        Method method = VaultController.class.getDeclaredMethod("getFormattedGetRecord", V1FieldRecords.class);
+        method.setAccessible(true);
+        @SuppressWarnings("unchecked")
+        HashMap<String, Object> result = (HashMap<String, Object>) method.invoke(null, record);
+
+        Assert.assertEquals("skyflowId should be present (new form)", "tok-789", result.get("skyflowId"));
+        Assert.assertEquals("skyflow_id should still be present (v2 deprecated form)", "tok-789", result.get("skyflow_id"));
+        Assert.assertEquals("other token fields should be preserved", "tok-card-abc", result.get("card_number"));
+    }
+
+    @Test
+    public void testGetRequestDownloadUrlNewForm() {
+        GetRequest request = GetRequest.builder()
+                .table("test_table")
+                .downloadUrl(true)
+                .build();
+        Assert.assertTrue("new downloadUrl(true) should be set", request.getDownloadUrl());
+    }
+
+    @Test
+    public void testGetRequestDownloadURLDeprecatedFormStillWorks() {
+        GetRequest request = GetRequest.builder()
+                .table("test_table")
+                .downloadURL(true)
+                .build();
+        Assert.assertTrue("deprecated downloadURL() should still work", request.getDownloadURL());
+        Assert.assertTrue("new getDownloadUrl() returns same value", request.getDownloadUrl());
+    }
+
+    @Test
+    public void testGetRequestDownloadUrlDefaultIsTrue() {
+        GetRequest request = GetRequest.builder()
+                .table("test_table")
+                .build();
+        Assert.assertTrue("downloadUrl should be true by default (preserved from original)", request.getDownloadUrl());
+    }
+
+    @Test
+    public void testDetokenizeRequestDownloadUrlNewForm() {
+        DetokenizeRequest request = DetokenizeRequest.builder()
+                .downloadUrl(true)
+                .build();
+        Assert.assertTrue("new downloadUrl(true) should be set", request.getDownloadUrl());
+    }
+
+    @Test
+    public void testDetokenizeRequestDownloadURLDeprecatedFormStillWorks() {
+        DetokenizeRequest request = DetokenizeRequest.builder()
+                .downloadURL(true)
+                .build();
+        Assert.assertTrue("deprecated downloadURL() should still work", request.getDownloadURL());
+        Assert.assertTrue("new getDownloadUrl() returns same value", request.getDownloadUrl());
+    }
+
+    @Test
+    public void testDetokenizeRequestDownloadUrlDefaultIsFalse() {
+        DetokenizeRequest request = DetokenizeRequest.builder().build();
+        Assert.assertFalse("downloadUrl should be false by default", request.getDownloadUrl());
     }
 
 }

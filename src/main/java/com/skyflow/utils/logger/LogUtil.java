@@ -4,12 +4,16 @@ import com.skyflow.enums.LogLevel;
 import com.skyflow.logs.InfoLogs;
 import com.skyflow.utils.Constants;
 
+import java.util.Collections;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.*;
 
 public final class LogUtil {
     private static final Logger LOGGER = Logger.getLogger(LogUtil.class.getName());
     private static final String SDK_LOG_PREFIX = "[" + Constants.SDK_PREFIX + "] ";
     private static boolean isLoggerSetupDone = false;
+    private static final Set<String> WARNED_ONCE = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     synchronized public static void setupLogger(LogLevel logLevel) {
         isLoggerSetupDone = true;
@@ -53,6 +57,11 @@ public final class LogUtil {
 
     public static void printWarningLog(String message) {
         if (isLoggerSetupDone)
+            LOGGER.warning(SDK_LOG_PREFIX + message);
+    }
+
+    public static void printWarningLogOnce(String message) {
+        if (isLoggerSetupDone && WARNED_ONCE.add(message))
             LOGGER.warning(SDK_LOG_PREFIX + message);
     }
 
