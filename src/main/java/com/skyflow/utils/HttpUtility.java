@@ -121,7 +121,7 @@ public final class HttpUtility {
         for (Map.Entry<String, String> currentEntry : jsonMap.entrySet())
             formEncodeString.append(makeFormEncodeKeyValuePair(currentEntry.getKey(), currentEntry.getValue()));
 
-        return formEncodeString.substring(0, formEncodeString.length() - 1);
+        return formEncodeString.length() == 0 ? "" : formEncodeString.substring(0, formEncodeString.length() - 1);
     }
 
     public static String formatJsonToMultiPartFormDataString(JsonObject requestBody, String boundary) {

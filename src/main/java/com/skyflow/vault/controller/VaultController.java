@@ -3,6 +3,7 @@ package com.skyflow.vault.controller;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -371,7 +372,7 @@ public final class VaultController extends VaultClient {
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
         }
         LogUtil.printInfoLog(InfoLogs.DELETE_SUCCESS.getLog());
-        return new DeleteResponse(result.getRecordIdResponse().get());
+        return new DeleteResponse(result.getRecordIdResponse().orElse(Collections.emptyList()));
     }
 
     public QueryResponse query(QueryRequest queryRequest) throws SkyflowException {

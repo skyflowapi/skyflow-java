@@ -20,6 +20,7 @@ import io.jsonwebtoken.Jwts;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.security.PrivateKey;
 import java.util.ArrayList;
@@ -58,8 +59,12 @@ public class BearerToken {
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidCredentials.getMessage());
             }
             FileReader reader = new FileReader(String.valueOf(credentialsFile));
-            JsonObject serviceAccountCredentials = JsonParser.parseReader(reader).getAsJsonObject();
-            return getBearerTokenFromCredentials(serviceAccountCredentials, context, roles);
+            try {
+                JsonObject serviceAccountCredentials = JsonParser.parseReader(reader).getAsJsonObject();
+                return getBearerTokenFromCredentials(serviceAccountCredentials, context, roles);
+            } finally {
+                try { reader.close(); } catch (IOException ignored) {}
+            }
         } catch (JsonSyntaxException e) {
             LogUtil.printErrorLog(ErrorLogs.INVALID_CREDENTIALS_FILE_FORMAT.getLog());
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), Utils.parameterizedString(
