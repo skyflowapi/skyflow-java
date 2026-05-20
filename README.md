@@ -164,10 +164,10 @@ public class InitSkyflowClient {
         // Step 3: Create credentials as a JSON object (if a Bearer Token is not provided).
         // Demonstrates an alternate approach to authenticate with Skyflow using a credentials object.
         JsonObject credentialsObject = new JsonObject();
-        credentialsObject.addProperty("clientID", "<YOUR_CLIENT_ID>");       // Replace with your Client ID.
+        credentialsObject.addProperty("clientId", "<YOUR_CLIENT_ID>");        // Replace with your Client ID.
         credentialsObject.addProperty("clientName", "<YOUR_CLIENT_NAME>");   // Replace with your Client Name.
-        credentialsObject.addProperty("TokenURI", "<YOUR_TOKEN_URI>");       // Replace with the Token URI.
-        credentialsObject.addProperty("keyID", "<YOUR_KEY_ID>");             // Replace with your Key ID.
+        credentialsObject.addProperty("tokenUri", "<YOUR_TOKEN_URI>");       // Replace with the Token URI.
+        credentialsObject.addProperty("keyId", "<YOUR_KEY_ID>");             // Replace with your Key ID.
         credentialsObject.addProperty("privateKey", "<YOUR_PRIVATE_KEY>");   // Replace with your Private Key.
 
         // Step 4: Convert the JSON object to a string and use it as credentials.
@@ -291,13 +291,15 @@ Skyflow returns tokens for the record that was just inserted.
     {
       "card_number": "5484-7829-1702-9110",
       "request_index": "0",
-      "skyflow_id": "9fac9201-7b8a-4446-93f8-5244e1213bd1",
+      "skyflowId": "9fac9201-7b8a-4446-93f8-5244e1213bd1",
       "cardholder_name": "b2308e2a-c1f5-469b-97b7-1f193159399b"
     }
   ],
   "errors": []
 }
 ```
+
+> **Note:** The response key is `skyflowId`. The legacy `skyflow_id` key is deprecated and will be removed in an upcoming release.
 
 # Vault
 
@@ -436,7 +438,7 @@ Sample response:
     {
       "card_number": "5484-7829-1702-9110",
       "request_index": "0",
-      "skyflow_id": "9fac9201-7b8a-4446-93f8-5244e1213bd1",
+      "skyflowId": "9fac9201-7b8a-4446-93f8-5244e1213bd1",
       "cardholder_name": "b2308e2a-c1f5-469b-97b7-1f193159399b"
     }
   ],
@@ -448,6 +450,8 @@ Sample response:
   ]
 }
 ```
+
+> **Note:** The response key is `skyflowId`. The legacy `skyflow_id` key is deprecated and will be removed in an upcoming release.
 
 ### Insert call example with `upsert` option
 
@@ -974,18 +978,20 @@ Sample response:
       "card_number": "4555555555555553",
       "email": "john.doe@gmail.com",
       "name": "john doe",
-      "skyflow_id": "a581d205-1969-4350-acbe-a2a13eb871a6"
+      "skyflowId": "a581d205-1969-4350-acbe-a2a13eb871a6"
     },
     {
       "card_number": "4555555555555559",
       "email": "jane.doe@gmail.com",
       "name": "jane doe",
-      "skyflow_id": "5ff887c3-b334-4294-9acc-70e78ae5164a"
+      "skyflowId": "5ff887c3-b334-4294-9acc-70e78ae5164a"
     }
   ],
   "errors": []
 }
 ```
+
+> **Note:** The response key is `skyflowId`. The legacy `skyflow_id` key is deprecated and will be removed in an upcoming release.
 
 ### Get tokens
 
@@ -1050,18 +1056,20 @@ Sample response:
       "card_number": "3998-2139-0328-0697",
       "email": "c9a6c9555060@82c092e7.bd52",
       "name": "82c092e7-74c0-4e60-bd52-c9a6c9555060",
-      "skyflow_id": "a581d205-1969-4350-acbe-a2a13eb871a6"
+      "skyflowId": "a581d205-1969-4350-acbe-a2a13eb871a6"
     },
     {
       "card_number": "3562-0140-8820-7499",
       "email": "6174366e2bc6@59f82e89.93fc",
       "name": "59f82e89-138e-4f9b-93fc-6174366e2bc6",
-      "skyflow_id": "5ff887c3-b334-4294-9acc-70e78ae5164a"
+      "skyflowId": "5ff887c3-b334-4294-9acc-70e78ae5164a"
     }
   ],
   "errors": []
 }
 ```
+
+> **Note:** The response key is `skyflowId`. The legacy `skyflow_id` key is deprecated and will be removed in an upcoming release.
 
 ### Get By column name and column values
 
@@ -1128,18 +1136,20 @@ Sample response:
       "card_number": "4555555555555553",
       "email": "john.doe@gmail.com",
       "name": "john doe",
-      "skyflow_id": "a581d205-1969-4350-acbe-a2a13eb871a6"
+      "skyflowId": "a581d205-1969-4350-acbe-a2a13eb871a6"
     },
     {
       "card_number": "4555555555555559",
       "email": "jane.doe@gmail.com",
       "name": "jane doe",
-      "skyflow_id": "5ff887c3-b334-4294-9acc-70e78ae5164a"
+      "skyflowId": "5ff887c3-b334-4294-9acc-70e78ae5164a"
     }
   ],
   "errors": []
 }
 ```
+
+> **Note:** The response key is `skyflowId`. The legacy `skyflow_id` key is deprecated and will be removed in an upcoming release.
 
 ### Redaction types
 
@@ -1495,12 +1505,14 @@ Sample response:
     {
       "card_number": "XXXXXXXXXXXX1112",
       "name": "S***ar",
-      "skyflow_id": "3ea3861-x107-40w8-la98-106sp08ea83f",
+      "skyflowId": "3ea3861-x107-40w8-la98-106sp08ea83f",
       "tokenizedData": null
     }
   ]
 }
 ```
+
+> **Note:** The response key is `skyflowId`. The legacy `skyflow_id` key is deprecated and will be removed in an upcoming release.
 
 ## Upload File
 
@@ -2829,10 +2841,10 @@ public class ChangeLogLevel {
         // Step 3: Define additional Skyflow credentials (optional, if needed for credentials string)
         // Create a JSON object to hold your Skyflow credentials
         JsonObject credentialsObject = new JsonObject();
-        credentialsObject.addProperty("clientID", "<YOUR_CLIENT_ID>");  // Replace with your client ID
+        credentialsObject.addProperty("clientId", "<YOUR_CLIENT_ID>");     // Replace with your client ID
         credentialsObject.addProperty("clientName", "<YOUR_CLIENT_NAME>"); // Replace with your client name
-        credentialsObject.addProperty("TokenURI", "<YOUR_TOKEN_URI>"); // Replace with your token URI
-        credentialsObject.addProperty("keyID", "<YOUR_KEY_ID>");  // Replace with your key ID
+        credentialsObject.addProperty("tokenUri", "<YOUR_TOKEN_URI>");    // Replace with your token URI
+        credentialsObject.addProperty("keyId", "<YOUR_KEY_ID>");          // Replace with your key ID
         credentialsObject.addProperty("privateKey", "<YOUR_PRIVATE_KEY>"); // Replace with your private key
 
         // Convert the credentials object to a string format to be used for generating a Bearer Token
