@@ -290,7 +290,7 @@ Skyflow returns tokens for the record that was just inserted.
   "insertedFields": [
     {
       "card_number": "5484-7829-1702-9110",
-      "request_index": "0",
+      "requestIndex": "0",
       "skyflowId": "9fac9201-7b8a-4446-93f8-5244e1213bd1",
       "cardholder_name": "b2308e2a-c1f5-469b-97b7-1f193159399b"
     }
@@ -437,14 +437,14 @@ Sample response:
   "insertedFields": [
     {
       "card_number": "5484-7829-1702-9110",
-      "request_index": "0",
+      "requestIndex": "0",
       "skyflowId": "9fac9201-7b8a-4446-93f8-5244e1213bd1",
       "cardholder_name": "b2308e2a-c1f5-469b-97b7-1f193159399b"
     }
   ],
   "errors": [
     {
-      "request_index": "1",
+      "requestIndex": "1",
       "error": "Insert failed. Column card_number is invalid. Specify a valid column."
     }
   ]
