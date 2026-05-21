@@ -50,6 +50,9 @@ The Skyflow Java SDK is designed to help with integrating Skyflow into a Java ba
   - [Generate scoped bearer tokens](#generate-scoped-bearer-tokens)
   - [Generate signed data tokens](#generate-signed-data-tokens)
   - [Bearer token expiry edge case](#bearer-token-expiry-edge-case)
+- [Error Handling](#error-handling)
+  - [Catching SkyflowException](#catching-skyflowexception)
+  - [SkyflowException properties](#skyflowexception-properties)
 - [Logging](#logging)
 - [Reporting a Vulnerability](#reporting-a-vulnerability)
 
@@ -2785,6 +2788,48 @@ public class DetokenizeExample {
     }
 }
 ```
+
+# Error Handling
+
+The SDK uses `SkyflowException` for all errors — both client-side validation errors and server-side API errors.
+
+## Catching SkyflowException
+
+Wrap SDK calls in a `try/catch` block and catch `SkyflowException` to handle Skyflow-specific errors separately from unexpected exceptions:
+
+```java
+import com.skyflow.errors.SkyflowException;
+
+try {
+    InsertResponse response = skyflowClient.vault().insert(insertRequest);
+} catch (SkyflowException e) {
+    System.err.println("Skyflow error:");
+    System.err.println("  HTTP code : " + e.getHttpCode());
+    System.err.println("  Message   : " + e.getMessage());
+    System.err.println("  Request ID: " + e.getRequestId()); // null for validation errors
+    System.err.println("  Details   : " + e.getDetails());
+} catch (Exception e) {
+    System.err.println("Unexpected error: " + e.getMessage());
+}
+```
+
+## SkyflowException properties
+
+| Property | Method | Description |
+|---|---|---|
+| HTTP status code | `getHttpCode()` | Integer status code (e.g. `400`, `404`, `500`). Defaults to `400` for validation errors. |
+| Message | `getMessage()` | Human-readable description of the error. |
+| HTTP status string | `getHttpStatus()` | Status string from the server (e.g. `"BAD_REQUEST"`). `null` for validation errors. |
+| gRPC code | `getGrpcCode()` | gRPC status code from the server. `null` for validation errors. |
+| Request ID | `getRequestId()` | The `x-request-id` header from the server response — useful for support escalations. `null` for validation errors that never reached the server. |
+| Details | `getDetails()` | `JsonArray` of additional error context from the server. Empty array for validation errors, `null` if the server response omitted the field. |
+
+**Validation errors** (missing table name, empty token list, etc.) are thrown before any network call:
+- `httpCode` is always `400`
+- `requestId` and `grpcCode` are `null`
+- `details` is an empty array
+
+**API errors** are returned by the Skyflow server and have all fields populated from the response body and headers.
 
 # Logging
 
