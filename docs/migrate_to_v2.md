@@ -249,4 +249,35 @@ Response maps now return `skyflowId` (camelCase). The legacy `skyflow_id` key is
 
 ---
 
+## Update request data key (v2.1+)
+
+When calling `update()`, use `skyflowId` (camelCase) as the key in the data map to identify the record. Using `skyflow_id` still works but emits a deprecation warning. If both keys are present, `skyflowId` takes precedence.
+
+```java
+HashMap<String, Object> data = new HashMap<>();
+data.put("skyflowId", "<SKYFLOW_ID>");   // preferred
+data.put("card_number", "<NEW_VALUE>");
+
+UpdateRequest request = UpdateRequest.builder()
+    .table("<TABLE_NAME>")
+    .data(data)
+    .returnTokens(true)
+    .build();
+
+skyflowClient.vault().update(request);
+```
+
+---
+
+## Method renames (v2.1+)
+
+The following instance methods have been renamed for consistency. The old names still work but emit deprecation warnings.
+
+| Deprecated | Preferred |
+|---|---|
+| `skyflowClient.updateLogLevel(logLevel)` | `skyflowClient.setLogLevel(logLevel)` |
+| `TokenMode.getBYOT()` | `TokenMode.getByot()` |
+
+---
+
 For the full list of changes see [CHANGELOG.md](../CHANGELOG.md).
