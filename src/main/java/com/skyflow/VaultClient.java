@@ -144,7 +144,7 @@ public class VaultClient {
                 .tokenization(request.getReturnTokens())
                 .homogeneous(request.getHomogeneous())
                 .upsert(request.getUpsert())
-                .byot(request.getTokenMode().getBYOT())
+                .byot(request.getTokenMode().getByot())
                 .records(records)
                 .build();
     }
@@ -171,14 +171,14 @@ public class VaultClient {
 
         return RecordServiceBatchOperationBody.builder()
                 .continueOnError(true)
-                .byot(request.getTokenMode().getBYOT())
+                .byot(request.getTokenMode().getByot())
                 .records(records)
                 .build();
     }
 
     protected RecordServiceUpdateRecordBody getUpdateRequestBody(UpdateRequest request) {
         RecordServiceUpdateRecordBody.Builder updateRequestBodyBuilder = RecordServiceUpdateRecordBody.builder();
-        updateRequestBodyBuilder.byot(request.getTokenMode().getBYOT());
+        updateRequestBodyBuilder.byot(request.getTokenMode().getByot());
         updateRequestBodyBuilder.tokenization(request.getReturnTokens());
         V1FieldRecords.Builder recordBuilder = V1FieldRecords.builder();
         HashMap<String, Object> values = request.getData();

@@ -13,8 +13,14 @@ public enum TokenMode {
         this.byot = byot;
     }
 
-    public V1Byot getBYOT() {
+    public V1Byot getByot() {
         return byot;
+    }
+
+    /** @deprecated Use {@link #getByot()} instead. */
+    @Deprecated(since = "2.1", forRemoval = true)
+    public V1Byot getBYOT() {
+        return getByot();
     }
 
     @Override
