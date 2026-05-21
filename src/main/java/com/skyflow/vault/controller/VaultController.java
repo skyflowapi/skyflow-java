@@ -81,6 +81,18 @@ public final class VaultController extends VaultClient {
         super(vaultConfig, credentials);
     }
 
+    private static String extractUpdateSkyflowId(HashMap<String, Object> data) {
+        if (data.containsKey("skyflowId")) {
+            if (data.containsKey("skyflow_id")) {
+                data.remove("skyflow_id");
+                LogUtil.printWarningLog(InfoLogs.DEPRECATED_SKYFLOW_ID_REQUEST_KEY.getLog());
+            }
+            return data.remove("skyflowId").toString();
+        }
+        LogUtil.printWarningLog(InfoLogs.DEPRECATED_SKYFLOW_ID_REQUEST_KEY.getLog());
+        return data.remove("skyflow_id").toString();
+    }
+
     private static synchronized HashMap<String, Object> getFormattedBatchInsertRecord(Object record, Integer requestIndex) {
         HashMap<String, Object> insertRecord = new HashMap<>();
         String jsonString = GSON.toJson(record);
@@ -133,7 +145,7 @@ public final class VaultController extends VaultClient {
 
         if (getRecord.containsKey("skyflow_id")) {
             getRecord.put("skyflowId", getRecord.get("skyflow_id"));
-            LogUtil.printWarningLogOnce(InfoLogs.DEPRECATED_SKYFLOW_ID_KEY.getLog());
+            LogUtil.printWarningLog(InfoLogs.DEPRECATED_SKYFLOW_ID_KEY.getLog());
         }
 
         return getRecord;
@@ -158,7 +170,7 @@ public final class VaultController extends VaultClient {
 
         if (queryRecord.containsKey("skyflow_id")) {
             queryRecord.put("skyflowId", queryRecord.get("skyflow_id"));
-            LogUtil.printWarningLogOnce(InfoLogs.DEPRECATED_SKYFLOW_ID_KEY.getLog());
+            LogUtil.printWarningLog(InfoLogs.DEPRECATED_SKYFLOW_ID_KEY.getLog());
         }
 
         return queryRecord;
@@ -336,7 +348,7 @@ public final class VaultController extends VaultClient {
             result = super.getRecordsApi().recordServiceUpdateRecord(
                     super.getVaultConfig().getVaultId(),
                     updateRequest.getTable(),
-                    updateRequest.getData().remove("skyflow_id").toString(),
+                    extractUpdateSkyflowId(updateRequest.getData()),
                     updateBody,
                     requestOptions
             );

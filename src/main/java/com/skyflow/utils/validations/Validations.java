@@ -548,17 +548,17 @@ public class Validations {
                     ErrorLogs.EMPTY_DATA.getLog(), InterfaceName.UPDATE.getName()
             ));
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyData.getMessage());
-        } else if (!data.containsKey("skyflow_id")) {
+        } else if (!data.containsKey("skyflowId") && !data.containsKey("skyflow_id")) {
             LogUtil.printErrorLog(Utils.parameterizedString(
                     ErrorLogs.SKYFLOW_ID_IS_REQUIRED.getLog(), InterfaceName.UPDATE.getName()
             ));
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.SkyflowIdKeyError.getMessage());
-        } else if (!(data.get("skyflow_id") instanceof String)) {
+        } else if (!(resolveUpdateId(data) instanceof String)) {
             LogUtil.printErrorLog(Utils.parameterizedString(
                     ErrorLogs.INVALID_SKYFLOW_ID_TYPE.getLog(), InterfaceName.UPDATE.getName()
             ));
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidSkyflowIdType.getMessage());
-        } else if (data.get("skyflow_id").toString().trim().isEmpty()) {
+        } else if (resolveUpdateId(data).toString().trim().isEmpty()) {
             LogUtil.printErrorLog(Utils.parameterizedString(
                     ErrorLogs.EMPTY_SKYFLOW_ID.getLog(), InterfaceName.UPDATE.getName()
             ));
@@ -971,6 +971,13 @@ public class Validations {
         if(request.getWaitTime() > 64) {
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.WaitTimeExceedsLimit.getMessage());
         }
+    }
+
+    static Object resolveUpdateId(HashMap<String, Object> data) {
+        if (data.containsKey("skyflowId")) {
+            return data.get("skyflowId");
+        }
+        return data.get("skyflow_id");
     }
 
     public static void validateGetDetectRunRequest(GetDetectRunRequest request) throws SkyflowException {
