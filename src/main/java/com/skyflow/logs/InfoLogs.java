@@ -99,7 +99,6 @@ public enum InfoLogs {
     // Deprecation warnings — v2 backward compat
     DEPRECATED_SKYFLOW_ID_KEY("[DEPRECATED] Response key 'skyflow_id' is deprecated and will be removed in an upcoming release. Use 'skyflowId' instead."),
     DEPRECATED_SKYFLOW_ID_REQUEST_KEY("[DEPRECATED] Request data key 'skyflow_id' is deprecated and will be removed in an upcoming release. Use 'skyflowId' instead."),
-    DEPRECATED_SKYFLOW_ID_BOTH_KEYS("[DEPRECATED] Both 'skyflow_id' and 'skyflowId' are present in request data. 'skyflowId' will be used. Remove 'skyflow_id' to suppress this warning."),
     DEPRECATED_DOWNLOAD_URL("[DEPRECATED] Method 'downloadURL()' is deprecated and will be removed in an upcoming release. Use 'downloadUrl()' instead."),
     DEPRECATED_GET_BYOT("[DEPRECATED] Method 'getBYOT()' is deprecated and will be removed in an upcoming release. Use 'getByot()' instead.");
 

@@ -85,7 +85,7 @@ public final class VaultController extends VaultClient {
         if (data.containsKey("skyflowId")) {
             if (data.containsKey("skyflow_id")) {
                 data.remove("skyflow_id");
-                LogUtil.printWarningLog(InfoLogs.DEPRECATED_SKYFLOW_ID_BOTH_KEYS.getLog());
+                LogUtil.printWarningLog(InfoLogs.DEPRECATED_SKYFLOW_ID_REQUEST_KEY.getLog());
             }
             return data.remove("skyflowId").toString();
         }
