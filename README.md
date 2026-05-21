@@ -2806,7 +2806,7 @@ try {
     System.err.println("Skyflow error:");
     System.err.println("  HTTP code : " + e.getHttpCode());
     System.err.println("  Message   : " + e.getMessage());
-    System.err.println("  Request ID: " + e.getRequestId()); // null for validation errors
+    System.err.println("  Request ID: " + e.getRequestId());
     System.err.println("  Details   : " + e.getDetails());
 } catch (Exception e) {
     System.err.println("Unexpected error: " + e.getMessage());
@@ -2817,11 +2817,11 @@ try {
 
 | Property | Method | Description |
 |---|---|---|
-| HTTP status code | `getHttpCode()` | Integer status code (e.g. `400`, `404`, `500`). Defaults to `400` for validation errors. |
+| HTTP status code | `getHttpCode()` | Integer status code (e.g. `400`, `404`, `500`). |
 | Message | `getMessage()` | Human-readable description of the error. |
-| HTTP status string | `getHttpStatus()` | Status string from the server (e.g. `"BAD_REQUEST"`). `null` for validation errors. |
-| gRPC code | `getGrpcCode()` | gRPC status code from the server. `null` for validation errors. |
-| Request ID | `getRequestId()` | The `x-request-id` header from the server response — useful for support escalations. `null` for validation errors that never reached the server. |
+| HTTP status string | `getHttpStatus()` | Status string from the server (e.g. `"BAD_REQUEST"`). |
+| gRPC code | `getGrpcCode()` | gRPC status code from the server. |
+| Request ID | `getRequestId()` | The `x-request-id` header — useful for support escalations. |
 | Details | `getDetails()` | `JsonArray` of additional error context from the server. Empty array for validation errors, `null` if the server response omitted the field. |
 
 **Validation errors** (missing table name, empty token list, etc.) are thrown before any network call:
