@@ -1,6 +1,8 @@
 package com.skyflow.enums;
 
 import com.skyflow.generated.rest.types.V1Byot;
+import com.skyflow.logs.InfoLogs;
+import com.skyflow.utils.logger.LogUtil;
 
 public enum TokenMode {
     DISABLE(V1Byot.DISABLE),
@@ -20,6 +22,7 @@ public enum TokenMode {
     /** @deprecated Use {@link #getByot()} instead. */
     @Deprecated(since = "2.1", forRemoval = true)
     public V1Byot getBYOT() {
+        LogUtil.printWarningLog(InfoLogs.DEPRECATED_GET_BYOT.getLog());
         return getByot();
     }
 
