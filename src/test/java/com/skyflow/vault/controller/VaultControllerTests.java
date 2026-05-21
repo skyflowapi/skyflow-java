@@ -291,4 +291,66 @@ public class VaultControllerTests {
         Assert.assertFalse("downloadUrl should be false by default", request.getDownloadUrl());
     }
 
+    // extractUpdateSkyflowId — all cases
+
+    @Test
+    public void testExtractUpdateSkyflowId_onlyCamelCase() throws Exception {
+        HashMap<String, Object> data = new HashMap<>();
+        data.put("skyflowId", "id-camel-only");
+        data.put("card_number", "4111111111111111");
+
+        Method method = VaultController.class.getDeclaredMethod("extractUpdateSkyflowId", HashMap.class);
+        method.setAccessible(true);
+        String result = (String) method.invoke(null, data);
+
+        Assert.assertEquals("should return the skyflowId value", "id-camel-only", result);
+        Assert.assertFalse("skyflowId should be removed from data map", data.containsKey("skyflowId"));
+        Assert.assertTrue("other fields should be preserved", data.containsKey("card_number"));
+    }
+
+    @Test
+    public void testExtractUpdateSkyflowId_onlySnakeCase() throws Exception {
+        HashMap<String, Object> data = new HashMap<>();
+        data.put("skyflow_id", "id-snake-only");
+        data.put("card_number", "4111111111111111");
+
+        Method method = VaultController.class.getDeclaredMethod("extractUpdateSkyflowId", HashMap.class);
+        method.setAccessible(true);
+        String result = (String) method.invoke(null, data);
+
+        Assert.assertEquals("should return the skyflow_id value", "id-snake-only", result);
+        Assert.assertFalse("skyflow_id should be removed from data map", data.containsKey("skyflow_id"));
+        Assert.assertTrue("other fields should be preserved", data.containsKey("card_number"));
+    }
+
+    @Test
+    public void testExtractUpdateSkyflowId_bothKeys_prefersSkyflowId() throws Exception {
+        HashMap<String, Object> data = new HashMap<>();
+        data.put("skyflowId", "id-camel");
+        data.put("skyflow_id", "id-snake");
+        data.put("card_number", "4111111111111111");
+
+        Method method = VaultController.class.getDeclaredMethod("extractUpdateSkyflowId", HashMap.class);
+        method.setAccessible(true);
+        String result = (String) method.invoke(null, data);
+
+        Assert.assertEquals("skyflowId should be preferred when both keys are present", "id-camel", result);
+    }
+
+    @Test
+    public void testExtractUpdateSkyflowId_bothKeys_removesBothFromMap() throws Exception {
+        HashMap<String, Object> data = new HashMap<>();
+        data.put("skyflowId", "id-camel");
+        data.put("skyflow_id", "id-snake");
+        data.put("card_number", "4111111111111111");
+
+        Method method = VaultController.class.getDeclaredMethod("extractUpdateSkyflowId", HashMap.class);
+        method.setAccessible(true);
+        method.invoke(null, data);
+
+        Assert.assertFalse("skyflowId should be removed from data map", data.containsKey("skyflowId"));
+        Assert.assertFalse("skyflow_id should be removed from data map", data.containsKey("skyflow_id"));
+        Assert.assertTrue("other fields should be preserved", data.containsKey("card_number"));
+    }
+
 }
