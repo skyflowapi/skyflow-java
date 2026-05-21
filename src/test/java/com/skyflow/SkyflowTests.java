@@ -8,13 +8,36 @@ import com.skyflow.enums.LogLevel;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.logs.InfoLogs;
+import com.skyflow.utils.logger.LogUtil;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
+
 public class SkyflowTests {
     private static final String INVALID_EXCEPTION_THROWN = "Should not have thrown any exception";
     private static final String EXCEPTION_NOT_THROWN = "Should have thrown an exception";
+
+    private static class CapturingHandler extends Handler {
+        final List<LogRecord> records = new ArrayList<>();
+        @Override public void publish(LogRecord r) { records.add(r); }
+        @Override public void flush() {}
+        @Override public void close() {}
+    }
+
+    private CapturingHandler attachCapture() {
+        CapturingHandler handler = new CapturingHandler();
+        handler.setLevel(Level.ALL);
+        Logger.getLogger(LogUtil.class.getName()).addHandler(handler);
+        return handler;
+    }
     private static String vaultID = null;
     private static String clusterID = null;
     private static String newClusterID = null;
@@ -429,12 +452,57 @@ public class SkyflowTests {
     }
 
     @Test
+    public void testSetLogLevel() {
+        try {
+            Skyflow skyflowClient = Skyflow.builder().setLogLevel(LogLevel.INFO).build();
+            Assert.assertEquals(LogLevel.INFO, skyflowClient.getLogLevel());
+            skyflowClient.setLogLevel(LogLevel.WARN);
+            Assert.assertEquals(LogLevel.WARN, skyflowClient.getLogLevel());
+        } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    @SuppressWarnings("deprecation")
     public void testUpdateLogLevel() {
         try {
             Skyflow skyflowClient = Skyflow.builder().setLogLevel(LogLevel.INFO).build();
             Assert.assertEquals(LogLevel.INFO, skyflowClient.getLogLevel());
             skyflowClient.updateLogLevel(LogLevel.WARN);
             Assert.assertEquals(LogLevel.WARN, skyflowClient.getLogLevel());
+        } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    @SuppressWarnings("deprecation")
+    public void testUpdateLogLevelEmitsDeprecationWarning() {
+        try {
+            // build() calls setupLogger internally — attach capture after so it isn't wiped
+            Skyflow skyflowClient = Skyflow.builder().setLogLevel(LogLevel.INFO).build();
+            CapturingHandler handler = attachCapture();
+            skyflowClient.updateLogLevel(LogLevel.WARN);
+            boolean warnFired = handler.records.stream()
+                    .anyMatch(r -> r.getLevel().equals(Level.WARNING)
+                            && r.getMessage().contains(InfoLogs.DEPRECATED_UPDATE_LOG_LEVEL.getLog()));
+            Assert.assertTrue("updateLogLevel() should emit a deprecation warning log", warnFired);
+        } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    @SuppressWarnings("deprecation")
+    public void testUpdateLogLevelWarningIsSuppressedAtErrorLevel() {
+        try {
+            Skyflow skyflowClient = Skyflow.builder().setLogLevel(LogLevel.ERROR).build();
+            CapturingHandler handler = attachCapture();
+            skyflowClient.updateLogLevel(LogLevel.WARN);
+            boolean warnFired = handler.records.stream()
+                    .anyMatch(r -> r.getLevel().equals(Level.WARNING));
+            Assert.assertFalse("updateLogLevel() warning should be suppressed at ERROR log level", warnFired);
         } catch (Exception e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
         }
