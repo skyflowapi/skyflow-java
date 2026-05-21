@@ -174,6 +174,31 @@ public class SkyflowTests {
     }
 
     @Test
+    public void testUpdateVaultConfigNullCredentialsFallsBackToPrevious() {
+        try {
+            VaultConfig config = new VaultConfig();
+            config.setVaultId(vaultID);
+            config.setClusterId(clusterID);
+            config.setEnv(Env.SANDBOX);
+
+            Credentials creds = new Credentials();
+            creds.setToken(token);
+            config.setCredentials(creds);
+
+            Skyflow skyflowClient = Skyflow.builder().addVaultConfig(config).build();
+
+            // Update with null credentials — should retain previous credentials value
+            VaultConfig partialUpdate = new VaultConfig();
+            partialUpdate.setVaultId(vaultID);
+            partialUpdate.setClusterId(clusterID);
+            skyflowClient.updateVaultConfig(partialUpdate);
+            Assert.assertNotNull(skyflowClient.getVaultConfig(vaultID).getCredentials());
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
     public void testRemovingNonExistentVaultConfigInSkyflowBuilder() {
         try {
             Skyflow.builder().removeVaultConfig(vaultID).build();
@@ -358,6 +383,32 @@ public class SkyflowTests {
 
             skyflowClient.updateConnectionConfig(config);
         } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testUpdateConnectionConfigWithNullFieldsFallsBackToPrevious() {
+        try {
+            ConnectionConfig config = new ConnectionConfig();
+            config.setConnectionId(connectionID);
+            config.setConnectionUrl(connectionURL);
+
+            Credentials creds = new Credentials();
+            creds.setToken(token);
+            config.setCredentials(creds);
+
+            Skyflow skyflowClient = Skyflow.builder().addConnectionConfig(config).build();
+
+            // Update with null credentials — validation requires connectionUrl, so provide it;
+            // credentials should fall back to previous value
+            ConnectionConfig partialUpdate = new ConnectionConfig();
+            partialUpdate.setConnectionId(connectionID);
+            partialUpdate.setConnectionUrl(connectionURL);
+            // credentials is null → should retain previous value
+            skyflowClient.updateConnectionConfig(partialUpdate);
+            Assert.assertNotNull(skyflowClient.getConnectionConfig(connectionID).getCredentials());
+        } catch (SkyflowException e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
         }
     }
