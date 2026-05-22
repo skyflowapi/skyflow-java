@@ -13,14 +13,18 @@ import com.skyflow.vault.data.UpdateResponse;
 import java.util.HashMap;
 
 /**
- * @deprecated Pre-v2.1 pattern. The "skyflow_id" key in the data map is deprecated.
- * Use "skyflowId" instead (see {@link com.example.vault.UpdateExample}).
+ * @deprecated Pre-v2.1 pattern. Demonstrates two deprecated APIs:
+ * <ul>
+ *   <li>The {@code "skyflow_id"} key in the data map — use {@code "skyflowId"} instead.</li>
+ *   <li>{@code updateLogLevel()} on the Skyflow client — use {@code setLogLevel()} instead.</li>
+ * </ul>
+ * See {@link com.example.vault.UpdateExample} for the current pattern.
  *
- * This example is retained for reference during the deprecation window.
- * "skyflow_id" still works but emits a runtime warning and will be removed in a future release.
+ * Both still work but emit runtime warnings and will be removed in a future release.
  */
 @Deprecated
 public class UpdateExample {
+    @SuppressWarnings("deprecation")
     public static void main(String[] args) throws SkyflowException {
         // Step 1: Set up credentials for the first vault configuration
         Credentials credentials = new Credentials();
@@ -38,11 +42,12 @@ public class UpdateExample {
         skyflowCredentials.setCredentialsString("<YOUR_CREDENTIALS_STRING>"); // Replace with the actual credentials string
 
         // Step 4: Create a Skyflow client and add vault configurations
+        // DEPRECATED: use setLogLevel() instead of updateLogLevel()
         Skyflow skyflowClient = Skyflow.builder()
-                .setLogLevel(LogLevel.ERROR) // Enable debugging for detailed logs
-                .addVaultConfig(vaultConfig)      // Add the vault configuration
-                .addSkyflowCredentials(skyflowCredentials) // Add general Skyflow credentials
+                .addVaultConfig(vaultConfig)
+                .addSkyflowCredentials(skyflowCredentials)
                 .build();
+        skyflowClient.updateLogLevel(LogLevel.ERROR); // @deprecated — use setLogLevel(LogLevel.ERROR)
 
         // Step 5: Update records with TokenMode enabled
         // DEPRECATED: use "skyflowId" key instead of "skyflow_id"
