@@ -189,4 +189,40 @@ public class HttpUtilityTests {
             fail(INVALID_EXCEPTION_THROWN);
         }
     }
+
+    @Test
+    public void testAppendRequestId_withNonNullRequestId() {
+        String result = HttpUtility.appendRequestId("base message", "req-123");
+        Assert.assertEquals("base message - requestId: req-123", result);
+    }
+
+    @Test
+    public void testAppendRequestId_withNullRequestId() {
+        String result = HttpUtility.appendRequestId("base message", null);
+        Assert.assertEquals("base message", result);
+    }
+
+    @Test
+    public void testAppendRequestId_withEmptyRequestId() {
+        String result = HttpUtility.appendRequestId("base message", "");
+        Assert.assertEquals("base message", result);
+    }
+
+    @Test
+    @PrepareForTest({URL.class, HttpURLConnection.class})
+    public void testSendRequestWithNestedJsonBody() {
+        try {
+            given(mockConnection.getRequestProperty("content-type")).willReturn("application/json");
+            Map<String, String> headers = new HashMap<>();
+            headers.put("content-type", "application/json");
+            JsonObject nested = new JsonObject();
+            nested.addProperty("inner", "value");
+            JsonObject params = new JsonObject();
+            params.add("outer", nested);
+            String response = httpUtility.sendRequest("POST", url, params, headers);
+            Assert.assertEquals(expected, response);
+        } catch (Exception e) {
+            fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
 }
