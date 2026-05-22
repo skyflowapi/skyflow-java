@@ -92,7 +92,13 @@
     "behaviours",
     "sanitisation",
     "recognised",
-    "unrecognised"
+    "unrecognised",
+    "nocreds",
+    "nodir",
+    "detok",
+    "qhdmceurtnlz",
+    "ngrok",
+    "obac"
   ],
   "languageSettings": [
     {
