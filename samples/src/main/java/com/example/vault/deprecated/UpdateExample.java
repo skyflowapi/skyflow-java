@@ -1,4 +1,4 @@
-package com.example.vault;
+package com.example.vault.deprecated;
 
 import com.skyflow.Skyflow;
 import com.skyflow.config.Credentials;
@@ -13,12 +13,13 @@ import com.skyflow.vault.data.UpdateResponse;
 import java.util.HashMap;
 
 /**
- * This example demonstrates how to use the Skyflow SDK to securely update records in a vault.
- * It includes:
- * 1. Setting up vault configurations.
- * 2. Creating a Skyflow client.
- * 3. Updating records with and without TokenMode.
+ * @deprecated Pre-v2.1 pattern. The "skyflow_id" key in the data map is deprecated.
+ * Use "skyflowId" instead (see {@link com.example.vault.UpdateExample}).
+ *
+ * This example is retained for reference during the deprecation window.
+ * "skyflow_id" still works but emits a runtime warning and will be removed in a future release.
  */
+@Deprecated
 public class UpdateExample {
     public static void main(String[] args) throws SkyflowException {
         // Step 1: Set up credentials for the first vault configuration
@@ -44,9 +45,10 @@ public class UpdateExample {
                 .build();
 
         // Step 5: Update records with TokenMode enabled
+        // DEPRECATED: use "skyflowId" key instead of "skyflow_id"
         try {
             HashMap<String, Object> data1 = new HashMap<>();
-            data1.put("skyflowId", "<YOUR_SKYFLOW_ID>"); // Replace with the Skyflow ID of the record
+            data1.put("skyflow_id", "<YOUR_SKYFLOW_ID>"); // @deprecated — use "skyflowId"
             data1.put("<COLUMN_NAME_1>", "<COLUMN_VALUE_1>"); // Replace with column name and value to update
             data1.put("<COLUMN_NAME_2>", "<COLUMN_VALUE_2>"); // Replace with another column name and value
 
@@ -69,9 +71,10 @@ public class UpdateExample {
         }
 
         // Step 6: Update records with TokenMode disabled
+        // DEPRECATED: use "skyflowId" key instead of "skyflow_id"
         try {
             HashMap<String, Object> data2 = new HashMap<>();
-            data2.put("skyflowId", "<YOUR_SKYFLOW_ID>"); // Replace with the Skyflow ID of the record
+            data2.put("skyflow_id", "<YOUR_SKYFLOW_ID>"); // @deprecated — use "skyflowId"
             data2.put("<COLUMN_NAME_1>", "<COLUMN_VALUE_1>"); // Replace with column name and value to update
             data2.put("<COLUMN_NAME_2>", "<COLUMN_VALUE_2>"); // Replace with another column name and value
 

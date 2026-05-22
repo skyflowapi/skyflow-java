@@ -103,7 +103,12 @@ public final class VaultController extends VaultClient {
         if (records != null) {
             for (JsonElement recordElement : records) {
                 JsonObject recordObject = recordElement.getAsJsonObject();
-                insertRecord.put("skyflowId", recordObject.get("skyflow_id").getAsString());
+                if (recordObject.has("skyflowId")) {
+                    insertRecord.put("skyflowId", recordObject.get("skyflowId").getAsString());
+                } else if (recordObject.has("skyflow_id")) {
+                    insertRecord.put("skyflowId", recordObject.get("skyflow_id").getAsString());
+                    LogUtil.printWarningLog(InfoLogs.DEPRECATED_SKYFLOW_ID_KEY.getLog());
+                }
                 JsonElement tokensElement = recordObject.get("tokens");
                 if (tokensElement != null) {
                     insertRecord.putAll(tokensElement.getAsJsonObject().asMap());

@@ -74,9 +74,16 @@ public final class Skyflow {
         return this;
     }
 
-    public Skyflow updateLogLevel(LogLevel logLevel) {
+    public Skyflow setLogLevel(LogLevel logLevel) {
         this.builder.setLogLevel(logLevel);
         return this;
+    }
+
+    /** @deprecated Use {@link #setLogLevel(LogLevel)} instead. */
+    @Deprecated(since = "2.1", forRemoval = true)
+    public Skyflow updateLogLevel(LogLevel logLevel) {
+        LogUtil.printWarningLog(InfoLogs.DEPRECATED_UPDATE_LOG_LEVEL.getLog());
+        return setLogLevel(logLevel);
     }
 
     public LogLevel getLogLevel() {

@@ -214,4 +214,74 @@ public class DeidentifyTextTests {
             Assert.fail(INVALID_EXCEPTION_THROWN);
         }
     }
+
+    @Test
+    public void testDeidentifyResponseGetEntitiesAndToString() {
+        TextIndex ti = new TextIndex(0, 4);
+        TextIndex pi = new TextIndex(5, 9);
+        java.util.Map<String, Double> scores = new java.util.HashMap<>();
+        scores.put("confidence", 0.95);
+        EntityInfo ei = new EntityInfo("tok1", "John", ti, pi, "NAME", scores);
+
+        List<EntityInfo> entities = new ArrayList<>();
+        entities.add(ei);
+
+        DeidentifyTextResponse response = new DeidentifyTextResponse(text, entities, 1, 10);
+        Assert.assertEquals(entities, response.getEntities());
+        String json = response.toString();
+        Assert.assertNotNull(json);
+        Assert.assertTrue(json.contains(text));
+    }
+
+    @Test
+    public void testTextIndex() {
+        TextIndex ti = new TextIndex(3, 7);
+        Assert.assertEquals(3, ti.getStart());
+        Assert.assertEquals(7, ti.getEnd());
+        String json = ti.toString();
+        Assert.assertNotNull(json);
+        Assert.assertTrue(json.contains("3"));
+    }
+
+    @Test
+    public void testEntityInfoGetters() {
+        TextIndex ti = new TextIndex(0, 4);
+        TextIndex pi = new TextIndex(5, 9);
+        java.util.Map<String, Double> scores = new java.util.HashMap<>();
+        scores.put("confidence", 0.9);
+        EntityInfo ei = new EntityInfo("tok1", "Alice", ti, pi, "NAME", scores);
+        Assert.assertEquals("tok1", ei.getToken());
+        Assert.assertEquals("Alice", ei.getValue());
+        Assert.assertEquals(ti, ei.getTextIndex());
+        Assert.assertEquals(pi, ei.getProcessedIndex());
+        Assert.assertEquals("NAME", ei.getEntity());
+        Assert.assertEquals(scores, ei.getScores());
+    }
+
+    @Test
+    public void testTokenFormatGetters() {
+        TokenFormat tf = TokenFormat.builder()
+                .vaultToken(detectEntities)
+                .entityUniqueCounter(detectEntities)
+                .entityOnly(detectEntities)
+                .build();
+        Assert.assertEquals(detectEntities, tf.getVaultToken());
+        Assert.assertEquals(detectEntities, tf.getEntityUniqueCounter());
+        Assert.assertEquals(detectEntities, tf.getEntityOnly());
+        Assert.assertNotNull(tf.getDefault());
+    }
+
+    @Test
+    public void testTokenFormatDefaultTypeNull() {
+        TokenFormat tf = TokenFormat.builder().defaultType(null).build();
+        Assert.assertEquals(com.skyflow.enums.TokenType.ENTITY_UNIQUE_COUNTER, tf.getDefault());
+    }
+
+    @Test
+    public void testTokenFormatDefaultTypeNonNull() {
+        TokenFormat tf = TokenFormat.builder()
+                .defaultType(com.skyflow.enums.TokenType.VAULT_TOKEN)
+                .build();
+        Assert.assertEquals(com.skyflow.enums.TokenType.VAULT_TOKEN, tf.getDefault());
+    }
 }

@@ -419,4 +419,15 @@ public class InsertTests {
         }
     }
 
+    @Test
+    public void testInsertRequestBuilderContinueOnErrorFalse() {
+        values.add(valueMap);
+        InsertRequest request = InsertRequest.builder()
+                .table(table)
+                .values(values)
+                .continueOnError(false)
+                .build();
+        Assert.assertFalse(request.getContinueOnError());
+    }
+
 }

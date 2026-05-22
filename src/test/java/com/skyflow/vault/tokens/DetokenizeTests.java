@@ -161,6 +161,66 @@ public class DetokenizeTests {
     }
 
     @Test
+    public void testDetokenizeDataNullRedactionTypeDefaultsToDefault() {
+        DetokenizeData data = new DetokenizeData("tok-null-redaction", null);
+        Assert.assertEquals(RedactionType.DEFAULT, data.getRedactionType());
+        Assert.assertEquals("tok-null-redaction", data.getToken());
+    }
+
+    @Test
+    public void testDetokenizeRecordResponseNullValue() {
+        V1DetokenizeRecordResponse record = V1DetokenizeRecordResponse.builder()
+                .token("tok-null-val")
+                .build();
+        DetokenizeRecordResponse response = new DetokenizeRecordResponse(record);
+        Assert.assertNull(response.getValue());
+        Assert.assertNull(response.getType());
+        Assert.assertNull(response.getRequestId());
+    }
+
+    @Test
+    public void testDetokenizeRecordResponseNoneValueTypeBecomesNull() {
+        V1DetokenizeRecordResponse record = V1DetokenizeRecordResponse.builder()
+                .token("tok-none-type")
+                .value("some-value")
+                .valueType(DetokenizeRecordResponseValueType.NONE)
+                .build();
+        DetokenizeRecordResponse response = new DetokenizeRecordResponse(record);
+        Assert.assertNull("NONE valueType should be normalised to null", response.getType());
+        Assert.assertEquals("some-value", response.getValue());
+    }
+
+    @Test
+    public void testDetokenizeRequestBuilderContinueOnErrorTrue() {
+        try {
+            ArrayList<DetokenizeData> data = new ArrayList<>();
+            data.add(new DetokenizeData("tok-true", RedactionType.PLAIN_TEXT));
+            DetokenizeRequest request = DetokenizeRequest.builder()
+                    .detokenizeData(data)
+                    .continueOnError(true)
+                    .build();
+            Assert.assertTrue(request.getContinueOnError());
+        } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testDetokenizeRequestBuilderDownloadUrlNull() {
+        try {
+            ArrayList<DetokenizeData> data = new ArrayList<>();
+            data.add(new DetokenizeData("tok-dl-null", RedactionType.DEFAULT));
+            DetokenizeRequest request = DetokenizeRequest.builder()
+                    .detokenizeData(data)
+                    .downloadUrl(null)
+                    .build();
+            Assert.assertNull(request.getDownloadUrl());
+        } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
     public void testDetokenizeResponse() {
         try {
             V1DetokenizeRecordResponse record1 = V1DetokenizeRecordResponse.builder()
