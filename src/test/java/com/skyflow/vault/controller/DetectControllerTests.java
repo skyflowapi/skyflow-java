@@ -4,6 +4,7 @@ import com.skyflow.Skyflow;
 import com.skyflow.VaultClient;
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
+import com.skyflow.enums.DetectEntities;
 import com.skyflow.enums.Env;
 import com.skyflow.enums.LogLevel;
 import com.skyflow.errors.ErrorMessage;
@@ -44,6 +45,7 @@ import java.util.Collections;
 import com.skyflow.generated.rest.core.RequestOptions;
 import com.skyflow.vault.detect.DeidentifyFileRequest;
 import com.skyflow.vault.detect.FileInput;
+import com.skyflow.vault.detect.TokenFormat;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -404,6 +406,11 @@ public class DetectControllerTests {
 
     private DeidentifyFileResponse runDeidentifyFileForExtension(
             String extension, FilesClient mockFilesClient) throws Exception {
+        return runDeidentifyFileForExtension(extension, mockFilesClient, null);
+    }
+
+    private DeidentifyFileResponse runDeidentifyFileForExtension(
+            String extension, FilesClient mockFilesClient, TokenFormat tokenFormat) throws Exception {
         File tmpFile = File.createTempFile("test-detect", "." + extension);
         tmpFile.deleteOnExit();
         Files.write(tmpFile.toPath(), ("content for " + extension).getBytes());
@@ -414,10 +421,12 @@ public class DetectControllerTests {
                 .thenReturn(buildSuccessDetectRunsResponse());
 
         DetectController controller = createDetectControllerWithMock(mockApiClient);
-        DeidentifyFileRequest request = DeidentifyFileRequest.builder()
-                .file(FileInput.builder().file(tmpFile).build())
-                .build();
-        return controller.deidentifyFile(request);
+        DeidentifyFileRequest.DeidentifyFileRequestBuilder builder = DeidentifyFileRequest.builder()
+                .file(FileInput.builder().file(tmpFile).build());
+        if (tokenFormat != null) {
+            builder.tokenFormat(tokenFormat);
+        }
+        return controller.deidentifyFile(builder.build());
     }
 
     @Test
@@ -878,5 +887,61 @@ public class DetectControllerTests {
         } catch (SkyflowException e) {
             Assert.fail(INVALID_EXCEPTION_THROWN + ": " + e.getMessage());
         }
+    }
+
+    // ─── entityUniqueCounter branches in VaultClient request builders ─────────
+
+    private static TokenFormat buildEntityUniqueCounterTokenFormat() {
+        return TokenFormat.builder()
+                .entityUniqueCounter(java.util.Collections.singletonList(DetectEntities.EMAIL_ADDRESS))
+                .build();
+    }
+
+    @Test
+    public void testDeidentifyFile_txt_withEntityUniqueCounter() throws Exception {
+        FilesClient mockFilesClient = Mockito.mock(FilesClient.class);
+        when(mockFilesClient.deidentifyText(any())).thenReturn(
+                com.skyflow.generated.rest.types.DeidentifyFileResponse.builder().runId("run-euc-txt").build());
+        Assert.assertNotNull(runDeidentifyFileForExtension("txt", mockFilesClient, buildEntityUniqueCounterTokenFormat()));
+    }
+
+    @Test
+    public void testDeidentifyFile_mp3_withEntityUniqueCounter() throws Exception {
+        FilesClient mockFilesClient = Mockito.mock(FilesClient.class);
+        when(mockFilesClient.deidentifyAudio(any())).thenReturn(
+                com.skyflow.generated.rest.types.DeidentifyFileResponse.builder().runId("run-euc-mp3").build());
+        Assert.assertNotNull(runDeidentifyFileForExtension("mp3", mockFilesClient, buildEntityUniqueCounterTokenFormat()));
+    }
+
+    @Test
+    public void testDeidentifyFile_pdf_withEntityUniqueCounter() throws Exception {
+        FilesClient mockFilesClient = Mockito.mock(FilesClient.class);
+        when(mockFilesClient.deidentifyPdf(any())).thenReturn(
+                com.skyflow.generated.rest.types.DeidentifyFileResponse.builder().runId("run-euc-pdf").build());
+        Assert.assertNotNull(runDeidentifyFileForExtension("pdf", mockFilesClient, buildEntityUniqueCounterTokenFormat()));
+    }
+
+    @Test
+    public void testDeidentifyFile_jpg_withEntityUniqueCounter() throws Exception {
+        FilesClient mockFilesClient = Mockito.mock(FilesClient.class);
+        when(mockFilesClient.deidentifyImage(any())).thenReturn(
+                com.skyflow.generated.rest.types.DeidentifyFileResponse.builder().runId("run-euc-jpg").build());
+        Assert.assertNotNull(runDeidentifyFileForExtension("jpg", mockFilesClient, buildEntityUniqueCounterTokenFormat()));
+    }
+
+    @Test
+    public void testDeidentifyFile_csv_withEntityUniqueCounter() throws Exception {
+        FilesClient mockFilesClient = Mockito.mock(FilesClient.class);
+        when(mockFilesClient.deidentifySpreadsheet(any())).thenReturn(
+                com.skyflow.generated.rest.types.DeidentifyFileResponse.builder().runId("run-euc-csv").build());
+        Assert.assertNotNull(runDeidentifyFileForExtension("csv", mockFilesClient, buildEntityUniqueCounterTokenFormat()));
+    }
+
+    @Test
+    public void testDeidentifyFile_dcm_withEntityUniqueCounter() throws Exception {
+        FilesClient mockFilesClient = Mockito.mock(FilesClient.class);
+        when(mockFilesClient.deidentifyFile(any())).thenReturn(
+                com.skyflow.generated.rest.types.DeidentifyFileResponse.builder().runId("run-euc-dcm").build());
+        Assert.assertNotNull(runDeidentifyFileForExtension("dcm", mockFilesClient, buildEntityUniqueCounterTokenFormat()));
     }
 }
