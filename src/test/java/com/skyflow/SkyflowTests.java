@@ -685,4 +685,163 @@ public class SkyflowTests {
             Assert.assertEquals(ErrorMessage.VaultIdNotInConfigList.getMessage(), e.getMessage());
         }
     }
+
+    @Test
+    public void testUpdateVaultConfig_withNewClusterIdAndCredentials_updatesAllFields() {
+        try {
+            VaultConfig config = new VaultConfig();
+            config.setVaultId(vaultID);
+            config.setClusterId(clusterID);
+            config.setEnv(Env.DEV);
+            Credentials creds = new Credentials();
+            creds.setToken(token);
+            config.setCredentials(creds);
+            Skyflow skyflowClient = Skyflow.builder().addVaultConfig(config).build();
+
+            // Update with a new non-null clusterId and new non-null credentials — covers
+            // the non-null (true) branches for all three ternaries in findAndUpdateVaultConfig
+            Credentials newCreds = new Credentials();
+            newCreds.setToken("updated-token-value");
+            VaultConfig update = new VaultConfig();
+            update.setVaultId(vaultID);
+            update.setClusterId(newClusterID);
+            update.setEnv(Env.PROD);
+            update.setCredentials(newCreds);
+            skyflowClient.updateVaultConfig(update);
+            Assert.assertEquals(newClusterID, skyflowClient.getVaultConfig(vaultID).getClusterId());
+            Assert.assertEquals(Env.PROD, skyflowClient.getVaultConfig(vaultID).getEnv());
+            Assert.assertEquals("updated-token-value", skyflowClient.getVaultConfig(vaultID).getCredentials().getToken());
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testUpdateConnectionConfig_withNewCredentials_updatesCredentials() {
+        try {
+            ConnectionConfig config = new ConnectionConfig();
+            config.setConnectionId(connectionID);
+            config.setConnectionUrl(connectionURL);
+            Credentials oldCreds = new Credentials();
+            oldCreds.setToken(token);
+            config.setCredentials(oldCreds);
+            Skyflow skyflowClient = Skyflow.builder().addConnectionConfig(config).build();
+
+            // Update with new non-null credentials and new non-null connectionUrl — covers
+            // the non-null (true) branches for both ternaries in findAndUpdateConnectionConfig
+            Credentials newCreds = new Credentials();
+            newCreds.setToken("new-token-value");
+            ConnectionConfig update = new ConnectionConfig();
+            update.setConnectionId(connectionID);
+            update.setConnectionUrl(newConnectionURL);
+            update.setCredentials(newCreds);
+            skyflowClient.updateConnectionConfig(update);
+            Assert.assertEquals("new-token-value", skyflowClient.getConnectionConfig(connectionID).getCredentials().getToken());
+            Assert.assertEquals(newConnectionURL, skyflowClient.getConnectionConfig(connectionID).getConnectionUrl());
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testUpdateVaultConfig_withNullEnv_fallsBackToPreviousEnv() {
+        // VaultConfig's constructor defaults env=PROD so getEnv() is never null via normal API.
+        // Use an anonymous subclass to make getEnv() return null, exercising the false branch
+        // of `vaultConfig.getEnv() != null` in findAndUpdateVaultConfig.
+        try {
+            Credentials creds = new Credentials();
+            creds.setToken(token);
+            VaultConfig initial = new VaultConfig();
+            initial.setVaultId(vaultID);
+            initial.setClusterId(clusterID);
+            initial.setEnv(Env.SANDBOX);
+            initial.setCredentials(creds);
+            Skyflow skyflowClient = Skyflow.builder().addVaultConfig(initial).build();
+
+            VaultConfig updateWithNullEnv = new VaultConfig() {
+                @Override public Env getEnv() { return null; }
+            };
+            updateWithNullEnv.setVaultId(vaultID);
+            updateWithNullEnv.setClusterId(clusterID);
+            updateWithNullEnv.setCredentials(creds);
+
+            skyflowClient.updateVaultConfig(updateWithNullEnv);
+            // env falls back to previous (SANDBOX)
+            Assert.assertEquals(Env.SANDBOX, skyflowClient.getVaultConfig(vaultID).getEnv());
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testFindAndUpdateVaultConfig_withNullClusterId_fallsBackToPreviousClusterId() {
+        // Validation enforces non-null clusterId, so the false branch of
+        // `vaultConfig.getClusterId() != null` in findAndUpdateVaultConfig is unreachable
+        // via the normal flow. Call the private method directly via reflection.
+        try {
+            Credentials creds = new Credentials();
+            creds.setToken(token);
+            VaultConfig initial = new VaultConfig();
+            initial.setVaultId(vaultID);
+            initial.setClusterId(clusterID);
+            initial.setEnv(Env.DEV);
+            initial.setCredentials(creds);
+            Skyflow skyflowClient = Skyflow.builder().addVaultConfig(initial).build();
+
+            java.lang.reflect.Field builderField = Skyflow.class.getDeclaredField("builder");
+            builderField.setAccessible(true);
+            Object builder = builderField.get(skyflowClient);
+
+            VaultConfig nullClusterConfig = new VaultConfig();
+            nullClusterConfig.setVaultId(vaultID);
+            // Override clusterId field to null via reflection (setter enforces non-null)
+            java.lang.reflect.Field clusterIdField = VaultConfig.class.getDeclaredField("clusterId");
+            clusterIdField.setAccessible(true);
+            clusterIdField.set(nullClusterConfig, null);
+
+            java.lang.reflect.Method method = builder.getClass().getDeclaredMethod(
+                    "findAndUpdateVaultConfig", VaultConfig.class);
+            method.setAccessible(true);
+            VaultConfig result = (VaultConfig) method.invoke(builder, nullClusterConfig);
+
+            Assert.assertEquals(clusterID, result.getClusterId());
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        } catch (Exception e) {
+            Assert.fail("Reflection failed: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void testFindAndUpdateConnectionConfig_withNullConnectionUrl_fallsBackToPreviousUrl() {
+        // `findAndUpdateConnectionConfig` has a ternary for connectionUrl that falls back
+        // to previousConfig.getConnectionUrl() when the incoming url is null.
+        // Since validation enforces non-null url, we call the private method directly
+        // via reflection to cover the false branch.
+        try {
+            ConnectionConfig initial = new ConnectionConfig();
+            initial.setConnectionId(connectionID);
+            initial.setConnectionUrl(connectionURL);
+            Skyflow skyflowClient = Skyflow.builder().addConnectionConfig(initial).build();
+
+            java.lang.reflect.Field builderField = Skyflow.class.getDeclaredField("builder");
+            builderField.setAccessible(true);
+            Object builder = builderField.get(skyflowClient);
+
+            ConnectionConfig nullUrlConfig = new ConnectionConfig();
+            nullUrlConfig.setConnectionId(connectionID);
+            // connectionUrl not set → remains null
+
+            java.lang.reflect.Method method = builder.getClass().getDeclaredMethod(
+                    "findAndUpdateConnectionConfig", ConnectionConfig.class);
+            method.setAccessible(true);
+            ConnectionConfig result = (ConnectionConfig) method.invoke(builder, nullUrlConfig);
+
+            Assert.assertEquals(connectionURL, result.getConnectionUrl());
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        } catch (Exception e) {
+            Assert.fail("Reflection failed: " + e.getMessage());
+        }
+    }
 }
