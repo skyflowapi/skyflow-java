@@ -35,9 +35,15 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
 
+import java.io.File;
 import java.lang.reflect.Field;
+import java.nio.file.Files;
 import java.util.Base64;
 import java.util.Collections;
+
+import com.skyflow.generated.rest.core.RequestOptions;
+import com.skyflow.vault.detect.DeidentifyFileRequest;
+import com.skyflow.vault.detect.FileInput;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -385,6 +391,35 @@ public class DetectControllerTests {
         }
     }
 
+    // ─── helpers ─────────────────────────────────────────────────────────────
+
+    private static DetectRunsResponse buildSuccessDetectRunsResponse() {
+        return DetectRunsResponse.builder()
+                .status(DetectRunsResponseStatus.SUCCESS)
+                .outputType(DetectRunsResponseOutputType.BASE_64)
+                .size(1.0f)
+                .duration(0.5f)
+                .build();
+    }
+
+    private DeidentifyFileResponse runDeidentifyFileForExtension(
+            String extension, FilesClient mockFilesClient) throws Exception {
+        File tmpFile = File.createTempFile("test-detect", "." + extension);
+        tmpFile.deleteOnExit();
+        Files.write(tmpFile.toPath(), ("content for " + extension).getBytes());
+
+        ApiClient mockApiClient = Mockito.mock(ApiClient.class);
+        when(mockApiClient.files()).thenReturn(mockFilesClient);
+        when(mockFilesClient.getRun(anyString(), any(GetRunRequest.class), any(RequestOptions.class)))
+                .thenReturn(buildSuccessDetectRunsResponse());
+
+        DetectController controller = createDetectControllerWithMock(mockApiClient);
+        DeidentifyFileRequest request = DeidentifyFileRequest.builder()
+                .file(FileInput.builder().file(tmpFile).build())
+                .build();
+        return controller.deidentifyFile(request);
+    }
+
     @Test
     public void testGetDetectRunApiError500() throws Exception {
         FilesClient mockFilesClient = Mockito.mock(FilesClient.class);
@@ -404,6 +439,274 @@ public class DetectControllerTests {
         } catch (SkyflowException e) {
             Assert.assertEquals(expectedStatusCode, e.getHttpCode());
         }
+    }
+
+    // ─── deidentifyFile — validation ──────────────────────────────────────────
+
+    @Test
+    public void testDeidentifyFile_nullRequest() {
+        try {
+            skyflowClient = Skyflow.builder().setLogLevel(LogLevel.DEBUG).addVaultConfig(vaultConfig).build();
+            skyflowClient.detect(vaultID).deidentifyFile(null);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.EmptyRequestBody.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testDeidentifyFile_noFileOrPathProvided() {
+        try {
+            skyflowClient = Skyflow.builder().setLogLevel(LogLevel.DEBUG).addVaultConfig(vaultConfig).build();
+            DeidentifyFileRequest request = DeidentifyFileRequest.builder()
+                    .file(FileInput.builder().build())
+                    .build();
+            skyflowClient.detect(vaultID).deidentifyFile(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.EmptyFileAndFilePathInDeIdentifyFile.getMessage(), e.getMessage());
+        }
+    }
+
+    // ─── deidentifyFile — happy path ──────────────────────────────────────────
+
+    @Test
+    public void testDeidentifyFile_successWithTxtFileObject() throws Exception {
+        File tmpFile = File.createTempFile("test-detect", ".txt");
+        tmpFile.deleteOnExit();
+        Files.write(tmpFile.toPath(), "hello world".getBytes());
+
+        FilesClient mockFilesClient = Mockito.mock(FilesClient.class);
+        ApiClient mockApiClient = Mockito.mock(ApiClient.class);
+        when(mockApiClient.files()).thenReturn(mockFilesClient);
+        when(mockFilesClient.deidentifyText(any())).thenReturn(
+                com.skyflow.generated.rest.types.DeidentifyFileResponse.builder().runId("run-txt-001").build());
+        when(mockFilesClient.getRun(anyString(), any(GetRunRequest.class), any(RequestOptions.class)))
+                .thenReturn(buildSuccessDetectRunsResponse());
+
+        DetectController controller = createDetectControllerWithMock(mockApiClient);
+        DeidentifyFileRequest request = DeidentifyFileRequest.builder()
+                .file(FileInput.builder().file(tmpFile).build()).build();
+
+        DeidentifyFileResponse response = controller.deidentifyFile(request);
+        Assert.assertNotNull(response);
+    }
+
+    @Test
+    public void testDeidentifyFile_successWithFilePath() throws Exception {
+        File tmpFile = File.createTempFile("test-detect-path", ".txt");
+        tmpFile.deleteOnExit();
+        Files.write(tmpFile.toPath(), "content".getBytes());
+
+        FilesClient mockFilesClient = Mockito.mock(FilesClient.class);
+        ApiClient mockApiClient = Mockito.mock(ApiClient.class);
+        when(mockApiClient.files()).thenReturn(mockFilesClient);
+        when(mockFilesClient.deidentifyText(any())).thenReturn(
+                com.skyflow.generated.rest.types.DeidentifyFileResponse.builder().runId("run-path-001").build());
+        when(mockFilesClient.getRun(anyString(), any(GetRunRequest.class), any(RequestOptions.class)))
+                .thenReturn(buildSuccessDetectRunsResponse());
+
+        DetectController controller = createDetectControllerWithMock(mockApiClient);
+        DeidentifyFileRequest request = DeidentifyFileRequest.builder()
+                .file(FileInput.builder().filePath(tmpFile.getAbsolutePath()).build()).build();
+
+        DeidentifyFileResponse response = controller.deidentifyFile(request);
+        Assert.assertNotNull(response);
+    }
+
+    @Test
+    public void testDeidentifyFile_successWithOutputFile() throws Exception {
+        File tmpFile = File.createTempFile("test-detect-out", ".txt");
+        tmpFile.deleteOnExit();
+        Files.write(tmpFile.toPath(), "content".getBytes());
+
+        String b64 = Base64.getEncoder().encodeToString("processed content".getBytes());
+        DeidentifiedFileOutput outputItem = DeidentifiedFileOutput.builder()
+                .processedFile(b64)
+                .processedFileExtension(DeidentifiedFileOutputProcessedFileExtension.TXT)
+                .build();
+        DetectRunsResponse successWithOutput = DetectRunsResponse.builder()
+                .status(DetectRunsResponseStatus.SUCCESS)
+                .outputType(DetectRunsResponseOutputType.BASE_64)
+                .size(1.0f).duration(0.5f)
+                .output(Collections.singletonList(outputItem))
+                .build();
+
+        FilesClient mockFilesClient = Mockito.mock(FilesClient.class);
+        ApiClient mockApiClient = Mockito.mock(ApiClient.class);
+        when(mockApiClient.files()).thenReturn(mockFilesClient);
+        when(mockFilesClient.deidentifyText(any())).thenReturn(
+                com.skyflow.generated.rest.types.DeidentifyFileResponse.builder().runId("run-out-001").build());
+        when(mockFilesClient.getRun(anyString(), any(GetRunRequest.class), any(RequestOptions.class)))
+                .thenReturn(successWithOutput);
+
+        DetectController controller = createDetectControllerWithMock(mockApiClient);
+        DeidentifyFileRequest request = DeidentifyFileRequest.builder()
+                .file(FileInput.builder().file(tmpFile).build())
+                .outputDirectory(System.getProperty("java.io.tmpdir"))
+                .build();
+
+        DeidentifyFileResponse response = controller.deidentifyFile(request);
+        Assert.assertNotNull(response);
+    }
+
+    // ─── deidentifyFile — IN_PROGRESS timeout ─────────────────────────────────
+
+    @Test
+    public void testDeidentifyFile_inProgressTimeout() throws Exception {
+        File tmpFile = File.createTempFile("test-detect-prog", ".txt");
+        tmpFile.deleteOnExit();
+        Files.write(tmpFile.toPath(), "content".getBytes());
+
+        FilesClient mockFilesClient = Mockito.mock(FilesClient.class);
+        ApiClient mockApiClient = Mockito.mock(ApiClient.class);
+        when(mockApiClient.files()).thenReturn(mockFilesClient);
+        when(mockFilesClient.deidentifyText(any())).thenReturn(
+                com.skyflow.generated.rest.types.DeidentifyFileResponse.builder().runId("run-prog-001").build());
+        when(mockFilesClient.getRun(anyString(), any(GetRunRequest.class), any(RequestOptions.class)))
+                .thenReturn(DetectRunsResponse.builder().status(DetectRunsResponseStatus.IN_PROGRESS).build());
+
+        DetectController controller = createDetectControllerWithMock(mockApiClient);
+        DeidentifyFileRequest request = DeidentifyFileRequest.builder()
+                .file(FileInput.builder().file(tmpFile).build())
+                .waitTime(1)
+                .build();
+
+        DeidentifyFileResponse response = controller.deidentifyFile(request);
+        Assert.assertNotNull(response);
+        Assert.assertEquals("IN_PROGRESS", response.getStatus());
+    }
+
+    // ─── deidentifyFile — error paths ─────────────────────────────────────────
+
+    @Test
+    public void testDeidentifyFile_nonExistentFilePath() {
+        try {
+            DetectController controller = createDetectControllerWithMock(Mockito.mock(ApiClient.class));
+            DeidentifyFileRequest request = DeidentifyFileRequest.builder()
+                    .file(FileInput.builder().filePath("/nonexistent/path/file.txt").build())
+                    .build();
+            controller.deidentifyFile(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (Exception e) {
+            Assert.assertNotNull(e.getMessage());
+        }
+    }
+
+    @Test
+    public void testDeidentifyFile_processFileApiError() throws Exception {
+        File tmpFile = File.createTempFile("test-detect-err", ".txt");
+        tmpFile.deleteOnExit();
+        Files.write(tmpFile.toPath(), "content".getBytes());
+
+        FilesClient mockFilesClient = Mockito.mock(FilesClient.class);
+        ApiClient mockApiClient = Mockito.mock(ApiClient.class);
+        when(mockApiClient.files()).thenReturn(mockFilesClient);
+        when(mockFilesClient.deidentifyText(any()))
+                .thenThrow(new ApiClientApiException("forbidden", 403, "access denied"));
+
+        DetectController controller = createDetectControllerWithMock(mockApiClient);
+        DeidentifyFileRequest request = DeidentifyFileRequest.builder()
+                .file(FileInput.builder().file(tmpFile).build()).build();
+
+        try {
+            controller.deidentifyFile(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(403, e.getHttpCode());
+        }
+    }
+
+    @Test
+    public void testDeidentifyFile_pollForResultsApiError() throws Exception {
+        File tmpFile = File.createTempFile("test-detect-poll", ".txt");
+        tmpFile.deleteOnExit();
+        Files.write(tmpFile.toPath(), "content".getBytes());
+
+        FilesClient mockFilesClient = Mockito.mock(FilesClient.class);
+        ApiClient mockApiClient = Mockito.mock(ApiClient.class);
+        when(mockApiClient.files()).thenReturn(mockFilesClient);
+        when(mockFilesClient.deidentifyText(any())).thenReturn(
+                com.skyflow.generated.rest.types.DeidentifyFileResponse.builder().runId("run-poll-err").build());
+        when(mockFilesClient.getRun(anyString(), any(GetRunRequest.class), any(RequestOptions.class)))
+                .thenThrow(new ApiClientApiException("unavailable", 503, "service unavailable"));
+
+        DetectController controller = createDetectControllerWithMock(mockApiClient);
+        DeidentifyFileRequest request = DeidentifyFileRequest.builder()
+                .file(FileInput.builder().file(tmpFile).build()).build();
+
+        try {
+            controller.deidentifyFile(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.PollingForResultsFailed.getMessage(), e.getMessage());
+        }
+    }
+
+    // ─── processFileByType — all extensions ───────────────────────────────────
+
+    @Test
+    public void testDeidentifyFile_pdfExtension() throws Exception {
+        FilesClient mockFilesClient = Mockito.mock(FilesClient.class);
+        when(mockFilesClient.deidentifyPdf(any())).thenReturn(
+                com.skyflow.generated.rest.types.DeidentifyFileResponse.builder().runId("run-pdf").build());
+        Assert.assertNotNull(runDeidentifyFileForExtension("pdf", mockFilesClient));
+    }
+
+    @Test
+    public void testDeidentifyFile_mp3Extension() throws Exception {
+        FilesClient mockFilesClient = Mockito.mock(FilesClient.class);
+        when(mockFilesClient.deidentifyAudio(any())).thenReturn(
+                com.skyflow.generated.rest.types.DeidentifyFileResponse.builder().runId("run-mp3").build());
+        Assert.assertNotNull(runDeidentifyFileForExtension("mp3", mockFilesClient));
+    }
+
+    @Test
+    public void testDeidentifyFile_jpgExtension() throws Exception {
+        FilesClient mockFilesClient = Mockito.mock(FilesClient.class);
+        when(mockFilesClient.deidentifyImage(any())).thenReturn(
+                com.skyflow.generated.rest.types.DeidentifyFileResponse.builder().runId("run-jpg").build());
+        Assert.assertNotNull(runDeidentifyFileForExtension("jpg", mockFilesClient));
+    }
+
+    @Test
+    public void testDeidentifyFile_pptExtension() throws Exception {
+        FilesClient mockFilesClient = Mockito.mock(FilesClient.class);
+        when(mockFilesClient.deidentifyPresentation(any())).thenReturn(
+                com.skyflow.generated.rest.types.DeidentifyFileResponse.builder().runId("run-ppt").build());
+        Assert.assertNotNull(runDeidentifyFileForExtension("ppt", mockFilesClient));
+    }
+
+    @Test
+    public void testDeidentifyFile_csvExtension() throws Exception {
+        FilesClient mockFilesClient = Mockito.mock(FilesClient.class);
+        when(mockFilesClient.deidentifySpreadsheet(any())).thenReturn(
+                com.skyflow.generated.rest.types.DeidentifyFileResponse.builder().runId("run-csv").build());
+        Assert.assertNotNull(runDeidentifyFileForExtension("csv", mockFilesClient));
+    }
+
+    @Test
+    public void testDeidentifyFile_docExtension() throws Exception {
+        FilesClient mockFilesClient = Mockito.mock(FilesClient.class);
+        when(mockFilesClient.deidentifyDocument(any())).thenReturn(
+                com.skyflow.generated.rest.types.DeidentifyFileResponse.builder().runId("run-doc").build());
+        Assert.assertNotNull(runDeidentifyFileForExtension("doc", mockFilesClient));
+    }
+
+    @Test
+    public void testDeidentifyFile_jsonExtension() throws Exception {
+        FilesClient mockFilesClient = Mockito.mock(FilesClient.class);
+        when(mockFilesClient.deidentifyStructuredText(any())).thenReturn(
+                com.skyflow.generated.rest.types.DeidentifyFileResponse.builder().runId("run-json").build());
+        Assert.assertNotNull(runDeidentifyFileForExtension("json", mockFilesClient));
+    }
+
+    @Test
+    public void testDeidentifyFile_defaultExtension() throws Exception {
+        FilesClient mockFilesClient = Mockito.mock(FilesClient.class);
+        when(mockFilesClient.deidentifyFile(any())).thenReturn(
+                com.skyflow.generated.rest.types.DeidentifyFileResponse.builder().runId("run-dcm").build());
+        Assert.assertNotNull(runDeidentifyFileForExtension("dcm", mockFilesClient));
     }
 
     // ─── parseDeidentifyFileResponse — wordCharacterCount branch L272-273 ─────

@@ -968,7 +968,7 @@ public class Validations {
         if (request.getWaitTime() != null && request.getWaitTime() <= 0) {
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidWaitTime.getMessage());
         }
-        if(request.getWaitTime() > 64) {
+        if(request.getWaitTime() != null && request.getWaitTime() > 64) {
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.WaitTimeExceedsLimit.getMessage());
         }
     }
