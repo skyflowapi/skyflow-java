@@ -748,6 +748,101 @@ public class DetectControllerTests {
         }
     }
 
+    // ─── deidentifyFile — processedFile present, no outputDirectory (lines 146, 168) ───
+
+    @Test
+    public void testDeidentifyFile_successWithProcessedFileNoOutputDir() throws Exception {
+        File tmpFile = File.createTempFile("test-detect-nodir", ".txt");
+        tmpFile.deleteOnExit();
+        Files.write(tmpFile.toPath(), "content".getBytes());
+
+        String b64 = Base64.getEncoder().encodeToString("processed content".getBytes());
+        DeidentifiedFileOutput outputItem = DeidentifiedFileOutput.builder()
+                .processedFile(b64)
+                .processedFileExtension(DeidentifiedFileOutputProcessedFileExtension.TXT)
+                .build();
+        DetectRunsResponse successWithOutput = DetectRunsResponse.builder()
+                .status(DetectRunsResponseStatus.SUCCESS)
+                .outputType(DetectRunsResponseOutputType.BASE_64)
+                .size(1.0f).duration(0.5f)
+                .output(Collections.singletonList(outputItem))
+                .build();
+
+        FilesClient mockFilesClient = Mockito.mock(FilesClient.class);
+        ApiClient mockApiClient = Mockito.mock(ApiClient.class);
+        when(mockApiClient.files()).thenReturn(mockFilesClient);
+        when(mockFilesClient.deidentifyText(any())).thenReturn(
+                com.skyflow.generated.rest.types.DeidentifyFileResponse.builder().runId("run-nodir-001").build());
+        when(mockFilesClient.getRun(anyString(), any(GetRunRequest.class), any(RequestOptions.class)))
+                .thenReturn(successWithOutput);
+
+        DetectController controller = createDetectControllerWithMock(mockApiClient);
+        // no outputDirectory → file written via new File(outputFileName) (line 146)
+        DeidentifyFileRequest request = DeidentifyFileRequest.builder()
+                .file(FileInput.builder().file(tmpFile).build())
+                .build();
+
+        DeidentifyFileResponse response = controller.deidentifyFile(request);
+        Assert.assertNotNull(response);
+    }
+
+    // ─── pollForResults — IN_PROGRESS retry then SUCCESS (lines 218-229) ─────────
+
+    @Test
+    public void testDeidentifyFile_inProgressThenSuccess() throws Exception {
+        File tmpFile = File.createTempFile("test-detect-retry", ".txt");
+        tmpFile.deleteOnExit();
+        Files.write(tmpFile.toPath(), "content".getBytes());
+
+        FilesClient mockFilesClient = Mockito.mock(FilesClient.class);
+        ApiClient mockApiClient = Mockito.mock(ApiClient.class);
+        when(mockApiClient.files()).thenReturn(mockFilesClient);
+        when(mockFilesClient.deidentifyText(any())).thenReturn(
+                com.skyflow.generated.rest.types.DeidentifyFileResponse.builder().runId("run-retry-001").build());
+        when(mockFilesClient.getRun(anyString(), any(GetRunRequest.class), any(RequestOptions.class)))
+                .thenReturn(DetectRunsResponse.builder().status(DetectRunsResponseStatus.IN_PROGRESS).build())
+                .thenReturn(buildSuccessDetectRunsResponse());
+
+        DetectController controller = createDetectControllerWithMock(mockApiClient);
+        // waitTime=2: first poll IN_PROGRESS → sleeps 1s → second poll SUCCESS
+        DeidentifyFileRequest request = DeidentifyFileRequest.builder()
+                .file(FileInput.builder().file(tmpFile).build())
+                .waitTime(2)
+                .build();
+
+        DeidentifyFileResponse response = controller.deidentifyFile(request);
+        Assert.assertNotNull(response);
+        Assert.assertFalse("IN_PROGRESS".equals(response.getStatus()));
+    }
+
+    // ─── pollForResults — IN_PROGRESS retry (else branch, lines 225-226) ────────
+
+    @Test
+    public void testDeidentifyFile_inProgressElseBranchThenSuccess() throws Exception {
+        File tmpFile = File.createTempFile("test-detect-else", ".txt");
+        tmpFile.deleteOnExit();
+        Files.write(tmpFile.toPath(), "content".getBytes());
+
+        FilesClient mockFilesClient = Mockito.mock(FilesClient.class);
+        ApiClient mockApiClient = Mockito.mock(ApiClient.class);
+        when(mockApiClient.files()).thenReturn(mockFilesClient);
+        when(mockFilesClient.deidentifyText(any())).thenReturn(
+                com.skyflow.generated.rest.types.DeidentifyFileResponse.builder().runId("run-else-001").build());
+        when(mockFilesClient.getRun(anyString(), any(GetRunRequest.class), any(RequestOptions.class)))
+                .thenReturn(DetectRunsResponse.builder().status(DetectRunsResponseStatus.IN_PROGRESS).build())
+                .thenReturn(buildSuccessDetectRunsResponse());
+
+        DetectController controller = createDetectControllerWithMock(mockApiClient);
+        // waitTime=3: currentWaitTime=1, nextWaitTime=2 < 3 → else branch (L225-226), sleep 2s
+        DeidentifyFileRequest request = DeidentifyFileRequest.builder()
+                .file(FileInput.builder().file(tmpFile).build())
+                .waitTime(3)
+                .build();
+
+        DeidentifyFileResponse response = controller.deidentifyFile(request);
+        Assert.assertNotNull(response);
+    }
+
     // ─── parseDeidentifyFileResponse — processedFile present branch L283-291 ──
 
     @Test
