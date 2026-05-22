@@ -14,11 +14,14 @@ import com.skyflow.generated.rest.core.ApiClientApiException;
 import com.skyflow.generated.rest.resources.files.FilesClient;
 import com.skyflow.generated.rest.resources.files.requests.GetRunRequest;
 import com.skyflow.generated.rest.resources.strings.StringsClient;
+import com.skyflow.generated.rest.types.DeidentifiedFileOutput;
+import com.skyflow.generated.rest.types.DeidentifiedFileOutputProcessedFileExtension;
 import com.skyflow.generated.rest.types.DeidentifyStringResponse;
 import com.skyflow.generated.rest.types.DetectRunsResponse;
 import com.skyflow.generated.rest.types.DetectRunsResponseOutputType;
 import com.skyflow.generated.rest.types.DetectRunsResponseStatus;
 import com.skyflow.generated.rest.types.IdentifyResponse;
+import com.skyflow.generated.rest.types.WordCharacterCount;
 import com.skyflow.utils.Constants;
 import com.skyflow.utils.Utils;
 import com.skyflow.vault.detect.DeidentifyTextRequest;
@@ -33,6 +36,8 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 import java.lang.reflect.Field;
+import java.util.Base64;
+import java.util.Collections;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -398,6 +403,82 @@ public class DetectControllerTests {
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(expectedStatusCode, e.getHttpCode());
+        }
+    }
+
+    // ─── parseDeidentifyFileResponse — wordCharacterCount branch L272-273 ─────
+
+    @Test
+    public void testGetDetectRun_withWordCharacterCount() throws Exception {
+        FilesClient mockFilesClient = Mockito.mock(FilesClient.class);
+        ApiClient mockApiClient = Mockito.mock(ApiClient.class);
+        when(mockApiClient.files()).thenReturn(mockFilesClient);
+
+        DeidentifiedFileOutput outputItem = DeidentifiedFileOutput.builder().build();
+        WordCharacterCount wordCharCount = WordCharacterCount.builder()
+                .wordCount(10)
+                .characterCount(55)
+                .build();
+
+        DetectRunsResponse fakeRunsResponse = DetectRunsResponse.builder()
+                .status(DetectRunsResponseStatus.SUCCESS)
+                .outputType(DetectRunsResponseOutputType.BASE_64)
+                .size(5.0f)
+                .duration(0.5f)
+                .output(Collections.singletonList(outputItem))
+                .wordCharacterCount(wordCharCount)
+                .build();
+
+        when(mockFilesClient.getRun(anyString(), any(GetRunRequest.class)))
+                .thenReturn(fakeRunsResponse);
+
+        DetectController controller = createDetectControllerWithMock(mockApiClient);
+        GetDetectRunRequest request = GetDetectRunRequest.builder().runId("run-wc-001").build();
+
+        try {
+            DeidentifyFileResponse response = controller.getDetectRun(request);
+            Assert.assertNotNull(response);
+            Assert.assertEquals(10, (int) response.getWordCount());
+            Assert.assertEquals(55, (int) response.getCharCount());
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN + ": " + e.getMessage());
+        }
+    }
+
+    // ─── parseDeidentifyFileResponse — processedFile present branch L283-291 ──
+
+    @Test
+    public void testGetDetectRun_withProcessedFile() throws Exception {
+        FilesClient mockFilesClient = Mockito.mock(FilesClient.class);
+        ApiClient mockApiClient = Mockito.mock(ApiClient.class);
+        when(mockApiClient.files()).thenReturn(mockFilesClient);
+
+        String base64Content = Base64.getEncoder().encodeToString("test file content".getBytes());
+        DeidentifiedFileOutput outputItem = DeidentifiedFileOutput.builder()
+                .processedFile(base64Content)
+                .processedFileExtension(DeidentifiedFileOutputProcessedFileExtension.TXT)
+                .build();
+
+        DetectRunsResponse fakeRunsResponse = DetectRunsResponse.builder()
+                .status(DetectRunsResponseStatus.SUCCESS)
+                .outputType(DetectRunsResponseOutputType.BASE_64)
+                .size(1.0f)
+                .duration(0.1f)
+                .output(Collections.singletonList(outputItem))
+                .build();
+
+        when(mockFilesClient.getRun(anyString(), any(GetRunRequest.class)))
+                .thenReturn(fakeRunsResponse);
+
+        DetectController controller = createDetectControllerWithMock(mockApiClient);
+        GetDetectRunRequest request = GetDetectRunRequest.builder().runId("run-file-001").build();
+
+        try {
+            DeidentifyFileResponse response = controller.getDetectRun(request);
+            Assert.assertNotNull(response);
+            Assert.assertEquals("run-file-001", response.getRunId());
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN + ": " + e.getMessage());
         }
     }
 }

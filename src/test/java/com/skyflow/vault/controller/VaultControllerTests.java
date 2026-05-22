@@ -6,6 +6,7 @@ import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.Env;
 import com.skyflow.enums.LogLevel;
+import com.skyflow.enums.RedactionType;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.HttpStatus;
@@ -60,6 +61,7 @@ import org.mockito.Mockito;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -956,6 +958,238 @@ public class VaultControllerTests {
         Assert.assertEquals(1, response.getErrors().size());
         Assert.assertEquals("tok-bad", response.getErrors().get(0).getToken());
         Assert.assertEquals("token not found", response.getErrors().get(0).getError());
+    }
+
+    // --- insert (batch) with deprecated skyflow_id key — covers getFormattedBatchInsertRecord L108-110 ---
+
+    @Test
+    public void testInsert_batchItemWithDeprecatedSkyflowId() throws Exception {
+        ApiClient mockApi = Mockito.mock(ApiClient.class);
+        RecordsClient mockRecords = Mockito.mock(RecordsClient.class);
+        RawRecordsClient mockRawRecords = Mockito.mock(RawRecordsClient.class);
+        when(mockApi.records()).thenReturn(mockRecords);
+        when(mockRecords.withRawResponse()).thenReturn(mockRawRecords);
+
+        Map<String, Object> recordEntry = new HashMap<>();
+        recordEntry.put("skyflow_id", "id-deprecated-001");
+
+        Map<String, Object> bodyMap = new HashMap<>();
+        bodyMap.put("records", Collections.singletonList(recordEntry));
+
+        Map<String, Object> responseItem = new HashMap<>();
+        responseItem.put("Body", bodyMap);
+
+        V1BatchOperationResponse batchBody = V1BatchOperationResponse.builder()
+                .responses(Collections.singletonList(responseItem))
+                .build();
+        Response rawResp = buildOkHttpResponse();
+        ApiClientHttpResponse<V1BatchOperationResponse> httpResp = new ApiClientHttpResponse<>(batchBody, rawResp);
+        when(mockRawRecords.recordServiceBatchOperation(anyString(), any(), any())).thenReturn(httpResp);
+
+        VaultController controller = createControllerWithMock(mockApi);
+
+        ArrayList<HashMap<String, Object>> values = new ArrayList<>();
+        HashMap<String, Object> row = new HashMap<>();
+        row.put("card_number", "4111111111111111");
+        values.add(row);
+        InsertRequest request = InsertRequest.builder()
+                .table("test_table").values(values).continueOnError(true).build();
+
+        InsertResponse response = controller.insert(request);
+        Assert.assertNotNull(INVALID_EXCEPTION_THROWN, response);
+        Assert.assertNotNull("insertedFields should not be null", response.getInsertedFields());
+        Assert.assertEquals("id-deprecated-001", response.getInsertedFields().get(0).get("skyflowId"));
+    }
+
+    // --- insert (batch) mixed result — covers error branch L119-121, L212-214, and L243 ---
+
+    @Test
+    public void testInsert_batchMixedResult() throws Exception {
+        ApiClient mockApi = Mockito.mock(ApiClient.class);
+        RecordsClient mockRecords = Mockito.mock(RecordsClient.class);
+        RawRecordsClient mockRawRecords = Mockito.mock(RawRecordsClient.class);
+        when(mockApi.records()).thenReturn(mockRecords);
+        when(mockRecords.withRawResponse()).thenReturn(mockRawRecords);
+
+        Map<String, Object> successRecord = new HashMap<>();
+        successRecord.put("skyflowId", "id-success-001");
+        Map<String, Object> successBody = new HashMap<>();
+        successBody.put("records", Collections.singletonList(successRecord));
+        Map<String, Object> successItem = new HashMap<>();
+        successItem.put("Body", successBody);
+
+        Map<String, Object> errorBody = new HashMap<>();
+        errorBody.put("error", "validation failed for record 2");
+        Map<String, Object> errorItem = new HashMap<>();
+        errorItem.put("Body", errorBody);
+
+        V1BatchOperationResponse batchBody = V1BatchOperationResponse.builder()
+                .responses(Arrays.asList(successItem, errorItem))
+                .build();
+        Response rawResp = buildOkHttpResponse();
+        ApiClientHttpResponse<V1BatchOperationResponse> httpResp = new ApiClientHttpResponse<>(batchBody, rawResp);
+        when(mockRawRecords.recordServiceBatchOperation(anyString(), any(), any())).thenReturn(httpResp);
+
+        VaultController controller = createControllerWithMock(mockApi);
+
+        ArrayList<HashMap<String, Object>> values = new ArrayList<>();
+        HashMap<String, Object> row1 = new HashMap<>();
+        row1.put("card_number", "4111111111111111");
+        values.add(row1);
+        HashMap<String, Object> row2 = new HashMap<>();
+        row2.put("card_number", "invalid-card");
+        values.add(row2);
+        InsertRequest request = InsertRequest.builder()
+                .table("test_table").values(values).continueOnError(true).build();
+
+        InsertResponse response = controller.insert(request);
+        Assert.assertNotNull(INVALID_EXCEPTION_THROWN, response);
+        Assert.assertNotNull("insertedFields should not be null", response.getInsertedFields());
+        Assert.assertNotNull("errorFields should not be null", response.getErrors());
+        Assert.assertEquals(1, response.getInsertedFields().size());
+        Assert.assertEquals(1, response.getErrors().size());
+    }
+
+    // --- insert (batch) all errors — covers L238 errorFields branch ---
+
+    @Test
+    public void testInsert_batchAllErrors() throws Exception {
+        ApiClient mockApi = Mockito.mock(ApiClient.class);
+        RecordsClient mockRecords = Mockito.mock(RecordsClient.class);
+        RawRecordsClient mockRawRecords = Mockito.mock(RawRecordsClient.class);
+        when(mockApi.records()).thenReturn(mockRecords);
+        when(mockRecords.withRawResponse()).thenReturn(mockRawRecords);
+
+        Map<String, Object> errorBody = new HashMap<>();
+        errorBody.put("error", "invalid card data");
+        Map<String, Object> errorItem = new HashMap<>();
+        errorItem.put("Body", errorBody);
+
+        V1BatchOperationResponse batchBody = V1BatchOperationResponse.builder()
+                .responses(Collections.singletonList(errorItem))
+                .build();
+        Response rawResp = buildOkHttpResponse();
+        ApiClientHttpResponse<V1BatchOperationResponse> httpResp = new ApiClientHttpResponse<>(batchBody, rawResp);
+        when(mockRawRecords.recordServiceBatchOperation(anyString(), any(), any())).thenReturn(httpResp);
+
+        VaultController controller = createControllerWithMock(mockApi);
+
+        ArrayList<HashMap<String, Object>> values = new ArrayList<>();
+        HashMap<String, Object> row = new HashMap<>();
+        row.put("card_number", "bad-card");
+        values.add(row);
+        InsertRequest request = InsertRequest.builder()
+                .table("test_table").values(values).continueOnError(true).build();
+
+        InsertResponse response = controller.insert(request);
+        Assert.assertNotNull(INVALID_EXCEPTION_THROWN, response);
+        Assert.assertNull("insertedFields should be null when all items fail", response.getInsertedFields());
+        Assert.assertNotNull("errors should not be null", response.getErrors());
+        Assert.assertEquals(1, response.getErrors().size());
+    }
+
+    // --- detokenize with empty records list — covers L288 null branch ---
+
+    @Test
+    public void testDetokenize_emptyRecordsList() throws Exception {
+        ApiClient mockApi = Mockito.mock(ApiClient.class);
+        TokensClient mockTokens = Mockito.mock(TokensClient.class);
+        RawTokensClient mockRawTokens = Mockito.mock(RawTokensClient.class);
+        when(mockApi.tokens()).thenReturn(mockTokens);
+        when(mockTokens.withRawResponse()).thenReturn(mockRawTokens);
+
+        V1DetokenizeResponse detokBody = V1DetokenizeResponse.builder()
+                .records(Collections.<V1DetokenizeRecordResponse>emptyList())
+                .build();
+        Response rawResp = buildOkHttpResponse();
+        ApiClientHttpResponse<V1DetokenizeResponse> httpResp = new ApiClientHttpResponse<>(detokBody, rawResp);
+        when(mockRawTokens.recordServiceDetokenize(anyString(), any(), any())).thenReturn(httpResp);
+
+        VaultController controller = createControllerWithMock(mockApi);
+
+        ArrayList<DetokenizeData> detokenizeDataList = new ArrayList<>();
+        detokenizeDataList.add(new DetokenizeData("tok-empty"));
+        DetokenizeRequest request = DetokenizeRequest.builder()
+                .detokenizeData(detokenizeDataList)
+                .build();
+
+        DetokenizeResponse response = controller.detokenize(request);
+        Assert.assertNotNull(INVALID_EXCEPTION_THROWN, response);
+        Assert.assertNull("detokenizedFields should be null when records list is empty", response.getDetokenizedFields());
+        Assert.assertNull("errors should be null when records list is empty", response.getErrors());
+    }
+
+    // --- get with redactionType set — covers L308 non-null branch ---
+
+    @Test
+    public void testGet_successWithRedactionType() throws Exception {
+        ApiClient mockApi = Mockito.mock(ApiClient.class);
+        RecordsClient mockRecords = Mockito.mock(RecordsClient.class);
+        when(mockApi.records()).thenReturn(mockRecords);
+
+        Map<String, Object> fields = new HashMap<>();
+        fields.put("skyflow_id", "id-redact-001");
+        V1FieldRecords fieldRecords = V1FieldRecords.builder().fields(fields).build();
+        V1BulkGetRecordResponse getResp = V1BulkGetRecordResponse.builder()
+                .records(Collections.singletonList(fieldRecords))
+                .build();
+        when(mockRecords.recordServiceBulkGetRecord(anyString(), anyString(), any(), any())).thenReturn(getResp);
+
+        VaultController controller = createControllerWithMock(mockApi);
+
+        ArrayList<String> ids = new ArrayList<>();
+        ids.add("id-redact-001");
+        GetRequest request = GetRequest.builder()
+                .table("test_table")
+                .ids(ids)
+                .redactionType(RedactionType.PLAIN_TEXT)
+                .build();
+
+        GetResponse response = controller.get(request);
+        Assert.assertNotNull(INVALID_EXCEPTION_THROWN, response);
+        Assert.assertNotNull("data should not be null", response.getData());
+        Assert.assertEquals(1, response.getData().size());
+    }
+
+    // --- detokenize with mixed success + error — covers L293 ---
+
+    @Test
+    public void testDetokenize_mixedSuccessAndError() throws Exception {
+        ApiClient mockApi = Mockito.mock(ApiClient.class);
+        TokensClient mockTokens = Mockito.mock(TokensClient.class);
+        RawTokensClient mockRawTokens = Mockito.mock(RawTokensClient.class);
+        when(mockApi.tokens()).thenReturn(mockTokens);
+        when(mockTokens.withRawResponse()).thenReturn(mockRawTokens);
+
+        V1DetokenizeRecordResponse goodRecord = V1DetokenizeRecordResponse.builder()
+                .token("tok-good")
+                .build();
+        V1DetokenizeRecordResponse badRecord = V1DetokenizeRecordResponse.builder()
+                .token("tok-bad")
+                .error("token not found")
+                .build();
+        V1DetokenizeResponse detokBody = V1DetokenizeResponse.builder()
+                .records(Arrays.asList(goodRecord, badRecord))
+                .build();
+        Response rawResp = buildOkHttpResponse();
+        ApiClientHttpResponse<V1DetokenizeResponse> httpResp = new ApiClientHttpResponse<>(detokBody, rawResp);
+        when(mockRawTokens.recordServiceDetokenize(anyString(), any(), any())).thenReturn(httpResp);
+
+        VaultController controller = createControllerWithMock(mockApi);
+
+        ArrayList<DetokenizeData> detokenizeDataList = new ArrayList<>();
+        detokenizeDataList.add(new DetokenizeData("tok-good"));
+        detokenizeDataList.add(new DetokenizeData("tok-bad"));
+        DetokenizeRequest request = DetokenizeRequest.builder()
+                .detokenizeData(detokenizeDataList)
+                .build();
+
+        DetokenizeResponse response = controller.detokenize(request);
+        Assert.assertNotNull(INVALID_EXCEPTION_THROWN, response);
+        Assert.assertNotNull("detokenizedFields should not be null", response.getDetokenizedFields());
+        Assert.assertNotNull("errors should not be null", response.getErrors());
+        Assert.assertEquals(1, response.getDetokenizedFields().size());
+        Assert.assertEquals(1, response.getErrors().size());
     }
 
     // --- tokenize ---
