@@ -19,6 +19,7 @@ import com.skyflow.generated.rest.resources.records.RawRecordsClient;
 import com.skyflow.generated.rest.resources.records.RecordsClient;
 import com.skyflow.generated.rest.resources.tokens.RawTokensClient;
 import com.skyflow.generated.rest.resources.tokens.TokensClient;
+import com.skyflow.generated.rest.types.UploadFileV2Response;
 import com.skyflow.generated.rest.types.V1BatchOperationResponse;
 import com.skyflow.generated.rest.types.V1BulkDeleteRecordResponse;
 import com.skyflow.generated.rest.types.V1BulkGetRecordResponse;
@@ -36,6 +37,7 @@ import com.skyflow.utils.Utils;
 import com.skyflow.vault.data.DeleteRequest;
 import com.skyflow.vault.data.DeleteResponse;
 import com.skyflow.vault.data.FileUploadRequest;
+import com.skyflow.vault.data.FileUploadResponse;
 import com.skyflow.vault.data.GetRequest;
 import com.skyflow.vault.data.GetResponse;
 import com.skyflow.vault.data.InsertRequest;
@@ -58,6 +60,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
 
+import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -1240,6 +1243,109 @@ public class VaultControllerTests {
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(422, e.getHttpCode());
+        }
+    }
+
+    // ─── uploadFile — getFileForFileUpload all three input paths ──────────────
+
+    @Test
+    public void testUploadFile_withFilePath() throws Exception {
+        File tmpFile = File.createTempFile("upload-test-path", ".txt");
+        tmpFile.deleteOnExit();
+        java.nio.file.Files.write(tmpFile.toPath(), "data".getBytes());
+
+        ApiClient mockApi = Mockito.mock(ApiClient.class);
+        RecordsClient mockRecords = Mockito.mock(RecordsClient.class);
+        when(mockApi.records()).thenReturn(mockRecords);
+        UploadFileV2Response uploadResp = UploadFileV2Response.builder()
+                .skyflowId(java.util.Optional.of("sky-id-path")).build();
+        when(mockRecords.uploadFileV2(anyString(), any(File.class), any(), any())).thenReturn(uploadResp);
+
+        VaultController controller = createControllerWithMock(mockApi);
+        FileUploadRequest request = FileUploadRequest.builder()
+                .table("files_table")
+                .columnName("file_col")
+                .filePath(tmpFile.getAbsolutePath())
+                .build();
+
+        FileUploadResponse response = controller.uploadFile(request);
+        Assert.assertNotNull(INVALID_EXCEPTION_THROWN, response);
+        Assert.assertEquals("sky-id-path", response.getSkyflowId());
+    }
+
+    @Test
+    public void testUploadFile_withBase64() throws Exception {
+        String b64 = java.util.Base64.getEncoder().encodeToString("file content".getBytes());
+
+        ApiClient mockApi = Mockito.mock(ApiClient.class);
+        RecordsClient mockRecords = Mockito.mock(RecordsClient.class);
+        when(mockApi.records()).thenReturn(mockRecords);
+        UploadFileV2Response uploadResp = UploadFileV2Response.builder()
+                .skyflowId(java.util.Optional.of("sky-id-b64")).build();
+        when(mockRecords.uploadFileV2(anyString(), any(File.class), any(), any())).thenReturn(uploadResp);
+
+        VaultController controller = createControllerWithMock(mockApi);
+        FileUploadRequest request = FileUploadRequest.builder()
+                .table("files_table")
+                .columnName("file_col")
+                .base64(b64)
+                .fileName("test.txt")
+                .build();
+
+        FileUploadResponse response = controller.uploadFile(request);
+        Assert.assertNotNull(INVALID_EXCEPTION_THROWN, response);
+        Assert.assertEquals("sky-id-b64", response.getSkyflowId());
+    }
+
+    @Test
+    public void testUploadFile_withFileObject() throws Exception {
+        File tmpFile = File.createTempFile("upload-test-obj", ".txt");
+        tmpFile.deleteOnExit();
+        java.nio.file.Files.write(tmpFile.toPath(), "data".getBytes());
+
+        ApiClient mockApi = Mockito.mock(ApiClient.class);
+        RecordsClient mockRecords = Mockito.mock(RecordsClient.class);
+        when(mockApi.records()).thenReturn(mockRecords);
+        UploadFileV2Response uploadResp = UploadFileV2Response.builder()
+                .skyflowId(java.util.Optional.of("sky-id-obj")).build();
+        when(mockRecords.uploadFileV2(anyString(), any(File.class), any(), any())).thenReturn(uploadResp);
+
+        VaultController controller = createControllerWithMock(mockApi);
+        FileUploadRequest request = FileUploadRequest.builder()
+                .table("files_table")
+                .columnName("file_col")
+                .fileObject(tmpFile)
+                .build();
+
+        FileUploadResponse response = controller.uploadFile(request);
+        Assert.assertNotNull(INVALID_EXCEPTION_THROWN, response);
+        Assert.assertEquals("sky-id-obj", response.getSkyflowId());
+    }
+
+    @Test
+    public void testUploadFile_apiError() throws Exception {
+        File tmpFile = File.createTempFile("upload-test-err", ".txt");
+        tmpFile.deleteOnExit();
+        java.nio.file.Files.write(tmpFile.toPath(), "data".getBytes());
+
+        ApiClient mockApi = Mockito.mock(ApiClient.class);
+        RecordsClient mockRecords = Mockito.mock(RecordsClient.class);
+        when(mockApi.records()).thenReturn(mockRecords);
+        when(mockRecords.uploadFileV2(anyString(), any(File.class), any(), any()))
+                .thenThrow(new ApiClientApiException("upload failed", 403, "forbidden"));
+
+        VaultController controller = createControllerWithMock(mockApi);
+        FileUploadRequest request = FileUploadRequest.builder()
+                .table("files_table")
+                .columnName("file_col")
+                .filePath(tmpFile.getAbsolutePath())
+                .build();
+
+        try {
+            controller.uploadFile(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(403, e.getHttpCode());
         }
     }
 }
