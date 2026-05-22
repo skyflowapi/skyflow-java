@@ -101,7 +101,10 @@ public enum InfoLogs {
     DEPRECATED_SKYFLOW_ID_REQUEST_KEY("[DEPRECATED] Request data key 'skyflow_id' is deprecated and will be removed in an upcoming release. Use 'skyflowId' instead."),
     DEPRECATED_DOWNLOAD_URL("[DEPRECATED] Method 'downloadURL()' is deprecated and will be removed in an upcoming release. Use 'downloadUrl()' instead."),
     DEPRECATED_GET_BYOT("[DEPRECATED] Method 'getBYOT()' is deprecated and will be removed in an upcoming release. Use 'getByot()' instead."),
-    DEPRECATED_UPDATE_LOG_LEVEL("[DEPRECATED] Method 'updateLogLevel()' is deprecated and will be removed in an upcoming release. Use 'setLogLevel()' instead.");
+    DEPRECATED_UPDATE_LOG_LEVEL("[DEPRECATED] Method 'updateLogLevel()' is deprecated and will be removed in an upcoming release. Use 'setLogLevel()' instead."),
+    DEPRECATED_CREDENTIAL_CLIENT_ID("[DEPRECATED] Credential field 'clientID' is deprecated and will be removed in an upcoming release. Use 'clientId' instead."),
+    DEPRECATED_CREDENTIAL_KEY_ID("[DEPRECATED] Credential field 'keyID' is deprecated and will be removed in an upcoming release. Use 'keyId' instead."),
+    DEPRECATED_CREDENTIAL_TOKEN_URI("[DEPRECATED] Credential field 'tokenURI' is deprecated and will be removed in an upcoming release. Use 'tokenUri' instead.");
 
 
 
