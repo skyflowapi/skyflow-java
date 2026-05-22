@@ -277,6 +277,7 @@ The following instance methods have been renamed for consistency. The old names 
 |---|---|
 | `skyflowClient.updateLogLevel(logLevel)` | `skyflowClient.setLogLevel(logLevel)` |
 | `TokenMode.getBYOT()` | `TokenMode.getByot()` |
+| `DetokenizeRequest.builder().downloadURL(b)` | `DetokenizeRequest.builder().downloadUrl(b)` |
 
 ---
 
