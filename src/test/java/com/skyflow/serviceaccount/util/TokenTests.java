@@ -52,4 +52,16 @@ public class TokenTests {
             Assert.fail(INVALID_EXCEPTION_THROWN);
         }
     }
+
+    @Test
+    public void testExpiredJwtTokenForIsExpiredToken() {
+        // 3-part fake JWT: middle is base64({"exp":1}) = eyJleHAiOjF9, exp=1970 → always expired
+        Assert.assertTrue(Token.isExpired("x.eyJleHAiOjF9.y"));
+    }
+
+    @Test
+    public void testValidJwtTokenForIsExpiredToken() {
+        // 3-part fake JWT: middle is base64({"exp":9999999999}) = eyJleHAiOjk5OTk5OTk5OTl9, far-future
+        Assert.assertFalse(Token.isExpired("x.eyJleHAiOjk5OTk5OTk5OTl9.y"));
+    }
 }
