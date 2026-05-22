@@ -27,17 +27,19 @@ import java.nio.file.Paths;
 public class VaultClientDotenvTests {
 
     private static final String ENV_FILE = ".env";
-    private boolean envFileExistedBefore;
+    private byte[] originalEnvContent;
 
     @Before
-    public void recordEnvFileState() {
-        envFileExistedBefore = new File(ENV_FILE).exists();
+    public void saveEnvFileState() throws IOException {
+        File f = new File(ENV_FILE);
+        originalEnvContent = f.exists() ? Files.readAllBytes(Paths.get(ENV_FILE)) : null;
     }
 
     @After
     public void restoreEnvFile() throws IOException {
-        // Remove our test .env file unless it existed before the test
-        if (!envFileExistedBefore) {
+        if (originalEnvContent != null) {
+            Files.write(Paths.get(ENV_FILE), originalEnvContent);
+        } else {
             Files.deleteIfExists(Paths.get(ENV_FILE));
         }
     }
@@ -78,12 +80,11 @@ public class VaultClientDotenvTests {
 
     /**
      * Covers the path where dotenv loads but the key is absent (returns null),
-     * causing SkyflowException(EmptyCredentials) to be thrown inside the try
-     * block → caught by catch(Exception e) → re-thrown as RuntimeException.
+     * causing SkyflowException(EmptyCredentials) to be thrown directly.
      * Lines ~864-876 of VaultClient.java.
      */
     @Test
-    public void testPrioritiseCredentials_dotenvKeyMissing_throwsRuntimeException() throws Exception {
+    public void testPrioritiseCredentials_dotenvKeyMissing_throwsSkyflowException() throws Exception {
         // Write a .env file WITHOUT the SKYFLOW_CREDENTIALS key
         try (FileWriter fw = new FileWriter(ENV_FILE)) {
             fw.write("SOME_OTHER_KEY=some_value\n");
@@ -92,13 +93,11 @@ public class VaultClientDotenvTests {
         VaultClient client = buildClientWithNoCreds("dotenv-vault-2", "cluster2");
         try {
             client.updateVaultConfig();
-            Assert.fail("Should have thrown RuntimeException");
-        } catch (RuntimeException e) {
-            // Expected: SkyflowException(EmptyCredentials) was wrapped as RuntimeException
-            Assert.assertNotNull(e.getCause());
-            Assert.assertTrue(e.getCause() instanceof SkyflowException);
+            Assert.fail("Should have thrown SkyflowException");
         } catch (SkyflowException e) {
-            Assert.fail("Expected RuntimeException wrapping SkyflowException, not direct SkyflowException");
+            Assert.assertTrue(e.getMessage().contains(ErrorMessage.EmptyCredentials.getMessage()));
+        } catch (RuntimeException e) {
+            Assert.fail("Expected direct SkyflowException, not RuntimeException wrapping it");
         }
     }
 }
