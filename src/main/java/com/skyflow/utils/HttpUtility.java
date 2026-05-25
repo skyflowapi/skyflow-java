@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 
 public final class HttpUtility {
 
@@ -73,7 +74,11 @@ public final class HttpUtility {
 
             int httpCode = connection.getResponseCode();
             String requestID = connection.getHeaderField("x-request-id");
-            HttpUtility.requestID = requestID != null ? requestID.split(",")[0] : null;
+            if (requestID != null) {
+                HttpUtility.requestID = requestID.split(",")[0];
+            } else {
+                HttpUtility.requestID = Constants.HttpUtilityExtra.SDK_GENERATED_PREFIX + UUID.randomUUID();
+            }
             Map<String, List<String>> responseHeaders = connection.getHeaderFields();
             Reader streamReader;
             if (httpCode > 299) {
