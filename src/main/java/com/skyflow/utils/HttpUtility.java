@@ -57,9 +57,7 @@ public final class HttpUtility {
                     byte[] input = null;
                     String requestContentType = connection.getRequestProperty("content-type");
 
-                    if (params.has(Constants.HttpUtilityExtra.RAW_BODY_KEY) && params.size() == 1) {
-                        input = params.get(Constants.HttpUtilityExtra.RAW_BODY_KEY).getAsString().getBytes(StandardCharsets.UTF_8);
-                    } else if (requestContentType != null && requestContentType.contains("application/x-www-form-urlencoded")) {
+                    if (requestContentType != null && requestContentType.contains("application/x-www-form-urlencoded")) {
                         input = formatJsonToFormEncodedString(params).getBytes(StandardCharsets.UTF_8);
                     } else if (requestContentType != null && requestContentType.contains("multipart/form-data")) {
                         input = formatJsonToMultiPartFormDataString(params, boundary).getBytes(StandardCharsets.UTF_8);
