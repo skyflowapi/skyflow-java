@@ -36,7 +36,7 @@ import static org.mockito.Mockito.when;
 public class ConnectionControllerTests {
     private static final String INVALID_EXCEPTION_THROWN = "Should not have thrown any exception";
     private static final String EXCEPTION_NOT_THROWN = "Should have thrown an exception";
-    private static final String API_KEY = "sky-ab123-abcd1234cdef1234abcd4321cdef4321";
+    private static final String API_KEY = "sky-ab123-abcd1234cdef1234abcd4321cdef4321"; // gitleaks:allow
     private static final String REQUEST_ID = "req-test-123";
 
     private static ConnectionConfig connectionConfig;
