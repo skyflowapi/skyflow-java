@@ -108,6 +108,9 @@ public class BearerToken {
             JsonElement clientId = credentials.get("clientId");
             if (clientId == null) {
                 clientId = credentials.get("clientID");
+                if (clientId != null) {
+                    LogUtil.printWarningLog(InfoLogs.DEPRECATED_CREDENTIAL_CLIENT_ID.getLog());
+                }
             }
             if (clientId == null) {
                 LogUtil.printErrorLog(ErrorLogs.CLIENT_ID_IS_REQUIRED.getLog());
@@ -117,6 +120,9 @@ public class BearerToken {
             JsonElement keyId = credentials.get("keyId");
             if (keyId == null) {
                 keyId = credentials.get("keyID");
+                if (keyId != null) {
+                    LogUtil.printWarningLog(InfoLogs.DEPRECATED_CREDENTIAL_KEY_ID.getLog());
+                }
             }
             if (keyId == null) {
                 LogUtil.printErrorLog(ErrorLogs.KEY_ID_IS_REQUIRED.getLog());
@@ -126,6 +132,9 @@ public class BearerToken {
             JsonElement tokenUri = credentials.get("tokenUri");
             if (tokenUri == null) {
                 tokenUri = credentials.get("tokenURI");
+                if (tokenUri != null) {
+                    LogUtil.printWarningLog(InfoLogs.DEPRECATED_CREDENTIAL_TOKEN_URI.getLog());
+                }
             }
             if (tokenUri == null) {
                 LogUtil.printErrorLog(ErrorLogs.TOKEN_URI_IS_REQUIRED.getLog());

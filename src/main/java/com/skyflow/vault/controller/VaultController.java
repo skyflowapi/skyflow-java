@@ -238,7 +238,7 @@ public final class VaultController extends VaultClient {
             return new InsertResponse(null, errorFields.isEmpty() ? null : errorFields);
         }
         if (errorFields.isEmpty()) {
-            return new InsertResponse(insertedFields.isEmpty() ? null : insertedFields, null);
+            return new InsertResponse(insertedFields, null);
         }
         return new InsertResponse(insertedFields, errorFields);
     }

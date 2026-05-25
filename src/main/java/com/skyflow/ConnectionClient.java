@@ -86,6 +86,8 @@ public class ConnectionClient {
         } catch (DotenvException e) {
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(),
                     ErrorMessage.EmptyCredentials.getMessage());
+        } catch (SkyflowException e) {
+            throw e;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
