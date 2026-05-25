@@ -1,5 +1,8 @@
 package com.skyflow.vault.tokens;
 
+import com.skyflow.logs.InfoLogs;
+import com.skyflow.utils.logger.LogUtil;
+
 import java.util.ArrayList;
 
 public class DetokenizeRequest {
@@ -21,18 +24,27 @@ public class DetokenizeRequest {
         return this.builder.continueOnError;
     }
 
+    /**
+     * @deprecated Use {@link #getDownloadUrl()} instead.
+     */
+    @Deprecated(since = "2.1", forRemoval = true)
     public Boolean getDownloadURL() {
-        return this.builder.downloadURL;
+        LogUtil.printWarningLog(InfoLogs.DEPRECATED_DOWNLOAD_URL.getLog());
+        return getDownloadUrl();
+    }
+
+    public Boolean getDownloadUrl() {
+        return this.builder.downloadUrl;
     }
 
     public static final class DetokenizeRequestBuilder {
         private ArrayList<DetokenizeData> detokenizeData;
         private Boolean continueOnError;
-        private Boolean downloadURL;
+        private Boolean downloadUrl;
 
         private DetokenizeRequestBuilder() {
             this.continueOnError = false;
-            this.downloadURL = false;
+            this.downloadUrl = false;
         }
 
         public DetokenizeRequestBuilder detokenizeData(ArrayList<DetokenizeData> detokenizeData) {
@@ -45,8 +57,17 @@ public class DetokenizeRequest {
             return this;
         }
 
+        /**
+         * @deprecated Use {@link #downloadUrl(Boolean)} instead.
+         */
+        @Deprecated(since = "2.1", forRemoval = true)
         public DetokenizeRequestBuilder downloadURL(Boolean downloadURL) {
-            this.downloadURL = downloadURL;
+            LogUtil.printWarningLog(InfoLogs.DEPRECATED_DOWNLOAD_URL.getLog());
+            return downloadUrl(downloadURL);
+        }
+
+        public DetokenizeRequestBuilder downloadUrl(Boolean downloadUrl) {
+            this.downloadUrl = downloadUrl;
             return this;
         }
 

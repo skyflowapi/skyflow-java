@@ -124,4 +124,105 @@ public class HttpUtilityTests {
             fail(INVALID_EXCEPTION_THROWN);
         }
     }
+
+    @Test
+    @PrepareForTest({URL.class, HttpURLConnection.class})
+    public void testSendRequestWithRawBody() {
+        try {
+            given(mockConnection.getRequestProperty("content-type")).willReturn("application/xml");
+            Map<String, String> headers = new HashMap<>();
+            headers.put("content-type", "application/xml");
+            JsonObject params = new JsonObject();
+            params.addProperty("__raw_body__", "<xml>test</xml>");
+            String response = httpUtility.sendRequest("POST", url, params, headers);
+            Assert.assertEquals(expected, response);
+        } catch (Exception e) {
+            fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    @PrepareForTest({URL.class, HttpURLConnection.class})
+    public void testSendRequestWithoutContentTypeHeader() {
+        try {
+            given(mockConnection.getRequestProperty("content-type")).willReturn("application/json");
+            JsonObject params = new JsonObject();
+            params.addProperty("key", "value");
+            String response = httpUtility.sendRequest("POST", url, params, null);
+            Assert.assertEquals(expected, response);
+        } catch (Exception e) {
+            fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    @PrepareForTest({URL.class, HttpURLConnection.class})
+    public void testSendRequestWithNullRequestId() {
+        try {
+            given(mockConnection.getHeaderField(anyString())).willReturn(null);
+            given(mockConnection.getRequestProperty("content-type")).willReturn("application/json");
+            Map<String, String> headers = new HashMap<>();
+            headers.put("content-type", "application/json");
+            JsonObject params = new JsonObject();
+            params.addProperty("key", "value");
+            String response = httpUtility.sendRequest("GET", url, params, headers);
+            Assert.assertEquals(expected, response);
+            Assert.assertNull(HttpUtility.getRequestID());
+        } catch (Exception e) {
+            fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    @PrepareForTest({URL.class, HttpURLConnection.class})
+    public void testSendRequestFormURLEncodedWithSpecialCharacters() {
+        try {
+            given(mockConnection.getRequestProperty("content-type")).willReturn("application/x-www-form-urlencoded");
+            Map<String, String> headers = new HashMap<>();
+            headers.put("content-type", "application/x-www-form-urlencoded");
+            JsonObject params = new JsonObject();
+            params.addProperty("key", "value with spaces");
+            params.addProperty("special", "test@email.com");
+            String response = httpUtility.sendRequest("POST", url, params, headers);
+            Assert.assertEquals(expected, response);
+        } catch (Exception e) {
+            fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testAppendRequestId_withNonNullRequestId() {
+        String result = HttpUtility.appendRequestId("base message", "req-123");
+        Assert.assertEquals("base message - requestId: req-123", result);
+    }
+
+    @Test
+    public void testAppendRequestId_withNullRequestId() {
+        String result = HttpUtility.appendRequestId("base message", null);
+        Assert.assertEquals("base message", result);
+    }
+
+    @Test
+    public void testAppendRequestId_withEmptyRequestId() {
+        String result = HttpUtility.appendRequestId("base message", "");
+        Assert.assertEquals("base message", result);
+    }
+
+    @Test
+    @PrepareForTest({URL.class, HttpURLConnection.class})
+    public void testSendRequestWithNestedJsonBody() {
+        try {
+            given(mockConnection.getRequestProperty("content-type")).willReturn("application/json");
+            Map<String, String> headers = new HashMap<>();
+            headers.put("content-type", "application/json");
+            JsonObject nested = new JsonObject();
+            nested.addProperty("inner", "value");
+            JsonObject params = new JsonObject();
+            params.add("outer", nested);
+            String response = httpUtility.sendRequest("POST", url, params, headers);
+            Assert.assertEquals(expected, response);
+        } catch (Exception e) {
+            fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
 }

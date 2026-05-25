@@ -17,6 +17,8 @@ import org.apache.commons.codec.binary.Base64;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
@@ -119,7 +121,12 @@ public final class Utils {
             for (Map.Entry<String, String> entry : invokeConnectionRequest.getPathParams().entrySet()) {
                 String key = entry.getKey();
                 String value = entry.getValue();
-                filledURL = new StringBuilder(filledURL.toString().replace(String.format("{%s}", key), value));
+                try {
+                    String encodedValue = URLEncoder.encode(value, StandardCharsets.UTF_8.name());
+                    filledURL = new StringBuilder(filledURL.toString().replace(String.format(Constants.CURLY_PLACEHOLDER, key), encodedValue));
+                } catch (Exception e) {
+                    filledURL = new StringBuilder(filledURL.toString().replace(String.format(Constants.CURLY_PLACEHOLDER, key), value));
+                }
             }
         }
 
@@ -128,7 +135,13 @@ public final class Utils {
             for (Map.Entry<String, String> entry : invokeConnectionRequest.getQueryParams().entrySet()) {
                 String key = entry.getKey();
                 String value = entry.getValue();
-                filledURL.append(key).append("=").append(value).append("&");
+                try {
+                    String encodedKey = URLEncoder.encode(key, StandardCharsets.UTF_8.name());
+                    String encodedValue = URLEncoder.encode(value, StandardCharsets.UTF_8.name());
+                    filledURL.append(encodedKey).append("=").append(encodedValue).append("&");
+                } catch (Exception e) {
+                    filledURL.append(key).append("=").append(value).append("&");
+                }
             }
             filledURL = new StringBuilder(filledURL.substring(0, filledURL.length() - 1));
         }

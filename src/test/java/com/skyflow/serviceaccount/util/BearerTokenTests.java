@@ -3,6 +3,7 @@ package com.skyflow.serviceaccount.util;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.utils.Constants;
 import com.skyflow.utils.Utils;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -225,7 +226,7 @@ public class BearerTokenTests {
 
     @Test
     public void testInvalidKeySpecInCredentialsForCredentials() {
-        String credentialsString = "{\"privateKey\": \"-----BEGIN PRIVATE KEY-----\\ncHJpdmF0ZV9rZXlfdmFsdWU=\\n-----END PRIVATE KEY-----\", \"clientID\": \"client_id_value\", \"keyID\": \"key_id_value\", \"tokenURI\": \"invalid_token_uri\"}";
+        String credentialsString = "{\"privateKey\": \"-----BEGIN PRIVATE KEY-----\\ncHJpdmF0ZV9rZXlfdmFsdWU=\\n-----END PRIVATE KEY-----\", \"clientID\": \"client_id_value\", \"keyID\": \"key_id_value\", \"tokenURI\": \"invalid_token_uri\"}"; // gitleaks:allow
         try {
             BearerToken bearerToken = BearerToken.builder().setCredentials(credentialsString).build();
             bearerToken.getBearerToken();
@@ -247,6 +248,24 @@ public class BearerTokenTests {
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.InvalidTokenUri.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testBearerTokenWithNewFormCredentialKeys() {
+        try {
+            // Fake key — fails at RSA parsing, not at field lookup, confirming new-form keys were accepted
+            String credentialsString = "{\"privateKey\": \"-----BEGIN PRIVATE KEY-----\\ncHJpdmF0ZV9rZXlfdmFsdWU=\\n-----END PRIVATE KEY-----\", " // gitleaks:allow
+                    + "\"clientId\": \"client_id_value\", \"keyId\": \"key_id_value\", \"tokenUri\": \"invalid_token_uri\"}";
+            BearerToken bearerToken = BearerToken.builder().setCredentials(credentialsString).build();
+            bearerToken.getBearerToken();
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            // InvalidKeySpec confirms all credential fields were resolved — failure is at RSA parsing, not field lookup
+            Assert.assertEquals(
+                    Utils.parameterizedString(ErrorMessage.InvalidKeySpec.getMessage(), Constants.SDK_PREFIX),
+                    e.getMessage());
         }
     }
 }

@@ -46,7 +46,7 @@ public class UpdateExample {
         // Step 5: Update records with TokenMode enabled
         try {
             HashMap<String, Object> data1 = new HashMap<>();
-            data1.put("skyflow_id", "<YOUR_SKYFLOW_ID>"); // Replace with the Skyflow ID of the record
+            data1.put("skyflowId", "<YOUR_SKYFLOW_ID>"); // Replace with the Skyflow ID of the record
             data1.put("<COLUMN_NAME_1>", "<COLUMN_VALUE_1>"); // Replace with column name and value to update
             data1.put("<COLUMN_NAME_2>", "<COLUMN_VALUE_2>"); // Replace with another column name and value
 
@@ -71,7 +71,7 @@ public class UpdateExample {
         // Step 6: Update records with TokenMode disabled
         try {
             HashMap<String, Object> data2 = new HashMap<>();
-            data2.put("skyflow_id", "<YOUR_SKYFLOW_ID>"); // Replace with the Skyflow ID of the record
+            data2.put("skyflowId", "<YOUR_SKYFLOW_ID>"); // Replace with the Skyflow ID of the record
             data2.put("<COLUMN_NAME_1>", "<COLUMN_VALUE_1>"); // Replace with column name and value to update
             data2.put("<COLUMN_NAME_2>", "<COLUMN_VALUE_2>"); // Replace with another column name and value
 

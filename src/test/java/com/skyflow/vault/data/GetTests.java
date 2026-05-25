@@ -98,6 +98,24 @@ public class GetTests {
     }
 
     @Test
+    public void testValidGetByIdInputWithNewDownloadUrl() {
+        try {
+            ids.add(skyflowID);
+            fields.add(field);
+            GetRequest request = GetRequest.builder()
+                    .ids(ids)
+                    .table(table)
+                    .downloadUrl(false)   // new form
+                    .build();
+            Validations.validateGetRequest(request);
+            Assert.assertFalse("new getDownloadUrl() should return false", request.getDownloadUrl());
+            Assert.assertFalse("deprecated getDownloadURL() should return same value", request.getDownloadURL());
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
     public void testValidGetByColumnValuesInputInGetRequestValidations() {
         try {
             columnValues.add(columnValue);
@@ -124,6 +142,24 @@ public class GetTests {
             Assert.assertEquals(Constants.ORDER_ASCENDING, request.getOrderBy());
             Assert.assertTrue(request.getDownloadURL());
             Assert.assertNull(request.getReturnTokens());
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testValidGetByColumnValuesInputWithNewDownloadUrl() {
+        try {
+            columnValues.add(columnValue);
+            GetRequest request = GetRequest.builder()
+                    .table(table)
+                    .columnName(columnName)
+                    .columnValues(columnValues)
+                    .downloadUrl(true)   // new form
+                    .build();
+            Validations.validateGetRequest(request);
+            Assert.assertTrue("new getDownloadUrl() should return true", request.getDownloadUrl());
+            Assert.assertTrue("deprecated getDownloadURL() should return same value", request.getDownloadURL());
         } catch (SkyflowException e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
         }

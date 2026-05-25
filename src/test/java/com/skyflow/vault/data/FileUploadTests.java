@@ -1,6 +1,8 @@
 package com.skyflow.vault.data;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -184,6 +186,27 @@ public class FileUploadTests {
                     e.getMessage()
             );
         }
+    }
+
+    @Test
+    public void testFileUploadResponseGetters() {
+        ArrayList<HashMap<String, Object>> errors = new ArrayList<>();
+        HashMap<String, Object> err = new HashMap<>();
+        err.put("error", "upload failed");
+        errors.add(err);
+
+        FileUploadResponse response = new FileUploadResponse("sky-123", errors);
+        Assert.assertEquals("sky-123", response.getSkyflowId());
+        Assert.assertEquals(1, response.getErrors().size());
+        Assert.assertEquals("upload failed", response.getErrors().get(0).get("error"));
+    }
+
+    @Test
+    public void testFileUploadResponseToString() {
+        FileUploadResponse response = new FileUploadResponse("sky-456", null);
+        String json = response.toString();
+        Assert.assertTrue(json.contains("sky-456"));
+        Assert.assertNull(response.getErrors());
     }
 
     @Test
