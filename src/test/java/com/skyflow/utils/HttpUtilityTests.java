@@ -167,7 +167,7 @@ public class HttpUtilityTests {
             params.addProperty("key", "value");
             String response = httpUtility.sendRequest("GET", url, params, headers);
             Assert.assertEquals(expected, response);
-            Assert.assertNull(HttpUtility.getRequestID());
+            Assert.assertNotNull(HttpUtility.getRequestID());
         } catch (Exception e) {
             fail(INVALID_EXCEPTION_THROWN);
         }
