@@ -138,44 +138,6 @@ public class ConnectionControllerTests {
     }
 
     @Test
-    public void testInvoke_successWithStringBodyAndJsonContentType() throws Exception {
-        when(HttpUtility.sendRequest(anyString(), any(URL.class), any(), any()))
-                .thenReturn("{\"parsed\":true}");
-        when(HttpUtility.getRequestID()).thenReturn(REQUEST_ID);
-
-        Map<String, String> headers = new HashMap<>();
-        headers.put("content-type", "application/json");
-
-        InvokeConnectionRequest request = InvokeConnectionRequest.builder()
-                .method(RequestMethod.POST)
-                .requestHeaders(headers)
-                .requestBody("{\"key\":\"value\"}")
-                .build();
-        InvokeConnectionResponse response = controller.invoke(request);
-
-        Assert.assertNotNull(response);
-    }
-
-    @Test
-    public void testInvoke_successWithStringBodyAndNonJsonContentType() throws Exception {
-        when(HttpUtility.sendRequest(anyString(), any(URL.class), any(), any()))
-                .thenReturn("ok");
-        when(HttpUtility.getRequestID()).thenReturn(REQUEST_ID);
-
-        Map<String, String> headers = new HashMap<>();
-        headers.put("content-type", "text/plain");
-
-        InvokeConnectionRequest request = InvokeConnectionRequest.builder()
-                .method(RequestMethod.POST)
-                .requestHeaders(headers)
-                .requestBody("raw body content")
-                .build();
-        InvokeConnectionResponse response = controller.invoke(request);
-
-        Assert.assertNotNull(response);
-    }
-
-    @Test
     public void testInvoke_successWithObjectBody() throws Exception {
         when(HttpUtility.sendRequest(anyString(), any(URL.class), any(), any()))
                 .thenReturn("{\"result\":\"ok\"}");
@@ -361,20 +323,6 @@ public class ConnectionControllerTests {
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(ErrorMessage.EmptyQueryParams.getMessage(), e.getMessage());
-        }
-    }
-
-    @Test
-    public void testInvoke_emptyStringBodyThrowsSkyflowException() {
-        try {
-            InvokeConnectionRequest request = InvokeConnectionRequest.builder()
-                    .requestBody("   ")
-                    .build();
-            controller.invoke(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(ErrorMessage.EmptyRequestBody.getMessage(), e.getMessage());
         }
     }
 

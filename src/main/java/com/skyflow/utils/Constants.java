@@ -40,7 +40,6 @@ public final class Constants {
     public static final String QUOTE = "\"";
 
     public static final class HttpUtilityExtra {
-        public static final String RAW_BODY_KEY = "__raw_body__";
         public static final String SDK_GENERATED_PREFIX = "SDK-Generated-";
         private HttpUtilityExtra() {}
     }

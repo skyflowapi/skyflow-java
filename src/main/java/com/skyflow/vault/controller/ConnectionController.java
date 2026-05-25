@@ -55,26 +55,11 @@ public final class ConnectionController extends ConnectionClient {
             Object requestBodyObject = invokeConnectionRequest.getRequestBody();
 
             if (requestBodyObject != null) {
-                if (requestBodyObject instanceof String) {
-                    String contentType = headers.getOrDefault("content-type", "");
-                    if (!contentType.isEmpty() && !contentType.toLowerCase().contains("application/json")) {
-                        requestBody = new JsonObject();
-                        requestBody.addProperty(Constants.HttpUtilityExtra.RAW_BODY_KEY, (String) requestBodyObject);
-                    } else {
-                        try {
-                            requestBody = convertObjectToJson(requestBodyObject);
-                        } catch (Exception e) {
-                            LogUtil.printErrorLog(ErrorLogs.INVALID_REQUEST_HEADERS.getLog());
-                            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidRequestBody.getMessage());
-                        }
-                    }
-                } else {
-                    try {
-                        requestBody = convertObjectToJson(requestBodyObject);
-                    } catch (Exception e) {
-                        LogUtil.printErrorLog(ErrorLogs.INVALID_REQUEST_HEADERS.getLog());
-                        throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidRequestBody.getMessage());
-                    }
+                try {
+                    requestBody = convertObjectToJson(requestBodyObject);
+                } catch (Exception e) {
+                    LogUtil.printErrorLog(ErrorLogs.INVALID_REQUEST_HEADERS.getLog());
+                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidRequestBody.getMessage());
                 }
             }
 
