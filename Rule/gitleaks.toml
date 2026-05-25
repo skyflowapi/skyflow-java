@@ -18,7 +18,7 @@ description = "global allow lists"
 commits = [
     "536cbb5857e0b7a21cb25f9cf1349af9071fb84c",
     "5acbb849d7f6831197a8a057cbbf5753115631df",
-    "96e7e395cc05edfcdb3d8b0ede38e7fa5b9ec34f",
+    "96e7e39d6b44d5e47895d444a0d0d3ca82dba4ba",
     "5e484d975d3dd715c38314d83db02bd4a2316c1d",
 ]
 regexes = [
@@ -2728,6 +2728,11 @@ keywords = ["-----begin"]
 regexTarget = "match"
 regexes = [
     '''cHJpdmF0ZV9rZXlfdmFsdWU=''',
+]
+
+[[rules.allowlists]]
+paths = [
+    '''src/test/resources/invalidTokenURICredentials\.json''',
 ]
 
 [[rules]]
