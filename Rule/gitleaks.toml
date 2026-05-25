@@ -15,6 +15,12 @@ title = "gitleaks config"
 
 [allowlist]
 description = "global allow lists"
+commits = [
+    "536cbb5857e0b7a21cb25f9cf1349af9071fb84c",
+    "5acbb849d7f6831197a8a057cbbf5753115631df",
+    "96e7e395cc05edfcdb3d8b0ede38e7fa5b9ec34f",
+    "5e484d975d3dd715c38314d83db02bd4a2316c1d",
+]
 regexes = [
     '''(?i)^true|false|null$''',
     '''^(?i:a+|b+|c+|d+|e+|f+|g+|h+|i+|j+|k+|l+|m+|n+|o+|p+|q+|r+|s+|t+|u+|v+|w+|x+|y+|z+|\*+|\.+)$''',

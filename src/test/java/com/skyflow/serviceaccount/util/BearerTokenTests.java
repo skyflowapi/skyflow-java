@@ -226,7 +226,7 @@ public class BearerTokenTests {
 
     @Test
     public void testInvalidKeySpecInCredentialsForCredentials() {
-        String credentialsString = "{\"privateKey\": \"-----BEGIN PRIVATE KEY-----\\ncHJpdmF0ZV9rZXlfdmFsdWU=\\n-----END PRIVATE KEY-----\", \"clientID\": \"client_id_value\", \"keyID\": \"key_id_value\", \"tokenURI\": \"invalid_token_uri\"}";
+        String credentialsString = "{\"privateKey\": \"-----BEGIN PRIVATE KEY-----\\ncHJpdmF0ZV9rZXlfdmFsdWU=\\n-----END PRIVATE KEY-----\", \"clientID\": \"client_id_value\", \"keyID\": \"key_id_value\", \"tokenURI\": \"invalid_token_uri\"}"; // gitleaks:allow
         try {
             BearerToken bearerToken = BearerToken.builder().setCredentials(credentialsString).build();
             bearerToken.getBearerToken();
@@ -255,7 +255,7 @@ public class BearerTokenTests {
     public void testBearerTokenWithNewFormCredentialKeys() {
         try {
             // Fake key — fails at RSA parsing, not at field lookup, confirming new-form keys were accepted
-            String credentialsString = "{\"privateKey\": \"-----BEGIN PRIVATE KEY-----\\ncHJpdmF0ZV9rZXlfdmFsdWU=\\n-----END PRIVATE KEY-----\", "
+            String credentialsString = "{\"privateKey\": \"-----BEGIN PRIVATE KEY-----\\ncHJpdmF0ZV9rZXlfdmFsdWU=\\n-----END PRIVATE KEY-----\", " // gitleaks:allow
                     + "\"clientId\": \"client_id_value\", \"keyId\": \"key_id_value\", \"tokenUri\": \"invalid_token_uri\"}";
             BearerToken bearerToken = BearerToken.builder().setCredentials(credentialsString).build();
             bearerToken.getBearerToken();
