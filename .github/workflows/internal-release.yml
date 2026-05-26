@@ -1,6 +1,5 @@
 name: Internal Release
 on:
-  workflow_dispatch:
   push:
     paths-ignore:
       - "pom.xml"
