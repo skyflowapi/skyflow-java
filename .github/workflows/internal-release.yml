@@ -1,12 +1,13 @@
 name: Publish package to the JFROG Artifactory
 on:
   push:
-    tags: '*.*.*'
+    tags:
+      - '*.*.*'
     paths-ignore:
       - "pom.xml"
       - "*.md"
     branches:
-      - release/*
+      - v1/release/*
 
 jobs:
   build-and-deploy:
