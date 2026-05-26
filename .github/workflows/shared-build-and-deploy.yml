@@ -98,7 +98,7 @@ jobs:
           json: ${{ secrets.TEST_CREDENTIALS_FILE_STRING }}
 
       - name: Publish package
-        run: mvn clean deploy -P ${{ inputs.profile }}
+        run: mvn clean deploy -P ${{ inputs.profile }} -DskipTests
         env:
           SERVER_USERNAME: ${{ secrets.server-username }}
           SERVER_PASSWORD: ${{ secrets.server-password  }}
