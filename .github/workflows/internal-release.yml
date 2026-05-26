@@ -1,13 +1,6 @@
 name: Publish package to the JFROG Artifactory
 on:
-  push:
-    tags:
-      - '*.*.*'
-    paths-ignore:
-      - "pom.xml"
-      - "*.md"
-    branches:
-      - release/v1/*
+  workflow_dispatch:
 
 jobs:
   build-and-deploy:
