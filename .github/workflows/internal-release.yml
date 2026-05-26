@@ -1,5 +1,6 @@
 name: Publish package to the JFROG Artifactory
 on:
+  workflow_dispatch:
   push:
     tags:
       - '*.*.*'
