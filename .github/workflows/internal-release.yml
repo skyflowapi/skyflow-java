@@ -1,6 +1,11 @@
 name: Internal Release
 on:
-  workflow_dispatch:
+  push:
+    paths-ignore:
+      - "pom.xml"
+      - "*.md"
+    branches:
+      - release/v1/*
 
 jobs:
   build-and-deploy:
