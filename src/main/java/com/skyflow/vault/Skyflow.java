@@ -37,6 +37,8 @@ public final class Skyflow {
     }
 
     public static Skyflow init(SkyflowConfiguration clientConfig) throws SkyflowException {
+        LogUtil.printWarningLog("skyflow-java v1.x is deprecated and will reach End of Life on October 31, 2026. " +
+                "Please migrate to v2: https://github.com/skyflowapi/skyflow-java/blob/main/docs/migrate_to_v2.md");
         return new Skyflow(clientConfig);
     }
 
