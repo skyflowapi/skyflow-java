@@ -4,6 +4,19 @@ This guide covers the steps to migrate the Skyflow Java SDK from v1 to v2.
 
 ---
 
+## Breaking Changes from V1 to V2
+
+| Area | V1 | V2 |
+|------|----|----|
+| **Client initialization** | `TokenProvider` / `vaultURL` pattern | `Credentials` + `VaultConfig` passed to `Skyflow.builder()` |
+| **Vault URL** | Single `vaultURL` string | Split into `vaultId` + `clusterId` |
+| **Request/response types** | Raw JSON (`JSONObject`) | Typed objects (e.g. `InsertRequest` / `InsertResponse`) |
+| **Error handling** | Basic error message | Restructured with `httpStatus`, `details`, and `requestId` |
+| **Logging** | Global log level | Per-instance `logLevel` set via `Skyflow.builder().setLogLevel(LogLevel.INFO)` |
+| **Import paths** | `com.skyflow.vault.*` | New module structure across all packages |
+
+---
+
 ## Authentication options
 
 In V2, multiple authentication options are available. You can now provide credentials in the following ways:
