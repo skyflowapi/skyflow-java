@@ -494,7 +494,7 @@ InsertBulkOptions insertOptions = new InsertBulkOptions(
             upsertOptions
         );
 ```
-An [example]() of insert call with upsert support:
+An [example](samples/src/main/java/com/example/InsertBulkWithUpsertExample.java) of insert call with upsert support:
 
 ```java
 JSONObject recordsJson = new JSONObject();
@@ -541,7 +541,7 @@ Sample insert Response
 }
 ```
 
-An [example]() of Insert using bulk call:
+An [example](samples/src/main/java/com/example/InsertBulkExample.java) of Insert using bulk call:
 ```java
 JSONObject records = new JSONObject();
 JSONArray recordsArray = new JSONArray();
