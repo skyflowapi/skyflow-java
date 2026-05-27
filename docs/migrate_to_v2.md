@@ -15,6 +15,7 @@ This guide covers the steps to migrate the Skyflow Java SDK from v1 to v2.
 
 ---
 
+
 ## Authentication options
 
 In V2, multiple authentication options are available. You can now provide credentials in the following ways:
