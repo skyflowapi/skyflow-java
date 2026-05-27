@@ -55,7 +55,7 @@ skyflowCredentials.setToken("<BEARER_TOKEN>");
 > **Notes:**
 > - Use only ONE authentication method per credentials object.
 > - API Key or environment variable are recommended for production.
-> - For priority order see [Quickstart — Initialize the client](https://github.com/skyflowapi/skyflow-java/blob/main/README.md#initialize-the-client).
+> - For priority order see [Quickstart — Initialize the client](https://github.com/skyflowapi/skyflow-java/blob/v1/README.md#vault-apis).
 
 ---
 
