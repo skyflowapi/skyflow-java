@@ -1,4 +1,7 @@
 # Skyflow Java
+
+> **Java V2.1.0 IS NOW AVAILABLE:** A new, improved version of the Skyflow SDK is ready with flexible authentication, multi-vault support, builder patterns, and richer error diagnostics. V1 is in maintenance mode (security patches only) and will reach End of Life on October 31, 2026. We recommend upgrading to v2.1.0 — see the **[Migration Guide](docs/migrate_to_v2.md)** for step-by-step instructions.
+
 The Skyflow Java SDK is designed to help with integrating Skyflow into a Java backend.
 
 [![CI](https://img.shields.io/static/v1?label=CI&message=passing&color=green?style=plastic&logo=github)](https://github.com/skyflowapi/skyflow-java/actions)
@@ -73,7 +76,7 @@ The [Service Account](https://github.com/skyflowapi/skyflow-java/tree/main/src/m
 
 The `generateBearerToken(filepath)` function takes the credentials file path for token generation, alternatively, you can also send the entire credentials as string, by using `generateBearerTokenFromCreds(credentials)` 
 
-[Example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/TokenGenerationExample.java
+[Example](https://github.com/skyflowapi/skyflow-java/blob/v1/samples/src/main/java/com/example/TokenGenerationExample.java
 ):
 
 ```java
@@ -109,7 +112,7 @@ Context-Aware Authorization enables you to embed context values into a Bearer to
 
 The service account generated with `context_id` identifier enabled can be used to generate bearer tokens with `context`, which is a `jwt` claim for a skyflow generated bearer token. The token generated from this service account will have a `context_identifier` claim and is valid for 60 minutes and can be used to make API calls to vault services as well as management API(s) based on the permissions of the service account.
 
-[Example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/BearerTokenWithContextGenerationExample.java):
+[Example](https://github.com/skyflowapi/skyflow-java/blob/v1/samples/src/main/java/com/example/BearerTokenWithContextGenerationExample.java):
 
 ``` java
 import com.skyflow.entities.ResponseToken;
@@ -154,13 +157,13 @@ public class BearerTokenWithContextGeneration {
 Note: 
 - You can pass either a service account key credentials file path or a service account key credentials as string to the `setCredentials` method of the BearerTokenBuilder class.
 - If you pass both a file path and string to the `setCredentials` method, the last method used takes precedence.
-- To generate multiple bearer tokens using a thread, see this [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/BearerTokenGenerationUsingThreadsExample.java)
+- To generate multiple bearer tokens using a thread, see this [example](https://github.com/skyflowapi/skyflow-java/blob/v1/samples/src/main/java/com/example/BearerTokenGenerationUsingThreadsExample.java)
 
 ## Service Account Scoped Bearer Token Generation
 
 A service account that has multiple roles can generate bearer tokens with access restricted to a specific role by providing the appropriate `roleID`. Generated bearer tokens are valid for 60 minutes and can only perform operations with the permissions associated with the specified role.
 
-[Example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/ScopedTokenGenerationExample.java):
+[Example](https://github.com/skyflowapi/skyflow-java/blob/v1/samples/src/main/java/com/example/ScopedTokenGenerationExample.java):
 
 ```java
 import java.io.File;
@@ -194,7 +197,7 @@ Note:
 Skyflow generates data tokens when sensitive data is inserted into the vault. These data tokens can be digitally signed with the private key of the service account credentials, which adds an additional layer of protection. Signed tokens can be detokenized by passing the signed data token and a bearer token generated from service account credentials. The service account must have appropriate permissions and context to detokenize the signed data tokens.
 
 
-[Example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/SignedTokenGenerationExample.java):
+[Example](https://github.com/skyflowapi/skyflow-java/blob/v1/samples/src/main/java/com/example/SignedTokenGenerationExample.java):
 
 ``` java
 import com.skyflow.errors.SkyflowException;
@@ -349,7 +352,7 @@ InsertOptions insertOptions = new InsertOptions(
         );
    
 ```
-An [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/InsertWithUpsertExample.java) of insert call with upsert support
+An [example](https://github.com/skyflowapi/skyflow-java/blob/v1/samples/src/main/java/com/example/InsertWithUpsertExample.java) of insert call with upsert support
 ```java
 JSONObject recordsJson = new JSONObject();
 JSONArray recordsArrayJson = new JSONArray();
@@ -395,7 +398,7 @@ Sample insert Response
 }
 ```
 
-An [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/InsertWithContinueOnErrorExample.java) of Insert call with `continueOnError` support:
+An [example](https://github.com/skyflowapi/skyflow-java/blob/v1/samples/src/main/java/com/example/InsertWithContinueOnErrorExample.java) of Insert call with `continueOnError` support:
 ```java
 JSONObject records = new JSONObject();
 JSONArray recordsArray = new JSONArray();
@@ -491,7 +494,7 @@ InsertBulkOptions insertOptions = new InsertBulkOptions(
             upsertOptions
         );
 ```
-An [example]() of insert call with upsert support:
+An [example](samples/src/main/java/com/example/InsertBulkWithUpsertExample.java) of insert call with upsert support:
 
 ```java
 JSONObject recordsJson = new JSONObject();
@@ -538,7 +541,7 @@ Sample insert Response
 }
 ```
 
-An [example]() of Insert using bulk call:
+An [example](samples/src/main/java/com/example/InsertBulkExample.java) of Insert using bulk call:
 ```java
 JSONObject records = new JSONObject();
 JSONArray recordsArray = new JSONArray();
@@ -619,7 +622,7 @@ recordsJson.put("records", recordsArrayJson);
 
 Note: `redaction` defaults to [`RedactionType.PLAIN_TEXT`](#redaction-types).
 
-The following [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/DetokenizeExample.java) code makes a detokenize call to reveal the masked value of a token:
+The following [example](https://github.com/skyflowapi/skyflow-java/blob/v1/samples/src/main/java/com/example/DetokenizeExample.java) code makes a detokenize call to reveal the masked value of a token:
 
 ```java
 JSONObject recordsJson = new JSONObject();
@@ -768,7 +771,7 @@ There are four accepted values for RedactionType:
 * `DEFAULT`
 
 ### Examples
-An [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/GetExample.java) call using Skyflow IDs with RedactionType.
+An [example](https://github.com/skyflowapi/skyflow-java/blob/v1/samples/src/main/java/com/example/GetExample.java) call using Skyflow IDs with RedactionType.
 
 ```java
 import com.skyflow.entities.RedactionType;
@@ -915,7 +918,7 @@ Sample response:
   ]
 }
 ```
-An [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/GetExample.java) call using column names and values.
+An [example](https://github.com/skyflowapi/skyflow-java/blob/v1/samples/src/main/java/com/example/GetExample.java) call using column names and values.
 
 ```java
 import com.skyflow.entities.RedactionType;
@@ -1022,7 +1025,7 @@ There are 4 accepted values in RedactionType:
 - `REDACTED`
 - `DEFAULT` 
 
-An [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/GetByIdExample.java) getById call 
+An [example](https://github.com/skyflowapi/skyflow-java/blob/v1/samples/src/main/java/com/example/GetByIdExample.java) getById call 
 ```java
 import com.skyflow.entities.RedactionType;
 
@@ -1115,7 +1118,7 @@ records.put("records", recordsArray);
 UpdateOptions updateOptions = new UpdateOptions(true);
 ```
 
-An [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/UpdateExample.java) of update call:
+An [example](https://github.com/skyflowapi/skyflow-java/blob/v1/samples/src/main/java/com/example/UpdateExample.java) of update call:
 ```java
 JSONObject records = new JSONObject();
 JSONArray recordsArray = new JSONArray();
@@ -1252,7 +1255,7 @@ invokeConfig.put("requestBody", requestBodyJson);
 
 **pathParams, queryParams, requestHeader, requestBody** are the JSON objects that will be sent through the connection integration url.
 
-An [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/InvokeConnectionExample.java) of invokeConnection:
+An [example](https://github.com/skyflowapi/skyflow-java/blob/v1/samples/src/main/java/com/example/InvokeConnectionExample.java) of invokeConnection:
 ```java
 JSONObject invokeConfig = new JSONObject();
 invokeConfig.put("connectionURL", "<your_connection_url>");
@@ -1302,7 +1305,7 @@ skyflowClient.query(queryInput);
 ```
 See [Query your data](https://docs.skyflow.com/query-data/) and [Execute Query](https://docs.skyflow.com/record/#QueryService_ExecuteQuery) for guidelines and restrictions on supported SQL statements, operators, and keywords.
 
-An [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/QueryExample.java) of query call:
+An [example](https://github.com/skyflowapi/skyflow-java/blob/v1/samples/src/main/java/com/example/QueryExample.java) of query call:
 ```java
 JSONObject queryInput = new JSONObject();
 queryInput.put("query", "SELECT * FROM cards WHERE skyflow_id='3ea3861-x107-40w8-la98-106sp08ea83f'");
