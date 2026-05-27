@@ -6,14 +6,12 @@ This guide covers the steps to migrate the Skyflow Java SDK from v1 to v2.
 
 ## Breaking Changes from V1 to V2
 
-| Area | V1 | V2 |
-|------|----|----|
-| **Client initialization** | `TokenProvider` / `vaultURL` pattern | `Credentials` + `VaultConfig` passed to `Skyflow.builder()` |
-| **Vault URL** | Single `vaultURL` string | Split into `vaultId` + `clusterId` |
-| **Request/response types** | Raw JSON (`JSONObject`) | Typed objects (e.g. `InsertRequest` / `InsertResponse`) |
-| **Error handling** | Basic error message | Restructured with `httpStatus`, `details`, and `requestId` |
-| **Logging** | Global log level | Per-instance `logLevel` set via `Skyflow.builder().setLogLevel(LogLevel.INFO)` |
-| **Import paths** | `com.skyflow.vault.*` | New module structure across all packages |
+- **Client initialization**: `TokenProvider` / `vaultURL` pattern replaced by `Credentials` + `VaultConfig` passed to `Skyflow.builder()`.
+- **Vault URL**: `vaultURL` is now split into `vaultId` + `clusterId`.
+- **Request/response types**: Operations like insert, get, detokenize now use typed request/response objects (e.g. `InsertRequest` / `InsertResponse`) instead of raw JSON (`JSONObject`).
+- **Error handling**: Error objects restructured to include `httpStatus`, `details`, and `requestId`.
+- **Logging**: Global log level replaced by per-instance `logLevel` set via `Skyflow.builder().setLogLevel(LogLevel.INFO)`.
+- **Import paths**: New module structure across all packages.
 
 ---
 
