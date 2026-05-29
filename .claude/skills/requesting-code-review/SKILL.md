@@ -1,6 +1,9 @@
 ---
 name: requesting-code-review
 description: Use when completing tasks, implementing major features, or before merging to verify work meets requirements
+paths:
+  - src/main/java/**/*.java
+  - src/test/java/**/*.java
 ---
 
 # Requesting Code Review
