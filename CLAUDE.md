@@ -112,6 +112,8 @@ See `docs/superpowers/specs/` for in-progress design specs and `docs/superpowers
 ## Commit & PR Guidelines
 
 ### Commit messages
+**When making any `git commit`, always extract the Jira ticket ID from the current branch name and include it in the message.** Use `/commit <description>` to do this automatically.
+
 Every commit on a PR branch **must** include a Jira ticket ID — enforced by the `check-commit-message` step in `.github/workflows/pr.yml`.
 
 Accepted formats:
