@@ -1,15 +1,15 @@
-name: Publish package to the Maven Central Repository
+name: Publish v1 package to the Maven Central Repository
 on:
   push:
     tags:
-      - '[2-9]*.*.*'
+      - '1.*.*'
 jobs:
   build-and-deploy:
     uses: ./.github/workflows/shared-build-and-deploy.yml
     with:
       ref: ${{ github.ref_name }}
       is-internal: false
-      target-branch: main
+      target-branch: v1
       server-id: ossrh
       profile: maven-central
     secrets:

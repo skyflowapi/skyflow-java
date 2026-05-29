@@ -7,6 +7,12 @@ on:
         required: true
         type: string
 
+      target-branch:
+        description: 'Branch to push the version bump commit back to'
+        required: false
+        type: string
+        default: 'main'
+
       is-internal:
         description: 'Flag for internal release'
         required: true
@@ -79,7 +85,7 @@ jobs:
             git push origin ${{ github.ref_name }} -f
           else
             git commit -m "[AUTOMATED] Public Release - ${{ steps.previoustag.outputs.tag }}"
-            git push origin
+            git push origin HEAD:${{ inputs.target-branch }}
           fi
 
       - name: Create env
