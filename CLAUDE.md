@@ -106,7 +106,7 @@ See `docs/superpowers/specs/` for in-progress design specs and `docs/superpowers
 - `/code-smell` — standalone structural smell analysis only (long methods, dead code, misplaced logic)
 - `/code-security` — standalone security audit only (credentials, input validation, HTTP security)
 - `/sdk-sample <feature>` — generate a sample file for a feature
-- `/test [ClassName]` — run quality pipeline (compile → checkstyle → build → test → coverage)
+- `/quality [ClassName]` — run quality pipeline (compile → checkstyle → build → test → 100% coverage check)
 - `/commit <description>` — stage check + Jira-aware commit (extracts ticket ID from branch name)
 
 ## Commit & PR Guidelines
