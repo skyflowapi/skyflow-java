@@ -46,7 +46,11 @@ Validate against the `pr.yml` enforced pattern: `(\[?[A-Z]{1,10}-[1-9][0-9]*)|(\
 - Must contain a Jira ID — a bare description without a ticket ID will fail CI.
 - If validation fails, report the exact requirement and stop.
 
-## Step 4 — Commit
+## Step 4 — Quality check
+
+Before committing, confirm `/quality` has been run and passed (compile, tests, 100% coverage on changed code). If it has not been run, ask the user whether to run it now before proceeding.
+
+## Step 5 — Commit
 
 ```bash
 git commit -m "<assembled message>"
