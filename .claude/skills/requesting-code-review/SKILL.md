@@ -8,120 +8,69 @@ paths:
 
 # Requesting Code Review
 
-Dispatch a code reviewer subagent to catch issues before they cascade. The reviewer gets precisely crafted context for evaluation — never your session's history. This keeps the reviewer focused on the work product, not your thought process, and preserves your own context for continued work.
-
-**Core principle:** Review early, review often.
+**Core principle:** Review early, review often. Review after each task — catch issues before they compound.
 
 ## When to Request Review
 
 **Mandatory:**
 - After each task in subagent-driven development
-- After completing major feature
+- After completing a major feature
 - Before merge to main
 
 **Optional but valuable:**
 - When stuck (fresh perspective)
 - Before refactoring (baseline check)
-- After fixing complex bug
+- After fixing a complex bug
 
 ## How to Request
 
-**1. Get git SHAs:**
-```bash
-BASE_SHA=$(git rev-parse HEAD~1)  # or origin/main
-HEAD_SHA=$(git rev-parse HEAD)
-```
+**1. Pick the right command:**
 
-**2. Choose the right review type for this project:**
-
-| Change type | Use |
+| Change type | Command |
 |---|---|
-| SDK logic, patterns, naming, tests | `/code-review` — runs SDK checks + smell + security |
+| SDK logic, patterns, naming, tests | `/code-review` — SDK checks + smell + security |
 | Structural debt only | `/code-smell` — standalone smell analysis |
 | Auth, credentials, tokens, HTTP | `/code-security` — standalone security audit |
-| Full review via subagent | Dispatch with template below |
 
-For a full feature branch vs main:
+For security-sensitive changes, run both:
 ```bash
-BASE_SHA=$(git merge-base main HEAD)
+/code-review src/main/java/com/skyflow/serviceaccount/
+/code-security src/main/java/com/skyflow/serviceaccount/
+```
+
+**2. Fork context — dispatch a subagent reviewer:**
+
+The commands above run in the current session and share your context. For an independent second opinion (no confirmation bias, preserved main context window), dispatch a fresh subagent:
+
+```
+Agent tool (general-purpose):
+  description: "SDK code review"
+  prompt: |
+    You are a senior engineer reviewing the Skyflow Java SDK.
+
+    Read CLAUDE.md for project conventions, then read and follow
+    .claude/commands/code-review.md for the full review process.
+
+    Git range to review:
+      Base: {BASE_SHA}
+      Head: {HEAD_SHA}
+
+    Run:
+      git diff --stat {BASE_SHA}..{HEAD_SHA}
+      git diff {BASE_SHA}..{HEAD_SHA}
+
+    Description of what was implemented:
+      {DESCRIPTION}
+```
+
+Get the SHAs:
+```bash
+BASE_SHA=$(git merge-base main HEAD)   # branch vs main
 HEAD_SHA=$(git rev-parse HEAD)
 ```
 
-For security-sensitive changes (auth, credentials, bearer tokens, HTTP headers) — dispatch both quality and security:
-```bash
-/code-review src/serviceaccount/
-/code-security src/serviceaccount/
-```
-
-**3. Dispatch code reviewer subagent:**
-
-Use Task tool with `general-purpose` type, fill template at `code-reviewer.md`
-
-**Placeholders:**
-- `{DESCRIPTION}` - Brief summary of what you built
-- `{PLAN_OR_REQUIREMENTS}` - What it should do
-- `{BASE_SHA}` - Starting commit
-- `{HEAD_SHA}` - Ending commit
-
-**4. Act on feedback:**
+**3. Act on feedback:**
 - Fix Critical issues immediately
 - Fix Important issues before proceeding
-- Note Minor issues for later
-- Push back if reviewer is wrong (with reasoning)
-
-## Example
-
-```
-[Just completed Task 2: Add verification function]
-
-You: Let me request code review before proceeding.
-
-BASE_SHA=$(git log --oneline | grep "Task 1" | head -1 | awk '{print $1}')
-HEAD_SHA=$(git rev-parse HEAD)
-
-[Dispatch code reviewer subagent]
-  DESCRIPTION: Added verifyIndex() and repairIndex() with 4 issue types
-  PLAN_OR_REQUIREMENTS: Task 2 from docs/superpowers/plans/deployment-plan.md
-  BASE_SHA: a7981ec
-  HEAD_SHA: 3df7661
-
-[Subagent returns]:
-  Strengths: Clean architecture, real tests
-  Issues:
-    Important: Missing progress indicators
-    Minor: Magic number (100) for reporting interval
-  Assessment: Ready to proceed
-
-You: [Fix progress indicators]
-[Continue to Task 3]
-```
-
-## Integration with Workflows
-
-**Subagent-Driven Development:**
-- Review after EACH task
-- Catch issues before they compound
-- Fix before moving to next task
-
-**Executing Plans:**
-- Review after each task or at natural checkpoints
-- Get feedback, apply, continue
-
-**Ad-Hoc Development:**
-- Review before merge
-- Review when stuck
-
-## Red Flags
-
-**Never:**
-- Skip review because "it's simple"
-- Ignore Critical issues
-- Proceed with unfixed Important issues
-- Argue with valid technical feedback
-
-**If reviewer wrong:**
-- Push back with technical reasoning
-- Show code/tests that prove it works
-- Request clarification
-
-See template at: requesting-code-review/code-reviewer.md
+- Note Minor/Smell issues for later
+- Push back with reasoning if you disagree
