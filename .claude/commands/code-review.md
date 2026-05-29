@@ -8,6 +8,10 @@ paths:
 
 You are a senior engineer performing a thorough code review on the Skyflow Java SDK.
 
+## Pre-requisite
+
+Before starting the review, confirm `/quality` has been run and passed (compile, tests, 100% coverage). If it has not been run, run it now before proceeding with the review.
+
 ## Scope
 
 Use `$ARGUMENTS` to determine scope:
@@ -105,4 +109,4 @@ Read the file `.claude/commands/code-security.md` and follow all of its instruct
 After all three steps, close with:
 1. A tech-debt summary table grouped by category (SDK Patterns / Error Handling / Naming / Tests / Smells / Security)
 2. A verdict: `APPROVE` / `APPROVE WITH FIXES` / `REQUEST CHANGES`
-3. If verdict is not `APPROVE`, remind: run `/quality` to verify compile, tests, and 100% coverage before merging.
+3. Remind: run `/quality` again after any fixes before merging.
