@@ -14,7 +14,13 @@ paths:
 
 This is the Skyflow Java SDK (`skyflow-java`). It provides a Java interface to the Skyflow Data Privacy Vault API — vault operations (insert, get, update, delete, query, tokenize, detokenize), service account authentication (bearer tokens, signed data tokens), connections, detect, and audit.
 
-**Current version:** 2.x (v3.0.0 in preparation — see `docs/superpowers/specs/`)
+**Current stable version: v2.1** — supports PDB vaults. This is what customers use.
+
+**v3 (pre-release, Flow DB only):** v3 is *not* a full replacement for v2. It adds Flow DB-specific operations used by the [Spark wrapper](https://github.com/skyflowapi/vault-workflows):
+- `bulkInsert`
+- `batchProcessing` (`batchSize` + `concurrencyLimit`)
+
+v3 does not yet have full parity with v2. Do not treat v3 as the general SDK — scope v3 work strictly to Flow DB features unless explicitly told otherwise.
 
 ## Critical Boundary — Generated Code
 
