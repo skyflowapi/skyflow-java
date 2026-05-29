@@ -1,9 +1,8 @@
 ---
 name: skyflow-java-sdk
-description: Skyflow Java SDK project context — naming conventions, build commands, known failures, and slash commands. Loaded for all Java source, test, and sample files.
+description: Skyflow Java SDK project context — naming conventions, build commands, known failures, and slash commands. Loaded for all Java source files.
 paths:
   - src/**/*.java
-  - samples/**/*.java
   - pom.xml
   - checkstyle.xml
 ---
@@ -46,7 +45,6 @@ src/
     generated/       # ← FERN-GENERATED, DO NOT EDIT
   test/java/com/skyflow/
     ...              # JUnit 4 tests mirroring main structure
-samples/             # Standalone Maven project — vault / serviceaccount / detect / connection
 docs/
   superpowers/specs/ # Design specs
   superpowers/plans/ # Implementation plans
@@ -67,11 +65,6 @@ mvn checkstyle:check -q     # lint (config: checkstyle.xml)
 mvn test -q                 # full test suite (JUnit 4)
 mvn test -Dtest=ClassName   # single test class
 mvn package -DskipTests -q  # build jar
-```
-
-Samples (separate Maven project):
-```bash
-cd samples && mvn compile -q
 ```
 
 ## Credentials JSON Format
