@@ -137,7 +137,13 @@ Exempt patterns (no ticket needed):
 Conventional Commits prefixes (`feat:`, `fix:`, `chore:`, `docs:`) are encouraged but only valid alongside a Jira ID.
 
 ### Branch naming
-`<author>/<ticket>-<short-description>` — e.g. `devesh/SK-1234-add-detokenize-support`
+Branch name must include your GitHub username:
+
+```
+<github-username>/<ticket-id>-<short-description>
+```
+
+Example: `karthik/GV-770-ext-auth-json-error`
 
 ### PR template
 The `.github/pull_request_template.md` requires: **Why**, **Goal**, **Testing** sections. Tech debt section is optional.
