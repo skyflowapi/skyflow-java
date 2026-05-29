@@ -1,0 +1,157 @@
+name: Claude PR Review
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/**/*.java'
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  sdk-patterns-review:
+    name: SDK Patterns & Naming Review
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Claude CLI
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Get changed Java files
+        id: changed-files
+        run: |
+          FILES=$(git diff --name-only origin/${{ github.base_ref }}...${{ github.sha }} \
+            | grep '\.java$' \
+            | grep -v 'generated' \
+            | tr '\n' ' ')
+          echo "files=$FILES" >> $GITHUB_OUTPUT
+
+      - name: Run SDK patterns review
+        if: steps.changed-files.outputs.files != ''
+        id: review
+        continue-on-error: true
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          FILES="${{ steps.changed-files.outputs.files }}"
+          REVIEW=$(claude --print --model claude-sonnet-4-5 -p "
+          You are a senior engineer reviewing the Skyflow Java SDK.
+
+          Review the following changed Java files for SDK pattern violations:
+          1. Request/Response/Options patterns — builders are data holders, validation in Validations.java only
+          2. Error handling — all public methods throw SkyflowException, no swallowed exceptions, no bare println/printStackTrace
+          3. Naming — acronyms as words (skyflowId not skyflowID, tokenUri not tokenURI); UPPER_SNAKE constants; PascalCase classes
+          4. Response normalisation — skyflowId not skyflow_id in response maps; getErrors() present on every response class
+          5. Code quality — no magic strings (use Constants), no @SuppressWarnings without comment, deprecation via LogUtil.printWarningLog
+
+          Skip src/main/java/com/skyflow/generated/ entirely.
+
+          Files to review: $FILES
+
+          For each file with findings, produce a markdown table:
+          | Severity | Line | Finding |
+          Severities: Critical (data loss/security), Bug (wrong behaviour), Quality (naming/patterns).
+          Skip Info-level observations. If no findings for a file, omit it.
+          If no findings at all, write: 'No issues found.'
+
+          End with one of: APPROVE / APPROVE WITH FIXES / REQUEST CHANGES
+          ")
+          echo "result<<EOF" >> $GITHUB_OUTPUT
+          echo "$REVIEW" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Post review comment
+        if: steps.changed-files.outputs.files != ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const review = `${{ steps.review.outputs.result }}`;
+            const files = `${{ steps.changed-files.outputs.files }}`;
+            await github.rest.issues.createComment({
+              ...context.repo,
+              issue_number: context.payload.pull_request.number,
+              body: `## Claude SDK Patterns Review\n\n${review}\n\n---\n_Files reviewed: \`${files}\`_`
+            });
+
+  security-review:
+    name: Security Review (serviceaccount changes)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for serviceaccount changes
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            serviceaccount:
+              - 'src/**/serviceaccount/**/*.java'
+
+      - name: Install Claude CLI
+        if: steps.filter.outputs.serviceaccount == 'true'
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Get changed serviceaccount files
+        if: steps.filter.outputs.serviceaccount == 'true'
+        id: sa-files
+        run: |
+          FILES=$(git diff --name-only origin/${{ github.base_ref }}...${{ github.sha }} \
+            | grep 'serviceaccount' \
+            | grep '\.java$' \
+            | tr '\n' ' ')
+          echo "files=$FILES" >> $GITHUB_OUTPUT
+
+      - name: Run security audit
+        if: steps.filter.outputs.serviceaccount == 'true' && steps.sa-files.outputs.files != ''
+        id: security
+        continue-on-error: true
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          FILES="${{ steps.sa-files.outputs.files }}"
+          AUDIT=$(claude --print --model claude-sonnet-4-5 -p "
+          You are a security engineer auditing the Skyflow Java SDK serviceaccount module.
+
+          Audit the following files for:
+          1. Credential and token exposure — bearer tokens, API keys, private keys must never appear in logs, error messages, or toString() output
+          2. Path traversal — file paths passed to new File(path) must not allow ../
+          3. JSON parsing — JsonParser calls must be wrapped in try/catch for JsonSyntaxException
+          4. HTTP security — all API calls must be HTTPS; Authorization headers must not be logged at any level
+          5. Token lifecycle — bearer token caching must check expiry before reuse; token refresh must be thread-safe
+
+          Files: $FILES
+
+          For each finding:
+          **Severity:** Critical / High / Medium / Low
+          **File:Line:** path:N
+          **Risk:** one sentence
+          **Fix:** one concrete sentence
+
+          If no findings, write: 'No security issues found.'
+          End with overall risk rating: LOW / MEDIUM / HIGH / CRITICAL
+          ")
+          echo "result<<EOF" >> $GITHUB_OUTPUT
+          echo "$AUDIT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Post security comment
+        if: steps.filter.outputs.serviceaccount == 'true' && steps.sa-files.outputs.files != ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const audit = `${{ steps.security.outputs.result }}`;
+            const files = `${{ steps.sa-files.outputs.files }}`;
+            await github.rest.issues.createComment({
+              ...context.repo,
+              issue_number: context.payload.pull_request.number,
+              body: `## Claude Security Audit (serviceaccount)\n\n${audit}\n\n---\n_Files audited: \`${files}\`_`
+            });

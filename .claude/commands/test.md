@@ -10,15 +10,8 @@ Run the Skyflow Java SDK quality pipeline.
 
 Use `$ARGUMENTS` to target a specific test class (e.g. `BearerTokenTests`). If empty, run the full suite.
 
-## Known Pre-existing Failures (not regressions)
-
-Before reporting failures, check against this baseline:
-- `HttpUtilityTests` — ALL tests fail (JDK 21 + PowerMock `InaccessibleObject` incompatibility)
-- `TokenTests#testExpiredTokenForIsExpiredToken` — needs live credentials
-- `VaultClientTests#testSetBearerTokenWithEnvCredentials` — needs `SKYFLOW_CREDENTIALS` env var
-- `ConnectionClientTests#testSetBearerTokenWithEnvCredentials` — needs `SKYFLOW_CREDENTIALS` env var
-
-Baseline: 374 tests, ~5 failures, ~4 errors. Only report failures **beyond** this baseline.
+> Baseline failures are listed in CLAUDE.md under "Known Pre-existing Test Failures".
+> Do not investigate them unless specifically asked. Only report failures **beyond** that baseline.
 
 ## Pipeline
 

@@ -14,7 +14,7 @@ paths:
 
 This is the Skyflow Java SDK (`skyflow-java`). It provides a Java interface to the Skyflow Data Privacy Vault API — vault operations (insert, get, update, delete, query, tokenize, detokenize), service account authentication (bearer tokens, signed data tokens), connections, detect, and audit.
 
-**v1 (maintenance mode, `v1` branch):** Security and bug fixes only — no new features. EOL announced: **October 31, 2026**. Do not add features or refactor v1 code unless it is a security fix or bug fix.
+**v1 (maintenance mode, `v1` branch):** Security and bug fixes only — no new features. EOL announced: **October 31, 2026**. 
 
 **Current stable version: v2.1** — supports PDB vaults. This is what customers use.
 
@@ -38,28 +38,18 @@ The `pom.xml` checkstyle and test configs already exclude `generated/` from all 
 src/
   main/java/com/skyflow/
     config/          # VaultConfig, Credentials, ConnectionConfig
-    vault/
-      controller/    # VaultController, AuditController, BinLookupController,
-                     # ConnectionController, DetectController
-      data/          # Request/Response objects: InsertRequest, GetResponse, etc.
-      tokens/        # DetokenizeRequest/Response, TokenizeRequest/Response
-      connection/    # InvokeConnectionRequest/Response
-      audit/         # ListEventRequest/Response
-      bin/           # GetBinRequest/Response (BIN lookup)
-      detect/        # Deidentify/Reidentify requests/responses
-    serviceaccount/
-      util/          # BearerToken, SignedDataTokens — credential parsing + JWT
-    enums/           # LogLevel, RedactionType, TokenMode, Env, etc.
+    vault/           # controller/, data/, tokens/, connection/, audit/, bin/, detect/
+    serviceaccount/  # BearerToken, SignedDataTokens (JWT + credential parsing)
+    enums/           # LogLevel, RedactionType, TokenMode, Env
     errors/          # SkyflowException, ErrorCode, ErrorMessage
-    utils/           # Utils, Constants, HttpUtility, LogUtil
+    utils/           # Utils, Constants, HttpUtility, LogUtil, Validations
     generated/       # ← FERN-GENERATED, DO NOT EDIT
   test/java/com/skyflow/
-    ...              # JUnit 4 tests mirroring the main structure
-samples/             # Standalone Maven project — com.example.vault / .serviceaccount / .detect / .connection
+    ...              # JUnit 4 tests mirroring main structure
+samples/             # Standalone Maven project — vault / serviceaccount / detect / connection
 docs/
-  superpowers/
-    specs/           # Design specs for in-progress features
-    plans/           # Implementation plans
+  superpowers/specs/ # Design specs
+  superpowers/plans/ # Implementation plans
 ```
 
 ## Naming Conventions
@@ -110,7 +100,7 @@ These failures exist on `main` and are **not regressions** — do not investigat
 | `VaultClientTests#testSetBearerTokenWithEnvCredentials` | Environment error | Requires `SKYFLOW_CREDENTIALS` env var |
 | `ConnectionClientTests#testSetBearerTokenWithEnvCredentials` | Environment error | Requires `SKYFLOW_CREDENTIALS` env var |
 
-Run `mvn test -q 2>&1 | grep -E "Tests run|FAIL|ERROR"` to see current baseline (374 tests, ~5 failures, ~4 errors).
+Run `mvn test -q 2>&1 | grep -E "Tests run|FAIL|ERROR"` to see the current baseline.
 
 ## Active Work
 
@@ -123,6 +113,7 @@ See `docs/superpowers/specs/` for in-progress design specs and `docs/superpowers
 - `/code-security` — standalone security audit only (credentials, input validation, HTTP security)
 - `/sdk-sample <feature>` — generate a sample file for a feature
 - `/test [ClassName]` — run quality pipeline (compile → checkstyle → build → test → coverage)
+- `/commit <description>` — stage check + Jira-aware commit (extracts ticket ID from branch name)
 
 ## Commit & PR Guidelines
 

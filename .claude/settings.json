@@ -16,7 +16,11 @@
     "allow": [
       "Bash(mvn *)",
       "Bash(java *)",
-      "Bash(python3 *)"
+      "Bash(python3 *)",
+      "Bash(git *)",
+      "Bash(find *)",
+      "Bash(grep *)",
+      "Bash(npx cspell *)"
     ],
     "deny": [
       "Edit(src/main/java/com/skyflow/generated/**)",
