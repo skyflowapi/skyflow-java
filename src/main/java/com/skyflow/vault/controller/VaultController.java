@@ -3,6 +3,7 @@ package com.skyflow.vault.controller;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -80,6 +81,18 @@ public final class VaultController extends VaultClient {
         super(vaultConfig, credentials);
     }
 
+    private static String extractUpdateSkyflowId(HashMap<String, Object> data) {
+        if (data.containsKey("skyflowId")) {
+            if (data.containsKey("skyflow_id")) {
+                data.remove("skyflow_id");
+                LogUtil.printWarningLog(InfoLogs.DEPRECATED_SKYFLOW_ID_REQUEST_KEY.getLog());
+            }
+            return data.remove("skyflowId").toString();
+        }
+        LogUtil.printWarningLog(InfoLogs.DEPRECATED_SKYFLOW_ID_REQUEST_KEY.getLog());
+        return data.remove("skyflow_id").toString();
+    }
+
     private static synchronized HashMap<String, Object> getFormattedBatchInsertRecord(Object record, Integer requestIndex) {
         HashMap<String, Object> insertRecord = new HashMap<>();
         String jsonString = GSON.toJson(record);
@@ -90,7 +103,12 @@ public final class VaultController extends VaultClient {
         if (records != null) {
             for (JsonElement recordElement : records) {
                 JsonObject recordObject = recordElement.getAsJsonObject();
-                insertRecord.put("skyflowId", recordObject.get("skyflow_id").getAsString());
+                if (recordObject.has("skyflowId")) {
+                    insertRecord.put("skyflowId", recordObject.get("skyflowId").getAsString());
+                } else if (recordObject.has("skyflow_id")) {
+                    insertRecord.put("skyflowId", recordObject.get("skyflow_id").getAsString());
+                    LogUtil.printWarningLog(InfoLogs.DEPRECATED_SKYFLOW_ID_KEY.getLog());
+                }
                 JsonElement tokensElement = recordObject.get("tokens");
                 if (tokensElement != null) {
                     insertRecord.putAll(tokensElement.getAsJsonObject().asMap());
@@ -131,7 +149,8 @@ public final class VaultController extends VaultClient {
         }
 
         if (getRecord.containsKey("skyflow_id")) {
-            getRecord.put("skyflowId", getRecord.remove("skyflow_id"));
+            getRecord.put("skyflowId", getRecord.get("skyflow_id"));
+            LogUtil.printWarningLog(InfoLogs.DEPRECATED_SKYFLOW_ID_KEY.getLog());
         }
 
         return getRecord;
@@ -155,7 +174,8 @@ public final class VaultController extends VaultClient {
         }
 
         if (queryRecord.containsKey("skyflow_id")) {
-            queryRecord.put("skyflowId", queryRecord.remove("skyflow_id"));
+            queryRecord.put("skyflowId", queryRecord.get("skyflow_id"));
+            LogUtil.printWarningLog(InfoLogs.DEPRECATED_SKYFLOW_ID_KEY.getLog());
         }
 
         return queryRecord;
@@ -218,7 +238,7 @@ public final class VaultController extends VaultClient {
             return new InsertResponse(null, errorFields.isEmpty() ? null : errorFields);
         }
         if (errorFields.isEmpty()) {
-            return new InsertResponse(insertedFields.isEmpty() ? null : insertedFields, null);
+            return new InsertResponse(insertedFields, null);
         }
         return new InsertResponse(insertedFields, errorFields);
     }
@@ -289,7 +309,7 @@ public final class VaultController extends VaultClient {
                     .tokenization(getRequest.getReturnTokens())
                     .offset(getRequest.getOffset())
                     .limit(getRequest.getLimit())
-                    .downloadUrl(getRequest.getDownloadURL())
+                    .downloadUrl(getRequest.getDownloadUrl())
                     .columnName(getRequest.getColumnName())
                     .columnValues(getRequest.getColumnValues())
                     .fields(getRequest.getFields())
@@ -333,7 +353,7 @@ public final class VaultController extends VaultClient {
             result = super.getRecordsApi().recordServiceUpdateRecord(
                     super.getVaultConfig().getVaultId(),
                     updateRequest.getTable(),
-                    updateRequest.getData().remove("skyflow_id").toString(),
+                    extractUpdateSkyflowId(updateRequest.getData()),
                     updateBody,
                     requestOptions
             );
@@ -369,7 +389,7 @@ public final class VaultController extends VaultClient {
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
         }
         LogUtil.printInfoLog(InfoLogs.DELETE_SUCCESS.getLog());
-        return new DeleteResponse(result.getRecordIdResponse().get());
+        return new DeleteResponse(result.getRecordIdResponse().orElse(Collections.emptyList()));
     }
 
     public QueryResponse query(QueryRequest queryRequest) throws SkyflowException {

@@ -5,8 +5,12 @@ import com.skyflow.config.VaultConfig;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.generated.rest.types.DeidentifiedFileOutput;
+import com.skyflow.generated.rest.types.DetectRunsResponse;
+import com.skyflow.generated.rest.types.DetectRunsResponseStatus;
 import com.skyflow.vault.detect.AudioBleep;
 import com.skyflow.vault.detect.DeidentifyFileRequest;
+import com.skyflow.vault.detect.DeidentifyFileResponse;
 import com.skyflow.vault.detect.FileInput;
 import com.skyflow.vault.detect.GetDetectRunRequest;
 import org.junit.Assert;
@@ -14,8 +18,10 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
+import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Collections;
 
 public class DetectControllerFileTests {
     private static final String EXCEPTION_NOT_THROWN = "Should have thrown an exception";
@@ -405,5 +411,55 @@ public class DetectControllerFileTests {
             file.delete();
             dir.delete();
         }
+    }
+
+    // C1 regression: the dead statement response.getEntities().get(0) has been removed.
+    // The short-form constructor produces null entities; the guarded block at the call site
+    // handles that safely.
+    @Test
+    public void testDeidentifyFileResponseNullEntitiesDoesNotThrow() {
+        DeidentifyFileResponse response = new DeidentifyFileResponse("run-id", "IN_PROGRESS");
+        Assert.assertNull("Entities must be null from short-form constructor", response.getEntities());
+    }
+
+    // C2: getFirstOutput must return null (not throw NoSuchElementException) when output is absent.
+    @Test
+    public void testGetFirstOutputReturnsNullWhenOutputAbsent() throws Exception {
+        DetectRunsResponse response = DetectRunsResponse.builder().build();
+        Method method = DetectController.class.getDeclaredMethod("getFirstOutput", DetectRunsResponse.class);
+        method.setAccessible(true);
+        DeidentifiedFileOutput result = (DeidentifiedFileOutput) method.invoke(null, response);
+        Assert.assertNull("getFirstOutput must return null when output Optional is absent", result);
+    }
+
+    // C2: getFirstOutput must return null when output list is present but empty.
+    @Test
+    public void testGetFirstOutputReturnsNullWhenOutputListEmpty() throws Exception {
+        DetectRunsResponse response = DetectRunsResponse.builder()
+                .output(Collections.emptyList())
+                .build();
+        Method method = DetectController.class.getDeclaredMethod("getFirstOutput", DetectRunsResponse.class);
+        method.setAccessible(true);
+        DeidentifiedFileOutput result = (DeidentifiedFileOutput) method.invoke(null, response);
+        Assert.assertNull("getFirstOutput must return null when output list is empty", result);
+    }
+
+    // C3: parseDeidentifyFileResponse must not throw when processedFileExtension is absent;
+    // it should fall back to the UNKNOWN sentinel value.
+    @Test
+    public void testParseDeidentifyFileResponseFallsBackWhenExtensionAbsent() throws Exception {
+        DetectRunsResponse response = DetectRunsResponse.builder()
+                .status(DetectRunsResponseStatus.SUCCESS)
+                .output(Collections.singletonList(DeidentifiedFileOutput.builder().build()))
+                .build();
+
+        Method method = DetectController.class.getDeclaredMethod(
+                "parseDeidentifyFileResponse", DetectRunsResponse.class, String.class, String.class);
+        method.setAccessible(true);
+        DeidentifyFileResponse result = (DeidentifyFileResponse) method.invoke(null, response, "run-id", "SUCCESS");
+
+        Assert.assertNotNull("Response must not be null", result);
+        Assert.assertEquals("Extension must fall back to UNKNOWN when absent",
+                DetectRunsResponseStatus.UNKNOWN.toString(), result.getExtension());
     }
 }

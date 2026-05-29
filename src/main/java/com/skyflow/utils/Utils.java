@@ -119,7 +119,7 @@ public final class Utils {
             for (Map.Entry<String, String> entry : invokeConnectionRequest.getPathParams().entrySet()) {
                 String key = entry.getKey();
                 String value = entry.getValue();
-                filledURL = new StringBuilder(filledURL.toString().replace(String.format("{%s}", key), value));
+                filledURL = new StringBuilder(filledURL.toString().replace(String.format(Constants.CURLY_PLACEHOLDER, key), value));
             }
         }
 

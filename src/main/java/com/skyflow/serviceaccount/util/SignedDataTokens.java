@@ -16,6 +16,7 @@ import io.jsonwebtoken.Jwts;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.IOException;
 import java.security.PrivateKey;
 import java.util.ArrayList;
 import java.util.Date;
@@ -55,8 +56,12 @@ public class SignedDataTokens {
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidCredentials.getMessage());
             }
             FileReader reader = new FileReader(String.valueOf(credentialsFile));
-            JsonObject serviceAccountCredentials = JsonParser.parseReader(reader).getAsJsonObject();
-            responseToken = generateSignedTokensFromCredentials(serviceAccountCredentials, dataTokens, timeToLive, context);
+            try {
+                JsonObject serviceAccountCredentials = JsonParser.parseReader(reader).getAsJsonObject();
+                responseToken = generateSignedTokensFromCredentials(serviceAccountCredentials, dataTokens, timeToLive, context);
+            } finally {
+                try { reader.close(); } catch (IOException ignored) {}
+            }
         } catch (JsonSyntaxException e) {
             LogUtil.printErrorLog(ErrorLogs.INVALID_CREDENTIALS_FILE_FORMAT.getLog());
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), Utils.parameterizedString(
@@ -104,6 +109,9 @@ public class SignedDataTokens {
             JsonElement clientId = credentials.get("clientId");
             if (clientId == null) {
                 clientId = credentials.get("clientID");
+                if (clientId != null) {
+                    LogUtil.printWarningLog(InfoLogs.DEPRECATED_CREDENTIAL_CLIENT_ID.getLog());
+                }
             }
             if (clientId == null) {
                 LogUtil.printErrorLog(ErrorLogs.CLIENT_ID_IS_REQUIRED.getLog());
@@ -113,6 +121,9 @@ public class SignedDataTokens {
             JsonElement keyId = credentials.get("keyId");
             if (keyId == null) {
                 keyId = credentials.get("keyID");
+                if (keyId != null) {
+                    LogUtil.printWarningLog(InfoLogs.DEPRECATED_CREDENTIAL_KEY_ID.getLog());
+                }
             }
             if (keyId == null) {
                 LogUtil.printErrorLog(ErrorLogs.KEY_ID_IS_REQUIRED.getLog());

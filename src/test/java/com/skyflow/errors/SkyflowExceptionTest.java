@@ -137,4 +137,57 @@ public class SkyflowExceptionTest {
         Assert.assertTrue(str.contains("httpStatus: null"));
         Assert.assertTrue(str.contains("details: null"));
     }
+
+    @Test
+    public void testZeroHttpCodeDefaultsTo400() {
+        Map<String, List<String>> headers = new HashMap<>();
+        String json = "{\"error\":{\"message\":\"zero code\",\"grpc_code\":1,\"http_status\":\"BAD_REQUEST\"}}";
+        SkyflowException ex = new SkyflowException(0, new RuntimeException("fail"), headers, json);
+        Assert.assertEquals(400, ex.getHttpCode());
+    }
+
+    @Test
+    public void testJsonBodyWithoutErrorKey() {
+        Map<String, List<String>> headers = new HashMap<>();
+        headers.put("x-request-id", Collections.singletonList("req-no-error"));
+        String json = "{\"message\":\"no error key here\"}";
+        SkyflowException ex = new SkyflowException(400, new RuntimeException("fail"), headers, json);
+        Assert.assertEquals("req-no-error", ex.getRequestId());
+        Assert.assertNull(ex.getGrpcCode());
+        Assert.assertNull(ex.getMessage());
+    }
+
+    @Test
+    public void testJsonErrorBodyWithNoMessageField() {
+        Map<String, List<String>> headers = new HashMap<>();
+        String json = "{\"error\":{\"grpc_code\":3,\"http_status\":\"INVALID_ARGUMENT\"}}";
+        SkyflowException ex = new SkyflowException(400, new RuntimeException("fail"), headers, json);
+        Assert.assertNull(ex.getMessage());
+        Assert.assertEquals(Integer.valueOf(3), ex.getGrpcCode());
+    }
+
+    @Test
+    public void testJsonErrorBodyWithNoGrpcCodeField() {
+        Map<String, List<String>> headers = new HashMap<>();
+        String json = "{\"error\":{\"message\":\"some error\",\"http_status\":\"BAD_REQUEST\"}}";
+        SkyflowException ex = new SkyflowException(400, new RuntimeException("fail"), headers, json);
+        Assert.assertEquals("some error", ex.getMessage());
+        Assert.assertNull(ex.getGrpcCode());
+    }
+
+    @Test
+    public void testNonJsonBodyFallsBackToRawBodyAsMessage() {
+        Map<String, List<String>> headers = new HashMap<>();
+        String body = "plain text error response";
+        SkyflowException ex = new SkyflowException(500, new RuntimeException("fail"), headers, body);
+        Assert.assertEquals("plain text error response", ex.getMessage());
+    }
+
+    @Test
+    public void testNullBodyNullCauseMessageFallsBackToErrorOccurred() {
+        Map<String, List<String>> headers = new HashMap<>();
+        SkyflowException ex = new SkyflowException(500, new RuntimeException((String) null), headers, null);
+        Assert.assertNotNull(ex.getMessage());
+        Assert.assertTrue(ex.getMessage().contains("API error"));
+    }
 }

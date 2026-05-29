@@ -73,6 +73,7 @@
     "pkcs",
     "prioritise",
     "Prioritise",
+    "prioritised",
     "Timeto",
     "Wdex",
     "jacoco",
@@ -81,14 +82,24 @@
     "serialises",
     "serialising",
     "normalise",
+    "Normalise",
     "normalised",
     "normalises",
+    "Normalises",
     "normalising",
     "behaviour",
+    "Behaviour",
     "behaviours",
     "sanitisation",
-    "prioritised",
-    "prioritise"
+    "prioritise",
+    "recognised",
+    "unrecognised",
+    "nocreds",
+    "nodir",
+    "detok",
+    "qhdmceurtnlz",
+    "ngrok",
+    "obac"
   ],
   "languageSettings": [
     {
@@ -111,7 +122,9 @@
     "src/main/java/com/skyflow/generated/**",
     "**/*.ts",
     "**/processed-*",
-    "samples/src/main/java/com/example/credentials.json"
+    "samples/src/main/java/com/example/credentials.json",
+    "RUNNING_SAMPLES.md",
+    "docs/superpowers/**"
   ],
   "ignoreRegExpList": [
     "/\\b[A-Z][A-Z0-9_]{2,}\\b/g",
