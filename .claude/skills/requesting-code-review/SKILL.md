@@ -1,9 +1,6 @@
 ---
 name: requesting-code-review
 description: Use when completing tasks, implementing major features, or before merging to verify work meets requirements
-paths:
-  - src/main/java/**/*.java
-  - src/test/java/**/*.java
 ---
 
 # Requesting Code Review
@@ -50,7 +47,8 @@ Agent tool (general-purpose):
     You are a senior engineer reviewing the Skyflow Java SDK.
 
     Read CLAUDE.md for project conventions, then read and follow
-    .claude/commands/code-review.md for the full review process.
+    .claude/commands/code-review.md for the full review process
+    including all rules, output format, and act-on-feedback guidance.
 
     Git range to review:
       Base: {BASE_SHA}
@@ -70,9 +68,4 @@ BASE_SHA=$(git merge-base main HEAD)   # branch vs main
 HEAD_SHA=$(git rev-parse HEAD)
 ```
 
-**3. Act on feedback:**
-- Fix Critical issues immediately
-- Fix Important issues before proceeding
-- Note Minor/Smell issues for later
-- Push back with reasoning if you disagree
-- After fixing: run `/quality` to verify compile + tests + 100% coverage, then `/commit`
+All review rules, severity definitions, output format, and post-review steps are defined in `.claude/commands/code-review.md` — that file is the single source of truth.
