@@ -31,6 +31,7 @@ paths:
 | SDK logic, patterns, naming, tests | `/code-review` — SDK checks + smell + security |
 | Structural debt only | `/code-smell` — standalone smell analysis |
 | Auth, credentials, tokens, HTTP | `/code-security` — standalone security audit |
+| Compile + tests + 100% coverage | `/quality` — run after fixing review findings, before `/commit` |
 
 For security-sensitive changes, run both:
 ```bash
@@ -74,3 +75,4 @@ HEAD_SHA=$(git rev-parse HEAD)
 - Fix Important issues before proceeding
 - Note Minor/Smell issues for later
 - Push back with reasoning if you disagree
+- After fixing: run `/quality` to verify compile + tests + 100% coverage, then `/commit`

@@ -112,7 +112,7 @@ See `docs/superpowers/specs/` for in-progress design specs and `docs/superpowers
 ## Commit & PR Guidelines
 
 ### Commit messages
-Always use `/commit <description>` when committing — it extracts the Jira ticket ID from the branch name and validates the format against the CI check in `.github/workflows/pr.yml`.
+**Never run `git commit` directly. Always use `/commit <description>`** — it extracts the Jira ticket ID from the branch name, confirms `/quality` has passed, and validates the format against the CI check in `.github/workflows/pr.yml`.
 
 ### Branch naming
 Branch name must include your GitHub username:
