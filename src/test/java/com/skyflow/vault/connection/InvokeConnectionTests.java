@@ -11,6 +11,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -433,6 +434,22 @@ public class InvokeConnectionTests {
             Assert.assertNotNull(connectionResponse.getData());
             Assert.assertEquals(responseString, connectionResponse.toString());
             Assert.assertEquals(1, connectionResponse.getMetadata().size());
+            Assert.assertNull(connectionResponse.getErrors());
+        } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testInvokeConnectionResponseWithErrors() {
+        try {
+            ArrayList<HashMap<String, Object>> errors = new ArrayList<>();
+            HashMap<String, Object> err = new HashMap<>();
+            err.put("error", "connection failed");
+            errors.add(err);
+            InvokeConnectionResponse response = new InvokeConnectionResponse(null, null, errors);
+            Assert.assertEquals(1, response.getErrors().size());
+            Assert.assertEquals("connection failed", response.getErrors().get(0).get("error"));
         } catch (Exception e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
         }

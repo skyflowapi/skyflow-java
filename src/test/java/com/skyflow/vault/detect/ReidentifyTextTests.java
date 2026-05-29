@@ -146,4 +146,12 @@ public class ReidentifyTextTests {
             Assert.fail(INVALID_EXCEPTION_THROWN);
         }
     }
+
+    @Test
+    public void testReidentifyResponseToString() {
+        ReidentifyTextResponse response = new ReidentifyTextResponse(text);
+        String json = response.toString();
+        Assert.assertNotNull(json);
+        Assert.assertTrue(json.contains(text));
+    }
 }

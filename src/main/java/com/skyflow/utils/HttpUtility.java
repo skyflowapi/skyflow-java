@@ -7,11 +7,13 @@ import com.skyflow.errors.SkyflowException;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 
 public final class HttpUtility {
 
@@ -32,8 +34,11 @@ public final class HttpUtility {
         try {
             connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod(method);
-            connection.setRequestProperty("content-type", "application/json");
             connection.setRequestProperty("Accept", "*/*");
+            boolean hasContentType = headers != null && headers.containsKey("content-type");
+            if (!hasContentType && params != null && !params.isEmpty()) {
+                connection.setRequestProperty("content-type", "application/json");
+            }
 
             if (headers != null && !headers.isEmpty()) {
                 for (Map.Entry<String, String> entry : headers.entrySet())
@@ -52,9 +57,9 @@ public final class HttpUtility {
                     byte[] input = null;
                     String requestContentType = connection.getRequestProperty("content-type");
 
-                    if (requestContentType.contains("application/x-www-form-urlencoded")) {
+                    if (requestContentType != null && requestContentType.contains("application/x-www-form-urlencoded")) {
                         input = formatJsonToFormEncodedString(params).getBytes(StandardCharsets.UTF_8);
-                    } else if (requestContentType.contains("multipart/form-data")) {
+                    } else if (requestContentType != null && requestContentType.contains("multipart/form-data")) {
                         input = formatJsonToMultiPartFormDataString(params, boundary).getBytes(StandardCharsets.UTF_8);
                     } else {
                         input = params.toString().getBytes(StandardCharsets.UTF_8);
@@ -67,7 +72,11 @@ public final class HttpUtility {
 
             int httpCode = connection.getResponseCode();
             String requestID = connection.getHeaderField("x-request-id");
-            HttpUtility.requestID = requestID.split(",")[0];
+            if (requestID != null) {
+                HttpUtility.requestID = requestID.split(",")[0];
+            } else {
+                HttpUtility.requestID = Constants.HttpUtilityExtra.SDK_GENERATED_PREFIX + UUID.randomUUID();
+            }
             Map<String, List<String>> responseHeaders = connection.getHeaderFields();
             Reader streamReader;
             if (httpCode > 299) {
@@ -110,7 +119,7 @@ public final class HttpUtility {
         for (Map.Entry<String, String> currentEntry : jsonMap.entrySet())
             formEncodeString.append(makeFormEncodeKeyValuePair(currentEntry.getKey(), currentEntry.getValue()));
 
-        return formEncodeString.substring(0, formEncodeString.length() - 1);
+        return formEncodeString.length() == 0 ? "" : formEncodeString.substring(0, formEncodeString.length() - 1);
     }
 
     public static String formatJsonToMultiPartFormDataString(JsonObject requestBody, String boundary) {
@@ -159,7 +168,13 @@ public final class HttpUtility {
     }
 
     private static String makeFormEncodeKeyValuePair(String key, String value) {
-        return key + "=" + value + "&";
+        try {
+            String encodedKey = URLEncoder.encode(key, StandardCharsets.UTF_8.toString());
+            String encodedValue = URLEncoder.encode(value, StandardCharsets.UTF_8.toString());
+            return encodedKey + "=" + encodedValue + "&";
+        } catch (Exception e) {
+            return key + "=" + value + "&";
+        }
     }
 
 }

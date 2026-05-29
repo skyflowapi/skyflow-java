@@ -34,6 +34,15 @@ public final class Constants {
     public static final String PROCESSED_FILE_NAME_PREFIX = "processed-";
     public static final String ERROR_FROM_CLIENT_HEADER_KEY = "error-from-client";
     public static final String DEIDENTIFIED_FILE_PREFIX = "deidentified";
+    public static final String HTTPS_PROTOCOL = "https";
+    public static final String CURLY_PLACEHOLDER = "{%s}";
+    public static final String EMPTY_STRING = "";
+    public static final String QUOTE = "\"";
+
+    public static final class HttpUtilityExtra {
+        public static final String SDK_GENERATED_PREFIX = "SDK-Generated-";
+        private HttpUtilityExtra() {}
+    }
 
     static {
         String sdkVersion;

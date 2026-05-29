@@ -14,6 +14,14 @@ public class GetResponse {
         this.errors = errors;
     }
 
+    /**
+     * Returns the list of record maps from the Get response. Each map contains all
+     * field name/value pairs for the record.
+     *
+     * <p><b>Deprecation notice:</b> The {@code skyflow_id} key in each record map is
+     * deprecated and will be removed in an upcoming release. Use {@code skyflowId} instead.
+     * Both keys are present simultaneously in v2 for backward compatibility.</p>
+     */
     public ArrayList<HashMap<String, Object>> getData() {
         return data;
     }

@@ -64,7 +64,13 @@ public final class ConnectionController extends ConnectionClient {
             }
 
             String response = HttpUtility.sendRequest(requestMethod.name(), new URL(filledURL), requestBody, headers);
-            JsonObject data = JsonParser.parseString(response).getAsJsonObject();
+            JsonObject data;
+            try {
+                data = JsonParser.parseString(response).getAsJsonObject();
+            } catch (Exception e) {
+                data = new JsonObject();
+                data.addProperty("response", response);
+            }
             HashMap<String, String> metadata = new HashMap<>();
             metadata.put("requestId", HttpUtility.getRequestID());
             connectionResponse = new InvokeConnectionResponse(data, metadata, null);

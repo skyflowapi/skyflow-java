@@ -53,5 +53,17 @@ public class DeidentifyFileResponseTest {
         Assert.assertTrue(json.contains(runId));
         Assert.assertTrue(json.contains(status));
         Assert.assertTrue(json.contains("PERSON"));
+        Assert.assertEquals(fileInfo, response.getFile());
+        Assert.assertEquals(file, response.getFileBase64());
+    }
+
+    @Test
+    public void testShortConstructorAndGetters() {
+        DeidentifyFileResponse response = new DeidentifyFileResponse("run-456", "PENDING");
+        Assert.assertEquals("run-456", response.getRunId());
+        Assert.assertEquals("PENDING", response.getStatus());
+        Assert.assertNull(response.getFile());
+        Assert.assertNull(response.getFileBase64());
+        Assert.assertNull(response.getWordCount());
     }
 }

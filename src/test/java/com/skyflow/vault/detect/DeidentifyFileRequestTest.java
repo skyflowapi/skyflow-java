@@ -96,4 +96,37 @@ public class DeidentifyFileRequestTest {
         Assert.assertNull(request.getFileInput().getFile());
         Assert.assertNull(request.getFileInput().getFilePath());
     }
+
+    @Test
+    public void testBuilderNullBooleansFallToFalse() {
+        DeidentifyFileRequest request = DeidentifyFileRequest.builder()
+                .outputProcessedImage(null)
+                .outputOcrText(null)
+                .outputProcessedAudio(null)
+                .build();
+        Assert.assertFalse(request.getOutputProcessedImage());
+        Assert.assertFalse(request.getOutputOcrText());
+        Assert.assertFalse(request.getOutputProcessedAudio());
+    }
+
+    @Test
+    public void testBuilderWithTokenFormatTransformationsPixelDensityMaxResolutionBleep() {
+        TokenFormat tf = TokenFormat.builder().build();
+        Transformations tr = new Transformations(null);
+        AudioBleep bleep = AudioBleep.builder().frequency(800.0).build();
+
+        DeidentifyFileRequest request = DeidentifyFileRequest.builder()
+                .tokenFormat(tf)
+                .transformations(tr)
+                .pixelDensity(150)
+                .maxResolution(1920)
+                .bleep(bleep)
+                .build();
+
+        Assert.assertEquals(tf, request.getTokenFormat());
+        Assert.assertEquals(tr, request.getTransformations());
+        Assert.assertEquals(150, request.getPixelDensity().intValue());
+        Assert.assertEquals(1920, request.getMaxResolution().intValue());
+        Assert.assertEquals(bleep, request.getBleep());
+    }
 }
