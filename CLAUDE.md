@@ -121,6 +121,7 @@ Branch name must include your GitHub username:
 <github-username>/<ticket-id>-<short-description>
 ```
 
+<!-- cspell:disable-next-line -->
 Example: `devesh/SK-770-ext-auth-json-error`
 
 ### PR template
