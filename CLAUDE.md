@@ -45,6 +45,7 @@ src/
     generated/       # ← FERN-GENERATED, DO NOT EDIT
   test/java/com/skyflow/
     ...              # JUnit 4 tests mirroring main structure
+samples/             # Standalone Maven project — see samples/CLAUDE.md for placement rules
 docs/
   superpowers/specs/ # Design specs
   superpowers/plans/ # Implementation plans
