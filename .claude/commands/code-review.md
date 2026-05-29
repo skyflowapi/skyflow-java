@@ -105,3 +105,4 @@ Read the file `.claude/commands/code-security.md` and follow all of its instruct
 After all three steps, close with:
 1. A tech-debt summary table grouped by category (SDK Patterns / Error Handling / Naming / Tests / Smells / Security)
 2. A verdict: `APPROVE` / `APPROVE WITH FIXES` / `REQUEST CHANGES`
+3. If verdict is not `APPROVE`, remind: run `/quality` to verify compile, tests, and 100% coverage before merging.
