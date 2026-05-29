@@ -121,7 +121,7 @@ Branch name must include your GitHub username:
 <github-username>/<ticket-id>-<short-description>
 ```
 
-Example: `karthik/GV-770-ext-auth-json-error`
+Example: `devesh/SK-770-ext-auth-json-error`
 
 ### PR template
 The `.github/pull_request_template.md` requires: **Why**, **Goal**, **Testing** sections. Tech debt section is optional.
