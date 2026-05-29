@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 -c \"\nimport sys, json, subprocess\nd = json.load(sys.stdin)\nf = d.get('tool_input', {}).get('file_path', d.get('file_path', ''))\nif f and f.endswith('.java'):\n    marker = 'src/main/java/'\n    if marker in f:\n        rel = f.split(marker, 1)[1]\n        args = ['mvn', 'checkstyle:check', '-q', '-Dcheckstyle.includes=' + rel]\n    else:\n        args = ['mvn', 'checkstyle:check', '-q']\n    r = subprocess.run(args, capture_output=True, text=True)\n    out = (r.stdout + r.stderr).strip()\n    if out:\n        lines = out.splitlines()\n        print('\\n'.join(lines[-20:]))\n\""
+            "command": "python3 .claude/hooks/checkstyle-on-edit.py"
           }
         ]
       }

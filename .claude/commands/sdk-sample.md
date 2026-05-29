@@ -16,6 +16,8 @@ Create a Skyflow Java SDK sample file demonstrating: $ARGUMENTS
 | Service account auth | `com.example.serviceaccount` | `samples/src/main/java/com/example/serviceaccount/` |
 | Connection | `com.example.connection` | `samples/src/main/java/com/example/connection/` |
 | Detect | `com.example.detect` | `samples/src/main/java/com/example/detect/` |
+| Audit event operations | `com.example.audit` | `samples/src/main/java/com/example/audit/` |
+| BIN lookup | `com.example.bin` | `samples/src/main/java/com/example/bin/` |
 
 File name: `<FeatureName>Example.java`
 

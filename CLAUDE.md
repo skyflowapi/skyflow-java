@@ -110,8 +110,34 @@ See `docs/superpowers/specs/` for in-progress design specs and `docs/superpowers
 
 ## Slash Commands
 
-- `/code-review` — full review: SDK patterns + code smells + security checks (reads `.claude/commands/code-smell.md` and `.claude/commands/code-security.md` inline)
+- `/code-review` — full review: SDK patterns + code smells + security (Steps 2 and 3 read `.claude/commands/code-smell.md` and `.claude/commands/code-security.md` at runtime)
 - `/code-smell` — standalone structural smell analysis only (long methods, dead code, misplaced logic)
 - `/code-security` — standalone security audit only (credentials, input validation, HTTP security)
 - `/sdk-sample <feature>` — generate a sample file for a feature
 - `/test [ClassName]` — run quality pipeline (compile → checkstyle → build → test → coverage)
+
+## Commit & PR Guidelines
+
+### Commit messages
+Every commit on a PR branch **must** include a Jira ticket ID — enforced by the `check-commit-message` step in `.github/workflows/pr.yml`.
+
+Accepted formats:
+```
+SK-1234 short description
+SK-1234: short description
+feat: SK-1234 short description
+fix(SK-1234): short description
+```
+
+Exempt patterns (no ticket needed):
+- `[AUTOMATED]` — release version bumps only
+- `Merge ...` — merge commits
+- `Release ...` — release commits
+
+Conventional Commits prefixes (`feat:`, `fix:`, `chore:`, `docs:`) are encouraged but only valid alongside a Jira ID.
+
+### Branch naming
+`<author>/<ticket>-<short-description>` — e.g. `devesh/SK-1234-add-detokenize-support`
+
+### PR template
+The `.github/pull_request_template.md` requires: **Why**, **Goal**, **Testing** sections. Tech debt section is optional.
