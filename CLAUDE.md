@@ -112,24 +112,7 @@ See `docs/superpowers/specs/` for in-progress design specs and `docs/superpowers
 ## Commit & PR Guidelines
 
 ### Commit messages
-**When making any `git commit`, always extract the Jira ticket ID from the current branch name and include it in the message.** Use `/commit <description>` to do this automatically.
-
-Every commit on a PR branch **must** include a Jira ticket ID — enforced by the `check-commit-message` step in `.github/workflows/pr.yml`.
-
-Accepted formats:
-```
-SK-1234 short description
-SK-1234: short description
-feat: SK-1234 short description
-fix(SK-1234): short description
-```
-
-Exempt patterns (no ticket needed):
-- `[AUTOMATED]` — release version bumps only
-- `Merge ...` — merge commits
-- `Release ...` — release commits
-
-Conventional Commits prefixes (`feat:`, `fix:`, `chore:`, `docs:`) are encouraged but only valid alongside a Jira ID.
+Always use `/commit <description>` when committing — it extracts the Jira ticket ID from the branch name and validates the format against the CI check in `.github/workflows/pr.yml`.
 
 ### Branch naming
 Branch name must include your GitHub username:
