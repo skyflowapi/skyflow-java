@@ -5,7 +5,7 @@ on:
       - "pom.xml"
       - "*.md"
     branches:
-      - release/*
+      - release/**
 
 jobs:
   build-and-deploy:
