@@ -5,6 +5,8 @@ paths:
   - src/**/*.java
   - pom.xml
   - checkstyle.xml
+exclude:
+  - src/main/java/com/skyflow/generated/**
 ---
 
 # Skyflow Java SDK — Claude Code Instructions
@@ -57,6 +59,26 @@ docs/
 - **Builder setters:** `setVaultId()`, `setClusterId()`, `setSkyflowId()` — never `setVaultID()`
 - **Response maps:** always use `skyflowId` (camelCase) — the raw API returns `skyflow_id` (snake_case) which VaultController normalises before returning to callers
 - **Constants class:** use `com.skyflow.utils.Constants` for string literals; `ErrorMessage` enum for error message strings
+
+## SDK Coding Rules
+
+These apply whenever writing or modifying code — not just during review.
+
+### Error handling
+- All public methods must declare `throws SkyflowException`
+- Never swallow exceptions — always re-throw as `SkyflowException`
+- No `System.out.println` or `e.printStackTrace()` — use `LogUtil`
+- `catch (Exception e)` without re-throw is always a bug
+
+### Request / Response patterns
+- Request builders are data holders — validation belongs in `Validations.validateXxxRequest()`, not in `build()`
+- No separate `*Options` classes — options are fields on the request builder itself
+- All response classes must have `getErrors()` returning `null` when no errors
+
+### String literals
+- Use `Constants` for string literals and `ErrorMessage` enum for error messages — no magic strings
+
+---
 
 ## Build and Test
 
@@ -112,7 +134,7 @@ See `docs/superpowers/specs/` for in-progress design specs and `docs/superpowers
 ## Commit & PR Guidelines
 
 ### Commit messages
-**Never run `git commit` directly. Always use `/commit <description>`** — it extracts the Jira ticket ID from the branch name, confirms `/quality` has passed, and validates the format against the CI check in `.github/workflows/pr.yml`.
+**Never run `git commit` directly. Always use `/commit <description>`** — it extracts the Jira ticket ID from the branch name, confirms `/code-quality` has passed, and validates the format against the CI check in `.github/workflows/pr.yml`.
 
 ### Branch naming
 Branch name must include your GitHub username:

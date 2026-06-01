@@ -1,5 +1,5 @@
 ---
-name: quality
+name: code-quality
 description: Quality pipeline — compile, checkstyle, build, tests, coverage check. Pass a class name to target a single test class.
 paths:
   - src/**/*.java

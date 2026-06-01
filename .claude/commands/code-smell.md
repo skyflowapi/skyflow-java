@@ -3,6 +3,8 @@ name: code-smell
 description: Structural smell analysis + spell check — long methods, dead code, misplaced validation, deep nesting, magic numbers. Does not check patterns or security.
 paths:
   - src/main/java/**/*.java
+exclude:
+  - src/main/java/com/skyflow/generated/**
 ---
 
 You are a senior engineer performing a code smell analysis on the Skyflow Java SDK.

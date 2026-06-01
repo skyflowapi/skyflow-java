@@ -2,6 +2,7 @@ package com.skyflow.utils;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
 
 import java.io.*;
@@ -83,8 +84,8 @@ public final class HttpUtility {
                 if (connection.getErrorStream() != null)
                     streamReader = new InputStreamReader(connection.getErrorStream());
                 else {
-                    String description = appendRequestId("replace with description", requestID);
-                    throw new SkyflowException(description);
+                    String description = appendRequestId(ErrorMessage.ErrorOccurred.getMessage(), requestID);
+                    throw new SkyflowException(httpCode, new Throwable(description), responseHeaders, "{}");
                 }
             } else {
                 streamReader = new InputStreamReader(connection.getInputStream());
