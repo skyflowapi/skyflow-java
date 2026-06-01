@@ -1,9 +1,13 @@
 ---
 name: sdk-sample
 description: Generate a Skyflow Java SDK sample file for a vault feature or service account operation. Compile-verified after creation.
+context: fork
 paths:
   - samples/**/*.java
   - samples/pom.xml
+  - src/main/java/com/skyflow/**/*.java
+exclude:
+  - src/main/java/com/skyflow/generated/**
 ---
 
 Create a Skyflow Java SDK sample file demonstrating: $ARGUMENTS

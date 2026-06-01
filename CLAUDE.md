@@ -55,8 +55,8 @@ docs/
 
 ## Naming Conventions
 
-- **Acronyms as words:** `skyflowId` (not `skyflowID`), `clientId` (not `clientID`), `tokenUri` (not `tokenURI`), `keyId` (not `keyID`)
-- **Builder setters:** `setVaultId()`, `setClusterId()`, `setSkyflowId()` — never `setVaultID()`
+- **Acronyms as words:** Examples: `skyflowId` (not `skyflowID`), `clientId` (not `clientID`), `tokenUri` (not `tokenURI`), `keyId` (not `keyID`)
+- **Builder setters:** Examples: `setVaultId()`, `setClusterId()`, `setSkyflowId()` — never `setVaultID()`
 - **Response maps:** always use `skyflowId` (camelCase) — the raw API returns `skyflow_id` (snake_case) which VaultController normalises before returning to callers
 - **Constants class:** use `com.skyflow.utils.Constants` for string literals; `ErrorMessage` enum for error message strings
 
@@ -77,6 +77,16 @@ These apply whenever writing or modifying code — not just during review.
 
 ### String literals
 - Use `Constants` for string literals and `ErrorMessage` enum for error messages — no magic strings
+
+### Tests
+- Use `Assert.assertEquals` / `Assert.assertNull` — not just `Assert.fail` guards
+- No mocking of the production class under test
+- Reflection-based tests on private methods are acceptable only when no public API exercises the method
+- All code written or modified by Claude must have 100% coverage — both instruction and branch
+
+### Code quality
+- No `@SuppressWarnings` without a comment explaining why
+- Use `LogUtil.printWarningLog` for deprecation warnings — not `System.err`
 
 ---
 
@@ -128,13 +138,13 @@ See `docs/superpowers/specs/` for in-progress design specs and `docs/superpowers
 - `/code-smell` — standalone structural smell analysis only (long methods, dead code, misplaced logic)
 - `/code-security` — standalone security audit only (credentials, input validation, HTTP security)
 - `/sdk-sample <feature>` — generate a sample file for a feature
-- `/quality [ClassName]` — run quality pipeline (compile → checkstyle → build → test → 100% coverage check)
-- `/commit <description>` — stage check + Jira-aware commit (extracts ticket ID from branch name)
+- `/code-quality [ClassName]` — run quality pipeline (compile → checkstyle → build → test → 100% coverage check)
+- `/git-commit <description>` — stage check + Jira-aware commit (extracts ticket ID from branch name)
 
 ## Commit & PR Guidelines
 
 ### Commit messages
-**Never run `git commit` directly. Always use `/commit <description>`** — it extracts the Jira ticket ID from the branch name, confirms `/code-quality` has passed, and validates the format against the CI check in `.github/workflows/pr.yml`.
+**Never run `git commit` directly. Always use `/git-commit <description>`** — it extracts the Jira ticket ID from the branch name, confirms `/code-quality` has passed, and validates the format against the CI check in `.github/workflows/pr.yml`.
 
 ### Branch naming
 Branch name must include your GitHub username:

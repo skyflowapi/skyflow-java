@@ -1,6 +1,7 @@
 ---
-name: commit
+name: git-commit
 description: Stage check + Jira-aware commit — extracts ticket ID from branch name and validates against pr.yml commit-message check.
+context: fork
 ---
 
 Create a git commit for staged changes on the current branch.
@@ -13,7 +14,7 @@ Use `$ARGUMENTS` as the commit message description. If empty, ask the user for a
 git rev-parse --abbrev-ref HEAD
 ```
 
-Extract the Jira ticket ID using the pattern `[A-Z]{1,10}-[0-9]+`:
+Extract the Jira ticket ID using the pattern `[A-Z]{1,5}-[0-9]+`:
 - `devesh/SK-1234-fix-foo` → `SK-1234`
 - `karthik/GV-770-ext-auth-json-error` → `GV-770`
 - `username/SDK-2814-some-fix` → `SDK-2814`
@@ -42,7 +43,7 @@ feat: SK-1234 add bulk insert support
 fix: GV-770 handle null bearer token on refresh
 ```
 
-Validate against the `pr.yml` enforced pattern: `(\[?[A-Z]{1,10}-[1-9][0-9]*)|(\[AUTOMATED\])|(Merge)|(Release)`
+Validate against the `pr.yml` enforced pattern: `(\[?[A-Z]{1,5}-[1-9][0-9]*)|(\[AUTOMATED\])|(Merge)|(Release).+$`
 - Must contain a Jira ID — a bare description without a ticket ID will fail CI.
 - If validation fails, report the exact requirement and stop.
 

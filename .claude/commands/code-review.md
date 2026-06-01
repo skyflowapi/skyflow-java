@@ -6,6 +6,7 @@ paths:
   - src/test/java/**/*.java
 exclude:
   - src/main/java/com/skyflow/generated/**
+context: fork
 ---
 
 You are a senior engineer performing a thorough code review on the Skyflow Java SDK.
@@ -23,8 +24,6 @@ Use `$ARGUMENTS` to determine scope:
   ```bash
   git diff main...HEAD --name-only | grep '\.java$' | grep -v 'generated'
   ```
-
-**Skip entirely:** `src/main/java/com/skyflow/generated/` — Fern-generated REST client, read-only.
 
 ---
 

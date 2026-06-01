@@ -3,8 +3,12 @@ name: code-smell
 description: Structural smell analysis + spell check — long methods, dead code, misplaced validation, deep nesting, magic numbers. Does not check patterns or security.
 paths:
   - src/main/java/**/*.java
+  - src/test/java/**/*.java
+  - .claude/**/*.md
+  - docs/**/*.md
 exclude:
   - src/main/java/com/skyflow/generated/**
+context: fork
 ---
 
 You are a senior engineer performing a code smell analysis on the Skyflow Java SDK.
@@ -17,8 +21,6 @@ Use `$ARGUMENTS` to determine scope:
   ```bash
   git diff main...HEAD --name-only | grep '\.java$' | grep -v 'generated'
   ```
-
-**Skip entirely:** `src/main/java/com/skyflow/generated/` — Fern-generated REST client, read-only.
 
 ---
 

@@ -2,13 +2,11 @@
 name: code-security
 description: Security audit — credential exposure, input validation, path traversal, HTTP security, token lifecycle, dependency CVEs.
 paths:
-  - src/main/java/com/skyflow/serviceaccount/**/*.java
-  - src/main/java/com/skyflow/config/**/*.java
-  - src/main/java/com/skyflow/utils/**/*.java
-  - src/main/java/com/skyflow/vault/controller/**/*.java
+  - src/main/java/com/skyflow/**/*.java
   - pom.xml
 exclude:
   - src/main/java/com/skyflow/generated/**
+context: fork
 ---
 
 You are a security engineer auditing the Skyflow Java SDK for vulnerabilities.
@@ -19,8 +17,6 @@ Use `$ARGUMENTS` to determine target files. If none provided, run:
 ```bash
 git diff main...HEAD --name-only | grep '\.java$' | grep -v 'generated'
 ```
-
-**Skip:** `src/main/java/com/skyflow/generated/` — observations only, no edits.
 
 ## Security Checks
 

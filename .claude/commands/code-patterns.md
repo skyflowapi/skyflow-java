@@ -6,11 +6,10 @@ paths:
   - src/test/java/**/*.java
 exclude:
   - src/main/java/com/skyflow/generated/**
+context: fork
 ---
 
 You are a senior engineer reviewing the Skyflow Java SDK against its established patterns.
-
-Coding rules (error handling, request/response shape, naming, no magic strings) are defined in CLAUDE.md — apply those during this review.
 
 ## Scope
 
@@ -21,18 +20,13 @@ Files are passed in by the caller (usually `/code-review`). Review only those fi
 ## 1. Test coverage
 
 - Every public method must have at least one positive and one negative test
-- Tests must use `Assert.assertEquals` / `Assert.assertNull` — not just `Assert.fail` guards
-- No mocking of the production class under test
-- Reflection-based tests on private methods are acceptable only when no public API exercises the method
+- Follow the Tests coding rules (Assert conventions, no production class mocking, 100% coverage)
 
 ---
 
 ## 2. Code quality
 
-- No magic strings for API field names — use `Constants` or `ErrorMessage` enums
-- No duplicate validation logic across request classes — belongs in `Validations`
-- No `@SuppressWarnings` without a comment explaining why
-- `LogUtil.printWarningLog` must be used for deprecation warnings, not `System.err`
+- Follow the Code quality coding rules (@SuppressWarnings, LogUtil for deprecation)
 
 ---
 

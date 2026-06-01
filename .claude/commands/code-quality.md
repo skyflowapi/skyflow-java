@@ -4,23 +4,24 @@ description: Quality pipeline — compile, checkstyle, build, tests, coverage ch
 paths:
   - src/**/*.java
   - pom.xml
+exclude:
+  - src/main/java/com/skyflow/generated/**
+context: fork
 ---
 
 Run the Skyflow Java SDK quality pipeline.
 
 Use `$ARGUMENTS` to target a specific test class (e.g. `BearerTokenTests`). If empty, run the full suite.
 
-> Baseline failures are listed in CLAUDE.md under "Known Pre-existing Test Failures".
+> Baseline failures are documented in the Known Pre-existing Test Failures table.
 > Do not investigate them unless specifically asked. Only report failures **beyond** that baseline.
 
 ## Coverage Requirements
 
-**All code written or modified by Claude must have 100% coverage — both instruction and branch.**
-
-**All public interfaces must have 100% coverage — both instruction and branch.** This applies to:
-- All classes under `src/main/java/com/skyflow/vault/` (controllers, data, tokens, connection, audit, bin, detect)
-- All classes under `src/main/java/com/skyflow/config/`
-- All classes under `src/main/java/com/skyflow/serviceaccount/`
+Follow the Tests coding rules (100% instruction + branch coverage). Public interface packages:
+- `src/main/java/com/skyflow/vault/` (controllers, data, tokens, connection, audit, bin, detect)
+- `src/main/java/com/skyflow/config/`
+- `src/main/java/com/skyflow/serviceaccount/`
 
 Flag any gap as a blocker — **NEEDS FIXES** if coverage is below 100% on Claude-written or public interface code.
 

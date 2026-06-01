@@ -4,6 +4,9 @@ description: Use when completing tasks, implementing major features, or before m
 paths:
   - src/main/java/**/*.java
   - src/test/java/**/*.java
+exclude:
+  - src/main/java/com/skyflow/generated/**
+context: fork
 ---
 
 # Requesting Code Review
