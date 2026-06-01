@@ -29,7 +29,28 @@ Use `$ARGUMENTS` to determine scope:
 
 ## Step 1 — SDK Pattern Review
 
-Read the file `.claude/commands/code-patterns.md` and follow all of its instructions for the same files in scope. Produce its full output (per-file findings table + severity key).
+Review all files in scope against the rules defined in `CLAUDE.md` (loaded automatically from the project root). Check every rule category: naming conventions, error handling, request/response patterns, string literals, tests, and code quality.
+
+Group findings by file and produce a table:
+
+```
+### path/to/File.java
+
+| Severity | Line | Finding |
+|----------|------|---------|
+| Critical | 42   | SkyflowException swallowed in catch block |
+| Bug      | 87   | skyflow_id not normalised to skyflowId |
+| Quality  | 103  | Magic string "records" — use Constants |
+```
+
+**Severities:**
+
+| Level | Meaning |
+|---|---|
+| **Critical** | Data loss, silent failure, security risk — must fix before merge |
+| **Bug** | Wrong behaviour, incorrect output — must fix before merge |
+| **Edge Case** | Unhandled input that will cause runtime failure — fix before merge |
+| **Quality** | Maintainability issue, naming violation, missing pattern — fix before merge |
 
 ---
 
