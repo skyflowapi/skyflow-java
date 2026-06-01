@@ -38,40 +38,8 @@ context: fork
 
 For security-sensitive changes, run both:
 ```bash
-/code-review src/main/java/com/skyflow/serviceaccount/
-/code-security src/main/java/com/skyflow/serviceaccount/
-```
-
-**2. Fork context — dispatch a subagent reviewer:**
-
-The commands above run in the current session and share your context. For an independent second opinion (no confirmation bias, preserved main context window), dispatch a fresh subagent:
-
-```
-Agent tool (general-purpose):
-  description: "SDK code review"
-  prompt: |
-    You are a senior engineer reviewing the Skyflow Java SDK.
-
-    Read CLAUDE.md for project conventions, then read and follow
-    .claude/commands/code-review.md for the full review process
-    including all rules, output format, and act-on-feedback guidance.
-
-    Git range to review:
-      Base: {BASE_SHA}
-      Head: {HEAD_SHA}
-
-    Run:
-      git diff --stat {BASE_SHA}..{HEAD_SHA}
-      git diff {BASE_SHA}..{HEAD_SHA}
-
-    Description of what was implemented:
-      {DESCRIPTION}
-```
-
-Get the SHAs:
-```bash
-BASE_SHA=$(git merge-base main HEAD)   # branch vs main
-HEAD_SHA=$(git rev-parse HEAD)
+/code-review src/main/java/com/skyflow/
+/code-security src/main/java/com/skyflow/
 ```
 
 All review rules, severity definitions, output format, and post-review steps are defined in `.claude/commands/code-review.md` — that file is the single source of truth.
