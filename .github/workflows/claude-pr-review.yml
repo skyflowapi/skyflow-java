@@ -17,7 +17,7 @@ permissions:
 
 jobs:
   sdk-review:
-    name: SDK Review (patterns + smell + security)
+    name: SDK PR Review (changed lines only)
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:

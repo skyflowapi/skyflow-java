@@ -24,12 +24,15 @@ Use `$ARGUMENTS` to determine scope:
 - A file or directory path — review only that path
 - Empty / default — review files changed on current PR/branch vs base:
   ```bash
-  # CI: GITHUB_BASE_REF is set (e.g. "main") — use origin/ prefix
-  # Local: unset — use main directly
   BASE="${GITHUB_BASE_REF:+origin/$GITHUB_BASE_REF}"
   BASE="${BASE:-main}"
   git diff "$BASE"...HEAD --name-only | grep '\.java$' | grep -v 'generated'
   ```
+  **If `GITHUB_ACTIONS` is set:** work from the diff output directly (changed lines only) instead of reading full files:
+  ```bash
+  git diff "$BASE"...HEAD -- '*.java' | grep -v 'src/main/java/com/skyflow/generated/'
+  ```
+  Review only added lines (`+` prefix) from the diff. Do not comment on unchanged context lines or pre-existing code.
 
 ---
 
