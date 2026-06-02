@@ -42,6 +42,14 @@ jobs:
             echo "changed_lines=$LINES" >> $GITHUB_OUTPUT
           fi
 
+      - name: Verify Claude CLI
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          echo "Claude version: $(claude --version)"
+          TEST=$(claude --dangerously-skip-permissions --output-format json -p "Reply with only the word: WORKING" 2>&1)
+          echo "Auth test: $TEST"
+
       - name: Run code review
         if: steps.check.outputs.has_changes == 'true'
         id: review
@@ -52,7 +60,7 @@ jobs:
           GITHUB_BASE_REF: ${{ github.base_ref }}
           GITHUB_ACTIONS: "true"
         run: |
-          RAW=$(claude --dangerously-skip-permissions --output-format json --model claude-sonnet-4-6 -p "/code-review")
+          RAW=$(claude --dangerously-skip-permissions --output-format json --model claude-sonnet-4-6 -p "/code-review" 2>&1)
 
           RESULT=$(echo "$RAW" | jq -r '.result // "_Review failed to produce output._"')
           INPUT_TOK=$(echo "$RAW" | jq -r '.usage.input_tokens // 0')
