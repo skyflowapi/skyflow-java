@@ -15,7 +15,11 @@ You are a security engineer auditing the Skyflow Java SDK for vulnerabilities.
 
 Use `$ARGUMENTS` to determine target files. If none provided, run:
 ```bash
-git diff main...HEAD --name-only | grep '\.java$' | grep -v 'generated'
+# CI: GITHUB_BASE_REF is set (e.g. "main") — use origin/ prefix
+# Local: unset — use main directly
+BASE="${GITHUB_BASE_REF:+origin/$GITHUB_BASE_REF}"
+BASE="${BASE:-main}"
+git diff "$BASE"...HEAD --name-only | grep '\.java$' | grep -v 'generated'
 ```
 
 ## Security Checks

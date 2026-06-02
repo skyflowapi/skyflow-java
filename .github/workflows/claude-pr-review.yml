@@ -5,16 +5,21 @@ on:
     branches: [main]
     paths:
       - 'src/**/*.java'
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to re-run review on'
+        required: false
 
 permissions:
   pull-requests: write
   contents: read
 
 jobs:
-  sdk-patterns-review:
-    name: SDK Patterns & Naming Review
+  sdk-review:
+    name: SDK Review (patterns + smell + security)
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
         with:
@@ -23,66 +28,72 @@ jobs:
       - name: Install Claude CLI
         run: npm install -g @anthropic-ai/claude-code
 
-      - name: Get changed Java files
-        id: changed-files
+      - name: Check for non-generated Java changes
+        id: check
         run: |
-          FILES=$(git diff --name-only origin/${{ github.base_ref }}...${{ github.sha }} \
-            | grep '\.java$' \
-            | grep -v 'generated' \
-            | tr '\n' ' ')
-          echo "files=$FILES" >> $GITHUB_OUTPUT
+          CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD \
+            | grep '\.java$' | grep -v 'generated')
+          if [ -z "$CHANGED" ]; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            LINES=$(git diff origin/${{ github.base_ref }}...HEAD -- '*.java' \
+              | grep -c '^[+-][^+-]' 2>/dev/null || echo 1)
+            echo "changed_lines=$LINES" >> $GITHUB_OUTPUT
+          fi
 
-      - name: Run SDK patterns review
-        if: steps.changed-files.outputs.files != ''
+      - name: Run code review
+        if: steps.check.outputs.has_changes == 'true'
         id: review
         continue-on-error: true
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: "1"
+          GITHUB_BASE_REF: ${{ github.base_ref }}
+          GITHUB_ACTIONS: "true"
         run: |
-          FILES="${{ steps.changed-files.outputs.files }}"
-          REVIEW=$(claude --print --model claude-sonnet-4-5 -p "
-          You are a senior engineer reviewing the Skyflow Java SDK.
+          RAW=$(claude --output-format json --model claude-sonnet-4-6 -p "/code-review" 2>/dev/null)
 
-          Review the following changed Java files for SDK pattern violations:
-          1. Request/Response/Options patterns — builders are data holders, validation in Validations.java only
-          2. Error handling — all public methods throw SkyflowException, no swallowed exceptions, no bare println/printStackTrace
-          3. Naming — acronyms as words (skyflowId not skyflowID, tokenUri not tokenURI); UPPER_SNAKE constants; PascalCase classes
-          4. Response normalisation — skyflowId not skyflow_id in response maps; getErrors() present on every response class
-          5. Code quality — no magic strings (use Constants), no @SuppressWarnings without comment, deprecation via LogUtil.printWarningLog
+          RESULT=$(echo "$RAW" | jq -r '.result // "_Review failed to produce output._"')
+          INPUT_TOK=$(echo "$RAW" | jq -r '.usage.input_tokens // 0')
+          OUTPUT_TOK=$(echo "$RAW" | jq -r '.usage.output_tokens // 0')
+          CACHED_TOK=$(echo "$RAW" | jq -r '.usage.cache_read_input_tokens // 0')
+          COST=$(echo "$RAW" | jq -r '.total_cost_usd // 0')
+          LINES="${{ steps.check.outputs.changed_lines }}"
 
-          Skip src/main/java/com/skyflow/generated/ entirely.
-
-          Files to review: $FILES
-
-          For each file with findings, produce a markdown table:
-          | Severity | Line | Finding |
-          Severities: Critical (data loss/security), Bug (wrong behaviour), Quality (naming/patterns).
-          Skip Info-level observations. If no findings for a file, omit it.
-          If no findings at all, write: 'No issues found.'
-
-          End with one of: APPROVE / APPROVE WITH FIXES / REQUEST CHANGES
-          ")
           echo "result<<EOF" >> $GITHUB_OUTPUT
-          echo "$REVIEW" >> $GITHUB_OUTPUT
+          echo "$RESULT" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
+          {
+            echo "## Token Usage — SDK Review"
+            echo "| Metric | Value |"
+            echo "|--------|-------|"
+            echo "| Input tokens | $INPUT_TOK |"
+            echo "| Output tokens | $OUTPUT_TOK |"
+            echo "| Cache hits | $CACHED_TOK |"
+            echo "| Total cost | \$$COST |"
+            echo "| Changed lines | $LINES |"
+          } >> $GITHUB_STEP_SUMMARY
+
       - name: Post review comment
-        if: steps.changed-files.outputs.files != ''
+        if: steps.check.outputs.has_changes == 'true'
         uses: actions/github-script@v7
+        env:
+          REVIEW_BODY: ${{ steps.review.outputs.result }}
         with:
           script: |
-            const review = `${{ steps.review.outputs.result }}`;
-            const files = `${{ steps.changed-files.outputs.files }}`;
+            const review = process.env.REVIEW_BODY || '_Review output unavailable._';
             await github.rest.issues.createComment({
               ...context.repo,
               issue_number: context.payload.pull_request.number,
-              body: `## Claude SDK Patterns Review\n\n${review}\n\n---\n_Files reviewed: \`${files}\`_`
+              body: `## Claude SDK Review\n\n${review}`
             });
 
   security-review:
     name: Security Review (serviceaccount changes)
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
         with:
@@ -104,10 +115,8 @@ jobs:
         if: steps.filter.outputs.serviceaccount == 'true'
         id: sa-files
         run: |
-          FILES=$(git diff --name-only origin/${{ github.base_ref }}...${{ github.sha }} \
-            | grep 'serviceaccount' \
-            | grep '\.java$' \
-            | tr '\n' ' ')
+          FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD \
+            | grep 'serviceaccount' | grep '\.java$' | tr '\n' ' ')
           echo "files=$FILES" >> $GITHUB_OUTPUT
 
       - name: Run security audit
@@ -116,40 +125,44 @@ jobs:
         continue-on-error: true
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: "1"
+          GITHUB_BASE_REF: ${{ github.base_ref }}
+          GITHUB_ACTIONS: "true"
+          SA_FILES: ${{ steps.sa-files.outputs.files }}
         run: |
-          FILES="${{ steps.sa-files.outputs.files }}"
-          AUDIT=$(claude --print --model claude-sonnet-4-5 -p "
-          You are a security engineer auditing the Skyflow Java SDK serviceaccount module.
+          RAW=$(claude --output-format json --model claude-sonnet-4-6 \
+            -p "/code-security $SA_FILES" 2>/dev/null)
 
-          Audit the following files for:
-          1. Credential and token exposure — bearer tokens, API keys, private keys must never appear in logs, error messages, or toString() output
-          2. Path traversal — file paths passed to new File(path) must not allow ../
-          3. JSON parsing — JsonParser calls must be wrapped in try/catch for JsonSyntaxException
-          4. HTTP security — all API calls must be HTTPS; Authorization headers must not be logged at any level
-          5. Token lifecycle — bearer token caching must check expiry before reuse; token refresh must be thread-safe
+          RESULT=$(echo "$RAW" | jq -r '.result // "_Audit failed to produce output._"')
+          INPUT_TOK=$(echo "$RAW" | jq -r '.usage.input_tokens // 0')
+          OUTPUT_TOK=$(echo "$RAW" | jq -r '.usage.output_tokens // 0')
+          CACHED_TOK=$(echo "$RAW" | jq -r '.usage.cache_read_input_tokens // 0')
+          COST=$(echo "$RAW" | jq -r '.total_cost_usd // 0')
 
-          Files: $FILES
-
-          For each finding:
-          **Severity:** Critical / High / Medium / Low
-          **File:Line:** path:N
-          **Risk:** one sentence
-          **Fix:** one concrete sentence
-
-          If no findings, write: 'No security issues found.'
-          End with overall risk rating: LOW / MEDIUM / HIGH / CRITICAL
-          ")
           echo "result<<EOF" >> $GITHUB_OUTPUT
-          echo "$AUDIT" >> $GITHUB_OUTPUT
+          echo "$RESULT" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
+
+          {
+            echo "## Token Usage — Security Audit"
+            echo "| Metric | Value |"
+            echo "|--------|-------|"
+            echo "| Input tokens | $INPUT_TOK |"
+            echo "| Output tokens | $OUTPUT_TOK |"
+            echo "| Cache hits | $CACHED_TOK |"
+            echo "| Total cost | \$$COST |"
+          } >> $GITHUB_STEP_SUMMARY
 
       - name: Post security comment
         if: steps.filter.outputs.serviceaccount == 'true' && steps.sa-files.outputs.files != ''
         uses: actions/github-script@v7
+        env:
+          AUDIT_BODY: ${{ steps.security.outputs.result }}
+          SA_FILES: ${{ steps.sa-files.outputs.files }}
         with:
           script: |
-            const audit = `${{ steps.security.outputs.result }}`;
-            const files = `${{ steps.sa-files.outputs.files }}`;
+            const audit = process.env.AUDIT_BODY || '_Audit output unavailable._';
+            const files = process.env.SA_FILES;
             await github.rest.issues.createComment({
               ...context.repo,
               issue_number: context.payload.pull_request.number,

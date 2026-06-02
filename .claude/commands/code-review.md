@@ -13,16 +13,22 @@ You are a senior engineer performing a thorough code review on the Skyflow Java 
 
 ## Pre-requisite
 
-Before starting the review, confirm `/code-quality` has been run and passed (compile, tests, 100% coverage). If it has not been run, run it now before proceeding with the review.
+If `GITHUB_ACTIONS` environment variable is set, skip this step (CI runs compile/test in a separate job).
+
+Otherwise, confirm `/code-quality` has been run and passed (compile, tests, 100% coverage). If it has not been run, run it now before proceeding with the review.
 
 ## Scope
 
 Use `$ARGUMENTS` to determine scope:
 - `full review` — scan all files under `src/main/java/com/skyflow/` recursively (exclude `generated/`)
 - A file or directory path — review only that path
-- Empty / default — review files changed on current branch vs `main`:
+- Empty / default — review files changed on current PR/branch vs base:
   ```bash
-  git diff main...HEAD --name-only | grep '\.java$' | grep -v 'generated'
+  # CI: GITHUB_BASE_REF is set (e.g. "main") — use origin/ prefix
+  # Local: unset — use main directly
+  BASE="${GITHUB_BASE_REF:+origin/$GITHUB_BASE_REF}"
+  BASE="${BASE:-main}"
+  git diff "$BASE"...HEAD --name-only | grep '\.java$' | grep -v 'generated'
   ```
 
 ---
