@@ -47,8 +47,12 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           echo "Claude version: $(claude --version)"
+          set +e
           TEST=$(claude --dangerously-skip-permissions --output-format json -p "Reply with only the word: WORKING" 2>&1)
-          echo "Auth test: $TEST"
+          EXIT=$?
+          set -e
+          echo "Exit code: $EXIT"
+          echo "Output: $TEST"
 
       - name: Run code review
         if: steps.check.outputs.has_changes == 'true'
