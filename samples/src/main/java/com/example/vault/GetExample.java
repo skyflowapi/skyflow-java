@@ -43,36 +43,65 @@ public class GetExample {
                 .addSkyflowCredentials(skyflowCredentials) // Add general Skyflow credentials
                 .build();
 
-        // Example 1: Fetch records by Skyflow IDs from the vault
+        // Example 1: Fetch records by Skyflow IDs — plain text values
         try {
             ArrayList<String> ids = new ArrayList<>();
-            ids.add("<YOUR_SKYFLOW_ID>");                  // Replace with the Skyflow ID to fetch the record
+            ids.add("<YOUR_SKYFLOW_ID>"); // Replace with the Skyflow ID of the record to fetch
 
             GetRequest getByIdRequest = GetRequest.builder()
-                    .ids(ids)                             // Specify the list of Skyflow IDs
-                    .table("<TABLE_NAME>")                // Replace with the table name
+                    .ids(ids)                                   // Skyflow IDs to retrieve
+                    .table("<TABLE_NAME>")                      // Replace with your table name
+                    .redactionType(RedactionType.PLAIN_TEXT)    // PLAIN_TEXT / MASKED / REDACTED / DEFAULT
+                    .returnTokens(false)                        // true: return tokens instead of values
+                    // .fields(fields)                          // Optional: ArrayList<String> of column names to return (subset of columns)
+                    // .offset("<OFFSET>")                      // Optional: pagination offset (record index to start from)
+                    // .limit("<LIMIT>")                        // Optional: max number of records to return per page
+                    // .orderBy("<COLUMN_NAME>")                // Optional: column name to sort results by
+                    // .downloadURL(true)                       // Optional: return a signed download URL for file columns
                     .build();
 
-            GetResponse getByIdResponse = skyflowClient.vault().get(getByIdRequest); // Fetch via skyflow IDs
-            System.out.println("Get Response (By ID): " + getByIdResponse);
+            GetResponse getByIdResponse = skyflowClient.vault().get(getByIdRequest);
+            System.out.println("Get Response (By Skyflow ID): " + getByIdResponse);
         } catch (SkyflowException e) {
             System.out.println("Error during fetch by ID:");
             e.printStackTrace();
         }
 
-        // Example 2: Fetch records by column values from the vault
+        // Example 2: Fetch records by Skyflow IDs — return tokens instead of values
         try {
-            ArrayList<String> columnValues = new ArrayList<>();
-            columnValues.add("<YOUR_COLUMN_VALUE>");       // Replace with the column value to fetch the record
+            ArrayList<String> ids = new ArrayList<>();
+            ids.add("<YOUR_SKYFLOW_ID>"); // Replace with the Skyflow ID of the record to fetch
 
-            GetRequest getByColumnRequest = GetRequest.builder()
-                    .table("<TABLE_NAME>")                // Replace with the table name
-                    .columnName("<COLUMN_NAME>")          // Replace with the column name
-                    .columnValues(columnValues)           // Specify the list of column values
-                    .redactionType(RedactionType.PLAIN_TEXT) // Fetch the data in plain text format
+            GetRequest getTokensRequest = GetRequest.builder()
+                    .ids(ids)
+                    .table("<TABLE_NAME>")  // Replace with your table name
+                    .returnTokens(true)    // Return vault tokens for sensitive columns instead of plain values
                     .build();
 
-            GetResponse getByColumnResponse = skyflowClient.vault().get(getByColumnRequest); // Fetch via column values
+            GetResponse getTokensResponse = skyflowClient.vault().get(getTokensRequest);
+            System.out.println("Get Response (Tokens): " + getTokensResponse);
+        } catch (SkyflowException e) {
+            System.out.println("Error during fetch tokens:");
+            e.printStackTrace();
+        }
+
+        // Example 3: Fetch records by unique column values
+        try {
+            ArrayList<String> columnValues = new ArrayList<>();
+            columnValues.add("<YOUR_COLUMN_VALUE>"); // Replace with the column value to match
+
+            GetRequest getByColumnRequest = GetRequest.builder()
+                    .table("<TABLE_NAME>")                      // Replace with your table name
+                    .columnName("<COLUMN_NAME>")                // Unique column to filter by (e.g. "email")
+                    .columnValues(columnValues)                 // Values to match in that column
+                    .redactionType(RedactionType.PLAIN_TEXT)    // PLAIN_TEXT / MASKED / REDACTED / DEFAULT
+                    // .fields(fields)                          // Optional: limit which columns are returned
+                    // .offset("<OFFSET>")                      // Optional: pagination offset
+                    // .limit("<LIMIT>")                        // Optional: max records per page
+                    // .orderBy("<COLUMN_NAME>")                // Optional: sort column
+                    .build();
+
+            GetResponse getByColumnResponse = skyflowClient.vault().get(getByColumnRequest);
             System.out.println("Get Response (By Column): " + getByColumnResponse);
         } catch (SkyflowException e) {
             System.out.println("Error during fetch by column:");
