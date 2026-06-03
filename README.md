@@ -19,6 +19,7 @@ The Skyflow Java SDK is designed to help with integrating Skyflow into a Java ba
   - [Configuration](#configuration)
     - [Gradle users](#gradle-users)
     - [Maven users](#maven-users)
+- [API Reference](docs/api_reference.md)
 - [Migration from v1 to v2](docs/migrate_to_v2.md)
 - [Quickstart](#quickstart)
   - [Authenticate](#authenticate)
@@ -68,6 +69,9 @@ The Skyflow Java SDK is designed to help with integrating Skyflow into a Java ba
 - Authenticate using a Skyflow service account and generate bearer tokens for secure access.
 - Perform Vault API operations such as inserting, retrieving, and tokenizing sensitive data with ease.
 - Invoke connections to third-party APIs without directly handling sensitive data, ensuring compliance and data protection.
+
+> [!TIP]
+> Looking for the full list of request builder methods, response getters, enums, helper class APIs, and service-account utilities? See the **[API Reference](docs/api_reference.md)**.
 
 # Install
 
@@ -332,20 +336,20 @@ VaultController vault = skyflowClient.vault("<VAULT_ID>");
 
 | Method | Parameters | Returns | Description |
 |--------|-----------|---------|-------------|
-| `insert(InsertRequest)` | `InsertRequest` | `InsertResponse` | Insert one or more records |
-| `detokenize(DetokenizeRequest)` | `DetokenizeRequest` | `DetokenizeResponse` | Detokenize tokens to their original values |
-| `tokenize(TokenizeRequest)` | `TokenizeRequest` | `TokenizeResponse` | Tokenize sensitive values |
-| `get(GetRequest)` | `GetRequest` | `GetResponse` | Retrieve records by Skyflow ID or column value |
-| `update(UpdateRequest)` | `UpdateRequest` | `UpdateResponse` | Update a record by Skyflow ID |
-| `delete(DeleteRequest)` | `DeleteRequest` | `DeleteResponse` | Delete records by Skyflow ID |
-| `query(QueryRequest)` | `QueryRequest` | `QueryResponse` | Execute a SQL query |
-| `uploadFile(FileUploadRequest)` | `FileUploadRequest` | `FileUploadResponse` | Upload a file to a vault column |
+| `insert(InsertRequest)` | [`InsertRequest`](docs/api_reference.md#insertrequest) | [`InsertResponse`](docs/api_reference.md#insertresponse) | Insert one or more records |
+| `detokenize(DetokenizeRequest)` | [`DetokenizeRequest`](docs/api_reference.md#detokenizerequest) | [`DetokenizeResponse`](docs/api_reference.md#detokenizeresponse) | Detokenize tokens to their original values |
+| `tokenize(TokenizeRequest)` | [`TokenizeRequest`](docs/api_reference.md#tokenizerequest) | [`TokenizeResponse`](docs/api_reference.md#tokenizeresponse) | Tokenize sensitive values |
+| `get(GetRequest)` | [`GetRequest`](docs/api_reference.md#getrequest) | [`GetResponse`](docs/api_reference.md#getresponse) | Retrieve records by Skyflow ID or column value |
+| `update(UpdateRequest)` | [`UpdateRequest`](docs/api_reference.md#updaterequest) | [`UpdateResponse`](docs/api_reference.md#updateresponse) | Update a record by Skyflow ID |
+| `delete(DeleteRequest)` | [`DeleteRequest`](docs/api_reference.md#deleterequest) | [`DeleteResponse`](docs/api_reference.md#deleteresponse) | Delete records by Skyflow ID |
+| `query(QueryRequest)` | [`QueryRequest`](docs/api_reference.md#queryrequest) | [`QueryResponse`](docs/api_reference.md#queryresponse) | Execute a SQL query |
+| `uploadFile(FileUploadRequest)` | [`FileUploadRequest`](docs/api_reference.md#fileuploadrequest) | [`FileUploadResponse`](docs/api_reference.md#fileuploadresponse) | Upload a file to a vault column |
 
 All methods throw `SkyflowException` on error.
 
 ## Insert data into the vault
 
-Apart from using the `insert` method to insert data into your vault covered in [Quickstart](#quickstart), you can also specify options in `InsertRequest`, such as returning tokenized data, upserting records, or continuing the operation in case of errors.
+Apart from using the `insert` method to insert data into your vault covered in [Quickstart](#quickstart), you can also specify options in [`InsertRequest`](docs/api_reference.md#insertrequest), such as returning tokenized data, upserting records, or continuing the operation in case of errors. Returns an [`InsertResponse`](docs/api_reference.md#insertresponse).
 
 ### Construct an insert request
 
@@ -565,23 +569,11 @@ Skyflow returns tokens, with `upsert` support, for the record you just inserted.
 
 ## Detokenize
 
-To retrieve tokens from your vault, use the `detokenize` method. The `DetokenizeRequest` class requires a list of detokenization data as input. Additionally, you can provide optional parameters, such as the redaction type and the option to continue on error.
-
-### DetokenizeData
-
-Each entry in the detokenize list is a `DetokenizeData` object pairing a token with its desired redaction type.
-
-| Constructor | Description |
-|-------------|-------------|
-| `new DetokenizeData(String token)` | Detokenize with default redaction (`RedactionType.DEFAULT`) |
-| `new DetokenizeData(String token, RedactionType redactionType)` | Detokenize with a specific redaction type |
-
-| Method | Return type | Description |
-|--------|------------|-------------|
-| `getToken()` | `String` | The token value |
-| `getRedactionType()` | `RedactionType` | The redaction type applied to the result |
+To retrieve tokens from your vault, use the `detokenize` method. [`DetokenizeRequest`](docs/api_reference.md#detokenizerequest) requires a list of detokenization data as input. Returns a [`DetokenizeResponse`](docs/api_reference.md#detokenizeresponse).
 
 ### Construct a detokenize request
+
+Each entry in the detokenize list is a [`DetokenizeData`](docs/api_reference.md#detokenizedata) object pairing a token with its desired redaction type. See the [API Reference](docs/api_reference.md#detokenizerequest) for all `DetokenizeRequest` builder options.
 
 ```java
 import com.skyflow.enums.RedactionType;
@@ -721,15 +713,7 @@ for (DetokenizeRecordResponse err : detokenizeResponse.getErrors()) {
 }
 ```
 
-**`DetokenizeRecordResponse` methods:**
-
-| Method | Return type | Description |
-|--------|------------|-------------|
-| `getToken()` | `String` | The original token value |
-| `getValue()` | `String` | The detokenized (plaintext) value; `null` on error |
-| `getType()` | `String` | Data type of the value (e.g. `"STRING"`); `null` if not set |
-| `getError()` | `String` | Error message when detokenization failed; `null` on success |
-| `getRequestId()` | `String` | The `x-request-id` for the underlying API call |
+See [`DetokenizeRecordResponse`](docs/api_reference.md#detokenizerecordresponse) in the API Reference for the full attribute list.
 
 ### An example of a detokenize call with `continueOnError` option:
 
@@ -809,30 +793,11 @@ Sample response:
 
 Tokenization replaces sensitive data with unique identifier tokens. This approach protects sensitive information by securely storing the original data while allowing the use of tokens within your application.
 
-To tokenize data, use the `tokenize` method. The `TokenizeRequest` class creates a tokenize request. In this request, you specify the `values` parameter, which is a list of `ColumnValue` objects. Each `ColumnValue` contains two properties: `value` and `columnGroup`.
-
-### ColumnValue
-
-`ColumnValue` pairs a sensitive value with the column group that defines how it is tokenized.
-
-```java
-ColumnValue columnValue = ColumnValue.builder()
-        .value("<SENSITIVE_VALUE>")      // the data to tokenize
-        .columnGroup("<COLUMN_GROUP>")   // the vault column group name
-        .build();
-```
-
-| Builder method | Description |
-|---------------|-------------|
-| `.value(String)` | The sensitive value to tokenize |
-| `.columnGroup(String)` | The column group in the vault that defines the tokenization policy |
-
-| Getter | Return type | Description |
-|--------|------------|-------------|
-| `getValue()` | `String` | The original value |
-| `getColumnGroup()` | `String` | The column group name |
+To tokenize data, use the `tokenize` method. [`TokenizeRequest`](docs/api_reference.md#tokenizerequest) accepts a list of [`ColumnValue`](docs/api_reference.md#columnvalue) objects. Returns a [`TokenizeResponse`](docs/api_reference.md#tokenizeresponse).
 
 ### Construct a tokenize request
+
+Each entry in the tokenize list is a [`ColumnValue`](docs/api_reference.md#columnvalue) object pairing a value with its column group. See the [API Reference](docs/api_reference.md#tokenizerequest) for all `TokenizeRequest` builder options.
 
 ```java
 import com.skyflow.errors.SkyflowException;
@@ -942,7 +907,7 @@ Sample response:
 
 ## Get
 
-To retrieve data using Skyflow IDs or unique column values, use the `get` method. The `GetRequest` class creates a get request, where you specify parameters such as the table name, redaction type, Skyflow IDs, column names, column values, and whether to return tokens. If you specify Skyflow IDs, you can't use column names and column values, and the inverse is true—if you specify column names and column values, you can't use Skyflow IDs.
+To retrieve data using Skyflow IDs or unique column values, use the `get` method. [`GetRequest`](docs/api_reference.md#getrequest) accepts parameters such as table name, redaction type, Skyflow IDs, column names, and column values. `ids` and `columnName`/`columnValues` are mutually exclusive. Returns a [`GetResponse`](docs/api_reference.md#getresponse).
 
 ### Construct a get request
 
@@ -1256,27 +1221,11 @@ Sample response:
 
 ### Redaction types
 
-Redaction types determine how sensitive data is displayed when retrieved from the vault.
-
-#### **Available Redaction Types**
-
-- `DEFAULT`: Applies the vault-configured default redaction setting.
-- `REDACTED`: Completely removes sensitive data from view.
-- `MASKED`: Partially obscures sensitive information.
-- `PLAIN_TEXT`: Displays the full, unmasked data.
-
-#### **Choosing the Right Redaction Type**
-
-- Use `REDACTED` for scenarios requiring maximum data protection to prevent exposure of sensitive information.
-- Use `MASKED` to provide partial visibility of sensitive data for less critical use cases.
-- Use `PLAIN_TEXT` for internal, authorized access where full data visibility is necessary.
+See [`RedactionType`](docs/api_reference.md#redactiontype) in the API Reference for all available values and their descriptions.
 
 ## Update
 
-To update data in your vault, use the `update` method. The `UpdateRequest` class is used to create an update request,
-where you specify parameters such as the table name, data (as a map of key value pairs), tokens, returnTokens, and
-tokenStrict. If `returnTokens` is set to `true`, Skyflow returns tokens for the updated records. If `returnTokens` is
-set to `false`, Skyflow returns IDs for the updated records.
+To update data in your vault, use the `update` method. [`UpdateRequest`](docs/api_reference.md#updaterequest) accepts the table name, data map, optional tokens, `returnTokens`, and `tokenMode`. Returns an [`UpdateResponse`](docs/api_reference.md#updateresponse) with the `skyflow_id` and (when `returnTokens=true`) a token per updated column.
 
 ### Construct an update request
 
@@ -1409,8 +1358,7 @@ Sample response:
 
 ## Delete
 
-To delete records using Skyflow IDs, use the `delete` method. The `DeleteRequest` class accepts a list of Skyflow IDs
-that you want to delete, as shown below:
+To delete records using Skyflow IDs, use the `delete` method. [`DeleteRequest`](docs/api_reference.md#deleterequest) accepts a table name and list of Skyflow IDs. Returns a [`DeleteResponse`](docs/api_reference.md#deleteresponse).
 
 ### Construct a delete request
 
@@ -1518,7 +1466,7 @@ Sample response:
 
 ## Query
 
-To retrieve data with SQL queries, use the `query` method. The `QueryRequest` class accepts a `query` parameter, as shown below.
+To retrieve data with SQL queries, use the `query` method. [`QueryRequest`](docs/api_reference.md#queryrequest) accepts a `query` string. Returns a [`QueryResponse`](docs/api_reference.md#queryresponse).
 
 ### Construct a query request
 
@@ -1619,7 +1567,7 @@ Sample response:
 
 ## Upload File
 
-To upload files to a Skyflow vault, use the `uploadFile` method. The `UploadFileRequest` class accepts parameters such as the file path, table name, and file name.
+To upload files to a Skyflow vault, use the `uploadFile` method. [`FileUploadRequest`](docs/api_reference.md#fileuploadrequest) accepts the table name, column name, optional skyflow ID, and a file source (`fileObject`, `filePath`, or `base64`). Returns a [`FileUploadResponse`](docs/api_reference.md#fileuploadresponse).
 
 ### Construct a file upload request
 
@@ -1730,13 +1678,13 @@ DetectController detect = skyflowClient.detect("<VAULT_ID>");
 
 | Method | Parameters | Returns | Description |
 |--------|-----------|---------|-------------|
-| `deidentifyText(DeidentifyTextRequest)` | `DeidentifyTextRequest` | `DeidentifyTextResponse` | Deidentify sensitive entities in text |
-| `reidentifyText(ReidentifyTextRequest)` | `ReidentifyTextRequest` | `ReidentifyTextResponse` | Restore original values from a deidentified text |
-| `deidentifyFile(DeidentifyFileRequest)` | `DeidentifyFileRequest` | `DeidentifyFileResponse` | Deidentify sensitive data in a file |
-| `getDetectRun(GetDetectRunRequest)` | `GetDetectRunRequest` | `DeidentifyFileResponse` | Poll for the result of an async file deidentification |
+| `deidentifyText(DeidentifyTextRequest)` | [`DeidentifyTextRequest`](docs/api_reference.md#deidentifytextrequest) | [`DeidentifyTextResponse`](docs/api_reference.md#deidentifytextresponse) | Deidentify sensitive entities in text |
+| `reidentifyText(ReidentifyTextRequest)` | [`ReidentifyTextRequest`](docs/api_reference.md#reidentifytextrequest) | [`ReidentifyTextResponse`](docs/api_reference.md#reidentifytextresponse) | Restore original values from a deidentified text |
+| `deidentifyFile(DeidentifyFileRequest)` | [`DeidentifyFileRequest`](docs/api_reference.md#deidentifyfilerequest) | [`DeidentifyFileResponse`](docs/api_reference.md#deidentifyfileresponse) | Deidentify sensitive data in a file |
+| `getDetectRun(GetDetectRunRequest)` | [`GetDetectRunRequest`](docs/api_reference.md#getdetectrunrequest) | [`DeidentifyFileResponse`](docs/api_reference.md#deidentifyfileresponse) | Poll for the result of an async file deidentification |
 
 ## Deidentify Text
-To deidentify text, use the `deidentifyText` method. The `DeidentifyTextRequest` class creates a deidentify text request, which includes the text to be deidentified. Additionally, you can provide optional parameters using the `DeidentifyTextOptions` class.
+To deidentify text, use the `deidentifyText` method. [`DeidentifyTextRequest`](docs/api_reference.md#deidentifytextrequest) accepts the text to deidentify along with optional entity types, regex lists, token format, and transformations. Returns a [`DeidentifyTextResponse`](docs/api_reference.md#deidentifytextresponse).
 
 ### Construct an deidentify text request
 
@@ -1939,7 +1887,7 @@ Sample Response:
 ```
 
 ## Reidentify Text
-To reidentify text, use the `reidentifyText` method. The `ReidentifyTextRequest` class creates a reidentify text request, which includes the redacted or deidentified text to be reidentified. Additionally, you can provide optional parameters using the ReidentifyTextOptions class to control how specific entities are returned (as redacted, masked, or plain text).
+To reidentify text, use the `reidentifyText` method. [`ReidentifyTextRequest`](docs/api_reference.md#reidentifytextrequest) accepts the redacted/deidentified text and optional entity lists controlling which entities to reveal, mask, or keep redacted. Returns a [`ReidentifyTextResponse`](docs/api_reference.md#reidentifytextresponse).
 
 ### Construct an reidentify text request
 
@@ -2048,11 +1996,11 @@ Sample Response:
 ```
 
 ## Deidentify file
-To deidentify files, use the `deidentifyFile` method. The `DeidentifyFileRequest` class creates a deidentify file request, which includes the file to be deidentified (such as images, PDFs, audio, documents, spreadsheets, or presentations). Additionally, you can provide optional parameters using the DeidentifyFileOptions class to control how entities are detected and deidentified, as well as how the output is generated for different file types.
+To deidentify files, use the `deidentifyFile` method. [`DeidentifyFileRequest`](docs/api_reference.md#deidentifyfilerequest) accepts a [`FileInput`](docs/api_reference.md#fileinput) and optional parameters controlling entity detection, masking, output format, and async wait time. Supports images, PDFs, audio, documents, spreadsheets, and presentations. Returns a [`DeidentifyFileResponse`](docs/api_reference.md#deidentifyfileresponse).
 
 ### AudioBleep
 
-`AudioBleep` controls how detected sensitive audio segments are replaced with a bleep tone. Used in `DeidentifyFileRequest.builder().bleep(audioBleep)` for audio files.
+[`AudioBleep`](docs/api_reference.md#audiobleep) controls how detected sensitive audio segments are replaced with a bleep tone. Used in `DeidentifyFileRequest.builder().bleep(audioBleep)` for audio files.
 
 ```java
 import com.skyflow.vault.detect.AudioBleep;
@@ -2064,13 +2012,6 @@ AudioBleep audioBleep = AudioBleep.builder()
         .stopPadding(0.2D)  // silence padding after the bleep (seconds)
         .build();
 ```
-
-| Builder method | Type | Description |
-|---------------|------|-------------|
-| `.frequency(Double)` | `Double` | Tone frequency in Hz |
-| `.gain(Double)` | `Double` | Tone gain (volume) |
-| `.startPadding(Double)` | `Double` | Padding before the bleep in seconds |
-| `.stopPadding(Double)` | `Double` | Padding after the bleep in seconds |
 
 ### Construct an deidentify file request
 
@@ -2297,9 +2238,7 @@ Sample response (when the API takes more than 64 seconds):
 ```
 
 ## Get run:
-To retrieve the results of a previously started file `deidentification operation`, use the `getDetectRun` method.
-The `GetDetectRunRequest` class is initialized with the `runId` returned from a prior deidentifyFile call.
-This method allows you to fetch the final results of the file processing operation once they are available.
+To retrieve the results of a previously started file deidentification operation, use the `getDetectRun` method. [`GetDetectRunRequest`](docs/api_reference.md#getdetectrunrequest) accepts the `runId` returned from a prior `deidentifyFile` call. Returns a [`DeidentifyFileResponse`](docs/api_reference.md#deidentifyfileresponse).
 
 ### Construct an get run request
 
@@ -2403,31 +2342,11 @@ Sample Response:
 
 ## Detect response types
 
-The Detect API returns structured objects for detected entities. These types appear in `DeidentifyTextResponse.getEntities()` and `DeidentifyFileResponse.getEntities()`.
+The Detect API returns structured objects for detected entities. See the API Reference for full attribute lists: [`EntityInfo`](docs/api_reference.md#entityinfo), [`TextIndex`](docs/api_reference.md#textindex), [`FileEntityInfo`](docs/api_reference.md#fileentityinfo), [`FileInfo`](docs/api_reference.md#fileinfo).
 
-### EntityInfo
+### EntityInfo and TextIndex
 
-Represents a single detected entity in a text deidentification response.
-
-| Method | Return type | Description |
-|--------|------------|-------------|
-| `getToken()` | `String` | Placeholder token that replaced the entity in the processed text |
-| `getValue()` | `String` | Original sensitive value that was detected |
-| `getEntity()` | `String` | Entity type label (e.g. `"SSN"`, `"CREDIT_CARD"`) |
-| `getTextIndex()` | `TextIndex` | Character positions of the entity in the **original** text |
-| `getProcessedIndex()` | `TextIndex` | Character positions of the token in the **processed** text |
-| `getScores()` | `Map<String, Double>` | Confidence scores per entity type (e.g. `{"SSN": 0.93}`) |
-
-### TextIndex
-
-Represents the start and end character positions of a detected entity.
-
-| Method | Return type | Description |
-|--------|------------|-------------|
-| `getStart()` | `int` | Inclusive start character index |
-| `getEnd()` | `int` | Exclusive end character index |
-
-**Example:**
+[`EntityInfo`](docs/api_reference.md#entityinfo) appears in `DeidentifyTextResponse.getEntities()`. Each entry includes the detected entity type, original value, replacement token, character positions ([`TextIndex`](docs/api_reference.md#textindex)), and confidence scores.
 
 ```java
 DeidentifyTextResponse response = skyflowClient.detect("<VAULT_ID>").deidentifyText(request);
@@ -2442,38 +2361,17 @@ for (EntityInfo entity : response.getEntities()) {
 }
 ```
 
-### FileEntityInfo
+### FileEntityInfo and FileInfo
 
-Appears inside `DeidentifyFileResponse.getEntities()` — represents a detected-entity output file (e.g. a JSON file listing all found entities).
-
-| Method | Return type | Description |
-|--------|------------|-------------|
-| `getFile()` | `String` | Base64-encoded content of the entity output file |
-| `getType()` | `String` | Output type (e.g. `"entities"`) |
-| `getExtension()` | `String` | File extension of the output (e.g. `"json"`) |
-
-### FileInfo
-
-Wraps metadata about a file used in detect operations.
-
-| Method | Return type | Description |
-|--------|------------|-------------|
-| `getName()` | `String` | File name |
-| `getSize()` | `long` | File size in bytes |
-| `getType()` | `String` | MIME type (may be empty for some formats) |
-| `getLastModified()` | `long` | Last modified timestamp (milliseconds since epoch) |
+[`FileEntityInfo`](docs/api_reference.md#fileentityinfo) appears in `DeidentifyFileResponse.getEntities()`. [`FileInfo`](docs/api_reference.md#fileinfo) is returned by `DeidentifyFileResponse.getFile()` and contains file metadata.
 
 ## Detect enums
 
+See the API Reference for full value descriptions: [`TokenType`](docs/api_reference.md#tokentype), [`DeidentifyFileStatus`](docs/api_reference.md#deidentifyfilestatus), [`DetectOutputTranscriptions`](docs/api_reference.md#detectoutputtranscriptions), [`MaskingMethod`](docs/api_reference.md#maskingmethod), [`DetectEntities`](docs/api_reference.md#detectentities).
+
 ### TokenType
 
-Controls how detected entities are tokenized in the output. Used in `TokenFormat.builder()`.
-
-| Value | Description |
-|-------|-------------|
-| `VAULT_TOKEN` | Store the entity in the vault and return a vault token |
-| `ENTITY_UNIQUE_COUNTER` | Return a deterministic label with a counter suffix (default) |
-| `ENTITY_ONLY` | Return only the entity label, without a counter |
+[`TokenType`](docs/api_reference.md#tokentype) controls how detected entities are tokenized. Used in `TokenFormat.builder()`.
 
 ```java
 import com.skyflow.enums.TokenType;
@@ -2487,14 +2385,7 @@ TokenFormat tokenFormat = TokenFormat.builder()
 
 ### DeidentifyFileStatus
 
-Returned in `DeidentifyFileResponse.getStatus()` to indicate the processing state of an async deidentify-file operation.
-
-| Value | Description |
-|-------|-------------|
-| `IN_PROGRESS` | File is still being processed |
-| `SUCCESS` | Processing completed successfully |
-| `FAILED` | Processing failed |
-| `UNKNOWN` | Status could not be determined |
+[`DeidentifyFileStatus`](docs/api_reference.md#deidentifyfilestatus) is returned in `DeidentifyFileResponse.getStatus()` to indicate async processing state.
 
 ```java
 import com.skyflow.enums.DeidentifyFileStatus;
@@ -2509,14 +2400,7 @@ if (DeidentifyFileStatus.SUCCESS.value().equals(response.getStatus())) {
 
 ### DetectOutputTranscriptions
 
-Controls the transcription format for audio file deidentification. Used in `DeidentifyFileRequest.builder().outputTranscription(DetectOutputTranscriptions)`.
-
-| Value | Description |
-|-------|-------------|
-| `TRANSCRIPTION` | Standard transcription of the audio |
-| `DIARIZED_TRANSCRIPTION` | Transcription with speaker labels |
-| `MEDICAL_TRANSCRIPTION` | Medical-domain transcription |
-| `MEDICAL_DIARIZED_TRANSCRIPTION` | Medical-domain transcription with speaker labels |
+[`DetectOutputTranscriptions`](docs/api_reference.md#detectoutputtranscriptions) controls the transcription format for audio file deidentification.
 
 ```java
 import com.skyflow.enums.DetectOutputTranscriptions;
@@ -2550,7 +2434,7 @@ ConnectionController connection = skyflowClient.connection("<CONNECTION_ID>");
 
 | Method | Parameters | Returns | Description |
 |--------|-----------|---------|-------------|
-| `invoke(InvokeConnectionRequest)` | `InvokeConnectionRequest` | `InvokeConnectionResponse` | Invoke an inbound or outbound connection |
+| `invoke(InvokeConnectionRequest)` | [`InvokeConnectionRequest`](docs/api_reference.md#invokeconnectionrequest) | [`InvokeConnectionResponse`](docs/api_reference.md#invokeconnectionresponse) | Invoke an inbound or outbound connection |
 
 ## Invoke a connection
 
@@ -2625,13 +2509,7 @@ public class InvokeConnectionSchema {
 }
 ```
 
-`method` supports the following methods:
-
-- GET
-- POST
-- PUT
-- PATCH
-- DELETE
+`method` accepts any [`RequestMethod`](docs/api_reference.md#requestmethod) value (`GET`, `POST`, `PUT`, `PATCH`, `DELETE`). See [`InvokeConnectionRequest`](docs/api_reference.md#invokeconnectionrequest) in the API Reference for all builder options.
 
 **pathParams, queryParams, requestHeader, requestBody** are the JSON objects represented as HashMaps, that will be sent through the connection integration url.
 
