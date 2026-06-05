@@ -46,26 +46,38 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "::error::ANTHROPIC_API_KEY secret is not set."
+            exit 1
+          fi
           echo "Claude version: $(claude --version)"
           set +e
           TEST=$(claude --dangerously-skip-permissions --output-format json -p "Reply with only the word: WORKING" 2>&1)
           EXIT=$?
           set -e
-          echo "Exit code: $EXIT"
-          echo "Output: $TEST"
+          IS_ERROR=$(echo "$TEST" | jq -r '.is_error // empty' 2>/dev/null)
+          if [ "$EXIT" -ne 0 ] || [ "$IS_ERROR" = "true" ]; then
+            MSG=$(echo "$TEST" | jq -r '.result // .error // .' 2>/dev/null | head -c 300)
+            echo "::error::Claude CLI check failed (invalid key, no API credits, or connectivity): $MSG"
+            exit 1
+          fi
+          echo "Claude CLI OK"
 
       - name: Run code review
         if: steps.check.outputs.has_changes == 'true'
         id: review
-        continue-on-error: true
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: "1"
           GITHUB_BASE_REF: ${{ github.base_ref }}
           GITHUB_ACTIONS: "true"
         run: |
+          set +e
           RAW=$(claude --dangerously-skip-permissions --output-format json --model claude-sonnet-4-6 -p "/code-review" 2>&1)
+          CLAUDE_EXIT=$?
+          set -e
 
+          IS_ERROR=$(echo "$RAW" | jq -r '.is_error // empty' 2>/dev/null)
           RESULT=$(echo "$RAW" | jq -r '.result // "_Review failed to produce output._"')
           INPUT_TOK=$(echo "$RAW" | jq '[.modelUsage[].inputTokens // 0] | add // 0')
           OUTPUT_TOK=$(echo "$RAW" | jq '[.modelUsage[].outputTokens // 0] | add // 0')
@@ -87,6 +99,13 @@ jobs:
             echo "| Total cost | \$$COST |"
             echo "| Changed lines | $LINES |"
           } >> $GITHUB_STEP_SUMMARY
+
+          # Fail the check on a real API/runtime error (invalid key, no credits, etc.)
+          # instead of posting the error text as a "review".
+          if [ "$CLAUDE_EXIT" -ne 0 ] || [ "$IS_ERROR" = "true" ]; then
+            echo "::error::Claude review failed (invalid key, no API credits, or runtime error): $(echo "$RESULT" | head -c 300)"
+            exit 1
+          fi
 
       - name: Post review comment
         if: steps.check.outputs.has_changes == 'true'
@@ -141,82 +160,3 @@ jobs:
                 body: body + list
               });
             }
-
-  security-review:
-    name: Security Review (serviceaccount changes)
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Check for serviceaccount changes
-        id: filter
-        uses: dorny/paths-filter@v3
-        with:
-          filters: |
-            serviceaccount:
-              - 'src/**/serviceaccount/**/*.java'
-
-      - name: Install Claude CLI
-        if: steps.filter.outputs.serviceaccount == 'true'
-        run: npm install -g @anthropic-ai/claude-code
-
-      - name: Get changed serviceaccount files
-        if: steps.filter.outputs.serviceaccount == 'true'
-        id: sa-files
-        run: |
-          FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD \
-            | grep 'serviceaccount' | grep '\.java$' | tr '\n' ' ')
-          echo "files=$FILES" >> $GITHUB_OUTPUT
-
-      - name: Run security audit
-        if: steps.filter.outputs.serviceaccount == 'true' && steps.sa-files.outputs.files != ''
-        id: security
-        continue-on-error: true
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: "1"
-          GITHUB_BASE_REF: ${{ github.base_ref }}
-          GITHUB_ACTIONS: "true"
-          SA_FILES: ${{ steps.sa-files.outputs.files }}
-        run: |
-          RAW=$(claude --dangerously-skip-permissions --output-format json --model claude-sonnet-4-6 \
-            -p "/code-security $SA_FILES")
-
-          RESULT=$(echo "$RAW" | jq -r '.result // "_Audit failed to produce output._"')
-          INPUT_TOK=$(echo "$RAW" | jq '[.modelUsage[].inputTokens // 0] | add // 0')
-          OUTPUT_TOK=$(echo "$RAW" | jq '[.modelUsage[].outputTokens // 0] | add // 0')
-          CACHED_TOK=$(echo "$RAW" | jq '[.modelUsage[].cacheReadInputTokens // 0] | add // 0')
-          COST=$(echo "$RAW" | jq -r '.total_cost_usd // 0')
-
-          echo "result<<EOF" >> $GITHUB_OUTPUT
-          echo "$RESULT" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
-          {
-            echo "## Token Usage — Security Audit"
-            echo "| Metric | Value |"
-            echo "|--------|-------|"
-            echo "| Input tokens | $INPUT_TOK |"
-            echo "| Output tokens | $OUTPUT_TOK |"
-            echo "| Cache hits | $CACHED_TOK |"
-            echo "| Total cost | \$$COST |"
-          } >> $GITHUB_STEP_SUMMARY
-
-      - name: Post security comment
-        if: steps.filter.outputs.serviceaccount == 'true' && steps.sa-files.outputs.files != ''
-        uses: actions/github-script@v7
-        env:
-          AUDIT_BODY: ${{ steps.security.outputs.result }}
-          SA_FILES: ${{ steps.sa-files.outputs.files }}
-        with:
-          script: |
-            const audit = process.env.AUDIT_BODY || '_Audit output unavailable._';
-            const files = process.env.SA_FILES;
-            await github.rest.issues.createComment({
-              ...context.repo,
-              issue_number: context.payload.pull_request.number,
-              body: `## Claude Security Audit (serviceaccount)\n\n${audit}\n\n---\n_Files audited: \`${files}\`_`
-            });

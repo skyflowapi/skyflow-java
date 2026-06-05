@@ -77,6 +77,8 @@ Read the file `.claude/commands/code-security.md` and follow all of its instruct
 
 **If `GITHUB_ACTIONS` is set:** apply that command's **PR / CI mode** — report only issues introduced by added (`+`) lines; do not raise pre-existing vulnerabilities or whole-project checks the diff does not touch. Do **not** print code-security's standalone per-finding blocks, summary, or risk rating — collect its findings into the single consolidated report defined in **Output (PR / CI mode)** below.
 
+**Serviceaccount emphasis:** when a changed file is under `serviceaccount/**` (auth, credentials, JWT, token lifecycle), prefix its findings with 🔐 and treat any security finding there as **at least High severity** (blocking). This replaces the need for a separate serviceaccount security job.
+
 ---
 
 ## Final Verdict (local mode only)
