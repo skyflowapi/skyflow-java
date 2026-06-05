@@ -67,17 +67,54 @@ Group findings by file and produce a table:
 
 Read the file `.claude/commands/code-smell.md` and follow all of its instructions for the same files in scope. Produce its full output (per-file smell table + smell summary + recommendation).
 
+**If `GITHUB_ACTIONS` is set:** apply that command's **PR / CI mode** — report only smells introduced by added (`+`) lines; do not report whole-file metrics (Long class/method, large parameter list) or any pre-existing debt. Do **not** print code-smell's standalone tables, summary, or recommendation — collect its findings into the single consolidated report defined in **Output (PR / CI mode)** below.
+
 ---
 
 ## Step 3 — Security Audit
 
 Read the file `.claude/commands/code-security.md` and follow all of its instructions for the same files in scope. Produce its full output (per-finding blocks + summary table + overall risk rating).
 
+**If `GITHUB_ACTIONS` is set:** apply that command's **PR / CI mode** — report only issues introduced by added (`+`) lines; do not raise pre-existing vulnerabilities or whole-project checks the diff does not touch. Do **not** print code-security's standalone per-finding blocks, summary, or risk rating — collect its findings into the single consolidated report defined in **Output (PR / CI mode)** below.
+
 ---
 
-## Final Verdict
+## Final Verdict (local mode only)
+
+> Skip this section when `GITHUB_ACTIONS` is set — use **Output (PR / CI mode)** instead.
 
 After all three steps, close with:
 1. A tech-debt summary table grouped by category (SDK Patterns / Error Handling / Naming / Tests / Smells / Security)
 2. A verdict: `APPROVE` / `APPROVE WITH FIXES` / `REQUEST CHANGES`
 3. Remind: run `/code-quality` again after any fixes before merging.
+
+---
+
+## Output (PR / CI mode)
+
+When `GITHUB_ACTIONS` is set, **do not** print the three steps' standalone tables/summaries/verdicts. Merge every finding from Steps 1–3 into a single de-duplicated report (if the same issue is flagged by more than one step, keep it once with the highest severity). Emit **exactly** the following, and nothing else:
+
+1. **One-line verdict** — `APPROVE` / `APPROVE WITH FIXES` / `REQUEST CHANGES`, followed by a one-sentence rationale.
+
+2. **One blocking-findings table** (Critical / Bug / Edge Case / High / Medium only). Omit the table entirely if there are none and say "No blocking findings on the changed lines."
+   ```
+   | File:Line | Severity | Category | Finding |
+   |-----------|----------|----------|---------|
+   ```
+
+3. **A collapsed section** for everything non-blocking (Quality / Smell / Low / Info):
+   ```
+   <details><summary>Non-blocking (Quality / Smell) — N items</summary>
+
+   | File:Line | Severity | Finding |
+   |-----------|----------|---------|
+   </details>
+   ```
+
+4. **An inline-findings block** — a fenced ```` ```json:inline ```` block whose body is a JSON array of the findings that should be posted as inline review comments. Include **only blocking findings (step 2) whose line is an added (`+`) line in the diff** — never non-blocking items, never lines outside the diff. Each entry:
+   ```json:inline
+   [{ "path": "src/main/java/com/skyflow/Foo.java", "line": 42, "severity": "Bug", "comment": "skyflow_id not normalised to skyflowId" }]
+   ```
+   Emit `[]` if there are none. The workflow parses this block to attach inline comments and renders items 1–3 as the review summary; keep it as the **last** thing in the output.
+
+Be concise: no preamble, no restating the diff, no per-step headers.

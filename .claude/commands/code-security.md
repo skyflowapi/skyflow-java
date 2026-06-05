@@ -22,6 +22,12 @@ BASE="${BASE:-main}"
 git diff "$BASE"...HEAD --name-only | grep '\.java$' | grep -v 'generated'
 ```
 
+**If `GITHUB_ACTIONS` is set (PR review mode):** audit only the code this PR changed. Work from the diff:
+```bash
+git diff "$BASE"...HEAD -- '*.java' | grep -v 'src/main/java/com/skyflow/generated/'
+```
+Report a finding **only if an added line (`+` prefix) introduces or directly exposes it.** Do not raise pre-existing vulnerabilities in unchanged code, and skip whole-project checks the diff does not touch (e.g. the dependency-CVE check in §6 unless `pom.xml` changed). If the added lines introduce no security issues, state that explicitly rather than listing pre-existing risks. (Local / non-CI runs and explicit file arguments keep full-file auditing.)
+
 ## Security Checks
 
 ### 1. Credential and token exposure (Critical)

@@ -95,12 +95,52 @@ jobs:
           REVIEW_BODY: ${{ steps.review.outputs.result }}
         with:
           script: |
-            const review = process.env.REVIEW_BODY || '_Review output unavailable._';
-            await github.rest.issues.createComment({
-              ...context.repo,
-              issue_number: context.payload.pull_request.number,
-              body: `## Claude SDK Review\n\n${review}`
-            });
+            const raw = process.env.REVIEW_BODY || '_Review output unavailable._';
+            const pull_number = context.payload.pull_request.number;
+
+            // Split the inline-findings JSON block (```json:inline ... ```) from the summary.
+            let summary = raw;
+            let inline = [];
+            const m = raw.match(/```json:inline\s*([\s\S]*?)```/);
+            if (m) {
+              summary = raw.replace(m[0], '').trim();
+              try { inline = JSON.parse(m[1].trim()); } catch (e) { inline = []; }
+            }
+
+            const comments = (Array.isArray(inline) ? inline : [])
+              .filter(f => f && f.path && Number.isInteger(f.line))
+              .map(f => ({
+                path: f.path,
+                line: f.line,
+                side: 'RIGHT',
+                body: `**${f.severity || 'Finding'}**: ${f.comment || ''}`.trim()
+              }));
+
+            const body = `## Claude SDK Review\n\n${summary}`;
+
+            // One PR review: summary as the body + inline comments anchored to changed lines.
+            try {
+              await github.rest.pulls.createReview({
+                ...context.repo,
+                pull_number,
+                event: 'COMMENT',
+                body,
+                comments
+              });
+            } catch (e) {
+              // Inline anchoring fails if a line is not in the diff — fall back to a single
+              // summary comment and list the would-be inline findings so nothing is lost.
+              const list = comments.length
+                ? '\n\n<details><summary>Inline findings (could not attach to lines)</summary>\n\n'
+                  + comments.map(c => `- \`${c.path}:${c.line}\` — ${c.body}`).join('\n')
+                  + '\n</details>'
+                : '';
+              await github.rest.issues.createComment({
+                ...context.repo,
+                issue_number: pull_number,
+                body: body + list
+              });
+            }
 
   security-review:
     name: Security Review (serviceaccount changes)

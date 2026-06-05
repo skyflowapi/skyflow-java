@@ -17,10 +17,28 @@ You are a senior engineer performing a code smell analysis on the Skyflow Java S
 
 Use `$ARGUMENTS` to determine scope:
 - A file or directory path — analyse only that path
-- Empty / default — analyse files changed on current branch vs `main`:
+- Empty / default — analyse files changed on current branch vs base:
   ```bash
-  git diff main...HEAD --name-only | grep '\.java$' | grep -v 'generated'
+  BASE="${GITHUB_BASE_REF:+origin/$GITHUB_BASE_REF}"
+  BASE="${BASE:-main}"
+  git diff "$BASE"...HEAD --name-only | grep '\.java$' | grep -v 'generated'
   ```
+  **If `GITHUB_ACTIONS` is set (PR review mode):** work from the diff, not whole files, and apply the **PR / CI mode** rules below:
+  ```bash
+  git diff "$BASE"...HEAD -- '*.java' | grep -v 'src/main/java/com/skyflow/generated/'
+  ```
+
+---
+
+## PR / CI mode (changed lines only)
+
+When `GITHUB_ACTIONS` is set, the analysis must reflect **only what this PR changed** — pre-existing debt must not be re-litigated on every PR:
+
+- Report a smell **only if an added line (`+` prefix) introduces it.** Never flag smells in unchanged/context lines or pre-existing code.
+- **Do not report whole-file metrics** — *Long class, Long method, Large parameter list, pre-existing dead code, raw HashMap chains* — unless the diff itself *creates* the violation (e.g. the PR adds a brand-new method over 40 lines, or pushes a class past 300 lines for the first time). A small diff to a large legacy file must **not** trigger "Long class" or a pre-existing "Long method".
+- Duplicated-code, deep-nesting, and magic-number smells: flag only when they appear in **added** lines.
+- If the added lines introduce no smells, state **"No new smells introduced by this PR."** Do not enumerate pre-existing debt.
+- This restriction applies to PR review only. Local / non-CI runs and explicit path arguments keep full-file analysis.
 
 ---
 
