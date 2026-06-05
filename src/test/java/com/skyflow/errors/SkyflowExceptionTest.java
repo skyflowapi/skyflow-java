@@ -176,11 +176,33 @@ public class SkyflowExceptionTest {
     }
 
     @Test
-    public void testNonJsonBodyFallsBackToRawBodyAsMessage() {
+    public void testMalformedJsonBodyUsesGenericMessage() {
+        // Malformed / unparseable JSON must not be echoed back as the message.
         Map<String, List<String>> headers = new HashMap<>();
         String body = "plain text error response";
         SkyflowException ex = new SkyflowException(500, new RuntimeException("fail"), headers, body);
-        Assert.assertEquals("plain text error response", ex.getMessage());
+        Assert.assertEquals(ErrorMessage.ErrorOccurred.getMessage(), ex.getMessage());
+        Assert.assertFalse(ex.getMessage().contains("plain text error response"));
+    }
+
+    @Test
+    public void testNonObjectJsonBodyUsesGenericMessage() {
+        // Valid JSON that is not an object (array) must not be echoed back as the message.
+        Map<String, List<String>> headers = new HashMap<>();
+        String body = "[\"sensitive\", \"values\"]";
+        SkyflowException ex = new SkyflowException(500, new RuntimeException("fail"), headers, body);
+        Assert.assertEquals(ErrorMessage.ErrorOccurred.getMessage(), ex.getMessage());
+        Assert.assertFalse(ex.getMessage().contains("sensitive"));
+    }
+
+    @Test
+    public void testWellFormedErrorBodyWithBadFieldTypeFallsBackToConstructorCatch() {
+        // Valid JSON object with "error", but a non-numeric grpc_code makes getAsInt() throw
+        // after the object guard -> exercises the constructor catch's (responseBody != null) branch.
+        Map<String, List<String>> headers = new HashMap<>();
+        String json = "{\"error\":{\"grpc_code\":\"not-a-number\"}}";
+        SkyflowException ex = new SkyflowException(500, new RuntimeException("fail"), headers, json);
+        Assert.assertEquals(json, ex.getMessage());
     }
 
     @Test

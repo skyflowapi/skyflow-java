@@ -59,7 +59,7 @@ public class ConnectionClientDotenvTests {
 
         ConnectionClient client = buildClientWithNoCreds("dotenv-valid-1");
         // updateConnectionConfig calls prioritiseCredentials which reads from .env
-        client.updateConnectionConfig(client.getConnectionConfig());
+        client.updateConnectionConfig();
     }
 
     @Test
@@ -72,7 +72,7 @@ public class ConnectionClientDotenvTests {
         ConnectionClient client = buildClientWithNoCreds("dotenv-null-1");
         // Null sysCredentials → SkyflowException thrown directly
         try {
-            client.updateConnectionConfig(client.getConnectionConfig());
+            client.updateConnectionConfig();
             Assert.fail("Should have thrown SkyflowException");
         } catch (SkyflowException e) {
             Assert.assertTrue(e.getMessage().contains(ErrorMessage.EmptyCredentials.getMessage()));

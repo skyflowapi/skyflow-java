@@ -238,7 +238,7 @@ public final class Skyflow {
             Validations.validateConnectionConfig(connectionConfig);
             if (this.connectionsMap.containsKey(connectionConfig.getConnectionId())) {
                 ConnectionConfig updatedConfig = findAndUpdateConnectionConfig(connectionConfig);
-                this.connectionsMap.get(updatedConfig.getConnectionId()).updateConnectionConfig(connectionConfig);
+                this.connectionsMap.get(updatedConfig.getConnectionId()).updateConnectionConfig();
             } else {
                 LogUtil.printErrorLog(Utils.parameterizedString(
                         ErrorLogs.CONNECTION_CONFIG_DOES_NOT_EXIST.getLog(), connectionConfig.getConnectionId()

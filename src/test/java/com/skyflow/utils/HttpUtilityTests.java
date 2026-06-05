@@ -167,7 +167,8 @@ public class HttpUtilityTests {
             params.addProperty("key", "value");
             String response = httpUtility.sendRequest("GET", url, params, headers);
             Assert.assertEquals(expected, response);
-            Assert.assertNotNull(HttpUtility.getRequestID());
+            // No x-request-id header from the backend -> SDK does not generate one.
+            Assert.assertNull(HttpUtility.getRequestID());
         } catch (Exception e) {
             fail(INVALID_EXCEPTION_THROWN);
         }

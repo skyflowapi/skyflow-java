@@ -36,11 +36,11 @@ public class ConnectionClient {
         prioritiseCredentials();
     }
 
-    protected void updateConnectionConfig(ConnectionConfig connectionConfig) throws SkyflowException {
+    protected void updateConnectionConfig() throws SkyflowException {
         prioritiseCredentials();
     }
 
-    protected void setBearerToken() throws SkyflowException {
+    protected synchronized void setBearerToken() throws SkyflowException {
         prioritiseCredentials();
         Validations.validateCredentials(this.finalCredentials);
         if (this.finalCredentials.getApiKey() != null) {
@@ -89,7 +89,7 @@ public class ConnectionClient {
         } catch (SkyflowException e) {
             throw e;
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new SkyflowException(ErrorCode.SERVER_ERROR.getCode(), ErrorMessage.EmptyCredentials.getMessage());
         }
     }
 

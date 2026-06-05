@@ -51,7 +51,7 @@ public class ConnectionClientTests {
             Credentials credentials = new Credentials();
             credentials.setToken(bearerToken);
             connectionConfig.setCredentials(credentials);
-            connectionClient.updateConnectionConfig(connectionConfig);
+            connectionClient.updateConnectionConfig();
 
             // regular scenario
             connectionClient.setBearerToken();
@@ -69,7 +69,7 @@ public class ConnectionClientTests {
             Credentials credentials = new Credentials();
             credentials.setApiKey(apiKey);
             connectionConfig.setCredentials(null);
-            connectionClient.updateConnectionConfig(connectionConfig);
+            connectionClient.updateConnectionConfig();
             connectionClient.setCommonCredentials(credentials);
 
             // regular scenario
@@ -86,7 +86,7 @@ public class ConnectionClientTests {
     public void testSetBearerTokenWithEnvCredentials() {
         try {
             connectionConfig.setCredentials(null);
-            connectionClient.updateConnectionConfig(connectionConfig);
+            connectionClient.updateConnectionConfig();
             connectionClient.setCommonCredentials(null);
             Assert.assertNull(connectionClient.getConnectionConfig().getCredentials());
         } catch (Exception e) {
@@ -152,7 +152,7 @@ public class ConnectionClientTests {
             config.setCredentials(credentialsA);
             ConnectionClient client = new ConnectionClient(config, null);
 
-            client.updateConnectionConfig(config); // sets finalCredentials = credentialsA (original=null → no reset)
+            client.updateConnectionConfig(); // sets finalCredentials = credentialsA (original=null → no reset)
             client.token = "cached-token-value"; // simulate previously obtained bearer token
 
             // Change to different credentials object
@@ -160,7 +160,7 @@ public class ConnectionClientTests {
             credentialsB.setToken("different-token");
             config.setCredentials(credentialsB);
 
-            client.updateConnectionConfig(config); // original=A, new=B → !A.equals(B) → reset (lines 83-84)
+            client.updateConnectionConfig(); // original=A, new=B → !A.equals(B) → reset (lines 83-84)
             Assert.assertNull(client.token);
             Assert.assertNull(client.apiKey);
         } catch (Exception e) {

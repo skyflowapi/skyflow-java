@@ -38,9 +38,19 @@ public final class Constants {
     public static final String CURLY_PLACEHOLDER = "{%s}";
     public static final String EMPTY_STRING = "";
     public static final String QUOTE = "\"";
+    public static final int HTTP_MAX_IDLE_CONNECTIONS = 10;
+    public static final long HTTP_KEEP_ALIVE_DURATION_MINUTES = 1;
 
     public static final class HttpUtilityExtra {
-        public static final String SDK_GENERATED_PREFIX = "SDK-Generated-";
+        public static final int HTTP_SUCCESS_STATUS_MAX = 299;
+        public static final String HEADER_ACCEPT = "Accept";
+        public static final String ACCEPT_ALL = "*/*";
+        public static final String HEADER_CONTENT_TYPE = "content-type";
+        public static final String HEADER_REQUEST_ID = "x-request-id";
+        public static final String CONTENT_TYPE_JSON = "application/json";
+        public static final String CONTENT_TYPE_FORM_URLENCODED = "application/x-www-form-urlencoded";
+        public static final String CONTENT_TYPE_MULTIPART = "multipart/form-data";
+        public static final String EMPTY_JSON_BODY = "{}";
         private HttpUtilityExtra() {}
     }
 
