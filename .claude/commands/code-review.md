@@ -54,12 +54,12 @@ Group findings by file and produce a table:
 
 **Severities:**
 
-| Level | Meaning |
-|---|---|
-| **Critical** | Data loss, silent failure, security risk — must fix before merge |
-| **Bug** | Wrong behaviour, incorrect output — must fix before merge |
-| **Edge Case** | Unhandled input that will cause runtime failure — fix before merge |
-| **Quality** | Maintainability issue, naming violation, missing pattern — fix before merge |
+| Level | Meaning | Blocks merge? |
+|---|---|---|
+| **Critical** | Data loss, silent failure, security risk | Yes |
+| **Bug** | Wrong behaviour, incorrect output | Yes |
+| **Edge Case** | Unhandled input that will cause runtime failure | Yes |
+| **Quality** | Maintainability issue, naming violation, missing pattern | No — advisory |
 
 ---
 
@@ -92,19 +92,23 @@ After all three steps, close with:
 
 ## Output (PR / CI mode)
 
-When `GITHUB_ACTIONS` is set, **do not** print the three steps' standalone tables/summaries/verdicts. Merge every finding from Steps 1–3 into a single de-duplicated report (if the same issue is flagged by more than one step, keep it once with the highest severity). Emit **exactly** the following, and nothing else:
+When `GITHUB_ACTIONS` is set, **do not** print the three steps' standalone tables/summaries/verdicts. Merge every finding from Steps 1–3 into a single de-duplicated report (if the same issue is flagged by more than one step, keep it once with the highest severity). Emit **exactly** the following, and nothing else.
 
-1. **One-line verdict** — `APPROVE` / `APPROVE WITH FIXES` / `REQUEST CHANGES`, followed by a one-sentence rationale.
+**Severity buckets (single source of truth for this mode — every finding is exactly one):**
+- **Blocking** (must fix before merge): `Critical`, `Bug`, `Edge Case`, `High`, `Medium`.
+- **Advisory** (does not block merge): `Quality`, `Smell`, `Low`, `Info`.
 
-2. **One blocking-findings table** (Critical / Bug / Edge Case / High / Medium only). Omit the table entirely if there are none and say "No blocking findings on the changed lines."
+1. **One-line verdict** — `REQUEST CHANGES` if there is **≥1 blocking** finding; `APPROVE WITH FIXES` if there are only advisory findings; `APPROVE` if there are none. Add a one-sentence rationale.
+
+2. **Blocking-findings table** — blocking severities only. A `Quality` / `Smell` / `Low` / `Info` finding must **never** appear here. Omit the table and say "No blocking findings on the changed lines." if there are none.
    ```
    | File:Line | Severity | Category | Finding |
    |-----------|----------|----------|---------|
    ```
 
-3. **A collapsed section** for everything non-blocking (Quality / Smell / Low / Info):
+3. **Advisory section (collapsed)** — every advisory finding (and only advisory ones). The count `N` must match the row count.
    ```
-   <details><summary>Non-blocking (Quality / Smell) — N items</summary>
+   <details><summary>Advisory (Quality / Smell / Low / Info) — N items</summary>
 
    | File:Line | Severity | Finding |
    |-----------|----------|---------|
