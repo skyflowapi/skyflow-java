@@ -117,14 +117,21 @@ jobs:
             const raw = process.env.REVIEW_BODY || '_Review output unavailable._';
             const pull_number = context.payload.pull_request.number;
 
-            // Split the inline-findings JSON block (```json:inline ... ```) from the summary.
+            // Extract inline findings, then strip the block so it never leaks into the comment.
+            // Primary format: HTML-comment sentinel <!-- ai-review-inline [...] --> (never renders,
+            // and backticks inside the JSON can't break extraction). Legacy fallback: ```json:inline fence.
             let summary = raw;
             let inline = [];
-            const m = raw.match(/```json:inline\s*([\s\S]*?)```/);
-            if (m) {
-              summary = raw.replace(m[0], '').trim();
-              try { inline = JSON.parse(m[1].trim()); } catch (e) { inline = []; }
-            }
+            const html = raw.match(/<!--\s*ai-review-inline\s*([\s\S]*?)-->/);
+            const fenced = raw.match(/```+\s*json:inline\s*([\s\S]*?)```/);
+            const block = html || fenced;
+            if (block) { try { inline = JSON.parse(block[1].trim()); } catch (e) { inline = []; } }
+            // Strip the sentinel block and any stray json:inline fence (to end-of-text, since it must
+            // be last) so a malformed block can never appear in the visible summary.
+            summary = summary
+              .replace(/<!--\s*ai-review-inline[\s\S]*?-->/g, '')
+              .replace(/```+\s*json:inline[\s\S]*$/i, '')
+              .trim();
 
             // Strip any leading model preamble/narration before the verdict line
             // (tolerates markdown decoration like **REQUEST CHANGES** or a heading).

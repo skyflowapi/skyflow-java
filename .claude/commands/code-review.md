@@ -127,8 +127,16 @@ Merge every finding from Steps 1–3 into one de-duplicated report (same issue f
    </details>
    ```
 
-4. **Inline-findings block** — a fenced ```` ```json:inline ```` block: a JSON array of **only blocking findings whose line is an added (`+`) line**. Put the **full explanation in `comment`** (this is what renders inline on the code); keep the table above terse. Never include advisory items or lines outside the diff.
-   ```json:inline
-   [{ "path": "src/main/java/com/skyflow/Foo.java", "line": 42, "severity": "High", "category": "Correctness", "comment": "Full explanation of the issue and the fix goes here." }]
+4. **Inline-findings block** — the **very last thing** in your output, wrapped in an **HTML comment** so it never renders even if parsing fails. Its body is a JSON array of **only blocking findings whose line is an added (`+`) line** (never advisory items, never lines outside the diff). Put the **full explanation in `comment`** (this is what renders inline on the code); keep the summary table above terse.
+
+   **Critical:** `comment` must be **plain text** — you may use single backticks for short identifiers, but **never triple backticks / code fences / `\`\`\`` anywhere inside the JSON** (they corrupt extraction). Describe the fix in prose, not a code block.
+
+   Use exactly these sentinels (emit `[]` for the array if there are no inline findings):
+
    ```
-   Emit `[]` if there are none. Keep this block **last**; the workflow strips it from the visible summary and renders items 1–3 as the review body.
+   <!-- ai-review-inline
+   [{ "path": "src/main/java/com/skyflow/Foo.java", "line": 42, "severity": "High", "category": "Correctness", "comment": "skyflow_id is not normalised to skyflowId before returning; normalise it in the controller." }]
+   -->
+   ```
+
+   The workflow extracts this block, strips it from the visible summary, and renders items 1–3 as the review body.
