@@ -32,4 +32,15 @@ public class ReviewProbe {
             throw new RuntimeException("bad value: " + API_TOKEN);
         }
     }
+
+    // NEW SMELL 1 (advisory): magic numbers — 3600 and 24 have no named constant.
+    public long sessionTtlSeconds() {
+        return 3600 * 24;
+    }
+
+    // NEW SMELL 2 (advisory): commented-out code block with no explanation.
+    // public void legacyFlush() {
+    //     cache.clear();
+    //     reset();
+    // }
 }
