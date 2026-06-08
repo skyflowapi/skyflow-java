@@ -127,9 +127,23 @@ jobs:
           REVIEW_BASE_SHA: ${{ steps.check.outputs.range_base }}
         run: |
           set +e
-          RAW=$(claude --dangerously-skip-permissions --output-format json --model claude-sonnet-4-6 -p "/code-review" 2>&1)
-          CLAUDE_EXIT=$?
+          # stream-json + --verbose emits one NDJSON event per line (init, each
+          # assistant turn, every tool call/result, final result) as the review
+          # runs. tee shows them live in the Actions log AND saves them for parsing.
+          # PIPESTATUS[0] is claude's exit (not tee's). The final {"type":"result"}
+          # event has the same shape as --output-format json, so the jq paths below
+          # still work — we just extract that last line.
+          claude --dangerously-skip-permissions \
+            --output-format stream-json --verbose \
+            --model claude-sonnet-4-6 -p "/code-review" 2>&1 \
+            | tee /tmp/claude-review.jsonl
+          CLAUDE_EXIT=${PIPESTATUS[0]}
           set -e
+
+          RAW=$(grep '"type":"result"' /tmp/claude-review.jsonl | tail -n 1)
+          if [ -z "$RAW" ]; then
+            RAW='{"is_error":true,"result":"_Review produced no result event._"}'
+          fi
 
           IS_ERROR=$(echo "$RAW" | jq -r '.is_error // empty' 2>/dev/null)
           RESULT=$(echo "$RAW" | jq -r '.result // "_Review failed to produce output._"')
