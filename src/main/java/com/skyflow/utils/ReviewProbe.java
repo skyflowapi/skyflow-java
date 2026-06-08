@@ -1,32 +1,35 @@
 package com.skyflow.utils;
 
+import java.util.Map;
+
 /**
  * Temporary probe to validate the Claude PR review workflow.
  * Intentionally contains SDK-rule violations — delete after testing.
  */
 public class ReviewProbe {
 
-    // Dummy comment block to test incremental review (no new issue expected).
-    // Line 1 of 10
-    // Line 2 of 10
-    // Line 3 of 10
-    // Line 4 of 10
-    // Line 5 of 10
-    // Line 6 of 10
-    // Line 7 of 10
-    // Line 8 of 10
-    // Line 9 of 10
-    // Line 10 of 10
-
+    // NEW BUG 1 (security): hardcoded credential embedded in source.
+    private static final String API_TOKEN = "hardcoded-admin-password-123";
 
     public String fetchRecord(String id) {
+        // Original bugs removed: swallowed exception, System.out.println, magic string.
+        return id;
+    }
+
+    // NEW BUG 2 (code quality): @SuppressWarnings with no explanatory comment.
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> castPayload(Object raw) {
+        return (Map<String, Object>) raw;
+    }
+
+    public void process(String value) {
         try {
-            // Magic string instead of a Constants entry.
-            return "records/" + id;
-        } catch (Exception e) {
-            // Swallowed exception, no re-throw as SkyflowException.
-            System.out.println("failed: " + e.getMessage());
+            Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+            // NEW BUG 3 (error handling): printStackTrace instead of LogUtil.
+            e.printStackTrace();
+            // NEW BUG 4 (error handling): re-thrown as RuntimeException, not SkyflowException.
+            throw new RuntimeException("bad value: " + API_TOKEN);
         }
-        return null;
     }
 }
