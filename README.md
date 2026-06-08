@@ -19,14 +19,17 @@ The Skyflow Java SDK is designed to help with integrating Skyflow into a Java ba
   - [Configuration](#configuration)
     - [Gradle users](#gradle-users)
     - [Maven users](#maven-users)
+- [API Reference](docs/api_reference.md)
 - [Migration from v1 to v2](docs/migrate_to_v2.md)
 - [Quickstart](#quickstart)
   - [Authenticate](#authenticate)
   - [Initialize the client](#initialize-the-client)
   - [Insert data into the vault](#insert-data-into-the-vault)
 - [Vault](#vault)
+  - [VaultController](#vaultcontroller)
   - [Insert data into the vault](#insert-data-into-the-vault-1)
   - [Detokenize](#detokenize)
+    - [DetokenizeRecordResponse](#detokenizerecordresponse)
   - [Tokenize](#tokenize)
   - [Get](#get)
     - [Get by skyflow IDS](#get-by-skyflow-ids)
@@ -37,13 +40,18 @@ The Skyflow Java SDK is designed to help with integrating Skyflow into a Java ba
   - [Delete](#delete)
   - [Query](#query)
   - [Upload File](#upload-file)
+
 - [Detect](#detect)
   - [Deidentify Text](#deidentify-text)
   - [Reidentify Text](#reidentify-text)
   - [Deidentify File](#deidentify-file)
   - [Get Run](#get-run)
+  - [Detect response types](#detect-response-types)
+  - [Detect enums](#detect-enums)
 - [Connections](#connections)
+  - [ConnectionController](#connectioncontroller)
   - [Invoke a connection](#invoke-a-connection)
+- [Client Management](#client-management)
 - [Authenticate with bearer tokens](#authenticate-with-bearer-tokens)
   - [Generate a bearer token](#generate-a-bearer-token)
   - [Generate bearer tokens with context](#generate-bearer-tokens-with-context)
@@ -61,6 +69,9 @@ The Skyflow Java SDK is designed to help with integrating Skyflow into a Java ba
 - Authenticate using a Skyflow service account and generate bearer tokens for secure access.
 - Perform Vault API operations such as inserting, retrieving, and tokenizing sensitive data with ease.
 - Invoke connections to third-party APIs without directly handling sensitive data, ensuring compliance and data protection.
+
+> [!TIP]
+> Looking for the full list of request builder methods, response getters, enums, helper class APIs, and service-account utilities? See the **[API Reference](docs/api_reference.md)**.
 
 # Install
 
@@ -228,6 +239,7 @@ Notes:
 - If both Skyflow common credentials and individual credentials at the configuration level are specified, the individual credentials at the configuration level will take precedence.
 - If neither Skyflow common credentials nor individual configuration-level credentials are provided, the SDK attempts to retrieve credentials from the `SKYFLOW_CREDENTIALS` environment variable.
 - All Vault operations require a client instance.
+- `Credentials.setContext()` accepts either a `String` or a `Map<String, Object>` for context-aware authorization. See [Generate bearer tokens with context](#generate-bearer-tokens-with-context) for full usage.
 
 ### Insert data into the vault
 
@@ -308,9 +320,36 @@ Skyflow returns tokens for the record that was just inserted.
 
 The [Vault](https://github.com/skyflowapi/skyflow-java/tree/main/samples/src/main/java/com/example/vault) module performs operations on the vault, including inserting records, detokenizing tokens, and retrieving tokens associated with a `skyflow_id`.
 
+## VaultController
+
+`VaultController` is the class returned by `skyflowClient.vault()` and `skyflowClient.vault(vaultId)`. All vault operations are called on this object.
+
+```java
+// Uses the default (first configured) vault
+VaultController vault = skyflowClient.vault();
+
+// Uses a specific vault by ID
+VaultController vault = skyflowClient.vault("<VAULT_ID>");
+```
+
+**Methods:**
+
+| Method | Parameters | Returns | Description |
+|--------|-----------|---------|-------------|
+| `insert(InsertRequest)` | [`InsertRequest`](docs/api_reference.md#insertrequest) | [`InsertResponse`](docs/api_reference.md#insertresponse) | Insert one or more records |
+| `detokenize(DetokenizeRequest)` | [`DetokenizeRequest`](docs/api_reference.md#detokenizerequest) | [`DetokenizeResponse`](docs/api_reference.md#detokenizeresponse) | Detokenize tokens to their original values |
+| `tokenize(TokenizeRequest)` | [`TokenizeRequest`](docs/api_reference.md#tokenizerequest) | [`TokenizeResponse`](docs/api_reference.md#tokenizeresponse) | Tokenize sensitive values |
+| `get(GetRequest)` | [`GetRequest`](docs/api_reference.md#getrequest) | [`GetResponse`](docs/api_reference.md#getresponse) | Retrieve records by Skyflow ID or column value |
+| `update(UpdateRequest)` | [`UpdateRequest`](docs/api_reference.md#updaterequest) | [`UpdateResponse`](docs/api_reference.md#updateresponse) | Update a record by Skyflow ID |
+| `delete(DeleteRequest)` | [`DeleteRequest`](docs/api_reference.md#deleterequest) | [`DeleteResponse`](docs/api_reference.md#deleteresponse) | Delete records by Skyflow ID |
+| `query(QueryRequest)` | [`QueryRequest`](docs/api_reference.md#queryrequest) | [`QueryResponse`](docs/api_reference.md#queryresponse) | Execute a SQL query |
+| `uploadFile(FileUploadRequest)` | [`FileUploadRequest`](docs/api_reference.md#fileuploadrequest) | [`FileUploadResponse`](docs/api_reference.md#fileuploadresponse) | Upload a file to a vault column |
+
+All methods throw `SkyflowException` on error.
+
 ## Insert data into the vault
 
-Apart from using the `insert` method to insert data into your vault covered in [Quickstart](#quickstart), you can also specify options in `InsertRequest`, such as returning tokenized data, upserting records, or continuing the operation in case of errors.
+Apart from using the `insert` method to insert data into your vault covered in [Quickstart](#quickstart), you can also specify options in [`InsertRequest`](docs/api_reference.md#insertrequest), such as returning tokenized data, upserting records, or continuing the operation in case of errors. Returns an [`InsertResponse`](docs/api_reference.md#insertresponse).
 
 ### Construct an insert request
 
@@ -530,9 +569,11 @@ Skyflow returns tokens, with `upsert` support, for the record you just inserted.
 
 ## Detokenize
 
-To retrieve tokens from your vault, use the `detokenize` method. The `DetokenizeRequest` class requires a list of detokenization data as input. Additionally, you can provide optional parameters, such as the redaction type and the option to continue on error.
+To retrieve tokens from your vault, use the `detokenize` method. [`DetokenizeRequest`](docs/api_reference.md#detokenizerequest) requires a list of detokenization data as input. Returns a [`DetokenizeResponse`](docs/api_reference.md#detokenizeresponse).
 
 ### Construct a detokenize request
+
+Each entry in the detokenize list is a [`DetokenizeData`](docs/api_reference.md#detokenizedata) object pairing a token with its desired redaction type. See the [API Reference](docs/api_reference.md#detokenizerequest) for all `DetokenizeRequest` builder options.
 
 ```java
 import com.skyflow.enums.RedactionType;
@@ -652,6 +693,28 @@ Sample response:
 
 ```
 
+### DetokenizeRecordResponse
+
+`DetokenizeResponse.getDetokenizedFields()` and `DetokenizeResponse.getErrors()` each return a `List<DetokenizeRecordResponse>`. Use this class to read individual token results:
+
+```java
+DetokenizeResponse detokenizeResponse = skyflowClient.vault("<VAULT_ID>").detokenize(detokenizeRequest);
+
+for (DetokenizeRecordResponse record : detokenizeResponse.getDetokenizedFields()) {
+    System.out.println("Token  : " + record.getToken());
+    System.out.println("Value  : " + record.getValue());
+    System.out.println("Type   : " + record.getType());
+    System.out.println("ReqID  : " + record.getRequestId());
+}
+
+for (DetokenizeRecordResponse err : detokenizeResponse.getErrors()) {
+    System.out.println("Failed token : " + err.getToken());
+    System.out.println("Error        : " + err.getError());
+}
+```
+
+See [`DetokenizeRecordResponse`](docs/api_reference.md#detokenizerecordresponse) in the API Reference for the full attribute list.
+
 ### An example of a detokenize call with `continueOnError` option:
 
 ```java
@@ -730,9 +793,11 @@ Sample response:
 
 Tokenization replaces sensitive data with unique identifier tokens. This approach protects sensitive information by securely storing the original data while allowing the use of tokens within your application.
 
-To tokenize data, use the `tokenize` method. The `TokenizeRequest` class creates a tokenize request. In this request, you specify the `values` parameter, which is a list of `ColumnValue` objects. Each `ColumnValue` contains two properties: `value` and `columnGroup`.
+To tokenize data, use the `tokenize` method. [`TokenizeRequest`](docs/api_reference.md#tokenizerequest) accepts a list of [`ColumnValue`](docs/api_reference.md#columnvalue) objects. Returns a [`TokenizeResponse`](docs/api_reference.md#tokenizeresponse).
 
 ### Construct a tokenize request
+
+Each entry in the tokenize list is a [`ColumnValue`](docs/api_reference.md#columnvalue) object pairing a value with its column group. See the [API Reference](docs/api_reference.md#tokenizerequest) for all `TokenizeRequest` builder options.
 
 ```java
 import com.skyflow.errors.SkyflowException;
@@ -842,7 +907,7 @@ Sample response:
 
 ## Get
 
-To retrieve data using Skyflow IDs or unique column values, use the `get` method. The `GetRequest` class creates a get request, where you specify parameters such as the table name, redaction type, Skyflow IDs, column names, column values, and whether to return tokens. If you specify Skyflow IDs, you can't use column names and column values, and the inverse is true—if you specify column names and column values, you can't use Skyflow IDs.
+To retrieve data using Skyflow IDs or unique column values, use the `get` method. [`GetRequest`](docs/api_reference.md#getrequest) accepts parameters such as table name, redaction type, Skyflow IDs, column names, and column values. `ids` and `columnName`/`columnValues` are mutually exclusive. Returns a [`GetResponse`](docs/api_reference.md#getresponse).
 
 ### Construct a get request
 
@@ -1156,27 +1221,11 @@ Sample response:
 
 ### Redaction types
 
-Redaction types determine how sensitive data is displayed when retrieved from the vault.
-
-#### **Available Redaction Types**
-
-- `DEFAULT`: Applies the vault-configured default redaction setting.
-- `REDACTED`: Completely removes sensitive data from view.
-- `MASKED`: Partially obscures sensitive information.
-- `PLAIN_TEXT`: Displays the full, unmasked data.
-
-#### **Choosing the Right Redaction Type**
-
-- Use `REDACTED` for scenarios requiring maximum data protection to prevent exposure of sensitive information.
-- Use `MASKED` to provide partial visibility of sensitive data for less critical use cases.
-- Use `PLAIN_TEXT` for internal, authorized access where full data visibility is necessary.
+See [`RedactionType`](docs/api_reference.md#redactiontype) in the API Reference for all available values and their descriptions.
 
 ## Update
 
-To update data in your vault, use the `update` method. The `UpdateRequest` class is used to create an update request,
-where you specify parameters such as the table name, data (as a map of key value pairs), tokens, returnTokens, and
-tokenStrict. If `returnTokens` is set to `true`, Skyflow returns tokens for the updated records. If `returnTokens` is
-set to `false`, Skyflow returns IDs for the updated records.
+To update data in your vault, use the `update` method. [`UpdateRequest`](docs/api_reference.md#updaterequest) accepts the table name, data map, optional tokens, `returnTokens`, and `tokenMode`. Returns an [`UpdateResponse`](docs/api_reference.md#updateresponse) with the `skyflow_id` and (when `returnTokens=true`) a token per updated column.
 
 ### Construct an update request
 
@@ -1309,8 +1358,7 @@ Sample response:
 
 ## Delete
 
-To delete records using Skyflow IDs, use the `delete` method. The `DeleteRequest` class accepts a list of Skyflow IDs
-that you want to delete, as shown below:
+To delete records using Skyflow IDs, use the `delete` method. [`DeleteRequest`](docs/api_reference.md#deleterequest) accepts a table name and list of Skyflow IDs. Returns a [`DeleteResponse`](docs/api_reference.md#deleteresponse).
 
 ### Construct a delete request
 
@@ -1418,7 +1466,7 @@ Sample response:
 
 ## Query
 
-To retrieve data with SQL queries, use the `query` method. The `QueryRequest` class accepts a `query` parameter, as shown below.
+To retrieve data with SQL queries, use the `query` method. [`QueryRequest`](docs/api_reference.md#queryrequest) accepts a `query` string. Returns a [`QueryResponse`](docs/api_reference.md#queryresponse).
 
 ### Construct a query request
 
@@ -1519,7 +1567,7 @@ Sample response:
 
 ## Upload File
 
-To upload files to a Skyflow vault, use the `uploadFile` method. The `UploadFileRequest` class accepts parameters such as the file path, table name, and file name.
+To upload files to a Skyflow vault, use the `uploadFile` method. [`FileUploadRequest`](docs/api_reference.md#fileuploadrequest) accepts the table name, column name, optional skyflow ID, and a file source (`fileObject`, `filePath`, or `base64`). Returns a [`FileUploadResponse`](docs/api_reference.md#fileuploadresponse).
 
 ### Construct a file upload request
 
@@ -1614,10 +1662,29 @@ Sample response:
 ```
 
 # Detect
-Skyflow Detect enables you to deidentify and reidentify sensitive data in text and files, supporting advanced privacy-preserving workflows. The Detect API supports the following operations:
+Skyflow Detect enables you to deidentify and reidentify sensitive data in text and files, supporting advanced privacy-preserving workflows.
+
+`DetectController` is the class returned by `skyflowClient.detect()` and `skyflowClient.detect(vaultId)`.
+
+```java
+// Uses the default (first configured) vault
+DetectController detect = skyflowClient.detect();
+
+// Uses a specific vault by ID
+DetectController detect = skyflowClient.detect("<VAULT_ID>");
+```
+
+**Methods:**
+
+| Method | Parameters | Returns | Description |
+|--------|-----------|---------|-------------|
+| `deidentifyText(DeidentifyTextRequest)` | [`DeidentifyTextRequest`](docs/api_reference.md#deidentifytextrequest) | [`DeidentifyTextResponse`](docs/api_reference.md#deidentifytextresponse) | Deidentify sensitive entities in text |
+| `reidentifyText(ReidentifyTextRequest)` | [`ReidentifyTextRequest`](docs/api_reference.md#reidentifytextrequest) | [`ReidentifyTextResponse`](docs/api_reference.md#reidentifytextresponse) | Restore original values from a deidentified text |
+| `deidentifyFile(DeidentifyFileRequest)` | [`DeidentifyFileRequest`](docs/api_reference.md#deidentifyfilerequest) | [`DeidentifyFileResponse`](docs/api_reference.md#deidentifyfileresponse) | Deidentify sensitive data in a file |
+| `getDetectRun(GetDetectRunRequest)` | [`GetDetectRunRequest`](docs/api_reference.md#getdetectrunrequest) | [`DeidentifyFileResponse`](docs/api_reference.md#deidentifyfileresponse) | Poll for the result of an async file deidentification |
 
 ## Deidentify Text
-To deidentify text, use the `deidentifyText` method. The `DeidentifyTextRequest` class creates a deidentify text request, which includes the text to be deidentified. Additionally, you can provide optional parameters using the `DeidentifyTextOptions` class.
+To deidentify text, use the `deidentifyText` method. [`DeidentifyTextRequest`](docs/api_reference.md#deidentifytextrequest) accepts the text to deidentify along with optional entity types, regex lists, token format, and transformations. Returns a [`DeidentifyTextResponse`](docs/api_reference.md#deidentifytextresponse).
 
 ### Construct an deidentify text request
 
@@ -1820,7 +1887,7 @@ Sample Response:
 ```
 
 ## Reidentify Text
-To reidentify text, use the `reidentifyText` method. The `ReidentifyTextRequest` class creates a reidentify text request, which includes the redacted or deidentified text to be reidentified. Additionally, you can provide optional parameters using the ReidentifyTextOptions class to control how specific entities are returned (as redacted, masked, or plain text).
+To reidentify text, use the `reidentifyText` method. [`ReidentifyTextRequest`](docs/api_reference.md#reidentifytextrequest) accepts the redacted/deidentified text and optional entity lists controlling which entities to reveal, mask, or keep redacted. Returns a [`ReidentifyTextResponse`](docs/api_reference.md#reidentifytextresponse).
 
 ### Construct an reidentify text request
 
@@ -1929,7 +1996,22 @@ Sample Response:
 ```
 
 ## Deidentify file
-To deidentify files, use the `deidentifyFile` method. The `DeidentifyFileRequest` class creates a deidentify file request, which includes the file to be deidentified (such as images, PDFs, audio, documents, spreadsheets, or presentations). Additionally, you can provide optional parameters using the DeidentifyFileOptions class to control how entities are detected and deidentified, as well as how the output is generated for different file types.
+To deidentify files, use the `deidentifyFile` method. [`DeidentifyFileRequest`](docs/api_reference.md#deidentifyfilerequest) accepts a [`FileInput`](docs/api_reference.md#fileinput) and optional parameters controlling entity detection, masking, output format, and async wait time. Supports images, PDFs, audio, documents, spreadsheets, and presentations. Returns a [`DeidentifyFileResponse`](docs/api_reference.md#deidentifyfileresponse).
+
+### AudioBleep
+
+[`AudioBleep`](docs/api_reference.md#audiobleep) controls how detected sensitive audio segments are replaced with a bleep tone. Used in `DeidentifyFileRequest.builder().bleep(audioBleep)` for audio files.
+
+```java
+import com.skyflow.vault.detect.AudioBleep;
+
+AudioBleep audioBleep = AudioBleep.builder()
+        .frequency(1000D)   // bleep tone frequency in Hz
+        .gain(0.5D)         // bleep tone gain (volume level)
+        .startPadding(0.2D) // silence padding before the bleep (seconds)
+        .stopPadding(0.2D)  // silence padding after the bleep (seconds)
+        .build();
+```
 
 ### Construct an deidentify file request
 
@@ -2156,9 +2238,7 @@ Sample response (when the API takes more than 64 seconds):
 ```
 
 ## Get run:
-To retrieve the results of a previously started file `deidentification operation`, use the `getDetectRun` method.
-The `GetDetectRunRequest` class is initialized with the `runId` returned from a prior deidentifyFile call.
-This method allows you to fetch the final results of the file processing operation once they are available.
+To retrieve the results of a previously started file deidentification operation, use the `getDetectRun` method. [`GetDetectRunRequest`](docs/api_reference.md#getdetectrunrequest) accepts the `runId` returned from a prior `deidentifyFile` call. Returns a [`DeidentifyFileResponse`](docs/api_reference.md#deidentifyfileresponse).
 
 ### Construct an get run request
 
@@ -2260,12 +2340,101 @@ Sample Response:
 
 ```
 
+## Detect response types
+
+The Detect API returns structured objects for detected entities. See the API Reference for full attribute lists: [`EntityInfo`](docs/api_reference.md#entityinfo), [`TextIndex`](docs/api_reference.md#textindex), [`FileEntityInfo`](docs/api_reference.md#fileentityinfo), [`FileInfo`](docs/api_reference.md#fileinfo).
+
+### EntityInfo and TextIndex
+
+[`EntityInfo`](docs/api_reference.md#entityinfo) appears in `DeidentifyTextResponse.getEntities()`. Each entry includes the detected entity type, original value, replacement token, character positions ([`TextIndex`](docs/api_reference.md#textindex)), and confidence scores.
+
+```java
+DeidentifyTextResponse response = skyflowClient.detect("<VAULT_ID>").deidentifyText(request);
+
+for (EntityInfo entity : response.getEntities()) {
+    System.out.println("Entity : " + entity.getEntity());
+    System.out.println("Value  : " + entity.getValue());
+    System.out.println("Token  : " + entity.getToken());
+    System.out.println("Start  : " + entity.getTextIndex().getStart());
+    System.out.println("End    : " + entity.getTextIndex().getEnd());
+    System.out.println("Score  : " + entity.getScores().get(entity.getEntity()));
+}
+```
+
+### FileEntityInfo and FileInfo
+
+[`FileEntityInfo`](docs/api_reference.md#fileentityinfo) appears in `DeidentifyFileResponse.getEntities()`. [`FileInfo`](docs/api_reference.md#fileinfo) is returned by `DeidentifyFileResponse.getFile()` and contains file metadata.
+
+## Detect enums
+
+See the API Reference for full value descriptions: [`TokenType`](docs/api_reference.md#tokentype), [`DeidentifyFileStatus`](docs/api_reference.md#deidentifyfilestatus), [`DetectOutputTranscriptions`](docs/api_reference.md#detectoutputtranscriptions), [`MaskingMethod`](docs/api_reference.md#maskingmethod), [`DetectEntities`](docs/api_reference.md#detectentities).
+
+### TokenType
+
+[`TokenType`](docs/api_reference.md#tokentype) controls how detected entities are tokenized. Used in `TokenFormat.builder()`.
+
+```java
+import com.skyflow.enums.TokenType;
+
+TokenFormat tokenFormat = TokenFormat.builder()
+        .vaultToken(vaultTokenList)          // uses VAULT_TOKEN
+        .entityOnly(entityOnlyList)          // uses ENTITY_ONLY
+        .entityUniqueCounter(entityUniqueCounterList) // uses ENTITY_UNIQUE_COUNTER
+        .build();
+```
+
+### DeidentifyFileStatus
+
+[`DeidentifyFileStatus`](docs/api_reference.md#deidentifyfilestatus) is returned in `DeidentifyFileResponse.getStatus()` to indicate async processing state.
+
+```java
+import com.skyflow.enums.DeidentifyFileStatus;
+
+DeidentifyFileResponse response = skyflowClient.detect("<VAULT_ID>").getDetectRun(request);
+if (DeidentifyFileStatus.SUCCESS.value().equals(response.getStatus())) {
+    // safe to read response.getFile()
+} else if (DeidentifyFileStatus.IN_PROGRESS.value().equals(response.getStatus())) {
+    // poll again using the runId
+}
+```
+
+### DetectOutputTranscriptions
+
+[`DetectOutputTranscriptions`](docs/api_reference.md#detectoutputtranscriptions) controls the transcription format for audio file deidentification.
+
+```java
+import com.skyflow.enums.DetectOutputTranscriptions;
+
+DeidentifyFileRequest request = DeidentifyFileRequest.builder()
+        .file(fileInput)
+        .outputTranscription(DetectOutputTranscriptions.TRANSCRIPTION)
+        .build();
+```
+
 # Connections
 
 Skyflow Connections is a gateway service that uses tokenization to securely send and receive data between your systems and first- or third-party services. The [connections](https://github.com/skyflowapi/skyflow-java/tree/main/src/main/java/com/skyflow/vault/connection) module invokes both inbound and/or outbound connections.
 
 - **Inbound connections**: Act as intermediaries between your client and server, tokenizing sensitive data before it reaches your backend, ensuring downstream services handle only tokenized data.
 - **Outbound connections**: Enable secure extraction of data from the vault and transfer it to third-party services via your backend server, such as processing checkout or card issuance flows.
+
+## ConnectionController
+
+`ConnectionController` is the class returned by `skyflowClient.connection()` and `skyflowClient.connection(connectionId)`. All connection operations are called on this object.
+
+```java
+// Uses the default (first configured) connection
+ConnectionController connection = skyflowClient.connection();
+
+// Uses a specific connection by ID
+ConnectionController connection = skyflowClient.connection("<CONNECTION_ID>");
+```
+
+**Methods:**
+
+| Method | Parameters | Returns | Description |
+|--------|-----------|---------|-------------|
+| `invoke(InvokeConnectionRequest)` | [`InvokeConnectionRequest`](docs/api_reference.md#invokeconnectionrequest) | [`InvokeConnectionResponse`](docs/api_reference.md#invokeconnectionresponse) | Invoke an inbound or outbound connection |
 
 ## Invoke a connection
 
@@ -2340,13 +2509,7 @@ public class InvokeConnectionSchema {
 }
 ```
 
-`method` supports the following methods:
-
-- GET
-- POST
-- PUT
-- PATCH
-- DELETE
+`method` accepts any [`RequestMethod`](docs/api_reference.md#requestmethod) value (`GET`, `POST`, `PUT`, `PATCH`, `DELETE`). See [`InvokeConnectionRequest`](docs/api_reference.md#invokeconnectionrequest) in the API Reference for all builder options.
 
 **pathParams, queryParams, requestHeader, requestBody** are the JSON objects represented as HashMaps, that will be sent through the connection integration url.
 
@@ -2788,6 +2951,78 @@ public class DetokenizeExample {
     }
 }
 ```
+
+# Client Management
+
+After the `Skyflow` client is built you can add, retrieve, update, or remove vault and connection configurations at runtime — without rebuilding the client.
+
+## Vault configuration management
+
+```java
+import com.skyflow.config.VaultConfig;
+
+// Add a new vault at runtime
+skyflowClient.addVaultConfig(newVaultConfig);
+
+// Retrieve the config for a specific vault
+VaultConfig config = skyflowClient.getVaultConfig("<VAULT_ID>");
+
+// Update an existing vault config (match by vaultId)
+skyflowClient.updateVaultConfig(updatedVaultConfig);
+
+// Remove a vault from the client
+skyflowClient.removeVaultConfig("<VAULT_ID>");
+```
+
+## Connection configuration management
+
+```java
+import com.skyflow.config.ConnectionConfig;
+
+// Add a new connection at runtime
+skyflowClient.addConnectionConfig(newConnectionConfig);
+
+// Retrieve the config for a specific connection
+ConnectionConfig config = skyflowClient.getConnectionConfig("<CONNECTION_ID>");
+
+// Update an existing connection config (match by connectionId)
+skyflowClient.updateConnectionConfig(updatedConnectionConfig);
+
+// Remove a connection from the client
+skyflowClient.removeConnectionConfig("<CONNECTION_ID>");
+```
+
+## Credentials and log level management
+
+```java
+// Replace the Skyflow-level credentials used when vault/connection configs
+// do not specify their own credentials
+skyflowClient.updateSkyflowCredentials(newCredentials);
+
+// Update the log level after the client has been built
+skyflowClient.updateLogLevel(LogLevel.DEBUG);
+
+// Read the current log level
+LogLevel currentLevel = skyflowClient.getLogLevel();
+```
+
+**Client management method reference:**
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `addVaultConfig(VaultConfig)` | `Skyflow` | Add a vault configuration |
+| `getVaultConfig(String vaultId)` | `VaultConfig` | Retrieve a vault configuration by ID |
+| `updateVaultConfig(VaultConfig)` | `Skyflow` | Replace a vault configuration (matched by `vaultId`) |
+| `removeVaultConfig(String vaultId)` | `Skyflow` | Remove a vault configuration |
+| `addConnectionConfig(ConnectionConfig)` | `Skyflow` | Add a connection configuration |
+| `getConnectionConfig(String connectionId)` | `ConnectionConfig` | Retrieve a connection configuration by ID |
+| `updateConnectionConfig(ConnectionConfig)` | `Skyflow` | Replace a connection configuration |
+| `removeConnectionConfig(String connectionId)` | `Skyflow` | Remove a connection configuration |
+| `updateSkyflowCredentials(Credentials)` | `Skyflow` | Replace the client-level credentials |
+| `updateLogLevel(LogLevel)` | `Skyflow` | Change the log level after initialization |
+| `getLogLevel()` | `LogLevel` | Return the current log level |
+
+All mutating methods return the `Skyflow` instance for chaining and throw `SkyflowException` on validation errors.
 
 # Error Handling
 
