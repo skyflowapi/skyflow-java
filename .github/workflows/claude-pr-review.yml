@@ -72,14 +72,19 @@ jobs:
           # for a real push event when the last reviewed commit is still an ancestor
           # of HEAD (a rebase/force-push or manual re-run forces a full re-review).
           RANGE_BASE="$BASE_REF"
+          INCREMENTAL=false
           if [ "$EVENT_NAME" != "workflow_dispatch" ] && [ -n "$LAST_SHA" ] \
              && git merge-base --is-ancestor "$LAST_SHA" HEAD 2>/dev/null; then
             RANGE_BASE="$LAST_SHA"
+            INCREMENTAL=true
             echo "Incremental review: ${LAST_SHA}...HEAD"
           else
             echo "Full review: ${BASE_REF}...HEAD"
           fi
           echo "range_base=$RANGE_BASE" >> $GITHUB_OUTPUT
+          # incremental=true means this is a re-review of only the latest commits, so
+          # the posted comment reminds the author to resolve earlier unresolved comments.
+          echo "incremental=$INCREMENTAL" >> $GITHUB_OUTPUT
 
           CHANGED=$(git diff --name-only "$RANGE_BASE"...HEAD \
             | grep '\.java$' | grep -v 'generated')
@@ -182,10 +187,21 @@ jobs:
         uses: actions/github-script@v7
         env:
           REVIEW_BODY: ${{ steps.review.outputs.result }}
+          IS_INCREMENTAL: ${{ steps.check.outputs.incremental }}
+          # The commit this review's diff is measured from (the last reviewed commit, when incremental).
+          REVIEW_BASE_SHA: ${{ steps.check.outputs.range_base }}
         with:
           script: |
             const raw = process.env.REVIEW_BODY || '_Review output unavailable._';
+            const isIncremental = process.env.IS_INCREMENTAL === 'true';
+            const baseSha = (process.env.REVIEW_BASE_SHA || '').slice(0, 7);
             const pull_number = context.payload.pull_request.number;
+
+            // No findings on the changed lines → the model emits only this marker → post nothing.
+            if (/<!--\s*ai-review-empty\s*-->/.test(raw)) {
+              core.info('No findings on the changed lines; posting nothing.');
+              return;
+            }
 
             // Extract inline findings, then strip the block so it never leaks into the comment.
             // Primary format: HTML-comment sentinel <!-- ai-review-inline [...] --> (never renders,
@@ -203,32 +219,18 @@ jobs:
               .replace(/```+\s*json:inline[\s\S]*$/i, '')
               .trim();
 
-            // Strip any leading model preamble/narration before the verdict line
-            // (tolerates markdown decoration like **REQUEST CHANGES** or a heading).
+            // Strip any leading model preamble/narration before the findings-count summary
+            // line (starts with "**Findings"); tolerate a markdown heading too.
             const lines = summary.split('\n');
             const idx = lines.findIndex(l =>
-              /\b(REQUEST CHANGES|APPROVE WITH FIXES|APPROVE)\b/.test(l) || /^#{1,6}\s/.test(l));
+              /\*\*Findings/.test(l) || /^#{1,6}\s/.test(l));
             if (idx > 0) summary = lines.slice(idx).join('\n').trim();
 
-            // Collapse duplicate verdict lines: keep the first, drop any later standalone
-            // line that just restates the verdict.
-            const verdictRe = /^\**\s*(REQUEST CHANGES|APPROVE WITH FIXES|APPROVE)\b/;
-            let seenVerdict = false;
-            summary = summary.split('\n').filter(l => {
-              if (verdictRe.test(l)) {
-                if (seenVerdict) return false;
-                seenVerdict = true;
-              }
-              return true;
-            }).join('\n').trim();
-
-            // Total silence: the diff is incremental, so a bare APPROVE means the new
-            // lines introduced no blocking or advisory finding — post nothing at all.
-            // (Alternation order matters: APPROVE WITH FIXES must be tried before APPROVE.)
-            const verdict = (summary.match(/\b(REQUEST CHANGES|APPROVE WITH FIXES|APPROVE)\b/) || [])[1];
-            if (verdict === 'APPROVE') {
-              core.info('Verdict APPROVE — no new issues on the changed lines; posting nothing.');
-              return;
+            // On a re-review (incremental run), make clear this comment only covers the
+            // commits added since the last review and earlier unresolved comments still stand.
+            if (isIncremental) {
+              const since = baseSha ? ` since the last review (\`${baseSha}\`)` : ' since the last review';
+              summary = `> ♻️ _**Incremental review** — covers only the commits added${since}; earlier changes were not re-checked. **Please resolve any open comments from previous reviews.**_\n\n${summary}`;
             }
 
             const comments = (Array.isArray(inline) ? inline : [])
