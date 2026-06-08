@@ -112,13 +112,14 @@ Merge every finding from Steps 1–3 into one de-duplicated report (same issue f
 - **Blocking** (must fix before merge): `Critical`, `High`, `Medium`.
 - **Advisory** (does not block merge): `Low`, `Info`.
 
-1. **Verdict** (first line, nothing above it) — `REQUEST CHANGES` if ≥1 blocking finding; `APPROVE WITH FIXES` if only advisory; `APPROVE` if none — plus a one-sentence rationale.
+1. **Verdict** (first line, nothing above it) — `REQUEST CHANGES` if ≥1 blocking finding; `APPROVE WITH FIXES` if only advisory; `APPROVE` if none. Follow it with **one short clause stating the theme/count only** — e.g. "— 2 error-handling issues on the changed lines." **Never enumerate or restate the individual findings**; the table already lists them.
 
-2. **Blocking-findings table** — `Critical` / `High` / `Medium` only (never `Low` / `Info`). Keep the `Finding` cell to **one crisp line**: each blocking finding is also posted as an inline comment carrying the full explanation, so do **not** duplicate the detail here. Omit the table and write "No blocking findings on the changed lines." if there are none.
+2. **Blocking-findings table** — `Critical` / `High` / `Medium` only (never `Low` / `Info`). The `Finding` cell is a **terse identifier (≤ ~12 words, a noun phrase)** — no mechanism, no "because…", no fix; the full explanation lives in the inline comment, so never repeat it here. If the **same issue appears at multiple locations**, emit **one row** with the locations comma-separated in `File:Line` (the inline block still gets one entry per location) — do not create near-duplicate rows. Omit the table and write "No blocking findings on the changed lines." if there are none.
    ```
    | File:Line | Severity · Category | Finding |
    |-----------|---------------------|---------|
    | HttpUtility.java:88 | High · Correctness | getMessage() returns null on the no-body error path |
+   | VaultClient.java:942, ConnectionClient.java:92 | Medium · Pattern | misleading EmptyCredentials message in generic catch |
    ```
 
 3. **Advisory section (collapsed)** — every advisory finding, one crisp line each; `N` must equal the row count.
