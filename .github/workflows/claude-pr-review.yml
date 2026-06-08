@@ -132,7 +132,7 @@ jobs:
                 path: f.path,
                 line: f.line,
                 side: 'RIGHT',
-                body: `**${f.severity || 'Finding'}**: ${f.comment || ''}`.trim()
+                body: `**${f.severity || 'Finding'}${f.category ? ' · ' + f.category : ''}**: ${f.comment || ''}`.trim()
               }));
 
             const body = `## Claude SDK Review\n\n${summary}`;

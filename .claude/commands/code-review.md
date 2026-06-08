@@ -45,21 +45,28 @@ Group findings by file and produce a table:
 ```
 ### path/to/File.java
 
-| Severity | Line | Finding |
-|----------|------|---------|
-| Critical | 42   | SkyflowException swallowed in catch block |
-| Bug      | 87   | skyflow_id not normalised to skyflowId |
-| Quality  | 103  | Magic string "records" — use Constants |
+| Severity | Category | Line | Finding |
+|----------|----------|------|---------|
+| Critical | Security    | 42  | SkyflowException swallowed in catch block |
+| High     | Correctness | 87  | skyflow_id not normalised to skyflowId |
+| Low      | Pattern     | 103 | Magic string "records" — use Constants |
 ```
 
-**Severities:**
+Every finding has **two independent axes** — don't conflate them:
 
-| Level | Meaning | Blocks merge? |
+**Severity** — *how serious* (one scale shared by all three steps):
+
+| Severity | Meaning | Blocks merge? |
 |---|---|---|
-| **Critical** | Data loss, silent failure, security risk | Yes |
-| **Bug** | Wrong behaviour, incorrect output | Yes |
-| **Edge Case** | Unhandled input that will cause runtime failure | Yes |
-| **Quality** | Maintainability issue, naming violation, missing pattern | No — advisory |
+| **Critical** | Data loss, security breach, silent failure | Yes |
+| **High** | Wrong behaviour / bug / guaranteed runtime failure | Yes |
+| **Medium** | Likely problem, risky or unhandled input, missing safeguard | Yes |
+| **Low** | Minor maintainability, naming, style, code smell | No — advisory |
+| **Info** | Note / FYI | No — advisory |
+
+**Category** — *what kind*: `Correctness` (a bug), `Edge case`, `Security`, `Pattern`, `Naming`, `Tests`, `Smell`.
+
+A logic bug is **Severity `High`/`Critical` + Category `Correctness`** — never severity "Bug". A magic string is **Severity `Low` + Category `Pattern`** — never severity "Quality". Keep level in the Severity column and kind in the Category column.
 
 ---
 
@@ -94,13 +101,13 @@ After all three steps, close with:
 
 When `GITHUB_ACTIONS` is set, **do not** print the three steps' standalone tables/summaries/verdicts. Merge every finding from Steps 1–3 into a single de-duplicated report (if the same issue is flagged by more than one step, keep it once with the highest severity). Emit **exactly** the following, and nothing else.
 
-**Severity buckets (single source of truth for this mode — every finding is exactly one):**
-- **Blocking** (must fix before merge): `Critical`, `Bug`, `Edge Case`, `High`, `Medium`.
-- **Advisory** (does not block merge): `Quality`, `Smell`, `Low`, `Info`.
+**Severity buckets (single source of truth for this mode — based on the one Severity scale; Category is a separate axis and never appears as a severity):**
+- **Blocking** (must fix before merge): `Critical`, `High`, `Medium`.
+- **Advisory** (does not block merge): `Low`, `Info`.
 
 1. **One-line verdict** — `REQUEST CHANGES` if there is **≥1 blocking** finding; `APPROVE WITH FIXES` if there are only advisory findings; `APPROVE` if there are none. Add a one-sentence rationale.
 
-2. **Blocking-findings table** — blocking severities only. A `Quality` / `Smell` / `Low` / `Info` finding must **never** appear here. Omit the table and say "No blocking findings on the changed lines." if there are none.
+2. **Blocking-findings table** — `Critical` / `High` / `Medium` only. A `Low` / `Info` finding must **never** appear here. Omit the table and say "No blocking findings on the changed lines." if there are none.
    ```
    | File:Line | Severity | Category | Finding |
    |-----------|----------|----------|---------|
@@ -108,16 +115,16 @@ When `GITHUB_ACTIONS` is set, **do not** print the three steps' standalone table
 
 3. **Advisory section (collapsed)** — every advisory finding (and only advisory ones). The count `N` must match the row count.
    ```
-   <details><summary>Advisory (Quality / Smell / Low / Info) — N items</summary>
+   <details><summary>Advisory (Low / Info) — N items</summary>
 
    | File:Line | Severity | Finding |
    |-----------|----------|---------|
    </details>
    ```
 
-4. **An inline-findings block** — a fenced ```` ```json:inline ```` block whose body is a JSON array of the findings that should be posted as inline review comments. Include **only blocking findings (step 2) whose line is an added (`+`) line in the diff** — never non-blocking items, never lines outside the diff. Each entry:
+4. **An inline-findings block** — a fenced ```` ```json:inline ```` block whose body is a JSON array of the findings that should be posted as inline review comments. Include **only blocking findings (step 2) whose line is an added (`+`) line in the diff** — never advisory items, never lines outside the diff. Each entry:
    ```json:inline
-   [{ "path": "src/main/java/com/skyflow/Foo.java", "line": 42, "severity": "Bug", "comment": "skyflow_id not normalised to skyflowId" }]
+   [{ "path": "src/main/java/com/skyflow/Foo.java", "line": 42, "severity": "High", "category": "Correctness", "comment": "skyflow_id not normalised to skyflowId" }]
    ```
    Emit `[]` if there are none. The workflow parses this block to attach inline comments and renders items 1–3 as the review summary; keep it as the **last** thing in the output.
 
