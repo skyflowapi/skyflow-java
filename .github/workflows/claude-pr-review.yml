@@ -194,6 +194,18 @@ jobs:
               /\b(REQUEST CHANGES|APPROVE WITH FIXES|APPROVE)\b/.test(l) || /^#{1,6}\s/.test(l));
             if (idx > 0) summary = lines.slice(idx).join('\n').trim();
 
+            // Collapse duplicate verdict lines: keep the first, drop any later standalone
+            // line that just restates the verdict.
+            const verdictRe = /^\**\s*(REQUEST CHANGES|APPROVE WITH FIXES|APPROVE)\b/;
+            let seenVerdict = false;
+            summary = summary.split('\n').filter(l => {
+              if (verdictRe.test(l)) {
+                if (seenVerdict) return false;
+                seenVerdict = true;
+              }
+              return true;
+            }).join('\n').trim();
+
             // Total silence: the diff is incremental, so a bare APPROVE means the new
             // lines introduced no blocking or advisory finding — post nothing at all.
             // (Alternation order matters: APPROVE WITH FIXES must be tried before APPROVE.)

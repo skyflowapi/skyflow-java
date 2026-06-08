@@ -112,7 +112,7 @@ Merge every finding from Steps 1–3 into one de-duplicated report (same issue f
 - **Blocking** (must fix before merge): `Critical`, `High`, `Medium`.
 - **Advisory** (does not block merge): `Low`, `Info`.
 
-1. **Verdict** (first line, nothing above it) — `REQUEST CHANGES` if ≥1 blocking finding; `APPROVE WITH FIXES` if only advisory; `APPROVE` if none. Follow it with **one short clause stating the theme/count only** — e.g. "— 2 error-handling issues on the changed lines." **Never enumerate or restate the individual findings**; the table already lists them.
+1. **Verdict** — emit **exactly one** verdict line, as the very first line and nowhere else: `REQUEST CHANGES` if ≥1 blocking finding; `APPROVE WITH FIXES` if only advisory; `APPROVE` if none. Follow it with **one short clause naming the count + theme(s)** — e.g. `REQUEST CHANGES — 5 blocking findings in ReviewProbe.java (error handling, naming, magic string).` **Never** write a second verdict line, repeat/rephrase the verdict, or enumerate the individual findings (the table lists them).
 
 2. **Blocking-findings table** — `Critical` / `High` / `Medium` only (never `Low` / `Info`). The `Finding` cell is a **terse identifier (≤ ~12 words, a noun phrase)** — no mechanism, no "because…", no fix; the full explanation lives in the inline comment, so never repeat it here. If the **same issue appears at multiple locations**, emit **one row** with the locations comma-separated in `File:Line` (the inline block still gets one entry per location) — do not create near-duplicate rows. Omit the table and write "No blocking findings on the changed lines." if there are none.
    ```
