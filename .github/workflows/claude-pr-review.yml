@@ -15,6 +15,12 @@ permissions:
   pull-requests: write
   contents: read
 
+# Debounce: when several pushes land on the same PR in quick succession, cancel
+# superseded runs so only the latest commit (current HEAD) gets reviewed.
+concurrency:
+  group: claude-pr-review-${{ github.event.pull_request.number || github.event.inputs.pr_number }}
+  cancel-in-progress: true
+
 jobs:
   sdk-review:
     name: SDK PR Review (changed lines only)
@@ -28,16 +34,60 @@ jobs:
       - name: Install Claude CLI
         run: npm install -g @anthropic-ai/claude-code
 
+      # Incremental review: find the commit the bot last reviewed (the commit_id of
+      # its most recent review on this PR). Subsequent runs diff only lines added
+      # since then, so unchanged commits are not re-reviewed and not re-commented.
+      - name: Determine last reviewed commit
+        id: lastrev
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = context.payload.pull_request?.number
+              || '${{ github.event.inputs.pr_number }}';
+            if (!prNumber) { core.setOutput('sha', ''); return; }
+            let sha = '';
+            try {
+              const reviews = await github.paginate(github.rest.pulls.listReviews, {
+                ...context.repo, pull_number: Number(prNumber), per_page: 100,
+              });
+              const mine = reviews
+                .filter(r => r.user && r.user.login === 'github-actions[bot]' && r.commit_id)
+                .sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at));
+              if (mine.length) sha = mine[0].commit_id;
+            } catch (e) {
+              core.warning(`listReviews failed (${e.message}); falling back to full review.`);
+            }
+            core.setOutput('sha', sha);
+            core.info(`last reviewed commit: ${sha || '(none — full review)'}`);
+
       - name: Check for non-generated Java changes
         id: check
+        env:
+          LAST_SHA: ${{ steps.lastrev.outputs.sha }}
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_BRANCH: ${{ github.base_ref }}
         run: |
-          CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD \
+          BASE_REF="origin/${BASE_BRANCH:-main}"
+          # Default to a full review against the PR base. Switch to incremental only
+          # for a real push event when the last reviewed commit is still an ancestor
+          # of HEAD (a rebase/force-push or manual re-run forces a full re-review).
+          RANGE_BASE="$BASE_REF"
+          if [ "$EVENT_NAME" != "workflow_dispatch" ] && [ -n "$LAST_SHA" ] \
+             && git merge-base --is-ancestor "$LAST_SHA" HEAD 2>/dev/null; then
+            RANGE_BASE="$LAST_SHA"
+            echo "Incremental review: ${LAST_SHA}...HEAD"
+          else
+            echo "Full review: ${BASE_REF}...HEAD"
+          fi
+          echo "range_base=$RANGE_BASE" >> $GITHUB_OUTPUT
+
+          CHANGED=$(git diff --name-only "$RANGE_BASE"...HEAD \
             | grep '\.java$' | grep -v 'generated')
           if [ -z "$CHANGED" ]; then
             echo "has_changes=false" >> $GITHUB_OUTPUT
           else
             echo "has_changes=true" >> $GITHUB_OUTPUT
-            LINES=$(git diff origin/${{ github.base_ref }}...HEAD -- '*.java' \
+            LINES=$(git diff "$RANGE_BASE"...HEAD -- '*.java' \
               | grep -c '^[+-][^+-]' 2>/dev/null || echo 1)
             echo "changed_lines=$LINES" >> $GITHUB_OUTPUT
           fi
@@ -71,6 +121,8 @@ jobs:
           CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: "1"
           GITHUB_BASE_REF: ${{ github.base_ref }}
           GITHUB_ACTIONS: "true"
+          # Incremental base: last reviewed commit (or PR base for a full review).
+          REVIEW_BASE_SHA: ${{ steps.check.outputs.range_base }}
         run: |
           set +e
           RAW=$(claude --dangerously-skip-permissions --output-format json --model claude-sonnet-4-6 -p "/code-review" 2>&1)
@@ -141,6 +193,15 @@ jobs:
             const idx = lines.findIndex(l =>
               /\b(REQUEST CHANGES|APPROVE WITH FIXES|APPROVE)\b/.test(l) || /^#{1,6}\s/.test(l));
             if (idx > 0) summary = lines.slice(idx).join('\n').trim();
+
+            // Total silence: the diff is incremental, so a bare APPROVE means the new
+            // lines introduced no blocking or advisory finding — post nothing at all.
+            // (Alternation order matters: APPROVE WITH FIXES must be tried before APPROVE.)
+            const verdict = (summary.match(/\b(REQUEST CHANGES|APPROVE WITH FIXES|APPROVE)\b/) || [])[1];
+            if (verdict === 'APPROVE') {
+              core.info('Verdict APPROVE — no new issues on the changed lines; posting nothing.');
+              return;
+            }
 
             const comments = (Array.isArray(inline) ? inline : [])
               .filter(f => f && f.path && Number.isInteger(f.line))

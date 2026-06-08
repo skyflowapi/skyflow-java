@@ -24,7 +24,10 @@ Use `$ARGUMENTS` to determine scope:
 - A file or directory path — review only that path
 - Empty / default — review files changed on current PR/branch vs base:
   ```bash
-  BASE="${GITHUB_BASE_REF:+origin/$GITHUB_BASE_REF}"
+  # REVIEW_BASE_SHA, when set (CI incremental review), is the last commit already
+  # reviewed by the bot — diff only lines added since then. Otherwise fall back to
+  # the PR base branch.
+  BASE="${REVIEW_BASE_SHA:-${GITHUB_BASE_REF:+origin/$GITHUB_BASE_REF}}"
   BASE="${BASE:-main}"
   git diff "$BASE"...HEAD --name-only | grep '\.java$' | grep -v 'generated'
   ```
