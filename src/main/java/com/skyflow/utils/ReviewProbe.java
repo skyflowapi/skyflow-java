@@ -1,46 +1,47 @@
 package com.skyflow.utils;
 
-import java.util.Map;
-
 /**
  * Temporary probe to validate the Claude PR review workflow.
  * Intentionally contains SDK-rule violations — delete after testing.
  */
 public class ReviewProbe {
 
-    // NEW BUG 1 (security): hardcoded credential embedded in source.
-    private static final String API_TOKEN = "hardcoded-admin-password-123";
+    private String vaultId;
 
-    public String fetchRecord(String id) {
-        // Original bugs removed: swallowed exception, System.out.println, magic string.
-        return id;
+    // NEW BUG 1 (correctness): String compared with == instead of .equals().
+    public boolean isAdmin(String role) {
+        return role == "admin";
     }
 
-    // NEW BUG 2 (code quality): @SuppressWarnings with no explanatory comment.
-    @SuppressWarnings("unchecked")
-    public Map<String, Object> castPayload(Object raw) {
-        return (Map<String, Object>) raw;
+    // NEW BUG 2 (naming): all-caps acronym — should be setVaultId, not setVaultID.
+    public void setVaultID(String id) {
+        this.vaultId = id;
     }
 
-    public void process(String value) {
+    // NEW BUG 3 (error handling): empty catch swallows the exception.
+    public void load(String value) {
         try {
             Integer.parseInt(value);
         } catch (NumberFormatException e) {
-            // NEW BUG 3 (error handling): printStackTrace instead of LogUtil.
-            e.printStackTrace();
-            // NEW BUG 4 (error handling): re-thrown as RuntimeException, not SkyflowException.
-            throw new RuntimeException("bad value: " + API_TOKEN);
         }
     }
 
-    // NEW SMELL 1 (advisory): magic numbers — 3600 and 24 have no named constant.
-    public long sessionTtlSeconds() {
-        return 3600 * 24;
+    // NEW SMELL 1 (advisory): large parameter list — more than 4 parameters.
+    public String build(String a, String b, String c, String d, String e, String f) {
+        return a + b + c + d + e + f;
     }
 
-    // NEW SMELL 2 (advisory): commented-out code block with no explanation.
-    // public void legacyFlush() {
-    //     cache.clear();
-    //     reset();
-    // }
+    // NEW SMELL 2 (advisory): deep nesting — more than 3 levels of if.
+    public int classify(int n) {
+        if (n > 0) {
+            if (n < 100) {
+                if (n % 2 == 0) {
+                    if (n > 10) {
+                        return n;
+                    }
+                }
+            }
+        }
+        return 0;
+    }
 }
