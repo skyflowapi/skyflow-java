@@ -126,9 +126,12 @@ jobs:
               try { inline = JSON.parse(m[1].trim()); } catch (e) { inline = []; }
             }
 
-            // Strip any leading model preamble/narration before the verdict or first heading.
-            const start = summary.search(/^(#|REQUEST CHANGES|APPROVE WITH FIXES|APPROVE\b)/m);
-            if (start > 0) summary = summary.slice(start).trim();
+            // Strip any leading model preamble/narration before the verdict line
+            // (tolerates markdown decoration like **REQUEST CHANGES** or a heading).
+            const lines = summary.split('\n');
+            const idx = lines.findIndex(l =>
+              /\b(REQUEST CHANGES|APPROVE WITH FIXES|APPROVE)\b/.test(l) || /^#{1,6}\s/.test(l));
+            if (idx > 0) summary = lines.slice(idx).join('\n').trim();
 
             const comments = (Array.isArray(inline) ? inline : [])
               .filter(f => f && f.path && Number.isInteger(f.line))

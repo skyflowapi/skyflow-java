@@ -103,6 +103,8 @@ When `GITHUB_ACTIONS` is set, your **entire output is the body of a code-review 
 
 Merge every finding from Steps 1–3 into one de-duplicated report (same issue flagged by multiple steps → keep once at the highest severity). Emit **exactly** the following, and nothing else.
 
+**Rendering rules (GitHub markdown):** emit each part below as a **top-level block at the left margin**, separated by a blank line. The numbers are labels for you — do **not** reproduce them as a markdown numbered list, and do **not** indent the tables or `<details>` (tables/`<details>` nested inside list items do not render on GitHub). Every table needs a blank line before and after it, and `<details>` needs a blank line after the `</summary>` tag.
+
 **Severity buckets (single source of truth; Category is a separate axis, never a severity):**
 - **Blocking** (must fix before merge): `Critical`, `High`, `Medium`.
 - **Advisory** (does not block merge): `Low`, `Info`.
