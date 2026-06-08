@@ -87,7 +87,9 @@ jobs:
             echo "has_changes=false" >> $GITHUB_OUTPUT
           else
             echo "has_changes=true" >> $GITHUB_OUTPUT
-            LINES=$(git diff "$RANGE_BASE"...HEAD -- '*.java' \
+            # Count added/removed lines over the same range the review uses, excluding
+            # generated/ so the metric matches what is actually reviewed.
+            LINES=$(git diff "$RANGE_BASE"...HEAD -- '*.java' ':(exclude)**/generated/**' \
               | grep -c '^[+-][^+-]' 2>/dev/null || echo 1)
             echo "changed_lines=$LINES" >> $GITHUB_OUTPUT
           fi
@@ -221,7 +223,7 @@ jobs:
                 path: f.path,
                 line: f.line,
                 side: 'RIGHT',
-                body: `**${f.severity || 'Finding'}${f.category ? ' · ' + f.category : ''}**: ${f.comment || ''}`.trim()
+                body: `**${f.severity || 'Finding'}${f.category ? ' · ' + f.category : ''}${f.cwe ? ' · ' + f.cwe : ''}**: ${f.comment || ''}`.trim()
               }));
 
             const body = `## AI Code Review\n\n${summary}`;
