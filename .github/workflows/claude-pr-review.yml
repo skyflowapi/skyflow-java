@@ -82,6 +82,7 @@ jobs:
           INPUT_TOK=$(echo "$RAW" | jq '[.modelUsage[].inputTokens // 0] | add // 0')
           OUTPUT_TOK=$(echo "$RAW" | jq '[.modelUsage[].outputTokens // 0] | add // 0')
           CACHED_TOK=$(echo "$RAW" | jq '[.modelUsage[].cacheReadInputTokens // 0] | add // 0')
+          CACHE_WRITE_TOK=$(echo "$RAW" | jq '[.modelUsage[].cacheCreationInputTokens // 0] | add // 0')
           COST=$(echo "$RAW" | jq -r '.total_cost_usd // 0')
           LINES="${{ steps.check.outputs.changed_lines }}"
 
@@ -95,7 +96,8 @@ jobs:
             echo "|--------|-------|"
             echo "| Input tokens | $INPUT_TOK |"
             echo "| Output tokens | $OUTPUT_TOK |"
-            echo "| Cache hits | $CACHED_TOK |"
+            echo "| Cache hits (read) | $CACHED_TOK |"
+            echo "| Cache writes | $CACHE_WRITE_TOK |"
             echo "| Total cost | \$$COST |"
             echo "| Changed lines | $LINES |"
           } >> $GITHUB_STEP_SUMMARY
