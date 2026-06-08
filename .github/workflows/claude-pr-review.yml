@@ -126,6 +126,10 @@ jobs:
               try { inline = JSON.parse(m[1].trim()); } catch (e) { inline = []; }
             }
 
+            // Strip any leading model preamble/narration before the verdict or first heading.
+            const start = summary.search(/^(#|REQUEST CHANGES|APPROVE WITH FIXES|APPROVE\b)/m);
+            if (start > 0) summary = summary.slice(start).trim();
+
             const comments = (Array.isArray(inline) ? inline : [])
               .filter(f => f && f.path && Number.isInteger(f.line))
               .map(f => ({
@@ -135,7 +139,7 @@ jobs:
                 body: `**${f.severity || 'Finding'}${f.category ? ' · ' + f.category : ''}**: ${f.comment || ''}`.trim()
               }));
 
-            const body = `## Claude SDK Review\n\n${summary}`;
+            const body = `## AI Code Review\n\n${summary}`;
 
             // One PR review: summary as the body + inline comments anchored to changed lines.
             try {
