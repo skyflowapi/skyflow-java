@@ -6,6 +6,19 @@ package com.skyflow.utils;
  */
 public class ReviewProbe {
 
+    // Dummy comment block to test incremental review (no new issue expected).
+    // Line 1 of 10
+    // Line 2 of 10
+    // Line 3 of 10
+    // Line 4 of 10
+    // Line 5 of 10
+    // Line 6 of 10
+    // Line 7 of 10
+    // Line 8 of 10
+    // Line 9 of 10
+    // Line 10 of 10
+
+
     public String fetchRecord(String id) {
         try {
             // Magic string instead of a Constants entry.
