@@ -2,7 +2,10 @@ name: Claude PR Review
 
 on:
   pull_request:
-    branches: [main]
+    # TEMP (SK-2832): devesh/SK-2832-claude-setup-v2 added so the probe PR (#339),
+    # which targets the setup branch rather than main, triggers the review bot.
+    # Revert to [main] once probe evaluation is done.
+    branches: [main, devesh/SK-2832-claude-setup-v2]
     paths:
       - 'src/**/*.java'
   workflow_dispatch:
