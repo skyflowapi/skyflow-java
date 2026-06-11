@@ -30,6 +30,8 @@ Report a finding **only if an added line (`+` prefix) introduces or directly exp
 
 ## Security Checks
 
+Where a finding maps to an **OWASP Top 10** category (e.g. `A01 — Broken Access Control`, `A06 — Vulnerable and Outdated Components`), tag it with that category in the output — only where it genuinely applies; don't force a mapping.
+
 ### 1. Credential and token exposure (Critical)
 - Bearer tokens, API keys, and private keys must never appear in logs, error messages, exception messages, or `toString()` output
 - `Credentials` fields (`path`, `token`, `apiKey`, `credentialsString`) must not be serialised to logs
@@ -53,8 +55,8 @@ Report a finding **only if an added line (`+` prefix) introduces or directly exp
 - `SkyflowException` messages must not include raw server response bodies that could contain PII
 - Stack traces must not be surfaced to callers — wrap in `SkyflowException`
 
-### 6. Dependency vulnerabilities (Low)
-- Note any dependencies that are known to have CVEs (check pom.xml versions)
+### 6. Dependency vulnerabilities (Critical)
+- Flag any dependency with a known CVE (check `pom.xml` versions). Report at **Critical** severity so it surfaces in the serious-findings table and gets an inline comment on the changed `pom.xml` line.
 
 ### 7. Authentication lifecycle (Medium)
 - Bearer token caching must check expiry before reuse
@@ -76,6 +78,7 @@ For each finding:
 **Trigger:** Input or code path that triggers the vulnerability
 **Fix:** Concrete remediation with code example
 **CWE:** CWE-NNN
+**OWASP:** Relevant OWASP Top 10 category, e.g. `A06 — Vulnerable and Outdated Components` — include only when the finding clearly maps to one; omit otherwise.
 ```
 
 End with a summary table and overall risk rating.
