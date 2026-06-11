@@ -85,7 +85,7 @@ Read the file `.claude/commands/code-smell.md` and follow all of its instruction
 
 Read the file `.claude/commands/code-security.md` and follow all of its instructions for the same files in scope. Produce its full output (per-finding blocks + summary table + overall risk rating).
 
-**If `GITHUB_ACTIONS` is set:** apply that command's **PR / CI mode** — report only issues introduced by added (`+`) lines; do not raise pre-existing vulnerabilities or whole-project checks the diff does not touch. Do **not** print code-security's standalone per-finding blocks, summary, or risk rating — collect its findings into the single consolidated report defined in **Output (PR / CI mode)** below.
+**If `GITHUB_ACTIONS` is set:** apply that command's **PR / CI mode** — report only issues introduced by added (`+`) lines; do not raise pre-existing vulnerabilities or whole-project checks the diff does not touch. **The security audit's scope additionally includes a changed `pom.xml`** (its own diff command covers it): when this PR modifies `pom.xml`, audit the added/changed dependency lines for known CVEs even though Steps 1–2 stay `.java`-only. Do **not** print code-security's standalone per-finding blocks, summary, or risk rating — collect its findings into the single consolidated report defined in **Output (PR / CI mode)** below.
 
 ---
 

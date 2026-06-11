@@ -19,14 +19,14 @@ Use `$ARGUMENTS` to determine target files. If none provided, run:
 # Local: unset — use main directly
 BASE="${GITHUB_BASE_REF:+origin/$GITHUB_BASE_REF}"
 BASE="${BASE:-main}"
-git diff "$BASE"...HEAD --name-only | grep '\.java$' | grep -v 'generated'
+git diff "$BASE"...HEAD --name-only | grep -E '\.java$|(^|/)pom\.xml$' | grep -v 'generated'
 ```
 
-**If `GITHUB_ACTIONS` is set (PR review mode):** audit only the code this PR changed. Work from the diff:
+**If `GITHUB_ACTIONS` is set (PR review mode):** audit only the code this PR changed. Work from the diff — **note the pathspec includes `pom.xml` so dependency changes are never invisible to the audit:**
 ```bash
-git diff "$BASE"...HEAD -- '*.java' | grep -v 'src/main/java/com/skyflow/generated/'
+git diff "$BASE"...HEAD -- '*.java' 'pom.xml' | grep -v 'src/main/java/com/skyflow/generated/'
 ```
-Report a finding **only if an added line (`+` prefix) introduces or directly exposes it.** Do not raise pre-existing vulnerabilities in unchanged code, and skip whole-project checks the diff does not touch (e.g. the dependency-CVE check in §6 unless `pom.xml` changed). If the added lines introduce no security issues, state that explicitly rather than listing pre-existing risks. (Local / non-CI runs and explicit file arguments keep full-file auditing.)
+Report a finding **only if an added line (`+` prefix) introduces or directly exposes it.** Do not raise pre-existing vulnerabilities in unchanged code, and skip whole-project checks the diff does not touch. **The diff above includes `pom.xml`; whenever a changed `<dependency>` appears in it, you MUST run §6 against those lines — do not treat the audit as `.java`-only.** If the added lines introduce no security issues, state that explicitly rather than listing pre-existing risks. (Local / non-CI runs and explicit file arguments keep full-file auditing.)
 
 ## Security Checks
 
@@ -59,6 +59,10 @@ Report a finding **only if an added line (`+` prefix) introduces or directly exp
 ### 7. Authentication lifecycle (Medium)
 - Bearer token caching must check expiry before reuse
 - Token refresh must be thread-safe (`synchronized` or equivalent)
+
+## Account for every check
+
+Before writing the report, walk checks **1–7 in order** against the changed lines and account for each one — do not report only the issues that first stand out. The Medium-severity categories (§4 HTTP, §5 error leakage, §7 auth lifecycle) and the dependency check (§6) are missed far more often than credential exposure (§1); give them equal scrutiny.
 
 ## Output Format
 
