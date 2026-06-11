@@ -29,11 +29,11 @@ Use `$ARGUMENTS` to determine scope:
   # the PR base branch.
   BASE="${REVIEW_BASE_SHA:-${GITHUB_BASE_REF:+origin/$GITHUB_BASE_REF}}"
   BASE="${BASE:-main}"
-  git diff "$BASE"...HEAD --name-only | grep '\.java$' | grep -v 'generated'
+  git diff "$BASE"...HEAD --name-only | grep -E '\.java$|(^|/)pom\.xml$' | grep -v 'generated'
   ```
   **If `GITHUB_ACTIONS` is set:** work from the diff output directly (changed lines only) instead of reading full files:
   ```bash
-  git diff "$BASE"...HEAD -- '*.java' | grep -v 'src/main/java/com/skyflow/generated/'
+  git diff "$BASE"...HEAD -- '*.java' 'pom.xml' | grep -v 'src/main/java/com/skyflow/generated/'
   ```
   Review only added lines (`+` prefix) from the diff. Do not comment on unchanged context lines or pre-existing code.
 
