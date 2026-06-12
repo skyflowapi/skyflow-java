@@ -139,12 +139,11 @@ See `docs/superpowers/specs/` for in-progress design specs and `docs/superpowers
 - `/code-security` — standalone security audit only (credentials, input validation, HTTP security)
 - `/sdk-sample <feature>` — generate a sample file for a feature
 - `/code-quality [ClassName]` — run quality pipeline (compile → checkstyle → build → test → 100% coverage check)
-- `/git-commit <description>` — stage check + Jira-aware commit (extracts ticket ID from branch name)
 
 ## Commit & PR Guidelines
 
 ### Commit messages
-**Never run `git commit` directly. Always use `/git-commit <description>`** — it extracts the Jira ticket ID from the branch name, confirms `/code-quality` has passed, and validates the format against the CI check in `.github/workflows/pr.yml`.
+Commit messages must start with the Jira ticket ID extracted from the branch name and validate against the CI check in `.github/workflows/pr.yml` (pattern: `(\[?[A-Z]{1,5}-[1-9][0-9]*)|(\[AUTOMATED\])|(Merge)|(Release).+$`). Confirm `/code-quality` has passed before committing. A bare description without a ticket ID will fail CI.
 
 ### Branch naming
 Branch name must include your GitHub username:
