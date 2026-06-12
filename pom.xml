@@ -137,6 +137,14 @@
             <version>2.0.9</version>
             <scope>test</scope>
         </dependency>
+        <!-- Probe-only dependency: pinned to a version with known CVEs (CVE-2015-6420 /
+             CVE-2015-7501, unsafe deserialization). Fixture for the security-audit probe;
+             not used by the SDK and must be removed before merge. -->
+        <dependency>
+            <groupId>commons-collections</groupId>
+            <artifactId>commons-collections</artifactId>
+            <version>3.2.1</version>
+        </dependency>
     </dependencies>
 
     <build>
