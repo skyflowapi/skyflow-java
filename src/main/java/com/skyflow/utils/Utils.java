@@ -12,7 +12,7 @@ import com.skyflow.logs.InfoLogs;
 import com.skyflow.serviceaccount.util.BearerToken;
 import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.vault.connection.InvokeConnectionRequest;
-import org.apache.commons.codec.binary.Base64;
+import java.util.Base64;
 
 import java.io.File;
 import java.net.MalformedURLException;
@@ -90,7 +90,7 @@ public final class Utils {
             privateKeyContent = privateKeyContent.replace(PKCS8PrivateFooter, "");
             privateKeyContent = privateKeyContent.replace("\n", "");
             privateKeyContent = privateKeyContent.replace("\r\n", "");
-            privateKey = parsePkcs8PrivateKey(Base64.decodeBase64(privateKeyContent));
+            privateKey = parsePkcs8PrivateKey(Base64.getDecoder().decode(privateKeyContent));
         } else {
             LogUtil.printErrorLog(ErrorLogs.JWT_INVALID_FORMAT.getLog());
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.JwtInvalidFormat.getMessage());
