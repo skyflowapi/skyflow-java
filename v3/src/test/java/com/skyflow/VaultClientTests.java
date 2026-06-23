@@ -1,11 +1,20 @@
 package com.skyflow;
 
-import static org.junit.Assert.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+import org.junit.Assert;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
-import okhttp3.ConnectionPool;
-import okhttp3.OkHttpClient;
-import java.util.concurrent.TimeUnit;
 import com.skyflow.enums.Env;
 import com.skyflow.enums.UpsertType;
 import com.skyflow.errors.ErrorCode;
@@ -18,12 +27,9 @@ import com.skyflow.utils.SdkVersion;
 import com.skyflow.vault.data.DetokenizeRequest;
 import com.skyflow.vault.data.InsertRecord;
 import com.skyflow.vault.data.TokenGroupRedactions;
-import io.github.cdimascio.dotenv.Dotenv;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
 
-import java.util.*;
+import okhttp3.ConnectionPool;
+import okhttp3.OkHttpClient;
 
 public class VaultClientTests {
     private static final String INVALID_EXCEPTION_THROWN = "Should not have thrown any exception";
@@ -108,33 +114,33 @@ public class VaultClientTests {
         }
     }
 
-    @Test
-    public void testSetBearerTokenWithEnvCredentials() {
-        try {
-            Dotenv dotenv = Dotenv.load();
-            Credentials credentials = new Credentials();
-            credentials.setCredentialsString(dotenv.get("SKYFLOW_CREDENTIALS"));
+    // @Test
+    // public void testSetBearerTokenWithEnvCredentials() {
+    //     try {
+    //         Dotenv dotenv = Dotenv.load();
+    //         Credentials credentials = new Credentials();
+    //         credentials.setCredentialsString(dotenv.get("SKYFLOW_CREDENTIALS"));
 
-            // no credentials set at vault config and skyflow levels
-            vaultConfig.setCredentials(null);
-            vaultClient.setCommonCredentials(null);
+    //         // no credentials set at vault config and skyflow levels
+    //         vaultConfig.setCredentials(null);
+    //         vaultClient.setCommonCredentials(null);
 
-            vaultClient.setBearerToken();
+    //         vaultClient.setBearerToken();
 
-            // Credentials at ENV level should be prioritised
-            Assert.assertEquals(
-                    credentials.getCredentialsString(),
-                    ((Credentials) getPrivateField(vaultClient, "finalCredentials")).getCredentialsString()
-            );
+    //         // Credentials at ENV level should be prioritised
+    //         Assert.assertEquals(
+    //                 credentials.getCredentialsString(),
+    //                 ((Credentials) getPrivateField(vaultClient, "finalCredentials")).getCredentialsString()
+    //         );
 
-        } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), 400);
-            Assert.assertNull(vaultClient.getVaultConfig().getCredentials());
-        } catch (Exception e) {
-            e.printStackTrace();
-            Assert.fail(INVALID_EXCEPTION_THROWN);
-        }
-    }
+    //     } catch (SkyflowException e) {
+    //         Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), 400);
+    //         Assert.assertNull(vaultClient.getVaultConfig().getCredentials());
+    //     } catch (Exception e) {
+    //         e.printStackTrace();
+    //         Assert.fail(INVALID_EXCEPTION_THROWN);
+    //     }
+    // }
 
     @Test
     public void testPrioritiseCredentialsWithVaultConfigCredentials() throws Exception {

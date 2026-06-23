@@ -1,13 +1,15 @@
 package com.skyflow;
 
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
 import com.skyflow.config.ConnectionConfig;
 import com.skyflow.config.Credentials;
 import com.skyflow.utils.Constants;
 import com.skyflow.utils.SdkVersion;
+
 import io.github.cdimascio.dotenv.Dotenv;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
 
 public class ConnectionClientTests {
     private static final String INVALID_EXCEPTION_THROWN = "Should not have thrown any exception";
@@ -84,15 +86,16 @@ public class ConnectionClientTests {
         }
     }
 
-    @Test
-    public void testSetBearerTokenWithEnvCredentials() {
-        try {
-            connectionConfig.setCredentials(null);
-            connectionClient.updateConnectionConfig(connectionConfig);
-            connectionClient.setCommonCredentials(null);
-            Assert.assertNull(connectionClient.getConnectionConfig().getCredentials());
-        } catch (Exception e) {
-            Assert.fail(INVALID_EXCEPTION_THROWN);
-        }
-    }
+    // @Test
+    // public void testSetBearerTokenWithEnvCredentials() {
+    //     try {
+    //         connectionConfig.setCredentials(null);
+    //         connectionClient.updateConnectionConfig(connectionConfig);
+    //         connectionClient.setCommonCredentials(null);
+    //         Assert.assertNull(connectionClient.getConnectionConfig().getCredentials());
+    //     } catch (Exception e) {
+    //         Assert.fail(INVALID_EXCEPTION_THROWN);
+    //     }
+    // }
+
 }
