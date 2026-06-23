@@ -17,10 +17,6 @@ class BaseSkyflow {
         return this.builder.logLevel;
     }
 
-    public void printLog(String message) {
-        System.err.println("Here is new code " + message);
-    }
-
     static class BaseSkyflowClientBuilder {
         protected Credentials skyflowCredentials;
         protected LogLevel logLevel;
@@ -38,5 +34,9 @@ class BaseSkyflow {
             ));
             return this;
         }
+        public BaseSkyflowClientBuilder printLog(String message) {
+            System.err.println("Here is new code " + message);
+        return this;
+    }
     }
 }
