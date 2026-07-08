@@ -9,7 +9,7 @@ import com.skyflow.errors.SkyflowException;
 import com.skyflow.logs.ErrorLogs;
 import com.skyflow.logs.InfoLogs;
 import com.skyflow.utils.logger.LogUtil;
-import org.apache.commons.codec.binary.Base64;
+import java.util.Base64;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
@@ -40,7 +40,7 @@ public class Token {
             LogUtil.printErrorLog(ErrorLogs.INVALID_BEARER_TOKEN.getLog());
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.JwtDecodeError.getMessage());
         }
-        byte[] decodedBytes = Base64.decodeBase64(split[1]);
+        byte[] decodedBytes = Base64.getUrlDecoder().decode(split[1]);
         return JsonParser.parseString(new String(decodedBytes, StandardCharsets.UTF_8)).getAsJsonObject();
     }
 }
