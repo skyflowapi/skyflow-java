@@ -17,7 +17,8 @@ import com.skyflow.vault.controller.VaultController;
 
 import java.util.LinkedHashMap;
 
-public final class Skyflow extends BaseSkyflow {
+public final class Skyflow extends BaseSkyflow
+        implements ISkyflow<Skyflow, VaultConfig, Credentials, VaultController> {
     private final SkyflowClientBuilder builder;
 
     private Skyflow(SkyflowClientBuilder builder) {
@@ -35,6 +36,37 @@ public final class Skyflow extends BaseSkyflow {
         return (VaultConfig) array[0];
     }
 
+    @Override
+    public Skyflow addVaultConfig(VaultConfig vaultConfig) throws SkyflowException {
+        this.builder.addVaultConfig(vaultConfig);
+        return this;
+    }
+
+    @Override
+    public Skyflow updateVaultConfig(VaultConfig vaultConfig) throws SkyflowException {
+        this.builder.updateVaultConfig(vaultConfig);
+        return this;
+    }
+
+    @Override
+    public Skyflow removeVaultConfig(String vaultId) throws SkyflowException {
+        this.builder.removeVaultConfig(vaultId);
+        return this;
+    }
+
+    @Override
+    public Skyflow updateSkyflowCredentials(Credentials credentials) throws SkyflowException {
+        this.builder.addSkyflowCredentials(credentials);
+        return this;
+    }
+
+    @Override
+    public Skyflow setLogLevel(LogLevel logLevel) {
+        this.builder.setLogLevel(logLevel);
+        return this;
+    }
+
+    @Override
     public VaultController vault() throws SkyflowException {
         Object[] array = this.builder.vaultClientsMap.keySet().toArray();
         if (array.length < 1) {
