@@ -5,7 +5,6 @@ import com.skyflow.config.BaseVaultConfig;
 import com.skyflow.enums.LogLevel;
 import com.skyflow.errors.SkyflowException;
 
-// Common interface — ONLY operations supported on both vault types.
 public interface ISkyflow<Self extends ISkyflow<Self, V, C, VC>, V extends BaseVaultConfig, C extends BaseCredentials, VC> {
     Self addVaultConfig(V vaultConfig) throws SkyflowException;
 

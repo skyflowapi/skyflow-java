@@ -1,7 +1,5 @@
 package com.skyflow.config;
 
-import com.skyflow.enums.Env;
-
 public class VaultConfig extends BaseVaultConfig implements Cloneable {
 
     private Credentials credentials;
@@ -18,7 +16,6 @@ public class VaultConfig extends BaseVaultConfig implements Cloneable {
     public void setCredentials(Credentials credentials) {
         this.credentials = credentials;
     }
-
 
     @Override
     public Object clone() throws CloneNotSupportedException {

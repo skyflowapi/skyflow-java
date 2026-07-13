@@ -8,15 +8,12 @@ import com.skyflow.generated.rest.ApiClientBuilder;
 import com.skyflow.generated.rest.resources.flowservice.FlowserviceClient;
 import com.skyflow.utils.Utils;
 
-
 public class VaultClient extends BaseVaultClient {
-    private final VaultConfig vaultConfig;
     private final ApiClientBuilder apiClientBuilder;
     private ApiClient apiClient;
 
     protected VaultClient(VaultConfig vaultConfig, Credentials credentials) throws SkyflowException {
-        this.vaultConfig = vaultConfig;
-        this.commonCredentials = credentials;
+        super(vaultConfig, credentials);
         this.apiClientBuilder = new ApiClientBuilder();
         this.apiClient = null;
         updateVaultURL();
@@ -24,10 +21,6 @@ public class VaultClient extends BaseVaultClient {
 
     protected FlowserviceClient getRecordsApi() {
         return this.apiClient.flowservice();
-    }
-
-    protected VaultConfig getVaultConfig() {
-        return vaultConfig;
     }
 
     protected void setCommonCredentials(Credentials commonCredentials) throws SkyflowException {

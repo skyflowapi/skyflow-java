@@ -79,6 +79,10 @@ public final class VaultController extends VaultClient
     private static final Gson GSON = new GsonBuilder().serializeNulls().create();
     private static final JsonObject SKY_METADATA = Utils.getMetrics();
 
+    private static RequestOptions buildRequestOptions() {
+        return RequestOptions.builder().addHeader(Constants.SDK_METRICS_HEADER_KEY, SKY_METADATA.toString()).build();
+    }
+
     public VaultController(VaultConfig vaultConfig, Credentials credentials) {
         super(vaultConfig, credentials);
     }
@@ -197,7 +201,7 @@ public final class VaultController extends VaultClient
             setBearerToken();
             if (continueOnError) {
                 RecordServiceBatchOperationBody insertBody = super.getBatchInsertRequestBody(insertRequest);
-                RequestOptions requestOptions = RequestOptions.builder().addHeader(Constants.SDK_METRICS_HEADER_KEY, SKY_METADATA.toString()).build();
+                RequestOptions requestOptions = buildRequestOptions();
                 batchInsertResult = super.getRecordsApi().withRawResponse().recordServiceBatchOperation(super.getVaultConfig().getVaultId(), insertBody, requestOptions);
                 LogUtil.printInfoLog(InfoLogs.INSERT_REQUEST_RESOLVED.getLog());
                 Optional<List<Map<String, Object>>> records = batchInsertResult.body().getResponses();
@@ -232,7 +236,7 @@ public final class VaultController extends VaultClient
                 }
             }
         } catch (ApiClientApiException e) {
-            throw BaseVaultController.wrapApiException(e.statusCode(), e, e.headers(), e.body(), ErrorLogs.INSERT_RECORDS_REJECTED);
+            throw wrapApiException(e.statusCode(), e, e.headers(), e.body(), ErrorLogs.INSERT_RECORDS_REJECTED);
         }
         LogUtil.printInfoLog(InfoLogs.INSERT_SUCCESS.getLog());
         if (insertedFields.isEmpty()) {
@@ -254,7 +258,7 @@ public final class VaultController extends VaultClient
             Validations.validateDetokenizeRequest(detokenizeRequest);
             setBearerToken();
             V1DetokenizePayload payload = super.getDetokenizePayload(detokenizeRequest);
-            RequestOptions requestOptions = RequestOptions.builder().addHeader(Constants.SDK_METRICS_HEADER_KEY, SKY_METADATA.toString()).build();
+            RequestOptions requestOptions = buildRequestOptions();
             result = super.getTokensApi().withRawResponse().recordServiceDetokenize(super.getVaultConfig().getVaultId(), payload, requestOptions);
             LogUtil.printInfoLog(InfoLogs.DETOKENIZE_REQUEST_RESOLVED.getLog());
             Map<String, List<String>> responseHeaders = result.headers();
@@ -275,7 +279,7 @@ public final class VaultController extends VaultClient
                 }
             }
         } catch (ApiClientApiException e) {
-            throw BaseVaultController.wrapApiException(e.statusCode(), e, e.headers(), e.body(), ErrorLogs.DETOKENIZE_REQUEST_REJECTED);
+            throw wrapApiException(e.statusCode(), e, e.headers(), e.body(), ErrorLogs.DETOKENIZE_REQUEST_REJECTED);
         }
 
         if (!errorRecords.isEmpty()) {
@@ -315,7 +319,7 @@ public final class VaultController extends VaultClient
                     .orderBy(RecordServiceBulkGetRecordRequestOrderBy.valueOf(getRequest.getOrderBy()))
                     .build();
 
-            RequestOptions requestOptions = RequestOptions.builder().addHeader(Constants.SDK_METRICS_HEADER_KEY, SKY_METADATA.toString()).build();
+            RequestOptions requestOptions = buildRequestOptions();
             result = super.getRecordsApi().recordServiceBulkGetRecord(
                     super.getVaultConfig().getVaultId(),
                     getRequest.getTable(),
@@ -330,7 +334,7 @@ public final class VaultController extends VaultClient
                 }
             }
         } catch (ApiClientApiException e) {
-            throw BaseVaultController.wrapApiException(e.statusCode(), e, e.headers(), e.body(), ErrorLogs.GET_REQUEST_REJECTED);
+            throw wrapApiException(e.statusCode(), e, e.headers(), e.body(), ErrorLogs.GET_REQUEST_REJECTED);
         }
         LogUtil.printInfoLog(InfoLogs.GET_SUCCESS.getLog());
         return new GetResponse(data, null);
@@ -346,7 +350,7 @@ public final class VaultController extends VaultClient
             Validations.validateUpdateRequest(updateRequest);
             setBearerToken();
             RecordServiceUpdateRecordBody updateBody = super.getUpdateRequestBody(updateRequest);
-            RequestOptions requestOptions = RequestOptions.builder().addHeader(Constants.SDK_METRICS_HEADER_KEY, SKY_METADATA.toString()).build();
+            RequestOptions requestOptions = buildRequestOptions();
             result = super.getRecordsApi().recordServiceUpdateRecord(
                     super.getVaultConfig().getVaultId(),
                     updateRequest.getTable(),
@@ -358,7 +362,7 @@ public final class VaultController extends VaultClient
             skyflowId = String.valueOf(result.getSkyflowId());
             tokensMap = getFormattedUpdateRecord(result);
         } catch (ApiClientApiException e) {
-            throw BaseVaultController.wrapApiException(e.statusCode(), e, e.headers(), e.body(), ErrorLogs.UPDATE_REQUEST_REJECTED);
+            throw wrapApiException(e.statusCode(), e, e.headers(), e.body(), ErrorLogs.UPDATE_REQUEST_REJECTED);
         }
         LogUtil.printInfoLog(InfoLogs.UPDATE_SUCCESS.getLog());
         return new UpdateResponse(skyflowId, tokensMap);
@@ -374,12 +378,12 @@ public final class VaultController extends VaultClient
             RecordServiceBulkDeleteRecordBody deleteBody = RecordServiceBulkDeleteRecordBody.builder().skyflowIds(deleteRequest.getIds())
                     .build();
 
-            RequestOptions requestOptions = RequestOptions.builder().addHeader(Constants.SDK_METRICS_HEADER_KEY, SKY_METADATA.toString()).build();
+            RequestOptions requestOptions = buildRequestOptions();
             result = super.getRecordsApi().recordServiceBulkDeleteRecord(
                     super.getVaultConfig().getVaultId(), deleteRequest.getTable(), deleteBody, requestOptions);
             LogUtil.printInfoLog(InfoLogs.DELETE_REQUEST_RESOLVED.getLog());
         } catch (ApiClientApiException e) {
-            throw BaseVaultController.wrapApiException(e.statusCode(), e, e.headers(), e.body(), ErrorLogs.DELETE_REQUEST_REJECTED);
+            throw wrapApiException(e.statusCode(), e, e.headers(), e.body(), ErrorLogs.DELETE_REQUEST_REJECTED);
         }
         LogUtil.printInfoLog(InfoLogs.DELETE_SUCCESS.getLog());
         return new DeleteResponse(result.getRecordIdResponse().orElse(Collections.emptyList()));
@@ -393,7 +397,7 @@ public final class VaultController extends VaultClient
             LogUtil.printInfoLog(InfoLogs.VALIDATING_QUERY_REQUEST.getLog());
             Validations.validateQueryRequest(queryRequest);
             setBearerToken();
-            RequestOptions requestOptions = RequestOptions.builder().addHeader(Constants.SDK_METRICS_HEADER_KEY, SKY_METADATA.toString()).build();
+            RequestOptions requestOptions = buildRequestOptions();
             result = super.getQueryApi().queryServiceExecuteQuery(
                     super.getVaultConfig().getVaultId(),
                     QueryServiceExecuteQueryBody.builder().query(queryRequest.getQuery()).build(),
@@ -407,7 +411,7 @@ public final class VaultController extends VaultClient
                 }
             }
         } catch (ApiClientApiException e) {
-            throw BaseVaultController.wrapApiException(e.statusCode(), e, e.headers(), e.body(), ErrorLogs.QUERY_REQUEST_REJECTED);
+            throw wrapApiException(e.statusCode(), e, e.headers(), e.body(), ErrorLogs.QUERY_REQUEST_REJECTED);
         }
         LogUtil.printInfoLog(InfoLogs.QUERY_SUCCESS.getLog());
         return new QueryResponse(fields);
@@ -422,7 +426,7 @@ public final class VaultController extends VaultClient
             Validations.validateTokenizeRequest(tokenizeRequest);
             setBearerToken();
             V1TokenizePayload payload = super.getTokenizePayload(tokenizeRequest);
-            RequestOptions requestOptions = RequestOptions.builder().addHeader(Constants.SDK_METRICS_HEADER_KEY, SKY_METADATA.toString()).build();
+            RequestOptions requestOptions = buildRequestOptions();
             result = super.getTokensApi().recordServiceTokenize(super.getVaultConfig().getVaultId(), payload, requestOptions);
             LogUtil.printInfoLog(InfoLogs.TOKENIZE_REQUEST_RESOLVED.getLog());
             if (result != null && result.getRecords().isPresent() && !result.getRecords().get().isEmpty()) {
@@ -433,7 +437,7 @@ public final class VaultController extends VaultClient
                 }
             }
         } catch (ApiClientApiException e) {
-            throw BaseVaultController.wrapApiException(e.statusCode(), e, e.headers(), e.body(), ErrorLogs.TOKENIZE_REQUEST_REJECTED);
+            throw wrapApiException(e.statusCode(), e, e.headers(), e.body(), ErrorLogs.TOKENIZE_REQUEST_REJECTED);
         }
         LogUtil.printInfoLog(InfoLogs.TOKENIZE_SUCCESS.getLog());
         return new TokenizeResponse(list);
@@ -456,7 +460,7 @@ public final class VaultController extends VaultClient
                     .returnFileMetadata(false)
                     .build();
 
-            RequestOptions requestOptions = RequestOptions.builder().addHeader(Constants.SDK_METRICS_HEADER_KEY, SKY_METADATA.toString()).build();
+            RequestOptions requestOptions = buildRequestOptions();
             UploadFileV2Response uploadFileV2Response = super.getRecordsApi().uploadFileV2(
                     super.getVaultConfig().getVaultId(),
                     file,
@@ -470,7 +474,7 @@ public final class VaultController extends VaultClient
             );
 
         } catch (ApiClientApiException e) {
-            throw BaseVaultController.wrapApiException(e.statusCode(), e, e.headers(), e.body(), ErrorLogs.UPLOAD_FILE_REQUEST_REJECTED);
+            throw wrapApiException(e.statusCode(), e, e.headers(), e.body(), ErrorLogs.UPLOAD_FILE_REQUEST_REJECTED);
         } catch (IOException e) {
             LogUtil.printErrorLog(ErrorLogs.UPLOAD_FILE_REQUEST_REJECTED.getLog());
             throw new SkyflowException(e.getMessage(), e);

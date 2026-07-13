@@ -8,8 +8,11 @@ import java.util.logging.*;
 
 public final class LogUtil {
     private static final Logger LOGGER = Logger.getLogger(LogUtil.class.getName());
-    private static final String SDK_LOG_PREFIX = "[" + SdkVersion.getSdkPrefix() + "] ";
     private static boolean IS_LOGGER_SETUP_DONE = false;
+
+    private static String logPrefix() {
+        return "[" + SdkVersion.getSdkPrefix() + "] ";
+    }
 
     synchronized public static void setupLogger(LogLevel logLevel) {
         IS_LOGGER_SETUP_DONE = true;
@@ -39,26 +42,26 @@ public final class LogUtil {
 
     public static void printErrorLog(String message) {
         if (IS_LOGGER_SETUP_DONE)
-            LOGGER.severe(SDK_LOG_PREFIX + message);
+            LOGGER.severe(logPrefix() + message);
         else {
             setupLogger(LogLevel.ERROR);
-            LOGGER.severe(SDK_LOG_PREFIX + message);
+            LOGGER.severe(logPrefix() + message);
         }
     }
 
     public static void printDebugLog(String message) {
         if (IS_LOGGER_SETUP_DONE)
-            LOGGER.config(SDK_LOG_PREFIX + message);
+            LOGGER.config(logPrefix() + message);
     }
 
     public static void printWarningLog(String message) {
         if (IS_LOGGER_SETUP_DONE)
-            LOGGER.warning(SDK_LOG_PREFIX + message);
+            LOGGER.warning(logPrefix() + message);
     }
 
     public static void printInfoLog(String message) {
         if (IS_LOGGER_SETUP_DONE)
-            LOGGER.info(SDK_LOG_PREFIX + message);
+            LOGGER.info(logPrefix() + message);
     }
 
 

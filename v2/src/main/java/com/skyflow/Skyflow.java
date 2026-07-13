@@ -10,6 +10,8 @@ import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.logs.ErrorLogs;
 import com.skyflow.logs.InfoLogs;
+import com.skyflow.utils.Constants;
+import com.skyflow.utils.SdkVersion;
 import com.skyflow.utils.Utils;
 import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.utils.validations.Validations;
@@ -29,6 +31,7 @@ public final class Skyflow extends BaseSkyflow
     }
 
     public static SkyflowClientBuilder builder() {
+        SdkVersion.setSdkPrefix(Constants.SDK_PREFIX);
         return new SkyflowClientBuilder();
     }
 
@@ -171,20 +174,26 @@ public final class Skyflow extends BaseSkyflow
         public SkyflowClientBuilder addVaultConfig(VaultConfig vaultConfig) throws SkyflowException {
             LogUtil.printInfoLog(InfoLogs.VALIDATING_VAULT_CONFIG.getLog());
             Validations.validateVaultConfig(vaultConfig);
-            if (this.vaultClientsMap.containsKey(vaultConfig.getVaultId())) {
+            VaultConfig vaultConfigCopy;
+            try {
+                vaultConfigCopy = (VaultConfig) vaultConfig.clone();
+            } catch (CloneNotSupportedException e) {
+                throw new RuntimeException(e);
+            }
+            if (this.vaultClientsMap.containsKey(vaultConfigCopy.getVaultId())) {
                 LogUtil.printErrorLog(Utils.parameterizedString(
-                        ErrorLogs.VAULT_CONFIG_EXISTS.getLog(), vaultConfig.getVaultId()
+                        ErrorLogs.VAULT_CONFIG_EXISTS.getLog(), vaultConfigCopy.getVaultId()
                 ));
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(),
                         ErrorMessage.VaultIdAlreadyInConfigList.getMessage());
             } else {
-                this.vaultConfigMap.put(vaultConfig.getVaultId(), vaultConfig);
-                this.vaultClientsMap.put(vaultConfig.getVaultId(), new VaultController(vaultConfig, this.skyflowCredentials));
-                this.detectClientsMap.put(vaultConfig.getVaultId(), new DetectController(vaultConfig, this.skyflowCredentials));
+                this.vaultConfigMap.put(vaultConfigCopy.getVaultId(), vaultConfigCopy);
+                this.vaultClientsMap.put(vaultConfigCopy.getVaultId(), new VaultController(vaultConfigCopy, this.skyflowCredentials));
+                this.detectClientsMap.put(vaultConfigCopy.getVaultId(), new DetectController(vaultConfigCopy, this.skyflowCredentials));
                 LogUtil.printInfoLog(Utils.parameterizedString(
-                        InfoLogs.VAULT_CONTROLLER_INITIALIZED.getLog(), vaultConfig.getVaultId()));
+                        InfoLogs.VAULT_CONTROLLER_INITIALIZED.getLog(), vaultConfigCopy.getVaultId()));
                 LogUtil.printInfoLog(Utils.parameterizedString(
-                        InfoLogs.DETECT_CONTROLLER_INITIALIZED.getLog(), vaultConfig.getVaultId()));
+                        InfoLogs.DETECT_CONTROLLER_INITIALIZED.getLog(), vaultConfigCopy.getVaultId()));
             }
             return this;
         }
@@ -266,7 +275,13 @@ public final class Skyflow extends BaseSkyflow
 
         public SkyflowClientBuilder addSkyflowCredentials(Credentials credentials) throws SkyflowException {
             Validations.validateCredentials(credentials);
-            this.skyflowCredentials = credentials;
+            Credentials credentialsCopy;
+            try {
+                credentialsCopy = (Credentials) credentials.clone();
+            } catch (CloneNotSupportedException e) {
+                throw new RuntimeException(e);
+            }
+            this.skyflowCredentials = credentialsCopy;
             for (VaultController vault : this.vaultClientsMap.values()) {
                 vault.setCommonCredentials(this.skyflowCredentials);
             }
@@ -293,7 +308,14 @@ public final class Skyflow extends BaseSkyflow
             VaultConfig previousConfig = this.vaultConfigMap.get(vaultConfig.getVaultId());
             Env env = vaultConfig.getEnv() != null ? vaultConfig.getEnv() : previousConfig.getEnv();
             String clusterId = vaultConfig.getClusterId() != null ? vaultConfig.getClusterId() : previousConfig.getClusterId();
-            Credentials credentials = vaultConfig.getCredentials() != null ? vaultConfig.getCredentials() : previousConfig.getCredentials();
+            Credentials credentials = previousConfig.getCredentials();
+            if (vaultConfig.getCredentials() != null) {
+                try {
+                    credentials = (Credentials) vaultConfig.getCredentials().clone();
+                } catch (CloneNotSupportedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
             previousConfig.setEnv(env);
             previousConfig.setClusterId(clusterId);
             previousConfig.setCredentials(credentials);

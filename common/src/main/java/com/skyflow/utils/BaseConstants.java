@@ -21,7 +21,6 @@ public class BaseConstants {
     public static final String API_KEY_REGEX = "^sky-[a-zA-Z0-9]{5}-[a-fA-F0-9]{32}$";
     public static final String CONTEXT_KEY_REGEX = "^[a-zA-Z0-9_]+$";
     public static final String SDK_METRIC_NAME_VERSION = "sdk_name_version";
-    public static final String SDK_METRIC_NAME_VERSION_PREFIX = "skyflow-java@";
     public static final String SDK_METRIC_CLIENT_DEVICE_MODEL = "sdk_client_device_model";
     public static final String SDK_METRIC_CLIENT_OS_DETAILS = "sdk_client_os_details";
     public static final String SDK_METRIC_RUNTIME_DETAILS = "sdk_runtime_details";

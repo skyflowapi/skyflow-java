@@ -13,14 +13,14 @@ import com.skyflow.vault.data.DetokenizeResponse;
 import com.skyflow.vault.data.InsertRequest;
 import com.skyflow.vault.data.InsertResponse;
 
-public final class VaultController extends VaultClient implements IVaultController<InsertRequest, InsertResponse, DetokenizeRequest, DetokenizeResponse>{
+public final class VaultController extends VaultClient
+        implements IVaultController<InsertRequest, InsertResponse, DetokenizeRequest, DetokenizeResponse> {
     private static final Gson gson = new GsonBuilder().serializeNulls().create();
     private JsonObject metrics = Utils.getMetrics();
 
     public VaultController(VaultConfig vaultConfig, Credentials credentials) throws SkyflowException {
         super(vaultConfig, credentials);
     }
-
 
     @Override
     public InsertResponse insert(InsertRequest request) throws SkyflowException {

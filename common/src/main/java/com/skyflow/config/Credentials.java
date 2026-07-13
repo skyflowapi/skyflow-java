@@ -4,6 +4,4 @@ public class Credentials extends BaseCredentials {
     public Credentials() {
         super();
     }
-
-
 }

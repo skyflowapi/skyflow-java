@@ -36,6 +36,10 @@ public final class Skyflow extends BaseSkyflow
         return (VaultConfig) array[0];
     }
 
+    public VaultConfig getVaultConfig(String vaultId) {
+        return this.builder.vaultConfigMap.get(vaultId);
+    }
+
     @Override
     public Skyflow addVaultConfig(VaultConfig vaultConfig) throws SkyflowException {
         this.builder.addVaultConfig(vaultConfig);
@@ -74,12 +78,15 @@ public final class Skyflow extends BaseSkyflow
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.VaultIdNotInConfigList.getMessage());
         }
         String vaultId = (String) array[0];
+        return this.vault(vaultId);
+    }
+
+    public VaultController vault(String vaultId) throws SkyflowException {
         VaultController controller = this.builder.vaultClientsMap.get(vaultId);
         if (controller == null) {
             LogUtil.printErrorLog(ErrorLogs.VAULT_CONFIG_DOES_NOT_EXIST.getLog());
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.VaultIdNotInConfigList.getMessage());
         }
-
         return controller;
     }
 
@@ -101,7 +108,7 @@ public final class Skyflow extends BaseSkyflow
             } catch (CloneNotSupportedException e) {
                 throw new RuntimeException(e);
             }
-            if (!this.vaultClientsMap.isEmpty()) {
+            if (this.vaultClientsMap.containsKey(vaultConfigCopy.getVaultId())) {
                 LogUtil.printErrorLog(Utils.parameterizedString(
                         ErrorLogs.VAULT_CONFIG_EXISTS.getLog(), vaultConfigCopy.getVaultId()
                 ));

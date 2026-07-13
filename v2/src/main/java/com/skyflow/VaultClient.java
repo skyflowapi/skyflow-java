@@ -45,13 +45,11 @@ import java.util.stream.Collectors;
 
 
 public class VaultClient extends BaseVaultClient {
-    private final VaultConfig vaultConfig;
     private final ApiClientBuilder apiClientBuilder;
     private ApiClient apiClient;
 
     protected VaultClient(VaultConfig vaultConfig, Credentials credentials) {
-        this.vaultConfig = vaultConfig;
-        this.commonCredentials = credentials;
+        super(vaultConfig, credentials);
         this.apiClientBuilder = new ApiClientBuilder();
         this.apiClient = null;
         updateVaultURL();
@@ -75,10 +73,6 @@ public class VaultClient extends BaseVaultClient {
 
     protected QueryClient getQueryApi() {
         return this.apiClient.query();
-    }
-
-    protected VaultConfig getVaultConfig() {
-        return vaultConfig;
     }
 
     protected void setCommonCredentials(Credentials commonCredentials) throws SkyflowException {

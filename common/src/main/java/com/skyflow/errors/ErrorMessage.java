@@ -201,10 +201,10 @@ public enum ErrorMessage {
     private final String message;
 
     ErrorMessage(String message) {
-        this.message = message.replace("%s0", SdkVersion.getSdkPrefix());
+        this.message = message;
     }
 
     public String getMessage() {
-        return message;
+        return message.replace("%s0", SdkVersion.getSdkPrefix());
     }
 }

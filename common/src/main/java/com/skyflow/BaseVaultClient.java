@@ -1,9 +1,13 @@
 package com.skyflow;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.skyflow.config.BaseCredentials;
+import com.skyflow.config.VaultConfig;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.logs.ErrorLogs;
 import com.skyflow.logs.InfoLogs;
 import com.skyflow.serviceaccount.util.Token;
 import com.skyflow.utils.BaseConstants;
@@ -16,10 +20,13 @@ import okhttp3.ConnectionPool;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 class BaseVaultClient {
+    protected VaultConfig vaultConfig;
     protected OkHttpClient sharedHttpClient;
     protected String currentVaultURL;
     protected BaseCredentials commonCredentials;
@@ -27,7 +34,13 @@ class BaseVaultClient {
     protected String token;
     protected String apiKey;
 
-    public BaseVaultClient() {
+    protected BaseVaultClient(VaultConfig vaultConfig, BaseCredentials credentials) {
+        this.vaultConfig = vaultConfig;
+        this.commonCredentials = credentials;
+    }
+
+    protected VaultConfig getVaultConfig() {
+        return vaultConfig;
     }
 
     protected OkHttpClient buildSharedHttpClient(Supplier<String> tokenSupplier) {
@@ -89,5 +102,13 @@ class BaseVaultClient {
         } else {
             LogUtil.printInfoLog(InfoLogs.REUSE_BEARER_TOKEN.getLog());
         }
+    }
+
+    protected static SkyflowException wrapApiException(int statusCode, Throwable cause,
+                                                         Map<String, List<String>> headers,
+                                                         Object responseBody, ErrorLogs errorLog) {
+        LogUtil.printErrorLog(errorLog.getLog());
+        Gson gson = new GsonBuilder().serializeNulls().create();
+        return new SkyflowException(statusCode, cause, headers, gson.toJson(responseBody));
     }
 }
