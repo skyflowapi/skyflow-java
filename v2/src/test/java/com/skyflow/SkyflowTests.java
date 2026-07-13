@@ -1,6 +1,7 @@
 package com.skyflow;
 
-import com.skyflow.config.BaseVaultConfig;
+import com.skyflow.config.Credentials;
+import com.skyflow.config.VaultConfig;
 import com.skyflow.config.ConnectionConfig;
 import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.Env;
@@ -60,7 +61,7 @@ public class SkyflowTests {
     @Test
     public void testAddingInvalidVaultConfigInSkyflowBuilder() {
         try {
-            BaseVaultConfig config = new BaseVaultConfig();
+            VaultConfig config = new VaultConfig();
             config.setVaultId("");
             config.setClusterId(clusterID);
             config.setEnv(Env.SANDBOX);
@@ -75,7 +76,7 @@ public class SkyflowTests {
     @Test
     public void testAddingInvalidVaultConfigInSkyflowClient() {
         try {
-            BaseVaultConfig config = new BaseVaultConfig();
+            VaultConfig config = new VaultConfig();
             config.setVaultId("");
             config.setClusterId(clusterID);
             config.setEnv(Env.SANDBOX);
@@ -91,7 +92,7 @@ public class SkyflowTests {
     @Test
     public void testAddingValidVaultConfigInSkyflowClient() {
         try {
-            BaseVaultConfig config = new BaseVaultConfig();
+            VaultConfig config = new VaultConfig();
             config.setVaultId(vaultID);
             config.setClusterId(clusterID);
             config.setEnv(Env.SANDBOX);
@@ -105,7 +106,7 @@ public class SkyflowTests {
     @Test
     public void testAddingExistingVaultConfigInSkyflowClient() {
         try {
-            BaseVaultConfig config = new BaseVaultConfig();
+            VaultConfig config = new VaultConfig();
             config.setVaultId(vaultID);
             config.setClusterId(clusterID);
             config.setEnv(Env.SANDBOX);
@@ -121,7 +122,7 @@ public class SkyflowTests {
     @Test
     public void testUpdatingNonExistentVaultConfigInSkyflowBuilder() {
         try {
-            BaseVaultConfig config = new BaseVaultConfig();
+            VaultConfig config = new VaultConfig();
             config.setVaultId(vaultID);
             config.setClusterId(clusterID);
             config.setEnv(Env.SANDBOX);
@@ -136,7 +137,7 @@ public class SkyflowTests {
     @Test
     public void testUpdatingNonExistentVaultConfigInSkyflowClient() {
         try {
-            BaseVaultConfig config = new VaultConfig();
+            VaultConfig config = new VaultConfig();
             config.setVaultId(vaultID);
             config.setClusterId(clusterID);
             config.setEnv(Env.SANDBOX);
@@ -154,7 +155,7 @@ public class SkyflowTests {
     @Test
     public void testUpdatingValidVaultConfigInSkyflowClient() {
         try {
-            BaseVaultConfig config = new BaseVaultConfig();
+            VaultConfig config = new VaultConfig();
             config.setVaultId(vaultID);
             config.setClusterId(clusterID);
             config.setEnv(Env.SANDBOX);
@@ -176,7 +177,7 @@ public class SkyflowTests {
     @Test
     public void testUpdateVaultConfigNullCredentialsFallsBackToPrevious() {
         try {
-            BaseVaultConfig config = new BaseVaultConfig();
+            VaultConfig config = new VaultConfig();
             config.setVaultId(vaultID);
             config.setClusterId(clusterID);
             config.setEnv(Env.SANDBOX);
@@ -188,7 +189,7 @@ public class SkyflowTests {
             Skyflow skyflowClient = Skyflow.builder().addVaultConfig(config).build();
 
             // Update with null credentials — should retain previous credentials value
-            BaseVaultConfig partialUpdate = new BaseVaultConfig();
+            VaultConfig partialUpdate = new VaultConfig();
             partialUpdate.setVaultId(vaultID);
             partialUpdate.setClusterId(clusterID);
             skyflowClient.updateVaultConfig(partialUpdate);
@@ -212,7 +213,7 @@ public class SkyflowTests {
     @Test
     public void testRemovingNonExistentVaultConfigInSkyflowClient() {
         try {
-            BaseVaultConfig config = new BaseVaultConfig();
+            VaultConfig config = new VaultConfig();
             config.setVaultId(vaultID);
             config.setClusterId(clusterID);
             config.setEnv(Env.SANDBOX);
@@ -239,7 +240,7 @@ public class SkyflowTests {
     public void testGettingNonExistentVaultConfigInSkyflowClient() {
         try {
             Skyflow skyflowClient = Skyflow.builder().build();
-            BaseVaultConfig config = skyflowClient.getVaultConfig(vaultID);
+            VaultConfig config = skyflowClient.getVaultConfig(vaultID);
             Assert.assertNull(config);
         } catch (Exception e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
@@ -261,12 +262,12 @@ public class SkyflowTests {
     @Test
     public void testGettingAlreadyRemovedVaultFromNonEmptyConfigs() {
         try {
-            BaseVaultConfig primaryConfig = new BaseVaultConfig();
+            VaultConfig primaryConfig = new VaultConfig();
             primaryConfig.setVaultId(vaultID);
             primaryConfig.setClusterId(clusterID);
             primaryConfig.setEnv(Env.SANDBOX);
 
-            BaseVaultConfig secondaryConfig = new BaseVaultConfig();
+            VaultConfig secondaryConfig = new VaultConfig();
             secondaryConfig.setVaultId(vaultID + "123");
             secondaryConfig.setClusterId(clusterID);
             secondaryConfig.setEnv(Env.SANDBOX);
@@ -475,7 +476,7 @@ public class SkyflowTests {
     @Test
     public void testUpdatingValidSkyflowCredentialsInSkyflowClient() {
         try {
-            BaseVaultConfig vaultConfig = new BaseVaultConfig();
+            VaultConfig vaultConfig = new VaultConfig();
             vaultConfig.setVaultId(vaultID);
             vaultConfig.setClusterId(clusterID);
 
@@ -574,7 +575,7 @@ public class SkyflowTests {
     @Test
     public void testVaultMethodWithValidConfig() {
         try {
-            BaseVaultConfig config = new BaseVaultConfig();
+            VaultConfig config = new VaultConfig();
             config.setVaultId(vaultID);
             config.setClusterId(clusterID);
             config.setEnv(Env.SANDBOX);
@@ -589,7 +590,7 @@ public class SkyflowTests {
     @Test
     public void testVaultMethodWithInvalidVaultId() {
         try {
-            BaseVaultConfig config = new BaseVaultConfig();
+            VaultConfig config = new VaultConfig();
             config.setVaultId(vaultID);
             config.setClusterId(clusterID);
             config.setEnv(Env.SANDBOX);
@@ -658,7 +659,7 @@ public class SkyflowTests {
     @Test
     public void testDetectMethodWithValidConfig() {
         try {
-            BaseVaultConfig config = new BaseVaultConfig();
+            VaultConfig config = new VaultConfig();
             config.setVaultId(vaultID);
             config.setClusterId(clusterID);
             config.setEnv(Env.SANDBOX);
@@ -673,7 +674,7 @@ public class SkyflowTests {
     @Test
     public void testDetectMethodWithInvalidVaultId() {
         try {
-            BaseVaultConfig config = new BaseVaultConfig();
+            VaultConfig config = new VaultConfig();
             config.setVaultId(vaultID);
             config.setClusterId(clusterID);
             config.setEnv(Env.SANDBOX);
@@ -689,7 +690,7 @@ public class SkyflowTests {
     @Test
     public void testUpdateVaultConfig_withNewClusterIdAndCredentials_updatesAllFields() {
         try {
-            BaseVaultConfig config = new BaseVaultConfig();
+            VaultConfig config = new VaultConfig();
             config.setVaultId(vaultID);
             config.setClusterId(clusterID);
             config.setEnv(Env.DEV);
@@ -702,7 +703,7 @@ public class SkyflowTests {
             // the non-null (true) branches for all three ternaries in findAndUpdateVaultConfig
             Credentials newCreds = new Credentials();
             newCreds.setToken("updated-token-value");
-            BaseVaultConfig update = new BaseVaultConfig();
+            VaultConfig update = new VaultConfig();
             update.setVaultId(vaultID);
             update.setClusterId(newClusterID);
             update.setEnv(Env.PROD);
@@ -751,14 +752,14 @@ public class SkyflowTests {
         try {
             Credentials creds = new Credentials();
             creds.setToken(token);
-            BaseVaultConfig initial = new BaseVaultConfig();
+            VaultConfig initial = new VaultConfig();
             initial.setVaultId(vaultID);
             initial.setClusterId(clusterID);
             initial.setEnv(Env.SANDBOX);
             initial.setCredentials(creds);
             Skyflow skyflowClient = Skyflow.builder().addVaultConfig(initial).build();
 
-            BaseVaultConfig updateWithNullEnv = new BaseVaultConfig() {
+            VaultConfig updateWithNullEnv = new VaultConfig() {
                 @Override public Env getEnv() { return null; }
             };
             updateWithNullEnv.setVaultId(vaultID);
@@ -781,7 +782,7 @@ public class SkyflowTests {
         try {
             Credentials creds = new Credentials();
             creds.setToken(token);
-            BaseVaultConfig initial = new BaseVaultConfig();
+            VaultConfig initial = new VaultConfig();
             initial.setVaultId(vaultID);
             initial.setClusterId(clusterID);
             initial.setEnv(Env.DEV);
@@ -792,17 +793,17 @@ public class SkyflowTests {
             builderField.setAccessible(true);
             Object builder = builderField.get(skyflowClient);
 
-            BaseVaultConfig nullClusterConfig = new BaseVaultConfig();
+            VaultConfig nullClusterConfig = new VaultConfig();
             nullClusterConfig.setVaultId(vaultID);
             // Override clusterId field to null via reflection (setter enforces non-null)
-            java.lang.reflect.Field clusterIdField = BaseVaultConfig.class.getDeclaredField("clusterId");
+            java.lang.reflect.Field clusterIdField = VaultConfig.class.getDeclaredField("clusterId");
             clusterIdField.setAccessible(true);
             clusterIdField.set(nullClusterConfig, null);
 
             java.lang.reflect.Method method = builder.getClass().getDeclaredMethod(
-                    "findAndUpdateVaultConfig", BaseVaultConfig.class);
+                    "findAndUpdateVaultConfig", VaultConfig.class);
             method.setAccessible(true);
-            BaseVaultConfig result = (BaseVaultConfig) method.invoke(builder, nullClusterConfig);
+            VaultConfig result = (VaultConfig) method.invoke(builder, nullClusterConfig);
 
             Assert.assertEquals(clusterID, result.getClusterId());
         } catch (SkyflowException e) {

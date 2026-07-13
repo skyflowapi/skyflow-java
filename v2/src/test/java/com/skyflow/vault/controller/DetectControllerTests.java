@@ -2,7 +2,8 @@ package com.skyflow.vault.controller;
 
 import com.skyflow.Skyflow;
 import com.skyflow.VaultClient;
-import com.skyflow.config.BaseVaultConfig;
+import com.skyflow.config.Credentials;
+import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.DetectEntities;
 import com.skyflow.enums.Env;
 import com.skyflow.enums.LogLevel;
@@ -55,7 +56,7 @@ public class DetectControllerTests {
     private static final String INVALID_EXCEPTION_THROWN = "Should not have thrown any exception";
     private static String vaultID = null;
     private static String clusterID = null;
-    private static BaseVaultConfig vaultConfig = null;
+    private static VaultConfig vaultConfig = null;
     private static Skyflow skyflowClient = null;
 
     @BeforeClass
@@ -66,7 +67,7 @@ public class DetectControllerTests {
         Credentials credentials = new Credentials();
         credentials.setToken("valid-token");
 
-        vaultConfig = new BaseVaultConfig();
+        vaultConfig = new VaultConfig();
         vaultConfig.setVaultId(vaultID);
         vaultConfig.setClusterId(clusterID);
         vaultConfig.setEnv(Env.DEV);
@@ -84,7 +85,7 @@ public class DetectControllerTests {
         Credentials creds = new Credentials();
         creds.setApiKey("sky-ab123-abcd1234cdef1234abcd4321cdef4321");
 
-        BaseVaultConfig config = new BaseVaultConfig();
+        VaultConfig config = new VaultConfig();
         config.setVaultId(vaultID);
         config.setClusterId(clusterID);
         config.setEnv(Env.DEV);
