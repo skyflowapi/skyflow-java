@@ -18,7 +18,7 @@ import com.skyflow.vault.controller.VaultController;
 
 import java.util.LinkedHashMap;
 
-public final class Skyflow extends BaseSkyflow<Skyflow, VaultController> {
+public final class Skyflow extends BaseSkyflow<Skyflow, VaultConfig, VaultController> {
     private final SkyflowClientBuilder builder;
 
     private Skyflow(SkyflowClientBuilder builder) {
@@ -81,7 +81,7 @@ public final class Skyflow extends BaseSkyflow<Skyflow, VaultController> {
         return resolveOrThrow(this.builder.detectClientsMap, vaultId, ErrorLogs.VAULT_CONFIG_DOES_NOT_EXIST, ErrorMessage.VaultIdNotInConfigList);
     }
 
-    public static final class SkyflowClientBuilder extends BaseSkyflowClientBuilder<VaultController> {
+    public static final class SkyflowClientBuilder extends BaseSkyflowClientBuilder<VaultConfig, VaultController> {
         private final LinkedHashMap<String, ConnectionController> connectionsMap = new LinkedHashMap<>();
         private final LinkedHashMap<String, DetectController> detectClientsMap = new LinkedHashMap<>();
         private final LinkedHashMap<String, ConnectionConfig> connectionConfigMap = new LinkedHashMap<>();
@@ -89,6 +89,38 @@ public final class Skyflow extends BaseSkyflow<Skyflow, VaultController> {
         @Override
         protected void validateVaultConfig(VaultConfig vaultConfig) throws SkyflowException {
             Validations.validateVaultConfig(vaultConfig);
+        }
+
+        @Override
+        protected VaultConfig cloneVaultConfig(VaultConfig vaultConfig) {
+            try {
+                return (VaultConfig) vaultConfig.clone();
+            } catch (CloneNotSupportedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        @Override
+        protected String extractVaultId(VaultConfig vaultConfig) {
+            return vaultConfig.getVaultId();
+        }
+
+        @Override
+        protected VaultConfig mergeVaultConfig(VaultConfig incoming, VaultConfig existing) {
+            if (incoming.getEnv() != null) {
+                existing.setEnv(incoming.getEnv());
+            }
+            if (incoming.getClusterId() != null) {
+                existing.setClusterId(incoming.getClusterId());
+            }
+            if (incoming.getCredentials() != null) {
+                try {
+                    existing.setCredentials((Credentials) incoming.getCredentials().clone());
+                } catch (CloneNotSupportedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            return existing;
         }
 
         @Override

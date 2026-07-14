@@ -1,7 +1,6 @@
 package com.skyflow;
 
 import com.skyflow.config.Credentials;
-import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.LogLevel;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
@@ -13,59 +12,52 @@ import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.utils.validations.BaseValidations;
 
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
-abstract class BaseSkyflow<Self, VC> implements ISkyflow<Self, VaultConfig, Credentials, VC> {
-    protected final BaseSkyflowClientBuilder<VC> builder;
 
-    protected BaseSkyflow(BaseSkyflowClientBuilder<VC> builder) {
+abstract class BaseSkyflow<Self, V, VC> implements ISkyflow<Self, V, Credentials, VC> {
+    protected final BaseSkyflowClientBuilder<V, VC> builder;
+
+    protected BaseSkyflow(BaseSkyflowClientBuilder<V, VC> builder) {
         this.builder = builder;
         LogUtil.printInfoLog(InfoLogs.CLIENT_INITIALIZED.getLog());
     }
 
     protected abstract Self self();
 
-    @Override
-    public Self addVaultConfig(VaultConfig vaultConfig) throws SkyflowException {
+    public Self addVaultConfig(V vaultConfig) throws SkyflowException {
         this.builder.addVaultConfigTemplate(vaultConfig);
         return self();
     }
 
-    public VaultConfig getVaultConfig(String vaultId) {
+    public V getVaultConfig(String vaultId) {
         return this.builder.vaultConfigMap.get(vaultId);
     }
 
-    @Override
-    public Self updateVaultConfig(VaultConfig vaultConfig) throws SkyflowException {
+    public Self updateVaultConfig(V vaultConfig) throws SkyflowException {
         this.builder.updateVaultConfigTemplate(vaultConfig);
         return self();
     }
 
-    @Override
     public Self removeVaultConfig(String vaultId) throws SkyflowException {
         this.builder.removeVaultConfigTemplate(vaultId);
         return self();
     }
 
-    @Override
     public Self updateSkyflowCredentials(Credentials credentials) throws SkyflowException {
         this.builder.addSkyflowCredentialsTemplate(credentials);
         return self();
     }
 
-    @Override
     public Self setLogLevel(LogLevel logLevel) {
         this.builder.setLogLevel(logLevel);
         return self();
     }
 
-    @Override
     public LogLevel getLogLevel() {
         return this.builder.logLevel;
     }
 
-    @Override
     public VC vault() throws SkyflowException {
         return resolveOrThrow(this.builder.vaultClientsMap, null, ErrorLogs.VAULT_CONFIG_DOES_NOT_EXIST, ErrorMessage.VaultIdNotInConfigList);
     }
@@ -80,8 +72,8 @@ abstract class BaseSkyflow<Self, VC> implements ISkyflow<Self, VaultConfig, Cred
         return value;
     }
 
-    abstract static class BaseSkyflowClientBuilder<VC> {
-        protected final LinkedHashMap<String, VaultConfig> vaultConfigMap = new LinkedHashMap<>();
+    abstract static class BaseSkyflowClientBuilder<V, VC> {
+        protected final LinkedHashMap<String, V> vaultConfigMap = new LinkedHashMap<>();
         protected final LinkedHashMap<String, VC> vaultClientsMap = new LinkedHashMap<>();
         protected Credentials skyflowCredentials;
         protected LogLevel logLevel = LogLevel.ERROR;
@@ -89,27 +81,27 @@ abstract class BaseSkyflow<Self, VC> implements ISkyflow<Self, VaultConfig, Cred
         protected BaseSkyflowClientBuilder() {
         }
 
-        public BaseSkyflowClientBuilder<VC> addVaultConfig(VaultConfig vaultConfig) throws SkyflowException {
+        public BaseSkyflowClientBuilder<V, VC> addVaultConfig(V vaultConfig) throws SkyflowException {
             addVaultConfigTemplate(vaultConfig);
             return this;
         }
 
-        public BaseSkyflowClientBuilder<VC> updateVaultConfig(VaultConfig vaultConfig) throws SkyflowException {
+        public BaseSkyflowClientBuilder<V, VC> updateVaultConfig(V vaultConfig) throws SkyflowException {
             updateVaultConfigTemplate(vaultConfig);
             return this;
         }
 
-        public BaseSkyflowClientBuilder<VC> removeVaultConfig(String vaultId) throws SkyflowException {
+        public BaseSkyflowClientBuilder<V, VC> removeVaultConfig(String vaultId) throws SkyflowException {
             removeVaultConfigTemplate(vaultId);
             return this;
         }
 
-        public BaseSkyflowClientBuilder<VC> addSkyflowCredentials(Credentials credentials) throws SkyflowException {
+        public BaseSkyflowClientBuilder<V, VC> addSkyflowCredentials(Credentials credentials) throws SkyflowException {
             addSkyflowCredentialsTemplate(credentials);
             return this;
         }
 
-        protected BaseSkyflowClientBuilder<VC> setLogLevel(LogLevel logLevel) {
+        protected BaseSkyflowClientBuilder<V, VC> setLogLevel(LogLevel logLevel) {
             this.logLevel = logLevel == null ? LogLevel.ERROR : logLevel;
             LogUtil.setupLogger(this.logLevel);
             LogUtil.printInfoLog(BaseUtils.parameterizedString(
@@ -118,50 +110,35 @@ abstract class BaseSkyflow<Self, VC> implements ISkyflow<Self, VaultConfig, Cred
             return this;
         }
 
-        protected final void addVaultConfigTemplate(VaultConfig vaultConfig) throws SkyflowException {
+        protected final void addVaultConfigTemplate(V vaultConfig) throws SkyflowException {
             LogUtil.printInfoLog(InfoLogs.VALIDATING_VAULT_CONFIG.getLog());
             validateVaultConfig(vaultConfig);
-            VaultConfig vaultConfigCopy;
-            try {
-                vaultConfigCopy = (VaultConfig) vaultConfig.clone();
-            } catch (CloneNotSupportedException e) {
-                throw new RuntimeException(e);
-            }
-            if (this.vaultClientsMap.containsKey(vaultConfigCopy.getVaultId())) {
+            V vaultConfigCopy = cloneVaultConfig(vaultConfig);
+            String vaultId = extractVaultId(vaultConfigCopy);
+            if (this.vaultClientsMap.containsKey(vaultId)) {
                 LogUtil.printErrorLog(BaseUtils.parameterizedString(
-                        ErrorLogs.VAULT_CONFIG_EXISTS.getLog(), vaultConfigCopy.getVaultId()
+                        ErrorLogs.VAULT_CONFIG_EXISTS.getLog(), vaultId
                 ));
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(),
                         ErrorMessage.VaultIdAlreadyInConfigList.getMessage());
             }
-            this.vaultConfigMap.put(vaultConfigCopy.getVaultId(), vaultConfigCopy);
+            this.vaultConfigMap.put(vaultId, vaultConfigCopy);
             onVaultConfigAdded(vaultConfigCopy);
         }
 
-        protected final void updateVaultConfigTemplate(VaultConfig vaultConfig) throws SkyflowException {
+        protected final void updateVaultConfigTemplate(V vaultConfig) throws SkyflowException {
             LogUtil.printInfoLog(InfoLogs.VALIDATING_VAULT_CONFIG.getLog());
             validateVaultConfig(vaultConfig);
-            if (!this.vaultClientsMap.containsKey(vaultConfig.getVaultId())) {
+            String vaultId = extractVaultId(vaultConfig);
+            if (!this.vaultClientsMap.containsKey(vaultId)) {
                 LogUtil.printErrorLog(BaseUtils.parameterizedString(
-                        ErrorLogs.VAULT_CONFIG_DOES_NOT_EXIST.getLog(), vaultConfig.getVaultId()
+                        ErrorLogs.VAULT_CONFIG_DOES_NOT_EXIST.getLog(), vaultId
                 ));
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.VaultIdNotInConfigList.getMessage());
             }
-            VaultConfig previousConfig = this.vaultConfigMap.get(vaultConfig.getVaultId());
-            if (vaultConfig.getEnv() != null) {
-                previousConfig.setEnv(vaultConfig.getEnv());
-            }
-            if (vaultConfig.getClusterId() != null) {
-                previousConfig.setClusterId(vaultConfig.getClusterId());
-            }
-            if (vaultConfig.getCredentials() != null) {
-                try {
-                    previousConfig.setCredentials((Credentials) vaultConfig.getCredentials().clone());
-                } catch (CloneNotSupportedException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-            onVaultConfigUpdated(previousConfig);
+            V previousConfig = this.vaultConfigMap.get(vaultId);
+            V merged = mergeVaultConfig(vaultConfig, previousConfig);
+            onVaultConfigUpdated(merged);
         }
 
         protected final void removeVaultConfigTemplate(String vaultId) throws SkyflowException {
@@ -185,11 +162,17 @@ abstract class BaseSkyflow<Self, VC> implements ISkyflow<Self, VaultConfig, Cred
             onCredentialsUpdated(credentialsCopy);
         }
 
-        protected abstract void validateVaultConfig(VaultConfig vaultConfig) throws SkyflowException;
+        protected abstract void validateVaultConfig(V vaultConfig) throws SkyflowException;
 
-        protected abstract void onVaultConfigAdded(VaultConfig vaultConfig) throws SkyflowException;
+        protected abstract V cloneVaultConfig(V vaultConfig);
 
-        protected abstract void onVaultConfigUpdated(VaultConfig updatedConfig) throws SkyflowException;
+        protected abstract String extractVaultId(V vaultConfig);
+
+        protected abstract V mergeVaultConfig(V incoming, V existing);
+
+        protected abstract void onVaultConfigAdded(V vaultConfig) throws SkyflowException;
+
+        protected abstract void onVaultConfigUpdated(V updatedConfig) throws SkyflowException;
 
         protected abstract void onCredentialsUpdated(Credentials credentials) throws SkyflowException;
     }

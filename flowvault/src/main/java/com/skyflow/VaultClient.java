@@ -8,7 +8,7 @@ import com.skyflow.generated.rest.ApiClientBuilder;
 import com.skyflow.generated.rest.resources.flowservice.FlowserviceClient;
 import com.skyflow.utils.Utils;
 
-public class VaultClient extends BaseVaultClient {
+public class VaultClient extends BaseVaultClient<VaultConfig> {
     private final ApiClientBuilder apiClientBuilder;
     private ApiClient apiClient;
 

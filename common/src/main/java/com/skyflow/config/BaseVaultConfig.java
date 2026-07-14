@@ -2,17 +2,17 @@ package com.skyflow.config;
 
 import com.skyflow.enums.Env;
 
-public class BaseVaultConfig {
+public class BaseVaultConfig implements Cloneable {
     private String vaultId;
     private String clusterId;
-    private String vaultURL;
     private Env env;
+    private Credentials credentials;
 
     public BaseVaultConfig() {
         this.vaultId = null;
         this.clusterId = null;
-        this.vaultURL = null;
         this.env = Env.PROD;
+        this.credentials = null;
     }
 
     public String getVaultId() {
@@ -39,13 +39,21 @@ public class BaseVaultConfig {
         this.env = env == null ? Env.PROD : env;
     }
 
-
-    public String getVaultURL() {
-        return vaultURL;
+    public Credentials getCredentials() {
+        return credentials;
     }
 
-    public void setVaultURL(String vaultURL) {
-        this.vaultURL = vaultURL;
+    public void setCredentials(Credentials credentials) {
+        this.credentials = credentials;
+    }
+
+    @Override
+    public Object clone() throws CloneNotSupportedException {
+        BaseVaultConfig cloned = (BaseVaultConfig) super.clone();
+        if (this.credentials != null) {
+            cloned.credentials = (Credentials) this.credentials.clone();
+        }
+        return cloned;
     }
 
 }

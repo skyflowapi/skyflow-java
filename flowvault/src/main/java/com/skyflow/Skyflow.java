@@ -12,7 +12,7 @@ import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.utils.validations.Validations;
 import com.skyflow.vault.controller.VaultController;
 
-public final class Skyflow extends BaseSkyflow<Skyflow, VaultController> {
+public final class Skyflow extends BaseSkyflow<Skyflow, VaultConfig, VaultController> {
 
     private Skyflow(SkyflowClientBuilder builder) {
         super(builder);
@@ -33,11 +33,43 @@ public final class Skyflow extends BaseSkyflow<Skyflow, VaultController> {
         return (VaultConfig) array[0];
     }
 
-    public static final class SkyflowClientBuilder extends BaseSkyflowClientBuilder<VaultController> {
+    public static final class SkyflowClientBuilder extends BaseSkyflowClientBuilder<VaultConfig, VaultController> {
 
         @Override
         protected void validateVaultConfig(VaultConfig vaultConfig) throws SkyflowException {
             Validations.validateVaultConfiguration(vaultConfig);
+        }
+
+        @Override
+        protected VaultConfig cloneVaultConfig(VaultConfig vaultConfig) {
+            try {
+                return (VaultConfig) vaultConfig.clone();
+            } catch (CloneNotSupportedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        @Override
+        protected String extractVaultId(VaultConfig vaultConfig) {
+            return vaultConfig.getVaultId();
+        }
+
+        @Override
+        protected VaultConfig mergeVaultConfig(VaultConfig incoming, VaultConfig existing) {
+            if (incoming.getEnv() != null) {
+                existing.setEnv(incoming.getEnv());
+            }
+            if (incoming.getClusterId() != null) {
+                existing.setClusterId(incoming.getClusterId());
+            }
+            if (incoming.getCredentials() != null) {
+                try {
+                    existing.setCredentials((Credentials) incoming.getCredentials().clone());
+                } catch (CloneNotSupportedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            return existing;
         }
 
         @Override

@@ -44,7 +44,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 
-public class VaultClient extends BaseVaultClient {
+public class VaultClient extends BaseVaultClient<VaultConfig> {
     private final ApiClientBuilder apiClientBuilder;
     private ApiClient apiClient;
 
