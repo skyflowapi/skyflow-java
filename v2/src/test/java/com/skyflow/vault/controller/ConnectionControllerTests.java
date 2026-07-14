@@ -2,6 +2,7 @@ package com.skyflow.vault.controller;
 
 import com.skyflow.Skyflow;
 import com.skyflow.config.ConnectionConfig;
+import com.skyflow.config.Credentials;
 import com.skyflow.enums.LogLevel;
 import com.skyflow.enums.RequestMethod;
 import com.skyflow.errors.ErrorCode;

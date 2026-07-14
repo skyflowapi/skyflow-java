@@ -1,7 +1,8 @@
 package com.skyflow.vault.data;
 
 import com.skyflow.Skyflow;
-import com.skyflow.config.BaseVaultConfig;
+import com.skyflow.config.Credentials;
+import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.Env;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
@@ -33,7 +34,7 @@ public class QueryTests {
         Credentials credentials = new Credentials();
         credentials.setToken("valid-token");
 
-        BaseVaultConfig vaultConfig = new BaseVaultConfig();
+        VaultConfig vaultConfig = new VaultConfig();
         vaultConfig.setVaultId(vaultID);
         vaultConfig.setClusterId(clusterID);
         vaultConfig.setEnv(Env.DEV);

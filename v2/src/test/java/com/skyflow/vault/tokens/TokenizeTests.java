@@ -1,7 +1,8 @@
 package com.skyflow.vault.tokens;
 
 import com.skyflow.Skyflow;
-import com.skyflow.config.BaseVaultConfig;
+import com.skyflow.config.VaultConfig;
+import com.skyflow.config.Credentials;
 import com.skyflow.enums.Env;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
@@ -20,7 +21,7 @@ public class TokenizeTests {
     private static final String EXCEPTION_NOT_THROWN = "Should have thrown an exception";
     private static String vaultID = null;
     private static String clusterID = null;
-    private static BaseVaultConfig vaultConfig = null;
+    private static VaultConfig vaultConfig = null;
     private static String token = null;
     private static ArrayList<String> tokens = null;
     private static Skyflow skyflowClient = null;
@@ -37,7 +38,7 @@ public class TokenizeTests {
         Credentials credentials = new Credentials();
         credentials.setToken("valid-token");
 
-        vaultConfig = new BaseVaultConfig();
+        vaultConfig = new VaultConfig();
         vaultConfig.setVaultId(vaultID);
         vaultConfig.setClusterId(clusterID);
         vaultConfig.setEnv(Env.DEV);

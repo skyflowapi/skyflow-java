@@ -5,12 +5,14 @@ import com.skyflow.enums.TokenMode;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class InsertRequest {
+public class InsertRequest extends BaseInsertRequest{
     private final InsertRequestBuilder builder;
 
     private InsertRequest(InsertRequestBuilder builder) {
+        super(builder);
         this.builder = builder;
     }
+
 
     public static InsertRequestBuilder builder() {
         return new InsertRequestBuilder();
@@ -48,7 +50,7 @@ public class InsertRequest {
         return this.builder.tokenMode;
     }
 
-    public static final class InsertRequestBuilder {
+    public static final class InsertRequestBuilder extends BaseInsertRequestBuilder{
         private String table;
         private ArrayList<HashMap<String, Object>> values;
         private ArrayList<HashMap<String, Object>> tokens;
