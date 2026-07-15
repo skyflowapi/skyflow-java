@@ -73,30 +73,15 @@ public class Validations extends BaseValidations {
                 }
             }
         }
-        // upsert check 1
-        if (insertRequest.getTable() != null && !table.trim().isEmpty()){ // if table name specified at both place
-            for (InsertRecord record : records) {
-                if (record.getUpsert() != null && record.getUpsert().isEmpty()) {
-                    LogUtil.printErrorLog(Utils.parameterizedString(
-                            ErrorLogs.EMPTY_UPSERT_VALUES.getLog(), InterfaceName.INSERT.getName()
-                    ));
-                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyUpsertValues.getMessage());
-                }
-                if (record.getUpsert() != null && !record.getUpsert().isEmpty()){
-                    LogUtil.printErrorLog(Utils.parameterizedString(
-                            ErrorLogs.UPSERT_TABLE_REQUEST_AT_RECORD_LEVEL.getLog(), InterfaceName.INSERT.getName()
-                    ));
-                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.UpsertTableRequestAtRecordLevel.getMessage());
-                }
-            }
-        }
-        // upsert check 2
-        if (insertRequest.getTable() == null || table.trim().isEmpty()){
-            if (insertRequest.getUpsert() != null && !insertRequest.getUpsert().isEmpty()){
+        // Upsert placement (request level vs record level) is validated by the backend,
+        // which returns the authoritative error message. The SDK only guards against
+        // empty upsert column lists.
+        for (InsertRecord record : records) {
+            if (record.getUpsert() != null && record.getUpsert().isEmpty()) {
                 LogUtil.printErrorLog(Utils.parameterizedString(
-                        ErrorLogs.UPSERT_TABLE_REQUEST_AT_REQUEST_LEVEL.getLog(), InterfaceName.INSERT.getName()
+                        ErrorLogs.EMPTY_UPSERT_VALUES.getLog(), InterfaceName.INSERT.getName()
                 ));
-                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.UpsertTableRequestAtRequestLevel.getMessage());
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyUpsertValues.getMessage());
             }
         }
 
