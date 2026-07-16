@@ -89,12 +89,20 @@ jobs:
           fallback: 1.0.0
 
       - name: Bump Version
+        id: bump-version
         run: |
           chmod +x ./scripts/bump_version.sh
           if ${{ inputs.tag == 'internal' }}; then
-            ./scripts/bump_version.sh "${{ steps.previoustag.outputs.tag }}" "$(git rev-parse --short "$GITHUB_SHA")"
+            ./scripts/bump_version.sh "${{ steps.previoustag.outputs.tag }}" "$(git rev-parse --short "$GITHUB_SHA")" "${{ inputs.module }}"
           else
             ./scripts/bump_version.sh "${{ steps.previoustag.outputs.tag }}" "" "${{ inputs.module }}"
+          fi
+
+          MODULE="${{ inputs.module }}"
+          if [ -n "$MODULE" ]; then
+            echo "pom_path=$MODULE/pom.xml" >> "$GITHUB_OUTPUT"
+          else
+            echo "pom_path=pom.xml" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Commit changes
@@ -106,7 +114,7 @@ jobs:
             git checkout ${{ env.branch_name }}
           fi
 
-          git add flowvault/pom.xml
+          git add ${{ steps.bump-version.outputs.pom_path }}
           if [[ "${{ inputs.tag }}" == "internal" ]]; then
             git commit -m "[AUTOMATED] Private Release ${{ steps.previoustag.outputs.tag }}-dev-$(git rev-parse --short $GITHUB_SHA)"
             git push origin ${{ github.ref_name }} -f
