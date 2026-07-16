@@ -1,5 +1,16 @@
 package com.skyflow.utils;
 
+import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.util.Base64;
+import java.util.Map;
+
 import com.google.gson.JsonObject;
 import com.skyflow.config.BaseCredentials;
 import com.skyflow.enums.Env;
@@ -10,17 +21,6 @@ import com.skyflow.logs.ErrorLogs;
 import com.skyflow.logs.InfoLogs;
 import com.skyflow.serviceaccount.util.BearerToken;
 import com.skyflow.utils.logger.LogUtil;
-import org.apache.commons.codec.binary.Base64;
-
-import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.security.KeyFactory;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.PKCS8EncodedKeySpec;
-import java.util.Map;
 
 public class BaseUtils {
     public static String generateBearerToken(BaseCredentials credentials) throws SkyflowException {
@@ -83,7 +83,7 @@ public class BaseUtils {
             privateKeyContent = privateKeyContent.replace(PKCS8PrivateFooter, "");
             privateKeyContent = privateKeyContent.replace("\n", "");
             privateKeyContent = privateKeyContent.replace("\r\n", "");
-            privateKey = parsePkcs8PrivateKey(Base64.decodeBase64(privateKeyContent));
+            privateKey = parsePkcs8PrivateKey(Base64.getDecoder().decode(privateKeyContent));
         } else {
             LogUtil.printErrorLog(ErrorLogs.JWT_INVALID_FORMAT.getLog());
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.JwtInvalidFormat.getMessage());
