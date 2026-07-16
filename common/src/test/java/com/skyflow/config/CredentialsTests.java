@@ -3,7 +3,7 @@ package com.skyflow.config;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
-import com.skyflow.utils.validations.Validations;
+import com.skyflow.utils.validations.BaseValidations;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -12,8 +12,6 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-
-import com.skyflow.utils.Utils;
 
 public class CredentialsTests {
     private static final String INVALID_EXCEPTION_THROWN = "Should not have thrown any exception";
@@ -49,7 +47,7 @@ public class CredentialsTests {
         try {
             Credentials credentials = new Credentials();
             credentials.setPath(path);
-            Validations.validateCredentials(credentials);
+            BaseValidations.validateCredentials(credentials);
             Assert.assertNull(credentials.getCredentialsString());
             Assert.assertNull(credentials.getToken());
             Assert.assertNull(credentials.getApiKey());
@@ -63,7 +61,7 @@ public class CredentialsTests {
         try {
             Credentials credentials = new Credentials();
             credentials.setCredentialsString(credentialsString);
-            Validations.validateCredentials(credentials);
+            BaseValidations.validateCredentials(credentials);
             Assert.assertNull(credentials.getPath());
             Assert.assertNull(credentials.getToken());
             Assert.assertNull(credentials.getApiKey());
@@ -77,7 +75,7 @@ public class CredentialsTests {
         try {
             Credentials credentials = new Credentials();
             credentials.setToken(token);
-            Validations.validateCredentials(credentials);
+            BaseValidations.validateCredentials(credentials);
             Assert.assertNull(credentials.getPath());
             Assert.assertNull(credentials.getCredentialsString());
             Assert.assertNull(credentials.getApiKey());
@@ -91,7 +89,7 @@ public class CredentialsTests {
         try {
             Credentials credentials = new Credentials();
             credentials.setApiKey(validApiKey);
-            Validations.validateCredentials(credentials);
+            BaseValidations.validateCredentials(credentials);
             Assert.assertNull(credentials.getPath());
             Assert.assertNull(credentials.getCredentialsString());
             Assert.assertNull(credentials.getToken());
@@ -108,7 +106,7 @@ public class CredentialsTests {
             credentials.setApiKey(validApiKey);
             credentials.setRoles(roles);
             credentials.setContext(context);
-            Validations.validateCredentials(credentials);
+            BaseValidations.validateCredentials(credentials);
             Assert.assertNull(credentials.getPath());
             Assert.assertNull(credentials.getCredentialsString());
             Assert.assertNull(credentials.getToken());
@@ -124,7 +122,7 @@ public class CredentialsTests {
         try {
             Credentials credentials = new Credentials();
             credentials.setPath("");
-            Validations.validateCredentials(credentials);
+            BaseValidations.validateCredentials(credentials);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
@@ -137,7 +135,7 @@ public class CredentialsTests {
         try {
             Credentials credentials = new Credentials();
             credentials.setCredentialsString("");
-            Validations.validateCredentials(credentials);
+            BaseValidations.validateCredentials(credentials);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
@@ -150,7 +148,7 @@ public class CredentialsTests {
         try {
             Credentials credentials = new Credentials();
             credentials.setToken("");
-            Validations.validateCredentials(credentials);
+            BaseValidations.validateCredentials(credentials);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
@@ -163,7 +161,7 @@ public class CredentialsTests {
         try {
             Credentials credentials = new Credentials();
             credentials.setApiKey("");
-            Validations.validateCredentials(credentials);
+            BaseValidations.validateCredentials(credentials);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
@@ -176,7 +174,7 @@ public class CredentialsTests {
         try {
             Credentials credentials = new Credentials();
             credentials.setApiKey(invalidApiKey);
-            Validations.validateCredentials(credentials);
+            BaseValidations.validateCredentials(credentials);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
@@ -190,7 +188,7 @@ public class CredentialsTests {
             Credentials credentials = new Credentials();
             credentials.setPath(path);
             credentials.setToken(token);
-            Validations.validateCredentials(credentials);
+            BaseValidations.validateCredentials(credentials);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
@@ -202,7 +200,7 @@ public class CredentialsTests {
     public void testNothingPassedInCredentials() {
         try {
             Credentials credentials = new Credentials();
-            Validations.validateCredentials(credentials);
+            BaseValidations.validateCredentials(credentials);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
@@ -216,7 +214,7 @@ public class CredentialsTests {
             Credentials credentials = new Credentials();
             credentials.setPath(path);
             credentials.setRoles(roles);
-            Validations.validateCredentials(credentials);
+            BaseValidations.validateCredentials(credentials);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
@@ -232,7 +230,7 @@ public class CredentialsTests {
             roles.add(role);
             roles.add(null);
             credentials.setRoles(roles);
-            Validations.validateCredentials(credentials);
+            BaseValidations.validateCredentials(credentials);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
@@ -248,7 +246,7 @@ public class CredentialsTests {
             roles.add(role);
             roles.add("");
             credentials.setRoles(roles);
-            Validations.validateCredentials(credentials);
+            BaseValidations.validateCredentials(credentials);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
@@ -262,7 +260,7 @@ public class CredentialsTests {
             Credentials credentials = new Credentials();
             credentials.setPath(path);
             credentials.setContext("");
-            Validations.validateCredentials(credentials);
+            BaseValidations.validateCredentials(credentials);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
@@ -280,7 +278,7 @@ public class CredentialsTests {
             ctxMap.put("department", "finance");
             ctxMap.put("user_id", "user_12345");
             credentials.setContext(ctxMap);
-            Validations.validateCredentials(credentials);
+            BaseValidations.validateCredentials(credentials);
         } catch (SkyflowException e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
         }
@@ -293,7 +291,7 @@ public class CredentialsTests {
             credentials.setPath(path);
             Map<String, Object> ctxMap = new HashMap<>();
             credentials.setContext(ctxMap);
-            Validations.validateCredentials(credentials);
+            BaseValidations.validateCredentials(credentials);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
@@ -310,7 +308,7 @@ public class CredentialsTests {
             ctxMap.put("valid_key", "value");
             ctxMap.put("invalid-key", "value");
             credentials.setContext(ctxMap);
-            Validations.validateCredentials(credentials);
+            BaseValidations.validateCredentials(credentials);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
@@ -329,7 +327,7 @@ public class CredentialsTests {
             ctxMap.put("role", "admin");
             ctxMap.put("metadata", nested);
             credentials.setContext(ctxMap);
-            Validations.validateCredentials(credentials);
+            BaseValidations.validateCredentials(credentials);
         } catch (SkyflowException e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
         }
@@ -346,7 +344,7 @@ public class CredentialsTests {
             ctxMap.put("active", true);
             ctxMap.put("timestamp", "2025-12-25T10:30:00Z");
             credentials.setContext(ctxMap);
-            Validations.validateCredentials(credentials);
+            BaseValidations.validateCredentials(credentials);
         } catch (SkyflowException e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
         }

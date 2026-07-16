@@ -4,19 +4,50 @@
 package com.skyflow.generated.rest.resources.records;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.skyflow.generated.rest.core.*;
+import com.skyflow.generated.rest.core.ApiClientApiException;
+import com.skyflow.generated.rest.core.ApiClientException;
+import com.skyflow.generated.rest.core.ApiClientHttpResponse;
+import com.skyflow.generated.rest.core.ClientOptions;
+import com.skyflow.generated.rest.core.MediaTypes;
+import com.skyflow.generated.rest.core.ObjectMappers;
+import com.skyflow.generated.rest.core.QueryStringMapper;
+import com.skyflow.generated.rest.core.RequestOptions;
 import com.skyflow.generated.rest.errors.BadRequestError;
 import com.skyflow.generated.rest.errors.InternalServerError;
 import com.skyflow.generated.rest.errors.NotFoundError;
 import com.skyflow.generated.rest.errors.UnauthorizedError;
-import com.skyflow.generated.rest.resources.records.requests.*;
-import com.skyflow.generated.rest.types.*;
-import okhttp3.*;
-
+import com.skyflow.generated.rest.resources.records.requests.FileServiceUploadFileRequest;
+import com.skyflow.generated.rest.resources.records.requests.RecordServiceBatchOperationBody;
+import com.skyflow.generated.rest.resources.records.requests.RecordServiceBulkDeleteRecordBody;
+import com.skyflow.generated.rest.resources.records.requests.RecordServiceBulkGetRecordRequest;
+import com.skyflow.generated.rest.resources.records.requests.RecordServiceGetRecordRequest;
+import com.skyflow.generated.rest.resources.records.requests.RecordServiceInsertRecordBody;
+import com.skyflow.generated.rest.resources.records.requests.RecordServiceUpdateRecordBody;
+import com.skyflow.generated.rest.resources.records.requests.UploadFileV2Request;
+import com.skyflow.generated.rest.types.ErrorResponse;
+import com.skyflow.generated.rest.types.UploadFileV2Response;
+import com.skyflow.generated.rest.types.V1BatchOperationResponse;
+import com.skyflow.generated.rest.types.V1BulkDeleteRecordResponse;
+import com.skyflow.generated.rest.types.V1BulkGetRecordResponse;
+import com.skyflow.generated.rest.types.V1DeleteFileResponse;
+import com.skyflow.generated.rest.types.V1DeleteRecordResponse;
+import com.skyflow.generated.rest.types.V1FieldRecords;
+import com.skyflow.generated.rest.types.V1GetFileScanStatusResponse;
+import com.skyflow.generated.rest.types.V1InsertRecordResponse;
+import com.skyflow.generated.rest.types.V1UpdateRecordResponse;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Optional;
+import okhttp3.Headers;
+import okhttp3.HttpUrl;
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
 
 public class RawRecordsClient {
     protected final ClientOptions clientOptions;
@@ -831,10 +862,10 @@ public class RawRecordsClient {
                 switch (response.code()) {
                     case 400:
                         throw new BadRequestError(
-                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class), response);
+                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class), response);
                     case 401:
                         throw new UnauthorizedError(
-                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class), response);
+                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class), response);
                     case 404:
                         throw new NotFoundError(
                                 ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class), response);

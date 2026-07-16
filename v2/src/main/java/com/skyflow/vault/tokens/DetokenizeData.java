@@ -1,23 +1,23 @@
 package com.skyflow.vault.tokens;
 
 import com.skyflow.enums.RedactionType;
+import com.skyflow.vault.data.BaseDetokenizeData;
 
-public class DetokenizeData {
-    private final String token;
+public class DetokenizeData extends BaseDetokenizeData {
     private final RedactionType redactionType;
 
     public DetokenizeData(String token) {
-        this.token = token;
+       super(token);
         this.redactionType = RedactionType.DEFAULT;
     }
 
     public DetokenizeData(String token, RedactionType redactionType) {
-        this.token = token;
-            this.redactionType = redactionType == null ? RedactionType.DEFAULT : redactionType;
+        super(token);
+        this.redactionType = redactionType == null ? RedactionType.DEFAULT : redactionType;
     }
 
     public String getToken() {
-        return this.token;
+        return super.getToken();
     }
 
     public RedactionType getRedactionType() {

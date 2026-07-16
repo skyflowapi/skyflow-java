@@ -30,7 +30,7 @@ public class VaultConfigTests {
     @Test
     public void testValidVaultConfigWithCredentialsInValidations() {
         try {
-            BaseVaultConfig vaultConfig = new BaseVaultConfig();
+            VaultConfig vaultConfig = new VaultConfig();
             vaultConfig.setVaultId(vaultID);
             vaultConfig.setClusterId(clusterID);
             vaultConfig.setEnv(Env.SANDBOX);
@@ -49,7 +49,7 @@ public class VaultConfigTests {
     @Test
     public void testValidVaultConfigWithoutCredentialsInValidations() {
         try {
-            BaseVaultConfig vaultConfig = new BaseVaultConfig();
+            VaultConfig vaultConfig = new VaultConfig();
             vaultConfig.setVaultId(vaultID);
             vaultConfig.setClusterId(clusterID);
             vaultConfig.setEnv(Env.SANDBOX);
@@ -67,7 +67,7 @@ public class VaultConfigTests {
     @Test
     public void testDefaultEnvInVaultConfigWithCredentialsInValidations() {
         try {
-            BaseVaultConfig vaultConfig = new BaseVaultConfig();
+            VaultConfig vaultConfig = new VaultConfig();
             vaultConfig.setVaultId(vaultID);
             vaultConfig.setClusterId(clusterID);
             vaultConfig.setCredentials(credentials);
@@ -85,7 +85,7 @@ public class VaultConfigTests {
     @Test
     public void testDefaultEnvInVaultConfigWithoutCredentialsInValidations() {
         try {
-            BaseVaultConfig vaultConfig = new BaseVaultConfig();
+            VaultConfig vaultConfig = new VaultConfig();
             vaultConfig.setVaultId(vaultID);
             vaultConfig.setClusterId(clusterID);
             vaultConfig.setEnv(null);
@@ -102,7 +102,7 @@ public class VaultConfigTests {
 
     @Test
     public void testNoVaultIdInVaultConfigInValidations() {
-        BaseVaultConfig vaultConfig = new BaseVaultConfig();
+        VaultConfig vaultConfig = new VaultConfig();
         try {
             vaultConfig.setClusterId(clusterID);
             vaultConfig.setEnv(Env.SANDBOX);
@@ -117,7 +117,7 @@ public class VaultConfigTests {
     @Test
     public void testEmptyVaultIdInVaultConfigInValidations() {
         try {
-            BaseVaultConfig vaultConfig = new BaseVaultConfig();
+            VaultConfig vaultConfig = new VaultConfig();
             vaultConfig.setVaultId("");
             vaultConfig.setClusterId(clusterID);
             vaultConfig.setEnv(Env.SANDBOX);
@@ -132,7 +132,7 @@ public class VaultConfigTests {
     @Test
     public void testNoClusterIdInVaultConfigInValidations() {
         try {
-            BaseVaultConfig vaultConfig = new BaseVaultConfig();
+            VaultConfig vaultConfig = new VaultConfig();
             vaultConfig.setVaultId(vaultID);
             vaultConfig.setEnv(Env.SANDBOX);
             Validations.validateVaultConfig(vaultConfig);
@@ -146,7 +146,7 @@ public class VaultConfigTests {
     @Test
     public void testEmptyClusterIdInVaultConfigInValidations() {
         try {
-            BaseVaultConfig vaultConfig = new BaseVaultConfig();
+            VaultConfig vaultConfig = new VaultConfig();
             vaultConfig.setVaultId(vaultID);
             vaultConfig.setClusterId("");
             vaultConfig.setEnv(Env.SANDBOX);

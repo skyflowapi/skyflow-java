@@ -2,16 +2,16 @@ package com.skyflow.utils;
 
 import com.google.gson.JsonObject;
 import com.skyflow.config.Credentials;
+import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.Env;
+import com.skyflow.enums.UpsertType;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.generated.rest.core.ApiClientApiException;
 import com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest;
-import com.skyflow.generated.rest.types.V1InsertRecordData;
-import com.skyflow.generated.rest.types.V1InsertResponse;
-import com.skyflow.generated.rest.types.V1RecordResponseObject;
-import com.skyflow.generated.rest.types.V1TokenGroupRedactions;
+import com.skyflow.generated.rest.resources.flowservice.requests.V1InsertRequest;
+import com.skyflow.generated.rest.types.*;
 import com.skyflow.logs.ErrorLogs;
 import com.skyflow.logs.InfoLogs;
 import com.skyflow.serviceaccount.util.BearerToken;
@@ -107,5 +107,127 @@ public final class Utils extends BaseUtils {
         }
     }
 
+    public static V1InsertRequest getBulkInsertRequestBody(InsertRequest request, VaultConfig config) {
+        ArrayList<InsertRecord> records = request.getRecords();
+        List<V1InsertRecordData> insertRecordDataList = new ArrayList<>();
+        for (InsertRecord record : records) {
+            V1InsertRecordData.Builder data = V1InsertRecordData.builder();
+            data.data(record.getData());
+            if (record.getTable() != null && !record.getTable().isEmpty()) {
+                data.tableName(record.getTable());
+            }
+            if (record.getUpsert() != null && !record.getUpsert().isEmpty()) {
+                if (record.getUpsertType() != null) {
+                    FlowEnumUpdateType updateType = null;
+                    if (record.getUpsertType() == UpsertType.REPLACE) {
+                        updateType = FlowEnumUpdateType.REPLACE;
+                    } else if (record.getUpsertType() == UpsertType.UPDATE) {
+                        updateType = FlowEnumUpdateType.UPDATE;
+                    }
+                    V1Upsert upsert = V1Upsert.builder().uniqueColumns(record.getUpsert()).updateType(updateType).build();
+                    data.upsert(upsert);
+                } else {
+                    V1Upsert upsert = V1Upsert.builder().uniqueColumns(record.getUpsert()).build();
+                    data.upsert(upsert);
+                }
+            }
+            insertRecordDataList.add(data.build());
+        }
 
+        V1InsertRequest.Builder builder = V1InsertRequest.builder()
+                .vaultId(config.getVaultId())
+                .records(insertRecordDataList);
+
+        if (request.getTable() != null && !request.getTable().isEmpty()) {
+            builder.tableName(request.getTable());
+        }
+
+        if (request.getUpsert() != null && !request.getUpsert().isEmpty()) {
+            if (request.getUpsertType() != null) {
+                FlowEnumUpdateType updateType = null;
+                if (request.getUpsertType() == UpsertType.REPLACE) {
+                    updateType = FlowEnumUpdateType.REPLACE;
+                } else if (request.getUpsertType() == UpsertType.UPDATE) {
+                    updateType = FlowEnumUpdateType.UPDATE;
+                }
+                V1Upsert upsert = V1Upsert.builder().uniqueColumns(request.getUpsert()).updateType(updateType).build();
+                builder.upsert(upsert);
+            } else {
+                V1Upsert upsert = V1Upsert.builder().uniqueColumns(request.getUpsert()).build();
+                builder.upsert(upsert);
+            }
+        }
+        return builder.build();
+
+    }
+
+    public static InsertResponse buildInsertResponse(V1InsertResponse res) {
+        ArrayList<HashMap<String, Object>> insertedFields = new ArrayList<>();
+        ArrayList<HashMap<String, Object>> errors = new ArrayList<>();
+
+        if (res.getRecords().isPresent()) {
+            for (V1RecordResponseObject record : res.getRecords().get()) {
+                if (record.getError().isPresent()) {
+                    HashMap<String, Object> errorRecord = new HashMap<>();
+                    record.getSkyflowId().ifPresent(skyflowId -> errorRecord.put("skyflowId", skyflowId));
+                    record.getTableName().ifPresent(tableName -> errorRecord.put("tableName", tableName));
+                    errorRecord.put("error", record.getError().get());
+                    record.getHttpCode().ifPresent(httpCode -> errorRecord.put("httpCode", httpCode));
+                    errors.add(errorRecord);
+                } else {
+                    HashMap<String, Object> insertedRecord = new HashMap<>();
+                    record.getSkyflowId().ifPresent(skyflowId -> insertedRecord.put("skyflowId", skyflowId));
+                    record.getTokens().ifPresent(insertedRecord::putAll);
+                    insertedFields.add(insertedRecord);
+                }
+            }
+        }
+        return new InsertResponse(insertedFields, errors);
+    }
+
+    public static com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest getDetokenizeRequestBody(DetokenizeRequest request, String vaultid) {
+        List<DetokenizeData> detokenizeData = request.getDetokenizeData();
+        List<String> tokens = new ArrayList<>();
+        for(int i = 0; i< detokenizeData.size(); i++){
+            tokens.add(detokenizeData.get(i).getToken());
+        }
+        com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest.Builder builder =
+                com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest.builder()
+                        .vaultId(vaultid)
+                        .tokens(tokens);
+        if (request.getTokenGroupRedactions() != null) {
+            List<com.skyflow.generated.rest.types.V1TokenGroupRedactions> tokenGroupRedactionsList = new ArrayList<>();
+            for (com.skyflow.vault.data.TokenGroupRedactions tokenGroupRedactions : request.getTokenGroupRedactions()) {
+                com.skyflow.generated.rest.types.V1TokenGroupRedactions redactions =
+                        com.skyflow.generated.rest.types.V1TokenGroupRedactions.builder()
+                                .tokenGroupName(tokenGroupRedactions.getTokenGroupName())
+                                .redaction(tokenGroupRedactions.getRedaction())
+                                .build();
+                tokenGroupRedactionsList.add(redactions);
+            }
+
+            builder.tokenGroupRedactions(tokenGroupRedactionsList);
+        }
+        return builder.build();
+    }
+
+    public static DetokenizeResponse buildDetokenizeResponse(V1FlowDetokenizeResponse res) {
+        ArrayList<DetokenizeRecordResponse> detokenizedFields = new ArrayList<>();
+        ArrayList<DetokenizeRecordResponse> errors = new ArrayList<>();
+
+        if (res.getResponse().isPresent()) {
+            for (V1FlowDetokenizeResponseObject record : res.getResponse().get()) {
+                String token = record.getToken().orElse(null);
+                String tokenGroupName = record.getTokenGroupName().orElse(null);
+                Map<String, Object> metadata = record.getMetadata().orElse(null);
+                if (record.getError().isPresent()) {
+                    errors.add(new DetokenizeRecordResponse(token, null, record.getError().get(), tokenGroupName, metadata));
+                } else {
+                    Object value = record.getValue().orElse(null);
+                    detokenizedFields.add(new DetokenizeRecordResponse(token, value, null, tokenGroupName, metadata));
+                }
+            }
+        }
+        return new DetokenizeResponse(detokenizedFields, errors);
+    }
 }

@@ -3,11 +3,9 @@
  */
 package com.skyflow.generated.rest;
 
-import com.skyflow.generated.rest.ApiClientBuilder;
 import com.skyflow.generated.rest.core.ClientOptions;
 import com.skyflow.generated.rest.core.Suppliers;
 import com.skyflow.generated.rest.resources.audit.AuditClient;
-import com.skyflow.generated.rest.resources.authentication.AuthenticationClient;
 import com.skyflow.generated.rest.resources.binlookup.BinLookupClient;
 import com.skyflow.generated.rest.resources.files.FilesClient;
 import com.skyflow.generated.rest.resources.guardrails.GuardrailsClient;
@@ -15,7 +13,6 @@ import com.skyflow.generated.rest.resources.query.QueryClient;
 import com.skyflow.generated.rest.resources.records.RecordsClient;
 import com.skyflow.generated.rest.resources.strings.StringsClient;
 import com.skyflow.generated.rest.resources.tokens.TokensClient;
-
 import java.util.function.Supplier;
 
 public class ApiClient {
@@ -31,8 +28,6 @@ public class ApiClient {
 
     protected final Supplier<QueryClient> queryClient;
 
-    protected final Supplier<AuthenticationClient> authenticationClient;
-
     protected final Supplier<FilesClient> filesClient;
 
     protected final Supplier<StringsClient> stringsClient;
@@ -46,7 +41,6 @@ public class ApiClient {
         this.recordsClient = Suppliers.memoize(() -> new RecordsClient(clientOptions));
         this.tokensClient = Suppliers.memoize(() -> new TokensClient(clientOptions));
         this.queryClient = Suppliers.memoize(() -> new QueryClient(clientOptions));
-        this.authenticationClient = Suppliers.memoize(() -> new AuthenticationClient(clientOptions));
         this.filesClient = Suppliers.memoize(() -> new FilesClient(clientOptions));
         this.stringsClient = Suppliers.memoize(() -> new StringsClient(clientOptions));
         this.guardrailsClient = Suppliers.memoize(() -> new GuardrailsClient(clientOptions));
@@ -70,10 +64,6 @@ public class ApiClient {
 
     public QueryClient query() {
         return this.queryClient.get();
-    }
-
-    public AuthenticationClient authentication() {
-        return this.authenticationClient.get();
     }
 
     public FilesClient files() {

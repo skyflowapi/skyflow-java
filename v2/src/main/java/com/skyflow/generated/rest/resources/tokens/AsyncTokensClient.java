@@ -9,7 +9,6 @@ import com.skyflow.generated.rest.resources.tokens.requests.V1DetokenizePayload;
 import com.skyflow.generated.rest.resources.tokens.requests.V1TokenizePayload;
 import com.skyflow.generated.rest.types.V1DetokenizeResponse;
 import com.skyflow.generated.rest.types.V1TokenizeResponse;
-
 import java.util.concurrent.CompletableFuture;
 
 public class AsyncTokensClient {

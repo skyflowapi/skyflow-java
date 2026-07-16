@@ -3,7 +3,7 @@ package com.skyflow.serviceaccount.util;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
-import com.skyflow.utils.Utils;
+import com.skyflow.utils.BaseUtils;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -85,7 +85,7 @@ public class SignedDataTokensTests {
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(Utils.parameterizedString(ErrorMessage.FileNotFound.getMessage(), ""), e.getMessage());
+            Assert.assertEquals(BaseUtils.parameterizedString(ErrorMessage.FileNotFound.getMessage(), ""), e.getMessage());
         }
     }
 
@@ -99,7 +99,7 @@ public class SignedDataTokensTests {
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
-                    Utils.parameterizedString(ErrorMessage.FileNotFound.getMessage(), invalidFilePath),
+                    BaseUtils.parameterizedString(ErrorMessage.FileNotFound.getMessage(), invalidFilePath),
                     e.getMessage());
         }
     }
@@ -114,7 +114,7 @@ public class SignedDataTokensTests {
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
-                    Utils.parameterizedString(ErrorMessage.FileInvalidJson.getMessage(), invalidJsonFilePath),
+                    BaseUtils.parameterizedString(ErrorMessage.FileInvalidJson.getMessage(), invalidJsonFilePath),
                     e.getMessage()
             );
         }
@@ -129,7 +129,7 @@ public class SignedDataTokensTests {
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
-                    Utils.parameterizedString(ErrorMessage.InvalidCredentials.getMessage(), invalidJsonFilePath),
+                    BaseUtils.parameterizedString(ErrorMessage.InvalidCredentials.getMessage(), invalidJsonFilePath),
                     e.getMessage()
             );
         } catch (Exception e) {
@@ -146,7 +146,7 @@ public class SignedDataTokensTests {
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
-                    Utils.parameterizedString(ErrorMessage.CredentialsStringInvalidJson.getMessage(), invalidJsonFilePath),
+                    BaseUtils.parameterizedString(ErrorMessage.CredentialsStringInvalidJson.getMessage(), invalidJsonFilePath),
                     e.getMessage()
             );
         }

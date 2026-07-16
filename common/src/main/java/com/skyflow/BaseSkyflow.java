@@ -1,5 +1,6 @@
 package com.skyflow;
 
+import com.skyflow.config.BaseVaultConfig;
 import com.skyflow.config.Credentials;
 import com.skyflow.enums.LogLevel;
 import com.skyflow.errors.ErrorCode;
@@ -15,7 +16,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 
-abstract class BaseSkyflow<Self, V, VC> implements ISkyflow<Self, V, Credentials, VC> {
+abstract class BaseSkyflow<Self, V extends BaseVaultConfig, VC> implements ISkyflow<Self, V, Credentials, VC> {
     protected final BaseSkyflowClientBuilder<V, VC> builder;
 
     protected BaseSkyflow(BaseSkyflowClientBuilder<V, VC> builder) {
@@ -72,7 +73,7 @@ abstract class BaseSkyflow<Self, V, VC> implements ISkyflow<Self, V, Credentials
         return value;
     }
 
-    abstract static class BaseSkyflowClientBuilder<V, VC> {
+    abstract static class BaseSkyflowClientBuilder<V extends BaseVaultConfig, VC> {
         protected final LinkedHashMap<String, V> vaultConfigMap = new LinkedHashMap<>();
         protected final LinkedHashMap<String, VC> vaultClientsMap = new LinkedHashMap<>();
         protected Credentials skyflowCredentials;
@@ -164,11 +165,35 @@ abstract class BaseSkyflow<Self, V, VC> implements ISkyflow<Self, V, Credentials
 
         protected abstract void validateVaultConfig(V vaultConfig) throws SkyflowException;
 
-        protected abstract V cloneVaultConfig(V vaultConfig);
+        @SuppressWarnings("unchecked")
+        protected final V cloneVaultConfig(V vaultConfig) {
+            try {
+                return (V) vaultConfig.clone();
+            } catch (CloneNotSupportedException e) {
+                throw new RuntimeException(e);
+            }
+        }
 
-        protected abstract String extractVaultId(V vaultConfig);
+        protected final String extractVaultId(V vaultConfig) {
+            return vaultConfig.getVaultId();
+        }
 
-        protected abstract V mergeVaultConfig(V incoming, V existing);
+        protected final V mergeVaultConfig(V incoming, V existing) {
+            if (incoming.getEnv() != null) {
+                existing.setEnv(incoming.getEnv());
+            }
+            if (incoming.getClusterId() != null) {
+                existing.setClusterId(incoming.getClusterId());
+            }
+            if (incoming.getCredentials() != null) {
+                try {
+                    existing.setCredentials((Credentials) incoming.getCredentials().clone());
+                } catch (CloneNotSupportedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            return existing;
+        }
 
         protected abstract void onVaultConfigAdded(V vaultConfig) throws SkyflowException;
 

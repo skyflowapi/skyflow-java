@@ -3,10 +3,9 @@
  */
 package com.skyflow.generated.rest.core;
 
-import okhttp3.Response;
-
 import java.io.FilterReader;
 import java.io.IOException;
+import okhttp3.Response;
 
 /**
  * A custom Reader that wraps the Reader from the OkHttp Response and ensures that the

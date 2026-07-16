@@ -3,8 +3,8 @@ package com.skyflow.serviceaccount.util;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
-import com.skyflow.utils.Constants;
-import com.skyflow.utils.Utils;
+import com.skyflow.utils.BaseConstants;
+import com.skyflow.utils.BaseUtils;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -92,7 +92,7 @@ public class BearerTokenTests {
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
-                    Utils.parameterizedString(ErrorMessage.FileNotFound.getMessage(), ""), e.getMessage()
+                    BaseUtils.parameterizedString(ErrorMessage.FileNotFound.getMessage(), ""), e.getMessage()
             );
         }
     }
@@ -107,7 +107,7 @@ public class BearerTokenTests {
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
-                    Utils.parameterizedString(ErrorMessage.FileNotFound.getMessage(), invalidFilePath),
+                    BaseUtils.parameterizedString(ErrorMessage.FileNotFound.getMessage(), invalidFilePath),
                     e.getMessage()
             );
         }
@@ -123,7 +123,7 @@ public class BearerTokenTests {
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
-                    Utils.parameterizedString(ErrorMessage.FileInvalidJson.getMessage(), invalidJsonFilePath),
+                    BaseUtils.parameterizedString(ErrorMessage.FileInvalidJson.getMessage(), invalidJsonFilePath),
                     e.getMessage()
             );
         }
@@ -264,7 +264,7 @@ public class BearerTokenTests {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             // InvalidKeySpec confirms all credential fields were resolved — failure is at RSA parsing, not field lookup
             Assert.assertEquals(
-                    Utils.parameterizedString(ErrorMessage.InvalidKeySpec.getMessage(), Constants.SDK_PREFIX),
+                    BaseUtils.parameterizedString(ErrorMessage.InvalidKeySpec.getMessage(), BaseConstants.SDK_PREFIX),
                     e.getMessage());
         }
     }

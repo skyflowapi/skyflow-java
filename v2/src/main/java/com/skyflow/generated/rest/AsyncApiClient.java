@@ -3,11 +3,9 @@
  */
 package com.skyflow.generated.rest;
 
-import com.skyflow.generated.rest.AsyncApiClientBuilder;
 import com.skyflow.generated.rest.core.ClientOptions;
 import com.skyflow.generated.rest.core.Suppliers;
 import com.skyflow.generated.rest.resources.audit.AsyncAuditClient;
-import com.skyflow.generated.rest.resources.authentication.AsyncAuthenticationClient;
 import com.skyflow.generated.rest.resources.binlookup.AsyncBinLookupClient;
 import com.skyflow.generated.rest.resources.files.AsyncFilesClient;
 import com.skyflow.generated.rest.resources.guardrails.AsyncGuardrailsClient;
@@ -15,7 +13,6 @@ import com.skyflow.generated.rest.resources.query.AsyncQueryClient;
 import com.skyflow.generated.rest.resources.records.AsyncRecordsClient;
 import com.skyflow.generated.rest.resources.strings.AsyncStringsClient;
 import com.skyflow.generated.rest.resources.tokens.AsyncTokensClient;
-
 import java.util.function.Supplier;
 
 public class AsyncApiClient {
@@ -31,8 +28,6 @@ public class AsyncApiClient {
 
     protected final Supplier<AsyncQueryClient> queryClient;
 
-    protected final Supplier<AsyncAuthenticationClient> authenticationClient;
-
     protected final Supplier<AsyncFilesClient> filesClient;
 
     protected final Supplier<AsyncStringsClient> stringsClient;
@@ -46,7 +41,6 @@ public class AsyncApiClient {
         this.recordsClient = Suppliers.memoize(() -> new AsyncRecordsClient(clientOptions));
         this.tokensClient = Suppliers.memoize(() -> new AsyncTokensClient(clientOptions));
         this.queryClient = Suppliers.memoize(() -> new AsyncQueryClient(clientOptions));
-        this.authenticationClient = Suppliers.memoize(() -> new AsyncAuthenticationClient(clientOptions));
         this.filesClient = Suppliers.memoize(() -> new AsyncFilesClient(clientOptions));
         this.stringsClient = Suppliers.memoize(() -> new AsyncStringsClient(clientOptions));
         this.guardrailsClient = Suppliers.memoize(() -> new AsyncGuardrailsClient(clientOptions));
@@ -70,10 +64,6 @@ public class AsyncApiClient {
 
     public AsyncQueryClient query() {
         return this.queryClient.get();
-    }
-
-    public AsyncAuthenticationClient authentication() {
-        return this.authenticationClient.get();
     }
 
     public AsyncFilesClient files() {

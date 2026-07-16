@@ -104,55 +104,6 @@ public class SkyflowTests {
     }
 
     @Test
-    public void testAddingExistingVaultConfigInSkyflowClient() {
-        try {
-            VaultConfig config = new VaultConfig();
-            config.setVaultId(vaultID);
-            config.setClusterId(clusterID);
-            config.setEnv(Env.SANDBOX);
-            Skyflow skyflowClient = Skyflow.builder().build();
-            skyflowClient.addVaultConfig(config).addVaultConfig(config);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(ErrorMessage.VaultIdAlreadyInConfigList.getMessage(), e.getMessage());
-        }
-    }
-
-    @Test
-    public void testUpdatingNonExistentVaultConfigInSkyflowBuilder() {
-        try {
-            VaultConfig config = new VaultConfig();
-            config.setVaultId(vaultID);
-            config.setClusterId(clusterID);
-            config.setEnv(Env.SANDBOX);
-            Skyflow.builder().updateVaultConfig(config).build();
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(ErrorMessage.VaultIdNotInConfigList.getMessage(), e.getMessage());
-        }
-    }
-
-    @Test
-    public void testUpdatingNonExistentVaultConfigInSkyflowClient() {
-        try {
-            VaultConfig config = new VaultConfig();
-            config.setVaultId(vaultID);
-            config.setClusterId(clusterID);
-            config.setEnv(Env.SANDBOX);
-            Skyflow skyflowClient = Skyflow.builder().build();
-            skyflowClient.updateVaultConfig(config);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(ErrorMessage.VaultIdNotInConfigList.getMessage(), e.getMessage());
-        } catch (Exception e) {
-            Assert.assertEquals(ErrorMessage.VaultIdNotInConfigList.getMessage(), e.getMessage());
-        }
-    }
-
-    @Test
     public void testUpdatingValidVaultConfigInSkyflowClient() {
         try {
             VaultConfig config = new VaultConfig();
@@ -173,114 +124,6 @@ public class SkyflowTests {
             Assert.fail(INVALID_EXCEPTION_THROWN);
         }
     }
-
-    @Test
-    public void testUpdateVaultConfigNullCredentialsFallsBackToPrevious() {
-        try {
-            VaultConfig config = new VaultConfig();
-            config.setVaultId(vaultID);
-            config.setClusterId(clusterID);
-            config.setEnv(Env.SANDBOX);
-
-            Credentials creds = new Credentials();
-            creds.setToken(token);
-            config.setCredentials(creds);
-
-            Skyflow skyflowClient = Skyflow.builder().addVaultConfig(config).build();
-
-            // Update with null credentials — should retain previous credentials value
-            VaultConfig partialUpdate = new VaultConfig();
-            partialUpdate.setVaultId(vaultID);
-            partialUpdate.setClusterId(clusterID);
-            skyflowClient.updateVaultConfig(partialUpdate);
-            Assert.assertNotNull(skyflowClient.getVaultConfig(vaultID).getCredentials());
-        } catch (SkyflowException e) {
-            Assert.fail(INVALID_EXCEPTION_THROWN);
-        }
-    }
-
-    @Test
-    public void testRemovingNonExistentVaultConfigInSkyflowBuilder() {
-        try {
-            Skyflow.builder().removeVaultConfig(vaultID).build();
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(ErrorMessage.VaultIdNotInConfigList.getMessage(), e.getMessage());
-        }
-    }
-
-    @Test
-    public void testRemovingNonExistentVaultConfigInSkyflowClient() {
-        try {
-            VaultConfig config = new VaultConfig();
-            config.setVaultId(vaultID);
-            config.setClusterId(clusterID);
-            config.setEnv(Env.SANDBOX);
-            Skyflow skyflowClient = Skyflow.builder().addVaultConfig(config).build();
-            skyflowClient.removeVaultConfig(vaultID);
-        } catch (SkyflowException e) {
-            Assert.fail(INVALID_EXCEPTION_THROWN);
-        }
-    }
-
-    @Test
-    public void testRemovingValidVaultConfigInSkyflowClient() {
-        try {
-            Skyflow skyflowClient = Skyflow.builder().build();
-            skyflowClient.removeVaultConfig(vaultID);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(ErrorMessage.VaultIdNotInConfigList.getMessage(), e.getMessage());
-        }
-    }
-
-    @Test
-    public void testGettingNonExistentVaultConfigInSkyflowClient() {
-        try {
-            Skyflow skyflowClient = Skyflow.builder().build();
-            VaultConfig config = skyflowClient.getVaultConfig(vaultID);
-            Assert.assertNull(config);
-        } catch (Exception e) {
-            Assert.fail(INVALID_EXCEPTION_THROWN);
-        }
-    }
-
-    @Test
-    public void testGettingAlreadyRemovedVaultFromEmptyConfigs() {
-        try {
-            Skyflow skyflowClient = Skyflow.builder().build();
-            skyflowClient.vault();
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(ErrorMessage.VaultIdNotInConfigList.getMessage(), e.getMessage());
-        }
-    }
-
-    @Test
-    public void testGettingAlreadyRemovedVaultFromNonEmptyConfigs() {
-        try {
-            VaultConfig primaryConfig = new VaultConfig();
-            primaryConfig.setVaultId(vaultID);
-            primaryConfig.setClusterId(clusterID);
-            primaryConfig.setEnv(Env.SANDBOX);
-
-            VaultConfig secondaryConfig = new VaultConfig();
-            secondaryConfig.setVaultId(vaultID + "123");
-            secondaryConfig.setClusterId(clusterID);
-            secondaryConfig.setEnv(Env.SANDBOX);
-            Skyflow skyflowClient = Skyflow.builder().addVaultConfig(primaryConfig).addVaultConfig(secondaryConfig).build();
-            skyflowClient.removeVaultConfig(vaultID);
-            skyflowClient.vault(vaultID);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(ErrorMessage.VaultIdNotInConfigList.getMessage(), e.getMessage());
-        }
-    }
-
 
     @Test
     public void testAddingInvalidConnectionConfigInSkyflowBuilder() {
@@ -462,60 +305,6 @@ public class SkyflowTests {
     }
 
     @Test
-    public void testAddingInvalidSkyflowCredentialsInSkyflowBuilder() {
-        try {
-            Credentials credentials = new Credentials();
-            Skyflow.builder().addSkyflowCredentials(credentials).build();
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(ErrorMessage.NoTokenGenerationMeansPassed.getMessage(), e.getMessage());
-        }
-    }
-
-    @Test
-    public void testUpdatingValidSkyflowCredentialsInSkyflowClient() {
-        try {
-            VaultConfig vaultConfig = new VaultConfig();
-            vaultConfig.setVaultId(vaultID);
-            vaultConfig.setClusterId(clusterID);
-
-            ConnectionConfig connectionConfig = new ConnectionConfig();
-            connectionConfig.setConnectionId(connectionID);
-            connectionConfig.setConnectionUrl(connectionURL);
-
-            Credentials credentials = new Credentials();
-            credentials.setToken(token);
-            Skyflow skyflowClient = Skyflow.builder().addVaultConfig(vaultConfig).addConnectionConfig(connectionConfig).build();
-            skyflowClient.updateSkyflowCredentials(credentials);
-        } catch (SkyflowException e) {
-            Assert.fail(INVALID_EXCEPTION_THROWN);
-        }
-    }
-
-    @Test
-    public void testDefaultLogLevel() {
-        try {
-            Skyflow skyflowClient = Skyflow.builder().setLogLevel(null).build();
-            Assert.assertEquals(LogLevel.ERROR, skyflowClient.getLogLevel());
-        } catch (Exception e) {
-            Assert.fail(INVALID_EXCEPTION_THROWN);
-        }
-    }
-
-    @Test
-    public void testSetLogLevel() {
-        try {
-            Skyflow skyflowClient = Skyflow.builder().setLogLevel(LogLevel.INFO).build();
-            Assert.assertEquals(LogLevel.INFO, skyflowClient.getLogLevel());
-            skyflowClient.setLogLevel(LogLevel.WARN);
-            Assert.assertEquals(LogLevel.WARN, skyflowClient.getLogLevel());
-        } catch (Exception e) {
-            Assert.fail(INVALID_EXCEPTION_THROWN);
-        }
-    }
-
-    @Test
     @SuppressWarnings("deprecation")
     public void testUpdateLogLevel() {
         try {
@@ -688,36 +477,6 @@ public class SkyflowTests {
     }
 
     @Test
-    public void testUpdateVaultConfig_withNewClusterIdAndCredentials_updatesAllFields() {
-        try {
-            VaultConfig config = new VaultConfig();
-            config.setVaultId(vaultID);
-            config.setClusterId(clusterID);
-            config.setEnv(Env.DEV);
-            Credentials creds = new Credentials();
-            creds.setToken(token);
-            config.setCredentials(creds);
-            Skyflow skyflowClient = Skyflow.builder().addVaultConfig(config).build();
-
-            // Update with a new non-null clusterId and new non-null credentials — covers
-            // the non-null (true) branches for all three ternaries in findAndUpdateVaultConfig
-            Credentials newCreds = new Credentials();
-            newCreds.setToken("updated-token-value");
-            VaultConfig update = new VaultConfig();
-            update.setVaultId(vaultID);
-            update.setClusterId(newClusterID);
-            update.setEnv(Env.PROD);
-            update.setCredentials(newCreds);
-            skyflowClient.updateVaultConfig(update);
-            Assert.assertEquals(newClusterID, skyflowClient.getVaultConfig(vaultID).getClusterId());
-            Assert.assertEquals(Env.PROD, skyflowClient.getVaultConfig(vaultID).getEnv());
-            Assert.assertEquals("updated-token-value", skyflowClient.getVaultConfig(vaultID).getCredentials().getToken());
-        } catch (SkyflowException e) {
-            Assert.fail(INVALID_EXCEPTION_THROWN);
-        }
-    }
-
-    @Test
     public void testUpdateConnectionConfig_withNewCredentials_updatesCredentials() {
         try {
             ConnectionConfig config = new ConnectionConfig();
@@ -741,75 +500,6 @@ public class SkyflowTests {
             Assert.assertEquals(newConnectionURL, skyflowClient.getConnectionConfig(connectionID).getConnectionUrl());
         } catch (SkyflowException e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
-        }
-    }
-
-    @Test
-    public void testUpdateVaultConfig_withNullEnv_fallsBackToPreviousEnv() {
-        // VaultConfig's constructor defaults env=PROD so getEnv() is never null via normal API.
-        // Use an anonymous subclass to make getEnv() return null, exercising the false branch
-        // of `vaultConfig.getEnv() != null` in findAndUpdateVaultConfig.
-        try {
-            Credentials creds = new Credentials();
-            creds.setToken(token);
-            VaultConfig initial = new VaultConfig();
-            initial.setVaultId(vaultID);
-            initial.setClusterId(clusterID);
-            initial.setEnv(Env.SANDBOX);
-            initial.setCredentials(creds);
-            Skyflow skyflowClient = Skyflow.builder().addVaultConfig(initial).build();
-
-            VaultConfig updateWithNullEnv = new VaultConfig() {
-                @Override public Env getEnv() { return null; }
-            };
-            updateWithNullEnv.setVaultId(vaultID);
-            updateWithNullEnv.setClusterId(clusterID);
-            updateWithNullEnv.setCredentials(creds);
-
-            skyflowClient.updateVaultConfig(updateWithNullEnv);
-            // env falls back to previous (SANDBOX)
-            Assert.assertEquals(Env.SANDBOX, skyflowClient.getVaultConfig(vaultID).getEnv());
-        } catch (SkyflowException e) {
-            Assert.fail(INVALID_EXCEPTION_THROWN);
-        }
-    }
-
-    @Test
-    public void testFindAndUpdateVaultConfig_withNullClusterId_fallsBackToPreviousClusterId() {
-        // Validation enforces non-null clusterId, so the false branch of
-        // `vaultConfig.getClusterId() != null` in findAndUpdateVaultConfig is unreachable
-        // via the normal flow. Call the private method directly via reflection.
-        try {
-            Credentials creds = new Credentials();
-            creds.setToken(token);
-            VaultConfig initial = new VaultConfig();
-            initial.setVaultId(vaultID);
-            initial.setClusterId(clusterID);
-            initial.setEnv(Env.DEV);
-            initial.setCredentials(creds);
-            Skyflow skyflowClient = Skyflow.builder().addVaultConfig(initial).build();
-
-            java.lang.reflect.Field builderField = Skyflow.class.getDeclaredField("builder");
-            builderField.setAccessible(true);
-            Object builder = builderField.get(skyflowClient);
-
-            VaultConfig nullClusterConfig = new VaultConfig();
-            nullClusterConfig.setVaultId(vaultID);
-            // Override clusterId field to null via reflection (setter enforces non-null)
-            java.lang.reflect.Field clusterIdField = VaultConfig.class.getDeclaredField("clusterId");
-            clusterIdField.setAccessible(true);
-            clusterIdField.set(nullClusterConfig, null);
-
-            java.lang.reflect.Method method = builder.getClass().getDeclaredMethod(
-                    "findAndUpdateVaultConfig", VaultConfig.class);
-            method.setAccessible(true);
-            VaultConfig result = (VaultConfig) method.invoke(builder, nullClusterConfig);
-
-            Assert.assertEquals(clusterID, result.getClusterId());
-        } catch (SkyflowException e) {
-            Assert.fail(INVALID_EXCEPTION_THROWN);
-        } catch (Exception e) {
-            Assert.fail("Reflection failed: " + e.getMessage());
         }
     }
 

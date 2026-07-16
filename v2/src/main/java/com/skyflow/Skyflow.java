@@ -92,38 +92,6 @@ public final class Skyflow extends BaseSkyflow<Skyflow, VaultConfig, VaultContro
         }
 
         @Override
-        protected VaultConfig cloneVaultConfig(VaultConfig vaultConfig) {
-            try {
-                return (VaultConfig) vaultConfig.clone();
-            } catch (CloneNotSupportedException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        @Override
-        protected String extractVaultId(VaultConfig vaultConfig) {
-            return vaultConfig.getVaultId();
-        }
-
-        @Override
-        protected VaultConfig mergeVaultConfig(VaultConfig incoming, VaultConfig existing) {
-            if (incoming.getEnv() != null) {
-                existing.setEnv(incoming.getEnv());
-            }
-            if (incoming.getClusterId() != null) {
-                existing.setClusterId(incoming.getClusterId());
-            }
-            if (incoming.getCredentials() != null) {
-                try {
-                    existing.setCredentials((Credentials) incoming.getCredentials().clone());
-                } catch (CloneNotSupportedException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-            return existing;
-        }
-
-        @Override
         protected void onVaultConfigAdded(VaultConfig vaultConfig) throws SkyflowException {
             this.vaultClientsMap.put(vaultConfig.getVaultId(), new VaultController(vaultConfig, this.skyflowCredentials));
             this.detectClientsMap.put(vaultConfig.getVaultId(), new DetectController(vaultConfig, this.skyflowCredentials));

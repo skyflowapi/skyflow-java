@@ -4,7 +4,13 @@
 package com.skyflow.generated.rest.resources.strings;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.skyflow.generated.rest.core.*;
+import com.skyflow.generated.rest.core.ApiClientApiException;
+import com.skyflow.generated.rest.core.ApiClientException;
+import com.skyflow.generated.rest.core.ApiClientHttpResponse;
+import com.skyflow.generated.rest.core.ClientOptions;
+import com.skyflow.generated.rest.core.MediaTypes;
+import com.skyflow.generated.rest.core.ObjectMappers;
+import com.skyflow.generated.rest.core.RequestOptions;
 import com.skyflow.generated.rest.errors.BadRequestError;
 import com.skyflow.generated.rest.errors.InternalServerError;
 import com.skyflow.generated.rest.errors.UnauthorizedError;
@@ -13,9 +19,14 @@ import com.skyflow.generated.rest.resources.strings.requests.ReidentifyStringReq
 import com.skyflow.generated.rest.types.DeidentifyStringResponse;
 import com.skyflow.generated.rest.types.ErrorResponse;
 import com.skyflow.generated.rest.types.IdentifyResponse;
-import okhttp3.*;
-
 import java.io.IOException;
+import okhttp3.Headers;
+import okhttp3.HttpUrl;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
 
 public class RawStringsClient {
     protected final ClientOptions clientOptions;
@@ -70,10 +81,10 @@ public class RawStringsClient {
                 switch (response.code()) {
                     case 400:
                         throw new BadRequestError(
-                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class), response);
+                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class), response);
                     case 401:
                         throw new UnauthorizedError(
-                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class), response);
+                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class), response);
                     case 500:
                         throw new InternalServerError(
                                 ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class), response);
@@ -143,10 +154,10 @@ public class RawStringsClient {
                 switch (response.code()) {
                     case 400:
                         throw new BadRequestError(
-                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class), response);
+                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class), response);
                     case 401:
                         throw new UnauthorizedError(
-                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class), response);
+                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class), response);
                     case 500:
                         throw new InternalServerError(
                                 ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class), response);

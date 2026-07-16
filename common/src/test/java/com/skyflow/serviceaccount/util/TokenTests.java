@@ -1,7 +1,7 @@
 package com.skyflow.serviceaccount.util;
 
-import com.skyflow.Skyflow;
 import com.skyflow.enums.LogLevel;
+import com.skyflow.utils.logger.LogUtil;
 import io.github.cdimascio.dotenv.Dotenv;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -12,7 +12,7 @@ public class TokenTests {
 
     @BeforeClass
     public static void setup() {
-        Skyflow skyflowClient = Skyflow.builder().setLogLevel(LogLevel.DEBUG).build();
+        LogUtil.setupLogger(LogLevel.DEBUG);
     }
 
     @Test

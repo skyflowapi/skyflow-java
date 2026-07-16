@@ -12,7 +12,6 @@ public class InsertRequest extends BaseInsertRequest {
         this.builder = builder;
     }
 
-
     public static InsertRequestBuilder builder() {
         return new InsertRequestBuilder();
     }
