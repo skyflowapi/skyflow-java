@@ -1,4 +1,4 @@
-name: Publish package to the JFROG Artifactory
+name: Publish v2 module to the JFROG Artifactory
 on:
   push:
     tags-ignore:
@@ -9,7 +9,7 @@ on:
       - release/*
 
 jobs:
-  build-and-deploy:
+  build-and-deploy-v2:
     uses: ./.github/workflows/shared-build-and-deploy.yml
     with:
       ref: ${{ github.ref_name }}

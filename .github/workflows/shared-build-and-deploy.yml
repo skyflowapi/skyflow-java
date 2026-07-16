@@ -59,19 +59,19 @@ jobs:
           fetch-depth: 0
 
       - name: Set up maven or jfrog repository
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v1
         with:
           java-version: "11"
           distribution: "adopt"
           server-id: ${{ inputs.server-id }}
-          server-username: ${{ secrets.server-username }}
-          server-password: ${{ secrets.server-password }}
+          server-username: SERVER_USERNAME
+          server-password: SERVER_PASSWORD
           gpg-private-key: ${{ secrets.gpg-key }} # Value of the GPG private key to import
-          gpg-passphrase: ${{ secrets.gpg-passphrase }} # env variable for GPG private key passphrase
-      
+          gpg-passphrase: GPG_PASSPHRASE # env variable for GPG private key passphrase
+
       - name: Resolve Branch for the Tagged Commit
         id: resolve-branch
-        if: ${{ inputs.tag == 'beta' || inputs.tag == 'public' }} 
+        if: ${{ inputs.tag == 'beta' || inputs.tag == 'public' }}
         run: |
           TAG_COMMIT=$(git rev-list -n 1 ${{ github.ref_name }})
           BRANCH_NAME=$(git branch -r --contains $TAG_COMMIT | grep -o 'origin/.*' | sed 's|origin/||' | head -n 1)
@@ -89,20 +89,12 @@ jobs:
           fallback: 1.0.0
 
       - name: Bump Version
-        id: bump-version
         run: |
           chmod +x ./scripts/bump_version.sh
           if ${{ inputs.tag == 'internal' }}; then
             ./scripts/bump_version.sh "${{ steps.previoustag.outputs.tag }}" "$(git rev-parse --short "$GITHUB_SHA")" "${{ inputs.module }}"
           else
             ./scripts/bump_version.sh "${{ steps.previoustag.outputs.tag }}" "" "${{ inputs.module }}"
-          fi
-
-          MODULE="${{ inputs.module }}"
-          if [ -n "$MODULE" ]; then
-            echo "pom_path=$MODULE/pom.xml" >> "$GITHUB_OUTPUT"
-          else
-            echo "pom_path=pom.xml" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Commit changes
@@ -114,7 +106,7 @@ jobs:
             git checkout ${{ env.branch_name }}
           fi
 
-          git add ${{ steps.bump-version.outputs.pom_path }}
+          git add ${{ inputs.module }}/pom.xml
           if [[ "${{ inputs.tag }}" == "internal" ]]; then
             git commit -m "[AUTOMATED] Private Release ${{ steps.previoustag.outputs.tag }}-dev-$(git rev-parse --short $GITHUB_SHA)"
             git push origin ${{ github.ref_name }} -f
@@ -142,9 +134,9 @@ jobs:
       - name: Publish package
         run: |
           if [[ "${{ inputs.tag }}" == "internal" ]]; then
-            mvn --batch-mode -pl ${{ inputs.module }} -am deploy -P jfrog  -DskipTests
+            mvn --batch-mode -pl ${{ inputs.module }} -am deploy -P jfrog -DskipTests
           elif [[ "${{ inputs.tag }}" == "beta" || "${{ inputs.tag }}" == "public" ]]; then
-            mvn --batch-mode -pl ${{ inputs.module }} -am deploy -P ${{ inputs.profile }} -DskipTests
+            mvn --batch-mode -pl ${{ inputs.module }} -am deploy -P ${{ inputs.profile }}
           fi
 
         env:
