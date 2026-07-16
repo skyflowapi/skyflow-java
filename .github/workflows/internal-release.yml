@@ -16,6 +16,7 @@ jobs:
       server-id: central
       profile: jfrog
       tag: 'internal'
+      module: 'v2'
     secrets:
       server-username: ${{ secrets.ARTIFACTORY_USERNAME }}
       server-password: ${{ secrets.ARTIFACTORY_PASSWORD }}
