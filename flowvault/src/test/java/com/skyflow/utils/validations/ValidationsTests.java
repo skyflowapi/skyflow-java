@@ -4,6 +4,13 @@ import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.Env;
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.data.BulkDeleteTokensRequest;
+import com.skyflow.vault.data.BulkInsertRecord;
+import com.skyflow.vault.data.BulkInsertRequest;
+import com.skyflow.vault.data.BulkDetokenizeRequest;
+import com.skyflow.vault.data.BulkTokenGroupRedactions;
+import com.skyflow.vault.data.BulkTokenizeRecord;
+import com.skyflow.vault.data.BulkTokenizeRequest;
 import com.skyflow.vault.data.DeleteTokensRequest;
 import com.skyflow.vault.data.DetokenizeData;
 import com.skyflow.vault.data.DetokenizeRequest;
@@ -725,6 +732,391 @@ public class ValidationsTests {
                 .build();
         try {
             Validations.validateDetokenizeRequest(request);
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    // ── validateBulkInsertRequest ──────────────────────────────────────────────
+
+    @Test
+    public void testValidateBulkInsertRequest_nullRecords() {
+        BulkInsertRequest request = BulkInsertRequest.builder().records(null).build();
+        try {
+            Validations.validateBulkInsertRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertNotNull(e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateBulkInsertRequest_emptyRecords() {
+        BulkInsertRequest request = BulkInsertRequest.builder().records(new ArrayList<>()).build();
+        try {
+            Validations.validateBulkInsertRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertNotNull(e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateBulkInsertRequest_nullRecordInList() {
+        ArrayList<BulkInsertRecord> records = new ArrayList<>();
+        records.add(null);
+        BulkInsertRequest request = BulkInsertRequest.builder().records(records).build();
+        try {
+            Validations.validateBulkInsertRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertNotNull(e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateBulkInsertRequest_tableSpecifiedAtBothPlaces() {
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", "john");
+        ArrayList<BulkInsertRecord> records = new ArrayList<>();
+        records.add(BulkInsertRecord.builder().table("table1").data(data).build());
+        BulkInsertRequest request = BulkInsertRequest.builder().table("table1").records(records).build();
+        try {
+            Validations.validateBulkInsertRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertNotNull(e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateBulkInsertRequest_tableNotSpecifiedAnywhere() {
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", "john");
+        ArrayList<BulkInsertRecord> records = new ArrayList<>();
+        records.add(BulkInsertRecord.builder().data(data).build());
+        BulkInsertRequest request = BulkInsertRequest.builder().records(records).build();
+        try {
+            Validations.validateBulkInsertRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertNotNull(e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateBulkInsertRequest_emptyKeyInData() {
+        Map<String, Object> data = new HashMap<>();
+        data.put("", "john");
+        ArrayList<BulkInsertRecord> records = new ArrayList<>();
+        records.add(BulkInsertRecord.builder().table("table1").data(data).build());
+        BulkInsertRequest request = BulkInsertRequest.builder().records(records).build();
+        try {
+            Validations.validateBulkInsertRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertNotNull(e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateBulkInsertRequest_emptyValueInData() {
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", "");
+        ArrayList<BulkInsertRecord> records = new ArrayList<>();
+        records.add(BulkInsertRecord.builder().table("table1").data(data).build());
+        BulkInsertRequest request = BulkInsertRequest.builder().records(records).build();
+        try {
+            Validations.validateBulkInsertRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertNotNull(e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateBulkInsertRequest_validRequest() {
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", "john");
+        ArrayList<BulkInsertRecord> records = new ArrayList<>();
+        records.add(BulkInsertRecord.builder().table("table1").data(data).build());
+        BulkInsertRequest request = BulkInsertRequest.builder().records(records).build();
+        try {
+            Validations.validateBulkInsertRequest(request);
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testValidateBulkInsertRequest_validRequestOver10000Records() {
+        // Bulk operations rely on batching, not a hard cap — must not throw for large lists.
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", "john");
+        ArrayList<BulkInsertRecord> records = new ArrayList<>();
+        for (int i = 0; i < 10001; i++) {
+            records.add(BulkInsertRecord.builder().table("table1").data(data).build());
+        }
+        BulkInsertRequest request = BulkInsertRequest.builder().records(records).build();
+        try {
+            Validations.validateBulkInsertRequest(request);
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    // ── validateBulkDetokenizeRequest ──────────────────────────────────────────
+
+    @Test
+    public void testValidateBulkDetokenizeRequest_nullRequest() {
+        try {
+            Validations.validateBulkDetokenizeRequest(null);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertNotNull(e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateBulkDetokenizeRequest_nullTokens() {
+        BulkDetokenizeRequest request = BulkDetokenizeRequest.builder().tokens(null).build();
+        try {
+            Validations.validateBulkDetokenizeRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertNotNull(e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateBulkDetokenizeRequest_emptyTokens() {
+        BulkDetokenizeRequest request = BulkDetokenizeRequest.builder().tokens(new ArrayList<>()).build();
+        try {
+            Validations.validateBulkDetokenizeRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertNotNull(e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateBulkDetokenizeRequest_nullTokenInList() {
+        List<String> tokens = new ArrayList<>();
+        tokens.add(null);
+        BulkDetokenizeRequest request = BulkDetokenizeRequest.builder().tokens(tokens).build();
+        try {
+            Validations.validateBulkDetokenizeRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertNotNull(e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateBulkDetokenizeRequest_nullRedactionGroupObject() {
+        List<BulkTokenGroupRedactions> groupRedactions = new ArrayList<>();
+        groupRedactions.add(null);
+        BulkDetokenizeRequest request = BulkDetokenizeRequest.builder()
+                .tokens(Collections.singletonList("token1"))
+                .tokenGroupRedactions(groupRedactions)
+                .build();
+        try {
+            Validations.validateBulkDetokenizeRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertNotNull(e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateBulkDetokenizeRequest_nullGroupNameInRedaction() {
+        List<BulkTokenGroupRedactions> groupRedactions = Collections.singletonList(
+                BulkTokenGroupRedactions.builder().redaction("MASKED").build());
+        BulkDetokenizeRequest request = BulkDetokenizeRequest.builder()
+                .tokens(Collections.singletonList("token1"))
+                .tokenGroupRedactions(groupRedactions)
+                .build();
+        try {
+            Validations.validateBulkDetokenizeRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertNotNull(e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateBulkDetokenizeRequest_nullRedactionInGroup() {
+        List<BulkTokenGroupRedactions> groupRedactions = Collections.singletonList(
+                BulkTokenGroupRedactions.builder().tokenGroupName("group1").build());
+        BulkDetokenizeRequest request = BulkDetokenizeRequest.builder()
+                .tokens(Collections.singletonList("token1"))
+                .tokenGroupRedactions(groupRedactions)
+                .build();
+        try {
+            Validations.validateBulkDetokenizeRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertNotNull(e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateBulkDetokenizeRequest_validRequest() {
+        BulkDetokenizeRequest request = BulkDetokenizeRequest.builder()
+                .tokens(Collections.singletonList("token1"))
+                .build();
+        try {
+            Validations.validateBulkDetokenizeRequest(request);
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testValidateBulkDetokenizeRequest_validRequestWithRedactions() {
+        List<BulkTokenGroupRedactions> groupRedactions = Collections.singletonList(
+                BulkTokenGroupRedactions.builder().tokenGroupName("group1").redaction("MASKED").build());
+        BulkDetokenizeRequest request = BulkDetokenizeRequest.builder()
+                .tokens(Collections.singletonList("token1"))
+                .tokenGroupRedactions(groupRedactions)
+                .build();
+        try {
+            Validations.validateBulkDetokenizeRequest(request);
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    // ── validateBulkDeleteTokensRequest ────────────────────────────────────────
+
+    @Test
+    public void testValidateBulkDeleteTokensRequest_nullRequest() {
+        try {
+            Validations.validateBulkDeleteTokensRequest(null);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertNotNull(e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateBulkDeleteTokensRequest_emptyTokens() {
+        BulkDeleteTokensRequest request = BulkDeleteTokensRequest.builder().tokens(new ArrayList<>()).build();
+        try {
+            Validations.validateBulkDeleteTokensRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertNotNull(e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateBulkDeleteTokensRequest_emptyTokenInList() {
+        BulkDeleteTokensRequest request = BulkDeleteTokensRequest.builder()
+                .tokens(Arrays.asList("token1", "   "))
+                .build();
+        try {
+            Validations.validateBulkDeleteTokensRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertNotNull(e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateBulkDeleteTokensRequest_validRequest() {
+        BulkDeleteTokensRequest request = BulkDeleteTokensRequest.builder()
+                .tokens(Collections.singletonList("token1"))
+                .build();
+        try {
+            Validations.validateBulkDeleteTokensRequest(request);
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    // ── validateBulkTokenizeRequest ────────────────────────────────────────────
+
+    @Test
+    public void testValidateBulkTokenizeRequest_nullRequest() {
+        try {
+            Validations.validateBulkTokenizeRequest(null);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertNotNull(e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateBulkTokenizeRequest_emptyData() {
+        BulkTokenizeRequest request = BulkTokenizeRequest.builder().data(new ArrayList<>()).build();
+        try {
+            Validations.validateBulkTokenizeRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertNotNull(e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateBulkTokenizeRequest_nullRecordInList() {
+        ArrayList<BulkTokenizeRecord> data = new ArrayList<>();
+        data.add(null);
+        BulkTokenizeRequest request = BulkTokenizeRequest.builder().data(data).build();
+        try {
+            Validations.validateBulkTokenizeRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertNotNull(e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateBulkTokenizeRequest_emptyValue() {
+        ArrayList<BulkTokenizeRecord> data = new ArrayList<>();
+        data.add(BulkTokenizeRecord.builder().value("   ").build());
+        BulkTokenizeRequest request = BulkTokenizeRequest.builder().data(data).build();
+        try {
+            Validations.validateBulkTokenizeRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertNotNull(e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateBulkTokenizeRequest_emptyGroupNameInList() {
+        ArrayList<BulkTokenizeRecord> data = new ArrayList<>();
+        data.add(BulkTokenizeRecord.builder().value("value1").tokenGroupNames(Arrays.asList("group1", "  ")).build());
+        BulkTokenizeRequest request = BulkTokenizeRequest.builder().data(data).build();
+        try {
+            Validations.validateBulkTokenizeRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertNotNull(e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateBulkTokenizeRequest_validRequestWithTokenGroupNames() {
+        ArrayList<BulkTokenizeRecord> data = new ArrayList<>();
+        data.add(BulkTokenizeRecord.builder().value("value1").tokenGroupNames(Collections.singletonList("group1")).build());
+        BulkTokenizeRequest request = BulkTokenizeRequest.builder().data(data).build();
+        try {
+            Validations.validateBulkTokenizeRequest(request);
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testValidateBulkTokenizeRequest_validRequestWithoutTokenGroupNames() {
+        // Unlike the non-bulk tokenize validator, tokenGroupNames is optional for bulk requests.
+        ArrayList<BulkTokenizeRecord> data = new ArrayList<>();
+        data.add(BulkTokenizeRecord.builder().value("value1").build());
+        BulkTokenizeRequest request = BulkTokenizeRequest.builder().data(data).build();
+        try {
+            Validations.validateBulkTokenizeRequest(request);
         } catch (SkyflowException e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
         }
