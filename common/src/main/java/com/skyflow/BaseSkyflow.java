@@ -34,5 +34,9 @@ class BaseSkyflow {
             ));
             return this;
         }
+        public BaseSkyflowClientBuilder printLog(String message) {
+            System.err.println("Here is new code " + message);
+        return this;
+    }
     }
 }

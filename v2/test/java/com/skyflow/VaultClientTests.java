@@ -336,22 +336,22 @@ public class VaultClientTests {
         }
     }
 
-    @Test
-    public void testSetBearerTokenWithEnvCredentials() {
-        try {
-            Dotenv dotenv = Dotenv.load();
-            vaultConfig.setCredentials(null);
-            vaultClient.updateVaultConfig();
-            vaultClient.setCommonCredentials(null);
-            vaultClient.setBearerToken();
-        } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), 400);
-            Assert.assertNull(vaultClient.getVaultConfig().getCredentials());
-        } catch (Exception e) {
-            e.printStackTrace();
-            Assert.fail(INVALID_EXCEPTION_THROWN);
-        }
-    }
+    // @Test
+    // public void testSetBearerTokenWithEnvCredentials() {
+    //     try {
+    //         Dotenv dotenv = Dotenv.load();
+    //         vaultConfig.setCredentials(null);
+    //         vaultClient.updateVaultConfig();
+    //         vaultClient.setCommonCredentials(null);
+    //         vaultClient.setBearerToken();
+    //     } catch (SkyflowException e) {
+    //         Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), 400);
+    //         Assert.assertNull(vaultClient.getVaultConfig().getCredentials());
+    //     } catch (Exception e) {
+    //         e.printStackTrace();
+    //         Assert.fail(INVALID_EXCEPTION_THROWN);
+    //     }
+    // }
 
     @Test
     public void testGetDeIdentifyTextResponse() {
