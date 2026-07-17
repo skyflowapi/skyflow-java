@@ -127,6 +127,7 @@ public enum ErrorLogs {
     EMPTY_DELETE_TOKENS_DATA("Invalid %s1 request. Delete tokens data can not be empty."),
     EMPTY_OR_NULL_TOKEN_IN_DELETE_TOKENS_DATA("Invalid %s1 request. Token can not be null or empty in delete tokens data at index %s2."),
     DELETE_TOKENS_SIZE_EXCEED("Maximum number of tokens exceeded. The limit is 10000."),
+    DELETE_TOKENS_REQUEST_REJECTED("DeleteTokens request resulted in failure."),
 
     // invoke connection interface
     INVOKE_CONNECTION_INVALID_CONNECTION_URL("Invalid %s1 request. Connection URL is not a valid URL."),
