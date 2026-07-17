@@ -8,8 +8,12 @@ import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.generated.rest.core.ApiClientApiException;
+import com.skyflow.generated.rest.core.ApiClientException;
+import com.skyflow.generated.rest.core.ApiClientHttpResponse;
 import com.skyflow.generated.rest.core.RequestOptions;
 import com.skyflow.generated.rest.resources.flowservice.requests.V1InsertRequest;
+import com.skyflow.generated.rest.types.V1FlowDeleteTokenResponse;
+import com.skyflow.generated.rest.types.V1FlowTokenizeResponse;
 import com.skyflow.generated.rest.types.V1InsertResponse;
 import com.skyflow.logs.ErrorLogs;
 import com.skyflow.logs.InfoLogs;
@@ -49,6 +53,9 @@ public final class VaultController extends VaultClient
             String bodyString = gson.toJson(e.body());
             LogUtil.printErrorLog(ErrorLogs.INSERT_RECORDS_REJECTED.getLog());
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
+        } catch (ApiClientException e) {
+            LogUtil.printErrorLog(ErrorLogs.INSERT_RECORDS_REJECTED.getLog());
+            throw new SkyflowException(e.getMessage());
         }
     }
 
@@ -68,17 +75,58 @@ public final class VaultController extends VaultClient
             String bodyString = gson.toJson(e.body());
             LogUtil.printErrorLog(ErrorLogs.DETOKENIZE_REQUEST_REJECTED.getLog());
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
+        } catch (ApiClientException e) {
+            LogUtil.printErrorLog(ErrorLogs.DETOKENIZE_REQUEST_REJECTED.getLog());
+            throw new SkyflowException(e.getMessage());
         }
     }
 
-    public TokenizeResponse tokenize(TokenizeRequest request){
-        LogUtil.printInfoLog(InfoLogs.TOKENIZE_TRIGGERED.getLog());
+    public TokenizeResponse tokenize(TokenizeRequest request) throws SkyflowException {
         try {
+            LogUtil.printInfoLog(InfoLogs.TOKENIZE_TRIGGERED.getLog());
+            LogUtil.printInfoLog(InfoLogs.VALIDATING_TOKENIZE_REQUEST.getLog());
+            Validations.validateTokenizeRequest(request);
+            setBearerToken();
 
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+            com.skyflow.generated.rest.resources.flowservice.requests.V1FlowTokenizeRequest requestTokenize = getTokenizeRequestBody(request, this.getVaultConfig().getVaultId());
+            ApiClientHttpResponse<V1FlowTokenizeResponse> response = this.getRecordsApi().withRawResponse().tokenize(requestTokenize, buildRequestOptions());
+            LogUtil.printInfoLog(InfoLogs.TOKENIZE_REQUEST_RESOLVED.getLog());
+
+            TokenizeResponse tokenizeResponse = buildTokenizeResponse(response.body(), response.headers(), request.getData().size());
+            LogUtil.printInfoLog(InfoLogs.TOKENIZE_SUCCESS.getLog());
+            return tokenizeResponse;
+        } catch (ApiClientApiException e) {
+            String bodyString = gson.toJson(e.body());
+            LogUtil.printErrorLog(ErrorLogs.TOKENIZE_REQUEST_REJECTED.getLog());
+            throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
+        } catch (ApiClientException e) {
+            LogUtil.printErrorLog(ErrorLogs.TOKENIZE_REQUEST_REJECTED.getLog());
+            throw new SkyflowException(e.getMessage());
         }
-        return null;
+    }
+
+    public DeleteTokensResponse deleteTokens(DeleteTokensRequest request) throws SkyflowException {
+        try {
+            LogUtil.printInfoLog(InfoLogs.DELETE_TOKENS_TRIGGERED.getLog());
+            LogUtil.printInfoLog(InfoLogs.VALIDATE_DELETE_TOKENS_REQUEST.getLog());
+            Validations.validateDeleteTokensRequest(request);
+            setBearerToken();
+
+            com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDeleteTokenRequest requestDeleteTokens = getDeleteTokensRequestBody(request, this.getVaultConfig().getVaultId());
+            ApiClientHttpResponse<V1FlowDeleteTokenResponse> response = this.getRecordsApi().withRawResponse().deletetoken(requestDeleteTokens, buildRequestOptions());
+            LogUtil.printInfoLog(InfoLogs.DELETE_TOKENS_REQUEST_RESOLVED.getLog());
+
+            DeleteTokensResponse deleteTokensResponse = buildDeleteTokensResponse(response.body(), response.headers(), request.getTokens().size());
+            LogUtil.printInfoLog(InfoLogs.DELETE_TOKENS_SUCCESS.getLog());
+            return deleteTokensResponse;
+        } catch (ApiClientApiException e) {
+            String bodyString = gson.toJson(e.body());
+            LogUtil.printErrorLog(ErrorLogs.DELETE_TOKENS_REQUEST_REJECTED.getLog());
+            throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
+        } catch (ApiClientException e) {
+            LogUtil.printErrorLog(ErrorLogs.DELETE_TOKENS_REQUEST_REJECTED.getLog());
+            throw new SkyflowException(e.getMessage());
+        }
     }
 
 

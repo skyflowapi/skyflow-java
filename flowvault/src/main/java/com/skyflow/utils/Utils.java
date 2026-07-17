@@ -14,6 +14,7 @@ import com.skyflow.generated.rest.resources.flowservice.requests.V1InsertRequest
 import com.skyflow.generated.rest.types.*;
 import com.skyflow.logs.ErrorLogs;
 import com.skyflow.logs.InfoLogs;
+import com.skyflow.logs.WarningLogs;
 import com.skyflow.serviceaccount.util.BearerToken;
 import com.skyflow.serviceaccount.util.Token;
 import com.skyflow.utils.logger.LogUtil;
@@ -165,7 +166,7 @@ public final class Utils extends BaseUtils {
         ArrayList<HashMap<String, Object>> insertedFields = new ArrayList<>();
         ArrayList<HashMap<String, Object>> errors = new ArrayList<>();
 
-        if (res.getRecords().isPresent()) {
+        if (res != null && res.getRecords().isPresent()) {
             for (V1RecordResponseObject record : res.getRecords().get()) {
                 if (record.getError().isPresent()) {
                     HashMap<String, Object> errorRecord = new HashMap<>();
@@ -215,7 +216,7 @@ public final class Utils extends BaseUtils {
         ArrayList<DetokenizeRecordResponse> detokenizedFields = new ArrayList<>();
         ArrayList<DetokenizeRecordResponse> errors = new ArrayList<>();
 
-        if (res.getResponse().isPresent()) {
+        if (res != null && res.getResponse().isPresent()) {
             for (V1FlowDetokenizeResponseObject record : res.getResponse().get()) {
                 String token = record.getToken().orElse(null);
                 String tokenGroupName = record.getTokenGroupName().orElse(null);
@@ -229,5 +230,100 @@ public final class Utils extends BaseUtils {
             }
         }
         return new DetokenizeResponse(detokenizedFields, errors);
+    }
+
+    public static com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDeleteTokenRequest getDeleteTokensRequestBody(DeleteTokensRequest request, String vaultid) {
+        return com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDeleteTokenRequest.builder()
+                .vaultId(vaultid)
+                .tokens(request.getTokens())
+                .build();
+    }
+    private static String extractRequestId(Map<String, List<String>> headers) {
+        if (headers == null) return null;
+        List<String> ids = headers.get(BaseConstants.REQUEST_ID_HEADER_KEY);
+        return (ids == null || ids.isEmpty()) ? null : ids.get(0);
+    }
+
+    public static DeleteTokensResponse buildDeleteTokensResponse(V1FlowDeleteTokenResponse res, Map<String, List<String>> headers, int requestedTokenCount) {
+        ArrayList<String> deletedTokens = new ArrayList<>();
+        ArrayList<HashMap<String, Object>> errors = new ArrayList<>();
+        String requestId = extractRequestId(headers);
+        if (res != null && res.getTokens().isPresent()) {
+            for (V1DeleteTokenResponseObject record : res.getTokens().get()) {
+                if (record.getError().isPresent()) {
+                    HashMap<String, Object> errorRecord = new HashMap<>();
+                    errorRecord.put("error", record.getError().get());
+                    record.getHttpCode().ifPresent(httpCode -> errorRecord.put("httpCode", httpCode));
+                    errorRecord.put("requestId", requestId);
+                    errors.add(errorRecord);
+                } else {
+                    record.getValue().ifPresent(deletedTokens::add);
+                }
+            }
+            if (deletedTokens.size() + errors.size() != requestedTokenCount) {
+                LogUtil.printWarningLog(WarningLogs.INCOMPLETE_DELETE_TOKENS_RESPONSE.getLog());
+            }
+        } else {
+            LogUtil.printWarningLog(WarningLogs.EMPTY_DELETE_TOKENS_RESPONSE.getLog());
+        }
+        return new DeleteTokensResponse(deletedTokens, errors);
+    }
+
+    public static com.skyflow.generated.rest.resources.flowservice.requests.V1FlowTokenizeRequest getTokenizeRequestBody(TokenizeRequest request, String vaultid) {
+        List<V1FlowTokenizeRequestObject> dataList = new ArrayList<>();
+        for (TokenizeRecord record : request.getData()) {
+            V1FlowTokenizeRequestObject obj = V1FlowTokenizeRequestObject.builder()
+                    .value(record.getValue())
+                    .tokenGroupNames(record.getTokenGroupNames())
+                    .build();
+            dataList.add(obj);
+        }
+        return com.skyflow.generated.rest.resources.flowservice.requests.V1FlowTokenizeRequest.builder()
+                .vaultId(vaultid)
+                .data(dataList)
+                .build();
+    }
+
+    public static TokenizeResponse buildTokenizeResponse(V1FlowTokenizeResponse res, Map<String, List<String>> headers, int requestedRecordCount) {
+        List<TokenizeData> tokenizedData = new ArrayList<>();
+        ArrayList<HashMap<String, Object>> errors = new ArrayList<>();
+        String requestId = extractRequestId(headers);
+        if (res != null && res.getResponse().isPresent()) {
+            List<V1FlowTokenizeResponseObject> records = res.getResponse().get();
+            int indexNumber = 0;
+            for (V1FlowTokenizeResponseObject record : records) {
+                Object value = record.getValue().orElse(null);
+                TokenizeData tokenizeData = new TokenizeData(value, indexNumber);
+                boolean hasAnySuccess = false;
+                if (record.getTokens().isPresent()) {
+                    for (FlowTokenizeResponseObjectToken tokenObj : record.getTokens().get()) {
+                        if (tokenObj.getError().isPresent()) {
+                            HashMap<String, Object> errorRecord = new HashMap<>();
+                            errorRecord.put("error", tokenObj.getError().get());
+                            tokenObj.getHttpCode().ifPresent(httpCode -> errorRecord.put("httpCode", httpCode));
+                            tokenObj.getTokenGroupName().ifPresent(name -> errorRecord.put("tokenGroupName", name));
+                            errorRecord.put("index", indexNumber);
+                            errorRecord.put("requestId", requestId);
+                            errors.add(errorRecord);
+                        } else if (tokenObj.getTokenGroupName().isPresent() && tokenObj.getToken().isPresent()) {
+                            tokenizeData.addToken(tokenObj.getTokenGroupName().get(), tokenObj.getToken().get());
+                            hasAnySuccess = true;
+                        }
+                    }
+                }
+                if (hasAnySuccess) {
+                    tokenizedData.add(tokenizeData);
+                }
+                indexNumber++;
+            }
+            if (indexNumber != requestedRecordCount) {
+                LogUtil.printWarningLog(WarningLogs.INCOMPLETE_TOKENIZE_RESPONSE.getLog());
+            }
+        } else {
+            LogUtil.printWarningLog(WarningLogs.EMPTY_TOKENIZE_RESPONSE.getLog());
+        }
+        TokenizeResponse tokenizeResponse = new TokenizeResponse(errors);
+        tokenizeResponse.setTokenizedData(tokenizedData);
+        return tokenizeResponse;
     }
 }

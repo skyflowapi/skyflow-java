@@ -65,7 +65,7 @@ public class BearerToken {
             } finally {
                 try { reader.close(); } catch (IOException ignored) {}
             }
-        } catch (JsonSyntaxException e) {
+        } catch (JsonSyntaxException | IllegalStateException e) {
             LogUtil.printErrorLog(ErrorLogs.INVALID_CREDENTIALS_FILE_FORMAT.getLog());
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), BaseUtils.parameterizedString(
                     ErrorMessage.FileInvalidJson.getMessage(), credentialsFile.getPath()));
@@ -87,7 +87,7 @@ public class BearerToken {
             }
             JsonObject serviceAccountCredentials = JsonParser.parseString(credentials).getAsJsonObject();
             return getBearerTokenFromCredentials(serviceAccountCredentials, context, roles);
-        } catch (JsonSyntaxException e) {
+        } catch (JsonSyntaxException | IllegalStateException e) {
             LogUtil.printErrorLog(ErrorLogs.INVALID_CREDENTIALS_STRING_FORMAT.getLog());
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(),
                     ErrorMessage.CredentialsStringInvalidJson.getMessage());

@@ -16,7 +16,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 
-abstract class BaseSkyflow<Self, V extends BaseVaultConfig, VC> implements ISkyflow<Self, V, Credentials, VC> {
+abstract class BaseSkyflow<Self extends BaseSkyflow, V extends BaseVaultConfig, VC> implements ISkyflow<Self, V, Credentials, VC> {
     protected final BaseSkyflowClientBuilder<V, VC> builder;
 
     protected BaseSkyflow(BaseSkyflowClientBuilder<V, VC> builder) {
