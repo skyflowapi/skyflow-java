@@ -1,0 +1,118 @@
+name: Contract Tests
+
+on:
+  pull_request:
+    branches:
+      - main
+      - release/*
+
+jobs:
+  contract-tests:
+    name: Contract Tests
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+          cache: 'maven'
+
+      - name: Verify API surface snapshot
+        run: mvn -B install -pl common,v2 -am -DskipTests -Dmaven.javadoc.skip=true -Dgpg.skip=true
+
+      - name: Show API surface diff
+        if: failure()
+        run: |
+          echo "### API surface changes detected ###"
+          echo "See v2/target/japicmp/default-cli.diff for the full comparison against v2/api-report/skyflow-java.baseline.jar."
+          echo "If this change is intentional, run scripts/contract-snapshot-update.sh and commit the updated baseline jar."
+          echo ""
+          cat v2/target/japicmp/default-cli.diff || true
+
+      - name: Upload API surface diff on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-surface-diff
+          path: v2/target/japicmp/**
+          retention-days: 7
+
+      # The step above only shows a diff when the CURRENT build differs from the
+      # committed baseline - once someone runs contract-snapshot-update.sh and
+      # commits the refreshed baseline jar, that check goes green and shows nothing.
+      # A reviewer looking at a green PR that touches api-report/skyflow-java.baseline.jar
+      # (a binary file) would otherwise have no way to see WHAT was just approved as
+      # the new contract. These steps explicitly diff the OLD committed baseline
+      # (from the PR's base branch) against the NEW committed baseline (from this PR)
+      # and post it as a PR comment, regardless of whether the check above passed.
+      - name: Check if contract baseline was updated in this PR
+        id: baseline-diff-check
+        if: always() && github.event.pull_request
+        run: |
+          git fetch origin "${{ github.event.pull_request.base.ref }}" --depth=1
+          if git diff --name-only "origin/${{ github.event.pull_request.base.ref }}" HEAD -- v2/api-report/skyflow-java.baseline.jar | grep -q .; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Diff old vs new contract baseline
+        if: always() && steps.baseline-diff-check.outputs.changed == 'true'
+        run: |
+          curl -sL -o /tmp/japicmp-cli.jar "https://repo.maven.apache.org/maven2/com/github/siom79/japicmp/japicmp/0.26.0/japicmp-0.26.0-jar-with-dependencies.jar"
+          mvn -q -B dependency:build-classpath -pl v2 -Dmdep.outputFile=/tmp/v2-classpath.txt -Dmaven.javadoc.skip=true -Dgpg.skip=true
+          git show "origin/${{ github.event.pull_request.base.ref }}:v2/api-report/skyflow-java.baseline.jar" > /tmp/old-baseline.jar
+
+          java -jar /tmp/japicmp-cli.jar \
+            -o /tmp/old-baseline.jar \
+            -n v2/api-report/skyflow-java.baseline.jar \
+            -a protected \
+            -e "com.skyflow.generated.*;com.skyflow.utils.*" \
+            --old-classpath "$(cat /tmp/v2-classpath.txt)" \
+            --new-classpath "$(cat /tmp/v2-classpath.txt)" \
+            -m \
+            --markdown > /tmp/contract-baseline-diff.md || true
+
+          cat /tmp/contract-baseline-diff.md
+
+      - name: Comment contract baseline change on PR
+        if: always() && steps.baseline-diff-check.outputs.changed == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const summary = fs.readFileSync('/tmp/contract-baseline-diff.md', 'utf8');
+            const marker = '<!-- contract-baseline-diff -->';
+            const body = `${marker}\n## Contract baseline change detected\n\nThis PR updates \`v2/api-report/skyflow-java.baseline.jar\` (the approved public API contract). Here is exactly what it changes, comparing the baseline on \`${{ github.event.pull_request.base.ref }}\` against the baseline committed in this PR:\n\n${summary}`;
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const existing = comments.find(c => c.body && c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }

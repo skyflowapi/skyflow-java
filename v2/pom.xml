@@ -46,6 +46,84 @@
                     <target>9</target>
                 </configuration>
             </plugin>
+            <plugin>
+                <!-- Produces an additional, comparison-only jar (classifier "with-common")
+                     that merges in com.skyflow:common, same pattern flowvault already uses.
+                     The real published skyflow-java-2.1.1.jar is untouched (shadedArtifactAttached
+                     keeps the main artifact slim) - this attached jar exists only so japicmp can
+                     compare an apples-to-apples "everything a v2 consumer actually gets" surface
+                     against the old 2.1.0 baseline, which was a single self-contained jar
+                     (predating the common/v2 split). Without this, classes that moved into
+                     common (Credentials, ErrorCode, BearerToken, Token, etc.) would show up as
+                     false-positive "removed" classes, since japicmp only compares what's
+                     physically inside the two jars it's given. -->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.6.0</version>
+                <executions>
+                    <execution>
+                        <id>shade-for-japicmp</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <shadedArtifactAttached>true</shadedArtifactAttached>
+                            <shadedClassifierName>with-common</shadedClassifierName>
+                            <artifactSet>
+                                <includes>
+                                    <include>com.skyflow:common</include>
+                                </includes>
+                            </artifactSet>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>com.github.siom79.japicmp</groupId>
+                <artifactId>japicmp-maven-plugin</artifactId>
+                <version>0.26.0</version>
+                <configuration>
+                    <!-- No published version is pulled for this comparison. "Old" is the
+                         committed contract snapshot (api-report/skyflow-java.baseline.jar) -
+                         a jar built from the last code state a human deliberately approved as
+                         the contract, same role as skyflow-node's committed api-report/*.api.md.
+                         Regenerate it with scripts/contract-snapshot-update.sh after an
+                         intentional public API change, then commit the updated jar. -->
+                    <oldVersion>
+                        <file>
+                            <path>${project.basedir}/api-report/skyflow-java.baseline.jar</path>
+                        </file>
+                    </oldVersion>
+                    <newVersion>
+                        <file>
+                            <path>${project.build.directory}/${project.build.finalName}-with-common.jar</path>
+                        </file>
+                    </newVersion>
+                    <parameter>
+                        <accessModifier>protected</accessModifier>
+                        <onlyModified>true</onlyModified>
+                        <ignoreMissingClasses>false</ignoreMissingClasses>
+                        <breakBuildOnBinaryIncompatibleModifications>true</breakBuildOnBinaryIncompatibleModifications>
+                        <breakBuildOnSourceIncompatibleModifications>true</breakBuildOnSourceIncompatibleModifications>
+                        <excludes>
+                            <exclude>com.skyflow.generated.*</exclude>
+                            <exclude>com.skyflow.utils.*</exclude>
+                        </excludes>
+                        <skipXmlReport>false</skipXmlReport>
+                        <skipHtmlReport>false</skipHtmlReport>
+                    </parameter>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>default-cli</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>cmp</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 </project>
