@@ -27,6 +27,7 @@ public final class Skyflow extends BaseSkyflow {
     }
 
     public static SkyflowClientBuilder builder() {
+
         SdkVersion.setSdkPrefix(Constants.SDK_PREFIX);
         return new SkyflowClientBuilder();
     }
