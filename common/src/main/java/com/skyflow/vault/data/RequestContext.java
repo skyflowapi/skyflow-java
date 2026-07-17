@@ -10,7 +10,7 @@ public final class RequestContext {
     private final String operation;
     private final Map<CustomHeaderKey, String> headers = new HashMap<>();
 
-    public RequestContext(String operation, int batchIndex, int totalBatches) {
+    public RequestContext(String operation) {
         this.operation = operation;
     }
 

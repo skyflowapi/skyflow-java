@@ -326,4 +326,542 @@ public final class Utils extends BaseUtils {
         tokenizeResponse.setTokenizedData(tokenizedData);
         return tokenizeResponse;
     }
+
+    // ── Bulk (batched/concurrent) request-body builders ──────────────────────
+
+    public static com.skyflow.generated.rest.resources.flowservice.requests.V1InsertRequest getBulkInsertRequestBody(BulkInsertRequest request, VaultConfig config) {
+        ArrayList<BulkInsertRecord> records = request.getRecords();
+        List<V1InsertRecordData> insertRecordDataList = new ArrayList<>();
+        for (BulkInsertRecord record : records) {
+            V1InsertRecordData.Builder data = V1InsertRecordData.builder();
+            data.data(record.getData());
+            if (record.getTable() != null && !record.getTable().isEmpty()) {
+                data.tableName(record.getTable());
+            }
+            if (record.getUpsert() != null && !record.getUpsert().isEmpty()) {
+                if (record.getUpsertType() != null) {
+                    FlowEnumUpdateType updateType = null;
+                    if (record.getUpsertType() == UpsertType.REPLACE) {
+                        updateType = FlowEnumUpdateType.REPLACE;
+                    } else if (record.getUpsertType() == UpsertType.UPDATE) {
+                        updateType = FlowEnumUpdateType.UPDATE;
+                    }
+                    V1Upsert upsert = V1Upsert.builder().uniqueColumns(record.getUpsert()).updateType(updateType).build();
+                    data.upsert(upsert);
+                } else {
+                    V1Upsert upsert = V1Upsert.builder().uniqueColumns(record.getUpsert()).build();
+                    data.upsert(upsert);
+                }
+            }
+            insertRecordDataList.add(data.build());
+        }
+
+        com.skyflow.generated.rest.resources.flowservice.requests.V1InsertRequest.Builder builder =
+                com.skyflow.generated.rest.resources.flowservice.requests.V1InsertRequest.builder()
+                        .vaultId(config.getVaultId())
+                        .records(insertRecordDataList);
+
+        if (request.getTable() != null && !request.getTable().isEmpty()) {
+            builder.tableName(request.getTable());
+        }
+
+        if (request.getUpsert() != null && !request.getUpsert().isEmpty()) {
+            if (request.getUpsertType() != null) {
+                FlowEnumUpdateType updateType = null;
+                if (request.getUpsertType() == UpsertType.REPLACE) {
+                    updateType = FlowEnumUpdateType.REPLACE;
+                } else if (request.getUpsertType() == UpsertType.UPDATE) {
+                    updateType = FlowEnumUpdateType.UPDATE;
+                }
+                V1Upsert upsert = V1Upsert.builder().uniqueColumns(request.getUpsert()).updateType(updateType).build();
+                builder.upsert(upsert);
+            } else {
+                V1Upsert upsert = V1Upsert.builder().uniqueColumns(request.getUpsert()).build();
+                builder.upsert(upsert);
+            }
+        }
+        return builder.build();
+    }
+
+    public static V1FlowDetokenizeRequest getBulkDetokenizeRequestBody(BulkDetokenizeRequest request, String vaultId) {
+        V1FlowDetokenizeRequest.Builder builder = V1FlowDetokenizeRequest.builder()
+                .vaultId(vaultId)
+                .tokens(request.getTokens());
+        if (request.getTokenGroupRedactions() != null && !request.getTokenGroupRedactions().isEmpty()) {
+            List<V1TokenGroupRedactions> tokenGroupRedactionsList = new ArrayList<>();
+            for (BulkTokenGroupRedactions tokenGroupRedactions : request.getTokenGroupRedactions()) {
+                tokenGroupRedactionsList.add(V1TokenGroupRedactions.builder()
+                        .tokenGroupName(tokenGroupRedactions.getTokenGroupName())
+                        .redaction(tokenGroupRedactions.getRedaction())
+                        .build());
+            }
+            builder.tokenGroupRedactions(tokenGroupRedactionsList);
+        }
+        return builder.build();
+    }
+
+    public static com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDeleteTokenRequest getBulkDeleteTokensRequestBody(BulkDeleteTokensRequest request, String vaultId) {
+        return com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDeleteTokenRequest.builder()
+                .vaultId(vaultId)
+                .tokens(request.getTokens())
+                .build();
+    }
+
+    public static com.skyflow.generated.rest.resources.flowservice.requests.V1FlowTokenizeRequest getBulkTokenizeRequestBody(BulkTokenizeRequest request, String vaultId) {
+        List<V1FlowTokenizeRequestObject> dataList = new ArrayList<>();
+        for (BulkTokenizeRecord record : request.getData()) {
+            dataList.add(V1FlowTokenizeRequestObject.builder()
+                    .value(record.getValue())
+                    .tokenGroupNames(record.getTokenGroupNames())
+                    .build());
+        }
+        return com.skyflow.generated.rest.resources.flowservice.requests.V1FlowTokenizeRequest.builder()
+                .vaultId(vaultId)
+                .data(dataList)
+                .build();
+    }
+
+    // ── Bulk batching, exception-handling and response-formatting helpers ────
+
+    public static List<List<V1InsertRecordData>> createBulkInsertBatches(List<V1InsertRecordData> records, int batchSize) {
+        List<List<V1InsertRecordData>> batches = new ArrayList<>();
+        for (int i = 0; i < records.size(); i += batchSize) {
+            batches.add(records.subList(i, Math.min(i + batchSize, records.size())));
+        }
+        return batches;
+    }
+
+    public static List<V1FlowDetokenizeRequest> createBulkDetokenizeBatches(V1FlowDetokenizeRequest request, int batchSize) {
+        List<V1FlowDetokenizeRequest> detokenizeRequests = new ArrayList<>();
+        List<String> tokens = request.getTokens().get();
+
+        for (int i = 0; i < tokens.size(); i += batchSize) {
+            List<String> batchTokens = tokens.subList(i, Math.min(i + batchSize, tokens.size()));
+            List<V1TokenGroupRedactions> tokenGroupRedactions = null;
+            if (request.getTokenGroupRedactions().isPresent() && !request.getTokenGroupRedactions().get().isEmpty()) {
+                tokenGroupRedactions = request.getTokenGroupRedactions().get();
+            }
+            V1FlowDetokenizeRequest batchRequest = V1FlowDetokenizeRequest.builder()
+                    .vaultId(request.getVaultId())
+                    .tokens(new ArrayList<>(batchTokens))
+                    .tokenGroupRedactions(tokenGroupRedactions)
+                    .build();
+
+            detokenizeRequests.add(batchRequest);
+        }
+
+        return detokenizeRequests;
+    }
+
+    public static List<com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDeleteTokenRequest> createBulkDeleteTokensBatches(
+            com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDeleteTokenRequest request, int batchSize) {
+        List<com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDeleteTokenRequest> batches = new ArrayList<>();
+        List<String> tokens = request.getTokens().get();
+        for (int i = 0; i < tokens.size(); i += batchSize) {
+            List<String> batchTokens = tokens.subList(i, Math.min(i + batchSize, tokens.size()));
+            com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDeleteTokenRequest batchRequest =
+                    com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDeleteTokenRequest.builder()
+                            .vaultId(request.getVaultId())
+                            .tokens(new ArrayList<>(batchTokens))
+                            .build();
+            batches.add(batchRequest);
+        }
+        return batches;
+    }
+
+    public static List<com.skyflow.generated.rest.resources.flowservice.requests.V1FlowTokenizeRequest> createBulkTokenizeBatches(
+            com.skyflow.generated.rest.resources.flowservice.requests.V1FlowTokenizeRequest request, int batchSize) {
+        List<com.skyflow.generated.rest.resources.flowservice.requests.V1FlowTokenizeRequest> batches = new ArrayList<>();
+        List<V1FlowTokenizeRequestObject> data = request.getData().get();
+        for (int i = 0; i < data.size(); i += batchSize) {
+            List<V1FlowTokenizeRequestObject> batchData = data.subList(i, Math.min(i + batchSize, data.size()));
+            com.skyflow.generated.rest.resources.flowservice.requests.V1FlowTokenizeRequest batchRequest =
+                    com.skyflow.generated.rest.resources.flowservice.requests.V1FlowTokenizeRequest.builder()
+                            .vaultId(request.getVaultId())
+                            .data(new ArrayList<>(batchData))
+                            .build();
+            batches.add(batchRequest);
+        }
+        return batches;
+    }
+
+    public static ErrorRecord createErrorRecord(Map<String, Object> recordMap, int indexNumber, String requestId) {
+        ErrorRecord err = null;
+        if (recordMap != null) {
+            int code = 500;
+            if (recordMap.containsKey("http_code")) {
+                code = (Integer) recordMap.get("http_code");
+            } else if (recordMap.containsKey("httpCode")) {
+                code = (Integer) recordMap.get("httpCode");
+            } else if (recordMap.containsKey("statusCode")) {
+                code = (Integer) recordMap.get("statusCode");
+            }
+            String message = recordMap.containsKey("error") ? (String) recordMap.get("error") :
+                    recordMap.containsKey("message") ? (String) recordMap.get("message") : "Unknown error";
+            err = new ErrorRecord(indexNumber, message, code, requestId);
+        }
+        return err;
+    }
+
+    public static List<ErrorRecord> handleBulkInsertBatchException(
+            Throwable ex, List<V1InsertRecordData> batch, int batchNumber, int batchSize
+    ) {
+        List<ErrorRecord> errorRecords = new ArrayList<>();
+        Throwable cause = ex.getCause();
+        if (cause instanceof ApiClientApiException) {
+            ApiClientApiException apiException = (ApiClientApiException) cause;
+            String requestId = extractRequestId(apiException.headers());
+            Object rawBody = apiException.body();
+            Map<String, Object> responseBody = (rawBody instanceof Map) ? (Map<String, Object>) rawBody : null;
+            int indexNumber = batchNumber > 0 ? batchNumber * batchSize : 0;
+            if (responseBody != null) {
+                if (responseBody.containsKey("records")) {
+                    Object recordss = responseBody.get("records");
+                    if (recordss instanceof List) {
+                        List<?> recordsList = (List<?>) recordss;
+                        for (Object record : recordsList) {
+                            if (record instanceof Map) {
+                                Map<String, Object> recordMap = (Map<String, Object>) record;
+                                ErrorRecord err = createErrorRecord(recordMap, indexNumber, requestId);
+                                errorRecords.add(err);
+                                indexNumber++;
+                            }
+                        }
+                    }
+                } else if (responseBody.containsKey("error")) {
+                    Object errField = responseBody.get("error");
+                    Map<String, Object> recordMap = (errField instanceof Map) ? (Map<String, Object>) errField : null;
+                    String fallbackMsg = (errField instanceof String) ? (String) errField : null;
+                    for (int j = 0; j < batch.size(); j++) {
+                        ErrorRecord err = (recordMap != null)
+                                ? createErrorRecord(recordMap, indexNumber, requestId)
+                                : new ErrorRecord(indexNumber, fallbackMsg != null ? fallbackMsg : apiException.getMessage(), apiException.statusCode(), requestId);
+                        errorRecords.add(err);
+                        indexNumber++;
+                    }
+                }
+            }
+            if (errorRecords.isEmpty()) {
+                for (int j = 0; j < batch.size(); j++) {
+                    errorRecords.add(new ErrorRecord(indexNumber, apiException.getMessage(), apiException.statusCode(), requestId));
+                    indexNumber++;
+                }
+            }
+        } else {
+            int indexNumber = batchNumber > 0 ? batchNumber * batchSize : 0;
+            for (int j = 0; j < batch.size(); j++) {
+                ErrorRecord err = new ErrorRecord(indexNumber, ex.getMessage(), 500);
+                errorRecords.add(err);
+                indexNumber++;
+            }
+        }
+        return errorRecords;
+    }
+
+    public static List<ErrorRecord> handleBulkDetokenizeBatchException(
+            Throwable ex, V1FlowDetokenizeRequest batch, int batchNumber, int batchSize
+    ) {
+        List<ErrorRecord> errorRecords = new ArrayList<>();
+        Throwable cause = ex.getCause();
+        if (cause instanceof ApiClientApiException) {
+            ApiClientApiException apiException = (ApiClientApiException) cause;
+            String requestId = extractRequestId(apiException.headers());
+            Object rawBody = apiException.body();
+            Map<String, Object> responseBody = (rawBody instanceof Map) ? (Map<String, Object>) rawBody : null;
+            int indexNumber = batchNumber * batchSize;
+            if (responseBody != null) {
+                if (responseBody.containsKey("response")) {
+                    Object recordss = responseBody.get("response");
+                    if (recordss instanceof List) {
+                        List<?> recordsList = (List<?>) recordss;
+                        for (Object record : recordsList) {
+                            if (record instanceof Map) {
+                                Map<String, Object> recordMap = (Map<String, Object>) record;
+                                ErrorRecord err = createErrorRecord(recordMap, indexNumber, requestId);
+                                errorRecords.add(err);
+                                indexNumber++;
+                            }
+                        }
+                    }
+                } else if (responseBody.containsKey("error")) {
+                    Object errField = responseBody.get("error");
+                    Map<String, Object> recordMap = (errField instanceof Map) ? (Map<String, Object>) errField : null;
+                    String fallbackMsg = (errField instanceof String) ? (String) errField : null;
+                    int tokenCount = batch.getTokens().isPresent() ? batch.getTokens().get().size() : 0;
+                    for (int j = 0; j < tokenCount; j++) {
+                        ErrorRecord err = (recordMap != null)
+                                ? createErrorRecord(recordMap, indexNumber, requestId)
+                                : new ErrorRecord(indexNumber, fallbackMsg != null ? fallbackMsg : apiException.getMessage(), apiException.statusCode(), requestId);
+                        errorRecords.add(err);
+                        indexNumber++;
+                    }
+                }
+            }
+            if (errorRecords.isEmpty()) {
+                int tokenCount = batch.getTokens().isPresent() ? batch.getTokens().get().size() : 0;
+                for (int j = 0; j < tokenCount; j++) {
+                    errorRecords.add(new ErrorRecord(indexNumber, apiException.getMessage(), apiException.statusCode(), requestId));
+                    indexNumber++;
+                }
+            }
+        } else {
+            int indexNumber = batchNumber * batchSize;
+            for (int j = 0; j < batch.getTokens().get().size(); j++) {
+                ErrorRecord err = new ErrorRecord(indexNumber, ex.getMessage(), 500);
+                errorRecords.add(err);
+                indexNumber++;
+            }
+        }
+        return errorRecords;
+    }
+
+    public static List<ErrorRecord> handleBulkDeleteTokensBatchException(
+            Throwable ex,
+            com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDeleteTokenRequest batch,
+            int batchNumber, int batchSize
+    ) {
+        List<ErrorRecord> errorRecords = new ArrayList<>();
+        Throwable cause = ex.getCause();
+        if (cause instanceof ApiClientApiException) {
+            ApiClientApiException apiException = (ApiClientApiException) cause;
+            String requestId = extractRequestId(apiException.headers());
+            Object rawBody = apiException.body();
+            Map<String, Object> responseBody = (rawBody instanceof Map) ? (Map<String, Object>) rawBody : null;
+            int indexNumber = batchNumber * batchSize;
+            if (responseBody != null) {
+                if (responseBody.containsKey("tokens")) {
+                    Object tokensList = responseBody.get("tokens");
+                    if (tokensList instanceof List) {
+                        List<?> recordsList = (List<?>) tokensList;
+                        for (Object record : recordsList) {
+                            if (record instanceof Map) {
+                                Map<String, Object> recordMap = (Map<String, Object>) record;
+                                ErrorRecord err = createErrorRecord(recordMap, indexNumber, requestId);
+                                errorRecords.add(err);
+                                indexNumber++;
+                            }
+                        }
+                    }
+                } else if (responseBody.containsKey("error")) {
+                    Object errField = responseBody.get("error");
+                    Map<String, Object> recordMap = (errField instanceof Map) ? (Map<String, Object>) errField : null;
+                    String fallbackMsg = (errField instanceof String) ? (String) errField : null;
+                    int tokenCount = batch.getTokens().isPresent() ? batch.getTokens().get().size() : 0;
+                    for (int j = 0; j < tokenCount; j++) {
+                        ErrorRecord err = (recordMap != null)
+                                ? createErrorRecord(recordMap, indexNumber, requestId)
+                                : new ErrorRecord(indexNumber, fallbackMsg != null ? fallbackMsg : apiException.getMessage(), apiException.statusCode(), requestId);
+                        errorRecords.add(err);
+                        indexNumber++;
+                    }
+                }
+            }
+            if (errorRecords.isEmpty()) {
+                int tokenCount = batch.getTokens().isPresent() ? batch.getTokens().get().size() : 0;
+                for (int j = 0; j < tokenCount; j++) {
+                    errorRecords.add(new ErrorRecord(indexNumber, apiException.getMessage(), apiException.statusCode(), requestId));
+                    indexNumber++;
+                }
+            }
+        } else {
+            int indexNumber = batchNumber * batchSize;
+            for (int j = 0; j < batch.getTokens().get().size(); j++) {
+                ErrorRecord err = new ErrorRecord(indexNumber, ex.getMessage(), 500);
+                errorRecords.add(err);
+                indexNumber++;
+            }
+        }
+        return errorRecords;
+    }
+
+    public static List<ErrorRecord> handleBulkTokenizeBatchException(
+            Throwable ex,
+            com.skyflow.generated.rest.resources.flowservice.requests.V1FlowTokenizeRequest batch,
+            int batchNumber, int batchSize
+    ) {
+        List<ErrorRecord> errorRecords = new ArrayList<>();
+        Throwable cause = ex.getCause();
+        if (cause instanceof ApiClientApiException) {
+            ApiClientApiException apiException = (ApiClientApiException) cause;
+            String requestId = extractRequestId(apiException.headers());
+            Object rawBody = apiException.body();
+            Map<String, Object> responseBody = (rawBody instanceof Map) ? (Map<String, Object>) rawBody : null;
+            int indexNumber = batchNumber * batchSize;
+            if (responseBody != null) {
+                if (responseBody.containsKey("response")) {
+                    Object responseList = responseBody.get("response");
+                    if (responseList instanceof List) {
+                        List<?> recordsList = (List<?>) responseList;
+                        for (Object record : recordsList) {
+                            if (record instanceof Map) {
+                                Map<String, Object> recordMap = (Map<String, Object>) record;
+                                ErrorRecord err = createErrorRecord(recordMap, indexNumber, requestId);
+                                errorRecords.add(err);
+                                indexNumber++;
+                            }
+                        }
+                    }
+                } else if (responseBody.containsKey("error")) {
+                    Object errField = responseBody.get("error");
+                    Map<String, Object> recordMap = (errField instanceof Map) ? (Map<String, Object>) errField : null;
+                    String fallbackMsg = (errField instanceof String) ? (String) errField : null;
+                    int batchDataSize = batch.getData().isPresent() ? batch.getData().get().size() : 0;
+                    for (int j = 0; j < batchDataSize; j++) {
+                        ErrorRecord err = (recordMap != null)
+                                ? createErrorRecord(recordMap, indexNumber, requestId)
+                                : new ErrorRecord(indexNumber, fallbackMsg != null ? fallbackMsg : apiException.getMessage(), apiException.statusCode(), requestId);
+                        errorRecords.add(err);
+                        indexNumber++;
+                    }
+                }
+            }
+            if (errorRecords.isEmpty()) {
+                int batchDataSize = batch.getData().isPresent() ? batch.getData().get().size() : 0;
+                for (int j = 0; j < batchDataSize; j++) {
+                    errorRecords.add(new ErrorRecord(indexNumber, apiException.getMessage(), apiException.statusCode(), requestId));
+                    indexNumber++;
+                }
+            }
+        } else {
+            int indexNumber = batchNumber * batchSize;
+            int batchDataSize = batch.getData().isPresent() ? batch.getData().get().size() : 0;
+            for (int j = 0; j < batchDataSize; j++) {
+                ErrorRecord err = new ErrorRecord(indexNumber, ex.getMessage(), 500);
+                errorRecords.add(err);
+                indexNumber++;
+            }
+        }
+        return errorRecords;
+    }
+
+    public static BulkInsertResponse formatBulkInsertResponse(V1InsertResponse response, int batch, int batchSize, Map<String, List<String>> headers) {
+        BulkInsertResponse formattedResponse = null;
+        List<Success> successRecords = new ArrayList<>();
+        List<ErrorRecord> errorRecords = new ArrayList<>();
+        if (response != null) {
+            String requestId = extractRequestId(headers);
+            List<V1RecordResponseObject> record = response.getRecords().get();
+            int indexNumber = batch * batchSize;
+            int recordsSize = response.getRecords().get().size();
+            for (int index = 0; index < recordsSize; index++) {
+                if (record.get(index).getError().isPresent()) {
+                    ErrorRecord errorRecord = new ErrorRecord(indexNumber, record.get(index).getError().get(), record.get(index).getHttpCode().orElse(500), requestId);
+                    errorRecords.add(errorRecord);
+                } else {
+                    Map<String, List<com.skyflow.vault.data.Token>> tokensMap = null;
+                    if (record.get(index).getTokens().isPresent()) {
+                        tokensMap = new HashMap<>();
+                        Map<String, Object> tok = record.get(index).getTokens().get();
+                        for (Map.Entry<String, Object> entry : tok.entrySet()) {
+                            String key = entry.getKey();
+                            Object value = entry.getValue();
+                            List<com.skyflow.vault.data.Token> tokenList = new ArrayList<>();
+                            if (value instanceof List) {
+                                List<?> valueList = (List<?>) value;
+                                for (Object item : valueList) {
+                                    if (item instanceof Map) {
+                                        Map<String, Object> tokenMap = (Map<String, Object>) item;
+                                        com.skyflow.vault.data.Token token = new com.skyflow.vault.data.Token((String) tokenMap.get("token"), (String) tokenMap.get("tokenGroupName"));
+                                        tokenList.add(token);
+                                    }
+                                }
+                            }
+                            tokensMap.put(key, tokenList);
+                        }
+                    }
+                    Success success = new Success(indexNumber, record.get(index).getSkyflowId().orElse(null), tokensMap, record.get(index).getData().isPresent() ? record.get(index).getData().get() : null, record.get(index).getTableName().isPresent() ? record.get(index).getTableName().get() : null);
+                    successRecords.add(success);
+                }
+                indexNumber++;
+            }
+            formattedResponse = new BulkInsertResponse(successRecords, errorRecords);
+        }
+        return formattedResponse;
+    }
+
+    public static BulkDetokenizeResponse formatBulkDetokenizeResponse(V1FlowDetokenizeResponse response, int batch, int batchSize, Map<String, List<String>> headers) {
+        if (response != null && response.getResponse().isPresent()) {
+            String requestId = extractRequestId(headers);
+            List<V1FlowDetokenizeResponseObject> record = response.getResponse().get();
+            List<ErrorRecord> errorRecords = new ArrayList<>();
+            List<DetokenizeResponseObject> successRecords = new ArrayList<>();
+            int indexNumber = batch * batchSize;
+            int recordsSize = record.size();
+            for (int index = 0; index < recordsSize; index++) {
+                if (record.get(index).getError().isPresent()) {
+                    ErrorRecord errorRecord = new ErrorRecord(indexNumber, record.get(index).getError().get(), record.get(index).getHttpCode().orElse(500), requestId);
+                    errorRecords.add(errorRecord);
+                } else {
+                    DetokenizeResponseObject success = new DetokenizeResponseObject(indexNumber, record.get(index).getToken().orElse(null), record.get(index).getValue().orElse(null), record.get(index).getTokenGroupName().orElse(null), record.get(index).getError().orElse(null), record.get(index).getMetadata().orElse(null));
+                    successRecords.add(success);
+                }
+                indexNumber++;
+            }
+            return new BulkDetokenizeResponse(successRecords, errorRecords);
+        }
+        return null;
+    }
+
+    public static BulkDeleteTokensResponse formatBulkDeleteTokensResponse(
+            V1FlowDeleteTokenResponse response, int batch, int batchSize, Map<String, List<String>> headers) {
+        if (response != null && response.getTokens().isPresent()) {
+            String requestId = extractRequestId(headers);
+            List<V1DeleteTokenResponseObject> records = response.getTokens().get();
+            List<ErrorRecord> errorRecords = new ArrayList<>();
+            List<DeleteTokensSuccess> successRecords = new ArrayList<>();
+            int indexNumber = batch * batchSize;
+            for (V1DeleteTokenResponseObject record : records) {
+                String tokenValue = record.getValue().orElse(null);
+                if (record.getError().isPresent()
+                        && record.getError().get() != null
+                        && !record.getError().get().isEmpty()
+                        && record.getHttpCode().orElse(200) != 200) {
+                    ErrorRecord errorRecord = new ErrorRecord(indexNumber, record.getError().get(),
+                            record.getHttpCode().orElse(500), requestId);
+                    errorRecords.add(errorRecord);
+                } else {
+                    DeleteTokensSuccess success = new DeleteTokensSuccess(indexNumber, tokenValue);
+                    successRecords.add(success);
+                }
+                indexNumber++;
+            }
+            return new BulkDeleteTokensResponse(successRecords, errorRecords);
+        }
+        return null;
+    }
+
+    public static BulkTokenizeResponse formatBulkTokenizeResponse(
+            V1FlowTokenizeResponse response,
+            com.skyflow.generated.rest.resources.flowservice.requests.V1FlowTokenizeRequest batchRequest,
+            int batchNumber, int batchSize, Map<String, List<String>> headers) {
+        if (response != null && response.getResponse().isPresent()) {
+            String requestId = extractRequestId(headers);
+            List<V1FlowTokenizeResponseObject> records = response.getResponse().get();
+            List<TokenizeSuccess> successRecords = new ArrayList<>();
+            List<ErrorRecord> errorRecords = new ArrayList<>();
+            int indexNumber = batchNumber * batchSize;
+            for (V1FlowTokenizeResponseObject record : records) {
+                Object value = record.getValue().orElse(null);
+                TokenizeSuccess successEntry = null;
+                if (record.getTokens().isPresent()) {
+                    for (FlowTokenizeResponseObjectToken tokenObj : record.getTokens().get()) {
+                        if (tokenObj.getError().isPresent()) {
+                            errorRecords.add(new ErrorRecord(indexNumber, tokenObj.getError().get(), tokenObj.getHttpCode().orElse(500), requestId));
+                        } else if (tokenObj.getTokenGroupName().isPresent() && tokenObj.getToken().isPresent()) {
+                            if (successEntry == null) {
+                                successEntry = new TokenizeSuccess(indexNumber, value);
+                            }
+                            successEntry.addToken(tokenObj.getTokenGroupName().get(), tokenObj.getToken().get());
+                        }
+                    }
+                }
+                if (successEntry != null) {
+                    successRecords.add(successEntry);
+                }
+                indexNumber++;
+            }
+            return new BulkTokenizeResponse(successRecords, errorRecords);
+        }
+        return null;
+    }
 }
