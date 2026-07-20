@@ -18,7 +18,7 @@ import com.skyflow.vault.controller.VaultController;
 
 import java.util.LinkedHashMap;
 
-public final class Skyflow extends BaseSkyflow<Skyflow, VaultConfig, VaultController> {
+public final class Skyflow extends BaseSkyflow<Skyflow, VaultConfig> {
     private final SkyflowClientBuilder builder;
 
     private Skyflow(SkyflowClientBuilder builder) {
@@ -61,6 +61,10 @@ public final class Skyflow extends BaseSkyflow<Skyflow, VaultConfig, VaultContro
         return setLogLevel(logLevel);
     }
 
+    public VaultController vault() throws SkyflowException {
+        return resolveOrThrow(this.builder.vaultClientsMap, null, ErrorLogs.VAULT_CONFIG_DOES_NOT_EXIST, ErrorMessage.VaultIdNotInConfigList);
+    }
+
     public VaultController vault(String vaultId) throws SkyflowException {
         return resolveOrThrow(this.builder.vaultClientsMap, vaultId, ErrorLogs.VAULT_CONFIG_DOES_NOT_EXIST, ErrorMessage.VaultIdNotInConfigList);
     }
@@ -81,7 +85,8 @@ public final class Skyflow extends BaseSkyflow<Skyflow, VaultConfig, VaultContro
         return resolveOrThrow(this.builder.detectClientsMap, vaultId, ErrorLogs.VAULT_CONFIG_DOES_NOT_EXIST, ErrorMessage.VaultIdNotInConfigList);
     }
 
-    public static final class SkyflowClientBuilder extends BaseSkyflowClientBuilder<VaultConfig, VaultController> {
+    public static final class SkyflowClientBuilder extends BaseSkyflowClientBuilder<VaultConfig> {
+        private final LinkedHashMap<String, VaultController> vaultClientsMap = new LinkedHashMap<>();
         private final LinkedHashMap<String, ConnectionController> connectionsMap = new LinkedHashMap<>();
         private final LinkedHashMap<String, DetectController> detectClientsMap = new LinkedHashMap<>();
         private final LinkedHashMap<String, ConnectionConfig> connectionConfigMap = new LinkedHashMap<>();
@@ -102,6 +107,11 @@ public final class Skyflow extends BaseSkyflow<Skyflow, VaultConfig, VaultContro
         @Override
         protected void onVaultConfigUpdated(VaultConfig updatedConfig) throws SkyflowException {
             this.vaultClientsMap.get(updatedConfig.getVaultId()).updateVaultConfig();
+        }
+
+        @Override
+        protected void onVaultConfigRemoved(String vaultId) throws SkyflowException {
+            this.vaultClientsMap.remove(vaultId);
         }
 
         @Override
