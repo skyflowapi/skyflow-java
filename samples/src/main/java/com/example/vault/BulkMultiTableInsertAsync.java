@@ -5,7 +5,6 @@ import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.Env;
 import com.skyflow.enums.LogLevel;
-import com.skyflow.enums.UpsertType;
 import com.skyflow.vault.data.InsertRecord;
 import com.skyflow.vault.data.InsertRequest;
 import com.skyflow.vault.data.InsertResponse;
@@ -59,7 +58,8 @@ public class BulkMultiTableInsertAsync {
                     .data(recordData1)
                     .table("<YOUR_TABLE_NAME>")
                     .upsert(upsertColumns)
-                    .upsertType(UpsertType.UPDATE)
+                    // upsertType is optional; when omitted the vault defaults to UpsertType.UPDATE.
+                    // Set .upsertType(UpsertType.REPLACE) to replace the matched row instead.
                     .build();
 
             // Step 5: Prepare second record for insertion

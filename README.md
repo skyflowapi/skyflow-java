@@ -260,8 +260,11 @@ public class InsertSchema {
 **Note**:
 - The table name can be specified either at the request level `InsertRequest` or at the record level `InsertRecord`, but not both.
 - If table name is not specified at the request level `InsertRequest`, then it must be specified in all record objects.
-- If table name is specified at the request level `InsertRequest`, then upsert must also be specified at the request level.
-- If table name is specified at the record level `InsertRecord`, then upsert must also be specified at the record level `InsertRecord`.
+- Upsert must be specified in the same place as the table name: if table name is specified at the request level `InsertRequest`, specify upsert at the request level; if table name is specified at the record level `InsertRecord`, specify upsert at the record level `InsertRecord`.
+- `upsertType` is optional and can be set alongside `upsert` at either the request level or the record level (matching the table/upsert placement):
+    - `UpsertType.UPDATE` — updates only the columns provided in the request on the matched row; other existing columns are retained.
+    - `UpsertType.REPLACE` — replaces the matched row with the provided values; columns not provided are cleared.
+    - If `upsertType` is not specified, the vault applies the default of `UPDATE`.
 
 ### An [example](https://github.com/skyflowapi/skyflow-java/blob/v3/samples/src/main/java/com/example/vault/BulkInsertSync.java) of a sync bulkInsert call
 
