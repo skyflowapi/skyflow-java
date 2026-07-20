@@ -4,21 +4,20 @@
 package com.skyflow.generated.rest.errors;
 
 import com.skyflow.generated.rest.core.ApiClientApiException;
-import com.skyflow.generated.rest.types.ErrorResponse;
 import okhttp3.Response;
 
 public final class BadRequestError extends ApiClientApiException {
     /**
      * The body of the response that triggered the exception.
      */
-    private final ErrorResponse body;
+    private final Object body;
 
-    public BadRequestError(ErrorResponse body) {
+    public BadRequestError(Object body) {
         super("BadRequestError", 400, body);
         this.body = body;
     }
 
-    public BadRequestError(ErrorResponse body, Response rawResponse) {
+    public BadRequestError(Object body, Response rawResponse) {
         super("BadRequestError", 400, body, rawResponse);
         this.body = body;
     }
@@ -27,7 +26,7 @@ public final class BadRequestError extends ApiClientApiException {
      * @return the body
      */
     @Override
-    public ErrorResponse body() {
+    public Object body() {
         return this.body;
     }
 }
