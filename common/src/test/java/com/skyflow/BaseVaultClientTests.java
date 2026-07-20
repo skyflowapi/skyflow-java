@@ -1,6 +1,7 @@
 package com.skyflow;
 
 import com.skyflow.config.BaseCredentials;
+import com.skyflow.config.BaseVaultConfig;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.utils.BaseConstants;
@@ -35,15 +36,15 @@ public class BaseVaultClientTests {
         }
     }
 
-    private BaseVaultClient<Object> newClient(BaseCredentials commonCredentials) {
-        return new BaseVaultClient<>(new Object(), commonCredentials);
+    private BaseVaultClient<BaseVaultConfig> newClient(BaseCredentials commonCredentials) {
+        return new BaseVaultClient<>(new BaseVaultConfig(), commonCredentials);
     }
 
     @Test
     public void testPrioritiseCredentials_prefersVaultSpecificCredentials() throws SkyflowException {
         BaseCredentials vaultSpecific = new BaseCredentials();
         vaultSpecific.setApiKey("test_api_key");
-        BaseVaultClient<Object> client = newClient(null);
+        BaseVaultClient<BaseVaultConfig> client = newClient(null);
 
         client.prioritiseCredentials(vaultSpecific);
 
@@ -54,7 +55,7 @@ public class BaseVaultClientTests {
     public void testPrioritiseCredentials_fallsBackToCommonCredentials() throws SkyflowException {
         BaseCredentials common = new BaseCredentials();
         common.setApiKey("common_api_key");
-        BaseVaultClient<Object> client = newClient(common);
+        BaseVaultClient<BaseVaultConfig> client = newClient(common);
 
         client.prioritiseCredentials(null);
 
@@ -65,7 +66,7 @@ public class BaseVaultClientTests {
     public void testPrioritiseCredentials_credentialChange_resetsTokenAndApiKey() throws SkyflowException {
         BaseCredentials credentialsA = new BaseCredentials();
         credentialsA.setToken("x.eyJleHAiOjk5OTk5OTk5OTl9.y");
-        BaseVaultClient<Object> client = newClient(null);
+        BaseVaultClient<BaseVaultConfig> client = newClient(null);
 
         client.prioritiseCredentials(credentialsA);
         client.token = "cached-token";
@@ -83,7 +84,7 @@ public class BaseVaultClientTests {
     public void testSetBearerToken_withApiKey() throws SkyflowException {
         BaseCredentials creds = new BaseCredentials();
         creds.setApiKey("sky-ab123-abcd1234cdef1234abcd4321cdef4321");
-        BaseVaultClient<Object> client = newClient(null);
+        BaseVaultClient<BaseVaultConfig> client = newClient(null);
 
         client.setBearerToken(creds);
 
@@ -94,7 +95,7 @@ public class BaseVaultClientTests {
     public void testSetBearerToken_generatesTokenWhenNull() throws SkyflowException {
         BaseCredentials creds = new BaseCredentials();
         creds.setToken("x.eyJleHAiOjk5OTk5OTk5OTl9.y");
-        BaseVaultClient<Object> client = newClient(null);
+        BaseVaultClient<BaseVaultConfig> client = newClient(null);
 
         client.setBearerToken(creds);
 
@@ -105,7 +106,7 @@ public class BaseVaultClientTests {
     public void testSetBearerToken_reusesValidNonExpiredToken() throws SkyflowException {
         BaseCredentials creds = new BaseCredentials();
         creds.setToken("x.eyJleHAiOjk5OTk5OTk5OTl9.y");
-        BaseVaultClient<Object> client = newClient(null);
+        BaseVaultClient<BaseVaultConfig> client = newClient(null);
 
         // First call: token=null → generates from creds.getToken()
         client.setBearerToken(creds);
@@ -118,7 +119,7 @@ public class BaseVaultClientTests {
 
     @Test
     public void testSetBearerToken_noCredentials_throwsEmptyCredentials() {
-        BaseVaultClient<Object> client = newClient(null);
+        BaseVaultClient<BaseVaultConfig> client = newClient(null);
         try {
             client.setBearerToken(null);
             Assert.fail("Should have thrown SkyflowException");
@@ -137,7 +138,7 @@ public class BaseVaultClientTests {
             fw.write(BaseConstants.ENV_CREDENTIALS_KEY_NAME + "={\"token\":\"env-token-value\"}\n");
         }
 
-        BaseVaultClient<Object> client = newClient(null);
+        BaseVaultClient<BaseVaultConfig> client = newClient(null);
         client.prioritiseCredentials(null);
 
         Assert.assertNotNull(client.finalCredentials);
@@ -154,7 +155,7 @@ public class BaseVaultClientTests {
             fw.write("SOME_OTHER_KEY=some_value\n");
         }
 
-        BaseVaultClient<Object> client = newClient(null);
+        BaseVaultClient<BaseVaultConfig> client = newClient(null);
         try {
             client.prioritiseCredentials(null);
             Assert.fail("Should have thrown SkyflowException");

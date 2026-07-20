@@ -260,9 +260,12 @@ public class BaseSkyflowTests {
         Assert.assertEquals(clusterID, result.getClusterId());
     }
 
-    private static class TestSkyflow extends BaseSkyflow<TestSkyflow, BaseVaultConfig, Object> {
+    private static class TestSkyflow extends BaseSkyflow<TestSkyflow, BaseVaultConfig> {
+        private final TestSkyflowClientBuilder builder;
+
         private TestSkyflow(TestSkyflowClientBuilder builder) {
             super(builder);
+            this.builder = builder;
         }
 
         static TestSkyflowClientBuilder builder() {
@@ -274,12 +277,19 @@ public class BaseSkyflowTests {
             return this;
         }
 
+        Object vault() throws SkyflowException {
+            return resolveOrThrow(this.builder.vaultClientsMap, null,
+                    ErrorLogs.VAULT_CONFIG_DOES_NOT_EXIST, ErrorMessage.VaultIdNotInConfigList);
+        }
+
         Object vault(String vaultId) throws SkyflowException {
             return resolveOrThrow(this.builder.vaultClientsMap, vaultId,
                     ErrorLogs.VAULT_CONFIG_DOES_NOT_EXIST, ErrorMessage.VaultIdNotInConfigList);
         }
 
-        private static class TestSkyflowClientBuilder extends BaseSkyflowClientBuilder<BaseVaultConfig, Object> {
+        private static class TestSkyflowClientBuilder extends BaseSkyflowClientBuilder<BaseVaultConfig> {
+            private final java.util.LinkedHashMap<String, Object> vaultClientsMap = new java.util.LinkedHashMap<>();
+
             @Override
             protected void validateVaultConfig(BaseVaultConfig vaultConfig) throws SkyflowException {
                 if (vaultConfig.getVaultId() == null || vaultConfig.getVaultId().trim().isEmpty()) {
@@ -295,6 +305,11 @@ public class BaseSkyflowTests {
             @Override
             protected void onVaultConfigUpdated(BaseVaultConfig updatedConfig) {
                 this.vaultClientsMap.put(updatedConfig.getVaultId(), new Object());
+            }
+
+            @Override
+            protected void onVaultConfigRemoved(String vaultId) {
+                this.vaultClientsMap.remove(vaultId);
             }
 
             @Override
