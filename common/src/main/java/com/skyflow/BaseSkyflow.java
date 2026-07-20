@@ -117,7 +117,7 @@ abstract class BaseSkyflow<Self extends BaseSkyflow, V extends BaseVaultConfig> 
             validateVaultConfig(vaultConfig);
             V vaultConfigCopy = cloneVaultConfig(vaultConfig);
             String vaultId = extractVaultId(vaultConfigCopy);
-            if (this.vaultConfigMap.containsKey(vaultId)) {
+            if (hasVaultClient(vaultId)) {
                 LogUtil.printErrorLog(BaseUtils.parameterizedString(
                         ErrorLogs.VAULT_CONFIG_EXISTS.getLog(), vaultId
                 ));
@@ -132,7 +132,7 @@ abstract class BaseSkyflow<Self extends BaseSkyflow, V extends BaseVaultConfig> 
             LogUtil.printInfoLog(InfoLogs.VALIDATING_VAULT_CONFIG.getLog());
             validateVaultConfig(vaultConfig);
             String vaultId = extractVaultId(vaultConfig);
-            if (!this.vaultConfigMap.containsKey(vaultId)) {
+            if (!hasVaultClient(vaultId)) {
                 LogUtil.printErrorLog(BaseUtils.parameterizedString(
                         ErrorLogs.VAULT_CONFIG_DOES_NOT_EXIST.getLog(), vaultId
                 ));
@@ -144,7 +144,7 @@ abstract class BaseSkyflow<Self extends BaseSkyflow, V extends BaseVaultConfig> 
         }
 
         protected final void removeVaultConfigTemplate(String vaultId) throws SkyflowException {
-            if (!this.vaultConfigMap.containsKey(vaultId)) {
+            if (!hasVaultClient(vaultId)) {
                 LogUtil.printErrorLog(BaseUtils.parameterizedString(ErrorLogs.VAULT_CONFIG_DOES_NOT_EXIST.getLog(), vaultId));
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.VaultIdNotInConfigList.getMessage());
             }
@@ -165,6 +165,8 @@ abstract class BaseSkyflow<Self extends BaseSkyflow, V extends BaseVaultConfig> 
         }
 
         protected abstract void validateVaultConfig(V vaultConfig) throws SkyflowException;
+
+        protected abstract boolean hasVaultClient(String vaultId);
 
         @SuppressWarnings("unchecked")
         protected final V cloneVaultConfig(V vaultConfig) {

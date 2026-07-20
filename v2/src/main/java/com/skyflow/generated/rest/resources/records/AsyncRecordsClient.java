@@ -5,24 +5,9 @@ package com.skyflow.generated.rest.resources.records;
 
 import com.skyflow.generated.rest.core.ClientOptions;
 import com.skyflow.generated.rest.core.RequestOptions;
-import com.skyflow.generated.rest.resources.records.requests.FileServiceUploadFileRequest;
-import com.skyflow.generated.rest.resources.records.requests.RecordServiceBatchOperationBody;
-import com.skyflow.generated.rest.resources.records.requests.RecordServiceBulkDeleteRecordBody;
-import com.skyflow.generated.rest.resources.records.requests.RecordServiceBulkGetRecordRequest;
-import com.skyflow.generated.rest.resources.records.requests.RecordServiceGetRecordRequest;
-import com.skyflow.generated.rest.resources.records.requests.RecordServiceInsertRecordBody;
-import com.skyflow.generated.rest.resources.records.requests.RecordServiceUpdateRecordBody;
-import com.skyflow.generated.rest.resources.records.requests.UploadFileV2Request;
-import com.skyflow.generated.rest.types.UploadFileV2Response;
-import com.skyflow.generated.rest.types.V1BatchOperationResponse;
-import com.skyflow.generated.rest.types.V1BulkDeleteRecordResponse;
-import com.skyflow.generated.rest.types.V1BulkGetRecordResponse;
-import com.skyflow.generated.rest.types.V1DeleteFileResponse;
-import com.skyflow.generated.rest.types.V1DeleteRecordResponse;
-import com.skyflow.generated.rest.types.V1FieldRecords;
-import com.skyflow.generated.rest.types.V1GetFileScanStatusResponse;
-import com.skyflow.generated.rest.types.V1InsertRecordResponse;
-import com.skyflow.generated.rest.types.V1UpdateRecordResponse;
+import com.skyflow.generated.rest.resources.records.requests.*;
+import com.skyflow.generated.rest.types.*;
+
 import java.io.File;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;

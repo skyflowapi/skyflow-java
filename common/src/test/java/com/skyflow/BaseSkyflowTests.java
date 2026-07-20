@@ -313,6 +313,11 @@ public class BaseSkyflowTests {
             }
 
             @Override
+            protected boolean hasVaultClient(String vaultId) {
+                return this.vaultClientsMap.containsKey(vaultId);
+            }
+
+            @Override
             protected void onCredentialsUpdated(Credentials credentials) {
                 // no-op: this test double only exercises template orchestration, not propagation
             }
