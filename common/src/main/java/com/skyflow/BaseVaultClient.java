@@ -3,6 +3,7 @@ package com.skyflow;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.skyflow.config.BaseCredentials;
+import com.skyflow.config.BaseVaultConfig;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
@@ -24,7 +25,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-class BaseVaultClient<V> {
+class BaseVaultClient<V extends BaseVaultConfig> {
     protected V vaultConfig;
     protected OkHttpClient sharedHttpClient;
     protected String currentVaultURL;
