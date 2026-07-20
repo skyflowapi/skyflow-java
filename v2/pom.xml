@@ -11,7 +11,7 @@
     </parent>
 
     <artifactId>skyflow-java</artifactId>
-    <version>1.15.1-dev.dd39149</version>
+    <version>1.15.1-dev.5bf1bec</version>
     <groupId>com.skyflow</groupId>
 
     <properties>
