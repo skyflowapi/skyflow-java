@@ -67,7 +67,7 @@ jobs:
         if: ${{ inputs.tag == 'beta' || inputs.tag == 'public' }} 
         run: |
           TAG_COMMIT=$(git rev-list -n 1 ${{ github.ref_name }})
-          BRANCH_NAME=$(git branch -r --contains $TAG_COMMIT | grep -o 'origin/.*' | sed 's|origin/||' | head -n 1)
+          BRANCH_NAME=$(git for-each-ref --points-at="$TAG_COMMIT" --format='%(refname:short)' refs/remotes/origin | grep -v '/HEAD$' | sed 's#^origin/##' | head -n 1)
           if [ -z "$BRANCH_NAME" ]; then
             echo "Error: Could not resolve branch for the tag."
             exit 1
