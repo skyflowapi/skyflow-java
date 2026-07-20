@@ -3,11 +3,12 @@
  */
 package com.skyflow.generated.rest.core;
 
-import java.io.InputStream;
-import java.util.Objects;
 import okhttp3.MediaType;
 import okhttp3.RequestBody;
 import org.jetbrains.annotations.Nullable;
+
+import java.io.InputStream;
+import java.util.Objects;
 
 /**
  * Represents a file stream with associated metadata for file uploads.

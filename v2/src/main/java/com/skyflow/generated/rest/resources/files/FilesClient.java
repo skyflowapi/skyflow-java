@@ -5,17 +5,7 @@ package com.skyflow.generated.rest.resources.files;
 
 import com.skyflow.generated.rest.core.ClientOptions;
 import com.skyflow.generated.rest.core.RequestOptions;
-import com.skyflow.generated.rest.resources.files.requests.DeidentifyFileAudioRequestDeidentifyAudio;
-import com.skyflow.generated.rest.resources.files.requests.DeidentifyFileDocumentPdfRequestDeidentifyPdf;
-import com.skyflow.generated.rest.resources.files.requests.DeidentifyFileImageRequestDeidentifyImage;
-import com.skyflow.generated.rest.resources.files.requests.DeidentifyFileRequest;
-import com.skyflow.generated.rest.resources.files.requests.DeidentifyFileRequestDeidentifyDocument;
-import com.skyflow.generated.rest.resources.files.requests.DeidentifyFileRequestDeidentifyPresentation;
-import com.skyflow.generated.rest.resources.files.requests.DeidentifyFileRequestDeidentifySpreadsheet;
-import com.skyflow.generated.rest.resources.files.requests.DeidentifyFileRequestDeidentifyStructuredText;
-import com.skyflow.generated.rest.resources.files.requests.DeidentifyFileRequestDeidentifyText;
-import com.skyflow.generated.rest.resources.files.requests.GetRunRequest;
-import com.skyflow.generated.rest.resources.files.requests.ReidentifyFileRequestReidentifyFile;
+import com.skyflow.generated.rest.resources.files.requests.*;
 import com.skyflow.generated.rest.types.DeidentifyFileResponse;
 import com.skyflow.generated.rest.types.DetectRunsResponse;
 import com.skyflow.generated.rest.types.ReidentifyFileResponse;

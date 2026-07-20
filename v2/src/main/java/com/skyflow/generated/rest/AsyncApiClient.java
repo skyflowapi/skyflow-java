@@ -13,6 +13,7 @@ import com.skyflow.generated.rest.resources.query.AsyncQueryClient;
 import com.skyflow.generated.rest.resources.records.AsyncRecordsClient;
 import com.skyflow.generated.rest.resources.strings.AsyncStringsClient;
 import com.skyflow.generated.rest.resources.tokens.AsyncTokensClient;
+
 import java.util.function.Supplier;
 
 public class AsyncApiClient {

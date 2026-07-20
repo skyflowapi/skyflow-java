@@ -3,25 +3,16 @@
  */
 package com.skyflow.generated.rest.resources.files.requests;
 
-import com.fasterxml.jackson.annotation.JsonAnyGetter;
-import com.fasterxml.jackson.annotation.JsonAnySetter;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonSetter;
-import com.fasterxml.jackson.annotation.Nulls;
+import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.skyflow.generated.rest.core.ObjectMappers;
 import com.skyflow.generated.rest.resources.files.types.DeidentifyFileDocumentPdfRequestDeidentifyPdfEntityTypesItem;
 import com.skyflow.generated.rest.types.FileDataDeidentifyPdf;
 import com.skyflow.generated.rest.types.TokenTypeMapping;
 import com.skyflow.generated.rest.types.Transformations;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.*;
 
 @JsonInclude(JsonInclude.Include.NON_ABSENT)
 @JsonDeserialize(builder = DeidentifyFileDocumentPdfRequestDeidentifyPdf.Builder.class)
