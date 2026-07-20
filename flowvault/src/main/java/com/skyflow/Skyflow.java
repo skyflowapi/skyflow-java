@@ -69,6 +69,11 @@ public final class Skyflow extends BaseSkyflow<Skyflow, VaultConfig> {
         }
 
         @Override
+        protected boolean hasVaultClient(String vaultId) {
+            return this.vaultClientsMap.containsKey(vaultId);
+        }
+
+        @Override
         protected void onCredentialsUpdated(Credentials credentials) throws SkyflowException {
             for (VaultController vault : this.vaultClientsMap.values()) {
                 vault.setCommonCredentials(credentials);
