@@ -15,7 +15,7 @@ import com.skyflow.errors.SkyflowException;
  *   <li>{@code timeout}                  – overall call timeout in <b>seconds</b> (bounds the whole
  *       request including retries and backoff). Default: 60.</li>
  *   <li>{@code maxRetries}               – retry attempts after the first failure (retries on HTTP
- *       408 / 429 / 5xx). Default: 3.</li>
+ *       408 / 429 / 5xx). Default: 0 — retries are OFF unless you set this (avoids auto-retrying non-idempotent writes).</li>
  *   <li>{@code initialRetryDelay}  – base backoff before the first retry, in <b>milliseconds</b>.
  *       Default: 500.</li>
  *   <li>{@code maxRetryDelay}      – cap on the (exponentially growing) backoff, in

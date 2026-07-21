@@ -54,7 +54,7 @@ public class VaultClient {
     private Long commonMaxRetryDelay;
     // SDK defaults, used when neither the vault-level nor the client-wide value is set.
     private static final int DEFAULT_TIMEOUT_SECONDS = 60;
-    private static final int DEFAULT_MAX_RETRIES = 3;
+    private static final int DEFAULT_MAX_RETRIES = 0; // retries OFF by default (opt-in) so non-idempotent writes aren't auto-retried
     private static final long DEFAULT_INITIAL_RETRY_DELAY_MILLIS = 500L;
     private static final long DEFAULT_MAX_RETRY_DELAY_MILLIS = 2000L;
 

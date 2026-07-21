@@ -136,7 +136,7 @@ public class VaultClientHttpConfigTests {
         client.setBearerToken();
 
         RetryInterceptor ri = retryInterceptor(client);
-        Assert.assertEquals(3, intField(ri, "maxRetries"));                 // SDK default
+        Assert.assertEquals(0, intField(ri, "maxRetries"));                 // SDK default: retries off (opt-in)
         Assert.assertEquals(500L, durationFieldMillis(ri, "initialRetryDelay"));
         Assert.assertEquals(2000L, durationFieldMillis(ri, "maxRetryDelay"));
     }
