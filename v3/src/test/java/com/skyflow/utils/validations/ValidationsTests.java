@@ -75,7 +75,8 @@ public class ValidationsTests {
     }
 
     @Test
-    public void validateInsertRequest_upsertAtRecordLevel_throws() {
+    public void validateInsertRequest_upsertAtRecordLevelWithTableAtRequestLevel_deferredToBackend() throws SkyflowException {
+        // Upsert placement is no longer validated client-side; the backend owns the rule.
         ArrayList<InsertRecord> records = new ArrayList<>();
         records.add(InsertRecord.builder()
                 .table(null)
@@ -85,12 +86,12 @@ public class ValidationsTests {
                 .table("requestTable")
                 .records(records)
                 .build();
-        assertSkyflowException(() -> Validations.validateInsertRequest(request),
-                ErrorMessage.UpsertTableRequestAtRecordLevel.getMessage());
+        Validations.validateInsertRequest(request);
     }
 
     @Test
-    public void validateInsertRequest_upsertAtRequestLevelWithoutTable_throws() {
+    public void validateInsertRequest_upsertAtRequestLevelWithTableAtRecordLevel_deferredToBackend() throws SkyflowException {
+        // Upsert placement is no longer validated client-side; the backend owns the rule.
         ArrayList<InsertRecord> records = new ArrayList<>();
         records.add(InsertRecord.builder().table("recordTable").build());
         InsertRequest request = InsertRequest.builder()
@@ -98,8 +99,7 @@ public class ValidationsTests {
                 .upsert(Collections.singletonList("key"))
                 .records(records)
                 .build();
-        assertSkyflowException(() -> Validations.validateInsertRequest(request),
-                ErrorMessage.UpsertTableRequestAtRequestLevel.getMessage());
+        Validations.validateInsertRequest(request);
     }
 
     @Test

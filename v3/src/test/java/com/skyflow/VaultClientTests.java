@@ -280,6 +280,75 @@ public class VaultClientTests {
     }
 
     @Test
+    public void testUpsertAtRequestLevelWithoutUpsertTypeOmitsUpdateType() {
+        // When upsertType is not specified, the SDK must not send updateType so the
+        // backend applies its default (UPDATE).
+        Map<String, Object> data = new HashMap<>();
+        data.put("key", "value");
+        InsertRecord record = InsertRecord.builder().data(data).build();
+        ArrayList<InsertRecord> records = new ArrayList<>();
+        records.add(record);
+
+        com.skyflow.vault.data.InsertRequest request =
+                com.skyflow.vault.data.InsertRequest.builder()
+                        .records(records)
+                        .upsert(Arrays.asList("col1"))
+                        .build();
+
+        V1InsertRequest result = vaultClient.getBulkInsertRequestBody(request, vaultConfig);
+        Assert.assertNotNull(result.getUpsert());
+        Assert.assertEquals("col1", result.getUpsert().get().getUniqueColumns().get().get(0));
+        Assert.assertFalse(result.getUpsert().get().getUpdateType().isPresent());
+    }
+
+    @Test
+    public void testUpsertAtRecordLevelWithoutUpsertTypeOmitsUpdateType() {
+        // When upsertType is not specified at the record level, the SDK must not send
+        // updateType so the backend applies its default (UPDATE).
+        Map<String, Object> data = new HashMap<>();
+        data.put("key", "value");
+        InsertRecord record = InsertRecord.builder().data(data).upsert(Arrays.asList("col2")).build();
+        ArrayList<InsertRecord> records = new ArrayList<>();
+        records.add(record);
+
+        com.skyflow.vault.data.InsertRequest request =
+                com.skyflow.vault.data.InsertRequest.builder()
+                        .records(records)
+                        .build();
+
+        V1InsertRequest result = vaultClient.getBulkInsertRequestBody(request, vaultConfig);
+        Assert.assertNotNull(result.getRecords().get().get(0).getUpsert());
+        Assert.assertEquals("col2", result.getRecords().get().get(0).getUpsert().get().getUniqueColumns().get().get(0));
+        Assert.assertFalse(result.getRecords().get().get(0).getUpsert().get().getUpdateType().isPresent());
+    }
+
+    @Test
+    public void testUpsertTypeAtBothRequestAndRecordLevelSerializesBoth() {
+        // The SDK serializes updateType wherever it is set; the backend rejects the
+        // both-levels combination. This asserts the SDK does not silently drop either.
+        Map<String, Object> data = new HashMap<>();
+        data.put("key", "value");
+        InsertRecord record = InsertRecord.builder()
+                .data(data)
+                .upsert(Arrays.asList("col2"))
+                .upsertType(UpsertType.UPDATE)
+                .build();
+        ArrayList<InsertRecord> records = new ArrayList<>();
+        records.add(record);
+
+        com.skyflow.vault.data.InsertRequest request =
+                com.skyflow.vault.data.InsertRequest.builder()
+                        .records(records)
+                        .upsert(Arrays.asList("col1"))
+                        .upsertType(UpsertType.REPLACE)
+                        .build();
+
+        V1InsertRequest result = vaultClient.getBulkInsertRequestBody(request, vaultConfig);
+        Assert.assertEquals("REPLACE", result.getUpsert().get().getUpdateType().get().getEnumValue().name());
+        Assert.assertEquals("UPDATE", result.getRecords().get().get(0).getUpsert().get().getUpdateType().get().getEnumValue().name());
+    }
+
+    @Test
     public void testSetBearerTokenWhenTokenIsNull() throws Exception {
         Credentials credentials = new Credentials();
         credentials.setApiKey("sky-ab123-abcd1234cdef1234abcd4321cdef4321");
