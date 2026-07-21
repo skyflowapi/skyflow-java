@@ -127,5 +127,15 @@ public final class V1FlowDeleteTokenRequest {
         public V1FlowDeleteTokenRequest build() {
             return new V1FlowDeleteTokenRequest(vaultId, tokens, additionalProperties);
         }
+
+        public Builder additionalProperty(String key, Object value) {
+            this.additionalProperties.put(key, value);
+            return this;
+        }
+
+        public Builder additionalProperties(Map<String, Object> additionalProperties) {
+            this.additionalProperties.putAll(additionalProperties);
+            return this;
+        }
     }
 }

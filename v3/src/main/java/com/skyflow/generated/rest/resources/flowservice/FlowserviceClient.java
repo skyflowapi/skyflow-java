@@ -43,6 +43,10 @@ public class FlowserviceClient {
         return this.rawClient.delete().body();
     }
 
+    public V1DeleteResponse delete(RequestOptions requestOptions) {
+        return this.rawClient.delete(requestOptions).body();
+    }
+
     public V1DeleteResponse delete(V1DeleteRequest request) {
         return this.rawClient.delete(request).body();
     }
@@ -53,6 +57,10 @@ public class FlowserviceClient {
 
     public V1GetResponse get() {
         return this.rawClient.get().body();
+    }
+
+    public V1GetResponse get(RequestOptions requestOptions) {
+        return this.rawClient.get(requestOptions).body();
     }
 
     public V1GetResponse get(V1GetRequest request) {
@@ -67,6 +75,10 @@ public class FlowserviceClient {
         return this.rawClient.insert().body();
     }
 
+    public V1InsertResponse insert(RequestOptions requestOptions) {
+        return this.rawClient.insert(requestOptions).body();
+    }
+
     public V1InsertResponse insert(V1InsertRequest request) {
         return this.rawClient.insert(request).body();
     }
@@ -77,6 +89,10 @@ public class FlowserviceClient {
 
     public V1UpdateResponse update() {
         return this.rawClient.update().body();
+    }
+
+    public V1UpdateResponse update(RequestOptions requestOptions) {
+        return this.rawClient.update(requestOptions).body();
     }
 
     public V1UpdateResponse update(V1UpdateRequest request) {
@@ -91,6 +107,10 @@ public class FlowserviceClient {
         return this.rawClient.deletetoken().body();
     }
 
+    public V1FlowDeleteTokenResponse deletetoken(RequestOptions requestOptions) {
+        return this.rawClient.deletetoken(requestOptions).body();
+    }
+
     public V1FlowDeleteTokenResponse deletetoken(V1FlowDeleteTokenRequest request) {
         return this.rawClient.deletetoken(request).body();
     }
@@ -101,6 +121,10 @@ public class FlowserviceClient {
 
     public V1FlowDetokenizeResponse detokenize() {
         return this.rawClient.detokenize().body();
+    }
+
+    public V1FlowDetokenizeResponse detokenize(RequestOptions requestOptions) {
+        return this.rawClient.detokenize(requestOptions).body();
     }
 
     public V1FlowDetokenizeResponse detokenize(V1FlowDetokenizeRequest request) {
@@ -115,6 +139,10 @@ public class FlowserviceClient {
         return this.rawClient.tokenize().body();
     }
 
+    public V1FlowTokenizeResponse tokenize(RequestOptions requestOptions) {
+        return this.rawClient.tokenize(requestOptions).body();
+    }
+
     public V1FlowTokenizeResponse tokenize(V1FlowTokenizeRequest request) {
         return this.rawClient.tokenize(request).body();
     }
@@ -125,6 +153,10 @@ public class FlowserviceClient {
 
     public V1FlowVaultMetricsResponse flowvaultmetrics() {
         return this.rawClient.flowvaultmetrics().body();
+    }
+
+    public V1FlowVaultMetricsResponse flowvaultmetrics(RequestOptions requestOptions) {
+        return this.rawClient.flowvaultmetrics(requestOptions).body();
     }
 
     public V1FlowVaultMetricsResponse flowvaultmetrics(V1FlowVaultMetricsRequest request) {

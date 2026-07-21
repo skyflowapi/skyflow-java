@@ -186,5 +186,15 @@ public final class V1UpdateRequest {
         public V1UpdateRequest build() {
             return new V1UpdateRequest(vaultId, tableName, records, updateType, additionalProperties);
         }
+
+        public Builder additionalProperty(String key, Object value) {
+            this.additionalProperties.put(key, value);
+            return this;
+        }
+
+        public Builder additionalProperties(Map<String, Object> additionalProperties) {
+            this.additionalProperties.putAll(additionalProperties);
+            return this;
+        }
     }
 }

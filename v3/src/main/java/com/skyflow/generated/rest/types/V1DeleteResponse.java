@@ -98,5 +98,15 @@ public final class V1DeleteResponse {
         public V1DeleteResponse build() {
             return new V1DeleteResponse(records, additionalProperties);
         }
+
+        public Builder additionalProperty(String key, Object value) {
+            this.additionalProperties.put(key, value);
+            return this;
+        }
+
+        public Builder additionalProperties(Map<String, Object> additionalProperties) {
+            this.additionalProperties.putAll(additionalProperties);
+            return this;
+        }
     }
 }

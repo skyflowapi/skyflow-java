@@ -36,6 +36,13 @@ public class AsyncRecordsClient {
     /**
      * Executes a query on the specified vault.
      */
+    public CompletableFuture<V1ExecuteQueryResponse> flowServiceExecuteQuery(RequestOptions requestOptions) {
+        return this.rawClient.flowServiceExecuteQuery(requestOptions).thenApply(response -> response.body());
+    }
+
+    /**
+     * Executes a query on the specified vault.
+     */
     public CompletableFuture<V1ExecuteQueryResponse> flowServiceExecuteQuery(V1ExecuteQueryRequest request) {
         return this.rawClient.flowServiceExecuteQuery(request).thenApply(response -> response.body());
     }

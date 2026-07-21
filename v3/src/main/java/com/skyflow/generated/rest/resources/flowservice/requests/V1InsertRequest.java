@@ -186,5 +186,15 @@ public final class V1InsertRequest {
         public V1InsertRequest build() {
             return new V1InsertRequest(vaultId, tableName, records, upsert, additionalProperties);
         }
+
+        public Builder additionalProperty(String key, Object value) {
+            this.additionalProperties.put(key, value);
+            return this;
+        }
+
+        public Builder additionalProperties(Map<String, Object> additionalProperties) {
+            this.additionalProperties.putAll(additionalProperties);
+            return this;
+        }
     }
 }

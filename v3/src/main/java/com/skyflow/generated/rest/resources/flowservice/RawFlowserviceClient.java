@@ -11,6 +11,7 @@ import com.skyflow.generated.rest.core.ClientOptions;
 import com.skyflow.generated.rest.core.MediaTypes;
 import com.skyflow.generated.rest.core.ObjectMappers;
 import com.skyflow.generated.rest.core.RequestOptions;
+import com.skyflow.generated.rest.core.RetryInterceptor;
 import com.skyflow.generated.rest.resources.flowservice.requests.V1DeleteRequest;
 import com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDeleteTokenRequest;
 import com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest;
@@ -47,15 +48,23 @@ public class RawFlowserviceClient {
         return delete(V1DeleteRequest.builder().build());
     }
 
+    public ApiClientHttpResponse<V1DeleteResponse> delete(RequestOptions requestOptions) {
+        return delete(V1DeleteRequest.builder().build(), requestOptions);
+    }
+
     public ApiClientHttpResponse<V1DeleteResponse> delete(V1DeleteRequest request) {
         return delete(request, null);
     }
 
     public ApiClientHttpResponse<V1DeleteResponse> delete(V1DeleteRequest request, RequestOptions requestOptions) {
-        HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
+        HttpUrl.Builder httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
                 .newBuilder()
-                .addPathSegments("v2/records/delete")
-                .build();
+                .addPathSegments("v2/records/delete");
+        if (requestOptions != null) {
+            requestOptions.getQueryParameters().forEach((_key, _value) -> {
+                httpUrl.addQueryParameter(_key, _value);
+            });
+        }
         RequestBody body;
         try {
             body = RequestBody.create(
@@ -64,7 +73,7 @@ public class RawFlowserviceClient {
             throw new ApiClientException("Failed to serialize request", e);
         }
         Request okhttpRequest = new Request.Builder()
-                .url(httpUrl)
+                .url(httpUrl.build())
                 .method("POST", body)
                 .headers(Headers.of(clientOptions.headers(requestOptions)))
                 .addHeader("Content-Type", "application/json")
@@ -74,18 +83,27 @@ public class RawFlowserviceClient {
         if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
             client = clientOptions.httpClientWithTimeout(requestOptions);
         }
+        if (requestOptions != null && requestOptions.getMaxRetries().isPresent()) {
+            okhttpRequest = okhttpRequest
+                    .newBuilder()
+                    .tag(
+                            RetryInterceptor.MaxRetriesOverride.class,
+                            new RetryInterceptor.MaxRetriesOverride(
+                                    requestOptions.getMaxRetries().get()))
+                    .build();
+        }
         try (Response response = client.newCall(okhttpRequest).execute()) {
             ResponseBody responseBody = response.body();
+            String responseBodyString = responseBody != null ? responseBody.string() : "{}";
             if (response.isSuccessful()) {
                 return new ApiClientHttpResponse<>(
-                        ObjectMappers.JSON_MAPPER.readValue(responseBody.string(), V1DeleteResponse.class), response);
+                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, V1DeleteResponse.class), response);
             }
-            String responseBodyString = responseBody != null ? responseBody.string() : "{}";
+            Object errorBody = ObjectMappers.parseErrorBody(responseBodyString);
             throw new ApiClientApiException(
-                    "Error with status code " + response.code(),
-                    response.code(),
-                    ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                    response);
+                    "Error with status code " + response.code(), response.code(), errorBody, response);
+        } catch (JsonProcessingException e) {
+            throw new ApiClientException("Failed to deserialize response: " + e.getMessage(), e);
         } catch (IOException e) {
             throw new ApiClientException("Network error executing HTTP request", e);
         }
@@ -95,15 +113,23 @@ public class RawFlowserviceClient {
         return get(V1GetRequest.builder().build());
     }
 
+    public ApiClientHttpResponse<V1GetResponse> get(RequestOptions requestOptions) {
+        return get(V1GetRequest.builder().build(), requestOptions);
+    }
+
     public ApiClientHttpResponse<V1GetResponse> get(V1GetRequest request) {
         return get(request, null);
     }
 
     public ApiClientHttpResponse<V1GetResponse> get(V1GetRequest request, RequestOptions requestOptions) {
-        HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
+        HttpUrl.Builder httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
                 .newBuilder()
-                .addPathSegments("v2/records/get")
-                .build();
+                .addPathSegments("v2/records/get");
+        if (requestOptions != null) {
+            requestOptions.getQueryParameters().forEach((_key, _value) -> {
+                httpUrl.addQueryParameter(_key, _value);
+            });
+        }
         RequestBody body;
         try {
             body = RequestBody.create(
@@ -112,7 +138,7 @@ public class RawFlowserviceClient {
             throw new ApiClientException("Failed to serialize request", e);
         }
         Request okhttpRequest = new Request.Builder()
-                .url(httpUrl)
+                .url(httpUrl.build())
                 .method("POST", body)
                 .headers(Headers.of(clientOptions.headers(requestOptions)))
                 .addHeader("Content-Type", "application/json")
@@ -122,18 +148,27 @@ public class RawFlowserviceClient {
         if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
             client = clientOptions.httpClientWithTimeout(requestOptions);
         }
+        if (requestOptions != null && requestOptions.getMaxRetries().isPresent()) {
+            okhttpRequest = okhttpRequest
+                    .newBuilder()
+                    .tag(
+                            RetryInterceptor.MaxRetriesOverride.class,
+                            new RetryInterceptor.MaxRetriesOverride(
+                                    requestOptions.getMaxRetries().get()))
+                    .build();
+        }
         try (Response response = client.newCall(okhttpRequest).execute()) {
             ResponseBody responseBody = response.body();
+            String responseBodyString = responseBody != null ? responseBody.string() : "{}";
             if (response.isSuccessful()) {
                 return new ApiClientHttpResponse<>(
-                        ObjectMappers.JSON_MAPPER.readValue(responseBody.string(), V1GetResponse.class), response);
+                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, V1GetResponse.class), response);
             }
-            String responseBodyString = responseBody != null ? responseBody.string() : "{}";
+            Object errorBody = ObjectMappers.parseErrorBody(responseBodyString);
             throw new ApiClientApiException(
-                    "Error with status code " + response.code(),
-                    response.code(),
-                    ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                    response);
+                    "Error with status code " + response.code(), response.code(), errorBody, response);
+        } catch (JsonProcessingException e) {
+            throw new ApiClientException("Failed to deserialize response: " + e.getMessage(), e);
         } catch (IOException e) {
             throw new ApiClientException("Network error executing HTTP request", e);
         }
@@ -143,15 +178,23 @@ public class RawFlowserviceClient {
         return insert(V1InsertRequest.builder().build());
     }
 
+    public ApiClientHttpResponse<V1InsertResponse> insert(RequestOptions requestOptions) {
+        return insert(V1InsertRequest.builder().build(), requestOptions);
+    }
+
     public ApiClientHttpResponse<V1InsertResponse> insert(V1InsertRequest request) {
         return insert(request, null);
     }
 
     public ApiClientHttpResponse<V1InsertResponse> insert(V1InsertRequest request, RequestOptions requestOptions) {
-        HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
+        HttpUrl.Builder httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
                 .newBuilder()
-                .addPathSegments("v2/records/insert")
-                .build();
+                .addPathSegments("v2/records/insert");
+        if (requestOptions != null) {
+            requestOptions.getQueryParameters().forEach((_key, _value) -> {
+                httpUrl.addQueryParameter(_key, _value);
+            });
+        }
         RequestBody body;
         try {
             body = RequestBody.create(
@@ -160,7 +203,7 @@ public class RawFlowserviceClient {
             throw new ApiClientException("Failed to serialize request", e);
         }
         Request okhttpRequest = new Request.Builder()
-                .url(httpUrl)
+                .url(httpUrl.build())
                 .method("POST", body)
                 .headers(Headers.of(clientOptions.headers(requestOptions)))
                 .addHeader("Content-Type", "application/json")
@@ -170,18 +213,27 @@ public class RawFlowserviceClient {
         if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
             client = clientOptions.httpClientWithTimeout(requestOptions);
         }
+        if (requestOptions != null && requestOptions.getMaxRetries().isPresent()) {
+            okhttpRequest = okhttpRequest
+                    .newBuilder()
+                    .tag(
+                            RetryInterceptor.MaxRetriesOverride.class,
+                            new RetryInterceptor.MaxRetriesOverride(
+                                    requestOptions.getMaxRetries().get()))
+                    .build();
+        }
         try (Response response = client.newCall(okhttpRequest).execute()) {
             ResponseBody responseBody = response.body();
+            String responseBodyString = responseBody != null ? responseBody.string() : "{}";
             if (response.isSuccessful()) {
                 return new ApiClientHttpResponse<>(
-                        ObjectMappers.JSON_MAPPER.readValue(responseBody.string(), V1InsertResponse.class), response);
+                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, V1InsertResponse.class), response);
             }
-            String responseBodyString = responseBody != null ? responseBody.string() : "{}";
+            Object errorBody = ObjectMappers.parseErrorBody(responseBodyString);
             throw new ApiClientApiException(
-                    "Error with status code " + response.code(),
-                    response.code(),
-                    ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                    response);
+                    "Error with status code " + response.code(), response.code(), errorBody, response);
+        } catch (JsonProcessingException e) {
+            throw new ApiClientException("Failed to deserialize response: " + e.getMessage(), e);
         } catch (IOException e) {
             throw new ApiClientException("Network error executing HTTP request", e);
         }
@@ -191,15 +243,23 @@ public class RawFlowserviceClient {
         return update(V1UpdateRequest.builder().build());
     }
 
+    public ApiClientHttpResponse<V1UpdateResponse> update(RequestOptions requestOptions) {
+        return update(V1UpdateRequest.builder().build(), requestOptions);
+    }
+
     public ApiClientHttpResponse<V1UpdateResponse> update(V1UpdateRequest request) {
         return update(request, null);
     }
 
     public ApiClientHttpResponse<V1UpdateResponse> update(V1UpdateRequest request, RequestOptions requestOptions) {
-        HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
+        HttpUrl.Builder httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
                 .newBuilder()
-                .addPathSegments("v2/records/update")
-                .build();
+                .addPathSegments("v2/records/update");
+        if (requestOptions != null) {
+            requestOptions.getQueryParameters().forEach((_key, _value) -> {
+                httpUrl.addQueryParameter(_key, _value);
+            });
+        }
         RequestBody body;
         try {
             body = RequestBody.create(
@@ -208,7 +268,7 @@ public class RawFlowserviceClient {
             throw new ApiClientException("Failed to serialize request", e);
         }
         Request okhttpRequest = new Request.Builder()
-                .url(httpUrl)
+                .url(httpUrl.build())
                 .method("POST", body)
                 .headers(Headers.of(clientOptions.headers(requestOptions)))
                 .addHeader("Content-Type", "application/json")
@@ -218,18 +278,27 @@ public class RawFlowserviceClient {
         if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
             client = clientOptions.httpClientWithTimeout(requestOptions);
         }
+        if (requestOptions != null && requestOptions.getMaxRetries().isPresent()) {
+            okhttpRequest = okhttpRequest
+                    .newBuilder()
+                    .tag(
+                            RetryInterceptor.MaxRetriesOverride.class,
+                            new RetryInterceptor.MaxRetriesOverride(
+                                    requestOptions.getMaxRetries().get()))
+                    .build();
+        }
         try (Response response = client.newCall(okhttpRequest).execute()) {
             ResponseBody responseBody = response.body();
+            String responseBodyString = responseBody != null ? responseBody.string() : "{}";
             if (response.isSuccessful()) {
                 return new ApiClientHttpResponse<>(
-                        ObjectMappers.JSON_MAPPER.readValue(responseBody.string(), V1UpdateResponse.class), response);
+                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, V1UpdateResponse.class), response);
             }
-            String responseBodyString = responseBody != null ? responseBody.string() : "{}";
+            Object errorBody = ObjectMappers.parseErrorBody(responseBodyString);
             throw new ApiClientApiException(
-                    "Error with status code " + response.code(),
-                    response.code(),
-                    ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                    response);
+                    "Error with status code " + response.code(), response.code(), errorBody, response);
+        } catch (JsonProcessingException e) {
+            throw new ApiClientException("Failed to deserialize response: " + e.getMessage(), e);
         } catch (IOException e) {
             throw new ApiClientException("Network error executing HTTP request", e);
         }
@@ -239,16 +308,24 @@ public class RawFlowserviceClient {
         return deletetoken(V1FlowDeleteTokenRequest.builder().build());
     }
 
+    public ApiClientHttpResponse<V1FlowDeleteTokenResponse> deletetoken(RequestOptions requestOptions) {
+        return deletetoken(V1FlowDeleteTokenRequest.builder().build(), requestOptions);
+    }
+
     public ApiClientHttpResponse<V1FlowDeleteTokenResponse> deletetoken(V1FlowDeleteTokenRequest request) {
         return deletetoken(request, null);
     }
 
     public ApiClientHttpResponse<V1FlowDeleteTokenResponse> deletetoken(
             V1FlowDeleteTokenRequest request, RequestOptions requestOptions) {
-        HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
+        HttpUrl.Builder httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
                 .newBuilder()
-                .addPathSegments("v2/tokens/delete")
-                .build();
+                .addPathSegments("v2/tokens/delete");
+        if (requestOptions != null) {
+            requestOptions.getQueryParameters().forEach((_key, _value) -> {
+                httpUrl.addQueryParameter(_key, _value);
+            });
+        }
         RequestBody body;
         try {
             body = RequestBody.create(
@@ -257,7 +334,7 @@ public class RawFlowserviceClient {
             throw new ApiClientException("Failed to serialize request", e);
         }
         Request okhttpRequest = new Request.Builder()
-                .url(httpUrl)
+                .url(httpUrl.build())
                 .method("POST", body)
                 .headers(Headers.of(clientOptions.headers(requestOptions)))
                 .addHeader("Content-Type", "application/json")
@@ -267,19 +344,28 @@ public class RawFlowserviceClient {
         if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
             client = clientOptions.httpClientWithTimeout(requestOptions);
         }
+        if (requestOptions != null && requestOptions.getMaxRetries().isPresent()) {
+            okhttpRequest = okhttpRequest
+                    .newBuilder()
+                    .tag(
+                            RetryInterceptor.MaxRetriesOverride.class,
+                            new RetryInterceptor.MaxRetriesOverride(
+                                    requestOptions.getMaxRetries().get()))
+                    .build();
+        }
         try (Response response = client.newCall(okhttpRequest).execute()) {
             ResponseBody responseBody = response.body();
+            String responseBodyString = responseBody != null ? responseBody.string() : "{}";
             if (response.isSuccessful()) {
                 return new ApiClientHttpResponse<>(
-                        ObjectMappers.JSON_MAPPER.readValue(responseBody.string(), V1FlowDeleteTokenResponse.class),
+                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, V1FlowDeleteTokenResponse.class),
                         response);
             }
-            String responseBodyString = responseBody != null ? responseBody.string() : "{}";
+            Object errorBody = ObjectMappers.parseErrorBody(responseBodyString);
             throw new ApiClientApiException(
-                    "Error with status code " + response.code(),
-                    response.code(),
-                    ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                    response);
+                    "Error with status code " + response.code(), response.code(), errorBody, response);
+        } catch (JsonProcessingException e) {
+            throw new ApiClientException("Failed to deserialize response: " + e.getMessage(), e);
         } catch (IOException e) {
             throw new ApiClientException("Network error executing HTTP request", e);
         }
@@ -289,16 +375,24 @@ public class RawFlowserviceClient {
         return detokenize(V1FlowDetokenizeRequest.builder().build());
     }
 
+    public ApiClientHttpResponse<V1FlowDetokenizeResponse> detokenize(RequestOptions requestOptions) {
+        return detokenize(V1FlowDetokenizeRequest.builder().build(), requestOptions);
+    }
+
     public ApiClientHttpResponse<V1FlowDetokenizeResponse> detokenize(V1FlowDetokenizeRequest request) {
         return detokenize(request, null);
     }
 
     public ApiClientHttpResponse<V1FlowDetokenizeResponse> detokenize(
             V1FlowDetokenizeRequest request, RequestOptions requestOptions) {
-        HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
+        HttpUrl.Builder httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
                 .newBuilder()
-                .addPathSegments("v2/tokens/detokenize")
-                .build();
+                .addPathSegments("v2/tokens/detokenize");
+        if (requestOptions != null) {
+            requestOptions.getQueryParameters().forEach((_key, _value) -> {
+                httpUrl.addQueryParameter(_key, _value);
+            });
+        }
         RequestBody body;
         try {
             body = RequestBody.create(
@@ -307,7 +401,7 @@ public class RawFlowserviceClient {
             throw new ApiClientException("Failed to serialize request", e);
         }
         Request okhttpRequest = new Request.Builder()
-                .url(httpUrl)
+                .url(httpUrl.build())
                 .method("POST", body)
                 .headers(Headers.of(clientOptions.headers(requestOptions)))
                 .addHeader("Content-Type", "application/json")
@@ -317,19 +411,28 @@ public class RawFlowserviceClient {
         if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
             client = clientOptions.httpClientWithTimeout(requestOptions);
         }
+        if (requestOptions != null && requestOptions.getMaxRetries().isPresent()) {
+            okhttpRequest = okhttpRequest
+                    .newBuilder()
+                    .tag(
+                            RetryInterceptor.MaxRetriesOverride.class,
+                            new RetryInterceptor.MaxRetriesOverride(
+                                    requestOptions.getMaxRetries().get()))
+                    .build();
+        }
         try (Response response = client.newCall(okhttpRequest).execute()) {
             ResponseBody responseBody = response.body();
+            String responseBodyString = responseBody != null ? responseBody.string() : "{}";
             if (response.isSuccessful()) {
                 return new ApiClientHttpResponse<>(
-                        ObjectMappers.JSON_MAPPER.readValue(responseBody.string(), V1FlowDetokenizeResponse.class),
+                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, V1FlowDetokenizeResponse.class),
                         response);
             }
-            String responseBodyString = responseBody != null ? responseBody.string() : "{}";
+            Object errorBody = ObjectMappers.parseErrorBody(responseBodyString);
             throw new ApiClientApiException(
-                    "Error with status code " + response.code(),
-                    response.code(),
-                    ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                    response);
+                    "Error with status code " + response.code(), response.code(), errorBody, response);
+        } catch (JsonProcessingException e) {
+            throw new ApiClientException("Failed to deserialize response: " + e.getMessage(), e);
         } catch (IOException e) {
             throw new ApiClientException("Network error executing HTTP request", e);
         }
@@ -339,16 +442,24 @@ public class RawFlowserviceClient {
         return tokenize(V1FlowTokenizeRequest.builder().build());
     }
 
+    public ApiClientHttpResponse<V1FlowTokenizeResponse> tokenize(RequestOptions requestOptions) {
+        return tokenize(V1FlowTokenizeRequest.builder().build(), requestOptions);
+    }
+
     public ApiClientHttpResponse<V1FlowTokenizeResponse> tokenize(V1FlowTokenizeRequest request) {
         return tokenize(request, null);
     }
 
     public ApiClientHttpResponse<V1FlowTokenizeResponse> tokenize(
             V1FlowTokenizeRequest request, RequestOptions requestOptions) {
-        HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
+        HttpUrl.Builder httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
                 .newBuilder()
-                .addPathSegments("v2/tokens/tokenize")
-                .build();
+                .addPathSegments("v2/tokens/tokenize");
+        if (requestOptions != null) {
+            requestOptions.getQueryParameters().forEach((_key, _value) -> {
+                httpUrl.addQueryParameter(_key, _value);
+            });
+        }
         RequestBody body;
         try {
             body = RequestBody.create(
@@ -357,7 +468,7 @@ public class RawFlowserviceClient {
             throw new ApiClientException("Failed to serialize request", e);
         }
         Request okhttpRequest = new Request.Builder()
-                .url(httpUrl)
+                .url(httpUrl.build())
                 .method("POST", body)
                 .headers(Headers.of(clientOptions.headers(requestOptions)))
                 .addHeader("Content-Type", "application/json")
@@ -367,19 +478,28 @@ public class RawFlowserviceClient {
         if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
             client = clientOptions.httpClientWithTimeout(requestOptions);
         }
+        if (requestOptions != null && requestOptions.getMaxRetries().isPresent()) {
+            okhttpRequest = okhttpRequest
+                    .newBuilder()
+                    .tag(
+                            RetryInterceptor.MaxRetriesOverride.class,
+                            new RetryInterceptor.MaxRetriesOverride(
+                                    requestOptions.getMaxRetries().get()))
+                    .build();
+        }
         try (Response response = client.newCall(okhttpRequest).execute()) {
             ResponseBody responseBody = response.body();
+            String responseBodyString = responseBody != null ? responseBody.string() : "{}";
             if (response.isSuccessful()) {
                 return new ApiClientHttpResponse<>(
-                        ObjectMappers.JSON_MAPPER.readValue(responseBody.string(), V1FlowTokenizeResponse.class),
+                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, V1FlowTokenizeResponse.class),
                         response);
             }
-            String responseBodyString = responseBody != null ? responseBody.string() : "{}";
+            Object errorBody = ObjectMappers.parseErrorBody(responseBodyString);
             throw new ApiClientApiException(
-                    "Error with status code " + response.code(),
-                    response.code(),
-                    ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                    response);
+                    "Error with status code " + response.code(), response.code(), errorBody, response);
+        } catch (JsonProcessingException e) {
+            throw new ApiClientException("Failed to deserialize response: " + e.getMessage(), e);
         } catch (IOException e) {
             throw new ApiClientException("Network error executing HTTP request", e);
         }
@@ -389,16 +509,24 @@ public class RawFlowserviceClient {
         return flowvaultmetrics(V1FlowVaultMetricsRequest.builder().build());
     }
 
+    public ApiClientHttpResponse<V1FlowVaultMetricsResponse> flowvaultmetrics(RequestOptions requestOptions) {
+        return flowvaultmetrics(V1FlowVaultMetricsRequest.builder().build(), requestOptions);
+    }
+
     public ApiClientHttpResponse<V1FlowVaultMetricsResponse> flowvaultmetrics(V1FlowVaultMetricsRequest request) {
         return flowvaultmetrics(request, null);
     }
 
     public ApiClientHttpResponse<V1FlowVaultMetricsResponse> flowvaultmetrics(
             V1FlowVaultMetricsRequest request, RequestOptions requestOptions) {
-        HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
+        HttpUrl.Builder httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
                 .newBuilder()
-                .addPathSegments("v2/vaults/metrics")
-                .build();
+                .addPathSegments("v2/vaults/metrics");
+        if (requestOptions != null) {
+            requestOptions.getQueryParameters().forEach((_key, _value) -> {
+                httpUrl.addQueryParameter(_key, _value);
+            });
+        }
         RequestBody body;
         try {
             body = RequestBody.create(
@@ -407,7 +535,7 @@ public class RawFlowserviceClient {
             throw new ApiClientException("Failed to serialize request", e);
         }
         Request okhttpRequest = new Request.Builder()
-                .url(httpUrl)
+                .url(httpUrl.build())
                 .method("POST", body)
                 .headers(Headers.of(clientOptions.headers(requestOptions)))
                 .addHeader("Content-Type", "application/json")
@@ -417,19 +545,28 @@ public class RawFlowserviceClient {
         if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
             client = clientOptions.httpClientWithTimeout(requestOptions);
         }
+        if (requestOptions != null && requestOptions.getMaxRetries().isPresent()) {
+            okhttpRequest = okhttpRequest
+                    .newBuilder()
+                    .tag(
+                            RetryInterceptor.MaxRetriesOverride.class,
+                            new RetryInterceptor.MaxRetriesOverride(
+                                    requestOptions.getMaxRetries().get()))
+                    .build();
+        }
         try (Response response = client.newCall(okhttpRequest).execute()) {
             ResponseBody responseBody = response.body();
+            String responseBodyString = responseBody != null ? responseBody.string() : "{}";
             if (response.isSuccessful()) {
                 return new ApiClientHttpResponse<>(
-                        ObjectMappers.JSON_MAPPER.readValue(responseBody.string(), V1FlowVaultMetricsResponse.class),
+                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, V1FlowVaultMetricsResponse.class),
                         response);
             }
-            String responseBodyString = responseBody != null ? responseBody.string() : "{}";
+            Object errorBody = ObjectMappers.parseErrorBody(responseBodyString);
             throw new ApiClientApiException(
-                    "Error with status code " + response.code(),
-                    response.code(),
-                    ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                    response);
+                    "Error with status code " + response.code(), response.code(), errorBody, response);
+        } catch (JsonProcessingException e) {
+            throw new ApiClientException("Failed to deserialize response: " + e.getMessage(), e);
         } catch (IOException e) {
             throw new ApiClientException("Network error executing HTTP request", e);
         }

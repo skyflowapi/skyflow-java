@@ -129,5 +129,15 @@ public final class V1FlowTokenizeResponseObject {
         public V1FlowTokenizeResponseObject build() {
             return new V1FlowTokenizeResponseObject(value, tokens, additionalProperties);
         }
+
+        public Builder additionalProperty(String key, Object value) {
+            this.additionalProperties.put(key, value);
+            return this;
+        }
+
+        public Builder additionalProperties(Map<String, Object> additionalProperties) {
+            this.additionalProperties.putAll(additionalProperties);
+            return this;
+        }
     }
 }

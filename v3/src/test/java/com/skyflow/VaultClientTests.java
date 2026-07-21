@@ -232,7 +232,7 @@ public class VaultClientTests {
         V1InsertRequest result = vaultClient.getBulkInsertRequestBody(request, vaultConfig);
         Assert.assertNotNull(result.getUpsert());
         Assert.assertEquals("col1", result.getUpsert().get().getUniqueColumns().get().get(0));
-        Assert.assertEquals("REPLACE", result.getUpsert().get().getUpdateType().get().name());
+        Assert.assertEquals("REPLACE", result.getUpsert().get().getUpdateType().get().getEnumValue().name());
     }
 
     @Test
@@ -252,7 +252,7 @@ public class VaultClientTests {
         V1InsertRequest result = vaultClient.getBulkInsertRequestBody(request, vaultConfig);
         Assert.assertNotNull(result.getRecords().get().get(0).getUpsert());
         Assert.assertEquals("col2", result.getRecords().get().get(0).getUpsert().get().getUniqueColumns().get().get(0));
-        Assert.assertEquals("UPDATE", result.getRecords().get().get(0).getUpsert().get().getUpdateType().get().name());
+        Assert.assertEquals("UPDATE", result.getRecords().get().get(0).getUpsert().get().getUpdateType().get().getEnumValue().name());
     }
 
     @Test
@@ -344,8 +344,8 @@ public class VaultClientTests {
                         .build();
 
         V1InsertRequest result = vaultClient.getBulkInsertRequestBody(request, vaultConfig);
-        Assert.assertEquals("REPLACE", result.getUpsert().get().getUpdateType().get().name());
-        Assert.assertEquals("UPDATE", result.getRecords().get().get(0).getUpsert().get().getUpdateType().get().name());
+        Assert.assertEquals("REPLACE", result.getUpsert().get().getUpdateType().get().getEnumValue().name());
+        Assert.assertEquals("UPDATE", result.getRecords().get().get(0).getUpsert().get().getUpdateType().get().getEnumValue().name());
     }
 
     @Test
