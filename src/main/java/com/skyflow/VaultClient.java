@@ -1,5 +1,18 @@
 package com.skyflow;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.DetectEntities;
@@ -10,8 +23,24 @@ import com.skyflow.errors.SkyflowException;
 import com.skyflow.generated.rest.ApiClient;
 import com.skyflow.generated.rest.ApiClientBuilder;
 import com.skyflow.generated.rest.resources.files.FilesClient;
-import com.skyflow.generated.rest.resources.files.requests.*;
-import com.skyflow.generated.rest.resources.files.types.*;
+import com.skyflow.generated.rest.resources.files.requests.DeidentifyFileAudioRequestDeidentifyAudio;
+import com.skyflow.generated.rest.resources.files.requests.DeidentifyFileDocumentPdfRequestDeidentifyPdf;
+import com.skyflow.generated.rest.resources.files.requests.DeidentifyFileImageRequestDeidentifyImage;
+import com.skyflow.generated.rest.resources.files.requests.DeidentifyFileRequestDeidentifyDocument;
+import com.skyflow.generated.rest.resources.files.requests.DeidentifyFileRequestDeidentifyPresentation;
+import com.skyflow.generated.rest.resources.files.requests.DeidentifyFileRequestDeidentifySpreadsheet;
+import com.skyflow.generated.rest.resources.files.requests.DeidentifyFileRequestDeidentifyStructuredText;
+import com.skyflow.generated.rest.resources.files.types.DeidentifyFileAudioRequestDeidentifyAudioEntityTypesItem;
+import com.skyflow.generated.rest.resources.files.types.DeidentifyFileAudioRequestDeidentifyAudioOutputTranscription;
+import com.skyflow.generated.rest.resources.files.types.DeidentifyFileDocumentPdfRequestDeidentifyPdfEntityTypesItem;
+import com.skyflow.generated.rest.resources.files.types.DeidentifyFileImageRequestDeidentifyImageEntityTypesItem;
+import com.skyflow.generated.rest.resources.files.types.DeidentifyFileImageRequestDeidentifyImageMaskingMethod;
+import com.skyflow.generated.rest.resources.files.types.DeidentifyFileRequestDeidentifyDocumentEntityTypesItem;
+import com.skyflow.generated.rest.resources.files.types.DeidentifyFileRequestDeidentifyPresentationEntityTypesItem;
+import com.skyflow.generated.rest.resources.files.types.DeidentifyFileRequestDeidentifySpreadsheetEntityTypesItem;
+import com.skyflow.generated.rest.resources.files.types.DeidentifyFileRequestDeidentifyStructuredTextEntityTypesItem;
+import com.skyflow.generated.rest.resources.files.types.DeidentifyFileRequestDeidentifyTextEntityTypesItem;
+import com.skyflow.generated.rest.resources.files.types.DeidentifyFileRequestEntityTypesItem;
 import com.skyflow.generated.rest.resources.query.QueryClient;
 import com.skyflow.generated.rest.resources.records.RecordsClient;
 import com.skyflow.generated.rest.resources.records.requests.RecordServiceBatchOperationBody;
@@ -24,8 +53,40 @@ import com.skyflow.generated.rest.resources.strings.types.DeidentifyStringReques
 import com.skyflow.generated.rest.resources.tokens.TokensClient;
 import com.skyflow.generated.rest.resources.tokens.requests.V1DetokenizePayload;
 import com.skyflow.generated.rest.resources.tokens.requests.V1TokenizePayload;
+import com.skyflow.generated.rest.types.BatchRecordMethod;
+import com.skyflow.generated.rest.types.DeidentifyStringResponse;
+import com.skyflow.generated.rest.types.FileData;
+import com.skyflow.generated.rest.types.FileDataDataFormat;
+import com.skyflow.generated.rest.types.FileDataDeidentifyAudio;
+import com.skyflow.generated.rest.types.FileDataDeidentifyAudioDataFormat;
+import com.skyflow.generated.rest.types.FileDataDeidentifyDocument;
+import com.skyflow.generated.rest.types.FileDataDeidentifyDocumentDataFormat;
+import com.skyflow.generated.rest.types.FileDataDeidentifyImage;
+import com.skyflow.generated.rest.types.FileDataDeidentifyImageDataFormat;
+import com.skyflow.generated.rest.types.FileDataDeidentifyPdf;
+import com.skyflow.generated.rest.types.FileDataDeidentifyPresentation;
+import com.skyflow.generated.rest.types.FileDataDeidentifyPresentationDataFormat;
+import com.skyflow.generated.rest.types.FileDataDeidentifySpreadsheet;
+import com.skyflow.generated.rest.types.FileDataDeidentifySpreadsheetDataFormat;
+import com.skyflow.generated.rest.types.FileDataDeidentifyStructuredText;
+import com.skyflow.generated.rest.types.FileDataDeidentifyStructuredTextDataFormat;
+import com.skyflow.generated.rest.types.FileDataDeidentifyText;
+import com.skyflow.generated.rest.types.Format;
+import com.skyflow.generated.rest.types.FormatMaskedItem;
+import com.skyflow.generated.rest.types.FormatPlaintextItem;
+import com.skyflow.generated.rest.types.FormatRedactedItem;
+import com.skyflow.generated.rest.types.ShiftDates;
+import com.skyflow.generated.rest.types.ShiftDatesEntityTypesItem;
+import com.skyflow.generated.rest.types.StringResponseEntities;
+import com.skyflow.generated.rest.types.TokenTypeMapping;
+import com.skyflow.generated.rest.types.TokenTypeMappingEntityOnlyItem;
+import com.skyflow.generated.rest.types.TokenTypeMappingEntityUnqCounterItem;
+import com.skyflow.generated.rest.types.TokenTypeMappingVaultTokenItem;
 import com.skyflow.generated.rest.types.Transformations;
-import com.skyflow.generated.rest.types.*;
+import com.skyflow.generated.rest.types.V1BatchRecord;
+import com.skyflow.generated.rest.types.V1DetokenizeRecordRequest;
+import com.skyflow.generated.rest.types.V1FieldRecords;
+import com.skyflow.generated.rest.types.V1TokenizeRecordRequest;
 import com.skyflow.logs.InfoLogs;
 import com.skyflow.serviceaccount.util.Token;
 import com.skyflow.utils.Constants;
@@ -36,23 +97,22 @@ import com.skyflow.vault.data.FileUploadRequest;
 import com.skyflow.vault.data.InsertRequest;
 import com.skyflow.vault.data.UpdateRequest;
 import com.skyflow.vault.detect.DeidentifyFileRequest;
-import com.skyflow.vault.detect.*;
+import com.skyflow.vault.detect.DeidentifyTextRequest;
+import com.skyflow.vault.detect.DeidentifyTextResponse;
+import com.skyflow.vault.detect.EntityInfo;
+import com.skyflow.vault.detect.ReidentifyTextRequest;
+import com.skyflow.vault.detect.TextIndex;
+import com.skyflow.vault.detect.TokenFormat;
 import com.skyflow.vault.tokens.ColumnValue;
 import com.skyflow.vault.tokens.DetokenizeData;
 import com.skyflow.vault.tokens.DetokenizeRequest;
 import com.skyflow.vault.tokens.TokenizeRequest;
+
 import io.github.cdimascio.dotenv.Dotenv;
 import io.github.cdimascio.dotenv.DotenvException;
 import okhttp3.ConnectionPool;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 
 public class VaultClient {
@@ -232,7 +292,7 @@ public class VaultClient {
         return null;
     }
 
-    protected void setBearerToken() throws SkyflowException {
+    protected synchronized void setBearerToken() throws SkyflowException {
         prioritiseCredentials();
         Validations.validateCredentials(this.finalCredentials);
         if (this.finalCredentials.getApiKey() != null) {
@@ -879,7 +939,7 @@ public class VaultClient {
         } catch (SkyflowException e) {
             throw e;
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new SkyflowException(ErrorCode.SERVER_ERROR.getCode(), ErrorMessage.EmptyCredentials.getMessage());
         }
     }
 }
