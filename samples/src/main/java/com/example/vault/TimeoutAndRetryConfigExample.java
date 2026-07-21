@@ -16,9 +16,9 @@ import com.skyflow.errors.SkyflowException;
  *       request including retries and backoff). Default: 60.</li>
  *   <li>{@code maxRetries}               – retry attempts after the first failure (retries on HTTP
  *       408 / 429 / 5xx). Default: 3.</li>
- *   <li>{@code initialRetryDelayMillis}  – base backoff before the first retry, in <b>milliseconds</b>.
+ *   <li>{@code initialRetryDelay}  – base backoff before the first retry, in <b>milliseconds</b>.
  *       Default: 500.</li>
- *   <li>{@code maxRetryDelayMillis}      – cap on the (exponentially growing) backoff, in
+ *   <li>{@code maxRetryDelay}      – cap on the (exponentially growing) backoff, in
  *       <b>milliseconds</b>. Default: 2000.</li>
  * </ul>
  *
@@ -45,8 +45,8 @@ public class TimeoutAndRetryConfigExample {
             // and then the SDK default.
             vaultConfig.setTimeout(30);                 // seconds  – tighter overall ceiling for this vault
             vaultConfig.setMaxRetries(2);               // fewer retries for this vault
-            vaultConfig.setInitialRetryDelayMillis(500L);
-            vaultConfig.setMaxRetryDelayMillis(1000L);
+            vaultConfig.setInitialRetryDelay(500L);
+            vaultConfig.setMaxRetryDelay(1000L);
 
             // Step 3: Create the Skyflow client. Client-wide defaults apply to every vault
             //         unless that vault overrides them (as above).
@@ -54,8 +54,8 @@ public class TimeoutAndRetryConfigExample {
                     .setLogLevel(LogLevel.ERROR)
                     .timeout(60)                        // seconds  – client-wide overall call timeout
                     .maxRetries(3)                      // client-wide retry attempts
-                    .initialRetryDelayMillis(500L)      // client-wide base backoff (ms)
-                    .maxRetryDelayMillis(2000L)         // client-wide backoff cap (ms)
+                    .initialRetryDelay(500L)      // client-wide base backoff (ms)
+                    .maxRetryDelay(2000L)         // client-wide backoff cap (ms)
                     .addVaultConfig(vaultConfig)
                     .build();
 

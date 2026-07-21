@@ -2,6 +2,7 @@ package com.skyflow;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import com.skyflow.config.Credentials;
@@ -19,8 +20,8 @@ import com.skyflow.generated.rest.types.V1InsertRecordData;
 import com.skyflow.generated.rest.types.V1Upsert;
 import com.skyflow.logs.InfoLogs;
 import com.skyflow.serviceaccount.util.Token;
+import com.skyflow.generated.rest.core.RetryInterceptor;
 import com.skyflow.utils.Constants;
-import com.skyflow.utils.SkyflowRetryInterceptor;
 import com.skyflow.utils.Utils;
 import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.utils.validations.Validations;
@@ -49,8 +50,8 @@ public class VaultClient {
     // Client-wide (Skyflow builder) HTTP config defaults; null => fall back to the SDK defaults below.
     private Integer commonTimeout;
     private Integer commonMaxRetries;
-    private Long commonInitialRetryDelayMillis;
-    private Long commonMaxRetryDelayMillis;
+    private Long commonInitialRetryDelay;
+    private Long commonMaxRetryDelay;
     // SDK defaults, used when neither the vault-level nor the client-wide value is set.
     private static final int DEFAULT_TIMEOUT_SECONDS = 60;
     private static final int DEFAULT_MAX_RETRIES = 3;
@@ -84,11 +85,11 @@ public class VaultClient {
      * so the next call rebuilds with the new values.
      */
     protected void setCommonHttpConfig(Integer timeout, Integer maxRetries,
-                                       Long initialRetryDelayMillis, Long maxRetryDelayMillis) {
+                                       Long initialRetryDelay, Long maxRetryDelay) {
         this.commonTimeout = timeout;
         this.commonMaxRetries = maxRetries;
-        this.commonInitialRetryDelayMillis = initialRetryDelayMillis;
-        this.commonMaxRetryDelayMillis = maxRetryDelayMillis;
+        this.commonInitialRetryDelay = initialRetryDelay;
+        this.commonMaxRetryDelay = maxRetryDelay;
         this.sharedHttpClient = null;
         this.apiClient = null;
     }
@@ -170,15 +171,16 @@ public class VaultClient {
         if (sharedHttpClient == null) {
             int timeoutSeconds = resolveInt(vaultConfig.getTimeout(), commonTimeout, DEFAULT_TIMEOUT_SECONDS);
             int maxRetries = resolveInt(vaultConfig.getMaxRetries(), commonMaxRetries, DEFAULT_MAX_RETRIES);
-            long initialRetryDelayMillis = resolveLong(
-                    vaultConfig.getInitialRetryDelayMillis(), commonInitialRetryDelayMillis, DEFAULT_INITIAL_RETRY_DELAY_MILLIS);
-            long maxRetryDelayMillis = resolveLong(
-                    vaultConfig.getMaxRetryDelayMillis(), commonMaxRetryDelayMillis, DEFAULT_MAX_RETRY_DELAY_MILLIS);
+            long initialRetryDelay = resolveLong(
+                    vaultConfig.getInitialRetryDelay(), commonInitialRetryDelay, DEFAULT_INITIAL_RETRY_DELAY_MILLIS);
+            long maxRetryDelay = resolveLong(
+                    vaultConfig.getMaxRetryDelay(), commonMaxRetryDelay, DEFAULT_MAX_RETRY_DELAY_MILLIS);
 
             sharedHttpClient = new OkHttpClient.Builder()
                     .connectionPool(new ConnectionPool(10, 1, TimeUnit.MINUTES))
                     .callTimeout(timeoutSeconds, TimeUnit.SECONDS) // overall ceiling; bounds the whole call incl. retries
-                    .addInterceptor(new SkyflowRetryInterceptor(maxRetries, initialRetryDelayMillis, maxRetryDelayMillis)) // OUTER: retries
+                    .addInterceptor(new RetryInterceptor( // OUTER: retries (Fern generated; jitter default 0.2)
+                            maxRetries, Optional.of(initialRetryDelay), Optional.of(maxRetryDelay), Optional.empty()))
                     .addInterceptor(chain -> {                     // INNER: auth (reads this.token per request)
                         Request requestWithAuth = chain.request().newBuilder()
                                 .header("Authorization", "Bearer " + this.token)
