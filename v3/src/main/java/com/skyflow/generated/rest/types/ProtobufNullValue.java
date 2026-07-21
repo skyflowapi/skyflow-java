@@ -6,16 +6,14 @@ package com.skyflow.generated.rest.types;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
-public final class FlowEnumUpdateType {
-    public static final FlowEnumUpdateType REPLACE = new FlowEnumUpdateType(Value.REPLACE, "REPLACE");
-
-    public static final FlowEnumUpdateType UPDATE = new FlowEnumUpdateType(Value.UPDATE, "UPDATE");
+public final class ProtobufNullValue {
+    public static final ProtobufNullValue NULL_VALUE = new ProtobufNullValue(Value.NULL_VALUE, "NULL_VALUE");
 
     private final Value value;
 
     private final String string;
 
-    FlowEnumUpdateType(Value value, String string) {
+    ProtobufNullValue(Value value, String string) {
         this.value = value;
         this.string = string;
     }
@@ -33,7 +31,7 @@ public final class FlowEnumUpdateType {
     @java.lang.Override
     public boolean equals(Object other) {
         return (this == other)
-                || (other instanceof FlowEnumUpdateType && this.string.equals(((FlowEnumUpdateType) other).string));
+                || (other instanceof ProtobufNullValue && this.string.equals(((ProtobufNullValue) other).string));
     }
 
     @java.lang.Override
@@ -43,10 +41,8 @@ public final class FlowEnumUpdateType {
 
     public <T> T visit(Visitor<T> visitor) {
         switch (value) {
-            case REPLACE:
-                return visitor.visitReplace();
-            case UPDATE:
-                return visitor.visitUpdate();
+            case NULL_VALUE:
+                return visitor.visitNullValue();
             case UNKNOWN:
             default:
                 return visitor.visitUnknown(string);
@@ -54,29 +50,23 @@ public final class FlowEnumUpdateType {
     }
 
     @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
-    public static FlowEnumUpdateType valueOf(String value) {
+    public static ProtobufNullValue valueOf(String value) {
         switch (value) {
-            case "REPLACE":
-                return REPLACE;
-            case "UPDATE":
-                return UPDATE;
+            case "NULL_VALUE":
+                return NULL_VALUE;
             default:
-                return new FlowEnumUpdateType(Value.UNKNOWN, value);
+                return new ProtobufNullValue(Value.UNKNOWN, value);
         }
     }
 
     public enum Value {
-        UPDATE,
-
-        REPLACE,
+        NULL_VALUE,
 
         UNKNOWN
     }
 
     public interface Visitor<T> {
-        T visitUpdate();
-
-        T visitReplace();
+        T visitNullValue();
 
         T visitUnknown(String unknownType);
     }

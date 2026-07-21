@@ -14,19 +14,31 @@ public final class RequestOptions {
 
     private final TimeUnit timeoutTimeUnit;
 
+    private final Optional<Integer> maxRetries;
+
     private final Map<String, String> headers;
 
     private final Map<String, Supplier<String>> headerSuppliers;
 
+    private final Map<String, String> queryParameters;
+
+    private final Map<String, Supplier<String>> queryParameterSuppliers;
+
     private RequestOptions(
             Optional<Integer> timeout,
             TimeUnit timeoutTimeUnit,
+            Optional<Integer> maxRetries,
             Map<String, String> headers,
-            Map<String, Supplier<String>> headerSuppliers) {
+            Map<String, Supplier<String>> headerSuppliers,
+            Map<String, String> queryParameters,
+            Map<String, Supplier<String>> queryParameterSuppliers) {
         this.timeout = timeout;
         this.timeoutTimeUnit = timeoutTimeUnit;
+        this.maxRetries = maxRetries;
         this.headers = headers;
         this.headerSuppliers = headerSuppliers;
+        this.queryParameters = queryParameters;
+        this.queryParameterSuppliers = queryParameterSuppliers;
     }
 
     public Optional<Integer> getTimeout() {
@@ -35,6 +47,10 @@ public final class RequestOptions {
 
     public TimeUnit getTimeoutTimeUnit() {
         return timeoutTimeUnit;
+    }
+
+    public Optional<Integer> getMaxRetries() {
+        return maxRetries;
     }
 
     public Map<String, String> getHeaders() {
@@ -46,18 +62,32 @@ public final class RequestOptions {
         return headers;
     }
 
+    public Map<String, String> getQueryParameters() {
+        Map<String, String> queryParameters = new HashMap<>(this.queryParameters);
+        this.queryParameterSuppliers.forEach((key, supplier) -> {
+            queryParameters.put(key, supplier.get());
+        });
+        return queryParameters;
+    }
+
     public static Builder builder() {
         return new Builder();
     }
 
-    public static final class Builder {
+    public static class Builder {
         private Optional<Integer> timeout = Optional.empty();
 
         private TimeUnit timeoutTimeUnit = TimeUnit.SECONDS;
 
+        private Optional<Integer> maxRetries = Optional.empty();
+
         private final Map<String, String> headers = new HashMap<>();
 
         private final Map<String, Supplier<String>> headerSuppliers = new HashMap<>();
+
+        private final Map<String, String> queryParameters = new HashMap<>();
+
+        private final Map<String, Supplier<String>> queryParameterSuppliers = new HashMap<>();
 
         public Builder timeout(Integer timeout) {
             this.timeout = Optional.of(timeout);
@@ -67,6 +97,11 @@ public final class RequestOptions {
         public Builder timeout(Integer timeout, TimeUnit timeoutTimeUnit) {
             this.timeout = Optional.of(timeout);
             this.timeoutTimeUnit = timeoutTimeUnit;
+            return this;
+        }
+
+        public Builder maxRetries(Integer maxRetries) {
+            this.maxRetries = Optional.of(maxRetries);
             return this;
         }
 
@@ -80,8 +115,25 @@ public final class RequestOptions {
             return this;
         }
 
+        public Builder addQueryParameter(String key, String value) {
+            this.queryParameters.put(key, value);
+            return this;
+        }
+
+        public Builder addQueryParameter(String key, Supplier<String> value) {
+            this.queryParameterSuppliers.put(key, value);
+            return this;
+        }
+
         public RequestOptions build() {
-            return new RequestOptions(timeout, timeoutTimeUnit, headers, headerSuppliers);
+            return new RequestOptions(
+                    timeout,
+                    timeoutTimeUnit,
+                    maxRetries,
+                    headers,
+                    headerSuppliers,
+                    queryParameters,
+                    queryParameterSuppliers);
         }
     }
 }

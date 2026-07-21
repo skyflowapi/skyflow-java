@@ -189,5 +189,15 @@ public final class FlowTokenizeResponseObjectToken {
         public FlowTokenizeResponseObjectToken build() {
             return new FlowTokenizeResponseObjectToken(tokenGroupName, token, error, httpCode, additionalProperties);
         }
+
+        public Builder additionalProperty(String key, Object value) {
+            this.additionalProperties.put(key, value);
+            return this;
+        }
+
+        public Builder additionalProperties(Map<String, Object> additionalProperties) {
+            this.additionalProperties.putAll(additionalProperties);
+            return this;
+        }
     }
 }

@@ -4,6 +4,7 @@
 package com.skyflow.generated.rest.core;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -17,6 +18,7 @@ public final class ObjectMappers {
             .addModule(new Jdk8Module())
             .addModule(new JavaTimeModule())
             .addModule(DateTimeDeserializer.getModule())
+            .addModule(DoubleSerializer.getModule())
             .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
             .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
             .build();
@@ -31,6 +33,14 @@ public final class ObjectMappers {
                     .writeValueAsString(o);
         } catch (IOException e) {
             return o.getClass().getName() + "@" + Integer.toHexString(o.hashCode());
+        }
+    }
+
+    public static Object parseErrorBody(String responseBodyString) {
+        try {
+            return JSON_MAPPER.readValue(responseBodyString, Object.class);
+        } catch (JsonProcessingException ignored) {
+            return responseBodyString;
         }
     }
 }
