@@ -90,7 +90,7 @@ public class SkyflowException extends Exception {
     }
 
     public int getHttpCode() {
-        return httpCode;
+        return httpCode == null ? 0 : httpCode;
     }
 
     public JsonArray getDetails() {

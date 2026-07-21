@@ -81,9 +81,14 @@ public class BaseUtils {
         if (pemKey.contains(PKCS8PrivateHeader)) {
             privateKeyContent = privateKeyContent.replace(PKCS8PrivateHeader, "");
             privateKeyContent = privateKeyContent.replace(PKCS8PrivateFooter, "");
-            privateKeyContent = privateKeyContent.replace("\n", "");
             privateKeyContent = privateKeyContent.replace("\r\n", "");
-            privateKey = parsePkcs8PrivateKey(Base64.getDecoder().decode(privateKeyContent));
+            privateKeyContent = privateKeyContent.replace("\n", "");
+            try {
+                privateKey = parsePkcs8PrivateKey(Base64.getDecoder().decode(privateKeyContent));
+            } catch (IllegalArgumentException e) {
+                LogUtil.printErrorLog(ErrorLogs.INVALID_KEY_SPEC.getLog());
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidKeySpec.getMessage());
+            }
         } else {
             LogUtil.printErrorLog(ErrorLogs.JWT_INVALID_FORMAT.getLog());
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.JwtInvalidFormat.getMessage());

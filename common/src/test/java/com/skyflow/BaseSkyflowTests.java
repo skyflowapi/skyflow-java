@@ -250,7 +250,7 @@ public class BaseSkyflowTests {
     }
 
     @Test
-    public void testMergeVaultConfigWithNullClusterIdFallsBackToPreviousClusterId() {
+    public void testMergeVaultConfigWithNullClusterIdFallsBackToPreviousClusterId() throws SkyflowException {
         BaseVaultConfig existing = newConfig(vaultID, clusterID, Env.DEV);
         BaseVaultConfig incoming = new BaseVaultConfig();
         incoming.setVaultId(vaultID);

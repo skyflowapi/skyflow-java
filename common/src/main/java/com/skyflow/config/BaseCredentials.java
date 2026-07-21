@@ -1,6 +1,7 @@
 package com.skyflow.config;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 
 public class BaseCredentials implements Cloneable {
@@ -69,7 +70,15 @@ public class BaseCredentials implements Cloneable {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public Object clone() throws CloneNotSupportedException {
-        return super.clone();
+        BaseCredentials copy = (BaseCredentials) super.clone();
+        if (this.roles != null) {
+            copy.roles = new ArrayList<>(this.roles);
+        }
+        if (this.context instanceof Map) {
+            copy.context = new HashMap<>((Map<String, Object>) this.context);
+        }
+        return copy;
     }
 }

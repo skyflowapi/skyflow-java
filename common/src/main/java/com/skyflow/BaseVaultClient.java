@@ -55,7 +55,7 @@ class BaseVaultClient<V extends BaseVaultConfig> {
                 .build();
     }
 
-    protected void prioritiseCredentials(BaseCredentials vaultSpecificCredentials) throws SkyflowException {
+    protected synchronized void prioritiseCredentials(BaseCredentials vaultSpecificCredentials) throws SkyflowException {
         try {
             BaseCredentials original = this.finalCredentials;
             if (vaultSpecificCredentials != null) {
@@ -88,7 +88,7 @@ class BaseVaultClient<V extends BaseVaultConfig> {
         }
     }
 
-    protected void setBearerToken(BaseCredentials vaultSpecificCredentials) throws SkyflowException {
+    protected synchronized void setBearerToken(BaseCredentials vaultSpecificCredentials) throws SkyflowException {
         prioritiseCredentials(vaultSpecificCredentials);
         BaseValidations.validateCredentials(this.finalCredentials);
         if (this.finalCredentials.getApiKey() != null) {

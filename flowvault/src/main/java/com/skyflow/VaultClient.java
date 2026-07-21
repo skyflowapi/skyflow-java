@@ -28,7 +28,7 @@ public class VaultClient extends BaseVaultClient<VaultConfig> {
         super.prioritiseCredentials(this.vaultConfig.getCredentials());
     }
 
-    protected void setBearerToken() throws SkyflowException {
+    protected synchronized void setBearerToken() throws SkyflowException {
         super.setBearerToken(this.vaultConfig.getCredentials());
         if (apiClient == null) {
             updateExecutorInHTTP();
