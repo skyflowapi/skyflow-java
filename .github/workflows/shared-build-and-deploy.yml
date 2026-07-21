@@ -21,6 +21,13 @@ on:
         description: 'Release Tag'
         required: true
         type: string
+
+      module:
+        description: 'Module to build and publish'
+        required: false
+        type: string
+        default: ''
+      
     secrets:
       server-username:
         required: true
@@ -61,10 +68,10 @@ jobs:
           server-password: SERVER_PASSWORD
           gpg-private-key: ${{ secrets.gpg-key }} # Value of the GPG private key to import
           gpg-passphrase: GPG_PASSPHRASE # env variable for GPG private key passphrase
-      
+
       - name: Resolve Branch for the Tagged Commit
         id: resolve-branch
-        if: ${{ inputs.tag == 'beta' || inputs.tag == 'public' }} 
+        if: ${{ inputs.tag == 'beta' || inputs.tag == 'public' }}
         run: |
           TAG_COMMIT=$(git rev-list -n 1 ${{ github.ref_name }})
           BRANCH_NAME=$(git for-each-ref --points-at="$TAG_COMMIT" --format='%(refname:short)' refs/remotes/origin | grep -v '/HEAD$' | sed 's#^origin/##' | head -n 1)
@@ -85,9 +92,9 @@ jobs:
         run: |
           chmod +x ./scripts/bump_version.sh
           if ${{ inputs.tag == 'internal' }}; then
-            ./scripts/bump_version.sh "${{ steps.previoustag.outputs.tag }}" "$(git rev-parse --short "$GITHUB_SHA")"
+            ./scripts/bump_version.sh "${{ steps.previoustag.outputs.tag }}" "$(git rev-parse --short "$GITHUB_SHA")" "${{ inputs.module }}"
           else
-            ./scripts/bump_version.sh "${{ steps.previoustag.outputs.tag }}"
+            ./scripts/bump_version.sh "${{ steps.previoustag.outputs.tag }}" "" "${{ inputs.module }}"
           fi
 
       - name: Commit changes
@@ -99,7 +106,7 @@ jobs:
             git checkout ${{ env.branch_name }}
           fi
 
-          git add pom.xml
+          git add ${{ inputs.module }}/pom.xml
           if [[ "${{ inputs.tag }}" == "internal" ]]; then
             git commit -m "[AUTOMATED] Private Release ${{ steps.previoustag.outputs.tag }}-dev-$(git rev-parse --short $GITHUB_SHA)"
             git push origin ${{ github.ref_name }} -f
@@ -125,7 +132,12 @@ jobs:
           json: ${{ secrets.TEST_CREDENTIALS_FILE_STRING }}
 
       - name: Publish package
-        run: mvn --batch-mode deploy -P ${{ inputs.profile }}
+        run: |
+          if [[ "${{ inputs.tag }}" == "internal" ]]; then
+            mvn --batch-mode -pl ${{ inputs.module }} -am deploy -P jfrog -DskipTests
+          elif [[ "${{ inputs.tag }}" == "beta" || "${{ inputs.tag }}" == "public" ]]; then
+            mvn --batch-mode -pl ${{ inputs.module }} -am deploy -P ${{ inputs.profile }}
+          fi
 
         env:
           SERVER_USERNAME: ${{ secrets.server-username }}
