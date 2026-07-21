@@ -85,6 +85,11 @@ public class VaultClient extends BaseVaultClient<VaultConfig> {
         super.prioritiseCredentials(this.vaultConfig.getCredentials());
     }
 
+    protected void updateVaultConfig(VaultConfig newConfig) throws SkyflowException {
+        this.vaultConfig = newConfig;
+        updateVaultConfig();
+    }
+
     protected V1DetokenizePayload getDetokenizePayload(DetokenizeRequest request) {
         List<V1DetokenizeRecordRequest> recordRequests = new ArrayList<>();
 

@@ -106,7 +106,7 @@ public final class Skyflow extends BaseSkyflow<Skyflow, VaultConfig> {
 
         @Override
         protected void onVaultConfigUpdated(VaultConfig updatedConfig) throws SkyflowException {
-            this.vaultClientsMap.get(updatedConfig.getVaultId()).updateVaultConfig();
+            this.vaultClientsMap.get(updatedConfig.getVaultId()).updateVaultConfig(updatedConfig);
         }
 
         @Override

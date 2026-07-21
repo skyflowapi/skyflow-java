@@ -54,6 +54,7 @@ public enum ErrorLogs {
     EMPTY_TABLE_NAME("Invalid %s1 request. Table name can not be empty."),
     VALUES_IS_REQUIRED("Invalid %s1 request. Values are required."),
     EMPTY_VALUES("Invalid %s1 request. Values can not be empty."),
+    INSERT_REQUEST_NULL("Invalid %s1 request. Insert request can not be null."),
     RECORDS_IS_REQUIRED("Invalid %s1 request. Records are required."),
     EMPTY_RECORDS("Invalid %s1 request. Records can not be empty."),
     INVALID_RECORD("Invalid %s1 request. Invalid record. Specify a valid record."),

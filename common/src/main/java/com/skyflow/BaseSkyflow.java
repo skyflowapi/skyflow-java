@@ -16,7 +16,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 
-abstract class BaseSkyflow<Self extends BaseSkyflow, V extends BaseVaultConfig> implements ISkyflow<Self, V, Credentials> {
+abstract class BaseSkyflow<Self extends BaseSkyflow<Self, V>, V extends BaseVaultConfig> implements ISkyflow<Self, V, Credentials> {
     protected final BaseSkyflowClientBuilder<V> builder;
 
     protected BaseSkyflow(BaseSkyflowClientBuilder<V> builder) {
@@ -124,8 +124,8 @@ abstract class BaseSkyflow<Self extends BaseSkyflow, V extends BaseVaultConfig> 
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(),
                         ErrorMessage.VaultIdAlreadyInConfigList.getMessage());
             }
-            this.vaultConfigMap.put(vaultId, vaultConfigCopy);
             onVaultConfigAdded(vaultConfigCopy);
+            this.vaultConfigMap.put(vaultId, vaultConfigCopy);
         }
 
         protected final void updateVaultConfigTemplate(V vaultConfig) throws SkyflowException {
@@ -139,8 +139,9 @@ abstract class BaseSkyflow<Self extends BaseSkyflow, V extends BaseVaultConfig> 
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.VaultIdNotInConfigList.getMessage());
             }
             V previousConfig = this.vaultConfigMap.get(vaultId);
-            V merged = mergeVaultConfig(vaultConfig, previousConfig);
+            V merged = mergeVaultConfig(vaultConfig, cloneVaultConfig(previousConfig));
             onVaultConfigUpdated(merged);
+            this.vaultConfigMap.put(vaultId, merged);
         }
 
         protected final void removeVaultConfigTemplate(String vaultId) throws SkyflowException {
@@ -158,10 +159,10 @@ abstract class BaseSkyflow<Self extends BaseSkyflow, V extends BaseVaultConfig> 
             try {
                 credentialsCopy = (Credentials) credentials.clone();
             } catch (CloneNotSupportedException e) {
-                throw new RuntimeException(e);
+                throw new SkyflowException(e.getMessage(), e);
             }
-            this.skyflowCredentials = credentialsCopy;
             onCredentialsUpdated(credentialsCopy);
+            this.skyflowCredentials = credentialsCopy;
         }
 
         protected abstract void validateVaultConfig(V vaultConfig) throws SkyflowException;
@@ -169,11 +170,11 @@ abstract class BaseSkyflow<Self extends BaseSkyflow, V extends BaseVaultConfig> 
         protected abstract boolean hasVaultClient(String vaultId);
 
         @SuppressWarnings("unchecked")
-        protected final V cloneVaultConfig(V vaultConfig) {
+        protected final V cloneVaultConfig(V vaultConfig) throws SkyflowException {
             try {
                 return (V) vaultConfig.clone();
             } catch (CloneNotSupportedException e) {
-                throw new RuntimeException(e);
+                throw new SkyflowException(e.getMessage(), e);
             }
         }
 
@@ -181,7 +182,7 @@ abstract class BaseSkyflow<Self extends BaseSkyflow, V extends BaseVaultConfig> 
             return vaultConfig.getVaultId();
         }
 
-        protected final V mergeVaultConfig(V incoming, V existing) {
+        protected final V mergeVaultConfig(V incoming, V existing) throws SkyflowException {
             if (incoming.getEnv() != null) {
                 existing.setEnv(incoming.getEnv());
             }
@@ -192,7 +193,7 @@ abstract class BaseSkyflow<Self extends BaseSkyflow, V extends BaseVaultConfig> 
                 try {
                     existing.setCredentials((Credentials) incoming.getCredentials().clone());
                 } catch (CloneNotSupportedException e) {
-                    throw new RuntimeException(e);
+                    throw new SkyflowException(e.getMessage(), e);
                 }
             }
             return existing;

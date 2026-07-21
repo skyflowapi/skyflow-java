@@ -63,6 +63,7 @@ public enum ErrorMessage {
     BearerTokenExpired("%s0 Validation error. Bearer token is invalid or expired. Please provide a valid bearer token."),
 
     // Insert
+    InsertRequestNull("%s0 Validation error. InsertRequest object is null. Specify a valid InsertRequest object."),
     TableKeyError("%s0 Validation error. 'table' key is missing from the payload. Specify a 'table' key."),
     EmptyTable("%s0 Validation error. 'table' can't be empty. Specify a table."),
     ValuesKeyError("%s0 Validation error. 'values' key is missing from the payload. Specify a 'values' key."),

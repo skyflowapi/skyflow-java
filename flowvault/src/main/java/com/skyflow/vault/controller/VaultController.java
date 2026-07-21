@@ -884,25 +884,33 @@ public final class VaultController extends VaultClient
             ArrayList<BulkInsertRecord> originalPayload,
             RequestInterceptor interceptor,
             BatchConfig cfg
-    ) throws ExecutionException, InterruptedException {
+    ) throws ExecutionException, InterruptedException, SkyflowException {
         LogUtil.printInfoLog(InfoLogs.PROCESSING_BATCHES.getLog());
         List<Success> successRecords = new ArrayList<>();
         List<ErrorRecord> errorRecords = Collections.synchronizedList(new ArrayList<>());
         List<CompletableFuture<BulkInsertResponse>> futures = this.insertBatchFutures(insertRequest, errorRecords, interceptor, cfg);
 
-        CompletableFuture<Void> allFutures = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
-        allFutures.join();
-
-        for (CompletableFuture<BulkInsertResponse> future : futures) {
-            BulkInsertResponse futureResponse = future.get();
-            if (futureResponse != null) {
-                if (futureResponse.getSuccess() != null) {
-                    successRecords.addAll(futureResponse.getSuccess());
-                }
-                if (futureResponse.getErrors() != null) {
-                    errorRecords.addAll(futureResponse.getErrors());
+        try {
+            CompletableFuture<Void> allFutures = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
+            try {
+                allFutures.join();
+            } catch (Exception e) {
+                // individual batch errors are already captured
+            }
+            for (CompletableFuture<BulkInsertResponse> future : futures) {
+                BulkInsertResponse futureResponse = future.get();
+                if (futureResponse != null) {
+                    if (futureResponse.getSuccess() != null) {
+                        successRecords.addAll(futureResponse.getSuccess());
+                    }
+                    if (futureResponse.getErrors() != null) {
+                        errorRecords.addAll(futureResponse.getErrors());
+                    }
                 }
             }
+        } catch (Exception e) {
+            LogUtil.printErrorLog(ErrorLogs.INSERT_RECORDS_REJECTED.getLog());
+            throw new SkyflowException(e.getMessage());
         }
         BulkInsertResponse response = new BulkInsertResponse(successRecords, errorRecords, originalPayload);
         LogUtil.printInfoLog(InfoLogs.INSERT_REQUEST_RESOLVED.getLog());

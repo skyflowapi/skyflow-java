@@ -152,6 +152,12 @@ public class Validations extends BaseValidations {
 
 
     public static void validateInsertRequest(InsertRequest insertRequest) throws SkyflowException {
+        if (insertRequest == null) {
+            LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.INSERT_REQUEST_NULL.getLog(), InterfaceName.INSERT.getName()
+            ));
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InsertRequestNull.getMessage());
+        }
         String table = insertRequest.getTable();
         ArrayList<InsertRecord> records = insertRequest.getRecords();
         if (records == null) {
@@ -384,6 +390,12 @@ public class Validations extends BaseValidations {
     // ── Bulk (batched/concurrent) request validations ────────────────────────
 
     public static void validateBulkInsertRequest(BulkInsertRequest insertRequest) throws SkyflowException {
+        if (insertRequest == null) {
+            LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.INSERT_REQUEST_NULL.getLog(), InterfaceName.INSERT.getName()
+            ));
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InsertRequestNull.getMessage());
+        }
         String table = insertRequest.getTable();
         ArrayList<BulkInsertRecord> records = insertRequest.getRecords();
         if (records == null) {

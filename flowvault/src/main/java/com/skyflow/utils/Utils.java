@@ -738,11 +738,11 @@ public final class Utils extends BaseUtils {
         BulkInsertResponse formattedResponse = null;
         List<Success> successRecords = new ArrayList<>();
         List<ErrorRecord> errorRecords = new ArrayList<>();
-        if (response != null) {
+        if (response != null && response.getRecords().isPresent()) {
             String requestId = extractRequestId(headers);
             List<V1RecordResponseObject> record = response.getRecords().get();
             int indexNumber = batch * batchSize;
-            int recordsSize = response.getRecords().get().size();
+            int recordsSize = record.size();
             for (int index = 0; index < recordsSize; index++) {
                 if (record.get(index).getError().isPresent()) {
                     ErrorRecord errorRecord = new ErrorRecord(indexNumber, record.get(index).getError().get(), record.get(index).getHttpCode().orElse(500), requestId);

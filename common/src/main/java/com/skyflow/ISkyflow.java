@@ -5,7 +5,7 @@ import com.skyflow.config.BaseVaultConfig;
 import com.skyflow.enums.LogLevel;
 import com.skyflow.errors.SkyflowException;
 
-public interface ISkyflow<Self, V extends BaseVaultConfig, C extends BaseCredentials> {
+public interface ISkyflow<Self extends ISkyflow<Self, V, C>, V extends BaseVaultConfig, C extends BaseCredentials> {
     Self addVaultConfig(V vaultConfig) throws SkyflowException;
 
     Self updateVaultConfig(V vaultConfig) throws SkyflowException;
