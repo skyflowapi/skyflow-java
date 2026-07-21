@@ -4,7 +4,9 @@ import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.Env;
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.utils.SkyflowRetryInterceptor;
 import java.lang.reflect.Field;
+import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import org.junit.Assert;
 import org.junit.Test;
@@ -102,5 +104,66 @@ public class VaultClientHttpConfigTests {
         Assert.assertEquals(Integer.valueOf(2), cfg.getMaxRetries());
         Assert.assertEquals(Long.valueOf(250L), cfg.getInitialRetryDelayMillis());
         Assert.assertEquals(Long.valueOf(1500L), cfg.getMaxRetryDelayMillis());
+    }
+
+    private SkyflowRetryInterceptor retryInterceptor(VaultClient client) throws Exception {
+        for (Interceptor interceptor : sharedClient(client).interceptors()) {
+            if (interceptor instanceof SkyflowRetryInterceptor) {
+                return (SkyflowRetryInterceptor) interceptor;
+            }
+        }
+        throw new AssertionError("SkyflowRetryInterceptor was not attached to the shared client");
+    }
+
+    private int intField(Object obj, String name) throws Exception {
+        Field field = obj.getClass().getDeclaredField(name);
+        field.setAccessible(true);
+        return field.getInt(obj);
+    }
+
+    private long longField(Object obj, String name) throws Exception {
+        Field field = obj.getClass().getDeclaredField(name);
+        field.setAccessible(true);
+        return field.getLong(obj);
+    }
+
+    @Test
+    public void defaultRetryConfigAppliedToInterceptor() throws Exception {
+        VaultConfig cfg = apiKeyConfig();
+        VaultClient client = new VaultClient(cfg, cfg.getCredentials());
+        client.setBearerToken();
+
+        SkyflowRetryInterceptor ri = retryInterceptor(client);
+        Assert.assertEquals(3, intField(ri, "maxRetries"));                 // SDK default
+        Assert.assertEquals(500L, longField(ri, "initialRetryDelayMillis"));
+        Assert.assertEquals(2000L, longField(ri, "maxRetryDelayMillis"));
+    }
+
+    @Test
+    public void vaultLevelRetryConfigOverridesDefault() throws Exception {
+        VaultConfig cfg = apiKeyConfig();
+        cfg.setMaxRetries(1);
+        cfg.setInitialRetryDelayMillis(250L);
+        cfg.setMaxRetryDelayMillis(1200L);
+        VaultClient client = new VaultClient(cfg, cfg.getCredentials());
+        client.setBearerToken();
+
+        SkyflowRetryInterceptor ri = retryInterceptor(client);
+        Assert.assertEquals(1, intField(ri, "maxRetries"));
+        Assert.assertEquals(250L, longField(ri, "initialRetryDelayMillis"));
+        Assert.assertEquals(1200L, longField(ri, "maxRetryDelayMillis"));
+    }
+
+    @Test
+    public void clientLevelRetryConfigUsedWhenNoVaultOverride() throws Exception {
+        VaultConfig cfg = apiKeyConfig();
+        VaultClient client = new VaultClient(cfg, cfg.getCredentials());
+        client.setCommonHttpConfig(null, 2, 300L, 1500L); // client-wide retry config, no vault override
+        client.setBearerToken();
+
+        SkyflowRetryInterceptor ri = retryInterceptor(client);
+        Assert.assertEquals(2, intField(ri, "maxRetries"));
+        Assert.assertEquals(300L, longField(ri, "initialRetryDelayMillis"));
+        Assert.assertEquals(1500L, longField(ri, "maxRetryDelayMillis"));
     }
 }

@@ -113,4 +113,21 @@ public class SkyflowRetryInterceptorTests {
         verify(chain, times(1)).proceed(any(Request.class)); // no retries
         Assert.assertEquals(503, result.code());
     }
+
+    @Test
+    public void interruptedDuringBackoffThrowsIOExceptionAndPreservesInterruptFlag() throws IOException {
+        Interceptor.Chain chain = mock(Interceptor.Chain.class);
+        when(chain.request()).thenReturn(request);
+        when(chain.proceed(any(Request.class))).thenReturn(response(503), response(200));
+
+        // Pre-set the interrupt flag so the backoff Thread.sleep throws InterruptedException immediately.
+        Thread.currentThread().interrupt();
+        try {
+            interceptor(2).intercept(chain);
+            Assert.fail("expected IOException when interrupted during backoff");
+        } catch (IOException expected) {
+            // Interrupt status must be restored by the interceptor (Thread.interrupted() reads and clears it).
+            Assert.assertTrue("interrupt flag should be preserved", Thread.interrupted());
+        }
+    }
 }
