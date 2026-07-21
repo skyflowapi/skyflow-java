@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
 import com.skyflow.utils.Constants;
 
 import java.util.List;
@@ -95,7 +96,20 @@ public class SkyflowException extends Exception {
     }
 
     private void setResponseBody(String responseBody, Map<String, List<String>> responseHeaders) {
-        this.responseBody = JsonParser.parseString(responseBody).getAsJsonObject();
+        JsonElement parsedBody;
+        try {
+            parsedBody = JsonParser.parseString(responseBody);
+        } catch (JsonSyntaxException e) {
+            // Malformed / unparseable JSON: use a generic message instead of echoing the raw body.
+            this.message = ErrorMessage.ErrorOccurred.getMessage();
+            return;
+        }
+        if (!parsedBody.isJsonObject()) {
+            // Valid JSON but not the expected object shape: do not echo the raw body.
+            this.message = ErrorMessage.ErrorOccurred.getMessage();
+            return;
+        }
+        this.responseBody = parsedBody.getAsJsonObject();
         if (this.responseBody.get("error") != null) {
             setGrpcCode();
             setHttpStatus();

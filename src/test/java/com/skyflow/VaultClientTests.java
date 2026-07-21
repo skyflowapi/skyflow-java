@@ -1043,7 +1043,7 @@ public class VaultClientTests {
     }
 
     @Test
-    public void testPrioritiseCredentials_credentialChange_resetsTokenAndApiKey() {
+    public void testPrioritiseCredentials_credentialChange_resetsToken() {
         try {
             Credentials credentialsA = new Credentials();
             credentialsA.setToken("x.eyJleHAiOjk5OTk5OTk5OTl9.y");
@@ -1061,9 +1061,8 @@ public class VaultClientTests {
             credentialsB.setToken("other-token");
             config.setCredentials(credentialsB);
 
-            freshClient.updateVaultConfig(); // original=A, new=B → different → reset token/apiKey
+            freshClient.updateVaultConfig(); // original=A, new=B → different → reset token
             Assert.assertNull(getPrivateField(freshClient, "token"));
-            Assert.assertNull(getPrivateField(freshClient, "apiKey"));
         } catch (Exception e) {
             Assert.fail("Should not have thrown: " + e.getMessage());
         }
