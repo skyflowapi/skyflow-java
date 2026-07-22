@@ -11,8 +11,8 @@ public class VaultConfig implements Cloneable {
     // HTTP timeout & retry config (vault-level overrides). null => inherit client-wide default, then SDK default.
     private Integer timeout;                 // overall call timeout, in seconds
     private Integer maxRetries;              // retry attempts after the first failure
-    private Long initialRetryDelay;    // base backoff before the first retry, in ms
-    private Long maxRetryDelay;        // cap on the (exponentially growing) backoff, in ms
+    private Long initialRetryDelayMillis;    // base backoff before the first retry, in ms
+    private Long maxRetryDelayMillis;        // cap on the (exponentially growing) backoff, in ms
 
     public VaultConfig() {
         this.vaultId = null;
@@ -22,8 +22,8 @@ public class VaultConfig implements Cloneable {
         this.credentials = null;
         this.timeout = null;
         this.maxRetries = null;
-        this.initialRetryDelay = null;
-        this.maxRetryDelay = null;
+        this.initialRetryDelayMillis = null;
+        this.maxRetryDelayMillis = null;
     }
 
     public String getVaultId() {
@@ -84,22 +84,22 @@ public class VaultConfig implements Cloneable {
         this.maxRetries = maxRetries;
     }
 
-    public Long getInitialRetryDelay() {
-        return initialRetryDelay;
+    public Long getInitialRetryDelayMillis() {
+        return initialRetryDelayMillis;
     }
 
     /** Base retry backoff in milliseconds for this vault. Overrides the client-wide default. */
-    public void setInitialRetryDelay(Long initialRetryDelay) {
-        this.initialRetryDelay = initialRetryDelay;
+    public void setInitialRetryDelayMillis(Long initialRetryDelayMillis) {
+        this.initialRetryDelayMillis = initialRetryDelayMillis;
     }
 
-    public Long getMaxRetryDelay() {
-        return maxRetryDelay;
+    public Long getMaxRetryDelayMillis() {
+        return maxRetryDelayMillis;
     }
 
     /** Cap on retry backoff in milliseconds for this vault. Overrides the client-wide default. */
-    public void setMaxRetryDelay(Long maxRetryDelay) {
-        this.maxRetryDelay = maxRetryDelay;
+    public void setMaxRetryDelayMillis(Long maxRetryDelayMillis) {
+        this.maxRetryDelayMillis = maxRetryDelayMillis;
     }
 
     @Override

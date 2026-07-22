@@ -93,18 +93,18 @@ public class VaultClientHttpConfigTests {
         VaultConfig cfg = new VaultConfig();
         Assert.assertNull(cfg.getTimeout());
         Assert.assertNull(cfg.getMaxRetries());
-        Assert.assertNull(cfg.getInitialRetryDelay());
-        Assert.assertNull(cfg.getMaxRetryDelay());
+        Assert.assertNull(cfg.getInitialRetryDelayMillis());
+        Assert.assertNull(cfg.getMaxRetryDelayMillis());
 
         cfg.setTimeout(30);
         cfg.setMaxRetries(2);
-        cfg.setInitialRetryDelay(250L);
-        cfg.setMaxRetryDelay(1500L);
+        cfg.setInitialRetryDelayMillis(250L);
+        cfg.setMaxRetryDelayMillis(1500L);
 
         Assert.assertEquals(Integer.valueOf(30), cfg.getTimeout());
         Assert.assertEquals(Integer.valueOf(2), cfg.getMaxRetries());
-        Assert.assertEquals(Long.valueOf(250L), cfg.getInitialRetryDelay());
-        Assert.assertEquals(Long.valueOf(1500L), cfg.getMaxRetryDelay());
+        Assert.assertEquals(Long.valueOf(250L), cfg.getInitialRetryDelayMillis());
+        Assert.assertEquals(Long.valueOf(1500L), cfg.getMaxRetryDelayMillis());
     }
 
     private RetryInterceptor retryInterceptor(VaultClient client) throws Exception {
@@ -145,8 +145,8 @@ public class VaultClientHttpConfigTests {
     public void vaultLevelRetryConfigOverridesDefault() throws Exception {
         VaultConfig cfg = apiKeyConfig();
         cfg.setMaxRetries(1);
-        cfg.setInitialRetryDelay(250L);
-        cfg.setMaxRetryDelay(1200L);
+        cfg.setInitialRetryDelayMillis(250L);
+        cfg.setMaxRetryDelayMillis(1200L);
         VaultClient client = new VaultClient(cfg, cfg.getCredentials());
         client.setBearerToken();
 
