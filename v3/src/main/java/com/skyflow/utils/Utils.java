@@ -24,6 +24,7 @@ import com.skyflow.vault.data.TokenizeSuccess;
 import io.github.cdimascio.dotenv.Dotenv;
 import io.github.cdimascio.dotenv.DotenvException;
 
+import java.io.InterruptedIOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -106,6 +107,26 @@ public final class Utils extends BaseUtils {
         return (ids == null || ids.isEmpty()) ? null : ids.get(0);
     }
 
+    private static final int HTTP_REQUEST_TIMEOUT = 408;
+    private static final String REQUEST_TIMED_OUT_MESSAGE = "Request timed out.";
+
+    /**
+     * Builds the {@link ErrorRecord} for a network-layer failure (a batch future that
+     * completed exceptionally with a non-API exception). A client-side timeout — OkHttp's
+     * call timeout surfaces as {@link InterruptedIOException} ({@link java.net.SocketTimeoutException}
+     * is a subclass) anywhere in the cause chain — is reported as HTTP 408 with a clean
+     * message, so callers can tell a timeout apart from a server 500. Any other network
+     * error keeps the existing 500 behaviour.
+     */
+    private static ErrorRecord networkErrorRecord(Throwable ex, int index) {
+        for (Throwable t = ex; t != null; t = t.getCause()) {
+            if (t instanceof InterruptedIOException) {
+                return new ErrorRecord(index, REQUEST_TIMED_OUT_MESSAGE, HTTP_REQUEST_TIMEOUT);
+            }
+        }
+        return new ErrorRecord(index, ex.getMessage(), 500);
+    }
+
     public static List<ErrorRecord> handleBatchException(
             Throwable ex, List<V1InsertRecordData> batch, int batchNumber, int batchSize
     ) {
@@ -153,8 +174,7 @@ public final class Utils extends BaseUtils {
         } else {
             int indexNumber = batchNumber > 0 ? batchNumber * batchSize : 0;
             for (int j = 0; j < batch.size(); j++) {
-                ErrorRecord err = new ErrorRecord(indexNumber, ex.getMessage(), 500);
-                errorRecords.add(err);
+                errorRecords.add(networkErrorRecord(ex, indexNumber));
                 indexNumber++;
             }
         }
@@ -210,8 +230,7 @@ public final class Utils extends BaseUtils {
         } else {
             int indexNumber = batchNumber * batchSize;
             for (int j = 0; j < batch.getTokens().get().size(); j++) {
-                ErrorRecord err = new ErrorRecord(indexNumber, ex.getMessage(), 500);
-                errorRecords.add(err);
+                errorRecords.add(networkErrorRecord(ex, indexNumber));
                 indexNumber++;
             }
         }
@@ -398,8 +417,7 @@ public final class Utils extends BaseUtils {
         } else {
             int indexNumber = batchNumber * batchSize;
             for (int j = 0; j < batch.getTokens().get().size(); j++) {
-                ErrorRecord err = new ErrorRecord(indexNumber, ex.getMessage(), 500);
-                errorRecords.add(err);
+                errorRecords.add(networkErrorRecord(ex, indexNumber));
                 indexNumber++;
             }
         }
@@ -508,8 +526,7 @@ public final class Utils extends BaseUtils {
             int indexNumber = batchNumber * batchSize;
             int batchDataSize = batch.getData().isPresent() ? batch.getData().get().size() : 0;
             for (int j = 0; j < batchDataSize; j++) {
-                ErrorRecord err = new ErrorRecord(indexNumber, ex.getMessage(), 500);
-                errorRecords.add(err);
+                errorRecords.add(networkErrorRecord(ex, indexNumber));
                 indexNumber++;
             }
         }
