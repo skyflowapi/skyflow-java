@@ -44,6 +44,10 @@ public class AsyncFlowserviceClient {
         return this.rawClient.delete().thenApply(response -> response.body());
     }
 
+    public CompletableFuture<V1DeleteResponse> delete(RequestOptions requestOptions) {
+        return this.rawClient.delete(requestOptions).thenApply(response -> response.body());
+    }
+
     public CompletableFuture<V1DeleteResponse> delete(V1DeleteRequest request) {
         return this.rawClient.delete(request).thenApply(response -> response.body());
     }
@@ -54,6 +58,10 @@ public class AsyncFlowserviceClient {
 
     public CompletableFuture<V1GetResponse> get() {
         return this.rawClient.get().thenApply(response -> response.body());
+    }
+
+    public CompletableFuture<V1GetResponse> get(RequestOptions requestOptions) {
+        return this.rawClient.get(requestOptions).thenApply(response -> response.body());
     }
 
     public CompletableFuture<V1GetResponse> get(V1GetRequest request) {
@@ -68,6 +76,10 @@ public class AsyncFlowserviceClient {
         return this.rawClient.insert().thenApply(response -> response.body());
     }
 
+    public CompletableFuture<V1InsertResponse> insert(RequestOptions requestOptions) {
+        return this.rawClient.insert(requestOptions).thenApply(response -> response.body());
+    }
+
     public CompletableFuture<V1InsertResponse> insert(V1InsertRequest request) {
         return this.rawClient.insert(request).thenApply(response -> response.body());
     }
@@ -80,6 +92,10 @@ public class AsyncFlowserviceClient {
         return this.rawClient.update().thenApply(response -> response.body());
     }
 
+    public CompletableFuture<V1UpdateResponse> update(RequestOptions requestOptions) {
+        return this.rawClient.update(requestOptions).thenApply(response -> response.body());
+    }
+
     public CompletableFuture<V1UpdateResponse> update(V1UpdateRequest request) {
         return this.rawClient.update(request).thenApply(response -> response.body());
     }
@@ -90,6 +106,10 @@ public class AsyncFlowserviceClient {
 
     public CompletableFuture<V1FlowDeleteTokenResponse> deletetoken() {
         return this.rawClient.deletetoken().thenApply(response -> response.body());
+    }
+
+    public CompletableFuture<V1FlowDeleteTokenResponse> deletetoken(RequestOptions requestOptions) {
+        return this.rawClient.deletetoken(requestOptions).thenApply(response -> response.body());
     }
 
     public CompletableFuture<V1FlowDeleteTokenResponse> deletetoken(V1FlowDeleteTokenRequest request) {
@@ -105,6 +125,10 @@ public class AsyncFlowserviceClient {
         return this.rawClient.detokenize().thenApply(response -> response.body());
     }
 
+    public CompletableFuture<V1FlowDetokenizeResponse> detokenize(RequestOptions requestOptions) {
+        return this.rawClient.detokenize(requestOptions).thenApply(response -> response.body());
+    }
+
     public CompletableFuture<V1FlowDetokenizeResponse> detokenize(V1FlowDetokenizeRequest request) {
         return this.rawClient.detokenize(request).thenApply(response -> response.body());
     }
@@ -118,6 +142,10 @@ public class AsyncFlowserviceClient {
         return this.rawClient.tokenize().thenApply(response -> response.body());
     }
 
+    public CompletableFuture<V1FlowTokenizeResponse> tokenize(RequestOptions requestOptions) {
+        return this.rawClient.tokenize(requestOptions).thenApply(response -> response.body());
+    }
+
     public CompletableFuture<V1FlowTokenizeResponse> tokenize(V1FlowTokenizeRequest request) {
         return this.rawClient.tokenize(request).thenApply(response -> response.body());
     }
@@ -129,6 +157,10 @@ public class AsyncFlowserviceClient {
 
     public CompletableFuture<V1FlowVaultMetricsResponse> flowvaultmetrics() {
         return this.rawClient.flowvaultmetrics().thenApply(response -> response.body());
+    }
+
+    public CompletableFuture<V1FlowVaultMetricsResponse> flowvaultmetrics(RequestOptions requestOptions) {
+        return this.rawClient.flowvaultmetrics(requestOptions).thenApply(response -> response.body());
     }
 
     public CompletableFuture<V1FlowVaultMetricsResponse> flowvaultmetrics(V1FlowVaultMetricsRequest request) {

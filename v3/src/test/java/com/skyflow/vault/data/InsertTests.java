@@ -326,6 +326,9 @@ public class InsertTests {
     }
 }
 
+   // Upsert placement (request vs record level) is validated by the backend, not the SDK.
+   // The SDK must accept these combinations and let the backend return the authoritative error.
+
    @Test
    public void testUpsertSpecifiedAtBothRequestAndRecordLevel() {
     InsertRecord record = InsertRecord.builder().data(valueMap).upsert(upsert).build();
@@ -333,13 +336,8 @@ public class InsertTests {
     InsertRequest request = InsertRequest.builder().table(table).records(values).upsert(upsert).build();
     try {
         Validations.validateInsertRequest(request);
-        Assert.fail(EXCEPTION_NOT_THROWN);
     } catch (SkyflowException e) {
-        Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-        Assert.assertEquals(
-            Utils.parameterizedString(ErrorMessage.UpsertTableRequestAtRecordLevel.getMessage(), Constants.SDK_PREFIX),
-            e.getMessage()
-        );
+        Assert.fail(INVALID_EXCEPTION_THROWN);
     }
 }
 
@@ -350,13 +348,8 @@ public class InsertTests {
     InsertRequest request = InsertRequest.builder().table(table).records(values).build();
     try {
         Validations.validateInsertRequest(request);
-        Assert.fail(EXCEPTION_NOT_THROWN);
     } catch (SkyflowException e) {
-        Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-        Assert.assertEquals(
-            Utils.parameterizedString(ErrorMessage.UpsertTableRequestAtRecordLevel.getMessage(), Constants.SDK_PREFIX),
-            e.getMessage()
-        );
+        Assert.fail(INVALID_EXCEPTION_THROWN);
     }
 }
 
@@ -367,13 +360,8 @@ public class InsertTests {
     InsertRequest request = InsertRequest.builder().records(values).upsert(upsert).build();
     try {
         Validations.validateInsertRequest(request);
-        Assert.fail(EXCEPTION_NOT_THROWN);
     } catch (SkyflowException e) {
-        Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-        Assert.assertEquals(
-            Utils.parameterizedString(ErrorMessage.UpsertTableRequestAtRequestLevel.getMessage(), Constants.SDK_PREFIX),
-            e.getMessage()
-        );
+        Assert.fail(INVALID_EXCEPTION_THROWN);
     }
 }
 
@@ -387,13 +375,8 @@ public class InsertTests {
         InsertRequest request = InsertRequest.builder().table("").records(values).upsert(upsert).build();
         try {
             Validations.validateInsertRequest(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(
-                    Utils.parameterizedString(ErrorMessage.UpsertTableRequestAtRequestLevel.getMessage(), Constants.SDK_PREFIX),
-                    e.getMessage()
-            );
+            Assert.fail(INVALID_EXCEPTION_THROWN);
         }
     }
 

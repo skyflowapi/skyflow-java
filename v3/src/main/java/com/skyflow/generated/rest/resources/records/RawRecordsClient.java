@@ -11,6 +11,7 @@ import com.skyflow.generated.rest.core.ClientOptions;
 import com.skyflow.generated.rest.core.MediaTypes;
 import com.skyflow.generated.rest.core.ObjectMappers;
 import com.skyflow.generated.rest.core.RequestOptions;
+import com.skyflow.generated.rest.core.RetryInterceptor;
 import com.skyflow.generated.rest.resources.records.requests.V1ExecuteQueryRequest;
 import com.skyflow.generated.rest.types.V1ExecuteQueryResponse;
 import java.io.IOException;
@@ -39,6 +40,13 @@ public class RawRecordsClient {
     /**
      * Executes a query on the specified vault.
      */
+    public ApiClientHttpResponse<V1ExecuteQueryResponse> flowServiceExecuteQuery(RequestOptions requestOptions) {
+        return flowServiceExecuteQuery(V1ExecuteQueryRequest.builder().build(), requestOptions);
+    }
+
+    /**
+     * Executes a query on the specified vault.
+     */
     public ApiClientHttpResponse<V1ExecuteQueryResponse> flowServiceExecuteQuery(V1ExecuteQueryRequest request) {
         return flowServiceExecuteQuery(request, null);
     }
@@ -48,10 +56,14 @@ public class RawRecordsClient {
      */
     public ApiClientHttpResponse<V1ExecuteQueryResponse> flowServiceExecuteQuery(
             V1ExecuteQueryRequest request, RequestOptions requestOptions) {
-        HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
+        HttpUrl.Builder httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
                 .newBuilder()
-                .addPathSegments("v2/query")
-                .build();
+                .addPathSegments("v2/query");
+        if (requestOptions != null) {
+            requestOptions.getQueryParameters().forEach((_key, _value) -> {
+                httpUrl.addQueryParameter(_key, _value);
+            });
+        }
         RequestBody body;
         try {
             body = RequestBody.create(
@@ -60,7 +72,7 @@ public class RawRecordsClient {
             throw new ApiClientException("Failed to serialize request", e);
         }
         Request okhttpRequest = new Request.Builder()
-                .url(httpUrl)
+                .url(httpUrl.build())
                 .method("POST", body)
                 .headers(Headers.of(clientOptions.headers(requestOptions)))
                 .addHeader("Content-Type", "application/json")
@@ -70,19 +82,28 @@ public class RawRecordsClient {
         if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
             client = clientOptions.httpClientWithTimeout(requestOptions);
         }
+        if (requestOptions != null && requestOptions.getMaxRetries().isPresent()) {
+            okhttpRequest = okhttpRequest
+                    .newBuilder()
+                    .tag(
+                            RetryInterceptor.MaxRetriesOverride.class,
+                            new RetryInterceptor.MaxRetriesOverride(
+                                    requestOptions.getMaxRetries().get()))
+                    .build();
+        }
         try (Response response = client.newCall(okhttpRequest).execute()) {
             ResponseBody responseBody = response.body();
+            String responseBodyString = responseBody != null ? responseBody.string() : "{}";
             if (response.isSuccessful()) {
                 return new ApiClientHttpResponse<>(
-                        ObjectMappers.JSON_MAPPER.readValue(responseBody.string(), V1ExecuteQueryResponse.class),
+                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, V1ExecuteQueryResponse.class),
                         response);
             }
-            String responseBodyString = responseBody != null ? responseBody.string() : "{}";
+            Object errorBody = ObjectMappers.parseErrorBody(responseBodyString);
             throw new ApiClientApiException(
-                    "Error with status code " + response.code(),
-                    response.code(),
-                    ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                    response);
+                    "Error with status code " + response.code(), response.code(), errorBody, response);
+        } catch (JsonProcessingException e) {
+            throw new ApiClientException("Failed to deserialize response: " + e.getMessage(), e);
         } catch (IOException e) {
             throw new ApiClientException("Network error executing HTTP request", e);
         }

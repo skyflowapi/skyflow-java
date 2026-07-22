@@ -11,6 +11,7 @@ import com.skyflow.generated.rest.core.ClientOptions;
 import com.skyflow.generated.rest.core.MediaTypes;
 import com.skyflow.generated.rest.core.ObjectMappers;
 import com.skyflow.generated.rest.core.RequestOptions;
+import com.skyflow.generated.rest.core.RetryInterceptor;
 import com.skyflow.generated.rest.resources.flowservice.requests.V1DeleteRequest;
 import com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDeleteTokenRequest;
 import com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest;
@@ -51,16 +52,24 @@ public class AsyncRawFlowserviceClient {
         return delete(V1DeleteRequest.builder().build());
     }
 
+    public CompletableFuture<ApiClientHttpResponse<V1DeleteResponse>> delete(RequestOptions requestOptions) {
+        return delete(V1DeleteRequest.builder().build(), requestOptions);
+    }
+
     public CompletableFuture<ApiClientHttpResponse<V1DeleteResponse>> delete(V1DeleteRequest request) {
         return delete(request, null);
     }
 
     public CompletableFuture<ApiClientHttpResponse<V1DeleteResponse>> delete(
             V1DeleteRequest request, RequestOptions requestOptions) {
-        HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
+        HttpUrl.Builder httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
                 .newBuilder()
-                .addPathSegments("v2/records/delete")
-                .build();
+                .addPathSegments("v2/records/delete");
+        if (requestOptions != null) {
+            requestOptions.getQueryParameters().forEach((_key, _value) -> {
+                httpUrl.addQueryParameter(_key, _value);
+            });
+        }
         RequestBody body;
         try {
             body = RequestBody.create(
@@ -69,7 +78,7 @@ public class AsyncRawFlowserviceClient {
             throw new ApiClientException("Failed to serialize request", e);
         }
         Request okhttpRequest = new Request.Builder()
-                .url(httpUrl)
+                .url(httpUrl.build())
                 .method("POST", body)
                 .headers(Headers.of(clientOptions.headers(requestOptions)))
                 .addHeader("Content-Type", "application/json")
@@ -79,24 +88,34 @@ public class AsyncRawFlowserviceClient {
         if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
             client = clientOptions.httpClientWithTimeout(requestOptions);
         }
+        if (requestOptions != null && requestOptions.getMaxRetries().isPresent()) {
+            okhttpRequest = okhttpRequest
+                    .newBuilder()
+                    .tag(
+                            RetryInterceptor.MaxRetriesOverride.class,
+                            new RetryInterceptor.MaxRetriesOverride(
+                                    requestOptions.getMaxRetries().get()))
+                    .build();
+        }
         CompletableFuture<ApiClientHttpResponse<V1DeleteResponse>> future = new CompletableFuture<>();
         client.newCall(okhttpRequest).enqueue(new Callback() {
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
                 try (ResponseBody responseBody = response.body()) {
+                    String responseBodyString = responseBody != null ? responseBody.string() : "{}";
                     if (response.isSuccessful()) {
                         future.complete(new ApiClientHttpResponse<>(
-                                ObjectMappers.JSON_MAPPER.readValue(responseBody.string(), V1DeleteResponse.class),
+                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, V1DeleteResponse.class),
                                 response));
                         return;
                     }
-                    String responseBodyString = responseBody != null ? responseBody.string() : "{}";
+                    Object errorBody = ObjectMappers.parseErrorBody(responseBodyString);
                     future.completeExceptionally(new ApiClientApiException(
-                            "Error with status code " + response.code(),
-                            response.code(),
-                            ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                            response));
+                            "Error with status code " + response.code(), response.code(), errorBody, response));
                     return;
+                } catch (JsonProcessingException e) {
+                    future.completeExceptionally(
+                            new ApiClientException("Failed to deserialize response: " + e.getMessage(), e));
                 } catch (IOException e) {
                     future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
                 }
@@ -114,16 +133,24 @@ public class AsyncRawFlowserviceClient {
         return get(V1GetRequest.builder().build());
     }
 
+    public CompletableFuture<ApiClientHttpResponse<V1GetResponse>> get(RequestOptions requestOptions) {
+        return get(V1GetRequest.builder().build(), requestOptions);
+    }
+
     public CompletableFuture<ApiClientHttpResponse<V1GetResponse>> get(V1GetRequest request) {
         return get(request, null);
     }
 
     public CompletableFuture<ApiClientHttpResponse<V1GetResponse>> get(
             V1GetRequest request, RequestOptions requestOptions) {
-        HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
+        HttpUrl.Builder httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
                 .newBuilder()
-                .addPathSegments("v2/records/get")
-                .build();
+                .addPathSegments("v2/records/get");
+        if (requestOptions != null) {
+            requestOptions.getQueryParameters().forEach((_key, _value) -> {
+                httpUrl.addQueryParameter(_key, _value);
+            });
+        }
         RequestBody body;
         try {
             body = RequestBody.create(
@@ -132,7 +159,7 @@ public class AsyncRawFlowserviceClient {
             throw new ApiClientException("Failed to serialize request", e);
         }
         Request okhttpRequest = new Request.Builder()
-                .url(httpUrl)
+                .url(httpUrl.build())
                 .method("POST", body)
                 .headers(Headers.of(clientOptions.headers(requestOptions)))
                 .addHeader("Content-Type", "application/json")
@@ -142,24 +169,34 @@ public class AsyncRawFlowserviceClient {
         if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
             client = clientOptions.httpClientWithTimeout(requestOptions);
         }
+        if (requestOptions != null && requestOptions.getMaxRetries().isPresent()) {
+            okhttpRequest = okhttpRequest
+                    .newBuilder()
+                    .tag(
+                            RetryInterceptor.MaxRetriesOverride.class,
+                            new RetryInterceptor.MaxRetriesOverride(
+                                    requestOptions.getMaxRetries().get()))
+                    .build();
+        }
         CompletableFuture<ApiClientHttpResponse<V1GetResponse>> future = new CompletableFuture<>();
         client.newCall(okhttpRequest).enqueue(new Callback() {
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
                 try (ResponseBody responseBody = response.body()) {
+                    String responseBodyString = responseBody != null ? responseBody.string() : "{}";
                     if (response.isSuccessful()) {
                         future.complete(new ApiClientHttpResponse<>(
-                                ObjectMappers.JSON_MAPPER.readValue(responseBody.string(), V1GetResponse.class),
+                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, V1GetResponse.class),
                                 response));
                         return;
                     }
-                    String responseBodyString = responseBody != null ? responseBody.string() : "{}";
+                    Object errorBody = ObjectMappers.parseErrorBody(responseBodyString);
                     future.completeExceptionally(new ApiClientApiException(
-                            "Error with status code " + response.code(),
-                            response.code(),
-                            ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                            response));
+                            "Error with status code " + response.code(), response.code(), errorBody, response));
                     return;
+                } catch (JsonProcessingException e) {
+                    future.completeExceptionally(
+                            new ApiClientException("Failed to deserialize response: " + e.getMessage(), e));
                 } catch (IOException e) {
                     future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
                 }
@@ -177,16 +214,24 @@ public class AsyncRawFlowserviceClient {
         return insert(V1InsertRequest.builder().build());
     }
 
+    public CompletableFuture<ApiClientHttpResponse<V1InsertResponse>> insert(RequestOptions requestOptions) {
+        return insert(V1InsertRequest.builder().build(), requestOptions);
+    }
+
     public CompletableFuture<ApiClientHttpResponse<V1InsertResponse>> insert(V1InsertRequest request) {
         return insert(request, null);
     }
 
     public CompletableFuture<ApiClientHttpResponse<V1InsertResponse>> insert(
             V1InsertRequest request, RequestOptions requestOptions) {
-        HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
+        HttpUrl.Builder httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
                 .newBuilder()
-                .addPathSegments("v2/records/insert")
-                .build();
+                .addPathSegments("v2/records/insert");
+        if (requestOptions != null) {
+            requestOptions.getQueryParameters().forEach((_key, _value) -> {
+                httpUrl.addQueryParameter(_key, _value);
+            });
+        }
         RequestBody body;
         try {
             body = RequestBody.create(
@@ -195,7 +240,7 @@ public class AsyncRawFlowserviceClient {
             throw new ApiClientException("Failed to serialize request", e);
         }
         Request okhttpRequest = new Request.Builder()
-                .url(httpUrl)
+                .url(httpUrl.build())
                 .method("POST", body)
                 .headers(Headers.of(clientOptions.headers(requestOptions)))
                 .addHeader("Content-Type", "application/json")
@@ -205,24 +250,34 @@ public class AsyncRawFlowserviceClient {
         if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
             client = clientOptions.httpClientWithTimeout(requestOptions);
         }
+        if (requestOptions != null && requestOptions.getMaxRetries().isPresent()) {
+            okhttpRequest = okhttpRequest
+                    .newBuilder()
+                    .tag(
+                            RetryInterceptor.MaxRetriesOverride.class,
+                            new RetryInterceptor.MaxRetriesOverride(
+                                    requestOptions.getMaxRetries().get()))
+                    .build();
+        }
         CompletableFuture<ApiClientHttpResponse<V1InsertResponse>> future = new CompletableFuture<>();
         client.newCall(okhttpRequest).enqueue(new Callback() {
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
                 try (ResponseBody responseBody = response.body()) {
+                    String responseBodyString = responseBody != null ? responseBody.string() : "{}";
                     if (response.isSuccessful()) {
                         future.complete(new ApiClientHttpResponse<>(
-                                ObjectMappers.JSON_MAPPER.readValue(responseBody.string(), V1InsertResponse.class),
+                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, V1InsertResponse.class),
                                 response));
                         return;
                     }
-                    String responseBodyString = responseBody != null ? responseBody.string() : "{}";
+                    Object errorBody = ObjectMappers.parseErrorBody(responseBodyString);
                     future.completeExceptionally(new ApiClientApiException(
-                            "Error with status code " + response.code(),
-                            response.code(),
-                            ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                            response));
+                            "Error with status code " + response.code(), response.code(), errorBody, response));
                     return;
+                } catch (JsonProcessingException e) {
+                    future.completeExceptionally(
+                            new ApiClientException("Failed to deserialize response: " + e.getMessage(), e));
                 } catch (IOException e) {
                     future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
                 }
@@ -240,16 +295,24 @@ public class AsyncRawFlowserviceClient {
         return update(V1UpdateRequest.builder().build());
     }
 
+    public CompletableFuture<ApiClientHttpResponse<V1UpdateResponse>> update(RequestOptions requestOptions) {
+        return update(V1UpdateRequest.builder().build(), requestOptions);
+    }
+
     public CompletableFuture<ApiClientHttpResponse<V1UpdateResponse>> update(V1UpdateRequest request) {
         return update(request, null);
     }
 
     public CompletableFuture<ApiClientHttpResponse<V1UpdateResponse>> update(
             V1UpdateRequest request, RequestOptions requestOptions) {
-        HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
+        HttpUrl.Builder httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
                 .newBuilder()
-                .addPathSegments("v2/records/update")
-                .build();
+                .addPathSegments("v2/records/update");
+        if (requestOptions != null) {
+            requestOptions.getQueryParameters().forEach((_key, _value) -> {
+                httpUrl.addQueryParameter(_key, _value);
+            });
+        }
         RequestBody body;
         try {
             body = RequestBody.create(
@@ -258,7 +321,7 @@ public class AsyncRawFlowserviceClient {
             throw new ApiClientException("Failed to serialize request", e);
         }
         Request okhttpRequest = new Request.Builder()
-                .url(httpUrl)
+                .url(httpUrl.build())
                 .method("POST", body)
                 .headers(Headers.of(clientOptions.headers(requestOptions)))
                 .addHeader("Content-Type", "application/json")
@@ -268,24 +331,34 @@ public class AsyncRawFlowserviceClient {
         if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
             client = clientOptions.httpClientWithTimeout(requestOptions);
         }
+        if (requestOptions != null && requestOptions.getMaxRetries().isPresent()) {
+            okhttpRequest = okhttpRequest
+                    .newBuilder()
+                    .tag(
+                            RetryInterceptor.MaxRetriesOverride.class,
+                            new RetryInterceptor.MaxRetriesOverride(
+                                    requestOptions.getMaxRetries().get()))
+                    .build();
+        }
         CompletableFuture<ApiClientHttpResponse<V1UpdateResponse>> future = new CompletableFuture<>();
         client.newCall(okhttpRequest).enqueue(new Callback() {
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
                 try (ResponseBody responseBody = response.body()) {
+                    String responseBodyString = responseBody != null ? responseBody.string() : "{}";
                     if (response.isSuccessful()) {
                         future.complete(new ApiClientHttpResponse<>(
-                                ObjectMappers.JSON_MAPPER.readValue(responseBody.string(), V1UpdateResponse.class),
+                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, V1UpdateResponse.class),
                                 response));
                         return;
                     }
-                    String responseBodyString = responseBody != null ? responseBody.string() : "{}";
+                    Object errorBody = ObjectMappers.parseErrorBody(responseBodyString);
                     future.completeExceptionally(new ApiClientApiException(
-                            "Error with status code " + response.code(),
-                            response.code(),
-                            ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                            response));
+                            "Error with status code " + response.code(), response.code(), errorBody, response));
                     return;
+                } catch (JsonProcessingException e) {
+                    future.completeExceptionally(
+                            new ApiClientException("Failed to deserialize response: " + e.getMessage(), e));
                 } catch (IOException e) {
                     future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
                 }
@@ -304,16 +377,25 @@ public class AsyncRawFlowserviceClient {
     }
 
     public CompletableFuture<ApiClientHttpResponse<V1FlowDeleteTokenResponse>> deletetoken(
+            RequestOptions requestOptions) {
+        return deletetoken(V1FlowDeleteTokenRequest.builder().build(), requestOptions);
+    }
+
+    public CompletableFuture<ApiClientHttpResponse<V1FlowDeleteTokenResponse>> deletetoken(
             V1FlowDeleteTokenRequest request) {
         return deletetoken(request, null);
     }
 
     public CompletableFuture<ApiClientHttpResponse<V1FlowDeleteTokenResponse>> deletetoken(
             V1FlowDeleteTokenRequest request, RequestOptions requestOptions) {
-        HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
+        HttpUrl.Builder httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
                 .newBuilder()
-                .addPathSegments("v2/tokens/delete")
-                .build();
+                .addPathSegments("v2/tokens/delete");
+        if (requestOptions != null) {
+            requestOptions.getQueryParameters().forEach((_key, _value) -> {
+                httpUrl.addQueryParameter(_key, _value);
+            });
+        }
         RequestBody body;
         try {
             body = RequestBody.create(
@@ -322,7 +404,7 @@ public class AsyncRawFlowserviceClient {
             throw new ApiClientException("Failed to serialize request", e);
         }
         Request okhttpRequest = new Request.Builder()
-                .url(httpUrl)
+                .url(httpUrl.build())
                 .method("POST", body)
                 .headers(Headers.of(clientOptions.headers(requestOptions)))
                 .addHeader("Content-Type", "application/json")
@@ -332,25 +414,35 @@ public class AsyncRawFlowserviceClient {
         if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
             client = clientOptions.httpClientWithTimeout(requestOptions);
         }
+        if (requestOptions != null && requestOptions.getMaxRetries().isPresent()) {
+            okhttpRequest = okhttpRequest
+                    .newBuilder()
+                    .tag(
+                            RetryInterceptor.MaxRetriesOverride.class,
+                            new RetryInterceptor.MaxRetriesOverride(
+                                    requestOptions.getMaxRetries().get()))
+                    .build();
+        }
         CompletableFuture<ApiClientHttpResponse<V1FlowDeleteTokenResponse>> future = new CompletableFuture<>();
         client.newCall(okhttpRequest).enqueue(new Callback() {
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
                 try (ResponseBody responseBody = response.body()) {
+                    String responseBodyString = responseBody != null ? responseBody.string() : "{}";
                     if (response.isSuccessful()) {
                         future.complete(new ApiClientHttpResponse<>(
                                 ObjectMappers.JSON_MAPPER.readValue(
-                                        responseBody.string(), V1FlowDeleteTokenResponse.class),
+                                        responseBodyString, V1FlowDeleteTokenResponse.class),
                                 response));
                         return;
                     }
-                    String responseBodyString = responseBody != null ? responseBody.string() : "{}";
+                    Object errorBody = ObjectMappers.parseErrorBody(responseBodyString);
                     future.completeExceptionally(new ApiClientApiException(
-                            "Error with status code " + response.code(),
-                            response.code(),
-                            ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                            response));
+                            "Error with status code " + response.code(), response.code(), errorBody, response));
                     return;
+                } catch (JsonProcessingException e) {
+                    future.completeExceptionally(
+                            new ApiClientException("Failed to deserialize response: " + e.getMessage(), e));
                 } catch (IOException e) {
                     future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
                 }
@@ -369,16 +461,25 @@ public class AsyncRawFlowserviceClient {
     }
 
     public CompletableFuture<ApiClientHttpResponse<V1FlowDetokenizeResponse>> detokenize(
+            RequestOptions requestOptions) {
+        return detokenize(V1FlowDetokenizeRequest.builder().build(), requestOptions);
+    }
+
+    public CompletableFuture<ApiClientHttpResponse<V1FlowDetokenizeResponse>> detokenize(
             V1FlowDetokenizeRequest request) {
         return detokenize(request, null);
     }
 
     public CompletableFuture<ApiClientHttpResponse<V1FlowDetokenizeResponse>> detokenize(
             V1FlowDetokenizeRequest request, RequestOptions requestOptions) {
-        HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
+        HttpUrl.Builder httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
                 .newBuilder()
-                .addPathSegments("v2/tokens/detokenize")
-                .build();
+                .addPathSegments("v2/tokens/detokenize");
+        if (requestOptions != null) {
+            requestOptions.getQueryParameters().forEach((_key, _value) -> {
+                httpUrl.addQueryParameter(_key, _value);
+            });
+        }
         RequestBody body;
         try {
             body = RequestBody.create(
@@ -387,7 +488,7 @@ public class AsyncRawFlowserviceClient {
             throw new ApiClientException("Failed to serialize request", e);
         }
         Request okhttpRequest = new Request.Builder()
-                .url(httpUrl)
+                .url(httpUrl.build())
                 .method("POST", body)
                 .headers(Headers.of(clientOptions.headers(requestOptions)))
                 .addHeader("Content-Type", "application/json")
@@ -397,25 +498,34 @@ public class AsyncRawFlowserviceClient {
         if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
             client = clientOptions.httpClientWithTimeout(requestOptions);
         }
+        if (requestOptions != null && requestOptions.getMaxRetries().isPresent()) {
+            okhttpRequest = okhttpRequest
+                    .newBuilder()
+                    .tag(
+                            RetryInterceptor.MaxRetriesOverride.class,
+                            new RetryInterceptor.MaxRetriesOverride(
+                                    requestOptions.getMaxRetries().get()))
+                    .build();
+        }
         CompletableFuture<ApiClientHttpResponse<V1FlowDetokenizeResponse>> future = new CompletableFuture<>();
         client.newCall(okhttpRequest).enqueue(new Callback() {
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
                 try (ResponseBody responseBody = response.body()) {
+                    String responseBodyString = responseBody != null ? responseBody.string() : "{}";
                     if (response.isSuccessful()) {
                         future.complete(new ApiClientHttpResponse<>(
-                                ObjectMappers.JSON_MAPPER.readValue(
-                                        responseBody.string(), V1FlowDetokenizeResponse.class),
+                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, V1FlowDetokenizeResponse.class),
                                 response));
                         return;
                     }
-                    String responseBodyString = responseBody != null ? responseBody.string() : "{}";
+                    Object errorBody = ObjectMappers.parseErrorBody(responseBodyString);
                     future.completeExceptionally(new ApiClientApiException(
-                            "Error with status code " + response.code(),
-                            response.code(),
-                            ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                            response));
+                            "Error with status code " + response.code(), response.code(), errorBody, response));
                     return;
+                } catch (JsonProcessingException e) {
+                    future.completeExceptionally(
+                            new ApiClientException("Failed to deserialize response: " + e.getMessage(), e));
                 } catch (IOException e) {
                     future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
                 }
@@ -433,16 +543,24 @@ public class AsyncRawFlowserviceClient {
         return tokenize(V1FlowTokenizeRequest.builder().build());
     }
 
+    public CompletableFuture<ApiClientHttpResponse<V1FlowTokenizeResponse>> tokenize(RequestOptions requestOptions) {
+        return tokenize(V1FlowTokenizeRequest.builder().build(), requestOptions);
+    }
+
     public CompletableFuture<ApiClientHttpResponse<V1FlowTokenizeResponse>> tokenize(V1FlowTokenizeRequest request) {
         return tokenize(request, null);
     }
 
     public CompletableFuture<ApiClientHttpResponse<V1FlowTokenizeResponse>> tokenize(
             V1FlowTokenizeRequest request, RequestOptions requestOptions) {
-        HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
+        HttpUrl.Builder httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
                 .newBuilder()
-                .addPathSegments("v2/tokens/tokenize")
-                .build();
+                .addPathSegments("v2/tokens/tokenize");
+        if (requestOptions != null) {
+            requestOptions.getQueryParameters().forEach((_key, _value) -> {
+                httpUrl.addQueryParameter(_key, _value);
+            });
+        }
         RequestBody body;
         try {
             body = RequestBody.create(
@@ -451,7 +569,7 @@ public class AsyncRawFlowserviceClient {
             throw new ApiClientException("Failed to serialize request", e);
         }
         Request okhttpRequest = new Request.Builder()
-                .url(httpUrl)
+                .url(httpUrl.build())
                 .method("POST", body)
                 .headers(Headers.of(clientOptions.headers(requestOptions)))
                 .addHeader("Content-Type", "application/json")
@@ -461,25 +579,34 @@ public class AsyncRawFlowserviceClient {
         if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
             client = clientOptions.httpClientWithTimeout(requestOptions);
         }
+        if (requestOptions != null && requestOptions.getMaxRetries().isPresent()) {
+            okhttpRequest = okhttpRequest
+                    .newBuilder()
+                    .tag(
+                            RetryInterceptor.MaxRetriesOverride.class,
+                            new RetryInterceptor.MaxRetriesOverride(
+                                    requestOptions.getMaxRetries().get()))
+                    .build();
+        }
         CompletableFuture<ApiClientHttpResponse<V1FlowTokenizeResponse>> future = new CompletableFuture<>();
         client.newCall(okhttpRequest).enqueue(new Callback() {
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
                 try (ResponseBody responseBody = response.body()) {
+                    String responseBodyString = responseBody != null ? responseBody.string() : "{}";
                     if (response.isSuccessful()) {
                         future.complete(new ApiClientHttpResponse<>(
-                                ObjectMappers.JSON_MAPPER.readValue(
-                                        responseBody.string(), V1FlowTokenizeResponse.class),
+                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, V1FlowTokenizeResponse.class),
                                 response));
                         return;
                     }
-                    String responseBodyString = responseBody != null ? responseBody.string() : "{}";
+                    Object errorBody = ObjectMappers.parseErrorBody(responseBodyString);
                     future.completeExceptionally(new ApiClientApiException(
-                            "Error with status code " + response.code(),
-                            response.code(),
-                            ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                            response));
+                            "Error with status code " + response.code(), response.code(), errorBody, response));
                     return;
+                } catch (JsonProcessingException e) {
+                    future.completeExceptionally(
+                            new ApiClientException("Failed to deserialize response: " + e.getMessage(), e));
                 } catch (IOException e) {
                     future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
                 }
@@ -498,16 +625,25 @@ public class AsyncRawFlowserviceClient {
     }
 
     public CompletableFuture<ApiClientHttpResponse<V1FlowVaultMetricsResponse>> flowvaultmetrics(
+            RequestOptions requestOptions) {
+        return flowvaultmetrics(V1FlowVaultMetricsRequest.builder().build(), requestOptions);
+    }
+
+    public CompletableFuture<ApiClientHttpResponse<V1FlowVaultMetricsResponse>> flowvaultmetrics(
             V1FlowVaultMetricsRequest request) {
         return flowvaultmetrics(request, null);
     }
 
     public CompletableFuture<ApiClientHttpResponse<V1FlowVaultMetricsResponse>> flowvaultmetrics(
             V1FlowVaultMetricsRequest request, RequestOptions requestOptions) {
-        HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
+        HttpUrl.Builder httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
                 .newBuilder()
-                .addPathSegments("v2/vaults/metrics")
-                .build();
+                .addPathSegments("v2/vaults/metrics");
+        if (requestOptions != null) {
+            requestOptions.getQueryParameters().forEach((_key, _value) -> {
+                httpUrl.addQueryParameter(_key, _value);
+            });
+        }
         RequestBody body;
         try {
             body = RequestBody.create(
@@ -516,7 +652,7 @@ public class AsyncRawFlowserviceClient {
             throw new ApiClientException("Failed to serialize request", e);
         }
         Request okhttpRequest = new Request.Builder()
-                .url(httpUrl)
+                .url(httpUrl.build())
                 .method("POST", body)
                 .headers(Headers.of(clientOptions.headers(requestOptions)))
                 .addHeader("Content-Type", "application/json")
@@ -526,25 +662,35 @@ public class AsyncRawFlowserviceClient {
         if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
             client = clientOptions.httpClientWithTimeout(requestOptions);
         }
+        if (requestOptions != null && requestOptions.getMaxRetries().isPresent()) {
+            okhttpRequest = okhttpRequest
+                    .newBuilder()
+                    .tag(
+                            RetryInterceptor.MaxRetriesOverride.class,
+                            new RetryInterceptor.MaxRetriesOverride(
+                                    requestOptions.getMaxRetries().get()))
+                    .build();
+        }
         CompletableFuture<ApiClientHttpResponse<V1FlowVaultMetricsResponse>> future = new CompletableFuture<>();
         client.newCall(okhttpRequest).enqueue(new Callback() {
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
                 try (ResponseBody responseBody = response.body()) {
+                    String responseBodyString = responseBody != null ? responseBody.string() : "{}";
                     if (response.isSuccessful()) {
                         future.complete(new ApiClientHttpResponse<>(
                                 ObjectMappers.JSON_MAPPER.readValue(
-                                        responseBody.string(), V1FlowVaultMetricsResponse.class),
+                                        responseBodyString, V1FlowVaultMetricsResponse.class),
                                 response));
                         return;
                     }
-                    String responseBodyString = responseBody != null ? responseBody.string() : "{}";
+                    Object errorBody = ObjectMappers.parseErrorBody(responseBodyString);
                     future.completeExceptionally(new ApiClientApiException(
-                            "Error with status code " + response.code(),
-                            response.code(),
-                            ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                            response));
+                            "Error with status code " + response.code(), response.code(), errorBody, response));
                     return;
+                } catch (JsonProcessingException e) {
+                    future.completeExceptionally(
+                            new ApiClientException("Failed to deserialize response: " + e.getMessage(), e));
                 } catch (IOException e) {
                     future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
                 }

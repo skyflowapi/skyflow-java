@@ -55,6 +55,11 @@ public final class Skyflow extends BaseSkyflow {
     public static final class SkyflowClientBuilder extends BaseSkyflowClientBuilder {
         private final LinkedHashMap<String, VaultConfig> vaultConfigMap;
         private final LinkedHashMap<String, VaultController> vaultClientsMap;
+        // Client-wide HTTP config defaults (apply to all vaults unless a vault overrides). null => SDK default.
+        private Integer timeout;
+        private Integer maxRetries;
+        private Long initialRetryDelayMillis;
+        private Long maxRetryDelayMillis;
 
         public SkyflowClientBuilder() {
             this.vaultConfigMap = new LinkedHashMap<>();
@@ -78,7 +83,9 @@ public final class Skyflow extends BaseSkyflow {
                         ErrorMessage.VaultIdAlreadyInConfigList.getMessage());
             } else {
                 this.vaultConfigMap.put(vaultConfigCopy.getVaultId(), vaultConfigCopy); // add new config in map
-                this.vaultClientsMap.put(vaultConfigCopy.getVaultId(), new VaultController(vaultConfigCopy, this.skyflowCredentials)); // add new controller with new config
+                VaultController controller = new VaultController(vaultConfigCopy, this.skyflowCredentials); // new controller with new config
+                controller.setCommonHttpConfig(this.timeout, this.maxRetries, this.initialRetryDelayMillis, this.maxRetryDelayMillis);
+                this.vaultClientsMap.put(vaultConfigCopy.getVaultId(), controller);
                 LogUtil.printInfoLog(Utils.parameterizedString(
                         InfoLogs.VAULT_CONTROLLER_INITIALIZED.getLog(), vaultConfigCopy.getVaultId()));
             }
@@ -98,6 +105,40 @@ public final class Skyflow extends BaseSkyflow {
                 vault.setCommonCredentials(this.skyflowCredentials);
             }
             return this;
+        }
+
+        /** Client-wide overall call timeout in seconds. Applies to all vaults unless a vault overrides it. */
+        public SkyflowClientBuilder timeout(int timeout) {
+            this.timeout = timeout;
+            propagateHttpConfig();
+            return this;
+        }
+
+        /** Client-wide retry attempt count. Applies to all vaults unless a vault overrides it. */
+        public SkyflowClientBuilder maxRetries(int maxRetries) {
+            this.maxRetries = maxRetries;
+            propagateHttpConfig();
+            return this;
+        }
+
+        /** Client-wide base retry backoff in milliseconds. Applies to all vaults unless a vault overrides it. */
+        public SkyflowClientBuilder initialRetryDelayMillis(long initialRetryDelayMillis) {
+            this.initialRetryDelayMillis = initialRetryDelayMillis;
+            propagateHttpConfig();
+            return this;
+        }
+
+        /** Client-wide retry backoff cap in milliseconds. Applies to all vaults unless a vault overrides it. */
+        public SkyflowClientBuilder maxRetryDelayMillis(long maxRetryDelayMillis) {
+            this.maxRetryDelayMillis = maxRetryDelayMillis;
+            propagateHttpConfig();
+            return this;
+        }
+
+        private void propagateHttpConfig() {
+            for (VaultController vault : this.vaultClientsMap.values()) {
+                vault.setCommonHttpConfig(this.timeout, this.maxRetries, this.initialRetryDelayMillis, this.maxRetryDelayMillis);
+            }
         }
 
         @Override

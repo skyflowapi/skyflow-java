@@ -2211,4 +2211,72 @@ public class UtilsTests {
         Assert.assertTrue(result.getSuccess().isEmpty());
         Assert.assertTrue(result.getErrors().isEmpty());
     }
+
+    // ── SK-3002: client-side timeout is classified as 408, not a generic 500 ──
+
+    private static Throwable timeoutFailure() {
+        // Mirrors the real chain: OkHttp call-timeout (SocketTimeoutException, a
+        // subclass of InterruptedIOException) -> wrapped by the generated client in
+        // ApiClientException -> wrapped by CompletableFuture in CompletionException.
+        return new java.util.concurrent.CompletionException(
+                new com.skyflow.generated.rest.core.ApiClientException(
+                        "Network error executing HTTP request",
+                        new java.net.SocketTimeoutException("timeout")));
+    }
+
+    @Test
+    public void handleBatchException_timeout_yields408AndCleanMessage() {
+        List<V1InsertRecordData> batch = Arrays.asList(
+                V1InsertRecordData.builder().build(),
+                V1InsertRecordData.builder().build());
+
+        List<ErrorRecord> errors = Utils.handleBatchException(timeoutFailure(), batch, 0, 1);
+
+        Assert.assertEquals(2, errors.size());
+        Assert.assertEquals("timeout maps to 408", 408, errors.get(0).getCode());
+        Assert.assertEquals("Request timed out.", errors.get(0).getError());
+    }
+
+    @Test
+    public void handleDetokenizeBatchException_timeout_yields408AndCleanMessage() {
+        com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest batch =
+                com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest.builder()
+                        .tokens(Arrays.asList("t1", "t2")).vaultId("v1").build();
+
+        List<ErrorRecord> errors = Utils.handleDetokenizeBatchException(timeoutFailure(), batch, 0, 2);
+
+        Assert.assertEquals(2, errors.size());
+        Assert.assertEquals("timeout maps to 408", 408, errors.get(0).getCode());
+        Assert.assertEquals("Request timed out.", errors.get(0).getError());
+    }
+
+    @Test
+    public void handleDeleteTokensBatchException_timeout_yields408AndCleanMessage() {
+        com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDeleteTokenRequest batch =
+                com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDeleteTokenRequest.builder()
+                        .tokens(Arrays.asList("tok1", "tok2")).vaultId("v1").build();
+
+        List<ErrorRecord> errors = Utils.handleDeleteTokensBatchException(timeoutFailure(), batch, 0, 2);
+
+        Assert.assertEquals(2, errors.size());
+        Assert.assertEquals("timeout maps to 408", 408, errors.get(0).getCode());
+        Assert.assertEquals("Request timed out.", errors.get(0).getError());
+    }
+
+    @Test
+    public void handleTokenizeBatchException_timeout_yields408AndCleanMessage() {
+        com.skyflow.generated.rest.resources.flowservice.requests.V1FlowTokenizeRequest batch =
+                com.skyflow.generated.rest.resources.flowservice.requests.V1FlowTokenizeRequest.builder()
+                        .vaultId("v1")
+                        .data(Arrays.asList(
+                                com.skyflow.generated.rest.types.V1FlowTokenizeRequestObject.builder().value("v1").build(),
+                                com.skyflow.generated.rest.types.V1FlowTokenizeRequestObject.builder().value("v2").build()))
+                        .build();
+
+        List<ErrorRecord> errors = Utils.handleTokenizeBatchException(timeoutFailure(), batch, 0, 2);
+
+        Assert.assertEquals(2, errors.size());
+        Assert.assertEquals("timeout maps to 408", 408, errors.get(0).getCode());
+        Assert.assertEquals("Request timed out.", errors.get(0).getError());
+    }
 }

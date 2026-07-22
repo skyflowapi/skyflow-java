@@ -35,6 +35,13 @@ public class RecordsClient {
     /**
      * Executes a query on the specified vault.
      */
+    public V1ExecuteQueryResponse flowServiceExecuteQuery(RequestOptions requestOptions) {
+        return this.rawClient.flowServiceExecuteQuery(requestOptions).body();
+    }
+
+    /**
+     * Executes a query on the specified vault.
+     */
     public V1ExecuteQueryResponse flowServiceExecuteQuery(V1ExecuteQueryRequest request) {
         return this.rawClient.flowServiceExecuteQuery(request).body();
     }

@@ -123,5 +123,15 @@ public final class V1ExecuteQueryResponse {
         public V1ExecuteQueryResponse build() {
             return new V1ExecuteQueryResponse(records, metadata, additionalProperties);
         }
+
+        public Builder additionalProperty(String key, Object value) {
+            this.additionalProperties.put(key, value);
+            return this;
+        }
+
+        public Builder additionalProperties(Map<String, Object> additionalProperties) {
+            this.additionalProperties.putAll(additionalProperties);
+            return this;
+        }
     }
 }

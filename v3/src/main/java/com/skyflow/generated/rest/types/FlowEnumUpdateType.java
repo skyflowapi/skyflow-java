@@ -3,22 +3,81 @@
  */
 package com.skyflow.generated.rest.types;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
-public enum FlowEnumUpdateType {
-    UPDATE("UPDATE"),
+public final class FlowEnumUpdateType {
+    public static final FlowEnumUpdateType REPLACE = new FlowEnumUpdateType(Value.REPLACE, "REPLACE");
 
-    REPLACE("REPLACE");
+    public static final FlowEnumUpdateType UPDATE = new FlowEnumUpdateType(Value.UPDATE, "UPDATE");
 
-    private final String value;
+    private final Value value;
 
-    FlowEnumUpdateType(String value) {
+    private final String string;
+
+    FlowEnumUpdateType(Value value, String string) {
         this.value = value;
+        this.string = string;
     }
 
-    @JsonValue
+    public Value getEnumValue() {
+        return value;
+    }
+
     @java.lang.Override
+    @JsonValue
     public String toString() {
-        return this.value;
+        return this.string;
+    }
+
+    @java.lang.Override
+    public boolean equals(Object other) {
+        return (this == other)
+                || (other instanceof FlowEnumUpdateType && this.string.equals(((FlowEnumUpdateType) other).string));
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+        return this.string.hashCode();
+    }
+
+    public <T> T visit(Visitor<T> visitor) {
+        switch (value) {
+            case REPLACE:
+                return visitor.visitReplace();
+            case UPDATE:
+                return visitor.visitUpdate();
+            case UNKNOWN:
+            default:
+                return visitor.visitUnknown(string);
+        }
+    }
+
+    @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
+    public static FlowEnumUpdateType valueOf(String value) {
+        switch (value) {
+            case "REPLACE":
+                return REPLACE;
+            case "UPDATE":
+                return UPDATE;
+            default:
+                return new FlowEnumUpdateType(Value.UNKNOWN, value);
+        }
+    }
+
+    public enum Value {
+        UPDATE,
+
+        REPLACE,
+
+        UNKNOWN
+    }
+
+    public interface Visitor<T> {
+        T visitUpdate();
+
+        T visitReplace();
+
+        T visitUnknown(String unknownType);
     }
 }

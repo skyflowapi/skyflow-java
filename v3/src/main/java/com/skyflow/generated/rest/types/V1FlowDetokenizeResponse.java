@@ -99,5 +99,15 @@ public final class V1FlowDetokenizeResponse {
         public V1FlowDetokenizeResponse build() {
             return new V1FlowDetokenizeResponse(response, additionalProperties);
         }
+
+        public Builder additionalProperty(String key, Object value) {
+            this.additionalProperties.put(key, value);
+            return this;
+        }
+
+        public Builder additionalProperties(Map<String, Object> additionalProperties) {
+            this.additionalProperties.putAll(additionalProperties);
+            return this;
+        }
     }
 }
