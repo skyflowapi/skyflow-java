@@ -103,7 +103,7 @@ jobs:
           git config user.email ${{ github.actor }}@users.noreply.github.com
 
           if [[ "${{ inputs.tag }}" == "beta" || "${{ inputs.tag }}" == "public" ]]; then
-            git checkout ${{ env.branch_name }}
+            git switch ${{ env.branch_name }}
           fi
 
           git add v3/pom.xml
