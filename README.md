@@ -173,6 +173,56 @@ Notes:
 - If neither Skyflow common credentials nor individual configuration-level credentials are provided, the SDK attempts to retrieve credentials from the `SKYFLOW_CREDENTIALS` environment variable.
 - All Vault operations require a client instance.
 
+### Configure timeouts and retries
+
+You can control how long a request is allowed to run and whether failed requests are retried. These settings can be applied client-wide (to all vaults) on `Skyflow.builder()`, or per vault on `VaultConfig`.
+
+| Setting | Unit | Default | Description |
+| --- | --- | --- | --- |
+| `timeout` | seconds | `60` | Overall time budget for a request, including any retries and backoff. |
+| `maxRetries` | count | `0` | Number of retry attempts. `0` disables retries. |
+| `initialRetryDelayMillis` | milliseconds | `500` | Base delay before the first retry. |
+| `maxRetryDelayMillis` | milliseconds | `2000` | Upper bound on the delay between retries. |
+
+Each setting is available at two levels:
+
+- **Client-wide** — on `Skyflow.builder()`: `.timeout(int)`, `.maxRetries(int)`, `.initialRetryDelayMillis(long)`, `.maxRetryDelayMillis(long)`. Applies to every vault.
+- **Per vault** — on `VaultConfig`: `.setTimeout(int)`, `.setMaxRetries(int)`, `.setInitialRetryDelayMillis(long)`, `.setMaxRetryDelayMillis(long)`. Applies to that vault only.
+
+**Precedence:** a value set on `VaultConfig` (per vault) overrides the client-wide value set on `Skyflow.builder()`, which overrides the SDK default. Resolution is per field, so a vault can override just `timeout` and still inherit the client-wide retry settings.
+
+**Retry behavior:** when `maxRetries` is greater than `0`, the SDK retries requests that fail with HTTP `408`, `429`, or `5xx`, using exponential backoff with jitter between `initialRetryDelayMillis` and `maxRetryDelayMillis`. It also honors the `Retry-After` and `X-RateLimit-Reset` response headers. Retries are disabled by default so non-idempotent writes are not automatically retried; enable them explicitly when appropriate.
+
+**Timeouts:** when a request exceeds `timeout`, the SDK surfaces an error with HTTP status `408` and the message `Request timed out.`.
+
+```java
+import com.skyflow.Skyflow;
+import com.skyflow.config.VaultConfig;
+
+// Per-vault configuration: these settings override the client-wide values for this vault only.
+VaultConfig vaultConfig = new VaultConfig();
+vaultConfig.setVaultId("<VAULT_ID>");
+vaultConfig.setClusterId("<CLUSTER_ID>");
+vaultConfig.setEnv(Env.PROD);
+vaultConfig.setCredentials(credentials);
+vaultConfig.setTimeout(30);                      // seconds — overall request timeout
+vaultConfig.setMaxRetries(3);                    // retry attempts (0 = retries off)
+vaultConfig.setInitialRetryDelayMillis(1000L);   // base backoff in milliseconds
+vaultConfig.setMaxRetryDelayMillis(4000L);       // backoff cap in milliseconds
+
+// Client-wide defaults: apply to every vault unless overridden on the vault (as above).
+Skyflow skyflowClient = Skyflow.builder()
+        .timeout(60)                             // seconds — overall request timeout
+        .maxRetries(2)                           // retry attempts (0 = retries off)
+        .initialRetryDelayMillis(500L)           // base backoff in milliseconds
+        .maxRetryDelayMillis(2000L)              // backoff cap in milliseconds
+        .addVaultConfig(vaultConfig)
+        .build();
+
+// Result for this vault: timeout=30, maxRetries=3, initialRetryDelayMillis=1000, maxRetryDelayMillis=4000
+// (all overridden per vault). A vault that sets none of these inherits the client-wide values above.
+```
+
 # Vault
 
 The [Vault](https://github.com/skyflowapi/skyflow-java/tree/main/src/main/java/com/skyflow/vault) module performs operations on the vault, including inserting records and detokenizing tokens.
