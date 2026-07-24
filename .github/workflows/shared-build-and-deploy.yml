@@ -50,6 +50,11 @@ jobs:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
+          # PAT of the skyflow-service-it admin service account. Persisted by
+          # checkout and reused for the automated version-bump push below, so
+          # that push satisfies the branch-protection ruleset's repo-admin
+          # bypass (github-actions[bot] is not a bypass actor). See SK-2986.
+          token: ${{ secrets.PAT_ACTIONS }}
 
       - name: Set up maven or jfrog repository
         uses: actions/setup-java@v4
