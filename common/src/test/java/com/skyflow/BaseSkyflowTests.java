@@ -260,6 +260,77 @@ public class BaseSkyflowTests {
         Assert.assertEquals(clusterID, result.getClusterId());
     }
 
+    @Test
+    public void testVaultReturnsFirstEntryWhenNoVaultIdSpecified() throws SkyflowException {
+        BaseVaultConfig config = newConfig(vaultID, clusterID, Env.SANDBOX);
+        TestSkyflow client = TestSkyflow.builder().addVaultConfig(config).build();
+
+        Object vault = client.vault();
+
+        Assert.assertNotNull(vault);
+        Assert.assertSame(vault, client.vault(vaultID));
+    }
+
+    @Test
+    public void testVaultByIdReturnsConfigSpecificEntry() throws SkyflowException {
+        String secondaryId = vaultID + "123";
+        BaseVaultConfig primary = newConfig(vaultID, clusterID, Env.SANDBOX);
+        BaseVaultConfig secondary = newConfig(secondaryId, clusterID, Env.SANDBOX);
+        TestSkyflow client = TestSkyflow.builder().addVaultConfig(primary).addVaultConfig(secondary).build();
+
+        Object primaryVault = client.vault(vaultID);
+        Object secondaryVault = client.vault(secondaryId);
+
+        Assert.assertNotNull(primaryVault);
+        Assert.assertNotNull(secondaryVault);
+        Assert.assertNotSame(primaryVault, secondaryVault);
+        Assert.assertSame(primaryVault, client.vault(vaultID));
+    }
+
+    @Test
+    public void testGettingExistingVaultConfigReturnsStoredConfig() throws SkyflowException {
+        BaseVaultConfig config = newConfig(vaultID, clusterID, Env.SANDBOX);
+        TestSkyflow client = TestSkyflow.builder().addVaultConfig(config).build();
+
+        BaseVaultConfig stored = client.getVaultConfig(vaultID);
+
+        Assert.assertNotNull(stored);
+        Assert.assertEquals(vaultID, stored.getVaultId());
+        Assert.assertEquals(clusterID, stored.getClusterId());
+        Assert.assertEquals(Env.SANDBOX, stored.getEnv());
+    }
+
+    @Test
+    public void testInstanceSetLogLevelNullResetsToDefault() throws SkyflowException {
+        TestSkyflow client = TestSkyflow.builder().setLogLevel(LogLevel.INFO).build();
+        Assert.assertEquals(LogLevel.INFO, client.getLogLevel());
+
+        client.setLogLevel(null);
+
+        Assert.assertEquals(LogLevel.ERROR, client.getLogLevel());
+    }
+
+    @Test
+    public void testUpdateVaultConfigLeavesOldConfigWhenHookThrows() throws SkyflowException {
+        BaseVaultConfig config = newConfig(vaultID, clusterID, Env.SANDBOX);
+        TestSkyflow client = TestSkyflow.builder()
+                .addVaultConfig(config)
+                .failVaultConfigUpdateFor(vaultID)
+                .build();
+
+        BaseVaultConfig update = newConfig(vaultID, newClusterID, Env.PROD);
+        try {
+            client.updateVaultConfig(update);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            // expected: onVaultConfigUpdated hook forced a failure
+        }
+
+        BaseVaultConfig stillOld = client.getVaultConfig(vaultID);
+        Assert.assertEquals(clusterID, stillOld.getClusterId());
+        Assert.assertEquals(Env.SANDBOX, stillOld.getEnv());
+    }
+
     private static class TestSkyflow extends BaseSkyflow<TestSkyflow, BaseVaultConfig> {
         private final TestSkyflowClientBuilder builder;
 
@@ -289,6 +360,7 @@ public class BaseSkyflowTests {
 
         private static class TestSkyflowClientBuilder extends BaseSkyflowClientBuilder<BaseVaultConfig> {
             private final java.util.LinkedHashMap<String, Object> vaultClientsMap = new java.util.LinkedHashMap<>();
+            private String vaultIdToFailUpdate;
 
             @Override
             protected void validateVaultConfig(BaseVaultConfig vaultConfig) throws SkyflowException {
@@ -303,8 +375,16 @@ public class BaseSkyflowTests {
             }
 
             @Override
-            protected void onVaultConfigUpdated(BaseVaultConfig updatedConfig) {
+            protected void onVaultConfigUpdated(BaseVaultConfig updatedConfig) throws SkyflowException {
+                if (updatedConfig.getVaultId().equals(this.vaultIdToFailUpdate)) {
+                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), "forced update hook failure");
+                }
                 this.vaultClientsMap.put(updatedConfig.getVaultId(), new Object());
+            }
+
+            TestSkyflowClientBuilder failVaultConfigUpdateFor(String vaultId) {
+                this.vaultIdToFailUpdate = vaultId;
+                return this;
             }
 
             @Override

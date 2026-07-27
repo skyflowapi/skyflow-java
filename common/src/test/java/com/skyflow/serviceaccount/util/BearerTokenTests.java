@@ -1,8 +1,11 @@
 package com.skyflow.serviceaccount.util;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.generated.auth.rest.core.ApiClientException;
 import com.skyflow.utils.BaseConstants;
 import com.skyflow.utils.BaseUtils;
 import org.junit.Assert;
@@ -10,7 +13,11 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.IOException;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -266,6 +273,56 @@ public class BearerTokenTests {
             Assert.assertEquals(
                     BaseUtils.parameterizedString(ErrorMessage.InvalidKeySpec.getMessage(), BaseConstants.SDK_PREFIX),
                     e.getMessage());
+        }
+    }
+
+    /**
+     * Generates a real, valid PKCS#8-encoded RSA private key PEM string, using the same
+     * header/footer BaseUtils.getPrivateKeyFromPem expects, so tests can exercise JWT
+     * signing (getSignedToken()) instead of always failing at key parsing.
+     */
+    private static String generateValidPkcs8PrivateKeyPem() throws Exception {
+        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+        keyPairGenerator.initialize(2048);
+        KeyPair keyPair = keyPairGenerator.generateKeyPair();
+        String base64EncodedKey = Base64.getEncoder().encodeToString(keyPair.getPrivate().getEncoded());
+        return BaseConstants.PKCS8_PRIVATE_HEADER + "\n" + base64EncodedKey + "\n" + BaseConstants.PKCS8_PRIVATE_FOOTER;
+    }
+
+    @Test
+    public void testGetSignedTokenAndScopeUsingRolesExecuteWithValidKeyRolesAndContext() {
+        try {
+            String privateKeyPem = generateValidPkcs8PrivateKeyPem();
+            ArrayList<String> testRoles = new ArrayList<>();
+            testRoles.add("test_role_one");
+            testRoles.add("test_role_two");
+            Map<String, Object> ctxMap = new HashMap<>();
+            ctxMap.put("role", "admin");
+            ctxMap.put("department", "finance");
+
+            JsonObject credentials = new JsonObject();
+            credentials.addProperty("privateKey", privateKeyPem);
+            credentials.addProperty("clientId", "client_id_value");
+            credentials.addProperty("keyId", "key_id_value");
+            // Syntactically valid but unreachable, so failure surfaces at the network call,
+            // proving getSignedToken() (with the ctx claim) and getScopeUsingRoles() (roles != null)
+            // both executed successfully first.
+            credentials.addProperty("tokenUri", "https://localhost:1");
+            String credentialsString = new Gson().toJson(credentials);
+
+            BearerToken bearerToken = BearerToken.builder()
+                    .setCredentials(credentialsString)
+                    .setCtx(ctxMap)
+                    .setRoles(testRoles)
+                    .build();
+            bearerToken.getBearerToken();
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (ApiClientException e) {
+            // Reaching this network-layer exception (rather than a SkyflowException from key
+            // parsing) confirms getSignedToken() and getScopeUsingRoles() both ran successfully.
+            Assert.assertTrue(e.getCause() instanceof IOException);
+        } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN + ": " + e);
         }
     }
 }

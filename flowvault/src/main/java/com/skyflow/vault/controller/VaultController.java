@@ -188,6 +188,72 @@ public final class VaultController extends VaultClient
         }
     }
 
+    public QueryResponse query(QueryRequest queryRequest) throws SkyflowException {
+        return query(queryRequest, null);
+    }
+
+    public QueryResponse query(QueryRequest queryRequest, QueryOptions options) throws SkyflowException {
+        try {
+            LogUtil.printInfoLog(InfoLogs.QUERY_TRIGGERED.getLog());
+            LogUtil.printInfoLog(InfoLogs.VALIDATING_QUERY_REQUEST.getLog());
+            Validations.validateQueryRequest(queryRequest);
+            setBearerToken();
+
+            com.skyflow.generated.rest.resources.records.requests.V1ExecuteQueryRequest requestBody =
+                    getQueryRequestBody(queryRequest, this.getVaultConfig().getVaultId());
+            RequestInterceptor interceptor = options != null ? options.getInterceptor() : null;
+            RequestContext ctx = new RequestContext("QUERY");
+            if (interceptor != null) interceptor.intercept(ctx);
+            com.skyflow.generated.rest.types.V1ExecuteQueryResponse response =
+                    this.getQueryApi().withRawResponse().flowServiceExecuteQuery(requestBody, buildRequestOptions(ctx)).body();
+            LogUtil.printInfoLog(InfoLogs.QUERY_REQUEST_RESOLVED.getLog());
+
+            QueryResponse queryResponse = buildQueryResponse(response);
+            LogUtil.printInfoLog(InfoLogs.QUERY_SUCCESS.getLog());
+            return queryResponse;
+        } catch (ApiClientApiException e) {
+            String bodyString = gson.toJson(e.body());
+            LogUtil.printErrorLog(ErrorLogs.QUERY_REQUEST_REJECTED.getLog());
+            throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
+        } catch (ApiClientException e) {
+            LogUtil.printErrorLog(ErrorLogs.QUERY_REQUEST_REJECTED.getLog());
+            throw new SkyflowException(e.getMessage());
+        }
+    }
+
+    public GetResponse get(GetRequest getRequest) throws SkyflowException {
+        return get(getRequest, null);
+    }
+
+    public GetResponse get(GetRequest getRequest, GetOptions options) throws SkyflowException {
+        try {
+            LogUtil.printInfoLog(InfoLogs.GET_TRIGGERED.getLog());
+            LogUtil.printInfoLog(InfoLogs.VALIDATE_GET_REQUEST.getLog());
+            Validations.validateGetRequest(getRequest);
+            setBearerToken();
+
+            com.skyflow.generated.rest.resources.flowservice.requests.V1GetRequest requestBody =
+                    getGetRequestBody(getRequest, this.getVaultConfig().getVaultId());
+            RequestInterceptor interceptor = options != null ? options.getInterceptor() : null;
+            RequestContext ctx = new RequestContext("GET");
+            if (interceptor != null) interceptor.intercept(ctx);
+            com.skyflow.generated.rest.types.V1GetResponse response =
+                    this.getRecordsApi().withRawResponse().get(requestBody, buildRequestOptions(ctx)).body();
+            LogUtil.printInfoLog(InfoLogs.GET_REQUEST_RESOLVED.getLog());
+
+            GetResponse getResponse = buildGetResponse(response);
+            LogUtil.printInfoLog(InfoLogs.GET_SUCCESS.getLog());
+            return getResponse;
+        } catch (ApiClientApiException e) {
+            String bodyString = gson.toJson(e.body());
+            LogUtil.printErrorLog(ErrorLogs.GET_REQUEST_REJECTED.getLog());
+            throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
+        } catch (ApiClientException e) {
+            LogUtil.printErrorLog(ErrorLogs.GET_REQUEST_REJECTED.getLog());
+            throw new SkyflowException(e.getMessage());
+        }
+    }
+
     // ── Bulk Insert ───────────────────────────────────────────────────────────
 
     public BulkInsertResponse bulkInsert(BulkInsertRequest insertRequest) throws SkyflowException {

@@ -1,5 +1,6 @@
 package com.skyflow.utils;
 
+import com.google.gson.JsonObject;
 import com.skyflow.config.Credentials;
 import com.skyflow.enums.Env;
 import com.skyflow.errors.ErrorCode;
@@ -9,7 +10,10 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.net.MalformedURLException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class BaseUtilsTests {
     private static final String INVALID_EXCEPTION_THROWN = "Should not have thrown any exception";
@@ -134,5 +138,107 @@ public class BaseUtilsTests {
         } catch (SkyflowException e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
         }
+    }
+
+    @Test
+    public void testGetBaseURLWithMalformedURL() {
+        try {
+            BaseUtils.getBaseURL("not a url");
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (MalformedURLException e) {
+            // expected
+        }
+    }
+
+    @Test
+    public void testGenerateBearerTokenWithCredentialsFileAndMapContext() {
+        try {
+            Map<String, Object> mapContext = new HashMap<>();
+            mapContext.put("test_key", "test_value");
+            Credentials credentials = new Credentials();
+            credentials.setPath(filePath);
+            credentials.setContext(mapContext);
+            credentials.setRoles(roles);
+            BaseUtils.generateBearerToken(credentials);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (ClassCastException e) {
+            Assert.fail("Map context should not cause a ClassCastException");
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(
+                    BaseUtils.parameterizedString(ErrorMessage.FileNotFound.getMessage(), filePath),
+                    e.getMessage()
+            );
+        }
+    }
+
+    @Test
+    public void testGenerateBearerTokenWithCredentialsStringAndMapContext() {
+        try {
+            Map<String, Object> mapContext = new HashMap<>();
+            mapContext.put("test_key", "test_value");
+            Credentials credentials = new Credentials();
+            credentials.setCredentialsString(credentialsString);
+            credentials.setContext(mapContext);
+            credentials.setRoles(roles);
+            BaseUtils.generateBearerToken(credentials);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (ClassCastException e) {
+            Assert.fail("Map context should not cause a ClassCastException");
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(ErrorMessage.CredentialsStringInvalidJson.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testGenerateBearerTokenWithContextNeitherStringNorMap() {
+        try {
+            // context is left unset (null), which is neither a String nor a Map -- this should
+            // simply be skipped rather than throwing any type-related exception.
+            Credentials credentials = new Credentials();
+            credentials.setCredentialsString(credentialsString);
+            credentials.setRoles(roles);
+            BaseUtils.generateBearerToken(credentials);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (ClassCastException e) {
+            Assert.fail("Non String/Map context should not cause a ClassCastException");
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(ErrorMessage.CredentialsStringInvalidJson.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testGetPrivateKeyFromPemWithMissingHeader() {
+        try {
+            BaseUtils.getPrivateKeyFromPem("this-is-not-a-pem-key-at-all");
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(ErrorMessage.JwtInvalidFormat.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testGetPrivateKeyFromPemWithInvalidBase64Body() {
+        String malformedPem = "-----BEGIN PRIVATE KEY-----\nnot-valid-base64!!!\n-----END PRIVATE KEY-----";
+        try {
+            BaseUtils.getPrivateKeyFromPem(malformedPem);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (IllegalArgumentException e) {
+            Assert.fail("Invalid base64 content should be wrapped into a SkyflowException, not thrown raw");
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(ErrorMessage.InvalidKeySpec.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testGetCommonMetrics() {
+        JsonObject metrics = BaseUtils.getCommonMetrics();
+        Assert.assertNotNull(metrics.get(BaseConstants.SDK_METRIC_CLIENT_DEVICE_MODEL));
+        Assert.assertNotNull(metrics.get(BaseConstants.SDK_METRIC_RUNTIME_DETAILS));
+        Assert.assertNotNull(metrics.get(BaseConstants.SDK_METRIC_CLIENT_OS_DETAILS));
     }
 }

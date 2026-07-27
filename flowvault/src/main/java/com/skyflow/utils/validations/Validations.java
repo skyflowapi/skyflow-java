@@ -620,4 +620,165 @@ public class Validations extends BaseValidations {
         }
     }
 
+    public static void validateQueryRequest(QueryRequest queryRequest) throws SkyflowException {
+        String query = queryRequest.getQuery();
+        if (query == null) {
+            LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.QUERY_IS_REQUIRED.getLog(), InterfaceName.QUERY.getName()
+            ));
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.QueryKeyError.getMessage());
+        } else if (query.trim().isEmpty()) {
+            LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.EMPTY_QUERY.getLog(), InterfaceName.QUERY.getName()
+            ));
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyQuery.getMessage());
+        }
+    }
+
+    public static void validateGetRequest(GetRequest getRequest) throws SkyflowException {
+        String table = getRequest.getTable();
+        ArrayList<String> ids = getRequest.getIds();
+        ArrayList<String> fields = getRequest.getFields();
+        List<Map<String, Object>> uniqueValues = getRequest.getUniqueValues();
+        List<ColumnRedaction> columnRedactions = getRequest.getColumnRedactions();
+        List<GetRecordRequest> records = getRequest.getRecords();
+
+        boolean hasSingleTableFields = table != null || ids != null || fields != null
+                || uniqueValues != null || columnRedactions != null;
+        boolean hasRecords = records != null && !records.isEmpty();
+
+        if (hasRecords) {
+            if (hasSingleTableFields) {
+                LogUtil.printErrorLog(Utils.parameterizedString(
+                        ErrorLogs.BOTH_SINGLE_TABLE_FIELDS_AND_RECORDS_PASSED.getLog(), InterfaceName.GET.getName()
+                ));
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.BothSingleTableFieldsAndRecordsSpecified.getMessage());
+            }
+            for (GetRecordRequest record : records) {
+                if (record == null) {
+                    LogUtil.printErrorLog(Utils.parameterizedString(
+                            ErrorLogs.NULL_GET_RECORD_REQUEST_OBJECT.getLog(), InterfaceName.GET.getName()
+                    ));
+                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.NullGetRecordRequest.getMessage());
+                }
+                validateSingleTableLookup(record.getTable(), record.getIds(), record.getFields(),
+                        record.getUniqueValues(), record.getColumnRedactions());
+            }
+        } else {
+            validateSingleTableLookup(table, ids, fields, uniqueValues, columnRedactions);
+        }
+    }
+
+    private static void validateSingleTableLookup(
+            String table, ArrayList<String> ids, ArrayList<String> fields,
+            List<Map<String, Object>> uniqueValues, List<ColumnRedaction> columnRedactions
+    ) throws SkyflowException {
+        if (table == null) {
+            LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.TABLE_IS_REQUIRED.getLog(), InterfaceName.GET.getName()
+            ));
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.TableKeyError.getMessage());
+        } else if (table.trim().isEmpty()) {
+            LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.EMPTY_TABLE_NAME.getLog(), InterfaceName.GET.getName()
+            ));
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyTable.getMessage());
+        }
+
+        if (ids != null) {
+            if (ids.isEmpty()) {
+                LogUtil.printErrorLog(Utils.parameterizedString(
+                        ErrorLogs.EMPTY_IDS.getLog(), InterfaceName.GET.getName()
+                ));
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyIds.getMessage());
+            } else {
+                for (int index = 0; index < ids.size(); index++) {
+                    String id = ids.get(index);
+                    if (id == null || id.trim().isEmpty()) {
+                        LogUtil.printErrorLog(Utils.parameterizedString(
+                                ErrorLogs.EMPTY_OR_NULL_ID_IN_IDS.getLog(),
+                                InterfaceName.GET.getName(), String.valueOf(index)
+                        ));
+                        throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyIdInIds.getMessage());
+                    }
+                }
+            }
+        }
+
+        if (fields != null) {
+            if (fields.isEmpty()) {
+                LogUtil.printErrorLog(Utils.parameterizedString(
+                        ErrorLogs.EMPTY_FIELDS.getLog(), InterfaceName.GET.getName()
+                ));
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyFields.getMessage());
+            } else {
+                for (int index = 0; index < fields.size(); index++) {
+                    String field = fields.get(index);
+                    if (field == null || field.trim().isEmpty()) {
+                        LogUtil.printErrorLog(Utils.parameterizedString(
+                                ErrorLogs.EMPTY_OR_NULL_FIELD_IN_FIELDS.getLog(),
+                                InterfaceName.GET.getName(), String.valueOf(index)
+                        ));
+                        throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyFieldInFields.getMessage());
+                    }
+                }
+            }
+        }
+
+        if (ids == null && uniqueValues == null) {
+            LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.NEITHER_IDS_NOR_UNIQUE_VALUES_PASSED.getLog(), InterfaceName.GET.getName()
+            ));
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.IdsOrUniqueValuesKeyError.getMessage());
+        } else if (ids != null && uniqueValues != null) {
+            LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.BOTH_IDS_AND_UNIQUE_VALUES_PASSED.getLog(), InterfaceName.GET.getName()
+            ));
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.BothIdsAndUniqueValuesSpecified.getMessage());
+        } else if (uniqueValues != null) {
+            if (uniqueValues.isEmpty()) {
+                LogUtil.printErrorLog(Utils.parameterizedString(
+                        ErrorLogs.EMPTY_UNIQUE_VALUES.getLog(), InterfaceName.GET.getName()
+                ));
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyUniqueValues.getMessage());
+            } else {
+                for (int index = 0; index < uniqueValues.size(); index++) {
+                    Map<String, Object> uniqueValue = uniqueValues.get(index);
+                    if (uniqueValue == null || uniqueValue.isEmpty()) {
+                        LogUtil.printErrorLog(Utils.parameterizedString(
+                                ErrorLogs.EMPTY_OR_NULL_UNIQUE_VALUE_IN_UNIQUE_VALUES.getLog(),
+                                InterfaceName.GET.getName(), String.valueOf(index)
+                        ));
+                        throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyUniqueValueInUniqueValues.getMessage());
+                    }
+                }
+            }
+        }
+
+        if (columnRedactions != null && !columnRedactions.isEmpty()) {
+            for (ColumnRedaction columnRedaction : columnRedactions) {
+                if (columnRedaction == null) {
+                    LogUtil.printErrorLog(Utils.parameterizedString(
+                            ErrorLogs.NULL_COLUMN_REDACTION_OBJECT.getLog(), InterfaceName.GET.getName()
+                    ));
+                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.NullColumnRedactions.getMessage());
+                }
+                String columnName = columnRedaction.getColumnName();
+                String redaction = columnRedaction.getRedaction();
+                if (columnName == null || columnName.trim().isEmpty()) {
+                    LogUtil.printErrorLog(Utils.parameterizedString(
+                            ErrorLogs.NULL_COLUMN_NAME_IN_COLUMN_REDACTION.getLog(), InterfaceName.GET.getName()
+                    ));
+                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.NullColumnNameInColumnRedaction.getMessage());
+                }
+                if (redaction == null || redaction.trim().isEmpty()) {
+                    LogUtil.printErrorLog(Utils.parameterizedString(
+                            ErrorLogs.EMPTY_OR_NULL_REDACTION_IN_COLUMN_REDACTION.getLog(), InterfaceName.GET.getName()
+                    ));
+                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.NullRedactionInColumnRedaction.getMessage());
+                }
+            }
+        }
+    }
+
 }

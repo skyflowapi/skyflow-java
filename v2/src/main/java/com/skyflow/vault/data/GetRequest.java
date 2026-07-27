@@ -7,23 +7,16 @@ import com.skyflow.utils.logger.LogUtil;
 
 import java.util.ArrayList;
 
-public class GetRequest {
+public class GetRequest extends BaseGetRequest {
     private final GetRequestBuilder builder;
 
     private GetRequest(GetRequestBuilder builder) {
+        super(builder);
         this.builder = builder;
     }
 
     public static GetRequestBuilder builder() {
         return new GetRequestBuilder();
-    }
-
-    public String getTable() {
-        return this.builder.table;
-    }
-
-    public ArrayList<String> getIds() {
-        return this.builder.ids;
     }
 
     public RedactionType getRedactionType() {
@@ -32,10 +25,6 @@ public class GetRequest {
 
     public Boolean getReturnTokens() {
         return this.builder.returnTokens;
-    }
-
-    public ArrayList<String> getFields() {
-        return this.builder.fields;
     }
 
     public String getOffset() {
@@ -71,12 +60,9 @@ public class GetRequest {
         return this.builder.orderBy;
     }
 
-    public static final class GetRequestBuilder {
-        private String table;
-        private ArrayList<String> ids;
+    public static final class GetRequestBuilder extends BaseGetRequestBuilder {
         private RedactionType redactionType;
         private Boolean returnTokens;
-        private ArrayList<String> fields;
         private String offset;
         private String limit;
         private Boolean downloadUrl;
@@ -89,13 +75,21 @@ public class GetRequest {
             this.downloadUrl = true;
         }
 
+        @Override
         public GetRequestBuilder table(String table) {
-            this.table = table;
+            super.table(table);
             return this;
         }
 
+        @Override
         public GetRequestBuilder ids(ArrayList<String> ids) {
-            this.ids = ids;
+            super.ids(ids);
+            return this;
+        }
+
+        @Override
+        public GetRequestBuilder fields(ArrayList<String> fields) {
+            super.fields(fields);
             return this;
         }
 
@@ -106,11 +100,6 @@ public class GetRequest {
 
         public GetRequestBuilder returnTokens(Boolean returnTokens) {
             this.returnTokens = returnTokens;
-            return this;
-        }
-
-        public GetRequestBuilder fields(ArrayList<String> fields) {
-            this.fields = fields;
             return this;
         }
 

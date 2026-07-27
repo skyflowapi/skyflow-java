@@ -9,32 +9,14 @@ import com.google.gson.JsonObject;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class QueryResponse {
-    private final ArrayList<HashMap<String, Object>> fields;
-    private final ArrayList<HashMap<String, Object>> errors;
-
+/**
+ * <b>Deprecation notice:</b> the {@code skyflow_id} key in each {@link #getFields()} record map is
+ * deprecated and will be removed in an upcoming release. Use {@code skyflowId} instead.
+ * Both keys are present simultaneously in v2 for backward compatibility.
+ */
+public class QueryResponse extends BaseQueryResponse {
     public QueryResponse(ArrayList<HashMap<String, Object>> fields) {
-        this.fields = fields;
-        this.errors = null;
-    }
-
-    /**
-     * Returns the list of record maps from the Query response. Each map contains all
-     * field name/value pairs for the record.
-     *
-     * <p><b>Deprecation notice:</b> The {@code skyflow_id} key in each record map is
-     * deprecated and will be removed in an upcoming release. Use {@code skyflowId} instead.
-     * Both keys are present simultaneously in v2 for backward compatibility.</p>
-     */
-    public ArrayList<HashMap<String, Object>> getFields() {
-        return fields;
-    }
-
-    /**
-     * Always returns null. The Query API does not support partial-error responses.
-     */
-    public ArrayList<HashMap<String, Object>> getErrors() {
-        return errors;
+        super(fields);
     }
 
     @Override

@@ -10,7 +10,9 @@ import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.generated.rest.core.ApiClientApiException;
 import com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest;
+import com.skyflow.generated.rest.resources.flowservice.requests.V1GetRequest;
 import com.skyflow.generated.rest.resources.flowservice.requests.V1InsertRequest;
+import com.skyflow.generated.rest.resources.records.requests.V1ExecuteQueryRequest;
 import com.skyflow.generated.rest.types.*;
 import com.skyflow.logs.ErrorLogs;
 import com.skyflow.logs.InfoLogs;
@@ -863,5 +865,122 @@ public final class Utils extends BaseUtils {
             return new BulkTokenizeResponse(successRecords, errorRecords);
         }
         return null;
+    }
+
+    public static V1ExecuteQueryRequest getQueryRequestBody(QueryRequest request, String vaultId) {
+        return V1ExecuteQueryRequest.builder()
+                .vaultId(vaultId)
+                .query(request.getQuery())
+                .build();
+    }
+
+    public static QueryResponse buildQueryResponse(V1ExecuteQueryResponse res) {
+        ArrayList<HashMap<String, Object>> fields = new ArrayList<>();
+        if (res != null && res.getRecords().isPresent()) {
+            for (V1ExecuteQueryRecordResponse record : res.getRecords().get()) {
+                HashMap<String, Object> fieldMap = new HashMap<>();
+                if (record.getData().isPresent()) {
+                    fieldMap.putAll(record.getData().get());
+                }
+                fields.add(fieldMap);
+            }
+        }
+        return new QueryResponse(fields);
+    }
+
+    private static List<V1ColumnRedactions> buildColumnRedactions(List<ColumnRedaction> columnRedactions) {
+        List<V1ColumnRedactions> columnRedactionsList = new ArrayList<>();
+        for (ColumnRedaction columnRedaction : columnRedactions) {
+            columnRedactionsList.add(V1ColumnRedactions.builder()
+                    .columnName(columnRedaction.getColumnName())
+                    .redaction(columnRedaction.getRedaction())
+                    .build());
+        }
+        return columnRedactionsList;
+    }
+
+    private static List<V1UniqueValue> buildUniqueValues(List<Map<String, Object>> uniqueValues) {
+        List<V1UniqueValue> uniqueValuesList = new ArrayList<>();
+        for (Map<String, Object> uniqueValue : uniqueValues) {
+            uniqueValuesList.add(V1UniqueValue.builder().data(uniqueValue).build());
+        }
+        return uniqueValuesList;
+    }
+
+    public static V1GetRequest getGetRequestBody(GetRequest request, String vaultId) {
+        V1GetRequest.Builder builder = V1GetRequest.builder().vaultId(vaultId);
+
+        if (request.getRecords() != null && !request.getRecords().isEmpty()) {
+            List<V1GetRequestData> recordsList = new ArrayList<>();
+            for (GetRecordRequest record : request.getRecords()) {
+                V1GetRequestData.Builder recordBuilder = V1GetRequestData.builder()
+                        .tableName(record.getTable());
+                if (record.getIds() != null) {
+                    recordBuilder.skyflowIDs(record.getIds());
+                }
+                if (record.getFields() != null) {
+                    recordBuilder.columns(record.getFields());
+                }
+                if (record.getColumnRedactions() != null && !record.getColumnRedactions().isEmpty()) {
+                    recordBuilder.columnRedactions(buildColumnRedactions(record.getColumnRedactions()));
+                }
+                if (record.getUniqueValues() != null && !record.getUniqueValues().isEmpty()) {
+                    recordBuilder.uniqueValues(buildUniqueValues(record.getUniqueValues()));
+                }
+                recordsList.add(recordBuilder.build());
+            }
+            builder.records(recordsList);
+        } else {
+            builder.tableName(request.getTable());
+            if (request.getIds() != null) {
+                builder.skyflowIDs(request.getIds());
+            }
+            if (request.getFields() != null) {
+                builder.columns(request.getFields());
+            }
+            if (request.getColumnRedactions() != null && !request.getColumnRedactions().isEmpty()) {
+                builder.columnRedactions(buildColumnRedactions(request.getColumnRedactions()));
+            }
+            if (request.getUniqueValues() != null && !request.getUniqueValues().isEmpty()) {
+                builder.uniqueValues(buildUniqueValues(request.getUniqueValues()));
+            }
+        }
+
+        if (request.getLimit() != null) {
+            builder.limit(request.getLimit());
+        }
+        if (request.getOffset() != null) {
+            builder.offset(request.getOffset());
+        }
+        return builder.build();
+    }
+
+    public static GetResponse buildGetResponse(V1GetResponse res) {
+        ArrayList<HashMap<String, Object>> data = new ArrayList<>();
+        ArrayList<HashMap<String, Object>> errors = new ArrayList<>();
+        if (res != null && res.getRecords().isPresent()) {
+            for (V1RecordResponseObject record : res.getRecords().get()) {
+                if (record.getError().isPresent()) {
+                    HashMap<String, Object> errorRecord = new HashMap<>();
+                    record.getSkyflowId().ifPresent(skyflowId -> errorRecord.put("skyflowId", skyflowId));
+                    record.getTableName().ifPresent(tableName -> errorRecord.put("tableName", tableName));
+                    errorRecord.put("error", record.getError().get());
+                    record.getHttpCode().ifPresent(httpCode -> errorRecord.put("httpCode", httpCode));
+                    errors.add(errorRecord);
+                } else {
+                    HashMap<String, Object> getRecord = new HashMap<>();
+                    if (record.getData().isPresent()) {
+                        getRecord.putAll(record.getData().get());
+                    }
+                    record.getSkyflowId().ifPresent(skyflowId -> getRecord.put("skyflowId", skyflowId));
+                    record.getTableName().ifPresent(tableName -> getRecord.put("tableName", tableName));
+                    if (record.getTokens().isPresent()) {
+                        getRecord.putAll(record.getTokens().get());
+                    }
+                    data.add(getRecord);
+                }
+            }
+        }
+        return new GetResponse(data, errors);
     }
 }

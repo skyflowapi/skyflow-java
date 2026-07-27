@@ -6,6 +6,7 @@ import com.skyflow.errors.SkyflowException;
 import com.skyflow.generated.rest.ApiClient;
 import com.skyflow.generated.rest.ApiClientBuilder;
 import com.skyflow.generated.rest.resources.flowservice.FlowserviceClient;
+import com.skyflow.generated.rest.resources.records.RecordsClient;
 import com.skyflow.utils.Utils;
 
 public class VaultClient extends BaseVaultClient<VaultConfig> {
@@ -21,6 +22,10 @@ public class VaultClient extends BaseVaultClient<VaultConfig> {
 
     protected FlowserviceClient getRecordsApi() {
         return this.apiClient.flowservice();
+    }
+
+    protected RecordsClient getQueryApi() {
+        return this.apiClient.records();
     }
 
     protected void setCommonCredentials(Credentials commonCredentials) throws SkyflowException {

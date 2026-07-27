@@ -4,7 +4,9 @@ public enum InterfaceName {
     INSERT("insert"),
     DETOKENIZE("detokenize"),
     DELETE("delete tokens"),
-    TOKENIZE("tokenize");
+    TOKENIZE("tokenize"),
+    QUERY("query"),
+    GET("get");
 
 
     private final String interfaceName;

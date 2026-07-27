@@ -1,16 +1,25 @@
 package com.skyflow.serviceaccount.util;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.utils.BaseConstants;
 import com.skyflow.utils.BaseUtils;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class SignedDataTokensTests {
@@ -128,12 +137,10 @@ public class SignedDataTokensTests {
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(
-                    BaseUtils.parameterizedString(ErrorMessage.InvalidCredentials.getMessage(), invalidJsonFilePath),
-                    e.getMessage()
-            );
+            // InvalidCredentials has no %s1 placeholder, so no extra arg is passed here.
+            Assert.assertEquals(ErrorMessage.InvalidCredentials.getMessage(), e.getMessage());
         } catch (Exception e) {
-            System.out.println(e);
+            Assert.fail(INVALID_EXCEPTION_THROWN + ": " + e);
         }
     }
 
@@ -145,10 +152,8 @@ public class SignedDataTokensTests {
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(
-                    BaseUtils.parameterizedString(ErrorMessage.CredentialsStringInvalidJson.getMessage(), invalidJsonFilePath),
-                    e.getMessage()
-            );
+            // CredentialsStringInvalidJson has no %s1 placeholder, so no extra arg is passed here.
+            Assert.assertEquals(ErrorMessage.CredentialsStringInvalidJson.getMessage(), e.getMessage());
         }
     }
 
@@ -256,6 +261,120 @@ public class SignedDataTokensTests {
             Assert.assertEquals("signed_token_" + signedToken, response.getSignedToken());
         } catch (Exception e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    /**
+     * Generates a real, valid PKCS#8-encoded RSA private key PEM string, using the same
+     * header/footer BaseUtils.getPrivateKeyFromPem expects, so tests can exercise the actual
+     * JWT signing path (getSignedToken()) instead of always failing at key parsing.
+     */
+    private static String generateValidPkcs8PrivateKeyPem() throws Exception {
+        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+        keyPairGenerator.initialize(2048);
+        KeyPair keyPair = keyPairGenerator.generateKeyPair();
+        String base64EncodedKey = Base64.getEncoder().encodeToString(keyPair.getPrivate().getEncoded());
+        return BaseConstants.PKCS8_PRIVATE_HEADER + "\n" + base64EncodedKey + "\n" + BaseConstants.PKCS8_PRIVATE_FOOTER;
+    }
+
+    /**
+     * Decodes (without verifying) the payload segment of a compact JWT so tests can assert
+     * on its claims. These tokens are self-signed with a key generated in-test, so decoding
+     * the payload directly is sufficient to verify claim content.
+     */
+    private static JsonObject decodeJwtPayload(String jwt) {
+        String[] parts = jwt.split("\\.");
+        byte[] payloadBytes = Base64.getUrlDecoder().decode(parts[1]);
+        return JsonParser.parseString(new String(payloadBytes, StandardCharsets.UTF_8)).getAsJsonObject();
+    }
+
+    @Test
+    public void testGetSignedDataTokensWithValidKeyMultipleTokensTimeToLiveAndContext() {
+        try {
+            String privateKeyPem = generateValidPkcs8PrivateKeyPem();
+            ArrayList<String> tokens = new ArrayList<>();
+            tokens.add("data_token_one");
+            tokens.add("data_token_two");
+            Map<String, Object> ctxMap = new HashMap<>();
+            ctxMap.put("role", "admin");
+            ctxMap.put("department", "finance");
+
+            JsonObject credentials = new JsonObject();
+            credentials.addProperty("privateKey", privateKeyPem);
+            credentials.addProperty("clientId", "client_id_value");
+            credentials.addProperty("keyId", "key_id_value");
+            String credentialsJsonString = new Gson().toJson(credentials);
+
+            int timeToLiveSeconds = 120;
+            long beforeCreationEpochSeconds = System.currentTimeMillis() / 1000;
+            List<SignedDataTokenResponse> responses = SignedDataTokens.builder()
+                    .setCredentials(credentialsJsonString)
+                    .setDataTokens(tokens)
+                    .setTimeToLive(timeToLiveSeconds)
+                    .setCtx(ctxMap)
+                    .build()
+                    .getSignedDataTokens();
+
+            Assert.assertEquals(tokens.size(), responses.size());
+            for (int i = 0; i < tokens.size(); i++) {
+                SignedDataTokenResponse response = responses.get(i);
+                Assert.assertEquals(tokens.get(i), response.getToken());
+                Assert.assertTrue(response.getSignedToken().startsWith(BaseConstants.SIGNED_DATA_TOKEN_PREFIX));
+
+                String signedJwt = response.getSignedToken().substring(BaseConstants.SIGNED_DATA_TOKEN_PREFIX.length());
+                JsonObject payload = decodeJwtPayload(signedJwt);
+                Assert.assertEquals(tokens.get(i), payload.get("tok").getAsString());
+                Assert.assertEquals("key_id_value", payload.get("key").getAsString());
+                Assert.assertEquals("client_id_value", payload.get("sub").getAsString());
+                Assert.assertEquals("sdk", payload.get("iss").getAsString());
+
+                Assert.assertTrue(payload.has("ctx"));
+                Assert.assertEquals("admin", payload.getAsJsonObject("ctx").get("role").getAsString());
+                Assert.assertEquals("finance", payload.getAsJsonObject("ctx").get("department").getAsString());
+
+                long expirationEpochSeconds = payload.get("exp").getAsLong();
+                long expectedExpirationEpochSeconds = beforeCreationEpochSeconds + timeToLiveSeconds;
+                // Small allowance for time elapsed during test execution
+                Assert.assertTrue(Math.abs(expirationEpochSeconds - expectedExpirationEpochSeconds) <= 5);
+            }
+        } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN + ": " + e);
+        }
+    }
+
+    @Test
+    public void testGetSignedDataTokensWithValidKeyAndDefaultTimeToLive() {
+        try {
+            String privateKeyPem = generateValidPkcs8PrivateKeyPem();
+            ArrayList<String> tokens = new ArrayList<>();
+            tokens.add("default_ttl_token");
+
+            JsonObject credentials = new JsonObject();
+            credentials.addProperty("privateKey", privateKeyPem);
+            credentials.addProperty("clientId", "client_id_value");
+            credentials.addProperty("keyId", "key_id_value");
+            String credentialsJsonString = new Gson().toJson(credentials);
+
+            long beforeCreationEpochSeconds = System.currentTimeMillis() / 1000;
+            List<SignedDataTokenResponse> responses = SignedDataTokens.builder()
+                    .setCredentials(credentialsJsonString)
+                    .setDataTokens(tokens)
+                    // timeToLive intentionally not set, exercising the default-60-second branch
+                    .build()
+                    .getSignedDataTokens();
+
+            Assert.assertEquals(1, responses.size());
+            String signedJwt = responses.get(0).getSignedToken().substring(BaseConstants.SIGNED_DATA_TOKEN_PREFIX.length());
+            JsonObject payload = decodeJwtPayload(signedJwt);
+            Assert.assertEquals(tokens.get(0), payload.get("tok").getAsString());
+            // No context was set, so the "ctx" claim branch should be skipped entirely
+            Assert.assertFalse(payload.has("ctx"));
+
+            long expirationEpochSeconds = payload.get("exp").getAsLong();
+            long expectedExpirationEpochSeconds = beforeCreationEpochSeconds + 60;
+            Assert.assertTrue(Math.abs(expirationEpochSeconds - expectedExpirationEpochSeconds) <= 5);
+        } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN + ": " + e);
         }
     }
 }

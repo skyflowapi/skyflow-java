@@ -96,4 +96,68 @@ public class LogUtilLevelTests {
                 .anyMatch(r -> r.getLevel().equals(Level.INFO));
         Assert.assertFalse("INFO log should NOT appear when LogLevel is WARN", infoCaptured);
     }
+
+    @Test
+    public void testDebugLogAppearsWhenLogLevelIsDebug() {
+        LogUtil.setupLogger(LogLevel.DEBUG);
+        CapturingHandler handler = attachCapture();
+
+        LogUtil.printDebugLog("debug message");
+
+        boolean debugCaptured = handler.records.stream()
+                .anyMatch(r -> r.getLevel().equals(Level.CONFIG)
+                        && r.getMessage().contains("debug message"));
+        Assert.assertTrue("DEBUG log should appear when LogLevel is DEBUG", debugCaptured);
+    }
+
+    @Test
+    public void testDebugLogSuppressedWhenLogLevelIsInfo() {
+        LogUtil.setupLogger(LogLevel.INFO);
+        CapturingHandler handler = attachCapture();
+
+        LogUtil.printDebugLog("suppressed debug message");
+
+        boolean debugCaptured = handler.records.stream()
+                .anyMatch(r -> r.getLevel().equals(Level.CONFIG));
+        Assert.assertFalse("DEBUG log should NOT appear when LogLevel is INFO", debugCaptured);
+    }
+
+    @Test
+    public void testErrorLogAppearsWhenLogLevelIsError() {
+        LogUtil.setupLogger(LogLevel.ERROR);
+        CapturingHandler handler = attachCapture();
+
+        LogUtil.printErrorLog("error message");
+
+        boolean errorCaptured = handler.records.stream()
+                .anyMatch(r -> r.getLevel().equals(Level.SEVERE)
+                        && r.getMessage().contains("error message"));
+        Assert.assertTrue("ERROR log should appear when LogLevel is ERROR", errorCaptured);
+    }
+
+    @Test
+    public void testErrorLogAppearsWhenLogLevelIsDebug() {
+        LogUtil.setupLogger(LogLevel.DEBUG);
+        CapturingHandler handler = attachCapture();
+
+        LogUtil.printErrorLog("debug level error message");
+
+        boolean errorCaptured = handler.records.stream()
+                .anyMatch(r -> r.getLevel().equals(Level.SEVERE)
+                        && r.getMessage().contains("debug level error message"));
+        Assert.assertTrue("ERROR log should appear when LogLevel is DEBUG", errorCaptured);
+    }
+
+    @Test
+    public void testNoLogsAppearWhenLogLevelIsOff() {
+        LogUtil.setupLogger(LogLevel.OFF);
+        CapturingHandler handler = attachCapture();
+
+        LogUtil.printErrorLog("off error message");
+        LogUtil.printWarningLog("off warning message");
+        LogUtil.printInfoLog("off info message");
+        LogUtil.printDebugLog("off debug message");
+
+        Assert.assertTrue("No logs should appear when LogLevel is OFF", handler.records.isEmpty());
+    }
 }
