@@ -61,7 +61,7 @@ public class VaultClientHttpConfigTests {
     public void clientLevelTimeoutUsedWhenNoVaultOverride() throws Exception {
         VaultConfig cfg = apiKeyConfig();
         VaultClient client = new VaultClient(cfg, cfg.getCredentials());
-        client.setCommonHttpConfig(45, null, null, null); // client-wide 45s, no vault override
+        client.setCommonHttpConfig(45, null, null, null, null, null, null); // client-wide 45s, no vault override
         client.setBearerToken();
 
         Assert.assertEquals(45000, sharedClient(client).callTimeoutMillis());
@@ -72,7 +72,7 @@ public class VaultClientHttpConfigTests {
         VaultConfig cfg = apiKeyConfig();
         cfg.setTimeout(15); // vault-level
         VaultClient client = new VaultClient(cfg, cfg.getCredentials());
-        client.setCommonHttpConfig(45, null, null, null); // client-wide 45s — should lose to vault's 15s
+        client.setCommonHttpConfig(45, null, null, null, null, null, null); // client-wide 45s — should lose to vault's 15s
         client.setBearerToken();
 
         Assert.assertEquals(15000, sharedClient(client).callTimeoutMillis());
@@ -92,19 +92,87 @@ public class VaultClientHttpConfigTests {
     public void vaultConfigStoresHttpFieldsAndDefaultsToNull() throws SkyflowException {
         VaultConfig cfg = new VaultConfig();
         Assert.assertNull(cfg.getTimeout());
+        Assert.assertNull(cfg.getConnectTimeout());
+        Assert.assertNull(cfg.getReadTimeout());
+        Assert.assertNull(cfg.getWriteTimeout());
         Assert.assertNull(cfg.getMaxRetries());
         Assert.assertNull(cfg.getInitialRetryDelayMillis());
         Assert.assertNull(cfg.getMaxRetryDelayMillis());
 
         cfg.setTimeout(30);
+        cfg.setConnectTimeout(5);
+        cfg.setReadTimeout(20);
+        cfg.setWriteTimeout(8);
         cfg.setMaxRetries(2);
         cfg.setInitialRetryDelayMillis(250L);
         cfg.setMaxRetryDelayMillis(1500L);
 
         Assert.assertEquals(Integer.valueOf(30), cfg.getTimeout());
+        Assert.assertEquals(Integer.valueOf(5), cfg.getConnectTimeout());
+        Assert.assertEquals(Integer.valueOf(20), cfg.getReadTimeout());
+        Assert.assertEquals(Integer.valueOf(8), cfg.getWriteTimeout());
         Assert.assertEquals(Integer.valueOf(2), cfg.getMaxRetries());
         Assert.assertEquals(Long.valueOf(250L), cfg.getInitialRetryDelayMillis());
         Assert.assertEquals(Long.valueOf(1500L), cfg.getMaxRetryDelayMillis());
+    }
+
+    // OkHttp's built-in default for connect/read/write is 10s. Unset SDK values must leave these untouched.
+    private static final int OKHTTP_DEFAULT_TIMEOUT_MS = 10000;
+
+    @Test
+    public void connectReadWriteDefaultToOkHttpWhenNothingConfigured() throws Exception {
+        VaultConfig cfg = apiKeyConfig();
+        VaultClient client = new VaultClient(cfg, cfg.getCredentials());
+        client.setBearerToken();
+
+        OkHttpClient shared = sharedClient(client);
+        Assert.assertEquals(OKHTTP_DEFAULT_TIMEOUT_MS, shared.connectTimeoutMillis());
+        Assert.assertEquals(OKHTTP_DEFAULT_TIMEOUT_MS, shared.readTimeoutMillis());
+        Assert.assertEquals(OKHTTP_DEFAULT_TIMEOUT_MS, shared.writeTimeoutMillis());
+    }
+
+    @Test
+    public void vaultLevelConnectReadWriteOverrideDefaults() throws Exception {
+        VaultConfig cfg = apiKeyConfig();
+        cfg.setConnectTimeout(5);  // seconds
+        cfg.setReadTimeout(20);
+        cfg.setWriteTimeout(8);
+        VaultClient client = new VaultClient(cfg, cfg.getCredentials());
+        client.setBearerToken();
+
+        OkHttpClient shared = sharedClient(client);
+        Assert.assertEquals(5000, shared.connectTimeoutMillis());
+        Assert.assertEquals(20000, shared.readTimeoutMillis());
+        Assert.assertEquals(8000, shared.writeTimeoutMillis());
+    }
+
+    @Test
+    public void clientLevelConnectReadWriteUsedWhenNoVaultOverride() throws Exception {
+        VaultConfig cfg = apiKeyConfig();
+        VaultClient client = new VaultClient(cfg, cfg.getCredentials());
+        // client-wide connect=5, read=20, write=8; no vault override
+        client.setCommonHttpConfig(null, 5, 20, 8, null, null, null);
+        client.setBearerToken();
+
+        OkHttpClient shared = sharedClient(client);
+        Assert.assertEquals(5000, shared.connectTimeoutMillis());
+        Assert.assertEquals(20000, shared.readTimeoutMillis());
+        Assert.assertEquals(8000, shared.writeTimeoutMillis());
+    }
+
+    @Test
+    public void connectReadWriteResolvePerFieldVaultOverClient() throws Exception {
+        VaultConfig cfg = apiKeyConfig();
+        cfg.setConnectTimeout(3); // vault overrides only connect
+        VaultClient client = new VaultClient(cfg, cfg.getCredentials());
+        // client-wide connect=5 (loses to vault's 3), read=20 (used), write left unset (OkHttp default)
+        client.setCommonHttpConfig(null, 5, 20, null, null, null, null);
+        client.setBearerToken();
+
+        OkHttpClient shared = sharedClient(client);
+        Assert.assertEquals(3000, shared.connectTimeoutMillis());                 // vault
+        Assert.assertEquals(20000, shared.readTimeoutMillis());                   // client-wide
+        Assert.assertEquals(OKHTTP_DEFAULT_TIMEOUT_MS, shared.writeTimeoutMillis()); // neither -> OkHttp default
     }
 
     private RetryInterceptor retryInterceptor(VaultClient client) throws Exception {
@@ -160,7 +228,7 @@ public class VaultClientHttpConfigTests {
     public void clientLevelRetryConfigUsedWhenNoVaultOverride() throws Exception {
         VaultConfig cfg = apiKeyConfig();
         VaultClient client = new VaultClient(cfg, cfg.getCredentials());
-        client.setCommonHttpConfig(null, 2, 300L, 1500L); // client-wide retry config, no vault override
+        client.setCommonHttpConfig(null, null, null, null, 2, 300L, 1500L); // client-wide retry config, no vault override
         client.setBearerToken();
 
         RetryInterceptor ri = retryInterceptor(client);

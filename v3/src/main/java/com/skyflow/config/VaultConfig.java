@@ -10,6 +10,9 @@ public class VaultConfig implements Cloneable {
     private Credentials credentials;
     // HTTP timeout & retry config (vault-level overrides). null => inherit client-wide default, then SDK default.
     private Integer timeout;                 // overall call timeout, in seconds
+    private Integer connectTimeout;          // per-attempt connection-establishment timeout, in seconds
+    private Integer readTimeout;             // per-attempt response-read timeout, in seconds
+    private Integer writeTimeout;            // per-attempt request-write timeout, in seconds
     private Integer maxRetries;              // retry attempts after the first failure
     private Long initialRetryDelayMillis;    // base backoff before the first retry, in ms
     private Long maxRetryDelayMillis;        // cap on the (exponentially growing) backoff, in ms
@@ -21,6 +24,9 @@ public class VaultConfig implements Cloneable {
         this.env = Env.PROD;
         this.credentials = null;
         this.timeout = null;
+        this.connectTimeout = null;
+        this.readTimeout = null;
+        this.writeTimeout = null;
         this.maxRetries = null;
         this.initialRetryDelayMillis = null;
         this.maxRetryDelayMillis = null;
@@ -73,6 +79,45 @@ public class VaultConfig implements Cloneable {
     /** Overall call timeout in seconds for this vault. Overrides the client-wide default. */
     public void setTimeout(Integer timeout) {
         this.timeout = timeout;
+    }
+
+    public Integer getConnectTimeout() {
+        return connectTimeout;
+    }
+
+    /**
+     * Per-attempt connection-establishment timeout in seconds for this vault. Overrides the
+     * client-wide default; when unset the underlying HTTP client default (10s) applies. Note the
+     * overall {@code timeout} still bounds the whole call, including retries.
+     */
+    public void setConnectTimeout(Integer connectTimeout) {
+        this.connectTimeout = connectTimeout;
+    }
+
+    public Integer getReadTimeout() {
+        return readTimeout;
+    }
+
+    /**
+     * Per-attempt response-read timeout in seconds for this vault. Overrides the client-wide
+     * default; when unset the underlying HTTP client default (10s) applies. Note the overall
+     * {@code timeout} still bounds the whole call, including retries.
+     */
+    public void setReadTimeout(Integer readTimeout) {
+        this.readTimeout = readTimeout;
+    }
+
+    public Integer getWriteTimeout() {
+        return writeTimeout;
+    }
+
+    /**
+     * Per-attempt request-write timeout in seconds for this vault. Overrides the client-wide
+     * default; when unset the underlying HTTP client default (10s) applies. Note the overall
+     * {@code timeout} still bounds the whole call, including retries.
+     */
+    public void setWriteTimeout(Integer writeTimeout) {
+        this.writeTimeout = writeTimeout;
     }
 
     public Integer getMaxRetries() {

@@ -32,6 +32,9 @@ public class SkyflowClientBuilderHttpConfigTests {
     public void clientWideConfigSetBeforeAddVaultReachesController() throws Exception {
         Skyflow client = Skyflow.builder()
                 .timeout(30)
+                .connectTimeout(5)
+                .readTimeout(20)
+                .writeTimeout(8)
                 .maxRetries(2)
                 .initialRetryDelayMillis(300L)
                 .maxRetryDelayMillis(1500L)
@@ -40,6 +43,9 @@ public class SkyflowClientBuilderHttpConfigTests {
 
         VaultController controller = client.vault();
         Assert.assertEquals(Integer.valueOf(30), commonField(controller, "commonTimeout"));
+        Assert.assertEquals(Integer.valueOf(5), commonField(controller, "commonConnectTimeout"));
+        Assert.assertEquals(Integer.valueOf(20), commonField(controller, "commonReadTimeout"));
+        Assert.assertEquals(Integer.valueOf(8), commonField(controller, "commonWriteTimeout"));
         Assert.assertEquals(Integer.valueOf(2), commonField(controller, "commonMaxRetries"));
         Assert.assertEquals(Long.valueOf(300L), commonField(controller, "commonInitialRetryDelayMillis"));
         Assert.assertEquals(Long.valueOf(1500L), commonField(controller, "commonMaxRetryDelayMillis"));
@@ -49,11 +55,15 @@ public class SkyflowClientBuilderHttpConfigTests {
     public void clientWideConfigSetAfterAddVaultPropagatesToExistingController() throws Exception {
         Skyflow.SkyflowClientBuilder builder = Skyflow.builder().addVaultConfig(vaultConfig());
         // Set config AFTER the controller already exists -> exercises propagateHttpConfig's loop.
-        builder.timeout(45).maxRetries(4).initialRetryDelayMillis(700L).maxRetryDelayMillis(3000L);
+        builder.timeout(45).connectTimeout(6).readTimeout(25).writeTimeout(9)
+                .maxRetries(4).initialRetryDelayMillis(700L).maxRetryDelayMillis(3000L);
         Skyflow client = builder.build();
 
         VaultController controller = client.vault();
         Assert.assertEquals(Integer.valueOf(45), commonField(controller, "commonTimeout"));
+        Assert.assertEquals(Integer.valueOf(6), commonField(controller, "commonConnectTimeout"));
+        Assert.assertEquals(Integer.valueOf(25), commonField(controller, "commonReadTimeout"));
+        Assert.assertEquals(Integer.valueOf(9), commonField(controller, "commonWriteTimeout"));
         Assert.assertEquals(Integer.valueOf(4), commonField(controller, "commonMaxRetries"));
         Assert.assertEquals(Long.valueOf(700L), commonField(controller, "commonInitialRetryDelayMillis"));
         Assert.assertEquals(Long.valueOf(3000L), commonField(controller, "commonMaxRetryDelayMillis"));
@@ -65,6 +75,9 @@ public class SkyflowClientBuilderHttpConfigTests {
 
         VaultController controller = client.vault();
         Assert.assertNull(commonField(controller, "commonTimeout"));
+        Assert.assertNull(commonField(controller, "commonConnectTimeout"));
+        Assert.assertNull(commonField(controller, "commonReadTimeout"));
+        Assert.assertNull(commonField(controller, "commonWriteTimeout"));
         Assert.assertNull(commonField(controller, "commonMaxRetries"));
         Assert.assertNull(commonField(controller, "commonInitialRetryDelayMillis"));
         Assert.assertNull(commonField(controller, "commonMaxRetryDelayMillis"));
