@@ -180,14 +180,19 @@ You can control how long a request is allowed to run and whether failed requests
 | Setting | Unit | Default | Description |
 | --- | --- | --- | --- |
 | `timeout` | seconds | `60` | Overall time budget for a request, including any retries and backoff. |
+| `connectTimeout` | seconds | `10` | Time budget for establishing a connection, per attempt. |
+| `readTimeout` | seconds | `10` | Time budget for reading the response, per attempt. |
+| `writeTimeout` | seconds | `10` | Time budget for writing the request, per attempt. |
 | `maxRetries` | count | `0` | Number of retry attempts. `0` disables retries. |
 | `initialRetryDelayMillis` | milliseconds | `500` | Base delay before the first retry. |
 | `maxRetryDelayMillis` | milliseconds | `2000` | Upper bound on the delay between retries. |
 
+**How the four timeouts relate:** `timeout` is the *total* ceiling for the whole call — every attempt, every backoff sleep, all counted together. `connectTimeout`, `readTimeout`, and `writeTimeout` each bound a single *phase of one attempt* (connecting, reading, writing). Because the phase timeouts are per attempt, their sum across retries can exceed `timeout` — but `timeout` always wins and cuts the call off. In practice, set `timeout` to cap worst-case blocking, and use the phase timeouts to fail faster on a stalled connection or a slow-but-not-dead server. The three phase timeouts default to the underlying HTTP client's `10` seconds; leaving them unset preserves that default.
+
 Each setting is available at two levels:
 
-- **Client-wide** — on `Skyflow.builder()`: `.timeout(int)`, `.maxRetries(int)`, `.initialRetryDelayMillis(long)`, `.maxRetryDelayMillis(long)`. Applies to every vault.
-- **Per vault** — on `VaultConfig`: `.setTimeout(int)`, `.setMaxRetries(int)`, `.setInitialRetryDelayMillis(long)`, `.setMaxRetryDelayMillis(long)`. Applies to that vault only.
+- **Client-wide** — on `Skyflow.builder()`: `.timeout(int)`, `.connectTimeout(int)`, `.readTimeout(int)`, `.writeTimeout(int)`, `.maxRetries(int)`, `.initialRetryDelayMillis(long)`, `.maxRetryDelayMillis(long)`. Applies to every vault.
+- **Per vault** — on `VaultConfig`: `.setTimeout(int)`, `.setConnectTimeout(int)`, `.setReadTimeout(int)`, `.setWriteTimeout(int)`, `.setMaxRetries(int)`, `.setInitialRetryDelayMillis(long)`, `.setMaxRetryDelayMillis(long)`. Applies to that vault only.
 
 **Precedence:** a value set on `VaultConfig` (per vault) overrides the client-wide value set on `Skyflow.builder()`, which overrides the SDK default. Resolution is per field, so a vault can override just `timeout` and still inherit the client-wide retry settings.
 
@@ -206,6 +211,9 @@ vaultConfig.setClusterId("<CLUSTER_ID>");
 vaultConfig.setEnv(Env.PROD);
 vaultConfig.setCredentials(credentials);
 vaultConfig.setTimeout(30);                      // seconds — overall request timeout
+vaultConfig.setConnectTimeout(5);                // seconds — per-attempt connect timeout
+vaultConfig.setReadTimeout(20);                  // seconds — per-attempt read timeout
+vaultConfig.setWriteTimeout(5);                  // seconds — per-attempt write timeout
 vaultConfig.setMaxRetries(3);                    // retry attempts (0 = retries off)
 vaultConfig.setInitialRetryDelayMillis(1000L);   // base backoff in milliseconds
 vaultConfig.setMaxRetryDelayMillis(4000L);       // backoff cap in milliseconds
@@ -213,14 +221,18 @@ vaultConfig.setMaxRetryDelayMillis(4000L);       // backoff cap in milliseconds
 // Client-wide defaults: apply to every vault unless overridden on the vault (as above).
 Skyflow skyflowClient = Skyflow.builder()
         .timeout(60)                             // seconds — overall request timeout
+        .connectTimeout(10)                      // seconds — per-attempt connect timeout
+        .readTimeout(15)                         // seconds — per-attempt read timeout
+        .writeTimeout(10)                        // seconds — per-attempt write timeout
         .maxRetries(2)                           // retry attempts (0 = retries off)
         .initialRetryDelayMillis(500L)           // base backoff in milliseconds
         .maxRetryDelayMillis(2000L)              // backoff cap in milliseconds
         .addVaultConfig(vaultConfig)
         .build();
 
-// Result for this vault: timeout=30, maxRetries=3, initialRetryDelayMillis=1000, maxRetryDelayMillis=4000
-// (all overridden per vault). A vault that sets none of these inherits the client-wide values above.
+// Result for this vault: timeout=30, connectTimeout=5, readTimeout=20, writeTimeout=5,
+// maxRetries=3, initialRetryDelayMillis=1000, maxRetryDelayMillis=4000 (all overridden per vault).
+// A vault that sets none of these inherits the client-wide values above.
 ```
 
 # Vault

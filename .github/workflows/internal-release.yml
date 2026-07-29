@@ -7,6 +7,8 @@ on:
       - "*.md"
     branches:
       - v3-release/*
+    # Note: pushes that change no non-.md files (e.g. empty commits) are skipped by the
+    # paths-ignore filter above and will not trigger this workflow.
 
 jobs:
   build-and-deploy-v3:
@@ -25,3 +27,4 @@ jobs:
       skyflow-credentials: ${{ secrets.SKYFLOW_CREDENTIALS }} >> .env
       test-expired-token: ${{ secrets.TEST_EXPIRED_TOKEN }} >> .env
       test-reusable-token: ${{ secrets.TEST_REUSABLE_TOKEN }} >> .env
+      pat-actions: ${{ secrets.PAT_ACTIONS }}
