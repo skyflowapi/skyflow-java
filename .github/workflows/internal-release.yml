@@ -7,9 +7,15 @@ on:
       - "*.md"
     branches:
       - v3-release/*
+    # Note: pushes that change no non-.md files (e.g. empty commits) are skipped by the
+    # paths-ignore filter above and will not trigger this workflow.
 
 jobs:
   build-and-deploy-v3:
+    # Skip the automated version-bump commit so it can't re-trigger this workflow.
+    # The bump is pushed with a PAT (which, unlike GITHUB_TOKEN, DOES trigger workflows),
+    # so without this guard the release loops: bump -> push -> release -> bump -> ...
+    if: ${{ !contains(github.event.head_commit.message, '[AUTOMATED]') }}
     uses: ./.github/workflows/shared-build-and-deploy.yml
     with:
       ref: ${{ github.ref_name }}
@@ -25,3 +31,4 @@ jobs:
       skyflow-credentials: ${{ secrets.SKYFLOW_CREDENTIALS }} >> .env
       test-expired-token: ${{ secrets.TEST_EXPIRED_TOKEN }} >> .env
       test-reusable-token: ${{ secrets.TEST_REUSABLE_TOKEN }} >> .env
+      pat-actions: ${{ secrets.PAT_ACTIONS }}

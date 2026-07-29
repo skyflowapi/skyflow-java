@@ -49,6 +49,9 @@ public class VaultClient {
     private String currentVaultURL = null;
     // Client-wide (Skyflow builder) HTTP config defaults; null => fall back to the SDK defaults below.
     private Integer commonTimeout;
+    private Integer commonConnectTimeout;
+    private Integer commonReadTimeout;
+    private Integer commonWriteTimeout;
     private Integer commonMaxRetries;
     private Long commonInitialRetryDelayMillis;
     private Long commonMaxRetryDelayMillis;
@@ -84,9 +87,13 @@ public class VaultClient {
      * Client-wide HTTP timeout/retry defaults from the Skyflow builder. Nulls out the cached client
      * so the next call rebuilds with the new values.
      */
-    protected void setCommonHttpConfig(Integer timeout, Integer maxRetries,
+    protected void setCommonHttpConfig(Integer timeout, Integer connectTimeout, Integer readTimeout,
+                                       Integer writeTimeout, Integer maxRetries,
                                        Long initialRetryDelayMillis, Long maxRetryDelayMillis) {
         this.commonTimeout = timeout;
+        this.commonConnectTimeout = connectTimeout;
+        this.commonReadTimeout = readTimeout;
+        this.commonWriteTimeout = writeTimeout;
         this.commonMaxRetries = maxRetries;
         this.commonInitialRetryDelayMillis = initialRetryDelayMillis;
         this.commonMaxRetryDelayMillis = maxRetryDelayMillis;
@@ -175,8 +182,12 @@ public class VaultClient {
                     vaultConfig.getInitialRetryDelayMillis(), commonInitialRetryDelayMillis, DEFAULT_INITIAL_RETRY_DELAY_MILLIS);
             long maxRetryDelayMillis = resolveLong(
                     vaultConfig.getMaxRetryDelayMillis(), commonMaxRetryDelayMillis, DEFAULT_MAX_RETRY_DELAY_MILLIS);
+            // Per-attempt timeouts: null => leave OkHttp's built-in 10s default (backward compatible).
+            Integer connectTimeout = resolveNullableInt(vaultConfig.getConnectTimeout(), commonConnectTimeout);
+            Integer readTimeout = resolveNullableInt(vaultConfig.getReadTimeout(), commonReadTimeout);
+            Integer writeTimeout = resolveNullableInt(vaultConfig.getWriteTimeout(), commonWriteTimeout);
 
-            sharedHttpClient = new OkHttpClient.Builder()
+            OkHttpClient.Builder httpBuilder = new OkHttpClient.Builder()
                     .connectionPool(new ConnectionPool(10, 1, TimeUnit.MINUTES))
                     .callTimeout(timeoutSeconds, TimeUnit.SECONDS) // overall ceiling; bounds the whole call incl. retries
                     .addInterceptor(new RetryInterceptor( // OUTER: retries (Fern generated; jitter default 0.2)
@@ -186,8 +197,18 @@ public class VaultClient {
                                 .header("Authorization", "Bearer " + this.token)
                                 .build();
                         return chain.proceed(requestWithAuth);
-                    })
-                    .build();
+                    });
+            // Per-attempt phase timeouts; only override when explicitly configured.
+            if (connectTimeout != null) {
+                httpBuilder.connectTimeout(connectTimeout, TimeUnit.SECONDS);
+            }
+            if (readTimeout != null) {
+                httpBuilder.readTimeout(readTimeout, TimeUnit.SECONDS);
+            }
+            if (writeTimeout != null) {
+                httpBuilder.writeTimeout(writeTimeout, TimeUnit.SECONDS);
+            }
+            sharedHttpClient = httpBuilder.build();
             apiClientBuilder.httpClient(sharedHttpClient);
         }
     }
@@ -198,6 +219,17 @@ public class VaultClient {
             return vaultLevel;
         }
         return clientLevel != null ? clientLevel : defaultValue;
+    }
+
+    /**
+     * Resolve an optional int setting: vault-level override, else client-wide default, else null.
+     * Null means "not configured" — the caller leaves the underlying HTTP client default in place.
+     */
+    private static Integer resolveNullableInt(Integer vaultLevel, Integer clientLevel) {
+        if (vaultLevel != null) {
+            return vaultLevel;
+        }
+        return clientLevel;
     }
 
     /** Resolve a long setting: vault-level override, else client-wide default, else SDK default. */

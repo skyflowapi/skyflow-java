@@ -50,6 +50,9 @@ on:
       test-reusable-token:
         required: true
 
+      pat-actions:
+        required: true
+
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -61,7 +64,9 @@ jobs:
           # checkout and reused for the automated version-bump push below, so
           # that push satisfies the branch-protection ruleset's repo-admin
           # bypass (github-actions[bot] is not a bypass actor). See SK-2986.
-          token: ${{ secrets.PAT_ACTIONS }}
+          # Passed through workflow_call.secrets since reusable workflows do
+          # not inherit the caller's secrets automatically.
+          token: ${{ secrets.pat-actions }}
 
       - name: Set up maven or jfrog repository
         uses: actions/setup-java@v1
@@ -113,6 +118,10 @@ jobs:
 
           git add v3/pom.xml
           if [[ "${{ inputs.tag }}" == "internal" ]]; then
+            # The '[AUTOMATED]' marker is what stops the release loop: internal-release.yml
+            # skips any push whose head commit contains it (the bump is pushed with a PAT,
+            # which — unlike GITHUB_TOKEN — DOES trigger workflows). Keep the marker in sync
+            # with that guard. This keeps PR CI intact (no global [skip ci]).
             git commit -m "[AUTOMATED] Private Release ${{ steps.previoustag.outputs.tag }}-dev-$(git rev-parse --short $GITHUB_SHA)"
             git push origin ${{ github.ref_name }} -f
           fi

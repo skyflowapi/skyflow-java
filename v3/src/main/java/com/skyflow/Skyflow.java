@@ -57,6 +57,9 @@ public final class Skyflow extends BaseSkyflow {
         private final LinkedHashMap<String, VaultController> vaultClientsMap;
         // Client-wide HTTP config defaults (apply to all vaults unless a vault overrides). null => SDK default.
         private Integer timeout;
+        private Integer connectTimeout;
+        private Integer readTimeout;
+        private Integer writeTimeout;
         private Integer maxRetries;
         private Long initialRetryDelayMillis;
         private Long maxRetryDelayMillis;
@@ -84,7 +87,8 @@ public final class Skyflow extends BaseSkyflow {
             } else {
                 this.vaultConfigMap.put(vaultConfigCopy.getVaultId(), vaultConfigCopy); // add new config in map
                 VaultController controller = new VaultController(vaultConfigCopy, this.skyflowCredentials); // new controller with new config
-                controller.setCommonHttpConfig(this.timeout, this.maxRetries, this.initialRetryDelayMillis, this.maxRetryDelayMillis);
+                controller.setCommonHttpConfig(this.timeout, this.connectTimeout, this.readTimeout,
+                        this.writeTimeout, this.maxRetries, this.initialRetryDelayMillis, this.maxRetryDelayMillis);
                 this.vaultClientsMap.put(vaultConfigCopy.getVaultId(), controller);
                 LogUtil.printInfoLog(Utils.parameterizedString(
                         InfoLogs.VAULT_CONTROLLER_INITIALIZED.getLog(), vaultConfigCopy.getVaultId()));
@@ -114,6 +118,39 @@ public final class Skyflow extends BaseSkyflow {
             return this;
         }
 
+        /**
+         * Client-wide per-attempt connection-establishment timeout in seconds. Applies to all vaults
+         * unless a vault overrides it; when unset the underlying HTTP client default (10s) applies.
+         * The overall {@code timeout} still bounds the whole call, including retries.
+         */
+        public SkyflowClientBuilder connectTimeout(int connectTimeout) {
+            this.connectTimeout = connectTimeout;
+            propagateHttpConfig();
+            return this;
+        }
+
+        /**
+         * Client-wide per-attempt response-read timeout in seconds. Applies to all vaults unless a
+         * vault overrides it; when unset the underlying HTTP client default (10s) applies. The overall
+         * {@code timeout} still bounds the whole call, including retries.
+         */
+        public SkyflowClientBuilder readTimeout(int readTimeout) {
+            this.readTimeout = readTimeout;
+            propagateHttpConfig();
+            return this;
+        }
+
+        /**
+         * Client-wide per-attempt request-write timeout in seconds. Applies to all vaults unless a
+         * vault overrides it; when unset the underlying HTTP client default (10s) applies. The overall
+         * {@code timeout} still bounds the whole call, including retries.
+         */
+        public SkyflowClientBuilder writeTimeout(int writeTimeout) {
+            this.writeTimeout = writeTimeout;
+            propagateHttpConfig();
+            return this;
+        }
+
         /** Client-wide retry attempt count. Applies to all vaults unless a vault overrides it. */
         public SkyflowClientBuilder maxRetries(int maxRetries) {
             this.maxRetries = maxRetries;
@@ -137,7 +174,8 @@ public final class Skyflow extends BaseSkyflow {
 
         private void propagateHttpConfig() {
             for (VaultController vault : this.vaultClientsMap.values()) {
-                vault.setCommonHttpConfig(this.timeout, this.maxRetries, this.initialRetryDelayMillis, this.maxRetryDelayMillis);
+                vault.setCommonHttpConfig(this.timeout, this.connectTimeout, this.readTimeout,
+                        this.writeTimeout, this.maxRetries, this.initialRetryDelayMillis, this.maxRetryDelayMillis);
             }
         }
 
