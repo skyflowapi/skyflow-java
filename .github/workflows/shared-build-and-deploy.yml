@@ -118,7 +118,10 @@ jobs:
 
           git add v3/pom.xml
           if [[ "${{ inputs.tag }}" == "internal" ]]; then
-            git commit -m "[AUTOMATED] Private Release ${{ steps.previoustag.outputs.tag }}-dev-$(git rev-parse --short $GITHUB_SHA)"
+            # [skip ci]: the version-bump push uses a PAT (see checkout above), and PAT-authored
+            # pushes DO trigger workflows (unlike GITHUB_TOKEN). Without this marker the push
+            # re-triggers this same internal-release workflow -> bump -> push -> infinite loop.
+            git commit -m "[AUTOMATED] Private Release ${{ steps.previoustag.outputs.tag }}-dev-$(git rev-parse --short $GITHUB_SHA) [skip ci]"
             git push origin ${{ github.ref_name }} -f
           fi
           if [[ "${{ inputs.tag }}" == "beta" || "${{ inputs.tag }}" == "public" ]]; then
