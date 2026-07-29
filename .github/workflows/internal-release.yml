@@ -10,6 +10,10 @@ on:
 
 jobs:
   build-and-deploy:
+    # Skip the automated version-bump commit so it can't re-trigger this workflow.
+    # The bump is pushed with a PAT (which, unlike GITHUB_TOKEN, DOES trigger workflows),
+    # so without this guard the release loops: bump -> push -> release -> bump -> ...
+    if: ${{ !contains(github.event.head_commit.message, '[AUTOMATED]') }}
     uses: ./.github/workflows/shared-build-and-deploy.yml
     with:
       ref: ${{ github.ref_name }}

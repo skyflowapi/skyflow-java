@@ -106,10 +106,11 @@ jobs:
 
           git add pom.xml
           if [[ "${{ inputs.tag }}" == "internal" ]]; then
-            # [skip ci]: the version-bump push uses a PAT (see checkout above), and PAT-authored
-            # pushes DO trigger workflows (unlike GITHUB_TOKEN). Without this marker the push
-            # re-triggers this same internal-release workflow -> bump -> push -> infinite loop.
-            git commit -m "[AUTOMATED] Private Release ${{ steps.previoustag.outputs.tag }}-dev-$(git rev-parse --short $GITHUB_SHA) [skip ci]"
+            # The '[AUTOMATED]' marker is what stops the release loop: internal-release.yml
+            # skips any push whose head commit contains it (the bump is pushed with a PAT,
+            # which — unlike GITHUB_TOKEN — DOES trigger workflows). Keep the marker in sync
+            # with that guard. This keeps PR CI intact (no global skip).
+            git commit -m "[AUTOMATED] Private Release ${{ steps.previoustag.outputs.tag }}-dev-$(git rev-parse --short $GITHUB_SHA)"
             git push origin ${{ github.ref_name }} -f
           fi
           if [[ "${{ inputs.tag }}" == "beta" || "${{ inputs.tag }}" == "public" ]]; then
