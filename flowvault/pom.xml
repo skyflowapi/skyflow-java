@@ -87,12 +87,12 @@
                 <repository>
                     <id>central</id>
                     <name>prekarilabs.jfrog.io-releases</name>
-                    <url>https://prekarilabs.jfrog.io/artifactory/skyflow-java</url>
+                    <url>https://prekarilabs.jfrog.io/artifactory/skyflow-flowvault-java</url>
                 </repository>
                 <snapshotRepository>
                     <id>snapshots</id>
                     <name>prekarilabs.jfrog.io-snapshots</name>
-                    <url>https://prekarilabs.jfrog.io/artifactory/skyflow-java</url>
+                    <url>https://prekarilabs.jfrog.io/artifactory/skyflow-flowvault-java</url>
                 </snapshotRepository>
             </distributionManagement>
         </profile>
