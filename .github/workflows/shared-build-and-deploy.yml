@@ -88,7 +88,12 @@ jobs:
         with:
           fallback: 1.0.0
 
+      # Skipped for flowvault's internal builds: flowvault carries its own
+      # -SNAPSHOT version in its committed pom (standard Maven convention) and
+      # deploys that as-is - no tag-derived version to compute. Every other
+      # module/tag combination (including v2's internal path) is unchanged.
       - name: Bump Version
+        if: ${{ !(inputs.tag == 'internal' && inputs.module == 'flowvault') }}
         run: |
           chmod +x ./scripts/bump_version.sh
           if ${{ inputs.tag == 'internal' }}; then
@@ -97,7 +102,10 @@ jobs:
             ./scripts/bump_version.sh "${{ steps.previoustag.outputs.tag }}" "" "${{ inputs.module }}"
           fi
 
+      # Same reasoning as above: flowvault's internal builds don't mutate the
+      # pom, so there's nothing to commit/push back for that one case.
       - name: Commit changes
+        if: ${{ !(inputs.tag == 'internal' && inputs.module == 'flowvault') }}
         run: |
           git config user.name ${{ github.actor }}
           git config user.email ${{ github.actor }}@users.noreply.github.com
