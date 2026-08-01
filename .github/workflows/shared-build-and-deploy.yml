@@ -88,24 +88,30 @@ jobs:
         with:
           fallback: 1.0.0
 
-      # Skipped for flowvault's internal builds: flowvault carries its own
-      # -SNAPSHOT version in its committed pom (standard Maven convention) and
-      # deploys that as-is - no tag-derived version to compute. Every other
-      # module/tag combination (including v2's internal path) is unchanged.
+      # flowvault's internal builds base their version off flowvault's own
+      # committed pom, not off a git tag - "previous tag" is a repo-wide
+      # lookup with no module awareness, which is exactly what let a v3 tag
+      # get stamped onto a flowvault build. Every other module/tag
+      # combination (including v2's internal path) is unchanged: it still
+      # uses previoustag exactly as before.
       - name: Bump Version
-        if: ${{ !(inputs.tag == 'internal' && inputs.module == 'flowvault') }}
+        id: bump-version
         run: |
-          chmod +x ./scripts/bump_version.sh
-          if ${{ inputs.tag == 'internal' }}; then
-            ./scripts/bump_version.sh "${{ steps.previoustag.outputs.tag }}" "$(git rev-parse --short "$GITHUB_SHA")" "${{ inputs.module }}"
+          chmod +x ./scripts/bump_version.sh ./scripts/current_module_version.sh
+          if ${{ inputs.tag == 'internal' && inputs.module == 'flowvault' }}; then
+            BASE_VERSION=$(./scripts/current_module_version.sh "${{ inputs.module }}")
           else
-            ./scripts/bump_version.sh "${{ steps.previoustag.outputs.tag }}" "" "${{ inputs.module }}"
+            BASE_VERSION="${{ steps.previoustag.outputs.tag }}"
+          fi
+          echo "base_version=$BASE_VERSION" >> "$GITHUB_OUTPUT"
+
+          if ${{ inputs.tag == 'internal' }}; then
+            ./scripts/bump_version.sh "$BASE_VERSION" "$(git rev-parse --short "$GITHUB_SHA")" "${{ inputs.module }}"
+          else
+            ./scripts/bump_version.sh "$BASE_VERSION" "" "${{ inputs.module }}"
           fi
 
-      # Same reasoning as above: flowvault's internal builds don't mutate the
-      # pom, so there's nothing to commit/push back for that one case.
       - name: Commit changes
-        if: ${{ !(inputs.tag == 'internal' && inputs.module == 'flowvault') }}
         run: |
           git config user.name ${{ github.actor }}
           git config user.email ${{ github.actor }}@users.noreply.github.com
@@ -116,11 +122,11 @@ jobs:
 
           git add ${{ inputs.module }}/pom.xml
           if [[ "${{ inputs.tag }}" == "internal" ]]; then
-            git commit -m "[AUTOMATED] Private Release ${{ steps.previoustag.outputs.tag }}-dev-$(git rev-parse --short $GITHUB_SHA)"
+            git commit -m "[AUTOMATED] Private Release ${{ steps.bump-version.outputs.base_version }}-dev-$(git rev-parse --short $GITHUB_SHA)"
             git push origin ${{ github.ref_name }} -f
           fi
           if [[ "${{ inputs.tag }}" == "beta" || "${{ inputs.tag }}" == "public" ]]; then
-            git commit -m "[AUTOMATED] Public Release - ${{ steps.previoustag.outputs.tag }}"
+            git commit -m "[AUTOMATED] Public Release - ${{ steps.bump-version.outputs.base_version }}"
             git push origin ${{ env.branch_name }}
           fi
 
