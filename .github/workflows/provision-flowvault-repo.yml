@@ -9,6 +9,9 @@ name: Provision flowvault Artifactory repo (one-off test)
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - flowvault-release/test-artifactory-path
 
 jobs:
   create-repo:
