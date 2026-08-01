@@ -91,7 +91,11 @@
                     <url>https://prekarilabs.jfrog.io/artifactory/skyflow-java</url>
                 </repository>
                 <snapshotRepository>
-                    <id>snapshots</id>
+                    <!-- Same id as <repository> above, deliberately - both blocks point
+                         at the identical Artifactory URL, so this reuses the "central"
+                         credentials CI already configures rather than needing a second
+                         server entry for a "snapshots" id that was never wired to anything. -->
+                    <id>central</id>
                     <name>prekarilabs.jfrog.io-snapshots</name>
                     <url>https://prekarilabs.jfrog.io/artifactory/skyflow-java</url>
                 </snapshotRepository>
