@@ -6,6 +6,7 @@
     "**/*.{java,md,xml,yml,yaml,json,txt,properties}"
   ],
   "words": [
+    "japicmp",
     "Skyflow",
     "skyflow",
     "skyflowapi",
