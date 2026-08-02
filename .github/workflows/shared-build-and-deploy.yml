@@ -184,6 +184,21 @@ jobs:
           name: "credentials.json"
           json: ${{ secrets.TEST_CREDENTIALS_FILE_STRING }}
 
+      # Tests load these with Dotenv.load()/relative paths, which resolve
+      # against the *module* directory - Maven runs each module's tests with
+      # that module as the working dir. A repo-root .env was correct when this
+      # was a single-module build, but since the common/v2/flowvault split it
+      # leaves module tests unable to find their config. Discovered by glob so
+      # this survives module renames/additions.
+      - name: Distribute test config to modules
+        run: |
+          for module_pom in */pom.xml; do
+            dir="$(dirname "$module_pom")"
+            cp .env "$dir/.env"
+            cp credentials.json "$dir/credentials.json"
+            echo "seeded $dir/"
+          done
+
       # 'verify' rather than 'deploy' for a dry run: the deploy plugin (and
       # the central-publishing extension bound to it) is never invoked at
       # all, so there is no upload path to accidentally leave enabled.
