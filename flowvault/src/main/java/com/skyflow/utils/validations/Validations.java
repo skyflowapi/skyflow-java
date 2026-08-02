@@ -119,7 +119,7 @@ public class Validations extends BaseValidations {
     public static void validateVaultConfiguration(VaultConfig vaultConfig) throws SkyflowException {
         String vaultId = vaultConfig.getVaultId();
         String clusterId = vaultConfig.getClusterId();
-        String vaultURL = vaultConfig.getVaultURL();
+        String vaultUrl = vaultConfig.getVaultUrl();
         Credentials credentials = vaultConfig.getCredentials();
 
         if (vaultId == null) {
@@ -132,15 +132,15 @@ public class Validations extends BaseValidations {
             validateCredentials(credentials);
         }
 
-        if (vaultURL != null) {
-            if (vaultURL.trim().isEmpty()) {
+        if (vaultUrl != null) {
+            if (vaultUrl.trim().isEmpty()) {
                 LogUtil.printErrorLog(ErrorLogs.EMPTY_VAULT_URL.getLog());
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyVaultUrl.getMessage());
-            } else if (!Utils.isValidURL(vaultURL)) {
+            } else if (!Utils.isValidUrl(vaultUrl)) {
                 LogUtil.printErrorLog(ErrorLogs.INVALID_VAULT_URL_FORMAT.getLog());
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidVaultUrlFormat.getMessage());
             }
-        } else if (Utils.getEnvVaultURL() == null) {
+        } else if (Utils.getEnvVaultUrl() == null) {
             if (clusterId == null) {
                 LogUtil.printErrorLog(ErrorLogs.EITHER_VAULT_URL_OR_CLUSTER_ID_REQUIRED.getLog());
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EitherVaultUrlOrClusterIdRequired.getMessage());

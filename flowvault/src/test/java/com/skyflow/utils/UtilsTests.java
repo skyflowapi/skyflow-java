@@ -75,29 +75,29 @@ public class UtilsTests {
         }
     }
 
-    // ── getVaultURL ───────────────────────────────────────────────────────────
+    // ── getVaultUrl ───────────────────────────────────────────────────────────
 
     @Test
     public void testGetVaultURL_prodEnv() {
-        String url = Utils.getVaultURL("cluster1", Env.PROD);
+        String url = Utils.getVaultUrl("cluster1", Env.PROD);
         Assert.assertEquals("https://cluster1.skyvault.skyflowapis.com", url);
     }
 
     @Test
     public void testGetVaultURL_devEnv() {
-        String url = Utils.getVaultURL("cluster1", Env.DEV);
+        String url = Utils.getVaultUrl("cluster1", Env.DEV);
         Assert.assertEquals("https://cluster1.skyvault.skyflowapis.dev", url);
     }
 
     @Test
     public void testGetVaultURL_stageEnv() {
-        String url = Utils.getVaultURL("cluster1", Env.STAGE);
+        String url = Utils.getVaultUrl("cluster1", Env.STAGE);
         Assert.assertEquals("https://cluster1.skyvault.skyflowapis.tech", url);
     }
 
     @Test
     public void testGetVaultURL_sandboxEnv() {
-        String url = Utils.getVaultURL("cluster1", Env.SANDBOX);
+        String url = Utils.getVaultUrl("cluster1", Env.SANDBOX);
         Assert.assertEquals("https://cluster1.skyvault.skyflowapis-preview.com", url);
     }
 
@@ -111,12 +111,12 @@ public class UtilsTests {
         Assert.assertTrue(sdkVersionMetric.startsWith(Constants.SDK_METRIC_NAME_VERSION_PREFIX));
     }
 
-    // ── getEnvVaultURL ────────────────────────────────────────────────────────
+    // ── getEnvVaultUrl ────────────────────────────────────────────────────────
 
     @Test
     public void testGetEnvVaultURL_doesNotThrowUnexpectedException() {
         try {
-            Utils.getEnvVaultURL();
+            Utils.getEnvVaultUrl();
         } catch (SkyflowException e) {
             // acceptable if this environment happens to have an invalid VAULT_URL set
             Assert.assertNotNull(e.getMessage());
@@ -132,7 +132,7 @@ public class UtilsTests {
         }
 
         try {
-            Utils.getEnvVaultURL();
+            Utils.getEnvVaultUrl();
             Assert.fail("Should have thrown SkyflowException for empty VAULT_URL");
         } catch (SkyflowException e) {
             Assert.assertEquals(com.skyflow.errors.ErrorMessage.EmptyVaultUrl.getMessage(), e.getMessage());
@@ -146,33 +146,33 @@ public class UtilsTests {
         }
 
         try {
-            Utils.getEnvVaultURL();
+            Utils.getEnvVaultUrl();
             Assert.fail("Should have thrown SkyflowException for invalid VAULT_URL format");
         } catch (SkyflowException e) {
             Assert.assertEquals(com.skyflow.errors.ErrorMessage.InvalidVaultUrlFormat.getMessage(), e.getMessage());
         }
     }
 
-    // ── isValidURL ────────────────────────────────────────────────────────────
+    // ── isValidUrl ────────────────────────────────────────────────────────────
 
     @Test
     public void testIsValidURL_validHttpsUrl() {
-        Assert.assertTrue(Utils.isValidURL("https://example.com"));
+        Assert.assertTrue(Utils.isValidUrl("https://example.com"));
     }
 
     @Test
     public void testIsValidURL_httpUrlIsInvalid() {
-        Assert.assertFalse(Utils.isValidURL("http://example.com"));
+        Assert.assertFalse(Utils.isValidUrl("http://example.com"));
     }
 
     @Test
     public void testIsValidURL_malformedUrl() {
-        Assert.assertFalse(Utils.isValidURL("not a url"));
+        Assert.assertFalse(Utils.isValidUrl("not a url"));
     }
 
     @Test
     public void testIsValidURL_httpsUrlWithEmptyHostIsInvalid() {
-        Assert.assertFalse(Utils.isValidURL("https:///path"));
+        Assert.assertFalse(Utils.isValidUrl("https:///path"));
     }
 
     // ── generateBearerToken ───────────────────────────────────────────────────

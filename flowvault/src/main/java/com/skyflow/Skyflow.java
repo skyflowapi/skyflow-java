@@ -72,10 +72,17 @@ public final class Skyflow extends BaseSkyflow<Skyflow, VaultConfig> {
 
         @Override
         protected void onVaultConfigUpdated(VaultConfig updatedConfig) throws SkyflowException {
-            VaultController updated = new VaultController(updatedConfig, this.skyflowCredentials);
+            // Update the existing controller in place — replacing it would leave any VaultController
+            // reference the caller already holds pointing at the previous config.
+            VaultController updated = this.vaultClientsMap.get(updatedConfig.getVaultId());
+            if (updated == null) {
+                updated = new VaultController(updatedConfig, this.skyflowCredentials);
+                this.vaultClientsMap.put(updatedConfig.getVaultId(), updated);
+            } else {
+                updated.setVaultConfig(updatedConfig);
+            }
             updated.setCommonHttpConfig(this.timeout, this.connectTimeout, this.readTimeout,
                     this.writeTimeout, this.maxRetries);
-            this.vaultClientsMap.put(updatedConfig.getVaultId(), updated);
         }
 
         @Override
@@ -110,7 +117,7 @@ public final class Skyflow extends BaseSkyflow<Skyflow, VaultConfig> {
 
         /**
          * BaseSkyflow.mergeVaultConfig() only carries env, clusterId and credentials across, so the
-         * flowvault-specific fields on an incoming update — vaultURL and the HTTP settings — would
+         * flowvault-specific fields on an incoming update — vaultUrl and the HTTP settings — would
          * be dropped silently. Apply them to the merged config the new controller is holding. A null
          * on the incoming config means "leave as is", matching how the base class merges every
          * other field.
@@ -137,11 +144,11 @@ public final class Skyflow extends BaseSkyflow<Skyflow, VaultConfig> {
             }
             // The HTTP settings above are resolved lazily on the next request, but the URL is
             // resolved once in the VaultClient constructor — which already ran with the old value.
-            if (incoming.getVaultURL() != null) {
-                merged.setVaultURL(incoming.getVaultURL());
+            if (incoming.getVaultUrl() != null) {
+                merged.setVaultUrl(incoming.getVaultUrl());
                 VaultController controller = this.vaultClientsMap.get(incoming.getVaultId());
                 if (controller != null) {
-                    controller.refreshVaultURL();
+                    controller.refreshVaultUrl();
                 }
             }
         }

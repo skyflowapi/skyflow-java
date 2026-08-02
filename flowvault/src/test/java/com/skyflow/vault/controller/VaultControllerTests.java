@@ -191,14 +191,14 @@ public class VaultControllerTests {
         records.add(BulkInsertRequestRecord.builder().tableName("table1").data(data).build());
         BulkInsertRequest request = BulkInsertRequest.builder().records(records).build();
 
-        RequestInterceptor interceptor = ctx -> ctx.addHeader(CustomHeaderKey.SkyflowAccountID, "acct-123");
+        RequestInterceptor interceptor = ctx -> ctx.addHeader(CustomHeaderKey.SkyflowAccountId, "acct-123");
         InsertOptions options = InsertOptions.builder().interceptor(interceptor).build();
 
         controller.bulkInsert(request, options);
 
         ArgumentCaptor<RequestOptions> captor = ArgumentCaptor.forClass(RequestOptions.class);
         Mockito.verify(mockRaw).insert(any(), captor.capture());
-        Assert.assertEquals("acct-123", captor.getValue().getHeaders().get(CustomHeaderKey.SkyflowAccountID.toString()));
+        Assert.assertEquals("acct-123", captor.getValue().getHeaders().get(CustomHeaderKey.SkyflowAccountId.toString()));
     }
 
     // ── bulkDetokenize ────────────────────────────────────────────────────────
@@ -721,7 +721,7 @@ public class VaultControllerTests {
                 callNumber = contexts.size();
                 contexts.add(context);
             }
-            context.addHeader(CustomHeaderKey.SkyflowAccountID, "batch-" + callNumber);
+            context.addHeader(CustomHeaderKey.SkyflowAccountId, "batch-" + callNumber);
         }
 
         int callCount() {
@@ -747,7 +747,7 @@ public class VaultControllerTests {
         Assert.assertEquals(EXPECTED_BATCH_COUNT, capturedOptions.size());
         java.util.Set<String> headerValues = new java.util.HashSet<>();
         for (RequestOptions options : capturedOptions) {
-            String value = options.getHeaders().get(CustomHeaderKey.SkyflowAccountID.toString());
+            String value = options.getHeaders().get(CustomHeaderKey.SkyflowAccountId.toString());
             Assert.assertNotNull("Interceptor header missing on a batch", value);
             headerValues.add(value);
         }

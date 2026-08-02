@@ -14,7 +14,7 @@ package com.skyflow.config;
  */
 public class VaultConfig extends BaseVaultConfig {
 
-    private String vaultURL;
+    private String vaultUrl;
     // HTTP timeout & retry config (vault-level overrides). null => inherit client-wide default, then SDK default.
     private Integer timeout;         // overall call timeout, in seconds
     private Integer connectTimeout;  // per-attempt connection-establishment timeout, in seconds
@@ -24,7 +24,7 @@ public class VaultConfig extends BaseVaultConfig {
 
     public VaultConfig() {
         super();
-        this.vaultURL = null;
+        this.vaultUrl = null;
         this.timeout = null;
         this.connectTimeout = null;
         this.readTimeout = null;
@@ -32,12 +32,12 @@ public class VaultConfig extends BaseVaultConfig {
         this.maxRetries = null;
     }
 
-    public String getVaultURL() {
-        return vaultURL;
+    public String getVaultUrl() {
+        return vaultUrl;
     }
 
-    public void setVaultURL(String vaultURL) {
-        this.vaultURL = vaultURL;
+    public void setVaultUrl(String vaultUrl) {
+        this.vaultUrl = vaultUrl;
     }
 
     public Integer getTimeout() {

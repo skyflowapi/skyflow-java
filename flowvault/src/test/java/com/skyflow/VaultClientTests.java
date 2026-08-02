@@ -20,12 +20,12 @@ public class VaultClientTests {
         return config;
     }
 
-    // ── updateVaultURL priority order ────────────────────────────────────────
+    // ── updateVaultUrl priority order ────────────────────────────────────────
 
     @Test
     public void testUpdateVaultURL_usesExplicitVaultURLOverClusterId() throws SkyflowException {
         VaultConfig config = buildConfig("vault1", "cluster1", null);
-        config.setVaultURL("https://custom.example.com");
+        config.setVaultUrl("https://custom.example.com");
 
         VaultClient client = new VaultClient(config, null);
 

@@ -272,7 +272,7 @@ public class ValidationsTests {
         VaultConfig config = new VaultConfig();
         config.setVaultId("vault123");
         config.setClusterId("cluster1");
-        config.setVaultURL("   ");
+        config.setVaultUrl("   ");
         try {
             Validations.validateVaultConfiguration(config);
             Assert.fail(EXCEPTION_NOT_THROWN);
@@ -285,7 +285,7 @@ public class ValidationsTests {
     public void testValidateVaultConfiguration_invalidVaultUrlFormat() {
         VaultConfig config = new VaultConfig();
         config.setVaultId("vault123");
-        config.setVaultURL("http://not-https.example.com");
+        config.setVaultUrl("http://not-https.example.com");
         try {
             Validations.validateVaultConfiguration(config);
             Assert.fail(EXCEPTION_NOT_THROWN);
@@ -311,7 +311,7 @@ public class ValidationsTests {
     public void testValidateVaultConfiguration_validWithVaultUrl() {
         VaultConfig config = new VaultConfig();
         config.setVaultId("vault123");
-        config.setVaultURL("https://myvault.example.com");
+        config.setVaultUrl("https://myvault.example.com");
         try {
             Validations.validateVaultConfiguration(config);
         } catch (SkyflowException e) {

@@ -34,7 +34,7 @@ public class VaultClient extends BaseVaultClient<VaultConfig> {
         super(vaultConfig, credentials);
         this.apiClientBuilder = new ApiClientBuilder();
         this.apiClient = null;
-        updateVaultURL();
+        updateVaultUrl();
     }
 
     /**
@@ -90,29 +90,42 @@ public class VaultClient extends BaseVaultClient<VaultConfig> {
     }
 
     /**
-     * Re-resolves the vault URL from the current config. The constructor resolves it once, so a
-     * vaultURL supplied later through updateVaultConfig would otherwise never take effect.
+     * Adopts an updated config in place, so a VaultController reference the caller already holds
+     * keeps working instead of silently serving the previous config. Discards the cached HTTP and
+     * API clients; the bearer token is re-resolved by setBearerToken, which drops it when the
+     * effective credentials changed.
      */
-    protected void refreshVaultURL() throws SkyflowException {
-        updateVaultURL();
+    protected void setVaultConfig(VaultConfig vaultConfig) throws SkyflowException {
+        this.vaultConfig = vaultConfig;
+        this.sharedHttpClient = null;
+        this.apiClient = null;
+        updateVaultUrl();
     }
 
-    private void updateVaultURL() throws SkyflowException {
-        // Fetch vaultURL from ENV
-        String vaultURL = Utils.getEnvVaultURL();
+    /**
+     * Re-resolves the vault URL from the current config. The constructor resolves it once, so a
+     * vaultUrl supplied later through updateVaultConfig would otherwise never take effect.
+     */
+    protected void refreshVaultUrl() throws SkyflowException {
+        updateVaultUrl();
+    }
 
-        // If vaultURL from ENV is null or empty, fetch vaultURL from vault config
-        if (vaultURL == null || vaultURL.isEmpty()) {
-            vaultURL = this.vaultConfig.getVaultURL();
+    private void updateVaultUrl() throws SkyflowException {
+        // Fetch vaultUrl from ENV
+        String vaultUrl = Utils.getEnvVaultUrl();
+
+        // If vaultUrl from ENV is null or empty, fetch vaultUrl from vault config
+        if (vaultUrl == null || vaultUrl.isEmpty()) {
+            vaultUrl = this.vaultConfig.getVaultUrl();
         }
 
-        // If vaultURL from vault config is also null or empty, construct vaultURL from clusterId passed in vault config
-        if (vaultURL == null || vaultURL.isEmpty()) {
-            vaultURL = Utils.getVaultURL(this.vaultConfig.getClusterId(), this.vaultConfig.getEnv());
+        // If vaultUrl from vault config is also null or empty, construct vaultUrl from clusterId passed in vault config
+        if (vaultUrl == null || vaultUrl.isEmpty()) {
+            vaultUrl = Utils.getVaultUrl(this.vaultConfig.getClusterId(), this.vaultConfig.getEnv());
         }
-        this.apiClientBuilder.url(vaultURL);
-        if (!vaultURL.equals(this.currentVaultURL)) {
-            this.currentVaultURL = vaultURL;
+        this.apiClientBuilder.url(vaultUrl);
+        if (!vaultUrl.equals(this.currentVaultURL)) {
+            this.currentVaultURL = vaultUrl;
             this.apiClient = null;
         }
     }

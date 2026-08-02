@@ -55,8 +55,10 @@ import io.github.cdimascio.dotenv.DotenvException;
 
 public final class Utils extends BaseUtils {
 
-    public static String getVaultURL(String clusterId, Env env) {
-        return getVaultURL(clusterId, env, Constants.VAULT_DOMAIN);
+    public static String getVaultUrl(String clusterId, Env env) {
+        // The 3-arg overload is inherited from common's BaseUtils, which keeps the older
+        // getVaultURL spelling (shared with v2), so it is qualified rather than renamed here.
+        return BaseUtils.getVaultURL(clusterId, env, Constants.VAULT_DOMAIN);
     }
 
     public static JsonObject getMetrics() {
@@ -67,27 +69,27 @@ public final class Utils extends BaseUtils {
     }
 
 
-    public static String getEnvVaultURL() throws SkyflowException {
+    public static String getEnvVaultUrl() throws SkyflowException {
         try {
-            String vaultURL = System.getenv("VAULT_URL");
-            if (vaultURL == null) {
+            String vaultUrl = System.getenv("VAULT_URL");
+            if (vaultUrl == null) {
                 Dotenv dotenv = Dotenv.load();
-                vaultURL = dotenv.get("VAULT_URL");
+                vaultUrl = dotenv.get("VAULT_URL");
             }
-            if (vaultURL != null && vaultURL.trim().isEmpty()) {
+            if (vaultUrl != null && vaultUrl.trim().isEmpty()) {
                 LogUtil.printErrorLog(ErrorLogs.EMPTY_VAULT_URL.getLog());
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyVaultUrl.getMessage());
-            } else if (vaultURL != null && !isValidURL(vaultURL)) {
+            } else if (vaultUrl != null && !isValidUrl(vaultUrl)) {
                 LogUtil.printErrorLog(ErrorLogs.INVALID_VAULT_URL_FORMAT.getLog());
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidVaultUrlFormat.getMessage());
             }
-            return vaultURL;
+            return vaultUrl;
         } catch (DotenvException e) {
             return null;
         }
     }
 
-    public static boolean isValidURL(String url) {
+    public static boolean isValidUrl(String url) {
         URL parsedUrl;
         try {
             parsedUrl = new URL(url);
