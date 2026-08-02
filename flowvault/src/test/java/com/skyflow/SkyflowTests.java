@@ -52,6 +52,70 @@ public class SkyflowTests {
         }
     }
 
+    // ── updateVaultConfig: flowvault-specific fields ─────────────────────────
+    // BaseSkyflow.mergeVaultConfig() only carries env/clusterId/credentials, so vaultURL needs
+    // SkyflowClientBuilder.carryVaultOverrides() to survive an update.
+
+    @Test
+    public void testUpdateVaultConfig_changesVaultURL() throws SkyflowException {
+        VaultConfig config = buildConfig("vault1", "cluster1");
+        config.setVaultURL("https://first.example.com");
+        Skyflow.SkyflowClientBuilder builder = Skyflow.builder().addVaultConfig(config);
+        Assert.assertEquals("https://first.example.com", builder.build().vault().currentVaultURL);
+
+        VaultConfig update = buildConfig("vault1", "cluster1");
+        update.setVaultURL("https://second.example.com");
+
+        Assert.assertEquals("https://second.example.com",
+                builder.updateVaultConfig(update).build().vault().currentVaultURL);
+    }
+
+    @Test
+    public void testUpdateVaultConfig_storesTheNewVaultURLOnTheConfig() throws SkyflowException {
+        VaultConfig config = buildConfig("vault1", "cluster1");
+        config.setVaultURL("https://first.example.com");
+        Skyflow.SkyflowClientBuilder builder = Skyflow.builder().addVaultConfig(config);
+
+        VaultConfig update = buildConfig("vault1", "cluster1");
+        update.setVaultURL("https://second.example.com");
+
+        Assert.assertEquals("https://second.example.com",
+                builder.updateVaultConfig(update).build().getVaultConfig("vault1").getVaultURL());
+    }
+
+    @Test
+    public void testUpdateVaultConfig_omittingVaultURLKeepsTheExistingOne() throws SkyflowException {
+        VaultConfig config = buildConfig("vault1", "cluster1");
+        config.setVaultURL("https://first.example.com");
+        Skyflow.SkyflowClientBuilder builder = Skyflow.builder().addVaultConfig(config);
+
+        // No vaultURL on the update: null means "leave as is", as elsewhere in the merge.
+        Skyflow client = builder.updateVaultConfig(buildConfig("vault1", "cluster2")).build();
+
+        Assert.assertEquals("https://first.example.com", client.vault().currentVaultURL);
+    }
+
+    @Test
+    public void testUpdateVaultConfig_canIntroduceAVaultURLWhereClusterIdWasUsed() throws SkyflowException {
+        Skyflow.SkyflowClientBuilder builder = Skyflow.builder().addVaultConfig(buildConfig("vault1", "cluster1"));
+        Assert.assertEquals("https://cluster1.skyvault.skyflowapis.dev", builder.build().vault().currentVaultURL);
+
+        VaultConfig update = buildConfig("vault1", "cluster1");
+        update.setVaultURL("https://explicit.example.com");
+
+        Assert.assertEquals("https://explicit.example.com",
+                builder.updateVaultConfig(update).build().vault().currentVaultURL);
+    }
+
+    @Test
+    public void testUpdateVaultConfig_clusterIdChangeStillRebuildsTheURL() throws SkyflowException {
+        Skyflow.SkyflowClientBuilder builder = Skyflow.builder().addVaultConfig(buildConfig("vault1", "cluster1"));
+
+        Skyflow client = builder.updateVaultConfig(buildConfig("vault1", "cluster2")).build();
+
+        Assert.assertEquals("https://cluster2.skyvault.skyflowapis.dev", client.vault().currentVaultURL);
+    }
+
     // ── updateVaultConfig ─────────────────────────────────────────────────────
 
     @Test

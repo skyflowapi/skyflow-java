@@ -5,19 +5,67 @@ import com.skyflow.config.VaultConfig;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.generated.rest.ApiClient;
 import com.skyflow.generated.rest.ApiClientBuilder;
+import com.skyflow.generated.rest.core.RetryInterceptor;
 import com.skyflow.generated.rest.resources.flowservice.FlowserviceClient;
 import com.skyflow.generated.rest.resources.records.RecordsClient;
 import com.skyflow.utils.Utils;
 
+import java.util.concurrent.TimeUnit;
+
+import okhttp3.ConnectionPool;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+
 public class VaultClient extends BaseVaultClient<VaultConfig> {
     private final ApiClientBuilder apiClientBuilder;
     private ApiClient apiClient;
+    // Client-wide (Skyflow builder) HTTP config; null => fall back to the SDK defaults below.
+    private Integer commonTimeout;
+    private Integer commonConnectTimeout;
+    private Integer commonReadTimeout;
+    private Integer commonWriteTimeout;
+    private Integer commonMaxRetries;
+    // SDK defaults, used when neither the vault-level nor the client-wide value is set.
+    private static final int DEFAULT_TIMEOUT_SECONDS = 60;
+    // Retries OFF by default (opt-in) so non-idempotent bulk writes aren't replayed automatically.
+    private static final int DEFAULT_MAX_RETRIES = 0;
 
     protected VaultClient(VaultConfig vaultConfig, Credentials credentials) throws SkyflowException {
         super(vaultConfig, credentials);
         this.apiClientBuilder = new ApiClientBuilder();
         this.apiClient = null;
         updateVaultURL();
+    }
+
+    /**
+     * Applies the client-wide HTTP settings from the Skyflow builder. Discards the cached HTTP
+     * client and ApiClient so the next call rebuilds them with the new values.
+     */
+    protected void setCommonHttpConfig(Integer timeout, Integer connectTimeout, Integer readTimeout,
+                                       Integer writeTimeout, Integer maxRetries) {
+        this.commonTimeout = timeout;
+        this.commonConnectTimeout = connectTimeout;
+        this.commonReadTimeout = readTimeout;
+        this.commonWriteTimeout = writeTimeout;
+        this.commonMaxRetries = maxRetries;
+        this.sharedHttpClient = null;
+        this.apiClient = null;
+    }
+
+    /** Resolve a setting: vault-level override, else client-wide default, else the SDK default. */
+    private static int resolveInt(Integer vaultLevel, Integer clientLevel, int defaultValue) {
+        if (vaultLevel != null) {
+            return vaultLevel;
+        }
+        return clientLevel != null ? clientLevel : defaultValue;
+    }
+
+    /**
+     * Resolve an optional setting: vault-level override, else client-wide default, else null.
+     * Null means "not configured" — the caller leaves the underlying HTTP client default in place.
+     */
+    private static Integer resolveNullableInt(Integer vaultLevel, Integer clientLevel) {
+        return vaultLevel != null ? vaultLevel : clientLevel;
     }
 
     protected FlowserviceClient getRecordsApi() {
@@ -39,6 +87,14 @@ public class VaultClient extends BaseVaultClient<VaultConfig> {
             updateExecutorInHTTP();
             this.apiClient = this.apiClientBuilder.build();
         }
+    }
+
+    /**
+     * Re-resolves the vault URL from the current config. The constructor resolves it once, so a
+     * vaultURL supplied later through updateVaultConfig would otherwise never take effect.
+     */
+    protected void refreshVaultURL() throws SkyflowException {
+        updateVaultURL();
     }
 
     private void updateVaultURL() throws SkyflowException {
@@ -63,7 +119,36 @@ public class VaultClient extends BaseVaultClient<VaultConfig> {
 
     protected void updateExecutorInHTTP() {
         if (sharedHttpClient == null) {
-            sharedHttpClient = buildSharedHttpClient(() -> this.token);
+            int timeoutSeconds = resolveInt(vaultConfig.getTimeout(), commonTimeout, DEFAULT_TIMEOUT_SECONDS);
+            int maxRetries = resolveInt(vaultConfig.getMaxRetries(), commonMaxRetries, DEFAULT_MAX_RETRIES);
+            // Per-attempt timeouts: null => leave OkHttp's built-in default (backward compatible).
+            Integer connectTimeout = resolveNullableInt(vaultConfig.getConnectTimeout(), commonConnectTimeout);
+            Integer readTimeout = resolveNullableInt(vaultConfig.getReadTimeout(), commonReadTimeout);
+            Integer writeTimeout = resolveNullableInt(vaultConfig.getWriteTimeout(), commonWriteTimeout);
+
+            OkHttpClient.Builder httpBuilder = new OkHttpClient.Builder()
+                    .connectionPool(new ConnectionPool(10, 1, TimeUnit.MINUTES))
+                    // Overall ceiling; bounds the whole call including retries.
+                    .callTimeout(timeoutSeconds, TimeUnit.SECONDS)
+                    // OUTER: retries. Must wrap the auth interceptor so each attempt re-reads the
+                    // (possibly refreshed) bearer token rather than replaying a stale one.
+                    .addInterceptor(new RetryInterceptor(maxRetries))
+                    .addInterceptor(chain -> {  // INNER: auth
+                        Request requestWithAuth = chain.request().newBuilder()
+                                .header("Authorization", "Bearer " + this.token)
+                                .build();
+                        return chain.proceed(requestWithAuth);
+                    });
+            if (connectTimeout != null) {
+                httpBuilder.connectTimeout(connectTimeout, TimeUnit.SECONDS);
+            }
+            if (readTimeout != null) {
+                httpBuilder.readTimeout(readTimeout, TimeUnit.SECONDS);
+            }
+            if (writeTimeout != null) {
+                httpBuilder.writeTimeout(writeTimeout, TimeUnit.SECONDS);
+            }
+            sharedHttpClient = httpBuilder.build();
             apiClientBuilder.httpClient(sharedHttpClient);
         }
     }
