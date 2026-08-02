@@ -70,6 +70,9 @@ import java.util.Set;
 
 public final class Utils extends BaseUtils {
 
+    // Spellings the vault has used for the per-record status, in precedence order.
+    private static final String[] HTTP_CODE_KEYS = {"http_code", "httpCode", "statusCode"};
+
     public static String getVaultUrl(String clusterId, Env env) {
         // The 3-arg overload is inherited from common's BaseUtils, which keeps the older
         // getVaultURL spelling (shared with v2), so it is qualified rather than renamed here.
@@ -306,28 +309,54 @@ public final class Utils extends BaseUtils {
         batches.add(current);
         return batches;
     }
+    // Error bodies routinely carry a key whose value is explicitly null (e.g. "skyflowID": null on a
+    // failed record), so containsKey() is not enough to know a value is usable — read through these
+    // helpers. Anything that throws here masks the real server error with a parsing crash.
+
+    /** Value as a String, or null when the key is absent or explicitly null. */
+    private static String readString(Map<String, Object> recordMap, String key) {
+        Object value = recordMap.get(key);
+        return value == null ? null : value.toString();
+    }
+
+    /** First usable HTTP status among the known spellings, else {@code fallback}. */
+    private static int readHttpCode(Map<String, Object> recordMap, int fallback) {
+        for (String key : HTTP_CODE_KEYS) {
+            Object value = recordMap.get(key);
+            if (value instanceof Number) {
+                return ((Number) value).intValue();
+            }
+            if (value instanceof String) {
+                try {
+                    return Integer.parseInt(((String) value).trim());
+                } catch (NumberFormatException ignored) {
+                    // fall through to the next spelling
+                }
+            }
+        }
+        return fallback;
+    }
+
+    /**
+     * Error text from "error", else "message", else a placeholder. Never null: a null message on an
+     * error record would make it read as a success downstream, since that is how failures are counted.
+     */
+    private static String readErrorMessage(Map<String, Object> recordMap) {
+        String error = readString(recordMap, "error");
+        if (error != null) {
+            return error;
+        }
+        String message = readString(recordMap, "message");
+        return message != null ? message : "Unknown error";
+    }
+
     public static BulkInsertResponseRecord createInsertErrorRecord(Map<String, Object> recordMap, int indexNumber, String requestId) {
         BulkInsertResponseRecord err = null;
         if (recordMap != null) {
-            int code = 500;
-            if (recordMap.containsKey("http_code")) {
-                code = (Integer) recordMap.get("http_code");
-            } else if (recordMap.containsKey("httpCode")) {
-                code = (Integer) recordMap.get("httpCode");
-            } else if (recordMap.containsKey("statusCode")) {
-                code = (Integer) recordMap.get("statusCode");
-            }
-            // check if skyflowID is present
-            String skyflowID = null;
-            if (recordMap.containsKey("skyflowID")) {
-                skyflowID = recordMap.get("skyflowID").toString();
-            }
-            String tableName = null;
-            if (recordMap.containsKey("tableName")) {
-                tableName = recordMap.get("tableName").toString();
-            }
-            String message = recordMap.containsKey("error") ? (String) recordMap.get("error") :
-                    recordMap.containsKey("message") ? (String) recordMap.get("message") : "Unknown error";
+            int code = readHttpCode(recordMap, 500);
+            String skyflowID = readString(recordMap, "skyflowID");
+            String tableName = readString(recordMap, "tableName");
+            String message = readErrorMessage(recordMap);
             err = new BulkInsertResponseRecord(indexNumber, tableName, skyflowID, null, null, code, message, requestId);
         }
         return err;
@@ -336,25 +365,11 @@ public final class Utils extends BaseUtils {
     public static BulkDetokenizeResponseRecord createDetokenizeErrorRecord(Map<String, Object> recordMap, int indexNumber, String requestId) {
         BulkDetokenizeResponseRecord err = null;
         if (recordMap != null) {
-            int code = 500;
-            if (recordMap.containsKey("http_code")) {
-                code = (Integer) recordMap.get("http_code");
-            } else if (recordMap.containsKey("httpCode")) {
-                code = (Integer) recordMap.get("httpCode");
-            } else if (recordMap.containsKey("statusCode")) {
-                code = (Integer) recordMap.get("statusCode");
-            }
+            int code = readHttpCode(recordMap, 500);
             // the failing token is echoed back so the caller can tell which one it was
-            String token = null;
-            if (recordMap.containsKey("token")) {
-                token = recordMap.get("token").toString();
-            }
-            String tokenGroupName = null;
-            if (recordMap.containsKey("tokenGroupName")) {
-                tokenGroupName = recordMap.get("tokenGroupName").toString();
-            }
-            String message = recordMap.containsKey("error") ? (String) recordMap.get("error") :
-                    recordMap.containsKey("message") ? (String) recordMap.get("message") : "Unknown error";
+            String token = readString(recordMap, "token");
+            String tokenGroupName = readString(recordMap, "tokenGroupName");
+            String message = readErrorMessage(recordMap);
             err = new BulkDetokenizeResponseRecord(indexNumber, token, null, tokenGroupName, null, code, message, requestId);
         }
         return err;
@@ -363,16 +378,8 @@ public final class Utils extends BaseUtils {
     public static ErrorRecord createErrorRecord(Map<String, Object> recordMap, int indexNumber, String requestId) {
         ErrorRecord err = null;
         if (recordMap != null) {
-            int code = 500;
-            if (recordMap.containsKey("http_code")) {
-                code = (Integer) recordMap.get("http_code");
-            } else if (recordMap.containsKey("httpCode")) {
-                code = (Integer) recordMap.get("httpCode");
-            } else if (recordMap.containsKey("statusCode")) {
-                code = (Integer) recordMap.get("statusCode");
-            }
-            String message = recordMap.containsKey("error") ? (String) recordMap.get("error") :
-                    recordMap.containsKey("message") ? (String) recordMap.get("message") : "Unknown error";
+            int code = readHttpCode(recordMap, 500);
+            String message = readErrorMessage(recordMap);
             err = new ErrorRecord(indexNumber, message, code, requestId);
         }
         return err;

@@ -818,6 +818,98 @@ public class UtilsTests {
         Assert.assertEquals(500, Utils.createDetokenizeErrorRecord(recordMap, 0, null).getHttpCode());
     }
 
+    // ── error-record building: keys present with explicit null values ────────
+    // Regression: the vault sends "skyflowID": null / "tableName": null on failed records, and
+    // containsKey() is true for those. Reading them unguarded threw NPE and masked the real error.
+
+    @Test
+    public void testCreateInsertErrorRecord_nullSkyflowIdAndTableNameDoNotThrow() {
+        Map<String, Object> recordMap = new HashMap<>();
+        recordMap.put("skyflowID", null);
+        recordMap.put("tableName", null);
+        recordMap.put("error", "Invalid request. Table not found.");
+        recordMap.put("httpCode", 400);
+
+        BulkInsertResponseRecord record = Utils.createInsertErrorRecord(recordMap, 0, "req-1");
+
+        Assert.assertNull(record.getSkyflowId());
+        Assert.assertNull(record.getTableName());
+        Assert.assertEquals(400, record.getHttpCode());
+        Assert.assertEquals("Invalid request. Table not found.", record.getError());
+    }
+
+    @Test
+    public void testCreateDetokenizeErrorRecord_nullTokenFieldsDoNotThrow() {
+        Map<String, Object> recordMap = new HashMap<>();
+        recordMap.put("token", null);
+        recordMap.put("tokenGroupName", null);
+        recordMap.put("error", "Token not found.");
+        recordMap.put("httpCode", 404);
+
+        BulkDetokenizeResponseRecord record = Utils.createDetokenizeErrorRecord(recordMap, 0, "req-1");
+
+        Assert.assertNull(record.getToken());
+        Assert.assertNull(record.getTokenGroupName());
+        Assert.assertEquals(404, record.getHttpCode());
+        Assert.assertEquals("Token not found.", record.getError());
+    }
+
+    @Test
+    public void testCreateErrorRecords_nullHttpCodeValueFallsBackTo500() {
+        Map<String, Object> recordMap = new HashMap<>();
+        recordMap.put("httpCode", null);
+        recordMap.put("error", "boom");
+
+        Assert.assertEquals(500, Utils.createErrorRecord(recordMap, 0, null).getCode());
+        Assert.assertEquals(500, Utils.createInsertErrorRecord(recordMap, 0, null).getHttpCode());
+        Assert.assertEquals(500, Utils.createDetokenizeErrorRecord(recordMap, 0, null).getHttpCode());
+    }
+
+    @Test
+    public void testCreateErrorRecords_nonIntegerHttpCodeIsCoerced() {
+        Map<String, Object> asLong = new HashMap<>();
+        asLong.put("httpCode", 409L);
+        asLong.put("error", "conflict");
+        Assert.assertEquals(409, Utils.createInsertErrorRecord(asLong, 0, null).getHttpCode());
+
+        Map<String, Object> asDouble = new HashMap<>();
+        asDouble.put("httpCode", 503.0d);
+        asDouble.put("error", "unavailable");
+        Assert.assertEquals(503, Utils.createInsertErrorRecord(asDouble, 0, null).getHttpCode());
+
+        Map<String, Object> asText = new HashMap<>();
+        asText.put("httpCode", "422");
+        asText.put("error", "unprocessable");
+        Assert.assertEquals(422, Utils.createInsertErrorRecord(asText, 0, null).getHttpCode());
+    }
+
+    @Test
+    public void testCreateErrorRecords_nonStringErrorDoesNotThrow() {
+        Map<String, Object> nested = new HashMap<>();
+        nested.put("detail", "inner");
+        Map<String, Object> recordMap = new HashMap<>();
+        recordMap.put("error", nested);
+        recordMap.put("httpCode", 500);
+
+        Assert.assertNotNull(Utils.createInsertErrorRecord(recordMap, 0, null).getError());
+        Assert.assertNotNull(Utils.createErrorRecord(recordMap, 0, null).getError());
+    }
+
+    @Test
+    public void testCreateErrorRecords_nullErrorValueFallsThroughToMessage() {
+        // A null error text would make the record read as a SUCCESS downstream, since failures are
+        // counted by getError() != null.
+        Map<String, Object> withMessage = new HashMap<>();
+        withMessage.put("error", null);
+        withMessage.put("message", "vault unreachable");
+        Assert.assertEquals("vault unreachable", Utils.createInsertErrorRecord(withMessage, 0, null).getError());
+
+        Map<String, Object> withNeither = new HashMap<>();
+        withNeither.put("error", null);
+        withNeither.put("message", null);
+        Assert.assertEquals("Unknown error", Utils.createInsertErrorRecord(withNeither, 0, null).getError());
+    }
+
     @Test
     public void testCreateErrorRecords_messageKeyIsUsedWhenErrorKeyAbsent() {
         Map<String, Object> recordMap = new HashMap<>();
