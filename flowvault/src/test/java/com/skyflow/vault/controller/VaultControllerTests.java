@@ -868,7 +868,8 @@ public class VaultControllerTests {
             Assert.assertEquals("cards", sent.getTableName().get());
             Assert.assertEquals("vault123", sent.getVaultId().get());
             for (com.skyflow.generated.rest.types.V1InsertRecordData record : sent.getRecords().get()) {
-                Assert.assertEquals("cards", record.getTableName().get());
+                // The name rides the envelope only — duplicating it per record is rejected by the vault.
+                Assert.assertFalse(record.getTableName().isPresent());
                 Assert.assertEquals(String.valueOf(expectedPos), record.getData().get().get("pos"));
                 expectedPos++;
             }

@@ -22,6 +22,7 @@ import com.skyflow.generated.rest.resources.flowservice.requests.V1InsertRequest
 import com.skyflow.generated.rest.types.V1FlowDeleteTokenResponse;
 import com.skyflow.generated.rest.types.V1FlowTokenizeResponse;
 import com.skyflow.generated.rest.types.V1InsertRecordData;
+import com.skyflow.generated.rest.types.V1Upsert;
 import com.skyflow.generated.rest.types.V1InsertResponse;
 import com.skyflow.logs.ErrorLogs;
 import com.skyflow.logs.InfoLogs;
@@ -877,7 +878,11 @@ public final class VaultController extends VaultClient {
                 RequestContext ctx = new RequestContext("INSERT");
                 if (interceptor != null) interceptor.intercept(ctx);
                 CompletableFuture<BulkInsertResponse> future = CompletableFuture
-                        .supplyAsync(() -> insertBatch(batch, insertRequest.getTableName().isPresent() ? insertRequest.getTableName().get() : null, ctx), executor)
+                        .supplyAsync(() -> insertBatch(
+                                batch,
+                                insertRequest.getTableName().isPresent() ? insertRequest.getTableName().get() : null,
+                                insertRequest.getUpsert().isPresent() ? insertRequest.getUpsert().get() : null,
+                                ctx), executor)
                         .thenApply(response -> Utils.formatBulkInsertResponse(response.body(), batchNumber, cfg.batchSize, response.headers()))
                         .exceptionally(ex -> new BulkInsertResponse(
                                 Utils.handleBulkInsertBatchException(ex, batch, batchNumber, cfg.batchSize)));
@@ -889,14 +894,19 @@ public final class VaultController extends VaultClient {
         return futures;
     }
 
-    // Upsert is not carried at the envelope level: getInsertRequestBody pushes it down onto every
-    // record, so each batch already has it.
-    private ApiClientHttpResponse<V1InsertResponse> insertBatch(List<V1InsertRecordData> batch, String tableName, RequestContext ctx) {
+    // tableName and upsert live on the envelope when the caller set them at the request level, and
+    // batching rebuilds the envelope per batch — so both have to be re-applied here or they are
+    // silently dropped for every batch after the body was built.
+    private ApiClientHttpResponse<V1InsertResponse> insertBatch(List<V1InsertRecordData> batch, String tableName,
+                                                                V1Upsert upsert, RequestContext ctx) {
         V1InsertRequest.Builder req = V1InsertRequest.builder()
                 .vaultId(this.getVaultConfig().getVaultId())
                 .records(batch);
         if (tableName != null && !tableName.isEmpty()) {
             req.tableName(tableName);
+        }
+        if (upsert != null) {
+            req.upsert(upsert);
         }
         V1InsertRequest request = req.build();
         return this.getRecordsApi().withRawResponse().insert(request, buildRequestOptions(ctx));

@@ -235,7 +235,7 @@ public class UtilsTests {
     }
 
     @Test
-    public void testGetInsertRequestBody_fallsBackToRequestLevelTableName() {
+    public void testGetInsertRequestBody_keepsRequestLevelTableNameOnEnvelopeOnly() {
         Map<String, Object> data = new HashMap<>();
         data.put("name", "john");
         InsertRequestRecord record = InsertRequestRecord.builder().data(data).build();
@@ -248,7 +248,7 @@ public class UtilsTests {
         V1InsertRequest body = Utils.getInsertRequestBody(request, config);
 
         Assert.assertEquals("table1", body.getTableName().get());
-        Assert.assertEquals("table1", body.getRecords().get().get(0).getTableName().get());
+        Assert.assertFalse(body.getRecords().get().get(0).getTableName().isPresent());
     }
 
     @Test
@@ -289,9 +289,11 @@ public class UtilsTests {
 
         V1InsertRequest body = Utils.getInsertRequestBody(request, config);
 
-        Assert.assertTrue(body.getRecords().get().get(0).getUpsert().isPresent());
-        Assert.assertEquals(Collections.singletonList("email"), body.getRecords().get().get(0).getUpsert().get().getUniqueColumns().get());
-        Assert.assertEquals(FlowEnumUpdateType.UPDATE, body.getRecords().get().get(0).getUpsert().get().getUpdateType().get());
+        // Request-level upsert stays on the envelope; it is not copied onto the records.
+        Assert.assertFalse(body.getRecords().get().get(0).getUpsert().isPresent());
+        Assert.assertTrue(body.getUpsert().isPresent());
+        Assert.assertEquals(Collections.singletonList("email"), body.getUpsert().get().getUniqueColumns().get());
+        Assert.assertEquals(FlowEnumUpdateType.UPDATE, body.getUpsert().get().getUpdateType().get());
     }
 
     @Test
@@ -342,7 +344,7 @@ public class UtilsTests {
         Assert.assertEquals("vault123", body.getVaultId().get());
         Assert.assertEquals("table1", body.getTableName().get());
         Assert.assertEquals(1, body.getRecords().get().size());
-        Assert.assertEquals("table1", body.getRecords().get().get(0).getTableName().get());
+        Assert.assertFalse(body.getRecords().get().get(0).getTableName().isPresent());
         Assert.assertEquals(data, body.getRecords().get().get(0).getData().get());
     }
 
@@ -366,9 +368,11 @@ public class UtilsTests {
 
         V1InsertRequest body = Utils.getBulkInsertRequestBody(request, config);
 
-        Assert.assertTrue(body.getRecords().get().get(0).getUpsert().isPresent());
-        Assert.assertEquals(Collections.singletonList("email"), body.getRecords().get().get(0).getUpsert().get().getUniqueColumns().get());
-        Assert.assertEquals(FlowEnumUpdateType.UPDATE, body.getRecords().get().get(0).getUpsert().get().getUpdateType().get());
+        // Request-level upsert stays on the envelope; it is not copied onto the records.
+        Assert.assertFalse(body.getRecords().get().get(0).getUpsert().isPresent());
+        Assert.assertTrue(body.getUpsert().isPresent());
+        Assert.assertEquals(Collections.singletonList("email"), body.getUpsert().get().getUniqueColumns().get());
+        Assert.assertEquals(FlowEnumUpdateType.UPDATE, body.getUpsert().get().getUpdateType().get());
     }
 
     @Test

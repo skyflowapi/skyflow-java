@@ -127,18 +127,24 @@ public final class Utils extends BaseUtils {
     public static V1InsertRequest getInsertRequestBody(InsertRequest request, VaultConfig config) {
         List<InsertRequestRecord> records = request.getRecords();
         List<V1InsertRecordData> insertRecordDataList = new ArrayList<>();
+        // tableName and upsert must reach the wire at exactly one level: the vault rejects a body
+        // that carries either at both the request and the record level. validateTableAndUpsertPlacement
+        // has already forced the caller to pick one, so mirror that choice here rather than copying
+        // the request-level value down onto every record.
         for (InsertRequestRecord record : records) {
             V1InsertRecordData.Builder data = V1InsertRecordData.builder()
-                    .data(record.getData())
-                    // A blank record-level table name counts as absent, matching
-                    // validateInsertRequest, so it falls back to the request-level one.
-                    .tableName(hasText(record.getTableName()) ? record.getTableName() : request.getTableName());
+                    .data(record.getData());
+            // A blank record-level table name counts as absent, matching validateInsertRequest.
+            if (hasText(record.getTableName())) {
+                data.tableName(record.getTableName());
+            }
             if (record.getTokens() != null && !record.getTokens().isEmpty()) {
                 data.tokens(record.getTokens());
             }
-            UpsertOptions upsert = record.getUpsert() != null ? record.getUpsert() : request.getUpsert();
-            if (upsert != null && upsert.getUniqueColumns() != null && !upsert.getUniqueColumns().isEmpty()) {
-                data.upsert(toV1Upsert(upsert));
+            UpsertOptions recordUpsert = record.getUpsert();
+            if (recordUpsert != null && recordUpsert.getUniqueColumns() != null
+                    && !recordUpsert.getUniqueColumns().isEmpty()) {
+                data.upsert(toV1Upsert(recordUpsert));
             }
             insertRecordDataList.add(data.build());
         }
@@ -148,6 +154,11 @@ public final class Utils extends BaseUtils {
                 .records(insertRecordDataList);
         if (hasText(request.getTableName())) {
             builder.tableName(request.getTableName());
+        }
+        UpsertOptions requestUpsert = request.getUpsert();
+        if (requestUpsert != null && requestUpsert.getUniqueColumns() != null
+                && !requestUpsert.getUniqueColumns().isEmpty()) {
+            builder.upsert(toV1Upsert(requestUpsert));
         }
         return builder.build();
     }
