@@ -2,9 +2,7 @@ package com.skyflow.utils;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import com.google.gson.JsonObject;
 import com.skyflow.config.VaultConfig;
@@ -61,12 +59,8 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
 
 public final class Utils extends BaseUtils {
 
@@ -445,7 +439,17 @@ public final class Utils extends BaseUtils {
         } else {
             int indexNumber = batchNumber > 0 ? batchNumber * batchSize : 0;
             for (int j = 0; j < batch.size(); j++) {
-                BulkInsertResponseRecord err = new BulkInsertResponseRecord(indexNumber, null, null, null, null, 500, ex.getMessage(), null);
+                String message = null;
+                if (cause != null && cause.getMessage() != null){
+                    message = cause.getMessage();
+                }
+                if (cause != null && cause.getLocalizedMessage() !=null) {
+                    message = cause.getLocalizedMessage();
+                }
+                if (cause != null && cause.getCause() !=null) {
+                    message = cause.getCause().toString();
+                }
+                BulkInsertResponseRecord err = new BulkInsertResponseRecord(indexNumber, null, null, null, null, 500, message, null);
                 allRecords.add(err);
                 indexNumber++;
             }
