@@ -15,6 +15,8 @@ jobs:
       server-password: ${{ secrets.CENTRAL_PUBLISHER_PORTAL_PASSWORD }}
       gpg-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
       gpg-passphrase: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
-      skyflow-credentials: ${{ secrets.SKYFLOW_CREDENTIALS }} >> .env
-      test-expired-token: ${{ secrets.TEST_EXPIRED_TOKEN }} >> .env
-      test-reusable-token: ${{ secrets.TEST_REUSABLE_TOKEN }} >> .env
+      skyflow-credentials: ${{ secrets.SKYFLOW_CREDENTIALS }}
+      test-expired-token: ${{ secrets.TEST_EXPIRED_TOKEN }}
+      test-reusable-token: ${{ secrets.TEST_REUSABLE_TOKEN }}
+      pat-actions: ${{ secrets.PAT_ACTIONS }}
+      test-credentials-file-string: ${{ secrets.TEST_CREDENTIALS_FILE_STRING }}
