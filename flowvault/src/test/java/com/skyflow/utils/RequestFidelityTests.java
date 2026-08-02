@@ -22,7 +22,7 @@ import com.skyflow.vault.data.BulkDetokenizeResponse;
 import com.skyflow.vault.data.BulkInsertRequest;
 import com.skyflow.vault.data.BulkInsertRequestRecord;
 import com.skyflow.vault.data.BulkInsertResponse;
-import com.skyflow.vault.data.BulkTokenizeRecord;
+import com.skyflow.vault.data.BulkTokenizeRequestRecord;
 import com.skyflow.vault.data.BulkTokenizeRequest;
 import com.skyflow.vault.data.InsertRequestRecord;
 import com.skyflow.vault.data.TokenGroupRedactions;
@@ -723,14 +723,13 @@ public class RequestFidelityTests {
     @Test
     public void testBulkTokenize_everyFieldReachesWire() {
         List<String> groupNames = Arrays.asList("group one", NON_ASCII_NAME);
-        BulkTokenizeRecord record = BulkTokenizeRecord.builder()
+        BulkTokenizeRequestRecord record = BulkTokenizeRequestRecord.builder()
                 .value(NON_ASCII_NAME)
                 .tokenGroupNames(groupNames)
                 .build();
-        ArrayList<BulkTokenizeRecord> data = new ArrayList<>(Collections.singletonList(record));
-        BulkTokenizeRequest request = BulkTokenizeRequest.builder().data(data).build();
+        List<BulkTokenizeRequestRecord> records = Collections.singletonList(record);
 
-        V1FlowTokenizeRequest body = Utils.getBulkTokenizeRequestBody(request, VAULT_ID);
+        V1FlowTokenizeRequest body = Utils.getBulkTokenizeRequestBody(records, VAULT_ID);
 
         Assert.assertEquals(VAULT_ID, body.getVaultId().get());
         Assert.assertEquals(1, body.getData().get().size());
@@ -741,21 +740,48 @@ public class RequestFidelityTests {
     }
 
     @Test
+    public void testBulkTokenize_byotTokenReachesWire() {
+        BulkTokenizeRequestRecord record = BulkTokenizeRequestRecord.builder()
+                .value("v1")
+                .token("my-own-token")
+                .tokenGroupNames(Collections.singletonList("g1"))
+                .build();
+
+        V1FlowTokenizeRequest body = Utils.getBulkTokenizeRequestBody(
+                Collections.singletonList(record), VAULT_ID);
+
+        Assert.assertEquals("my-own-token", body.getData().get().get(0).getToken().get());
+    }
+
+    @Test
+    public void testBulkTokenize_absentByotTokenIsOmittedFromWire() {
+        BulkTokenizeRequestRecord record = BulkTokenizeRequestRecord.builder()
+                .value("v1")
+                .tokenGroupNames(Collections.singletonList("g1"))
+                .build();
+
+        V1FlowTokenizeRequest body = Utils.getBulkTokenizeRequestBody(
+                Collections.singletonList(record), VAULT_ID);
+
+        // omitted rather than sent as null, so a non-BYOT request is byte-identical to before
+        Assert.assertFalse(body.getData().get().get(0).getToken().isPresent());
+    }
+
+    @Test
     public void testBulkTokenize_nonStringValues_objectIdentitySurvives() {
         Map<String, Object> nested = new LinkedHashMap<>();
         nested.put("city", "Paris");
         nested.put("zip", 75001);
         List<Object> listValue = Arrays.asList(1, 2, 3);
 
-        ArrayList<BulkTokenizeRecord> data = new ArrayList<>(Arrays.asList(
-                BulkTokenizeRecord.builder().value(42).build(),
-                BulkTokenizeRecord.builder().value(3.14d).build(),
-                BulkTokenizeRecord.builder().value(Boolean.FALSE).build(),
-                BulkTokenizeRecord.builder().value(nested).build(),
-                BulkTokenizeRecord.builder().value(listValue).build()));
-        BulkTokenizeRequest request = BulkTokenizeRequest.builder().data(data).build();
+        List<BulkTokenizeRequestRecord> records = Arrays.asList(
+                BulkTokenizeRequestRecord.builder().value(42).build(),
+                BulkTokenizeRequestRecord.builder().value(3.14d).build(),
+                BulkTokenizeRequestRecord.builder().value(Boolean.FALSE).build(),
+                BulkTokenizeRequestRecord.builder().value(nested).build(),
+                BulkTokenizeRequestRecord.builder().value(listValue).build());
 
-        V1FlowTokenizeRequest body = Utils.getBulkTokenizeRequestBody(request, VAULT_ID);
+        V1FlowTokenizeRequest body = Utils.getBulkTokenizeRequestBody(records, VAULT_ID);
         List<V1FlowTokenizeRequestObject> wire = body.getData().get();
 
         Assert.assertEquals(Integer.valueOf(42), wire.get(0).getValue().get());
@@ -767,11 +793,10 @@ public class RequestFidelityTests {
 
     @Test
     public void testBulkTokenize_nullTokenGroupNamesIsOmitted() {
-        ArrayList<BulkTokenizeRecord> data = new ArrayList<>(
-                Collections.singletonList(BulkTokenizeRecord.builder().value("v1").build()));
-        BulkTokenizeRequest request = BulkTokenizeRequest.builder().data(data).build();
+        List<BulkTokenizeRequestRecord> records =
+                Collections.singletonList(BulkTokenizeRequestRecord.builder().value("v1").build());
 
-        V1FlowTokenizeRequest body = Utils.getBulkTokenizeRequestBody(request, VAULT_ID);
+        V1FlowTokenizeRequest body = Utils.getBulkTokenizeRequestBody(records, VAULT_ID);
 
         Assert.assertFalse(body.getData().get().get(0).getTokenGroupNames().isPresent());
     }
@@ -780,21 +805,23 @@ public class RequestFidelityTests {
     public void testBulkTokenize_recordOrderPreservedAcrossBatches() {
         int total = 7;
         int batchSize = 3;
-        ArrayList<BulkTokenizeRecord> data = new ArrayList<>();
+        List<BulkTokenizeRequestRecord> records = new ArrayList<>();
         for (int i = 0; i < total; i++) {
-            data.add(BulkTokenizeRecord.builder().value("value-" + i).build());
+            records.add(BulkTokenizeRequestRecord.builder().value("value-" + i).build());
         }
-        BulkTokenizeRequest request = BulkTokenizeRequest.builder().data(data).build();
 
-        V1FlowTokenizeRequest body = Utils.getBulkTokenizeRequestBody(request, VAULT_ID);
-        List<V1FlowTokenizeRequest> batches = Utils.createBulkTokenizeBatches(body, batchSize);
+        // batching now happens on the SDK records, before the wire object is built, so the
+        // response formatter can recover each value's index from its batch position
+        List<List<BulkTokenizeRequestRecord>> batches =
+                Utils.createBulkTokenizeBatches(records, batchSize);
 
         Assert.assertEquals(3, batches.size());
         List<Object> flattened = new ArrayList<>();
-        for (V1FlowTokenizeRequest batch : batches) {
+        for (List<BulkTokenizeRequestRecord> batch : batches) {
+            V1FlowTokenizeRequest body = Utils.getBulkTokenizeRequestBody(batch, VAULT_ID);
             // vaultId is a non-batched field and must be re-applied on every batch.
-            Assert.assertEquals(VAULT_ID, batch.getVaultId().get());
-            for (V1FlowTokenizeRequestObject obj : batch.getData().get()) {
+            Assert.assertEquals(VAULT_ID, body.getVaultId().get());
+            for (V1FlowTokenizeRequestObject obj : body.getData().get()) {
                 flattened.add(obj.getValue().get());
             }
         }
@@ -863,11 +890,12 @@ public class RequestFidelityTests {
             }
             V1FlowDeleteTokenResponse response =
                     V1FlowDeleteTokenResponse.builder().tokens(responseRecords).build();
-            BulkDeleteTokensResponse formatted =
-                    Utils.formatBulkDeleteTokensResponse(response, batchNumber, batchSize, new HashMap<>());
-            formatted.getSuccess().forEach(s -> {
-                indices.add(s.getIndex());
-                echoed.add(s.getToken());
+            // successes and errors now share one records list, keyed by index
+            BulkDeleteTokensResponse formatted = Utils.formatBulkDeleteTokensResponse(
+                    response, batches.get(batchNumber), batchNumber, batchSize, new HashMap<>());
+            formatted.getRecords().forEach(r -> {
+                indices.add(r.getIndex());
+                echoed.add(r.getToken());
             });
         }
 

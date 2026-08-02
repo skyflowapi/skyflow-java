@@ -2,33 +2,29 @@ package com.skyflow.vault.data;
 
 import java.util.List;
 
-public class BulkDeleteTokensRequest {
-    private final BulkDeleteTokensRequestBuilder builder;
+public class BulkDeleteTokensRequest extends DeleteTokensRequest {
 
-    private BulkDeleteTokensRequest(BulkDeleteTokensRequestBuilder builder) {
-        this.builder = builder;
+    private BulkDeleteTokensRequest(List<String> tokens) {
+        super(tokens);
     }
 
     public static BulkDeleteTokensRequestBuilder builder() {
         return new BulkDeleteTokensRequestBuilder();
     }
 
-    public List<String> getTokens() {
-        return this.builder.tokens;
-    }
-
-    public static final class BulkDeleteTokensRequestBuilder {
-        private List<String> tokens;
+    public static final class BulkDeleteTokensRequestBuilder extends DeleteTokensRequestBuilder {
 
         private BulkDeleteTokensRequestBuilder() {}
 
+        @Override
         public BulkDeleteTokensRequestBuilder tokens(List<String> tokens) {
             this.tokens = tokens;
             return this;
         }
 
+        @Override
         public BulkDeleteTokensRequest build() {
-            return new BulkDeleteTokensRequest(this);
+            return new BulkDeleteTokensRequest(this.tokens);
         }
     }
 }

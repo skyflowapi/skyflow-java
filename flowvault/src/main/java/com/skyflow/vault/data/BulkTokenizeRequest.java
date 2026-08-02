@@ -1,34 +1,50 @@
 package com.skyflow.vault.data;
 
 import java.util.ArrayList;
+import java.util.List;
 
-public class BulkTokenizeRequest {
-    private final BulkTokenizeRequestBuilder builder;
+public class BulkTokenizeRequest extends TokenizeRequest {
 
-    private BulkTokenizeRequest(BulkTokenizeRequestBuilder builder) {
-        this.builder = builder;
+    private BulkTokenizeRequest(List<BulkTokenizeRequestRecord> records) {
+        super(records);
     }
 
     public static BulkTokenizeRequestBuilder builder() {
         return new BulkTokenizeRequestBuilder();
     }
 
-    public ArrayList<BulkTokenizeRecord> getData() {
-        return this.builder.data;
+    /**
+     * Narrows the inherited accessor to the bulk record type. Safe because the builder only ever
+     * stores {@link BulkTokenizeRequestRecord}s.
+     */
+    @Override
+    @SuppressWarnings("unchecked")
+    public List<BulkTokenizeRequestRecord> getRecords() {
+        return (List<BulkTokenizeRequestRecord>) super.getRecords();
     }
 
-    public static final class BulkTokenizeRequestBuilder {
-        private ArrayList<BulkTokenizeRecord> data;
+    public static final class BulkTokenizeRequestBuilder extends TokenizeRequestBuilder {
 
         private BulkTokenizeRequestBuilder() {}
 
-        public BulkTokenizeRequestBuilder data(ArrayList<BulkTokenizeRecord> data) {
-            this.data = data;
+        @Override
+        public BulkTokenizeRequestBuilder records(List<? extends TokenizeRequestRecord> records) {
+            this.records = records;
             return this;
         }
 
+        @Override
         public BulkTokenizeRequest build() {
-            return new BulkTokenizeRequest(this);
+            List<BulkTokenizeRequestRecord> bulkRecords = null;
+            if (this.records != null) {
+                bulkRecords = new ArrayList<>();
+                for (TokenizeRequestRecord record : this.records) {
+                    // fail fast and clearly if a plain TokenizeRequestRecord was supplied to the
+                    // bulk builder through the inherited setter
+                    bulkRecords.add((BulkTokenizeRequestRecord) record);
+                }
+            }
+            return new BulkTokenizeRequest(bulkRecords);
         }
     }
 }
