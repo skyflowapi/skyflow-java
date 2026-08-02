@@ -27,7 +27,17 @@ on:
         required: false
         type: string
         default: ''
-      
+
+      version:
+        description: >-
+          Explicit version to release. Set by tag-triggered (beta/public)
+          callers, which parse it out of a <module>/v<semver> tag - the raw
+          tag text is not itself a usable Maven version. When empty, the
+          version is derived as before (see the Bump Version step).
+        required: false
+        type: string
+        default: ''
+
     secrets:
       server-username:
         required: true
@@ -88,17 +98,23 @@ jobs:
         with:
           fallback: 1.0.0
 
-      # flowvault's internal builds base their version off flowvault's own
-      # committed pom, not off a git tag - "previous tag" is a repo-wide
-      # lookup with no module awareness, which is exactly what let a v3 tag
-      # get stamped onto a flowvault build. Every other module/tag
-      # combination (including v2's internal path) is unchanged: it still
-      # uses previoustag exactly as before.
+      # Version resolution, in priority order:
+      #   1. inputs.version - set by beta/public callers, which parse it out
+      #      of a <module>/v<semver> tag (the tag text itself isn't a valid
+      #      Maven version, so it can't be used directly).
+      #   2. flowvault internal - reads flowvault's own committed pom.
+      #      "previous tag" is a repo-wide lookup with no module awareness,
+      #      which is exactly what let a v3 tag get stamped onto a flowvault
+      #      build.
+      #   3. Everything else - unchanged, still uses previoustag exactly as
+      #      before (this is v2's internal path).
       - name: Bump Version
         id: bump-version
         run: |
           chmod +x ./scripts/bump_version.sh ./scripts/current_module_version.sh
-          if ${{ inputs.tag == 'internal' && inputs.module == 'flowvault' }}; then
+          if [ -n "${{ inputs.version }}" ]; then
+            BASE_VERSION="${{ inputs.version }}"
+          elif ${{ inputs.tag == 'internal' && inputs.module == 'flowvault' }}; then
             BASE_VERSION=$(./scripts/current_module_version.sh "${{ inputs.module }}")
           else
             BASE_VERSION="${{ steps.previoustag.outputs.tag }}"

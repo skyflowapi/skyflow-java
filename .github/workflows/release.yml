@@ -1,20 +1,65 @@
 name: Public release
 on:
   push:
-    tags: '[0-9]+.[0-9]+.[0-9]+'
+    # Per-module tags: <module>/v<semver>, e.g. flowvault/v1.0.0, skyvault/v2.1.2
+    #
+    # The slash is load-bearing: GitHub Actions glob '*' does NOT match '/'
+    # (only '**' does), so these tags can never be matched by a bare-semver
+    # pattern, and each module's tags can never trigger another's release.
+    #
+    # The prefix exists only in the git tag. It is stripped below, so the
+    # version published to Maven Central is a plain semver (1.0.0), never
+    # 'flowvault/v1.0.0'.
+    tags:
+      - 'flowvault/v[0-9]+.[0-9]+.[0-9]+'
+      - 'skyvault/v[0-9]+.[0-9]+.[0-9]+'
+
 jobs:
+  resolve-release:
+    runs-on: ubuntu-latest
+    outputs:
+      module: ${{ steps.parse.outputs.module }}
+      version: ${{ steps.parse.outputs.version }}
+    steps:
+      - name: Parse module and version from tag
+        id: parse
+        run: |
+          TAG="${{ github.ref_name }}"
+          PREFIX="${TAG%%/*}"      # flowvault/v1.0.0 -> flowvault
+          VERSION="${TAG#*/}"      # flowvault/v1.0.0 -> v1.0.0
+          VERSION="${VERSION#v}"   # v1.0.0           -> 1.0.0
+
+          # Tag prefix -> module directory. These deliberately differ for
+          # skyvault: the tag uses the product name, the module directory is
+          # still 'v2' until/unless that folder is renamed.
+          case "$PREFIX" in
+            flowvault) MODULE="flowvault" ;;
+            skyvault)  MODULE="v2" ;;
+            *)
+              echo "::error::Unknown module prefix '$PREFIX' in tag '$TAG'"
+              exit 1
+              ;;
+          esac
+
+          echo "Tag '$TAG' -> module='$MODULE' version='$VERSION'"
+          echo "module=$MODULE" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
   build-and-deploy:
+    needs: resolve-release
     uses: ./.github/workflows/shared-build-and-deploy.yml
     with:
       ref: ${{ github.ref_name }}
       server-id: central
       profile: maven-central
       tag: 'public'
+      module: ${{ needs.resolve-release.outputs.module }}
+      version: ${{ needs.resolve-release.outputs.version }}
     secrets:
       server-username: ${{ secrets.CENTRAL_PUBLISHER_PORTAL_USERNAME }}
       server-password: ${{ secrets.CENTRAL_PUBLISHER_PORTAL_PASSWORD }}
       gpg-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
       gpg-passphrase: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
-      skyflow-credentials: ${{ secrets.SKYFLOW_CREDENTIALS }} >> .env
-      test-expired-token: ${{ secrets.TEST_EXPIRED_TOKEN }} >> .env
-      test-reusable-token: ${{ secrets.TEST_REUSABLE_TOKEN }} >> .env
+      skyflow-credentials: ${{ secrets.SKYFLOW_CREDENTIALS }}
+      test-expired-token: ${{ secrets.TEST_EXPIRED_TOKEN }}
+      test-reusable-token: ${{ secrets.TEST_REUSABLE_TOKEN }}
