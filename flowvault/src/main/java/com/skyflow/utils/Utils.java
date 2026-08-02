@@ -756,12 +756,20 @@ public final class Utils extends BaseUtils {
             int recordsSize = record.size();
             for (int index = 0; index < recordsSize; index++) {
                 V1FlowDetokenizeResponseObject current = record.get(index);
+                Map<String, Object> data = null;
+                if(current.getMetadata().isPresent()){
+                    data = current.getMetadata().get();
+                    if (data.containsKey("skyflowID")) {
+                        Object value = data.remove("skyflowID");
+                        data.put("skyflowId", value);
+                    }
+                }
                 records.add(new BulkDetokenizeResponseRecord(
                         indexNumber,
                         current.getToken().orElse(null),
                         current.getValue().orElse(null),
                         current.getTokenGroupName().orElse(null),
-                        current.getMetadata().orElse(null),
+                        data,
                         current.getHttpCode().orElse(current.getError().isPresent() ? 500 : 200),
                         current.getError().orElse(null),
                         null));
