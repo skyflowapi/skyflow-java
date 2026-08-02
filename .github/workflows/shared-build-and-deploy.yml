@@ -102,19 +102,21 @@ jobs:
       #   1. inputs.version - set by beta/public callers, which parse it out
       #      of a <module>/v<semver> tag (the tag text itself isn't a valid
       #      Maven version, so it can't be used directly).
-      #   2. flowvault internal - reads flowvault's own committed pom.
-      #      "previous tag" is a repo-wide lookup with no module awareness,
-      #      which is exactly what let a v3 tag get stamped onto a flowvault
-      #      build.
-      #   3. Everything else - unchanged, still uses previoustag exactly as
-      #      before (this is v2's internal path).
+      #   2. internal - reads the module's OWN committed pom. Git tags are a
+      #      flat, repo-wide namespace with no module awareness, so a tag
+      #      lookup cannot tell one module's version lineage from another's:
+      #      it stamped a v3 tag (3.0.0-beta.13) onto both flowvault AND v2
+      #      internal builds. A module's own pom is inherently per-module.
+      #   3. Fallback - previoustag. Now unreachable in practice: all three
+      #      callers either set inputs.version (release.yml, beta-release.yml)
+      #      or are internal (internal-release.yml). Kept as a safety net.
       - name: Bump Version
         id: bump-version
         run: |
           chmod +x ./scripts/bump_version.sh ./scripts/current_module_version.sh
           if [ -n "${{ inputs.version }}" ]; then
             BASE_VERSION="${{ inputs.version }}"
-          elif ${{ inputs.tag == 'internal' && inputs.module == 'flowvault' }}; then
+          elif ${{ inputs.tag == 'internal' }}; then
             BASE_VERSION=$(./scripts/current_module_version.sh "${{ inputs.module }}")
           else
             BASE_VERSION="${{ steps.previoustag.outputs.tag }}"
