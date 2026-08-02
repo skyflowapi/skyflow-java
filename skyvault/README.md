@@ -2,6 +2,8 @@
 
 > **This SDK brings flexible auth, multi-vault support, builder patterns, native data types, and rich error diagnostics.**
 >
+> Meant for **Privacy DB** vaults.
+>
 > Migrating from v1? See the **[Migration Guide](../docs/migrate_to_v2.md)** for step-by-step instructions. V1 is in maintenance mode and will reach End of Life on October 31, 2026.
 
 The Skyflow Java SDK is designed to help with integrating Skyflow into a Java backend.

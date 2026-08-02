@@ -2,6 +2,8 @@
 
 The `flowvault` module is a Skyflow Java SDK built for high-throughput vault operations. It shares its client, credentials, and configuration classes with the [skyvault SDK](../skyvault/README.md) (both depend on the `common` module) but currently exposes a different, narrower surface: **bulk** vault operations only.
 
+> Meant for **Flow DB** vaults.
+
 [![CI](https://img.shields.io/static/v1?label=CI&message=passing&color=green?style=plastic&logo=github)](https://github.com/skyflowapi/skyflow-java/actions)
 [![License](https://img.shields.io/github/license/skyflowapi/skyflow-java)](https://github.com/skyflowapi/skyflow-java/blob/main/LICENSE)
 
