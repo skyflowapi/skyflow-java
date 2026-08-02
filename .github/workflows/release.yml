@@ -80,9 +80,6 @@ jobs:
       module: ${{ needs.resolve-release.outputs.module }}
       version: ${{ needs.resolve-release.outputs.version }}
       release-branch: ${{ github.event.release.target_commitish }}
-      # TEMPORARY - pipeline verification only. MUST be removed before any real
-      # release: while this is true, nothing is ever published.
-      dry-run: true
     secrets:
       server-username: ${{ secrets.CENTRAL_PUBLISHER_PORTAL_USERNAME }}
       server-password: ${{ secrets.CENTRAL_PUBLISHER_PORTAL_PASSWORD }}
