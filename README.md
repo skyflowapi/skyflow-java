@@ -8,39 +8,12 @@ This repository hosts Skyflow's Java SDKs for integrating Skyflow into a Java ba
 
 ## Which package do I want?
 
-### skyvault
+| Package | Artifact | README | Vault Type | Supported Operations |
+|---|---|---|---|---|
+| **skyvault** | `com.skyflow:skyflow-java` | [skyvault/README.md](skyvault/README.md) | Privacy DB | <ul><li>Insert</li><li>Detokenize</li><li>Tokenize</li><li>Get</li><li>Update</li><li>Delete</li><li>Query</li><li>Upload File</li><li>Detect (deidentify text/file, reidentify text)</li><li>Connections (invoke third-party connections)</li></ul> |
+| **flowvault** | `com.skyflow:skyflow-flowvault-java` | [flowvault/README.md](flowvault/README.md) | Flow DB | <ul><li>Bulk Insert</li><li>Bulk Tokenize</li><li>Bulk Detokenize</li><li>Bulk Delete Tokens</li></ul>(each with a sync and async variant) |
 
-`com.skyflow:skyflow-java` — [skyvault/README.md](skyvault/README.md)
-
-> Meant for **Privacy DB** vaults.
-
-Supported operations:
-
-- Insert
-- Detokenize
-- Tokenize
-- Get
-- Update
-- Delete
-- Query
-- Upload File
-- Detect (deidentify text/file, reidentify text)
-- Connections (invoke third-party connections)
-
-### flowvault
-
-`com.skyflow:skyflow-flowvault-java` — [flowvault/README.md](flowvault/README.md)
-
-> Meant for **Flow DB** vaults.
-
-Supported operations (bulk-only, each with a sync and async variant):
-
-- Bulk Insert
-- Bulk Tokenize
-- Bulk Detokenize
-- Bulk Delete Tokens
-
-Shares auth/client setup with `skyvault` — both depend on the `common` module.
+`flowvault` shares auth/client setup with `skyvault` — both depend on the `common` module.
 
 > Migrating from v1? See skyvault's **[Migration Guide](docs/migrate_to_v2.md)**. V1 is in maintenance mode and will reach End of Life on October 31, 2026.
 
