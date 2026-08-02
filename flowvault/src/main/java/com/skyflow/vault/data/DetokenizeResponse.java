@@ -2,23 +2,19 @@ package com.skyflow.vault.data;
 
 import com.google.gson.Gson;
 
-import java.util.ArrayList;
+import java.util.List;
 
-public class DetokenizeResponse {
-    private final ArrayList<DetokenizeRecordResponse> detokenizedFields;
-    private final ArrayList<DetokenizeRecordResponse> errors;
+// Response shape for the unary detokenize contract. Retained as published API even though the
+// module currently exposes only the bulk operations.
+public class DetokenizeResponse extends BaseDetokenizeResponse {
+    private final List<DetokenizeResponseRecord> records;
 
-    public DetokenizeResponse(ArrayList<DetokenizeRecordResponse> detokenizedFields, ArrayList<DetokenizeRecordResponse> errors) {
-        this.detokenizedFields = detokenizedFields;
-        this.errors = errors;
+    public DetokenizeResponse(List<DetokenizeResponseRecord> records) {
+        this.records = records;
     }
 
-    public ArrayList<DetokenizeRecordResponse> getDetokenizedFields() {
-        return detokenizedFields;
-    }
-
-    public ArrayList<DetokenizeRecordResponse> getErrors() {
-        return errors;
+    public List<DetokenizeResponseRecord> getRecords() {
+        return records;
     }
 
     @Override

@@ -1,25 +1,7 @@
 package com.skyflow.vault.data;
 
-class BaseInsertRequest {
-    private final BaseInsertRequestBuilder builder;
-
-    protected BaseInsertRequest(BaseInsertRequestBuilder builder) {
-        this.builder = builder;
-    }
-
-    public String getTable() {
-        return this.builder.table;
-    }
-
-    static class BaseInsertRequestBuilder {
-        protected String table;
-        protected BaseInsertRequestBuilder() {
-        }
-
-        public BaseInsertRequestBuilder table(String table) {
-            this.table = table;
-            return this;
-        }
-
-    }
+// Shared extension point for module-specific insert requests. Intentionally empty:
+// v2 and flowvault insert requests no longer have any field in common, so each owns
+// its own state. Retained so the modules keep a shared supertype for future use.
+public class BaseInsertRequest {
 }

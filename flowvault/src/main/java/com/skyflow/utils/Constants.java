@@ -10,6 +10,7 @@ public final class Constants extends BaseConstants {
     public static final String VAULT_DOMAIN = ".skyvault.";
     public static final String SDK_PREFIX;
     public static final String SDK_METRIC_NAME_VERSION_PREFIX = "skyflow-flowvault-java@";
+    public static final Integer MAX_BULK_DATA_SIZE = 10000;
     public static final Integer INSERT_BATCH_SIZE = 50;
     public static final Integer MAX_INSERT_BATCH_SIZE = 1000;
     public static final Integer INSERT_CONCURRENCY_LIMIT = 1;

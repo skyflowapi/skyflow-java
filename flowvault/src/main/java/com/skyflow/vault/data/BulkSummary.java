@@ -3,7 +3,7 @@ package com.skyflow.vault.data;
 import com.google.gson.Gson;
 import com.google.gson.annotations.Expose;
 
-public class Summary {
+public class BulkSummary {
     @Expose(serialize = true)
     private int totalRecords;
     @Expose(serialize = true)
@@ -11,10 +11,10 @@ public class Summary {
     @Expose(serialize = true)
     private int totalFailed;
 
-    public Summary() {
+    public BulkSummary() {
     }
 
-    public Summary(int totalRecords, int totalInserted, int totalFailed) {
+    public BulkSummary(int totalRecords, int totalInserted, int totalFailed) {
         this.totalRecords = totalRecords;
         this.totalInserted = totalInserted;
         this.totalFailed = totalFailed;
@@ -24,7 +24,6 @@ public class Summary {
         return totalRecords;
     }
 
-
     public int getTotalInserted() {
         return totalInserted;
     }
@@ -32,7 +31,6 @@ public class Summary {
     public int getTotalFailed() {
         return totalFailed;
     }
-
 
     @Override
     public String toString() {

@@ -4,10 +4,11 @@ import com.google.gson.ExclusionStrategy;
 import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.skyflow.vault.data.BaseDetokenizeResponse;
 
 import java.util.ArrayList;
 
-public class DetokenizeResponse {
+public class DetokenizeResponse extends BaseDetokenizeResponse {
     private final ArrayList<DetokenizeRecordResponse> detokenizedFields;
     private final ArrayList<DetokenizeRecordResponse> errors;
 

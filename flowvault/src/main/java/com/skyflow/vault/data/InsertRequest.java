@@ -1,14 +1,11 @@
 package com.skyflow.vault.data;
-import com.skyflow.enums.UpsertType;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class InsertRequest extends BaseInsertRequest {
     private final InsertRequestBuilder builder;
 
-    private InsertRequest(InsertRequestBuilder builder) {
-        super(builder);
+    protected InsertRequest(InsertRequestBuilder builder) {
         this.builder = builder;
     }
 
@@ -16,47 +13,38 @@ public class InsertRequest extends BaseInsertRequest {
         return new InsertRequestBuilder();
     }
 
-    public List<String> getUpsert() {
-        return this.builder.upsert;
+    public String getTableName() {
+        return this.builder.tableName;
     }
 
-    public UpsertType getUpsertType() {
-        return this.builder.upsertType;
-    }
-
-    public ArrayList<InsertRecord> getRecords(){
+    public List<InsertRequestRecord> getRecords() {
         return this.builder.records;
     }
 
-    public static final class InsertRequestBuilder extends BaseInsertRequestBuilder {
-        private List<String> upsert;
+    public UpsertOptions getUpsert() {
+        return this.builder.upsert;
+    }
 
-        private UpsertType upsertType;
+    public static class InsertRequestBuilder {
+        private String tableName;
+        private List<InsertRequestRecord> records;
+        private UpsertOptions upsert;
 
-        private ArrayList<InsertRecord> records;
-
-        private InsertRequestBuilder() {
-            super();
+        protected InsertRequestBuilder() {
         }
 
-        @Override
-        public InsertRequestBuilder table(String table) {
-            super.table(table);
+        public InsertRequestBuilder tableName(String tableName) {
+            this.tableName = tableName;
             return this;
         }
 
-        public InsertRequestBuilder upsert(List<String> upsert) {
-            this.upsert = upsert;
-            return this;
-        }
-
-        public InsertRequestBuilder upsertType(UpsertType upsertType) {
-            this.upsertType = upsertType;
-            return this;
-        }
-
-        public InsertRequestBuilder records(ArrayList<InsertRecord> records){
+        public InsertRequestBuilder records(List<InsertRequestRecord> records) {
             this.records = records;
+            return this;
+        }
+
+        public InsertRequestBuilder upsert(UpsertOptions upsert) {
+            this.upsert = upsert;
             return this;
         }
 
