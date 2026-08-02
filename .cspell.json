@@ -99,7 +99,15 @@
     "detok",
     "qhdmceurtnlz",
     "ngrok",
-    "obac"
+    "obac",
+    "siom",
+    "vaultid",
+    "recordss",
+    "synthesise",
+    "synthesised",
+    "deserialise",
+    "deserialised",
+    "unmodelled"
   ],
   "languageSettings": [
     {
@@ -119,7 +127,7 @@
     "**/target/**",
     "*.lock",
     "Rule/**",
-    "src/main/java/com/skyflow/generated/**",
+    "**/src/main/java/com/skyflow/generated/**",
     "**/*.ts",
     "**/processed-*",
     "samples/src/main/java/com/example/credentials.json",

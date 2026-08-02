@@ -48,7 +48,7 @@ public class FlatTokenizeResponseTests {
 
     private static final String LIVE_RESPONSE = "{\n"
             + "  \"response\": [\n"
-            + "    { \"token\": \"\", \"value\": \"dasftrqsafasfav\", \"tokenGroupName\": null,\n"
+            + "    { \"token\": \"\", \"value\": \"byot-input-value\", \"tokenGroupName\": null,\n"
             + "      \"error\": \"Invalid request. BYOT token should contain one token group.\", \"httpCode\": 400 },\n"
             + "    { \"token\": \"cc1179a3-e2be-404e-9a31-4f97f27bf406\", \"value\": {\"age\": 28, \"email\": \"ka@yahoo.com\"},\n"
             + "      \"tokenGroupName\": \"deterministic_string_tg\", \"error\": null, \"httpCode\": 200 },\n"
@@ -64,7 +64,7 @@ public class FlatTokenizeResponseTests {
         objectValue.put("email", "ka@yahoo.com");
         objectValue.put("age", 28);
         List<BulkTokenizeRequestRecord> sent = Arrays.asList(
-                byotRecord("dasftrqsafasfav", "550e8400-e29b-41d4-a716-446655440000",
+                byotRecord("byot-input-value", "550e8400-e29b-41d4-a716-446655440000",
                         "deterministic_string_tg", "non_deterministic"),
                 record(objectValue, "deterministic_string_tg", "emailTokenGroup"));
 
@@ -76,7 +76,7 @@ public class FlatTokenizeResponseTests {
 
         BulkTokenizeResponseRecord byot = result.getRecords().get(0);
         Assert.assertEquals(0, byot.getIndex());
-        Assert.assertEquals("dasftrqsafasfav", byot.getValue());
+        Assert.assertEquals("byot-input-value", byot.getValue());
         Assert.assertEquals(1, byot.getTokens().size());
         Assert.assertEquals("Invalid request. BYOT token should contain one token group.",
                 byot.getTokens().get(0).getError());
@@ -100,7 +100,7 @@ public class FlatTokenizeResponseTests {
         objectValue.put("email", "ka@yahoo.com");
         objectValue.put("age", 28);
         List<BulkTokenizeRequestRecord> sent = Arrays.asList(
-                byotRecord("dasftrqsafasfav", "550e8400", "deterministic_string_tg", "non_deterministic"),
+                byotRecord("byot-input-value", "550e8400", "deterministic_string_tg", "non_deterministic"),
                 record(objectValue, "deterministic_string_tg", "emailTokenGroup"));
 
         BulkTokenizeResponse formatted =
