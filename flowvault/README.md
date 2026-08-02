@@ -10,6 +10,7 @@ The `flowvault` module is a Skyflow Java SDK built for high-throughput vault ope
 # Table of Contents
 
 - [Table of Contents](#table-of-contents)
+- [Overview](#overview)
 - [Install](#install)
   - [Requirements](#requirements)
   - [Configuration](#configuration)
@@ -19,7 +20,14 @@ The `flowvault` module is a Skyflow Java SDK built for high-throughput vault ope
 - [Bulk Tokenize](#bulk-tokenize)
 - [Bulk Detokenize](#bulk-detokenize)
 - [Bulk Delete Tokens](#bulk-delete-tokens)
+- [Custom Request Headers](#custom-request-headers)
 - [Error Handling](#error-handling)
+
+# Overview
+
+- Authenticate using a Skyflow service account and generate bearer tokens for secure access (shared with `skyvault` — see its [Authenticate with bearer tokens](../skyvault/README.md#authenticate-with-bearer-tokens) section).
+- Perform bulk Vault API operations — insert, tokenize, detokenize, and delete tokens — each with a synchronous and an async variant, built for high-throughput Flow DB workloads.
+- Per-record/per-token results, instead of an all-or-nothing call: every bulk response reports a summary plus which individual records/tokens succeeded or failed.
 
 # Install
 
@@ -91,19 +99,7 @@ VaultController vault = skyflowClient.vault("<VAULT_ID>");
 | `bulkDeleteTokens(BulkDeleteTokensRequest)` | `BulkDeleteTokensRequest`, optional `DeleteTokensOptions` | `BulkDeleteTokensResponse` | Delete many tokens in one call |
 | `bulkDeleteTokensAsync(BulkDeleteTokensRequest)` | same | `CompletableFuture<BulkDeleteTokensResponse>` | Async variant of `bulkDeleteTokens` |
 
-All methods throw `SkyflowException` on request-level errors. Each also accepts an optional options object (`InsertOptions`, `TokenizeOptions`, `DetokenizeOptions`, `DeleteTokensOptions`) built the same way:
-
-```java
-import com.skyflow.vault.data.InsertOptions;
-import com.skyflow.vault.data.RequestContext;
-import com.skyflow.enums.CustomHeaderKey;
-
-InsertOptions options = InsertOptions.builder()
-        .interceptor(context -> context.addHeader(CustomHeaderKey.RequestIDHeader, "<REQUEST_ID>"))
-        .build();
-
-vault.bulkInsert(insertRequest, options);
-```
+All methods throw `SkyflowException` on request-level errors. Each also accepts an optional options object (`InsertOptions`, `TokenizeOptions`, `DetokenizeOptions`, `DeleteTokensOptions`) — see [Custom Request Headers](#custom-request-headers) for what they're for and how to build one.
 
 Every bulk response carries three parts:
 
@@ -116,6 +112,11 @@ Responses also expose a retry helper — `getRecordsToRetry()` on `BulkInsertRes
 # Bulk Insert
 
 Insert many records — even across different tables — in a single call. Each record is a [`BulkInsertRecord`](#bulk-insert) specifying its own `table`, `data`, and optional per-record `upsert`/`upsertType`.
+
+**Note:**
+
+- `table` must be specified either on the request (`BulkInsertRequest.builder().table(...)`) or on every record (`BulkInsertRecord.builder().table(...)`) — not both, and not neither.
+- `upsert`/`upsertType` must be specified at whichever level `table` was specified: request-level `table` pairs with request-level `upsert`; record-level `table` pairs with per-record `upsert` (as `record2` does below).
 
 ### Construct a bulk insert request
 
@@ -375,6 +376,36 @@ Sample response:
   "errors": []
 }
 ```
+
+# Custom Request Headers
+
+To include custom HTTP headers on an outgoing bulk request, pass a `RequestInterceptor` via that operation's options object. The headers available are defined by the `CustomHeaderKey` enum:
+
+| `CustomHeaderKey` | HTTP header name |
+|---|---|
+| `SkyflowAccountID` | `x-skyflow-account-id` |
+| `SkyflowAccountName` | `x-skyflow-account-name` |
+| `RequestIDHeader` | `x-request-id` |
+
+```java
+import com.skyflow.enums.CustomHeaderKey;
+import com.skyflow.vault.data.InsertOptions;
+
+InsertOptions options = InsertOptions.builder()
+        .interceptor(context -> context.addHeader(CustomHeaderKey.RequestIDHeader, "<YOUR_REQUEST_ID>"))
+        .build();
+
+BulkInsertResponse insertResponse = vault.bulkInsert(insertRequest, options);
+```
+
+The same pattern applies to every bulk operation, via its corresponding options class:
+
+| Operation | Options class |
+|---|---|
+| `bulkInsert` / `bulkInsertAsync` | `InsertOptions` |
+| `bulkTokenize` / `bulkTokenizeAsync` | `TokenizeOptions` |
+| `bulkDetokenize` / `bulkDetokenizeAsync` | `DetokenizeOptions` |
+| `bulkDeleteTokens` / `bulkDeleteTokensAsync` | `DeleteTokensOptions` |
 
 # Error Handling
 
