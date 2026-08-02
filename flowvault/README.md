@@ -1,6 +1,6 @@
 # Skyflow FlowVault Java SDK
 
-The `flowvault` module is a Skyflow Java SDK built for high-throughput vault operations. It shares its client, credentials, and configuration classes with the [v2 SDK](../v2/README.md) (both depend on the `common` module) but currently exposes a different, narrower surface: **bulk** vault operations only.
+The `flowvault` module is a Skyflow Java SDK built for high-throughput vault operations. It shares its client, credentials, and configuration classes with the [skyvault SDK](../skyvault/README.md) (both depend on the `common` module) but currently exposes a different, narrower surface: **bulk** vault operations only.
 
 [![CI](https://img.shields.io/static/v1?label=CI&message=passing&color=green?style=plastic&logo=github)](https://github.com/skyflowapi/skyflow-java/actions)
 [![License](https://img.shields.io/github/license/skyflowapi/skyflow-java)](https://github.com/skyflowapi/skyflow-java/blob/main/LICENSE)
@@ -45,7 +45,7 @@ implementation 'com.skyflow:skyflow-flowvault-java:1.0.0'
 
 # Quickstart
 
-Authentication and client setup are identical to the v2 SDK — `Skyflow`, `Credentials`, and `VaultConfig` all come from the shared `common` module. See [Authenticate](../v2/README.md#authenticate) and [Initialize the client](../v2/README.md#initialize-the-client) in the v2 README for the full set of credential types and multi-vault configuration options.
+Authentication and client setup are identical to the skyvault SDK — `Skyflow`, `Credentials`, and `VaultConfig` all come from the shared `common` module. See [Authenticate](../skyvault/README.md#authenticate) and [Initialize the client](../skyvault/README.md#initialize-the-client) in the skyvault README for the full set of credential types and multi-vault configuration options.
 
 ```java
 import com.skyflow.Skyflow;
@@ -285,7 +285,7 @@ public class BulkDetokenizeExample {
         ));
 
         // redaction is a free-form string understood by the vault (e.g. "PLAIN_TEXT",
-        // "MASKED", "REDACTED", "DEFAULT" — the same redaction types as v2's RedactionType enum)
+        // "MASKED", "REDACTED", "DEFAULT" — the same redaction types as skyvault's RedactionType enum)
         BulkTokenGroupRedactions redaction = BulkTokenGroupRedactions.builder()
                 .tokenGroupName("card_number_cg")
                 .redaction("MASKED")
@@ -376,4 +376,4 @@ Sample response:
 
 # Error Handling
 
-All bulk operations throw `SkyflowException` for request-level failures (invalid request shape, auth errors, and similar). Per-record/per-token failures within an otherwise-successful call are surfaced in the response's `errors` list instead — they don't throw. See [Error Handling](../v2/README.md#error-handling) in the v2 README for `SkyflowException`'s properties, since `flowvault` shares the same exception type from `common`.
+All bulk operations throw `SkyflowException` for request-level failures (invalid request shape, auth errors, and similar). Per-record/per-token failures within an otherwise-successful call are surfaced in the response's `errors` list instead — they don't throw. See [Error Handling](../skyvault/README.md#error-handling) in the skyvault README for `SkyflowException`'s properties, since `flowvault` shares the same exception type from `common`.

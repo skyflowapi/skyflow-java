@@ -10,24 +10,24 @@ This repository hosts Skyflow's Java SDKs for integrating Skyflow into a Java ba
 
 | Package | Artifact | README | Description |
 |---|---|---|---|
-| **v2** | `com.skyflow:skyflow-java` | [v2/README.md](v2/README.md) | **Current, recommended SDK.** Full vault API (insert, detokenize, tokenize, get, update, delete, query, file upload), Detect (deidentify/reidentify), Connections, flexible auth, multi-vault support. |
-| **flowvault** | `com.skyflow:skyflow-flowvault-java` | [flowvault/README.md](flowvault/README.md) | Bulk-only vault operations (`bulkInsert`, `bulkTokenize`, `bulkDetokenize`, `bulkDeleteTokens`, and their async variants) for high-throughput workloads. Shares auth/client setup with v2. |
+| **skyvault** | `com.skyflow:skyflow-java` | [skyvault/README.md](skyvault/README.md) | **Current, recommended SDK.** Full vault API (insert, detokenize, tokenize, get, update, delete, query, file upload), Detect (deidentify/reidentify), Connections, flexible auth, multi-vault support. |
+| **flowvault** | `com.skyflow:skyflow-flowvault-java` | [flowvault/README.md](flowvault/README.md) | Bulk-only vault operations (`bulkInsert`, `bulkTokenize`, `bulkDetokenize`, `bulkDeleteTokens`, and their async variants) for high-throughput workloads. Shares auth/client setup with skyvault. |
 
-> Migrating from v1? See v2's **[Migration Guide](docs/migrate_to_v2.md)**. V1 is in maintenance mode and will reach End of Life on October 31, 2026.
+> Migrating from v1? See skyvault's **[Migration Guide](docs/migrate_to_v2.md)**. V1 is in maintenance mode and will reach End of Life on October 31, 2026.
 
 ## Repository layout
 
 The root `pom.xml` (`packaging=pom`) aggregates this Maven reactor:
 
-- `common/` — shared client, credentials, config, and error-handling code used by both `v2` and `flowvault`
-- `v2/` — the `skyflow-java` SDK ([README](v2/README.md))
+- `common/` — shared client, credentials, config, and error-handling code used by both `skyvault` and `flowvault`
+- `skyvault/` — the `skyflow-java` SDK ([README](skyvault/README.md))
 - `flowvault/` — the `skyflow-flowvault-java` SDK ([README](flowvault/README.md))
 
 `v3/` is a separate, standalone Maven project outside this reactor.
 
 ## Documentation
 
-- [v2 API Reference](docs/api_reference.md) — full list of request builder methods, response getters, enums, and service-account utilities
+- [skyvault API Reference](docs/api_reference.md) — full list of request builder methods, response getters, enums, and service-account utilities
 - [Migrate from v1 to v2](docs/migrate_to_v2.md)
 
 ## Reporting a Vulnerability
