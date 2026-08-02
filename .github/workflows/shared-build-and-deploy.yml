@@ -38,6 +38,19 @@ on:
         type: string
         default: ''
 
+      dry-run:
+        description: >-
+          Validate the release pipeline WITHOUT publishing anything.
+          Everything still runs - tag parsing, version resolution, the pom
+          bump, the full build, tests and GPG signing - but 'mvn verify'
+          replaces 'mvn deploy' (so the deploy plugin never runs at all,
+          rather than being asked politely to skip) and the version-bump
+          commit is not pushed. Publishing to Maven Central is immutable,
+          so this is the only safe way to exercise the public path.
+        required: false
+        type: boolean
+        default: false
+
     secrets:
       server-username:
         required: true
@@ -141,11 +154,19 @@ jobs:
           git add ${{ inputs.module }}/pom.xml
           if [[ "${{ inputs.tag }}" == "internal" ]]; then
             git commit -m "[AUTOMATED] Private Release ${{ steps.bump-version.outputs.base_version }}-dev-$(git rev-parse --short $GITHUB_SHA)"
-            git push origin ${{ github.ref_name }} -f
+            if [[ "${{ inputs.dry-run }}" == "true" ]]; then
+              echo "::notice::DRY RUN - not pushing the version-bump commit"
+            else
+              git push origin ${{ github.ref_name }} -f
+            fi
           fi
           if [[ "${{ inputs.tag }}" == "beta" || "${{ inputs.tag }}" == "public" ]]; then
             git commit -m "[AUTOMATED] Public Release - ${{ steps.bump-version.outputs.base_version }}"
-            git push origin ${{ env.branch_name }}
+            if [[ "${{ inputs.dry-run }}" == "true" ]]; then
+              echo "::notice::DRY RUN - not pushing the version-bump commit"
+            else
+              git push origin ${{ env.branch_name }}
+            fi
           fi
 
       - name: Create env
@@ -163,9 +184,21 @@ jobs:
           name: "credentials.json"
           json: ${{ secrets.TEST_CREDENTIALS_FILE_STRING }}
 
+      # 'verify' rather than 'deploy' for a dry run: the deploy plugin (and
+      # the central-publishing extension bound to it) is never invoked at
+      # all, so there is no upload path to accidentally leave enabled.
+      # Everything up to and including packaging, tests and GPG signing
+      # still runs, so this exercises the same build the real release would.
       - name: Publish package
         run: |
-          if [[ "${{ inputs.tag }}" == "internal" ]]; then
+          if [[ "${{ inputs.dry-run }}" == "true" ]]; then
+            echo "::notice::DRY RUN - running 'verify' instead of 'deploy'; nothing will be published"
+            if [[ "${{ inputs.tag }}" == "internal" ]]; then
+              mvn --batch-mode -pl ${{ inputs.module }} -am verify -P jfrog -DskipTests
+            else
+              mvn --batch-mode -pl ${{ inputs.module }} -am verify -P ${{ inputs.profile }}
+            fi
+          elif [[ "${{ inputs.tag }}" == "internal" ]]; then
             mvn --batch-mode -pl ${{ inputs.module }} -am deploy -P jfrog -DskipTests
           elif [[ "${{ inputs.tag }}" == "beta" || "${{ inputs.tag }}" == "public" ]]; then
             mvn --batch-mode -pl ${{ inputs.module }} -am deploy -P ${{ inputs.profile }}
