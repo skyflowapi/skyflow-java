@@ -39,6 +39,15 @@ jobs:
           echo TEST_EXPIRED_TOKEN=${{ secrets.TEST_EXPIRED_TOKEN }} >> .env
           echo TEST_REUSABLE_TOKEN=${{ secrets.TEST_REUSABLE_TOKEN }} >> .env
 
+      - name: Distribute test fixtures to modules
+        run: |
+          # Surefire runs each module's tests with the module directory as the working
+          # directory, so dotenv and ./credentials.json lookups miss the repo-root copies.
+          for module in common v2 flowvault; do
+            cp .env "$module/.env"
+            cp credentials.json "$module/credentials.json"
+          done
+
       - name: Build & Run tests with Maven
         run: mvn -B package -f pom.xml -Dmaven.javadoc.skip=true
 
