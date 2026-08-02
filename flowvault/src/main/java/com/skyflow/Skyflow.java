@@ -184,7 +184,7 @@ public final class Skyflow extends BaseSkyflow<Skyflow, VaultConfig> {
         }
 
         /**
-         * Per-attempt connection-establishment timeout in seconds. Unset => HTTP client default (10s).
+         * Per-attempt connection-establishment timeout in seconds. Unset =&gt; HTTP client default (10s).
          * <p>
          * <b>Precedence:</b> a vault that sets {@link VaultConfig#setConnectTimeout(Integer)} wins;
          * this value applies only to vaults that leave it unset.
@@ -196,7 +196,7 @@ public final class Skyflow extends BaseSkyflow<Skyflow, VaultConfig> {
         }
 
         /**
-         * Per-attempt response-read timeout in seconds. Unset => HTTP client default (10s).
+         * Per-attempt response-read timeout in seconds. Unset =&gt; HTTP client default (10s).
          * <p>
          * <b>Precedence:</b> a vault that sets {@link VaultConfig#setReadTimeout(Integer)} wins;
          * this value applies only to vaults that leave it unset.
@@ -208,7 +208,7 @@ public final class Skyflow extends BaseSkyflow<Skyflow, VaultConfig> {
         }
 
         /**
-         * Per-attempt request-write timeout in seconds. Unset => HTTP client default (10s).
+         * Per-attempt request-write timeout in seconds. Unset =&gt; HTTP client default (10s).
          * <p>
          * <b>Precedence:</b> a vault that sets {@link VaultConfig#setWriteTimeout(Integer)} wins;
          * this value applies only to vaults that leave it unset.
