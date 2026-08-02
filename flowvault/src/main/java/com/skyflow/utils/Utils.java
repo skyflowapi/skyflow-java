@@ -449,6 +449,9 @@ public final class Utils extends BaseUtils {
                 if (cause != null && cause.getCause() !=null) {
                     message = cause.getCause().toString();
                 }
+                if (message == null || message.isEmpty() || message.trim().isEmpty()){
+                    message = ex.getMessage();
+                }
                 BulkInsertResponseRecord err = new BulkInsertResponseRecord(indexNumber, null, null, null, null, 500, message, null);
                 allRecords.add(err);
                 indexNumber++;
@@ -516,8 +519,21 @@ public final class Utils extends BaseUtils {
             }
         } else {
             int indexNumber = batchNumber * batchSize;
+            String message = null;
+            if (cause != null && cause.getMessage() != null){
+                message = cause.getMessage();
+            }
+            if (cause != null && cause.getLocalizedMessage() !=null) {
+                message = cause.getLocalizedMessage();
+            }
+            if (cause != null && cause.getCause() !=null) {
+                message = cause.getCause().toString();
+            }
+            if (message == null || message.isEmpty() || message.trim().isEmpty()){
+                message = ex.getMessage();
+            }
             for (int j = 0; j < batch.getTokens().get().size(); j++) {
-                BulkDetokenizeResponseRecord err = new BulkDetokenizeResponseRecord(indexNumber, null, null, null, null, 500, ex.getMessage(), null);
+                BulkDetokenizeResponseRecord err = new BulkDetokenizeResponseRecord(indexNumber, null, null, null, null, 500, message, null);
                 allRecords.add(err);
                 indexNumber++;
             }
