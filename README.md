@@ -25,8 +25,6 @@ The root `pom.xml` (`packaging=pom`) aggregates this Maven reactor:
 - `skyvault/` — the `skyflow-java` SDK ([README](skyvault/README.md))
 - `flowvault/` — the `skyflow-flowvault-java` SDK ([README](flowvault/README.md))
 
-`v3/` is a separate, standalone Maven project outside this reactor.
-
 ## Documentation
 
 - [skyvault API Reference](docs/api_reference.md) — full list of request builder methods, response getters, enums, and service-account utilities
