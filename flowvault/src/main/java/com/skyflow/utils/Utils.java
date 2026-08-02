@@ -267,7 +267,8 @@ public final class Utils extends BaseUtils {
     }
 
     /** Converts one wire record into the unified success/error record shape. */
-    private static List<TokenizeResponseToken> buildTokenizeResponseTokens(V1FlowTokenizeResponseObject record) {
+    private static List<TokenizeResponseToken> buildTokenizeResponseTokens(
+            V1FlowTokenizeResponseObject record, String requestId) {
         List<TokenizeResponseToken> tokens = new ArrayList<>();
         if (record.getTokens().isPresent()) {
             for (FlowTokenizeResponseObjectToken tokenObj : record.getTokens().get()) {
@@ -278,13 +279,14 @@ public final class Utils extends BaseUtils {
                         tokenObj.getTokenGroupName().orElse(null),
                         tokenObj.getToken().orElse(null),
                         tokenObj.getHttpCode().orElse(failed ? 500 : 200),
-                        failed ? tokenObj.getError().get() : null
+                        failed ? tokenObj.getError().get() : null,
+                        requestId
                 ));
             }
         } else {
             // the API reports one flat row per (value, token group) instead of a nested tokens
             // array; the generated type has no fields for those, so they land in additionalProperties
-            TokenizeResponseToken flat = flatToken(record);
+            TokenizeResponseToken flat = flatToken(record, requestId);
             if (flat != null) {
                 tokens.add(flat);
             }
@@ -297,7 +299,7 @@ public final class Utils extends BaseUtils {
      * the wire object's unmodelled properties. Returns null when the row carries none of them, so a
      * genuinely token-less record still reports an empty list rather than a phantom entry.
      */
-    private static TokenizeResponseToken flatToken(V1FlowTokenizeResponseObject record) {
+    private static TokenizeResponseToken flatToken(V1FlowTokenizeResponseObject record, String requestId) {
         Map<String, Object> extras = record.getAdditionalProperties();
         if (extras == null || extras.isEmpty()) {
             return null;
@@ -315,7 +317,7 @@ public final class Utils extends BaseUtils {
                 ? ((Number) extras.get("httpCode")).intValue()
                 : (error != null ? 500 : 200);
         return new TokenizeResponseToken(
-                asNonEmptyString(extras.get("tokenGroupName")), token, httpCode, error);
+                asNonEmptyString(extras.get("tokenGroupName")), token, httpCode, error, requestId);
     }
 
     /** The API sends "" for a token or error that does not apply; normalise both to null. */
@@ -643,6 +645,7 @@ public final class Utils extends BaseUtils {
         Throwable cause = ex.getCause();
         if (cause instanceof ApiClientApiException) {
             ApiClientApiException apiException = (ApiClientApiException) cause;
+            String requestId = extractRequestId(apiException.headers());
             Object rawBody = apiException.body();
             Map<String, Object> responseBody = (rawBody instanceof Map) ? (Map<String, Object>) rawBody : null;
             if (responseBody != null) {
@@ -654,8 +657,8 @@ public final class Utils extends BaseUtils {
                             Object record = recordsList.get(position);
                             if (record instanceof Map) {
                                 Map<String, Object> recordMap = (Map<String, Object>) record;
-                                errorRecords.add(createDeleteTokensErrorRecord(
-                                        recordMap, startIndex + position, tokenAt(batchTokens, position)));
+                                errorRecords.add(createDeleteTokensErrorRecord(recordMap,
+                                        startIndex + position, tokenAt(batchTokens, position), requestId));
                             }
                         }
                     }
@@ -665,11 +668,13 @@ public final class Utils extends BaseUtils {
                     String fallbackMsg = (errField instanceof String) ? (String) errField : null;
                     for (int position = 0; position < batchTokens.size(); position++) {
                         errorRecords.add((recordMap != null)
-                                ? createDeleteTokensErrorRecord(recordMap, startIndex + position, tokenAt(batchTokens, position))
+                                ? createDeleteTokensErrorRecord(recordMap, startIndex + position,
+                                        tokenAt(batchTokens, position), requestId)
                                 : new BulkDeleteTokensResponseRecord(
                                         startIndex + position, tokenAt(batchTokens, position),
                                         apiException.statusCode(),
-                                        fallbackMsg != null ? fallbackMsg : apiException.getMessage()));
+                                        fallbackMsg != null ? fallbackMsg : apiException.getMessage(),
+                                        requestId));
                     }
                 }
             }
@@ -677,10 +682,11 @@ public final class Utils extends BaseUtils {
                 for (int position = 0; position < batchTokens.size(); position++) {
                     errorRecords.add(new BulkDeleteTokensResponseRecord(
                             startIndex + position, tokenAt(batchTokens, position),
-                            apiException.statusCode(), apiException.getMessage()));
+                            apiException.statusCode(), apiException.getMessage(), requestId));
                 }
             }
         } else {
+            // a transport-level failure never reached the API, so there is no id to report
             for (int position = 0; position < batchTokens.size(); position++) {
                 errorRecords.add(new BulkDeleteTokensResponseRecord(
                         startIndex + position, tokenAt(batchTokens, position), 500, ex.getMessage()));
@@ -694,7 +700,7 @@ public final class Utils extends BaseUtils {
     }
 
     private static BulkDeleteTokensResponseRecord createDeleteTokensErrorRecord(
-            Map<String, Object> recordMap, int index, String requestedToken) {
+            Map<String, Object> recordMap, int index, String requestedToken, String requestId) {
         int code = 500;
         if (recordMap.containsKey("http_code")) {
             code = (Integer) recordMap.get("http_code");
@@ -707,13 +713,14 @@ public final class Utils extends BaseUtils {
                 recordMap.containsKey("message") ? (String) recordMap.get("message") : "Unknown error";
         Object echoedToken = recordMap.get("value");
         String token = (echoedToken instanceof String) ? (String) echoedToken : requestedToken;
-        return new BulkDeleteTokensResponseRecord(index, token, code, message);
+        return new BulkDeleteTokensResponseRecord(index, token, code, message, requestId);
     }
 
     public static List<BulkTokenizeResponseRecord> handleBulkTokenizeBatchException(
             Throwable ex, List<BulkTokenizeRequestRecord> batchRecords, int startIndex) {
         String message;
         int httpCode;
+        String requestId = null;
         Throwable cause = ex.getCause();
         if (cause instanceof ApiClientApiException) {
             ApiClientApiException apiException = (ApiClientApiException) cause;
@@ -726,7 +733,9 @@ public final class Utils extends BaseUtils {
             }
             httpCode = apiException.statusCode();
             message = extractBatchErrorMessage(apiException);
+            requestId = extractRequestId(apiException.headers());
         } else {
+            // a transport-level failure never reached the API, so there is no id to report
             httpCode = 500;
             message = ex.getMessage();
         }
@@ -738,10 +747,10 @@ public final class Utils extends BaseUtils {
             List<TokenizeResponseToken> tokens = new ArrayList<>();
             List<String> groupNames = requested.getTokenGroupNames();
             if (groupNames == null || groupNames.isEmpty()) {
-                tokens.add(new TokenizeResponseToken(null, null, httpCode, message));
+                tokens.add(new TokenizeResponseToken(null, null, httpCode, message, requestId));
             } else {
                 for (String groupName : groupNames) {
-                    tokens.add(new TokenizeResponseToken(groupName, null, httpCode, message));
+                    tokens.add(new TokenizeResponseToken(groupName, null, httpCode, message, requestId));
                 }
             }
             errorRecords.add(new BulkTokenizeResponseRecord(
@@ -775,7 +784,8 @@ public final class Utils extends BaseUtils {
             if (!parsed.getResponse().isPresent() || parsed.getResponse().get().isEmpty()) {
                 return null;
             }
-            return groupTokenizeRows(parsed.getResponse().get(), batchRecords, startIndex);
+            return groupTokenizeRows(parsed.getResponse().get(), batchRecords, startIndex,
+                    extractRequestId(apiException.headers()));
         } catch (RuntimeException ignored) {
             // body did not deserialise into the shape we know; let the caller summarise instead
             return null;
@@ -883,6 +893,8 @@ public final class Utils extends BaseUtils {
                     ? batchRequest.getTokens().get() : null;
             List<BulkDeleteTokensResponseRecord> responseRecords = new ArrayList<>();
             int indexNumber = batch * batchSize;
+            // one id per API call, so every error this batch reports carries the same one
+            String requestId = extractRequestId(headers);
             for (int position = 0; position < records.size(); position++) {
                 V1DeleteTokenResponseObject record = records.get(position);
                 boolean failed = isFailedRecord(record);
@@ -895,7 +907,8 @@ public final class Utils extends BaseUtils {
                         indexNumber,
                         tokenValue,
                         record.getHttpCode().orElse(failed ? 500 : 200),
-                        failed ? record.getError().get() : null
+                        failed ? record.getError().get() : null,
+                        requestId
                 ));
                 indexNumber++;
             }
@@ -911,7 +924,9 @@ public final class Utils extends BaseUtils {
             Map<String, List<String>> headers) {
         if (response != null && response.getResponse().isPresent()) {
             List<V1FlowTokenizeResponseObject> rows = response.getResponse().get();
-            return new BulkTokenizeResponse(groupTokenizeRows(rows, batchRecords, startIndex));
+            // one id per API call, so every error this batch reports carries the same one
+            String requestId = extractRequestId(headers);
+            return new BulkTokenizeResponse(groupTokenizeRows(rows, batchRecords, startIndex, requestId));
         }
         return null;
     }
@@ -933,14 +948,15 @@ public final class Utils extends BaseUtils {
     private static List<BulkTokenizeResponseRecord> groupTokenizeRows(
             List<V1FlowTokenizeResponseObject> rows,
             List<BulkTokenizeRequestRecord> batchRecords,
-            int startIndex) {
+            int startIndex,
+            String requestId) {
         List<BulkTokenizeResponseRecord> responseRecords = new ArrayList<>();
         if (batchRecords == null || batchRecords.isEmpty()) {
             // nothing to correlate against; fall back to one record per row
             for (int position = 0; position < rows.size(); position++) {
                 responseRecords.add(new BulkTokenizeResponseRecord(startIndex + position,
                         rows.get(position).getValue().orElse(null),
-                        buildTokenizeResponseTokens(rows.get(position))));
+                        buildTokenizeResponseTokens(rows.get(position), requestId)));
             }
             return responseRecords;
         }
@@ -961,11 +977,11 @@ public final class Utils extends BaseUtils {
             if (recordPosition >= batchRecords.size()) {
                 // more rows than the request can account for; keep them rather than drop them
                 responseRecords.add(new BulkTokenizeResponseRecord(startIndex + recordPosition,
-                        rowValue, buildTokenizeResponseTokens(row)));
+                        rowValue, buildTokenizeResponseTokens(row, requestId)));
                 recordPosition++;
                 continue;
             }
-            tokens.addAll(buildTokenizeResponseTokens(row));
+            tokens.addAll(buildTokenizeResponseTokens(row, requestId));
             rowsTakenByRecord++;
         }
         // close the record in flight, then any records the response never mentioned

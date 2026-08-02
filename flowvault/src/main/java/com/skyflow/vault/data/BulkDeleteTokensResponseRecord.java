@@ -12,7 +12,12 @@ public class BulkDeleteTokensResponseRecord extends DeleteTokensRecord {
     private final int index;
 
     public BulkDeleteTokensResponseRecord(int index, String token, Integer httpCode, String error) {
-        super(token, httpCode, error);
+        this(index, token, httpCode, error, null);
+    }
+
+    public BulkDeleteTokensResponseRecord(int index, String token, Integer httpCode,
+                                          String error, String requestId) {
+        super(token, httpCode, error, requestId);
         this.index = index;
     }
 
