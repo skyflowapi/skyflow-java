@@ -732,6 +732,10 @@ public final class Utils extends BaseUtils {
             int recordsSize = record.size();
             for (int index = 0; index < recordsSize; index++) {
                 V1RecordResponseObject current = record.get(index);
+                String reqID = null;
+                if(current.getError().isPresent()){
+                    reqID = extractRequestId(headers);
+                }
                 records.add(new BulkInsertResponseRecord(
                         indexNumber,
                         current.getTableName().orElse(null),
@@ -740,7 +744,7 @@ public final class Utils extends BaseUtils {
                         current.getHashedData().orElse(null),
                         current.getHttpCode().orElse(current.getError().isPresent() ? 500 : 200),
                         current.getError().orElse(null),
-                        null));
+                        reqID));
                 indexNumber++;
             }
             formattedResponse = new BulkInsertResponse(records);
@@ -764,6 +768,10 @@ public final class Utils extends BaseUtils {
                         data.put("skyflowId", value);
                     }
                 }
+                String reqID = null;
+                if(current.getError().isPresent()){
+                    reqID = extractRequestId(headers);
+                }
                 records.add(new BulkDetokenizeResponseRecord(
                         indexNumber,
                         current.getToken().orElse(null),
@@ -772,7 +780,7 @@ public final class Utils extends BaseUtils {
                         data,
                         current.getHttpCode().orElse(current.getError().isPresent() ? 500 : 200),
                         current.getError().orElse(null),
-                        null));
+                        reqID));
                 indexNumber++;
             }
             return new BulkDetokenizeResponse(records);
