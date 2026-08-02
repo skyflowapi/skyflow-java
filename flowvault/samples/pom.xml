@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.example</groupId>
+    <artifactId>skyflow-javasdk-sample</artifactId>
+    <version>1.0.0</version>
+
+    <properties>
+        <maven.compiler.source>8</maven.compiler.source>
+        <maven.compiler.target>8</maven.compiler.target>
+    </properties>
+
+    <dependencies>
+        <!-- https://mvnrepository.com/artifact/com.skyflow/skyflow-flowvault-java -->
+        <dependency>
+            <groupId>com.skyflow</groupId>
+            <artifactId>skyflow-flowvault-java</artifactId>
+            <version>3.0.0-beta.13-dev.0d4db0a</version>
+        </dependency>
+
+    </dependencies>
+    <repositories>
+        <repository>
+            <id>central</id>
+            <url>https://prekarilabs.jfrog.io/artifactory/skyflow-java</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>maven_central</id>
+            <name>Maven Central</name>
+            <url>https://repo.maven.apache.org/maven2/</url>
+        </repository>
+    </repositories>
+
+
+</project>
