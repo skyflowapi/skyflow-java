@@ -52,9 +52,9 @@ public class RequestFidelityTests {
     private static final String VAULT_ID = "vault123";
 
     // Values that are easy to mangle: non-ASCII, embedded spaces, punctuation.
-    private static final String NON_ASCII_NAME = "José Ürsula 日本語 Ω";
+    private static final String NON_ASCII_NAME = "日本語 テスト Ω";
     private static final String SPACED_TABLE = "my table name";
-    private static final String NON_ASCII_TABLE = "tabela_ação";
+    private static final String NON_ASCII_TABLE = "表_日本語";
 
     private static VaultConfig vaultConfig() {
         VaultConfig config = new VaultConfig();
@@ -109,7 +109,7 @@ public class RequestFidelityTests {
     public void testBulkInsert_nonAsciiAndSpacedValues_userValueReachesWire() {
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("name", NON_ASCII_NAME);
-        data.put("street address", "12 Rue de l'Église");
+        data.put("street address", "12 東京都 千代田区");
         Map<String, Object> tokens = new LinkedHashMap<>();
         tokens.put("name", "tök-ábc 123");
 
@@ -129,7 +129,7 @@ public class RequestFidelityTests {
         V1InsertRecordData wire = body.getRecords().get().get(0);
         Assert.assertEquals(NON_ASCII_TABLE, wire.getTableName().get());
         Assert.assertEquals(NON_ASCII_NAME, wire.getData().get().get("name"));
-        Assert.assertEquals("12 Rue de l'Église", wire.getData().get().get("street address"));
+        Assert.assertEquals("12 東京都 千代田区", wire.getData().get().get("street address"));
         Assert.assertEquals("tök-ábc 123", wire.getTokens().get().get("name"));
     }
 
@@ -585,7 +585,7 @@ public class RequestFidelityTests {
 
     @Test
     public void testBulkDetokenize_everyFieldReachesWire() {
-        List<String> tokens = Arrays.asList("token-1", "token 2", "tökén-3");
+        List<String> tokens = Arrays.asList("token-1", "token 2", "トークン-3");
         TokenGroupRedactions groupA = TokenGroupRedactions.builder()
                 .tokenGroupName("group one")
                 .redaction("MASKED")
@@ -603,7 +603,7 @@ public class RequestFidelityTests {
 
         Assert.assertEquals(VAULT_ID, body.getVaultId().get());
         Assert.assertSame(tokens, body.getTokens().get());
-        Assert.assertEquals(Arrays.asList("token-1", "token 2", "tökén-3"), body.getTokens().get());
+        Assert.assertEquals(Arrays.asList("token-1", "token 2", "トークン-3"), body.getTokens().get());
 
         List<V1TokenGroupRedactions> wireGroups = body.getTokenGroupRedactions().get();
         Assert.assertEquals(2, wireGroups.size());
@@ -805,14 +805,14 @@ public class RequestFidelityTests {
 
     @Test
     public void testBulkDeleteTokens_everyFieldReachesWire() {
-        List<String> tokens = Arrays.asList("token-1", "token 2", "tökén-3");
+        List<String> tokens = Arrays.asList("token-1", "token 2", "トークン-3");
         BulkDeleteTokensRequest request = BulkDeleteTokensRequest.builder().tokens(tokens).build();
 
         V1FlowDeleteTokenRequest body = Utils.getBulkDeleteTokensRequestBody(request, VAULT_ID);
 
         Assert.assertEquals(VAULT_ID, body.getVaultId().get());
         Assert.assertSame(tokens, body.getTokens().get());
-        Assert.assertEquals(Arrays.asList("token-1", "token 2", "tökén-3"), body.getTokens().get());
+        Assert.assertEquals(Arrays.asList("token-1", "token 2", "トークン-3"), body.getTokens().get());
     }
 
     @Test

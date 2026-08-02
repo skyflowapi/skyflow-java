@@ -103,7 +103,7 @@ public class RequestFidelityTests {
     private static final String CONNECTION_URL = "https://conn.example.com/api/{resource}/details";
 
     // Non-trivial values reused across tests.
-    private static final String NON_ASCII_NAME = "José Muñoz";
+    private static final String NON_ASCII_NAME = "日本語 テスト";
     private static final String NON_ASCII_CITY = "北京市 朝阳区";
     private static final String MULTILINE_NOTE = "line one\nline two with  spaces";
 
@@ -843,7 +843,7 @@ public class RequestFidelityTests {
         VaultController controller = newControllerWithMockApi(mockApi);
 
         String sql = "SELECT name, \"card number\"\nFROM cards\n"
-                + "WHERE name = 'O''Brien' AND city = '" + NON_ASCII_CITY + "'\nLIMIT 10";
+                + "WHERE name = 'Smith''s' AND city = '" + NON_ASCII_CITY + "'\nLIMIT 10";
         controller.query(QueryRequest.builder().query(sql).build());
 
         ArgumentCaptor<QueryServiceExecuteQueryBody> bodyCaptor =

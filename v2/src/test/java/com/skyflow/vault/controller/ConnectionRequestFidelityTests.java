@@ -39,7 +39,7 @@ public class ConnectionRequestFidelityTests {
 
     private static final String API_KEY = "sky-ab123-abcd1234cdef1234abcd4321cdef4321"; // gitleaks:allow
     private static final String CONNECTION_URL = "https://conn.example.com/api/{resource}/details";
-    private static final String NON_ASCII_NAME = "José Muñoz";
+    private static final String NON_ASCII_NAME = "日本語 テスト";
 
     private static ConnectionConfig connectionConfig;
     private static Credentials credentials;
