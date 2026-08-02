@@ -1,31 +1,7 @@
 package com.skyflow.vault.data;
 
-import com.google.gson.Gson;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-
+// Shared extension point for module-specific insert responses. Intentionally empty:
+// v2 and flowvault insert responses no longer have any field in common, so each owns
+// its own state. Retained so the modules keep a shared supertype for future use.
 public class BaseInsertResponse {
-    private final ArrayList<HashMap<String, Object>> insertedFields;
-    private final ArrayList<HashMap<String, Object>> errors;
-
-    public BaseInsertResponse(ArrayList<HashMap<String, Object>> insertedFields, ArrayList<HashMap<String, Object>> errors) {
-        this.insertedFields = insertedFields;
-        this.errors = errors;
-    }
-
-    public ArrayList<HashMap<String, Object>> getInsertedFields() {
-        return insertedFields;
-    }
-
-    public ArrayList<HashMap<String, Object>> getErrors() {
-        return errors;
-    }
-
-    @Override
-    public String toString() {
-        Gson gson = new Gson().newBuilder().serializeNulls().create();
-        return gson.toJson(this);
-    }
 }
-

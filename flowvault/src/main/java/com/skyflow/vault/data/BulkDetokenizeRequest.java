@@ -2,40 +2,38 @@ package com.skyflow.vault.data;
 
 import java.util.List;
 
-public class BulkDetokenizeRequest {
-    private final BulkDetokenizeRequestBuilder builder;
-    private BulkDetokenizeRequest(BulkDetokenizeRequestBuilder builder){
-        this.builder = builder;
+// Bulk counterpart of DetokenizeRequest. Carries no extra state today; all fields
+// (tokens, tokenGroupRedactions) are inherited.
+public class BulkDetokenizeRequest extends DetokenizeRequest {
+
+    protected BulkDetokenizeRequest(BulkDetokenizeRequestBuilder builder) {
+        super(builder);
     }
 
-    public static BulkDetokenizeRequestBuilder builder(){
+    public static BulkDetokenizeRequestBuilder builder() {
         return new BulkDetokenizeRequestBuilder();
     }
-    public List<String> getTokens(){
-        return this.builder.tokens;
-    }
-    public List<BulkTokenGroupRedactions> getTokenGroupRedactions(){
-        return this.builder.tokenGroupRedactions;
-    }
 
-    public static final class BulkDetokenizeRequestBuilder{
-        private List<String> tokens;
+    public static final class BulkDetokenizeRequestBuilder extends DetokenizeRequestBuilder {
 
-        private List<BulkTokenGroupRedactions> tokenGroupRedactions;
+        private BulkDetokenizeRequestBuilder() {
+        }
 
-        public BulkDetokenizeRequestBuilder tokens(List<String> tokens){
-            this.tokens = tokens;
+        @Override
+        public BulkDetokenizeRequestBuilder tokens(List<String> tokens) {
+            super.tokens(tokens);
             return this;
         }
-        public BulkDetokenizeRequestBuilder tokenGroupRedactions(List<BulkTokenGroupRedactions> tokenGroupRedactions){
-            this.tokenGroupRedactions = tokenGroupRedactions;
+
+        @Override
+        public BulkDetokenizeRequestBuilder tokenGroupRedactions(List<TokenGroupRedactions> tokenGroupRedactions) {
+            super.tokenGroupRedactions(tokenGroupRedactions);
             return this;
         }
-        public BulkDetokenizeRequest build(){
+
+        @Override
+        public BulkDetokenizeRequest build() {
             return new BulkDetokenizeRequest(this);
         }
-
-
     }
-
 }

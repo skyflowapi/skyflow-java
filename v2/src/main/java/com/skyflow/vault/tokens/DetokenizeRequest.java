@@ -1,11 +1,12 @@
 package com.skyflow.vault.tokens;
 
 import com.skyflow.logs.InfoLogs;
+import com.skyflow.vault.data.BaseDetokenizeRequest;
 import com.skyflow.utils.logger.LogUtil;
 
 import java.util.ArrayList;
 
-public class DetokenizeRequest {
+public class DetokenizeRequest extends BaseDetokenizeRequest {
     private final DetokenizeRequestBuilder builder;
 
     private DetokenizeRequest(DetokenizeRequestBuilder builder) {

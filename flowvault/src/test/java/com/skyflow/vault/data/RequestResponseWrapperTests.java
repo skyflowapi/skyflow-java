@@ -1,6 +1,5 @@
 package com.skyflow.vault.data;
 
-import com.skyflow.enums.UpsertType;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -12,192 +11,174 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Tests for the simple request/response wrapper classes: {@link DeleteTokensRequest},
- * {@link InsertRequest}, {@link InsertResponse}, {@link TokenizeRequest}, {@link TokenizeResponse},
- * {@link DetokenizeRequest}, {@link DetokenizeResponse}, {@link DetokenizeRecordResponse},
- * {@link DetokenizeData}, {@link BulkDeleteTokensRequest}, {@link BulkDetokenizeRequest},
- * {@link BulkTokenizeRequest}, {@link BulkInsertRequest} and {@link DeleteTokensResponse}.
+ * Tests for the simple request/response wrapper classes: {@link InsertRequest},
+ * {@link InsertResponseRecord}, {@link DetokenizeRequest}, {@link DetokenizeResponseRecord},
+ * {@link BulkDeleteTokensRequest}, {@link BulkDetokenizeRequest}, {@link BulkTokenizeRequest}
+ * and {@link BulkInsertRequest}.
  */
 public class RequestResponseWrapperTests {
 
-    // ── DeleteTokensRequest ──────────────────────────────────────────────────
-
-    @Test
-    public void testDeleteTokensRequest_getterReturnsBuilderValue() {
-        List<String> tokens = Arrays.asList("tok-1", "tok-2");
-        DeleteTokensRequest request = DeleteTokensRequest.builder().tokens(tokens).build();
-        Assert.assertEquals(tokens, request.getTokens());
-    }
-
-    @Test
-    public void testDeleteTokensRequest_defaultIsNull() {
-        DeleteTokensRequest request = DeleteTokensRequest.builder().build();
-        Assert.assertNull(request.getTokens());
-    }
+    // Tests for DeleteTokensRequest were removed: the class no longer exists (bulk-only module).
 
     // ── InsertRequest ────────────────────────────────────────────────────────
 
     @Test
     public void testInsertRequest_gettersReturnBuilderValues() {
-        ArrayList<InsertRecord> records = new ArrayList<>(Collections.singletonList(
-                InsertRecord.builder().table("persons").build()));
-        List<String> upsert = Arrays.asList("id");
+        ArrayList<InsertRequestRecord> records = new ArrayList<>(Collections.singletonList(
+                InsertRequestRecord.builder().tableName("persons").build()));
+        UpsertOptions upsert = UpsertOptions.builder()
+                .uniqueColumns(Arrays.asList("id"))
+                .updateType("UPDATE")
+                .build();
 
         InsertRequest request = InsertRequest.builder()
-                .table("persons")
                 .upsert(upsert)
-                .upsertType(UpsertType.UPDATE)
                 .records(records)
                 .build();
 
-        Assert.assertEquals("persons", request.getTable());
         Assert.assertEquals(upsert, request.getUpsert());
-        Assert.assertEquals(UpsertType.UPDATE, request.getUpsertType());
         Assert.assertEquals(records, request.getRecords());
+    }
+
+    @Test
+    public void testInsertRequest_tableNameGetterReturnsBuilderValue() {
+        InsertRequest request = InsertRequest.builder().tableName("persons").build();
+        Assert.assertEquals("persons", request.getTableName());
     }
 
     @Test
     public void testInsertRequest_defaultsAreNull() {
         InsertRequest request = InsertRequest.builder().build();
-        Assert.assertNull(request.getTable());
         Assert.assertNull(request.getUpsert());
-        Assert.assertNull(request.getUpsertType());
         Assert.assertNull(request.getRecords());
+        Assert.assertNull(request.getTableName());
     }
 
-    // ── InsertResponse ───────────────────────────────────────────────────────
+    // ── InsertRequestRecord ─────────────────────────────────────────────────────────
 
     @Test
-    public void testInsertResponse_gettersReturnConstructorValues() {
-        ArrayList<HashMap<String, Object>> insertedFields = new ArrayList<>();
-        HashMap<String, Object> field = new HashMap<>();
-        field.put("skyflow_id", "id-1");
-        insertedFields.add(field);
-        ArrayList<HashMap<String, Object>> errors = new ArrayList<>();
+    public void testInsertRequestRecord_gettersReturnBuilderValues() {
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", "john");
+        Map<String, Object> tokens = new HashMap<>();
+        tokens.put("name", "tok-abc");
+        UpsertOptions upsert = UpsertOptions.builder().uniqueColumns(Arrays.asList("id")).build();
 
-        InsertResponse response = new InsertResponse(insertedFields, errors);
+        InsertRequestRecord record = InsertRequestRecord.builder()
+                .tableName("persons")
+                .data(data)
+                .tokens(tokens)
+                .upsert(upsert)
+                .build();
 
-        Assert.assertEquals(insertedFields, response.getInsertedFields());
-        Assert.assertEquals(errors, response.getErrors());
+        Assert.assertEquals("persons", record.getTableName());
+        Assert.assertEquals(data, record.getData());
+        Assert.assertEquals(tokens, record.getTokens());
+        Assert.assertEquals(upsert, record.getUpsert());
     }
 
-    // ── TokenizeRequest ──────────────────────────────────────────────────────
+    // ── UpsertOptions ────────────────────────────────────────────────────────
 
     @Test
-    public void testTokenizeRequest_getterReturnsBuilderValue() {
-        ArrayList<TokenizeRecord> data = new ArrayList<>(Collections.singletonList(
-                TokenizeRecord.builder().value("v1").build()));
-        TokenizeRequest request = TokenizeRequest.builder().data(data).build();
-        Assert.assertEquals(data, request.getData());
+    public void testUpsertOptions_gettersReturnBuilderValues() {
+        List<String> uniqueColumns = Arrays.asList("id", "email");
+        UpsertOptions upsert = UpsertOptions.builder()
+                .updateType("REPLACE")
+                .uniqueColumns(uniqueColumns)
+                .build();
+
+        Assert.assertEquals("REPLACE", upsert.getUpdateType());
+        Assert.assertEquals(uniqueColumns, upsert.getUniqueColumns());
+    }
+
+    // Tests for InsertResponse were removed: the class no longer exists (bulk-only module).
+
+    // ── InsertResponseRecord ─────────────────────────────────────────────────
+
+    @Test
+    public void testInsertResponseRecord_gettersReturnConstructorValues() {
+        Map<String, Object> fields = new HashMap<>();
+        fields.put("name", "tok-abc");
+        Map<String, Object> hashedData = new HashMap<>();
+        hashedData.put("name", "hashed-value");
+
+        InsertResponseRecord record = new InsertResponseRecord(
+                "persons", "id-1", fields, hashedData, 200, null);
+
+        Assert.assertEquals("persons", record.getTableName());
+        Assert.assertEquals("id-1", record.getSkyflowId());
+        Assert.assertEquals(fields, record.getFields());
+        Assert.assertEquals(hashedData, record.getHashedData());
+        Assert.assertEquals(200, record.getHttpCode());
+        Assert.assertNull(record.getError());
     }
 
     @Test
-    public void testTokenizeRequest_defaultIsNull() {
-        TokenizeRequest request = TokenizeRequest.builder().build();
-        Assert.assertNull(request.getData());
+    public void testInsertResponseRecord_errorCase() {
+        InsertResponseRecord record = new InsertResponseRecord(
+                "persons", null, null, null, 400, "insert failed");
+
+        Assert.assertEquals("persons", record.getTableName());
+        Assert.assertNull(record.getSkyflowId());
+        Assert.assertEquals("insert failed", record.getError());
+        Assert.assertEquals(400, record.getHttpCode());
     }
 
-    // ── TokenizeResponse ─────────────────────────────────────────────────────
-
-    @Test
-    public void testTokenizeResponse_defaultConstructorInitializesEmptyErrors() {
-        TokenizeResponse response = new TokenizeResponse();
-        Assert.assertNotNull(response.getErrors());
-        Assert.assertTrue(response.getErrors().isEmpty());
-        Assert.assertNull(response.getTokenizedData());
-    }
-
-    @Test
-    public void testTokenizeResponse_errorsConstructorAndTokenizedDataSetter() {
-        ArrayList<HashMap<String, Object>> errors = new ArrayList<>();
-        HashMap<String, Object> error = new HashMap<>();
-        error.put("error", "failed");
-        errors.add(error);
-
-        TokenizeResponse response = new TokenizeResponse(errors);
-        Assert.assertEquals(errors, response.getErrors());
-
-        List<TokenizeData> tokenizedData = Collections.singletonList(new TokenizeData("v1", 0));
-        response.setTokenizedData(tokenizedData);
-        Assert.assertEquals(tokenizedData, response.getTokenizedData());
-    }
+    // Tests for TokenizeRequest / TokenizeResponse were removed: those classes no longer exist (bulk-only module).
 
     // ── DetokenizeRequest ────────────────────────────────────────────────────
 
     @Test
     public void testDetokenizeRequest_gettersReturnBuilderValues() {
-        ArrayList<DetokenizeData> detokenizeData = new ArrayList<>(Collections.singletonList(
-                new DetokenizeData("tok-1")));
+        List<String> tokens = Collections.singletonList("tok-1");
         List<TokenGroupRedactions> redactions = Collections.singletonList(
                 TokenGroupRedactions.builder().tokenGroupName("group1").redaction("MASK").build());
 
         DetokenizeRequest request = DetokenizeRequest.builder()
-                .detokenizeData(detokenizeData)
+                .tokens(tokens)
                 .tokenGroupRedactions(redactions)
                 .build();
 
-        Assert.assertEquals(detokenizeData, request.getDetokenizeData());
+        Assert.assertEquals(tokens, request.getTokens());
         Assert.assertEquals(redactions, request.getTokenGroupRedactions());
     }
 
     @Test
     public void testDetokenizeRequest_defaultsAreNull() {
         DetokenizeRequest request = DetokenizeRequest.builder().build();
-        Assert.assertNull(request.getDetokenizeData());
+        Assert.assertNull(request.getTokens());
         Assert.assertNull(request.getTokenGroupRedactions());
     }
 
-    // ── DetokenizeResponse ───────────────────────────────────────────────────
+    // Tests for DetokenizeResponse were removed: the class no longer exists (bulk-only module).
+
+    // ── DetokenizeResponseRecord ─────────────────────────────────────────────
 
     @Test
-    public void testDetokenizeResponse_gettersReturnConstructorValues() {
-        ArrayList<DetokenizeRecordResponse> detokenizedFields = new ArrayList<>(Collections.singletonList(
-                new DetokenizeRecordResponse("tok-1", "value", null, "group1", null)));
-        ArrayList<DetokenizeRecordResponse> errors = new ArrayList<>();
-
-        DetokenizeResponse response = new DetokenizeResponse(detokenizedFields, errors);
-
-        Assert.assertEquals(detokenizedFields, response.getDetokenizedFields());
-        Assert.assertEquals(errors, response.getErrors());
-        Assert.assertNotNull(response.toString());
-    }
-
-    // ── DetokenizeRecordResponse ─────────────────────────────────────────────
-
-    @Test
-    public void testDetokenizeRecordResponse_gettersReturnConstructorValues() {
+    public void testDetokenizeResponseRecord_gettersReturnConstructorValues() {
         Map<String, Object> metadata = new HashMap<>();
         metadata.put("key", "value");
 
-        DetokenizeRecordResponse response = new DetokenizeRecordResponse(
-                "tok-1", "plain-value", null, "group1", metadata);
+        DetokenizeResponseRecord response = new DetokenizeResponseRecord(
+                "tok-1", "secret-value", "group1", metadata, 200, null);
 
         Assert.assertEquals("tok-1", response.getToken());
-        Assert.assertEquals("plain-value", response.getValue());
         Assert.assertNull(response.getError());
         Assert.assertEquals("group1", response.getTokenGroupName());
         Assert.assertEquals(metadata, response.getMetadata());
-        Assert.assertNotNull(response.toString());
+        Assert.assertEquals(200, response.getHttpCode());
     }
 
     @Test
-    public void testDetokenizeRecordResponse_errorCase() {
-        DetokenizeRecordResponse response = new DetokenizeRecordResponse(
-                "tok-2", null, "Token not found", null, null);
+    public void testDetokenizeResponseRecord_errorCase() {
+        DetokenizeResponseRecord response = new DetokenizeResponseRecord(
+                "tok-2", null, null, null, 404, "Token not found");
 
         Assert.assertEquals("tok-2", response.getToken());
         Assert.assertEquals("Token not found", response.getError());
-        Assert.assertNull(response.getValue());
         Assert.assertNull(response.getTokenGroupName());
         Assert.assertNull(response.getMetadata());
-    }
-
-    // ── DetokenizeData ───────────────────────────────────────────────────────
-
-    @Test
-    public void testDetokenizeData_getterReturnsConstructorValue() {
-        DetokenizeData data = new DetokenizeData("tok-1");
-        Assert.assertEquals("tok-1", data.getToken());
+        Assert.assertEquals(404, response.getHttpCode());
     }
 
     // ── BulkDeleteTokensRequest ──────────────────────────────────────────────
@@ -220,8 +201,8 @@ public class RequestResponseWrapperTests {
     @Test
     public void testBulkDetokenizeRequest_gettersReturnBuilderValues() {
         List<String> tokens = Arrays.asList("tok-1", "tok-2");
-        List<BulkTokenGroupRedactions> redactions = Collections.singletonList(
-                BulkTokenGroupRedactions.builder().tokenGroupName("group1").redaction("MASK").build());
+        List<TokenGroupRedactions> redactions = Collections.singletonList(
+                TokenGroupRedactions.builder().tokenGroupName("group1").redaction("MASK").build());
 
         BulkDetokenizeRequest request = BulkDetokenizeRequest.builder()
                 .tokens(tokens)
@@ -237,6 +218,16 @@ public class RequestResponseWrapperTests {
         BulkDetokenizeRequest request = BulkDetokenizeRequest.builder().build();
         Assert.assertNull(request.getTokens());
         Assert.assertNull(request.getTokenGroupRedactions());
+    }
+
+    @Test
+    public void testBulkDetokenizeRequest_isADetokenizeRequest() {
+        // Bulk detokenize now shares the unary request contract; all state is inherited.
+        BulkDetokenizeRequest request = BulkDetokenizeRequest.builder()
+                .tokens(Collections.singletonList("tok-1"))
+                .build();
+        DetokenizeRequest asUnary = request;
+        Assert.assertEquals(Collections.singletonList("tok-1"), asUnary.getTokens());
     }
 
     // ── BulkTokenizeRequest ──────────────────────────────────────────────────
@@ -259,45 +250,41 @@ public class RequestResponseWrapperTests {
 
     @Test
     public void testBulkInsertRequest_gettersReturnBuilderValues() {
-        ArrayList<BulkInsertRecord> records = new ArrayList<>(Collections.singletonList(
-                BulkInsertRecord.builder().table("persons").build()));
-        List<String> upsert = Arrays.asList("id");
+        List<InsertRequestRecord> records = new ArrayList<>(Collections.singletonList(
+                BulkInsertRequestRecord.builder().tableName("persons").build()));
+        UpsertOptions upsert = UpsertOptions.builder()
+                .updateType("REPLACE")
+                .uniqueColumns(Arrays.asList("id"))
+                .build();
 
         BulkInsertRequest request = BulkInsertRequest.builder()
-                .table("persons")
+                .tableName("persons")
                 .upsert(upsert)
-                .upsertType(UpsertType.REPLACE)
                 .records(records)
                 .build();
 
-        Assert.assertEquals("persons", request.getTable());
+        Assert.assertEquals("persons", request.getTableName());
         Assert.assertEquals(upsert, request.getUpsert());
-        Assert.assertEquals(UpsertType.REPLACE, request.getUpsertType());
+        Assert.assertEquals("REPLACE", request.getUpsert().getUpdateType());
+        Assert.assertEquals(Arrays.asList("id"), request.getUpsert().getUniqueColumns());
         Assert.assertEquals(records, request.getRecords());
     }
 
     @Test
     public void testBulkInsertRequest_defaultsAreNull() {
         BulkInsertRequest request = BulkInsertRequest.builder().build();
-        Assert.assertNull(request.getTable());
+        Assert.assertNull(request.getTableName());
         Assert.assertNull(request.getUpsert());
-        Assert.assertNull(request.getUpsertType());
         Assert.assertNull(request.getRecords());
     }
 
-    // ── DeleteTokensResponse ─────────────────────────────────────────────────
-
     @Test
-    public void testDeleteTokensResponse_gettersReturnConstructorValues() {
-        List<String> tokens = Arrays.asList("tok-1", "tok-2");
-        ArrayList<HashMap<String, Object>> errors = new ArrayList<>();
-        HashMap<String, Object> error = new HashMap<>();
-        error.put("error", "failed");
-        errors.add(error);
-
-        DeleteTokensResponse response = new DeleteTokensResponse(tokens, errors);
-
-        Assert.assertEquals(tokens, response.getTokens());
-        Assert.assertEquals(errors, response.getErrors());
+    public void testBulkInsertRequest_isAnInsertRequest() {
+        InsertRequest request = BulkInsertRequest.builder().tableName("persons").build();
+        Assert.assertTrue(request instanceof BulkInsertRequest);
+        Assert.assertEquals("persons", request.getTableName());
     }
+
+    // Tests for DeleteTokensResponse were removed: the class no longer exists (bulk-only module).
+
 }

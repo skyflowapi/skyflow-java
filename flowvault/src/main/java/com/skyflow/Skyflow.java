@@ -46,6 +46,15 @@ public final class Skyflow extends BaseSkyflow<Skyflow, VaultConfig> {
 
     public static final class SkyflowClientBuilder extends BaseSkyflowClientBuilder<VaultConfig> {
         private final LinkedHashMap<String, VaultController> vaultClientsMap = new LinkedHashMap<>();
+        // Client-wide HTTP config. Resolution per vault, most specific first:
+        //   VaultConfig value -> the value set here -> SDK default (60s call timeout, 0 retries).
+        // null here means "not set", so the SDK default applies to vaults that don't override it.
+        // Only null means inherit: an explicit 0 is a real value and wins over the level below.
+        private Integer timeout;
+        private Integer connectTimeout;
+        private Integer readTimeout;
+        private Integer writeTimeout;
+        private Integer maxRetries;
 
         @Override
         protected void validateVaultConfig(VaultConfig vaultConfig) throws SkyflowException {
@@ -54,13 +63,26 @@ public final class Skyflow extends BaseSkyflow<Skyflow, VaultConfig> {
 
         @Override
         protected void onVaultConfigAdded(VaultConfig vaultConfig) throws SkyflowException {
-            this.vaultClientsMap.put(vaultConfig.getVaultId(), new VaultController(vaultConfig, this.skyflowCredentials));
+            VaultController controller = new VaultController(vaultConfig, this.skyflowCredentials);
+            controller.setCommonHttpConfig(this.timeout, this.connectTimeout, this.readTimeout,
+                    this.writeTimeout, this.maxRetries);
+            this.vaultClientsMap.put(vaultConfig.getVaultId(), controller);
             LogUtil.printInfoLog(Utils.parameterizedString(InfoLogs.VAULT_CONTROLLER_INITIALIZED.getLog(), vaultConfig.getVaultId()));
         }
 
         @Override
         protected void onVaultConfigUpdated(VaultConfig updatedConfig) throws SkyflowException {
-            this.vaultClientsMap.put(updatedConfig.getVaultId(), new VaultController(updatedConfig, this.skyflowCredentials));
+            // Update the existing controller in place — replacing it would leave any VaultController
+            // reference the caller already holds pointing at the previous config.
+            VaultController updated = this.vaultClientsMap.get(updatedConfig.getVaultId());
+            if (updated == null) {
+                updated = new VaultController(updatedConfig, this.skyflowCredentials);
+                this.vaultClientsMap.put(updatedConfig.getVaultId(), updated);
+            } else {
+                updated.setVaultConfig(updatedConfig);
+            }
+            updated.setCommonHttpConfig(this.timeout, this.connectTimeout, this.readTimeout,
+                    this.writeTimeout, this.maxRetries);
         }
 
         @Override
@@ -89,7 +111,46 @@ public final class Skyflow extends BaseSkyflow<Skyflow, VaultConfig> {
         @Override
         public SkyflowClientBuilder updateVaultConfig(VaultConfig vaultConfig) throws SkyflowException {
             super.updateVaultConfig(vaultConfig);
+            carryVaultOverrides(vaultConfig);
             return this;
+        }
+
+        /**
+         * BaseSkyflow.mergeVaultConfig() only carries env, clusterId and credentials across, so the
+         * flowvault-specific fields on an incoming update — vaultUrl and the HTTP settings — would
+         * be dropped silently. Apply them to the merged config the new controller is holding. A null
+         * on the incoming config means "leave as is", matching how the base class merges every
+         * other field.
+         */
+        private void carryVaultOverrides(VaultConfig incoming) throws SkyflowException {
+            VaultConfig merged = this.vaultConfigMap.get(incoming.getVaultId());
+            if (merged == null || merged == incoming) {
+                return;
+            }
+            if (incoming.getTimeout() != null) {
+                merged.setTimeout(incoming.getTimeout());
+            }
+            if (incoming.getConnectTimeout() != null) {
+                merged.setConnectTimeout(incoming.getConnectTimeout());
+            }
+            if (incoming.getReadTimeout() != null) {
+                merged.setReadTimeout(incoming.getReadTimeout());
+            }
+            if (incoming.getWriteTimeout() != null) {
+                merged.setWriteTimeout(incoming.getWriteTimeout());
+            }
+            if (incoming.getMaxRetries() != null) {
+                merged.setMaxRetries(incoming.getMaxRetries());
+            }
+            // The HTTP settings above are resolved lazily on the next request, but the URL is
+            // resolved once in the VaultClient constructor — which already ran with the old value.
+            if (incoming.getVaultUrl() != null) {
+                merged.setVaultUrl(incoming.getVaultUrl());
+                VaultController controller = this.vaultClientsMap.get(incoming.getVaultId());
+                if (controller != null) {
+                    controller.refreshVaultUrl();
+                }
+            }
         }
 
         @Override
@@ -108,6 +169,75 @@ public final class Skyflow extends BaseSkyflow<Skyflow, VaultConfig> {
         public SkyflowClientBuilder setLogLevel(LogLevel logLevel) {
             super.setLogLevel(logLevel);
             return this;
+        }
+
+        /**
+         * Overall call timeout in seconds, including retries. Default 60.
+         * <p>
+         * <b>Precedence:</b> a vault that sets {@link VaultConfig#setTimeout(Integer)} wins; this
+         * value applies only to vaults that leave it unset.
+         */
+        public SkyflowClientBuilder timeout(int timeout) {
+            this.timeout = timeout;
+            propagateHttpConfig();
+            return this;
+        }
+
+        /**
+         * Per-attempt connection-establishment timeout in seconds. Unset => HTTP client default (10s).
+         * <p>
+         * <b>Precedence:</b> a vault that sets {@link VaultConfig#setConnectTimeout(Integer)} wins;
+         * this value applies only to vaults that leave it unset.
+         */
+        public SkyflowClientBuilder connectTimeout(int connectTimeout) {
+            this.connectTimeout = connectTimeout;
+            propagateHttpConfig();
+            return this;
+        }
+
+        /**
+         * Per-attempt response-read timeout in seconds. Unset => HTTP client default (10s).
+         * <p>
+         * <b>Precedence:</b> a vault that sets {@link VaultConfig#setReadTimeout(Integer)} wins;
+         * this value applies only to vaults that leave it unset.
+         */
+        public SkyflowClientBuilder readTimeout(int readTimeout) {
+            this.readTimeout = readTimeout;
+            propagateHttpConfig();
+            return this;
+        }
+
+        /**
+         * Per-attempt request-write timeout in seconds. Unset => HTTP client default (10s).
+         * <p>
+         * <b>Precedence:</b> a vault that sets {@link VaultConfig#setWriteTimeout(Integer)} wins;
+         * this value applies only to vaults that leave it unset.
+         */
+        public SkyflowClientBuilder writeTimeout(int writeTimeout) {
+            this.writeTimeout = writeTimeout;
+            propagateHttpConfig();
+            return this;
+        }
+
+        /**
+         * Retry attempts after the first failure. Default 0 — retries are opt-in so non-idempotent
+         * bulk writes are not replayed automatically.
+         * <p>
+         * <b>Precedence:</b> a vault that sets {@link VaultConfig#setMaxRetries(Integer)} wins;
+         * this value applies only to vaults that leave it unset.
+         */
+        public SkyflowClientBuilder maxRetries(int maxRetries) {
+            this.maxRetries = maxRetries;
+            propagateHttpConfig();
+            return this;
+        }
+
+        /** Push the current client-wide HTTP settings onto every vault controller built so far. */
+        private void propagateHttpConfig() {
+            for (VaultController vault : this.vaultClientsMap.values()) {
+                vault.setCommonHttpConfig(this.timeout, this.connectTimeout, this.readTimeout,
+                        this.writeTimeout, this.maxRetries);
+            }
         }
 
         public Skyflow build() {

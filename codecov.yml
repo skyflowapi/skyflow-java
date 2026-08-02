@@ -1,5 +1,10 @@
 comment: false
 
+# Component paths are prefixed with **/ (quoted - a bare leading * is a YAML
+# alias) so they match every Maven module. Before the common/v2/flowvault
+# split sources lived at src/main/java/...; they are now
+# <module>/src/main/java/..., so the unprefixed globs matched zero files and
+# every component reported no coverage data.
 component_management:
   default_rules:
     statuses:
@@ -9,44 +14,44 @@ component_management:
     - component_id: service_account
       name: Service Account
       paths:
-        - src/main/java/com/skyflow/serviceaccount/**
+        - "**/src/main/java/com/skyflow/serviceaccount/**"
     - component_id: vault_data
       name: Vault Data
       paths:
-        - src/main/java/com/skyflow/vault/data/**
+        - "**/src/main/java/com/skyflow/vault/data/**"
     - component_id: vault_tokens
       name: Vault Tokens
       paths:
-        - src/main/java/com/skyflow/vault/tokens/**
+        - "**/src/main/java/com/skyflow/vault/tokens/**"
     - component_id: vault_connection
       name: Vault Connection
       paths:
-        - src/main/java/com/skyflow/vault/connection/**
+        - "**/src/main/java/com/skyflow/vault/connection/**"
     - component_id: vault_controller
       name: Vault Controller
       paths:
-        - src/main/java/com/skyflow/vault/controller/**
+        - "**/src/main/java/com/skyflow/vault/controller/**"
     - component_id: vault_detect
       name: Detect
       paths:
-        - src/main/java/com/skyflow/vault/detect/**
+        - "**/src/main/java/com/skyflow/vault/detect/**"
     - component_id: vault_audit
       name: Audit
       paths:
-        - src/main/java/com/skyflow/vault/audit/**
+        - "**/src/main/java/com/skyflow/vault/audit/**"
     - component_id: vault_bin
       name: BIN Lookup
       paths:
-        - src/main/java/com/skyflow/vault/bin/**
+        - "**/src/main/java/com/skyflow/vault/bin/**"
     - component_id: config
       name: Config
       paths:
-        - src/main/java/com/skyflow/config/**
+        - "**/src/main/java/com/skyflow/config/**"
     - component_id: utils
       name: Utils
       paths:
-        - src/main/java/com/skyflow/utils/**
+        - "**/src/main/java/com/skyflow/utils/**"
     - component_id: errors
       name: Errors
       paths:
-        - src/main/java/com/skyflow/errors/**
+        - "**/src/main/java/com/skyflow/errors/**"

@@ -1,63 +1,59 @@
 package com.skyflow.vault.data;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.annotations.Expose;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class BulkDetokenizeResponse {
-    @Expose(serialize = true)
     private DetokenizeSummary summary;
+    private List<BulkDetokenizeResponseRecord> records;
 
-    @Expose(serialize = true)
-    private List<DetokenizeResponseObject> success;
+    // Internal fields. transient keeps them out of the toString() output.
+    private transient List<String> originalPayload;
+    private transient List<String> tokensToRetry;
 
-    @Expose(serialize = true)
-    private List<ErrorRecord> errors;
-
-    private List<String> originalPayload;
-    private List<String> tokensToRetry;
-
-    public BulkDetokenizeResponse(List<DetokenizeResponseObject> success, List<ErrorRecord> errors) {
-        this.success = success;
-        this.errors = errors;
+    public BulkDetokenizeResponse(List<BulkDetokenizeResponseRecord> records) {
+        this.records = records;
     }
 
-    public BulkDetokenizeResponse(List<DetokenizeResponseObject> success, List<ErrorRecord> errors, List<String> originalPayload) {
-        this.success = success;
-        this.errors = errors;
+    public BulkDetokenizeResponse(
+            List<BulkDetokenizeResponseRecord> records,
+            List<String> originalPayload
+    ) {
+        this.records = records;
         this.originalPayload = originalPayload;
-        this.summary = new DetokenizeSummary(this.originalPayload.size(), this.success.size(), this.errors.size());
+        int totalFailed = (int) records.stream().filter(record -> record.getError() != null).count();
+        this.summary = new DetokenizeSummary(originalPayload.size(), records.size() - totalFailed, totalFailed);
     }
 
-    public List<String> getTokensToRetry() {
-        if (tokensToRetry == null) {
-            tokensToRetry = new ArrayList<>();
-            tokensToRetry = errors.stream()
-                    .filter(error -> (error.getCode() >= 500 && error.getCode() <= 599) && error.getCode() != 529)
-                    .map(errorRecord -> originalPayload.get(errorRecord.getIndex()))
-                    .collect(Collectors.toList());
-        }
-        return tokensToRetry;
-    }
-
-    public List<DetokenizeResponseObject> getSuccess() {
-        return success;
-    }
     public DetokenizeSummary getSummary() {
         return this.summary;
     }
 
-    public List<ErrorRecord> getErrors() {
-        return this.errors;
-    }
-    @Override
-    public String toString() {
-        Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
-        return gson.toJson(this);
+    public List<BulkDetokenizeResponseRecord> getRecords() {
+        return this.records;
     }
 
+    public List<String> getTokensToRetry() {
+        if (tokensToRetry == null) {
+            // Per-batch responses are built without the original payload; nothing to retry from.
+            if (originalPayload == null) {
+                return new ArrayList<>();
+            }
+            tokensToRetry = records.stream()
+                    .filter(record -> record.getHttpCode() >= 500 && record.getHttpCode() <= 599
+                            && record.getHttpCode() != 529)
+                    .map(record -> originalPayload.get(record.getIndex()))
+                    .collect(Collectors.toCollection(ArrayList::new));
+        }
+        return tokensToRetry;
+    }
+
+    @Override
+    public String toString() {
+        Gson gson = new Gson().newBuilder().serializeNulls().create();
+        return gson.toJson(this);
+    }
 }

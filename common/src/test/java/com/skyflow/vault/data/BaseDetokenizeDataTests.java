@@ -6,23 +6,19 @@ import org.junit.Test;
 public class BaseDetokenizeDataTests {
 
     @Test
-    public void testGetTokenReturnsConstructorValue() {
-        BaseDetokenizeData data = new BaseDetokenizeData("token-value");
+    public void testInstantiationDoesNotThrow() {
+        BaseDetokenizeData data = new BaseDetokenizeData();
 
-        Assert.assertEquals("token-value", data.getToken());
+        Assert.assertNotNull(data);
     }
 
     @Test
-    public void testNullToken() {
-        BaseDetokenizeData data = new BaseDetokenizeData(null);
+    public void testUsableAsExtensionPointForSubclasses() {
+        // BaseDetokenizeData carries no state of its own; it exists purely so module-specific
+        // classes (v2's DetokenizeData, flowvault's TokenGroupRedactions) share a supertype.
+        BaseDetokenizeData data = new BaseDetokenizeData() {
+        };
 
-        Assert.assertNull(data.getToken());
-    }
-
-    @Test
-    public void testEmptyToken() {
-        BaseDetokenizeData data = new BaseDetokenizeData("");
-
-        Assert.assertEquals("", data.getToken());
+        Assert.assertTrue(data instanceof BaseDetokenizeData);
     }
 }
