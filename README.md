@@ -8,10 +8,10 @@ This repository hosts Skyflow's Java SDKs for integrating Skyflow into a Java ba
 
 ## Which package do I want?
 
-| Package | Artifact | README | Vault Type | Supported Operations |
-|---|---|---|---|---|
-| **skyvault** | `com.skyflow:skyflow-java` | [skyvault/README.md](skyvault/README.md) | Privacy DB | <ul><li>Insert</li><li>Detokenize</li><li>Tokenize</li><li>Get</li><li>Update</li><li>Delete</li><li>Query</li><li>Upload File</li><li>Detect (deidentify text/file, reidentify text)</li><li>Connections (invoke third-party connections)</li></ul> |
-| **flowvault** | `com.skyflow:skyflow-flowvault-java` | [flowvault/README.md](flowvault/README.md) | Flow DB | <ul><li>Bulk Insert</li><li>Bulk Tokenize</li><li>Bulk Detokenize</li><li>Bulk Delete Tokens</li></ul>(each with a sync and async variant) |
+| Package | Artifact | README | Vault Type |
+|---|---|---|---|
+| **skyvault** | `com.skyflow:skyflow-java` | [skyvault/README.md](skyvault/README.md) | Privacy DB |
+| **flowvault** | `com.skyflow:skyflow-flowvault-java` | [flowvault/README.md](flowvault/README.md) | Flow DB |
 
 `flowvault` shares auth/client setup with `skyvault` — both depend on the `common` module.
 
