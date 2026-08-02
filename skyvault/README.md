@@ -1,6 +1,6 @@
 # Skyflow Java
 
-> **This is the current, recommended version of the Skyflow SDK.** V2.1.0 brings flexible auth, multi-vault support, builder patterns, native data types, and rich error diagnostics.
+> **This SDK brings flexible auth, multi-vault support, builder patterns, native data types, and rich error diagnostics.**
 >
 > Migrating from v1? See the **[Migration Guide](../docs/migrate_to_v2.md)** for step-by-step instructions. V1 is in maintenance mode and will reach End of Life on October 31, 2026.
 

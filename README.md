@@ -10,7 +10,7 @@ This repository hosts Skyflow's Java SDKs for integrating Skyflow into a Java ba
 
 | Package | Artifact | README | Description |
 |---|---|---|---|
-| **skyvault** | `com.skyflow:skyflow-java` | [skyvault/README.md](skyvault/README.md) | **Current, recommended SDK.** Full vault API (insert, detokenize, tokenize, get, update, delete, query, file upload), Detect (deidentify/reidentify), Connections, flexible auth, multi-vault support. |
+| **skyvault** | `com.skyflow:skyflow-java` | [skyvault/README.md](skyvault/README.md) | Full vault API (insert, detokenize, tokenize, get, update, delete, query, file upload), Detect (deidentify/reidentify), Connections, flexible auth, multi-vault support. |
 | **flowvault** | `com.skyflow:skyflow-flowvault-java` | [flowvault/README.md](flowvault/README.md) | Bulk-only vault operations (`bulkInsert`, `bulkTokenize`, `bulkDetokenize`, `bulkDeleteTokens`, and their async variants) for high-throughput workloads. Shares auth/client setup with skyvault. |
 
 > Migrating from v1? See skyvault's **[Migration Guide](docs/migrate_to_v2.md)**. V1 is in maintenance mode and will reach End of Life on October 31, 2026.
