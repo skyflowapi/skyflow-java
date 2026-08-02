@@ -19,63 +19,78 @@ import java.util.Map;
  */
 public class ResponseComponentTests {
 
-    // ── Success ──────────────────────────────────────────────────────────────
+    // Tests for Success, Summary and Token were removed: the bulk insert response contract
+    // replaced those classes with BulkInsertResponseRecord / BulkSummary, covered below.
+
+    // ── BulkInsertResponseRecord ─────────────────────────────────────────────
 
     @Test
-    public void testSuccess_gettersReturnConstructorValues() {
-        Map<String, List<Token>> tokens = new HashMap<>();
-        tokens.put("group1", Collections.singletonList(new Token("tok-1", "group1")));
-        Map<String, Object> data = new HashMap<>();
-        data.put("name", "John");
+    public void testBulkInsertResponseRecord_gettersReturnConstructorValues() {
+        Map<String, Object> fields = new HashMap<>();
+        fields.put("name", "tok-1");
+        Map<String, Object> hashedData = new HashMap<>();
+        hashedData.put("name", "hashed-1");
 
-        Success success = new Success(2, "skyflow-id-1", tokens, data, "persons");
+        BulkInsertResponseRecord record = new BulkInsertResponseRecord(
+                2, "persons", "skyflow-id-1", fields, hashedData, 200, null, null);
 
-        Assert.assertEquals(2, success.getIndex());
-        Assert.assertEquals("skyflow-id-1", success.getSkyflowId());
-        Assert.assertEquals(tokens, success.getTokens());
-        Assert.assertEquals(data, success.getData());
-        Assert.assertEquals("persons", success.getTable());
+        Assert.assertEquals(2, record.getIndex());
+        Assert.assertEquals("persons", record.getTableName());
+        Assert.assertEquals("skyflow-id-1", record.getSkyflowId());
+        Assert.assertEquals(fields, record.getFields());
+        Assert.assertEquals(hashedData, record.getHashedData());
+        Assert.assertEquals(200, record.getHttpCode());
+        Assert.assertNull(record.getError());
     }
 
     @Test
-    public void testSuccess_toStringContainsSkyflowId() {
-        Success success = new Success(0, "skyflow-id-2", new HashMap<>(), new HashMap<>(), "persons");
-        String json = success.toString();
+    public void testBulkInsertResponseRecord_errorCase() {
+        BulkInsertResponseRecord record = new BulkInsertResponseRecord(
+                3, null, null, null, null, 500, "Internal Server Error", null);
+
+        Assert.assertEquals(3, record.getIndex());
+        Assert.assertEquals(500, record.getHttpCode());
+        Assert.assertEquals("Internal Server Error", record.getError());
+        Assert.assertNull(record.getTableName());
+        Assert.assertNull(record.getSkyflowId());
+        Assert.assertNull(record.getFields());
+        Assert.assertNull(record.getHashedData());
+    }
+
+    @Test
+    public void testBulkInsertResponseRecord_toStringSerializesNulls() {
+        BulkInsertResponseRecord record = new BulkInsertResponseRecord(
+                0, "persons", "skyflow-id-2", null, null, 200, null, null);
+        String json = record.toString();
         Assert.assertNotNull(json);
         Assert.assertTrue(json.contains("skyflow-id-2"));
+        Assert.assertTrue(json.contains("\"index\":0"));
+        Assert.assertTrue(json.contains("\"fields\":null"));
     }
 
-    // ── Summary ──────────────────────────────────────────────────────────────
+    // ── BulkSummary ──────────────────────────────────────────────────────────
 
     @Test
-    public void testSummary_noArgConstructorDefaultsToZero() {
-        Summary summary = new Summary();
+    public void testBulkSummary_noArgConstructorDefaultsToZero() {
+        BulkSummary summary = new BulkSummary();
         Assert.assertEquals(0, summary.getTotalRecords());
         Assert.assertEquals(0, summary.getTotalInserted());
         Assert.assertEquals(0, summary.getTotalFailed());
     }
 
     @Test
-    public void testSummary_allArgConstructor() {
-        Summary summary = new Summary(10, 8, 2);
+    public void testBulkSummary_allArgConstructor() {
+        BulkSummary summary = new BulkSummary(10, 8, 2);
         Assert.assertEquals(10, summary.getTotalRecords());
         Assert.assertEquals(8, summary.getTotalInserted());
         Assert.assertEquals(2, summary.getTotalFailed());
     }
 
     @Test
-    public void testSummary_toStringNotNull() {
-        Assert.assertNotNull(new Summary(1, 1, 0).toString());
+    public void testBulkSummary_toStringNotNull() {
+        Assert.assertNotNull(new BulkSummary(1, 1, 0).toString());
     }
 
-    // ── Token ────────────────────────────────────────────────────────────────
-
-    @Test
-    public void testToken_gettersReturnConstructorValues() {
-        Token token = new Token("tok-value", "group-name");
-        Assert.assertEquals("tok-value", token.getToken());
-        Assert.assertEquals("group-name", token.getTokenGroupName());
-    }
 
     // ── TokenizeResponseToken ────────────────────────────────────────────────
 
@@ -263,38 +278,55 @@ public class ResponseComponentTests {
         Assert.assertNotNull(new ErrorRecord(0, "err", 400).toString());
     }
 
-    // ── DetokenizeResponseObject ─────────────────────────────────────────────
+    // DetokenizeResponseObject tests removed: the class was deleted; the bulk detokenize response
+    // contract replaced it with BulkDetokenizeResponseRecord, covered below.
+
+    // ── BulkDetokenizeResponseRecord ─────────────────────────────────────────
 
     @Test
-    public void testDetokenizeResponseObject_gettersReturnConstructorValues() {
+    public void testBulkDetokenizeResponseRecord_gettersReturnConstructorValues() {
         Map<String, Object> metadata = new HashMap<>();
         metadata.put("key", "value");
 
-        DetokenizeResponseObject obj = new DetokenizeResponseObject(
-                4, "tok-1", "plain-value", "group1", null, metadata);
+        BulkDetokenizeResponseRecord record = new BulkDetokenizeResponseRecord(
+                4, "tok-1", "secret-value", "group1", metadata, 200, null, null);
 
-        Assert.assertEquals(4, obj.getIndex());
-        Assert.assertEquals("tok-1", obj.getToken());
-        Assert.assertEquals("plain-value", obj.getValue());
-        Assert.assertEquals("group1", obj.getTokenGroupName());
-        Assert.assertNull(obj.getError());
-        Assert.assertEquals(metadata, obj.getMetadata());
+        Assert.assertEquals(4, record.getIndex());
+        Assert.assertEquals("tok-1", record.getToken());
+        Assert.assertEquals("group1", record.getTokenGroupName());
+        Assert.assertEquals(metadata, record.getMetadata());
+        Assert.assertEquals(200, record.getHttpCode());
+        Assert.assertNull(record.getError());
     }
 
     @Test
-    public void testDetokenizeResponseObject_errorCase() {
-        DetokenizeResponseObject obj = new DetokenizeResponseObject(
-                0, "tok-2", null, null, "Token not found", null);
+    public void testBulkDetokenizeResponseRecord_errorCase() {
+        BulkDetokenizeResponseRecord record = new BulkDetokenizeResponseRecord(
+                0, "tok-2", null, null, null, 404, "Token not found", null);
 
-        Assert.assertEquals("Token not found", obj.getError());
-        Assert.assertNull(obj.getValue());
-        Assert.assertNull(obj.getTokenGroupName());
-        Assert.assertNull(obj.getMetadata());
+        Assert.assertEquals(0, record.getIndex());
+        Assert.assertEquals("Token not found", record.getError());
+        Assert.assertEquals(404, record.getHttpCode());
+        Assert.assertNull(record.getTokenGroupName());
+        Assert.assertNull(record.getMetadata());
     }
 
     @Test
-    public void testDetokenizeResponseObject_toStringNotNull() {
-        DetokenizeResponseObject obj = new DetokenizeResponseObject(0, "tok", "v", "g", null, null);
-        Assert.assertNotNull(obj.toString());
+    public void testBulkDetokenizeResponseRecord_isADetokenizeResponseRecord() {
+        BulkDetokenizeResponseRecord record = new BulkDetokenizeResponseRecord(
+                1, "tok", "plain", "group", null, 200, null, null);
+        Assert.assertTrue(record instanceof DetokenizeResponseRecord);
+    }
+
+    @Test
+    public void testBulkDetokenizeResponseRecord_toStringSerializesNulls() {
+        BulkDetokenizeResponseRecord record = new BulkDetokenizeResponseRecord(
+                2, "tok", null, null, null, 200, null, null);
+        String json = record.toString();
+
+        Assert.assertNotNull(json);
+        Assert.assertTrue(json.contains("\"index\":2"));
+        Assert.assertTrue(json.contains("\"token\":\"tok\""));
+        Assert.assertTrue(json.contains("\"error\":null"));
     }
 }

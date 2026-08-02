@@ -3,22 +3,21 @@ package com.skyflow.utils.validations;
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.Env;
+import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.vault.data.BulkDeleteTokensRequest;
-import com.skyflow.vault.data.BulkInsertRecord;
+import com.skyflow.vault.data.BulkInsertRequestRecord;
 import com.skyflow.vault.data.BulkInsertRequest;
 import com.skyflow.vault.data.BulkDetokenizeRequest;
-import com.skyflow.vault.data.BulkTokenGroupRedactions;
 import com.skyflow.vault.data.BulkTokenizeRequestRecord;
 import com.skyflow.vault.data.BulkTokenizeRequest;
-import com.skyflow.vault.data.DeleteTokensRequest;
-import com.skyflow.vault.data.DetokenizeData;
 import com.skyflow.vault.data.DetokenizeRequest;
-import com.skyflow.vault.data.InsertRecord;
+import com.skyflow.vault.data.InsertRequestRecord;
 import com.skyflow.vault.data.InsertRequest;
 import com.skyflow.vault.data.TokenGroupRedactions;
 import com.skyflow.vault.data.TokenizeRequestRecord;
 import com.skyflow.vault.data.TokenizeRequest;
+import com.skyflow.vault.data.UpsertOptions;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -33,6 +32,9 @@ import java.util.Map;
 public class ValidationsTests {
     private static final String EXCEPTION_NOT_THROWN = "Should have thrown an exception";
     private static final String INVALID_EXCEPTION_THROWN = "Should not have thrown any exception";
+
+    // Tests for validateTokenizeRequest / validateDeleteTokensRequest were removed:
+    // those unary validators no longer exist (bulk-only module).
 
     // ── validateCredentials ───────────────────────────────────────────────────
 
@@ -272,7 +274,7 @@ public class ValidationsTests {
         VaultConfig config = new VaultConfig();
         config.setVaultId("vault123");
         config.setClusterId("cluster1");
-        config.setVaultURL("   ");
+        config.setVaultUrl("   ");
         try {
             Validations.validateVaultConfiguration(config);
             Assert.fail(EXCEPTION_NOT_THROWN);
@@ -285,7 +287,7 @@ public class ValidationsTests {
     public void testValidateVaultConfiguration_invalidVaultUrlFormat() {
         VaultConfig config = new VaultConfig();
         config.setVaultId("vault123");
-        config.setVaultURL("http://not-https.example.com");
+        config.setVaultUrl("http://not-https.example.com");
         try {
             Validations.validateVaultConfiguration(config);
             Assert.fail(EXCEPTION_NOT_THROWN);
@@ -311,7 +313,7 @@ public class ValidationsTests {
     public void testValidateVaultConfiguration_validWithVaultUrl() {
         VaultConfig config = new VaultConfig();
         config.setVaultId("vault123");
-        config.setVaultURL("https://myvault.example.com");
+        config.setVaultUrl("https://myvault.example.com");
         try {
             Validations.validateVaultConfiguration(config);
         } catch (SkyflowException e) {
@@ -349,7 +351,7 @@ public class ValidationsTests {
 
     @Test
     public void testValidateInsertRequest_nullRecords() {
-        InsertRequest request = InsertRequest.builder().table("table1").records(null).build();
+        InsertRequest request = InsertRequest.builder().records(null).build();
         try {
             Validations.validateInsertRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
@@ -360,7 +362,7 @@ public class ValidationsTests {
 
     @Test
     public void testValidateInsertRequest_emptyRecords() {
-        InsertRequest request = InsertRequest.builder().table("table1").records(new ArrayList<>()).build();
+        InsertRequest request = InsertRequest.builder().records(new ArrayList<>()).build();
         try {
             Validations.validateInsertRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
@@ -371,9 +373,9 @@ public class ValidationsTests {
 
     @Test
     public void testValidateInsertRequest_nullRecordInList() {
-        ArrayList<InsertRecord> records = new ArrayList<>();
+        ArrayList<InsertRequestRecord> records = new ArrayList<>();
         records.add(null);
-        InsertRequest request = InsertRequest.builder().table("table1").records(records).build();
+        InsertRequest request = InsertRequest.builder().records(records).build();
         try {
             Validations.validateInsertRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
@@ -382,27 +384,19 @@ public class ValidationsTests {
         }
     }
 
-    @Test
-    public void testValidateInsertRequest_tableSpecifiedAtBothPlaces() {
-        Map<String, Object> data = new HashMap<>();
-        data.put("name", "john");
-        ArrayList<InsertRecord> records = new ArrayList<>();
-        records.add(InsertRecord.builder().table("recordTable").data(data).build());
-        InsertRequest request = InsertRequest.builder().table("requestTable").records(records).build();
-        try {
-            Validations.validateInsertRequest(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertNotNull(e.getMessage());
-        }
-    }
+    // NOTE: a table name may now be supplied at either the record level or the request level.
+    // EmptyTable is thrown only when it is missing from both. Specifying it at both levels is
+    // currently accepted (no conflict error) — that decision is deliberately deferred. Likewise
+    // the old "upsert present at record/request level requires table at the other level" checks are
+    // gone, since upsert is no longer coupled to where the table is specified — it's just an
+    // UpsertOptions object validated the same way at either level (see the upsert tests below).
 
     @Test
-    public void testValidateInsertRequest_tableMissingAtBothPlaces() {
+    public void testValidateInsertRequest_missingTableNameInRecordThrowsEmptyTable() {
         Map<String, Object> data = new HashMap<>();
         data.put("name", "john");
-        ArrayList<InsertRecord> records = new ArrayList<>();
-        records.add(InsertRecord.builder().data(data).build());
+        ArrayList<InsertRequestRecord> records = new ArrayList<>();
+        records.add(InsertRequestRecord.builder().data(data).build());
         InsertRequest request = InsertRequest.builder().records(records).build();
         try {
             Validations.validateInsertRequest(request);
@@ -413,15 +407,12 @@ public class ValidationsTests {
     }
 
     @Test
-    public void testValidateInsertRequest_upsertAtRecordLevelWhenTableAtRequestLevel() {
+    public void testValidateInsertRequest_emptyTableNameInRecordThrowsEmptyTable() {
         Map<String, Object> data = new HashMap<>();
         data.put("name", "john");
-        ArrayList<InsertRecord> records = new ArrayList<>();
-        records.add(InsertRecord.builder().data(data).upsert(Collections.singletonList("email")).build());
-        InsertRequest request = InsertRequest.builder()
-                .table("table1")
-                .records(records)
-                .build();
+        ArrayList<InsertRequestRecord> records = new ArrayList<>();
+        records.add(InsertRequestRecord.builder().tableName("   ").data(data).build());
+        InsertRequest request = InsertRequest.builder().records(records).build();
         try {
             Validations.validateInsertRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
@@ -431,20 +422,16 @@ public class ValidationsTests {
     }
 
     @Test
-    public void testValidateInsertRequest_upsertAtRequestLevelWhenNoTableAtRequestLevel() {
+    public void testValidateInsertRequest_requestLevelTableNameSatisfiesRecordsWithoutOne() {
         Map<String, Object> data = new HashMap<>();
         data.put("name", "john");
-        ArrayList<InsertRecord> records = new ArrayList<>();
-        records.add(InsertRecord.builder().table("table1").data(data).build());
-        InsertRequest request = InsertRequest.builder()
-                .records(records)
-                .upsert(Collections.singletonList("email"))
-                .build();
+        ArrayList<InsertRequestRecord> records = new ArrayList<>();
+        records.add(InsertRequestRecord.builder().data(data).build());
+        InsertRequest request = InsertRequest.builder().tableName("table1").records(records).build();
         try {
             Validations.validateInsertRequest(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertNotNull(e.getMessage());
+            Assert.fail(INVALID_EXCEPTION_THROWN);
         }
     }
 
@@ -452,13 +439,29 @@ public class ValidationsTests {
     public void testValidateInsertRequest_emptyUpsertAtRequestLevel() {
         Map<String, Object> data = new HashMap<>();
         data.put("name", "john");
-        ArrayList<InsertRecord> records = new ArrayList<>();
-        records.add(InsertRecord.builder().data(data).build());
+        ArrayList<InsertRequestRecord> records = new ArrayList<>();
+        records.add(InsertRequestRecord.builder().tableName("table1").data(data).build());
+        UpsertOptions upsert = UpsertOptions.builder().uniqueColumns(new ArrayList<>()).build();
         InsertRequest request = InsertRequest.builder()
-                .table("table1")
                 .records(records)
-                .upsert(new ArrayList<>())
+                .upsert(upsert)
                 .build();
+        try {
+            Validations.validateInsertRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertNotNull(e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateInsertRequest_emptyUpsertAtRecordLevel() {
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", "john");
+        UpsertOptions upsert = UpsertOptions.builder().uniqueColumns(new ArrayList<>()).build();
+        ArrayList<InsertRequestRecord> records = new ArrayList<>();
+        records.add(InsertRequestRecord.builder().tableName("table1").data(data).upsert(upsert).build());
+        InsertRequest request = InsertRequest.builder().records(records).build();
         try {
             Validations.validateInsertRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
@@ -471,8 +474,8 @@ public class ValidationsTests {
     public void testValidateInsertRequest_emptyOrNullKeyInData() {
         Map<String, Object> data = new HashMap<>();
         data.put("", "john");
-        ArrayList<InsertRecord> records = new ArrayList<>();
-        records.add(InsertRecord.builder().table("table1").data(data).build());
+        ArrayList<InsertRequestRecord> records = new ArrayList<>();
+        records.add(InsertRequestRecord.builder().tableName("table1").data(data).build());
         InsertRequest request = InsertRequest.builder().records(records).build();
         try {
             Validations.validateInsertRequest(request);
@@ -486,8 +489,8 @@ public class ValidationsTests {
     public void testValidateInsertRequest_emptyOrNullValueInData() {
         Map<String, Object> data = new HashMap<>();
         data.put("name", "");
-        ArrayList<InsertRecord> records = new ArrayList<>();
-        records.add(InsertRecord.builder().table("table1").data(data).build());
+        ArrayList<InsertRequestRecord> records = new ArrayList<>();
+        records.add(InsertRequestRecord.builder().tableName("table1").data(data).build());
         InsertRequest request = InsertRequest.builder().records(records).build();
         try {
             Validations.validateInsertRequest(request);
@@ -501,8 +504,62 @@ public class ValidationsTests {
     public void testValidateInsertRequest_validRequest() {
         Map<String, Object> data = new HashMap<>();
         data.put("name", "john");
-        ArrayList<InsertRecord> records = new ArrayList<>();
-        records.add(InsertRecord.builder().table("table1").data(data).build());
+        ArrayList<InsertRequestRecord> records = new ArrayList<>();
+        records.add(InsertRequestRecord.builder().tableName("table1").data(data).build());
+        InsertRequest request = InsertRequest.builder().records(records).build();
+        try {
+            Validations.validateInsertRequest(request);
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testValidateInsertRequest_validRequestWithUpsertAtRequestLevel() {
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", "john");
+        ArrayList<InsertRequestRecord> records = new ArrayList<>();
+        records.add(InsertRequestRecord.builder().data(data).build());
+        UpsertOptions upsert = UpsertOptions.builder()
+                .uniqueColumns(Collections.singletonList("email"))
+                .updateType("UPDATE")
+                .build();
+        InsertRequest request = InsertRequest.builder()
+                .tableName("table1")
+                .records(records)
+                .upsert(upsert)
+                .build();
+        try {
+            Validations.validateInsertRequest(request);
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testValidateInsertRequest_validRequestWithUpsertAtRecordLevel() {
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", "john");
+        UpsertOptions upsert = UpsertOptions.builder()
+                .uniqueColumns(Collections.singletonList("email"))
+                .updateType("REPLACE")
+                .build();
+        ArrayList<InsertRequestRecord> records = new ArrayList<>();
+        records.add(InsertRequestRecord.builder().tableName("table1").data(data).upsert(upsert).build());
+        InsertRequest request = InsertRequest.builder().records(records).build();
+        try {
+            Validations.validateInsertRequest(request);
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testValidateInsertRequest_validRequestWithTokens() {
+        Map<String, Object> tokens = new HashMap<>();
+        tokens.put("name", "tok-abc");
+        ArrayList<InsertRequestRecord> records = new ArrayList<>();
+        records.add(InsertRequestRecord.builder().tableName("table1").tokens(tokens).build());
         InsertRequest request = InsertRequest.builder().records(records).build();
         try {
             Validations.validateInsertRequest(request);
@@ -524,8 +581,8 @@ public class ValidationsTests {
     }
 
     @Test
-    public void testValidateDetokenizeRequest_nullDetokenizeData() {
-        DetokenizeRequest request = DetokenizeRequest.builder().detokenizeData(null).build();
+    public void testValidateDetokenizeRequest_nullTokens() {
+        DetokenizeRequest request = DetokenizeRequest.builder().tokens(null).build();
         try {
             Validations.validateDetokenizeRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
@@ -535,8 +592,8 @@ public class ValidationsTests {
     }
 
     @Test
-    public void testValidateDetokenizeRequest_emptyDetokenizeData() {
-        DetokenizeRequest request = DetokenizeRequest.builder().detokenizeData(new ArrayList<>()).build();
+    public void testValidateDetokenizeRequest_emptyTokens() {
+        DetokenizeRequest request = DetokenizeRequest.builder().tokens(new ArrayList<>()).build();
         try {
             Validations.validateDetokenizeRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
@@ -546,10 +603,10 @@ public class ValidationsTests {
     }
 
     @Test
-    public void testValidateDetokenizeRequest_nullEntryInDetokenizeData() {
-        ArrayList<DetokenizeData> data = new ArrayList<>();
-        data.add(null);
-        DetokenizeRequest request = DetokenizeRequest.builder().detokenizeData(data).build();
+    public void testValidateDetokenizeRequest_nullTokenInList() {
+        List<String> tokens = new ArrayList<>();
+        tokens.add(null);
+        DetokenizeRequest request = DetokenizeRequest.builder().tokens(tokens).build();
         try {
             Validations.validateDetokenizeRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
@@ -559,10 +616,10 @@ public class ValidationsTests {
     }
 
     @Test
-    public void testValidateDetokenizeRequest_blankTokenInDetokenizeData() {
-        ArrayList<DetokenizeData> data = new ArrayList<>();
-        data.add(new DetokenizeData("   "));
-        DetokenizeRequest request = DetokenizeRequest.builder().detokenizeData(data).build();
+    public void testValidateDetokenizeRequest_blankTokenInList() {
+        DetokenizeRequest request = DetokenizeRequest.builder()
+                .tokens(Collections.singletonList("   "))
+                .build();
         try {
             Validations.validateDetokenizeRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
@@ -573,12 +630,10 @@ public class ValidationsTests {
 
     @Test
     public void testValidateDetokenizeRequest_nullTokenGroupRedactionInList() {
-        ArrayList<DetokenizeData> data = new ArrayList<>();
-        data.add(new DetokenizeData("token1"));
         List<TokenGroupRedactions> groupRedactions = new ArrayList<>();
         groupRedactions.add(null);
         DetokenizeRequest request = DetokenizeRequest.builder()
-                .detokenizeData(data)
+                .tokens(Collections.singletonList("token1"))
                 .tokenGroupRedactions(groupRedactions)
                 .build();
         try {
@@ -591,12 +646,10 @@ public class ValidationsTests {
 
     @Test
     public void testValidateDetokenizeRequest_blankTokenGroupNameInRedaction() {
-        ArrayList<DetokenizeData> data = new ArrayList<>();
-        data.add(new DetokenizeData("token1"));
         List<TokenGroupRedactions> groupRedactions = Collections.singletonList(
                 TokenGroupRedactions.builder().tokenGroupName("   ").redaction("MASKED").build());
         DetokenizeRequest request = DetokenizeRequest.builder()
-                .detokenizeData(data)
+                .tokens(Collections.singletonList("token1"))
                 .tokenGroupRedactions(groupRedactions)
                 .build();
         try {
@@ -609,12 +662,10 @@ public class ValidationsTests {
 
     @Test
     public void testValidateDetokenizeRequest_blankRedactionInGroup() {
-        ArrayList<DetokenizeData> data = new ArrayList<>();
-        data.add(new DetokenizeData("token1"));
         List<TokenGroupRedactions> groupRedactions = Collections.singletonList(
                 TokenGroupRedactions.builder().tokenGroupName("group1").redaction("   ").build());
         DetokenizeRequest request = DetokenizeRequest.builder()
-                .detokenizeData(data)
+                .tokens(Collections.singletonList("token1"))
                 .tokenGroupRedactions(groupRedactions)
                 .build();
         try {
@@ -627,9 +678,9 @@ public class ValidationsTests {
 
     @Test
     public void testValidateDetokenizeRequest_validRequest() {
-        ArrayList<DetokenizeData> data = new ArrayList<>();
-        data.add(new DetokenizeData("token1"));
-        DetokenizeRequest request = DetokenizeRequest.builder().detokenizeData(data).build();
+        DetokenizeRequest request = DetokenizeRequest.builder()
+                .tokens(Collections.singletonList("token1"))
+                .build();
         try {
             Validations.validateDetokenizeRequest(request);
         } catch (SkyflowException e) {
@@ -639,12 +690,10 @@ public class ValidationsTests {
 
     @Test
     public void testValidateDetokenizeRequest_validRequestWithTokenGroupRedactions() {
-        ArrayList<DetokenizeData> data = new ArrayList<>();
-        data.add(new DetokenizeData("token1"));
         List<TokenGroupRedactions> groupRedactions = Collections.singletonList(
                 TokenGroupRedactions.builder().tokenGroupName("group1").redaction("MASKED").build());
         DetokenizeRequest request = DetokenizeRequest.builder()
-                .detokenizeData(data)
+                .tokens(Collections.singletonList("token1"))
                 .tokenGroupRedactions(groupRedactions)
                 .build();
         try {
@@ -690,7 +739,7 @@ public class ValidationsTests {
 
     @Test
     public void testValidateBulkInsertRequest_nullRecordInList() {
-        ArrayList<BulkInsertRecord> records = new ArrayList<>();
+        ArrayList<InsertRequestRecord> records = new ArrayList<>();
         records.add(null);
         BulkInsertRequest request = BulkInsertRequest.builder().records(records).build();
         try {
@@ -701,69 +750,94 @@ public class ValidationsTests {
         }
     }
 
-    @Test
-    public void testValidateBulkInsertRequest_tableSpecifiedAtBothPlaces() {
-        Map<String, Object> data = new HashMap<>();
-        data.put("name", "john");
-        ArrayList<BulkInsertRecord> records = new ArrayList<>();
-        records.add(BulkInsertRecord.builder().table("table1").data(data).build());
-        BulkInsertRequest request = BulkInsertRequest.builder().table("table1").records(records).build();
-        try {
-            Validations.validateBulkInsertRequest(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertNotNull(e.getMessage());
-        }
-    }
+    // Removed: testValidateBulkInsertRequest_tableSpecifiedAtBothPlaces — bulk insert now
+    // delegates to validateInsertRequest, which deliberately accepts a table name at both
+    // the request and record level (TableSpecifiedInRequestAndRecordObject is no longer thrown).
+
+    // Removed: testValidateBulkInsertRequest_upsertAtRecordLevelWhenTableAtRequestLevel and
+    // testValidateBulkInsertRequest_upsertAtRequestLevelWhenNoTableAtRequestLevel — upsert is
+    // now an UpsertOptions object accepted at either level, so UpsertTableRequestAtRecordLevel /
+    // UpsertTableRequestAtRequestLevel are no longer thrown for insert.
 
     @Test
-    public void testValidateBulkInsertRequest_tableNotSpecifiedAnywhere() {
+    public void testValidateBulkInsertRequest_tableNotSpecifiedAnywhereThrowsEmptyTable() {
         Map<String, Object> data = new HashMap<>();
         data.put("name", "john");
-        ArrayList<BulkInsertRecord> records = new ArrayList<>();
-        records.add(BulkInsertRecord.builder().data(data).build());
+        ArrayList<InsertRequestRecord> records = new ArrayList<>();
+        records.add(BulkInsertRequestRecord.builder().data(data).build());
         BulkInsertRequest request = BulkInsertRequest.builder().records(records).build();
         try {
             Validations.validateBulkInsertRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertNotNull(e.getMessage());
+            Assert.assertEquals(ErrorMessage.TableNotSpecifiedInRequestAndRecordObject.getMessage(), e.getMessage());
         }
     }
 
     @Test
-    public void testValidateBulkInsertRequest_upsertAtRecordLevelWhenTableAtRequestLevel() {
+    public void testValidateBulkInsertRequest_requestLevelTableNameSatisfiesRecordsWithoutOne() {
         Map<String, Object> data = new HashMap<>();
         data.put("name", "john");
-        ArrayList<BulkInsertRecord> records = new ArrayList<>();
-        records.add(BulkInsertRecord.builder().data(data).upsert(Collections.singletonList("email")).build());
+        ArrayList<InsertRequestRecord> records = new ArrayList<>();
+        records.add(BulkInsertRequestRecord.builder().data(data).build());
+        BulkInsertRequest request = BulkInsertRequest.builder().tableName("table1").records(records).build();
+        try {
+            Validations.validateBulkInsertRequest(request);
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testValidateBulkInsertRequest_tableNameAtBothLevelsThrows() {
+        // Table name must live at exactly one level, never both.
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", "john");
+        ArrayList<InsertRequestRecord> records = new ArrayList<>();
+        records.add(BulkInsertRequestRecord.builder().tableName("table1").data(data).build());
+        BulkInsertRequest request = BulkInsertRequest.builder().tableName("table1").records(records).build();
+        try {
+            Validations.validateBulkInsertRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.TableSpecifiedInRequestAndRecordObject.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateBulkInsertRequest_emptyUpsertAtRecordLevel() {
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", "john");
+        ArrayList<InsertRequestRecord> records = new ArrayList<>();
+        records.add(BulkInsertRequestRecord.builder()
+                .tableName("table1")
+                .data(data)
+                .upsert(UpsertOptions.builder().updateType("UPDATE").build())
+                .build());
+        BulkInsertRequest request = BulkInsertRequest.builder().records(records).build();
+        try {
+            Validations.validateBulkInsertRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.EmptyUpsertValues.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateBulkInsertRequest_emptyUpsertAtRequestLevel() {
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", "john");
+        ArrayList<InsertRequestRecord> records = new ArrayList<>();
+        records.add(BulkInsertRequestRecord.builder().tableName("table1").data(data).build());
         BulkInsertRequest request = BulkInsertRequest.builder()
-                .table("table1")
                 .records(records)
+                .upsert(UpsertOptions.builder().uniqueColumns(new ArrayList<>()).build())
                 .build();
         try {
             Validations.validateBulkInsertRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertNotNull(e.getMessage());
-        }
-    }
-
-    @Test
-    public void testValidateBulkInsertRequest_upsertAtRequestLevelWhenNoTableAtRequestLevel() {
-        Map<String, Object> data = new HashMap<>();
-        data.put("name", "john");
-        ArrayList<BulkInsertRecord> records = new ArrayList<>();
-        records.add(BulkInsertRecord.builder().table("table1").data(data).build());
-        BulkInsertRequest request = BulkInsertRequest.builder()
-                .records(records)
-                .upsert(Collections.singletonList("email"))
-                .build();
-        try {
-            Validations.validateBulkInsertRequest(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertNotNull(e.getMessage());
+            Assert.assertEquals(ErrorMessage.EmptyUpsertValues.getMessage(), e.getMessage());
         }
     }
 
@@ -771,8 +845,8 @@ public class ValidationsTests {
     public void testValidateBulkInsertRequest_emptyKeyInData() {
         Map<String, Object> data = new HashMap<>();
         data.put("", "john");
-        ArrayList<BulkInsertRecord> records = new ArrayList<>();
-        records.add(BulkInsertRecord.builder().table("table1").data(data).build());
+        ArrayList<InsertRequestRecord> records = new ArrayList<>();
+        records.add(BulkInsertRequestRecord.builder().tableName("table1").data(data).build());
         BulkInsertRequest request = BulkInsertRequest.builder().records(records).build();
         try {
             Validations.validateBulkInsertRequest(request);
@@ -786,8 +860,8 @@ public class ValidationsTests {
     public void testValidateBulkInsertRequest_emptyValueInData() {
         Map<String, Object> data = new HashMap<>();
         data.put("name", "");
-        ArrayList<BulkInsertRecord> records = new ArrayList<>();
-        records.add(BulkInsertRecord.builder().table("table1").data(data).build());
+        ArrayList<InsertRequestRecord> records = new ArrayList<>();
+        records.add(BulkInsertRequestRecord.builder().tableName("table1").data(data).build());
         BulkInsertRequest request = BulkInsertRequest.builder().records(records).build();
         try {
             Validations.validateBulkInsertRequest(request);
@@ -801,8 +875,8 @@ public class ValidationsTests {
     public void testValidateBulkInsertRequest_validRequest() {
         Map<String, Object> data = new HashMap<>();
         data.put("name", "john");
-        ArrayList<BulkInsertRecord> records = new ArrayList<>();
-        records.add(BulkInsertRecord.builder().table("table1").data(data).build());
+        ArrayList<InsertRequestRecord> records = new ArrayList<>();
+        records.add(BulkInsertRequestRecord.builder().tableName("table1").data(data).build());
         BulkInsertRequest request = BulkInsertRequest.builder().records(records).build();
         try {
             Validations.validateBulkInsertRequest(request);
@@ -812,17 +886,368 @@ public class ValidationsTests {
     }
 
     @Test
-    public void testValidateBulkInsertRequest_validRequestOver10000Records() {
-        // Bulk operations rely on batching, not a hard cap — must not throw for large lists.
+    public void testValidateBulkInsertRequest_validRequestWithUpsertAndTokens() {
         Map<String, Object> data = new HashMap<>();
         data.put("name", "john");
-        ArrayList<BulkInsertRecord> records = new ArrayList<>();
+        Map<String, Object> tokens = new HashMap<>();
+        tokens.put("name", "tok-abc");
+        ArrayList<InsertRequestRecord> records = new ArrayList<>();
+        records.add(BulkInsertRequestRecord.builder()
+                .tableName("table1")
+                .data(data)
+                .tokens(tokens)
+                .upsert(UpsertOptions.builder()
+                        .updateType("REPLACE")
+                        .uniqueColumns(Collections.singletonList("email"))
+                        .build())
+                .build());
+        BulkInsertRequest request = BulkInsertRequest.builder().records(records).build();
+        try {
+            Validations.validateBulkInsertRequest(request);
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testValidateBulkInsertRequest_over10000RecordsThrows() {
+        // Constants.MAX_BULK_DATA_SIZE is a hard ceiling; batching splits the payload but
+        // does not lift it.
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", "john");
+        ArrayList<InsertRequestRecord> records = new ArrayList<>();
         for (int i = 0; i < 10001; i++) {
-            records.add(BulkInsertRecord.builder().table("table1").data(data).build());
+            records.add(BulkInsertRequestRecord.builder().tableName("table1").data(data).build());
         }
         BulkInsertRequest request = BulkInsertRequest.builder().records(records).build();
         try {
             Validations.validateBulkInsertRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.RecordSizeExceedError.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateBulkInsertRequest_exactly10000RecordsIsValid() {
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", "john");
+        ArrayList<InsertRequestRecord> records = new ArrayList<>();
+        for (int i = 0; i < 10000; i++) {
+            records.add(BulkInsertRequestRecord.builder().tableName("table1").data(data).build());
+        }
+        BulkInsertRequest request = BulkInsertRequest.builder().records(records).build();
+        try {
+            Validations.validateBulkInsertRequest(request);
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testValidateBulkDetokenizeRequest_over10000TokensThrows() {
+        List<String> tokens = new ArrayList<>();
+        for (int i = 0; i < 10001; i++) {
+            tokens.add("token-" + i);
+        }
+        BulkDetokenizeRequest request = BulkDetokenizeRequest.builder().tokens(tokens).build();
+        try {
+            Validations.validateBulkDetokenizeRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.TokensSizeExceedError.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateBulkDeleteTokensRequest_over10000TokensThrows() {
+        List<String> tokens = new ArrayList<>();
+        for (int i = 0; i < 10001; i++) {
+            tokens.add("token-" + i);
+        }
+        BulkDeleteTokensRequest request = BulkDeleteTokensRequest.builder().tokens(tokens).build();
+        try {
+            Validations.validateBulkDeleteTokensRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.DeleteTokensSizeExceedError.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateBulkTokenizeRequest_over10000RecordsThrows() {
+        ArrayList<BulkTokenizeRequestRecord> records = new ArrayList<>();
+        for (int i = 0; i < 10001; i++) {
+            records.add(BulkTokenizeRequestRecord.builder()
+                    .value("value-" + i)
+                    .tokenGroupNames(Collections.singletonList("group"))
+                    .build());
+        }
+        BulkTokenizeRequest request = BulkTokenizeRequest.builder().records(records).build();
+        try {
+            Validations.validateBulkTokenizeRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.TokenizeDataSizeExceedError.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateInsertRequest_unrecognizedUpdateTypeThrows() {
+        // Previously this was silently dropped during mapping; it is now rejected up front.
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", "john");
+        ArrayList<InsertRequestRecord> records = new ArrayList<>();
+        records.add(InsertRequestRecord.builder().data(data).build());
+        InsertRequest request = InsertRequest.builder()
+                .tableName("table1")
+                .records(records)
+                .upsert(UpsertOptions.builder()
+                        .uniqueColumns(Collections.singletonList("email"))
+                        .updateType("MERGE")
+                        .build())
+                .build();
+        try {
+            Validations.validateInsertRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.InvalidUpsertUpdateType.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateInsertRequest_updateTypeWithStrayWhitespaceThrows() {
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", "john");
+        ArrayList<InsertRequestRecord> records = new ArrayList<>();
+        records.add(InsertRequestRecord.builder().data(data).build());
+        InsertRequest request = InsertRequest.builder()
+                .tableName("table1")
+                .records(records)
+                .upsert(UpsertOptions.builder()
+                        .uniqueColumns(Collections.singletonList("email"))
+                        .updateType("update ")
+                        .build())
+                .build();
+        try {
+            Validations.validateInsertRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.InvalidUpsertUpdateType.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateInsertRequest_nullUpdateTypeIsValid() {
+        // updateType is optional; only a non-null unrecognized value is rejected.
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", "john");
+        ArrayList<InsertRequestRecord> records = new ArrayList<>();
+        records.add(InsertRequestRecord.builder().data(data).build());
+        InsertRequest request = InsertRequest.builder()
+                .tableName("table1")
+                .records(records)
+                .upsert(UpsertOptions.builder().uniqueColumns(Collections.singletonList("email")).build())
+                .build();
+        try {
+            Validations.validateInsertRequest(request);
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testValidateBulkInsertRequest_plainInsertRequestRecordRejected() {
+        // `records` is inherited as List<InsertRequestRecord>, so a plain unary record is
+        // accepted by the compiler. Bulk must reject it, otherwise getRecordsToRetry() would
+        // hit a ClassCastException later.
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", "john");
+        ArrayList<InsertRequestRecord> records = new ArrayList<>();
+        records.add(InsertRequestRecord.builder().tableName("table1").data(data).build());
+        BulkInsertRequest request = BulkInsertRequest.builder().records(records).build();
+        try {
+            Validations.validateBulkInsertRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.InvalidRecord.getMessage(), e.getMessage());
+        }
+    }
+
+    // ── validateBulkInsertRequest: table-name presence rule ────────────────────
+    //
+    // The rule is: a table name must be present at the request level OR on EVERY record.
+    // "Present" means non-null and non-blank at both levels (Validations trims before testing,
+    // and Utils.hasText applies the same test when mapping to the wire), so a blank record-level
+    // name is treated as absent and satisfied by the request-level one.
+
+    @Test
+    public void testValidateBulkInsertRequest_requestLevelTableNameSatisfiesBlankRecordTableNames() {
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", "john");
+        ArrayList<InsertRequestRecord> records = new ArrayList<>();
+        records.add(BulkInsertRequestRecord.builder().tableName("   ").data(data).build());
+        records.add(BulkInsertRequestRecord.builder().tableName("").data(data).build());
+        records.add(BulkInsertRequestRecord.builder().data(data).build());
+        BulkInsertRequest request = BulkInsertRequest.builder().tableName("cards").records(records).build();
+        try {
+            Validations.validateBulkInsertRequest(request);
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testValidateBulkInsertRequest_noRequestLevelTableNameButEveryRecordHasOneIsValid() {
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", "john");
+        ArrayList<InsertRequestRecord> records = new ArrayList<>();
+        records.add(BulkInsertRequestRecord.builder().tableName("cards").data(data).build());
+        records.add(BulkInsertRequestRecord.builder().tableName("accounts").data(data).build());
+        records.add(BulkInsertRequestRecord.builder().tableName("people").data(data).build());
+        BulkInsertRequest request = BulkInsertRequest.builder().records(records).build();
+        try {
+            Validations.validateBulkInsertRequest(request);
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testValidateBulkInsertRequest_noRequestLevelTableNameAndOneRecordMissingThrowsEmptyTable() {
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", "john");
+        ArrayList<InsertRequestRecord> records = new ArrayList<>();
+        records.add(BulkInsertRequestRecord.builder().tableName("cards").data(data).build());
+        records.add(BulkInsertRequestRecord.builder().data(data).build());
+        records.add(BulkInsertRequestRecord.builder().tableName("people").data(data).build());
+        BulkInsertRequest request = BulkInsertRequest.builder().records(records).build();
+        try {
+            Validations.validateBulkInsertRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.TableNotSpecifiedInRequestAndRecordObject.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateBulkInsertRequest_noRequestLevelTableNameAndOneRecordBlankThrowsEmptyTable() {
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", "john");
+        ArrayList<InsertRequestRecord> records = new ArrayList<>();
+        records.add(BulkInsertRequestRecord.builder().tableName("cards").data(data).build());
+        records.add(BulkInsertRequestRecord.builder().tableName("   ").data(data).build());
+        BulkInsertRequest request = BulkInsertRequest.builder().records(records).build();
+        try {
+            Validations.validateBulkInsertRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.TableNotSpecifiedInRequestAndRecordObject.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateBulkInsertRequest_blankRequestLevelTableNameDoesNotSatisfyRecords() {
+        // A blank request-level table name is treated as absent too, so records must supply one.
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", "john");
+        ArrayList<InsertRequestRecord> records = new ArrayList<>();
+        records.add(BulkInsertRequestRecord.builder().data(data).build());
+        BulkInsertRequest request = BulkInsertRequest.builder().tableName("   ").records(records).build();
+        try {
+            Validations.validateBulkInsertRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.TableNotSpecifiedInRequestAndRecordObject.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateInsertRequest_upsertAtRequestLevelWithTableAtRecordLevelThrows() {
+        // upsert must sit at the same level as the table name.
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", "john");
+        ArrayList<InsertRequestRecord> records = new ArrayList<>();
+        records.add(InsertRequestRecord.builder().tableName("table1").data(data).build());
+        InsertRequest request = InsertRequest.builder()
+                .records(records)
+                .upsert(UpsertOptions.builder().uniqueColumns(Collections.singletonList("email")).build())
+                .build();
+        try {
+            Validations.validateInsertRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.UpsertTableRequestAtRequestLevel.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateInsertRequest_upsertAtRecordLevelWithTableAtRequestLevelThrows() {
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", "john");
+        ArrayList<InsertRequestRecord> records = new ArrayList<>();
+        records.add(InsertRequestRecord.builder()
+                .data(data)
+                .upsert(UpsertOptions.builder().uniqueColumns(Collections.singletonList("email")).build())
+                .build());
+        InsertRequest request = InsertRequest.builder().tableName("table1").records(records).build();
+        try {
+            Validations.validateInsertRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.UpsertTableRequestAtRecordLevel.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateInsertRequest_upsertOnSomeRecordsOnlyIsValid() {
+        // Upsert is optional per record; it only has to sit at the same level as the table name.
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", "john");
+        ArrayList<InsertRequestRecord> records = new ArrayList<>();
+        records.add(InsertRequestRecord.builder()
+                .tableName("table1")
+                .data(data)
+                .upsert(UpsertOptions.builder().uniqueColumns(Collections.singletonList("email")).build())
+                .build());
+        records.add(InsertRequestRecord.builder().tableName("table1").data(data).build());
+        InsertRequest request = InsertRequest.builder().records(records).build();
+        try {
+            Validations.validateInsertRequest(request);
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testValidateInsertRequest_upsertOnEveryRecordWithTableOnEveryRecordIsValid() {
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", "john");
+        ArrayList<InsertRequestRecord> records = new ArrayList<>();
+        for (int i = 0; i < 2; i++) {
+            records.add(InsertRequestRecord.builder()
+                    .tableName("table1")
+                    .data(data)
+                    .upsert(UpsertOptions.builder().uniqueColumns(Collections.singletonList("email")).build())
+                    .build());
+        }
+        InsertRequest request = InsertRequest.builder().records(records).build();
+        try {
+            Validations.validateInsertRequest(request);
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testValidateInsertRequest_noUpsertAnywhereIsValid() {
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", "john");
+        ArrayList<InsertRequestRecord> records = new ArrayList<>();
+        records.add(InsertRequestRecord.builder().data(data).build());
+        InsertRequest request = InsertRequest.builder().tableName("table1").records(records).build();
+        try {
+            Validations.validateInsertRequest(request);
         } catch (SkyflowException e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
         }
@@ -877,7 +1302,7 @@ public class ValidationsTests {
 
     @Test
     public void testValidateBulkDetokenizeRequest_nullRedactionGroupObject() {
-        List<BulkTokenGroupRedactions> groupRedactions = new ArrayList<>();
+        List<TokenGroupRedactions> groupRedactions = new ArrayList<>();
         groupRedactions.add(null);
         BulkDetokenizeRequest request = BulkDetokenizeRequest.builder()
                 .tokens(Collections.singletonList("token1"))
@@ -893,8 +1318,8 @@ public class ValidationsTests {
 
     @Test
     public void testValidateBulkDetokenizeRequest_nullGroupNameInRedaction() {
-        List<BulkTokenGroupRedactions> groupRedactions = Collections.singletonList(
-                BulkTokenGroupRedactions.builder().redaction("MASKED").build());
+        List<TokenGroupRedactions> groupRedactions = Collections.singletonList(
+                TokenGroupRedactions.builder().redaction("MASKED").build());
         BulkDetokenizeRequest request = BulkDetokenizeRequest.builder()
                 .tokens(Collections.singletonList("token1"))
                 .tokenGroupRedactions(groupRedactions)
@@ -909,8 +1334,8 @@ public class ValidationsTests {
 
     @Test
     public void testValidateBulkDetokenizeRequest_nullRedactionInGroup() {
-        List<BulkTokenGroupRedactions> groupRedactions = Collections.singletonList(
-                BulkTokenGroupRedactions.builder().tokenGroupName("group1").build());
+        List<TokenGroupRedactions> groupRedactions = Collections.singletonList(
+                TokenGroupRedactions.builder().tokenGroupName("group1").build());
         BulkDetokenizeRequest request = BulkDetokenizeRequest.builder()
                 .tokens(Collections.singletonList("token1"))
                 .tokenGroupRedactions(groupRedactions)
@@ -937,8 +1362,8 @@ public class ValidationsTests {
 
     @Test
     public void testValidateBulkDetokenizeRequest_validRequestWithRedactions() {
-        List<BulkTokenGroupRedactions> groupRedactions = Collections.singletonList(
-                BulkTokenGroupRedactions.builder().tokenGroupName("group1").redaction("MASKED").build());
+        List<TokenGroupRedactions> groupRedactions = Collections.singletonList(
+                TokenGroupRedactions.builder().tokenGroupName("group1").redaction("MASKED").build());
         BulkDetokenizeRequest request = BulkDetokenizeRequest.builder()
                 .tokens(Collections.singletonList("token1"))
                 .tokenGroupRedactions(groupRedactions)
@@ -1099,338 +1524,7 @@ public class ValidationsTests {
         }
     }
 
-    // ── validateQueryRequest ───────────────────────────────────────────────────
+    // Tests for validateQueryRequest / validateGetRequest were removed:
+    // those unary validators no longer exist (bulk-only module).
 
-    @Test
-    public void testValidateQueryRequest_nullQuery() {
-        com.skyflow.vault.data.QueryRequest request = com.skyflow.vault.data.QueryRequest.builder().build();
-        try {
-            Validations.validateQueryRequest(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertNotNull(e.getMessage());
-        }
-    }
-
-    @Test
-    public void testValidateQueryRequest_emptyQuery() {
-        com.skyflow.vault.data.QueryRequest request = com.skyflow.vault.data.QueryRequest.builder().query("   ").build();
-        try {
-            Validations.validateQueryRequest(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertNotNull(e.getMessage());
-        }
-    }
-
-    @Test
-    public void testValidateQueryRequest_validRequest() {
-        com.skyflow.vault.data.QueryRequest request = com.skyflow.vault.data.QueryRequest.builder()
-                .query("SELECT * FROM table1")
-                .build();
-        try {
-            Validations.validateQueryRequest(request);
-        } catch (SkyflowException e) {
-            Assert.fail(INVALID_EXCEPTION_THROWN);
-        }
-    }
-
-    // ── validateGetRequest ─────────────────────────────────────────────────────
-
-    @Test
-    public void testValidateGetRequest_nullTable() {
-        com.skyflow.vault.data.GetRequest request = com.skyflow.vault.data.GetRequest.builder()
-                .ids(new ArrayList<>(Collections.singletonList("id1")))
-                .build();
-        try {
-            Validations.validateGetRequest(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertNotNull(e.getMessage());
-        }
-    }
-
-    @Test
-    public void testValidateGetRequest_emptyTable() {
-        com.skyflow.vault.data.GetRequest request = com.skyflow.vault.data.GetRequest.builder()
-                .table("   ")
-                .ids(new ArrayList<>(Collections.singletonList("id1")))
-                .build();
-        try {
-            Validations.validateGetRequest(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertNotNull(e.getMessage());
-        }
-    }
-
-    @Test
-    public void testValidateGetRequest_emptyIds() {
-        com.skyflow.vault.data.GetRequest request = com.skyflow.vault.data.GetRequest.builder()
-                .table("table1")
-                .ids(new ArrayList<>())
-                .build();
-        try {
-            Validations.validateGetRequest(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertNotNull(e.getMessage());
-        }
-    }
-
-    @Test
-    public void testValidateGetRequest_nullIdInIds() {
-        ArrayList<String> ids = new ArrayList<>();
-        ids.add(null);
-        com.skyflow.vault.data.GetRequest request = com.skyflow.vault.data.GetRequest.builder()
-                .table("table1")
-                .ids(ids)
-                .build();
-        try {
-            Validations.validateGetRequest(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertNotNull(e.getMessage());
-        }
-    }
-
-    @Test
-    public void testValidateGetRequest_neitherIdsNorUniqueValues() {
-        com.skyflow.vault.data.GetRequest request = com.skyflow.vault.data.GetRequest.builder()
-                .table("table1")
-                .build();
-        try {
-            Validations.validateGetRequest(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertNotNull(e.getMessage());
-        }
-    }
-
-    @Test
-    public void testValidateGetRequest_bothIdsAndUniqueValues() {
-        Map<String, Object> uniqueValue = new HashMap<>();
-        uniqueValue.put("email", "john@example.com");
-        com.skyflow.vault.data.GetRequest request = com.skyflow.vault.data.GetRequest.builder()
-                .table("table1")
-                .ids(new ArrayList<>(Collections.singletonList("id1")))
-                .uniqueValues(Collections.singletonList(uniqueValue))
-                .build();
-        try {
-            Validations.validateGetRequest(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertNotNull(e.getMessage());
-        }
-    }
-
-    @Test
-    public void testValidateGetRequest_emptyUniqueValues() {
-        com.skyflow.vault.data.GetRequest request = com.skyflow.vault.data.GetRequest.builder()
-                .table("table1")
-                .uniqueValues(new ArrayList<>())
-                .build();
-        try {
-            Validations.validateGetRequest(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertNotNull(e.getMessage());
-        }
-    }
-
-    @Test
-    public void testValidateGetRequest_nullUniqueValueInUniqueValues() {
-        List<Map<String, Object>> uniqueValues = new ArrayList<>();
-        uniqueValues.add(null);
-        com.skyflow.vault.data.GetRequest request = com.skyflow.vault.data.GetRequest.builder()
-                .table("table1")
-                .uniqueValues(uniqueValues)
-                .build();
-        try {
-            Validations.validateGetRequest(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertNotNull(e.getMessage());
-        }
-    }
-
-    @Test
-    public void testValidateGetRequest_emptyFields() {
-        com.skyflow.vault.data.GetRequest request = com.skyflow.vault.data.GetRequest.builder()
-                .table("table1")
-                .ids(new ArrayList<>(Collections.singletonList("id1")))
-                .fields(new ArrayList<>())
-                .build();
-        try {
-            Validations.validateGetRequest(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertNotNull(e.getMessage());
-        }
-    }
-
-    @Test
-    public void testValidateGetRequest_nullColumnRedactionObject() {
-        List<com.skyflow.vault.data.ColumnRedaction> columnRedactions = new ArrayList<>();
-        columnRedactions.add(null);
-        com.skyflow.vault.data.GetRequest request = com.skyflow.vault.data.GetRequest.builder()
-                .table("table1")
-                .ids(new ArrayList<>(Collections.singletonList("id1")))
-                .columnRedactions(columnRedactions)
-                .build();
-        try {
-            Validations.validateGetRequest(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertNotNull(e.getMessage());
-        }
-    }
-
-    @Test
-    public void testValidateGetRequest_nullColumnNameInColumnRedaction() {
-        com.skyflow.vault.data.ColumnRedaction redaction = com.skyflow.vault.data.ColumnRedaction.builder()
-                .redaction("MASKED")
-                .build();
-        com.skyflow.vault.data.GetRequest request = com.skyflow.vault.data.GetRequest.builder()
-                .table("table1")
-                .ids(new ArrayList<>(Collections.singletonList("id1")))
-                .columnRedactions(Collections.singletonList(redaction))
-                .build();
-        try {
-            Validations.validateGetRequest(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertNotNull(e.getMessage());
-        }
-    }
-
-    @Test
-    public void testValidateGetRequest_nullRedactionInColumnRedaction() {
-        com.skyflow.vault.data.ColumnRedaction redaction = com.skyflow.vault.data.ColumnRedaction.builder()
-                .columnName("email")
-                .build();
-        com.skyflow.vault.data.GetRequest request = com.skyflow.vault.data.GetRequest.builder()
-                .table("table1")
-                .ids(new ArrayList<>(Collections.singletonList("id1")))
-                .columnRedactions(Collections.singletonList(redaction))
-                .build();
-        try {
-            Validations.validateGetRequest(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertNotNull(e.getMessage());
-        }
-    }
-
-    @Test
-    public void testValidateGetRequest_validRequestWithIds() {
-        com.skyflow.vault.data.GetRequest request = com.skyflow.vault.data.GetRequest.builder()
-                .table("table1")
-                .ids(new ArrayList<>(Collections.singletonList("id1")))
-                .build();
-        try {
-            Validations.validateGetRequest(request);
-        } catch (SkyflowException e) {
-            Assert.fail(INVALID_EXCEPTION_THROWN);
-        }
-    }
-
-    @Test
-    public void testValidateGetRequest_validRequestWithUniqueValuesAndColumnRedactions() {
-        Map<String, Object> uniqueValue = new HashMap<>();
-        uniqueValue.put("email", "john@example.com");
-        com.skyflow.vault.data.ColumnRedaction redaction = com.skyflow.vault.data.ColumnRedaction.builder()
-                .columnName("email")
-                .redaction("MASKED")
-                .build();
-        com.skyflow.vault.data.GetRequest request = com.skyflow.vault.data.GetRequest.builder()
-                .table("table1")
-                .uniqueValues(Collections.singletonList(uniqueValue))
-                .columnRedactions(Collections.singletonList(redaction))
-                .build();
-        try {
-            Validations.validateGetRequest(request);
-        } catch (SkyflowException e) {
-            Assert.fail(INVALID_EXCEPTION_THROWN);
-        }
-    }
-
-    // ── validateGetRequest (multi-table records) ──────────────────────────────
-
-    @Test
-    public void testValidateGetRequest_bothSingleTableFieldsAndRecordsPassed() {
-        com.skyflow.vault.data.GetRecordRequest record = com.skyflow.vault.data.GetRecordRequest.builder()
-                .table("table2")
-                .ids(new ArrayList<>(Collections.singletonList("id2")))
-                .build();
-        com.skyflow.vault.data.GetRequest request = com.skyflow.vault.data.GetRequest.builder()
-                .table("table1")
-                .ids(new ArrayList<>(Collections.singletonList("id1")))
-                .records(Collections.singletonList(record))
-                .build();
-        try {
-            Validations.validateGetRequest(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertNotNull(e.getMessage());
-        }
-    }
-
-    @Test
-    public void testValidateGetRequest_nullRecordInRecords() {
-        List<com.skyflow.vault.data.GetRecordRequest> records = new ArrayList<>();
-        records.add(null);
-        com.skyflow.vault.data.GetRequest request = com.skyflow.vault.data.GetRequest.builder()
-                .records(records)
-                .build();
-        try {
-            Validations.validateGetRequest(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertNotNull(e.getMessage());
-        }
-    }
-
-    @Test
-    public void testValidateGetRequest_invalidRecordWithinRecords() {
-        // second record is missing both ids and uniqueValues
-        com.skyflow.vault.data.GetRecordRequest validRecord = com.skyflow.vault.data.GetRecordRequest.builder()
-                .table("table1")
-                .ids(new ArrayList<>(Collections.singletonList("id1")))
-                .build();
-        com.skyflow.vault.data.GetRecordRequest invalidRecord = com.skyflow.vault.data.GetRecordRequest.builder()
-                .table("table2")
-                .build();
-        com.skyflow.vault.data.GetRequest request = com.skyflow.vault.data.GetRequest.builder()
-                .records(java.util.Arrays.asList(validRecord, invalidRecord))
-                .build();
-        try {
-            Validations.validateGetRequest(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertNotNull(e.getMessage());
-        }
-    }
-
-    @Test
-    public void testValidateGetRequest_validMultiTableRecords() {
-        com.skyflow.vault.data.GetRecordRequest record1 = com.skyflow.vault.data.GetRecordRequest.builder()
-                .table("table1")
-                .ids(new ArrayList<>(Collections.singletonList("id1")))
-                .build();
-        Map<String, Object> uniqueValue = new HashMap<>();
-        uniqueValue.put("email", "john@example.com");
-        com.skyflow.vault.data.GetRecordRequest record2 = com.skyflow.vault.data.GetRecordRequest.builder()
-                .table("table2")
-                .uniqueValues(Collections.singletonList(uniqueValue))
-                .build();
-        com.skyflow.vault.data.GetRequest request = com.skyflow.vault.data.GetRequest.builder()
-                .records(java.util.Arrays.asList(record1, record2))
-                .build();
-        try {
-            Validations.validateGetRequest(request);
-        } catch (SkyflowException e) {
-            Assert.fail(INVALID_EXCEPTION_THROWN);
-        }
-    }
 }

@@ -52,14 +52,14 @@ public class VaultConfigTests {
     @Test
     public void testVaultURLDefaultsToNull() {
         VaultConfig config = new VaultConfig();
-        Assert.assertNull(config.getVaultURL());
+        Assert.assertNull(config.getVaultUrl());
     }
 
     @Test
     public void testVaultURLGetterSetter() {
         VaultConfig config = new VaultConfig();
-        config.setVaultURL("https://myvault.example.com");
-        Assert.assertEquals("https://myvault.example.com", config.getVaultURL());
+        config.setVaultUrl("https://myvault.example.com");
+        Assert.assertEquals("https://myvault.example.com", config.getVaultUrl());
     }
 
     @Test

@@ -1,60 +1,53 @@
 package com.skyflow.vault.data;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.annotations.Expose;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class BulkInsertResponse {
-    // These members will be included in the toString() output
-    @Expose(serialize = true)
-    private Summary summary;
-    @Expose(serialize = true)
-    private List<Success> success;
-    @Expose(serialize = true)
-    private List<ErrorRecord> errors;
+    private BulkSummary summary;
+    private List<BulkInsertResponseRecord> records;
 
-    // Internal fields. Should not be included in toString() output
-    private ArrayList<BulkInsertRecord> originalPayload;
-    private ArrayList<BulkInsertRecord> recordsToRetry;
+    // Internal fields. transient keeps them out of the toString() output.
+    private transient List<InsertRequestRecord> originalPayload;
+    private transient List<BulkInsertRequestRecord> recordsToRetry;
 
-    public BulkInsertResponse(List<Success> successRecords, List<ErrorRecord> errorRecords) {
-        this.success = successRecords;
-        this.errors = errorRecords;
+    public BulkInsertResponse(List<BulkInsertResponseRecord> records) {
+        this.records = records;
     }
 
     public BulkInsertResponse(
-            List<Success> successRecords,
-            List<ErrorRecord> errorRecords,
-            ArrayList<BulkInsertRecord> originalPayload
+            List<BulkInsertResponseRecord> records,
+            List<InsertRequestRecord> originalPayload
     ) {
-        this.success = successRecords;
-        this.errors = errorRecords;
+        this.records = records;
         this.originalPayload = originalPayload;
-        this.summary = new Summary(this.originalPayload.size(), this.success.size(), this.errors.size());
+        int totalFailed = (int) records.stream().filter(record -> record.getError() != null).count();
+        this.summary = new BulkSummary(originalPayload.size(), records.size() - totalFailed, totalFailed);
     }
 
-    public Summary getSummary() {
+    public BulkSummary getSummary() {
         return this.summary;
     }
 
-    public List<Success> getSuccess() {
-        return this.success;
+    public List<BulkInsertResponseRecord> getRecords() {
+        return this.records;
     }
 
-    public List<ErrorRecord> getErrors() {
-        return this.errors;
-    }
-
-    public ArrayList<BulkInsertRecord> getRecordsToRetry() {
+    // Records are guaranteed to be BulkInsertRequestRecord: validateBulkInsertRequest rejects
+    // any other InsertRequestRecord subtype before the request is ever sent.
+    public List<BulkInsertRequestRecord> getRecordsToRetry() {
         if (recordsToRetry == null) {
-            recordsToRetry = new ArrayList<>();
-            recordsToRetry = errors.stream()
-                    .filter(error -> (error.getCode() >= 500 && error.getCode() <= 599) && error.getCode() != 529)
-                    .map(errorRecord -> originalPayload.get(errorRecord.getIndex()))
+            // Per-batch responses are built without the original payload; nothing to retry from.
+            if (originalPayload == null) {
+                return new ArrayList<>();
+            }
+            recordsToRetry = records.stream()
+                    .filter(record -> record.getHttpCode() >= 500 && record.getHttpCode() <= 599
+                            && record.getHttpCode() != 529)
+                    .map(record -> (BulkInsertRequestRecord) originalPayload.get(record.getIndex()))
                     .collect(Collectors.toCollection(ArrayList::new));
         }
         return recordsToRetry;
@@ -62,7 +55,7 @@ public class BulkInsertResponse {
 
     @Override
     public String toString() {
-        Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
+        Gson gson = new Gson().newBuilder().serializeNulls().create();
         return gson.toJson(this);
     }
 }

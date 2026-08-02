@@ -9,7 +9,6 @@ public class InsertRequest extends BaseInsertRequest{
     private final InsertRequestBuilder builder;
 
     private InsertRequest(InsertRequestBuilder builder) {
-        super(builder);
         this.builder = builder;
     }
 
@@ -50,7 +49,7 @@ public class InsertRequest extends BaseInsertRequest{
         return this.builder.tokenMode;
     }
 
-    public static final class InsertRequestBuilder extends BaseInsertRequestBuilder{
+    public static final class InsertRequestBuilder {
         private String table;
         private ArrayList<HashMap<String, Object>> values;
         private ArrayList<HashMap<String, Object>> tokens;

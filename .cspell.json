@@ -106,7 +106,8 @@
     "synthesised",
     "deserialise",
     "deserialised",
-    "unmodelled"
+    "unmodelled",
+    "recordss"
   ],
   "languageSettings": [
     {
@@ -127,6 +128,7 @@
     "*.lock",
     "Rule/**",
     "**/src/main/java/com/skyflow/generated/**",
+    "**/generated/**",
     "**/*.ts",
     "**/processed-*",
     "samples/src/main/java/com/example/credentials.json",

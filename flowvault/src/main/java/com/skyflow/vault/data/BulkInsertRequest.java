@@ -1,67 +1,43 @@
 package com.skyflow.vault.data;
 
-import com.skyflow.enums.UpsertType;
-
-import java.util.ArrayList;
 import java.util.List;
 
-public class BulkInsertRequest extends BaseInsertRequest {
-    private final BulkInsertRequestBuilder builder;
+// Bulk counterpart of InsertRequest. Carries no extra state today; all fields
+// (tableName, records, upsert) are inherited.
+public class BulkInsertRequest extends InsertRequest {
 
-    private BulkInsertRequest(BulkInsertRequestBuilder builder) {
+    protected BulkInsertRequest(BulkInsertRequestBuilder builder) {
         super(builder);
-        this.builder = builder;
     }
-
 
     public static BulkInsertRequestBuilder builder() {
         return new BulkInsertRequestBuilder();
     }
 
-    public List<String> getUpsert() {
-        return this.builder.upsert;
-    }
-
-    public UpsertType getUpsertType() {
-        return this.builder.upsertType;
-    }
-
-    public ArrayList<BulkInsertRecord> getRecords(){
-        return this.builder.records;
-    }
-
-    public static final class BulkInsertRequestBuilder extends BaseInsertRequestBuilder {
-        private List<String> upsert;
-
-        private UpsertType upsertType;
-
-        private ArrayList<BulkInsertRecord> records;
+    public static final class BulkInsertRequestBuilder extends InsertRequestBuilder {
 
         private BulkInsertRequestBuilder() {
-            super();
         }
 
         @Override
-        public BulkInsertRequestBuilder table(String table) {
-            super.table(table);
+        public BulkInsertRequestBuilder tableName(String tableName) {
+            super.tableName(tableName);
             return this;
         }
 
-        public BulkInsertRequestBuilder upsert(List<String> upsert) {
-            this.upsert = upsert;
+        @Override
+        public BulkInsertRequestBuilder records(List<InsertRequestRecord> records) {
+            super.records(records);
             return this;
         }
 
-        public BulkInsertRequestBuilder upsertType(UpsertType upsertType) {
-            this.upsertType = upsertType;
+        @Override
+        public BulkInsertRequestBuilder upsert(UpsertOptions upsert) {
+            super.upsert(upsert);
             return this;
         }
 
-        public BulkInsertRequestBuilder records(ArrayList<BulkInsertRecord> records){
-            this.records = records;
-            return this;
-        }
-
+        @Override
         public BulkInsertRequest build() {
             return new BulkInsertRequest(this);
         }

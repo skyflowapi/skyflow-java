@@ -1,6 +1,5 @@
 package com.skyflow.vault.data;
 
-import com.skyflow.enums.UpsertType;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -11,8 +10,8 @@ import java.util.Map;
 
 /**
  * Tests for the plain record/redaction data holders: {@link TokenGroupRedactions},
- * {@link BulkTokenGroupRedactions}, {@link InsertRecord}, {@link BulkInsertRecord},
- * {@link TokenizeRequestRecord} and {@link BulkTokenizeRequestRecord}. None of these classes perform
+ * {@link InsertRequestRecord}, {@link BulkInsertRequestRecord}
+ * and {@link BulkTokenizeRequestRecord}. None of these classes perform
  * validation in their builders, so coverage here is builder-construction plus getters.
  */
 public class RecordAndRedactionTests {
@@ -37,84 +36,79 @@ public class RecordAndRedactionTests {
         Assert.assertNull(redaction.getRedaction());
     }
 
-    // ── BulkTokenGroupRedactions ─────────────────────────────────────────────
+    // BulkTokenGroupRedactions tests removed: the class was deleted; bulk detokenize now reuses
+    // TokenGroupRedactions (covered above).
+
+    // ── InsertRequestRecord ─────────────────────────────────────────────────────────
 
     @Test
-    public void testBulkTokenGroupRedactions_gettersReturnBuilderValues() {
-        BulkTokenGroupRedactions redaction = BulkTokenGroupRedactions.builder()
-                .tokenGroupName("group2")
-                .redaction("REDACT")
-                .build();
-
-        Assert.assertEquals("group2", redaction.getTokenGroupName());
-        Assert.assertEquals("REDACT", redaction.getRedaction());
-    }
-
-    @Test
-    public void testBulkTokenGroupRedactions_defaultsAreNull() {
-        BulkTokenGroupRedactions redaction = BulkTokenGroupRedactions.builder().build();
-        Assert.assertNull(redaction.getTokenGroupName());
-        Assert.assertNull(redaction.getRedaction());
-    }
-
-    // ── InsertRecord ─────────────────────────────────────────────────────────
-
-    @Test
-    public void testInsertRecord_gettersReturnBuilderValues() {
+    public void testInsertRequestRecord_gettersReturnBuilderValues() {
         Map<String, Object> data = new HashMap<>();
         data.put("name", "John");
-        List<String> upsert = Arrays.asList("id");
-
-        InsertRecord record = InsertRecord.builder()
-                .table("persons")
-                .data(data)
-                .upsert(upsert)
-                .upsertType(UpsertType.UPDATE)
+        Map<String, Object> tokens = new HashMap<>();
+        tokens.put("name", "token-value");
+        UpsertOptions upsert = UpsertOptions.builder()
+                .uniqueColumns(Arrays.asList("id"))
+                .updateType("UPDATE")
                 .build();
 
-        Assert.assertEquals("persons", record.getTable());
+        InsertRequestRecord record = InsertRequestRecord.builder()
+                .tableName("persons")
+                .data(data)
+                .tokens(tokens)
+                .upsert(upsert)
+                .build();
+
+        Assert.assertEquals("persons", record.getTableName());
         Assert.assertEquals(data, record.getData());
+        Assert.assertEquals(tokens, record.getTokens());
         Assert.assertEquals(upsert, record.getUpsert());
-        Assert.assertEquals(UpsertType.UPDATE, record.getUpsertType());
     }
 
     @Test
-    public void testInsertRecord_defaultsAreNull() {
-        InsertRecord record = InsertRecord.builder().build();
-        Assert.assertNull(record.getTable());
+    public void testInsertRequestRecord_defaultsAreNull() {
+        InsertRequestRecord record = InsertRequestRecord.builder().build();
+        Assert.assertNull(record.getTableName());
         Assert.assertNull(record.getData());
+        Assert.assertNull(record.getTokens());
         Assert.assertNull(record.getUpsert());
-        Assert.assertNull(record.getUpsertType());
     }
 
-    // ── BulkInsertRecord ─────────────────────────────────────────────────────
+    // ── BulkInsertRequestRecord ──────────────────────────────────────────────
 
     @Test
-    public void testBulkInsertRecord_gettersReturnBuilderValues() {
+    public void testBulkInsertRequestRecord_gettersReturnBuilderValues() {
         Map<String, Object> data = new HashMap<>();
         data.put("name", "Jane");
-        List<String> upsert = Arrays.asList("id");
-
-        BulkInsertRecord record = BulkInsertRecord.builder()
-                .table("persons")
-                .data(data)
-                .upsert(upsert)
-                .upsertType(UpsertType.REPLACE)
+        Map<String, Object> tokens = new HashMap<>();
+        tokens.put("name", "token-1");
+        UpsertOptions upsert = UpsertOptions.builder()
+                .updateType("REPLACE")
+                .uniqueColumns(Arrays.asList("id"))
                 .build();
 
-        Assert.assertEquals("persons", record.getTable());
+        BulkInsertRequestRecord record = BulkInsertRequestRecord.builder()
+                .tableName("persons")
+                .data(data)
+                .tokens(tokens)
+                .upsert(upsert)
+                .build();
+
+        Assert.assertEquals("persons", record.getTableName());
         Assert.assertEquals(data, record.getData());
+        Assert.assertEquals(tokens, record.getTokens());
         Assert.assertEquals(upsert, record.getUpsert());
-        Assert.assertEquals(UpsertType.REPLACE, record.getUpsertType());
+        Assert.assertEquals("REPLACE", record.getUpsert().getUpdateType());
+        Assert.assertEquals(Arrays.asList("id"), record.getUpsert().getUniqueColumns());
     }
 
     @Test
-    public void testBulkInsertRecord_defaultsAreNull() {
-        BulkInsertRecord record = BulkInsertRecord.builder().build();
-        Assert.assertNull(record.getTable());
+    public void testBulkInsertRequestRecord_defaultsAreNull() {
+        BulkInsertRequestRecord record = BulkInsertRequestRecord.builder().build();
+        Assert.assertNull(record.getTableName());
         Assert.assertNull(record.getData());
+        Assert.assertNull(record.getTokens());
         Assert.assertNull(record.getUpsert());
-        Assert.assertNull(record.getUpsertType());
     }
 
     // ── TokenizeRequestRecord ───────────────────────────────────────────────────────
@@ -141,7 +135,7 @@ public class RecordAndRedactionTests {
     // ── BulkTokenizeRequestRecord ───────────────────────────────────────────────────
 
     @Test
-    public void testBulkTokenizeRecord_gettersReturnBuilderValues() {
+    public void testBulkTokenizeRequestRecord_gettersReturnBuilderValues() {
         List<String> groups = Arrays.asList("group3");
         BulkTokenizeRequestRecord record = BulkTokenizeRequestRecord.builder()
                 .value(12345)
@@ -155,7 +149,7 @@ public class RecordAndRedactionTests {
     }
 
     @Test
-    public void testBulkTokenizeRecord_defaultsAreNull() {
+    public void testBulkTokenizeRequestRecord_defaultsAreNull() {
         BulkTokenizeRequestRecord record = BulkTokenizeRequestRecord.builder().build();
         Assert.assertNull(record.getValue());
         Assert.assertNull(record.getToken());
@@ -163,7 +157,7 @@ public class RecordAndRedactionTests {
     }
 
     @Test
-    public void testBulkTokenizeRecord_isATokenizeRequestRecord() {
+    public void testBulkTokenizeRequestRecord_isATokenizeRequestRecord() {
         // the bulk record adds nothing today; it must still satisfy the parent contract
         BulkTokenizeRequestRecord record = BulkTokenizeRequestRecord.builder().value("v1").build();
         Assert.assertTrue(record instanceof TokenizeRequestRecord);
