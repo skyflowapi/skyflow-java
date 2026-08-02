@@ -8,15 +8,22 @@ import java.util.Map;
 // in the submitted payload; all other fields are inherited.
 public class BulkDetokenizeResponseRecord extends DetokenizeResponseRecord {
     private final int index;
+    private final String requestId;
 
     public BulkDetokenizeResponseRecord(int index, String token, Object value, String tokenGroupName,
-                                        Map<String, Object> metadata, int httpCode, String error) {
+                                        Map<String, Object> metadata, int httpCode, String error,
+                                        String requestId) {
         super(token, value, tokenGroupName, metadata, httpCode, error);
         this.index = index;
+        this.requestId = requestId;
     }
 
     public int getIndex() {
         return index;
+    }
+
+    public String getRequestId() {
+        return requestId;
     }
 
     @Override

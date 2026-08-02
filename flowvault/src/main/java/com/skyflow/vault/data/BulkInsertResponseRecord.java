@@ -8,16 +8,22 @@ import java.util.Map;
 // in the submitted payload; all other fields are inherited.
 public class BulkInsertResponseRecord extends InsertResponseRecord {
     private final int index;
+    private final String requestId;
 
     public BulkInsertResponseRecord(int index, String tableName, String skyflowId,
                                     Map<String, Object> fields, Map<String, Object> hashedData,
-                                    int httpCode, String error) {
+                                    int httpCode, String error, String requestId) {
         super(tableName, skyflowId, fields, hashedData, httpCode, error);
         this.index = index;
+        this.requestId = requestId;
     }
 
     public int getIndex() {
         return index;
+    }
+
+    public String getRequestId(){
+        return requestId;
     }
 
     @Override

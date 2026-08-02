@@ -1,5 +1,11 @@
 package com.skyflow.utils;
 
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 import com.google.gson.JsonObject;
 import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.Env;
@@ -9,18 +15,43 @@ import com.skyflow.errors.SkyflowException;
 import com.skyflow.generated.rest.core.ApiClientApiException;
 import com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest;
 import com.skyflow.generated.rest.resources.flowservice.requests.V1InsertRequest;
-import com.skyflow.generated.rest.types.*;
+import com.skyflow.generated.rest.types.FlowEnumUpdateType;
+import com.skyflow.generated.rest.types.FlowTokenizeResponseObjectToken;
+import com.skyflow.generated.rest.types.V1DeleteTokenResponseObject;
+import com.skyflow.generated.rest.types.V1FlowDeleteTokenResponse;
+import com.skyflow.generated.rest.types.V1FlowDetokenizeResponse;
+import com.skyflow.generated.rest.types.V1FlowDetokenizeResponseObject;
+import com.skyflow.generated.rest.types.V1FlowTokenizeRequestObject;
+import com.skyflow.generated.rest.types.V1FlowTokenizeResponse;
+import com.skyflow.generated.rest.types.V1FlowTokenizeResponseObject;
+import com.skyflow.generated.rest.types.V1InsertRecordData;
+import com.skyflow.generated.rest.types.V1InsertResponse;
+import com.skyflow.generated.rest.types.V1RecordResponseObject;
+import com.skyflow.generated.rest.types.V1TokenGroupRedactions;
+import com.skyflow.generated.rest.types.V1Upsert;
 import com.skyflow.logs.ErrorLogs;
 import com.skyflow.utils.logger.LogUtil;
-import com.skyflow.vault.data.*;
+import com.skyflow.vault.data.BulkDeleteTokensRequest;
+import com.skyflow.vault.data.BulkDeleteTokensResponse;
+import com.skyflow.vault.data.BulkDetokenizeRequest;
+import com.skyflow.vault.data.BulkDetokenizeResponse;
+import com.skyflow.vault.data.BulkDetokenizeResponseRecord;
+import com.skyflow.vault.data.BulkInsertRequest;
+import com.skyflow.vault.data.BulkInsertResponse;
+import com.skyflow.vault.data.BulkInsertResponseRecord;
+import com.skyflow.vault.data.BulkTokenizeRecord;
+import com.skyflow.vault.data.BulkTokenizeRequest;
+import com.skyflow.vault.data.BulkTokenizeResponse;
+import com.skyflow.vault.data.DeleteTokensSuccess;
+import com.skyflow.vault.data.ErrorRecord;
+import com.skyflow.vault.data.InsertRequest;
+import com.skyflow.vault.data.InsertRequestRecord;
+import com.skyflow.vault.data.TokenGroupRedactions;
+import com.skyflow.vault.data.TokenizeSuccess;
+import com.skyflow.vault.data.UpsertOptions;
+
 import io.github.cdimascio.dotenv.Dotenv;
 import io.github.cdimascio.dotenv.DotenvException;
-
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 public final class Utils extends BaseUtils {
 
@@ -233,6 +264,59 @@ public final class Utils extends BaseUtils {
         }
         return batches;
     }
+    public static BulkInsertResponseRecord createInsertErrorRecord(Map<String, Object> recordMap, int indexNumber, String requestId) {
+        BulkInsertResponseRecord err = null;
+        if (recordMap != null) {
+            int code = 500;
+            if (recordMap.containsKey("http_code")) {
+                code = (Integer) recordMap.get("http_code");
+            } else if (recordMap.containsKey("httpCode")) {
+                code = (Integer) recordMap.get("httpCode");
+            } else if (recordMap.containsKey("statusCode")) {
+                code = (Integer) recordMap.get("statusCode");
+            }
+            // check if skyflowID is present
+            String skyflowID = null;
+            if (recordMap.containsKey("skyflowID")) {
+                skyflowID = recordMap.get("skyflowID").toString();
+            }
+            String tableName = null;
+            if (recordMap.containsKey("tableName")) {
+                tableName = recordMap.get("tableName").toString();
+            }
+            String message = recordMap.containsKey("error") ? (String) recordMap.get("error") :
+                    recordMap.containsKey("message") ? (String) recordMap.get("message") : "Unknown error";
+            err = new BulkInsertResponseRecord(indexNumber, tableName, skyflowID, null, null, code, message, requestId);
+        }
+        return err;
+    }
+
+    public static BulkDetokenizeResponseRecord createDetokenizeErrorRecord(Map<String, Object> recordMap, int indexNumber, String requestId) {
+        BulkDetokenizeResponseRecord err = null;
+        if (recordMap != null) {
+            int code = 500;
+            if (recordMap.containsKey("http_code")) {
+                code = (Integer) recordMap.get("http_code");
+            } else if (recordMap.containsKey("httpCode")) {
+                code = (Integer) recordMap.get("httpCode");
+            } else if (recordMap.containsKey("statusCode")) {
+                code = (Integer) recordMap.get("statusCode");
+            }
+            // the failing token is echoed back so the caller can tell which one it was
+            String token = null;
+            if (recordMap.containsKey("token")) {
+                token = recordMap.get("token").toString();
+            }
+            String tokenGroupName = null;
+            if (recordMap.containsKey("tokenGroupName")) {
+                tokenGroupName = recordMap.get("tokenGroupName").toString();
+            }
+            String message = recordMap.containsKey("error") ? (String) recordMap.get("error") :
+                    recordMap.containsKey("message") ? (String) recordMap.get("message") : "Unknown error";
+            err = new BulkDetokenizeResponseRecord(indexNumber, token, null, tokenGroupName, null, code, message, requestId);
+        }
+        return err;
+    }
 
     public static ErrorRecord createErrorRecord(Map<String, Object> recordMap, int indexNumber, String requestId) {
         ErrorRecord err = null;
@@ -257,7 +341,7 @@ public final class Utils extends BaseUtils {
     public static List<BulkInsertResponseRecord> handleBulkInsertBatchException(
             Throwable ex, List<V1InsertRecordData> batch, int batchNumber, int batchSize
     ) {
-        List<ErrorRecord> errorRecords = new ArrayList<>();
+        List<BulkInsertResponseRecord> allRecords = new ArrayList<>();
         Throwable cause = ex.getCause();
         if (cause instanceof ApiClientApiException) {
             ApiClientApiException apiException = (ApiClientApiException) cause;
@@ -273,8 +357,8 @@ public final class Utils extends BaseUtils {
                         for (Object record : recordsList) {
                             if (record instanceof Map) {
                                 Map<String, Object> recordMap = (Map<String, Object>) record;
-                                ErrorRecord err = createErrorRecord(recordMap, indexNumber, requestId);
-                                errorRecords.add(err);
+                                BulkInsertResponseRecord err = createInsertErrorRecord(recordMap, indexNumber, requestId);
+                                allRecords.add(err);
                                 indexNumber++;
                             }
                         }
@@ -284,35 +368,40 @@ public final class Utils extends BaseUtils {
                     Map<String, Object> recordMap = (errField instanceof Map) ? (Map<String, Object>) errField : null;
                     String fallbackMsg = (errField instanceof String) ? (String) errField : null;
                     for (int j = 0; j < batch.size(); j++) {
-                        ErrorRecord err = (recordMap != null)
-                                ? createErrorRecord(recordMap, indexNumber, requestId)
-                                : new ErrorRecord(indexNumber, fallbackMsg != null ? fallbackMsg : apiException.getMessage(), apiException.statusCode(), requestId);
-                        errorRecords.add(err);
+                        BulkInsertResponseRecord err = null;
+                        if(recordMap != null){
+                            err = createInsertErrorRecord(recordMap, indexNumber, requestId);
+                        } else {
+                            String errorMessage = null;
+                            if (fallbackMsg != null){
+                                errorMessage = fallbackMsg;
+                            } else {
+                                errorMessage = apiException.getMessage();
+                            }
+                            err = new BulkInsertResponseRecord(indexNumber, null, null, null, null, apiException.statusCode(), errorMessage, requestId);
+
+                        }
+                        allRecords.add(err);
                         indexNumber++;
                     }
                 }
             }
-            if (errorRecords.isEmpty()) {
+
+            if (allRecords.isEmpty()) {
                 for (int j = 0; j < batch.size(); j++) {
-                    errorRecords.add(new ErrorRecord(indexNumber, apiException.getMessage(), apiException.statusCode(), requestId));
+                    allRecords.add(new BulkInsertResponseRecord(indexNumber, null, null, null, null, apiException.statusCode(), apiException.getMessage(), requestId));
                     indexNumber++;
                 }
             }
         } else {
             int indexNumber = batchNumber > 0 ? batchNumber * batchSize : 0;
             for (int j = 0; j < batch.size(); j++) {
-                ErrorRecord err = new ErrorRecord(indexNumber, ex.getMessage(), 500);
-                errorRecords.add(err);
+                BulkInsertResponseRecord err = new BulkInsertResponseRecord(indexNumber, null, null, null, null, 500, ex.getMessage(), null);
+                allRecords.add(err);
                 indexNumber++;
             }
         }
-        List<BulkInsertResponseRecord> records = new ArrayList<>();
-        for (ErrorRecord errorRecord : errorRecords) {
-            records.add(new BulkInsertResponseRecord(
-                    errorRecord.getIndex(), null, null, null, null,
-                    errorRecord.getCode(), errorRecord.getError()));
-        }
-        return records;
+        return allRecords;
     }
 
     // Errors are parsed into ErrorRecord (shared with the other bulk ops), then projected onto
@@ -320,7 +409,7 @@ public final class Utils extends BaseUtils {
     public static List<BulkDetokenizeResponseRecord> handleBulkDetokenizeBatchException(
             Throwable ex, V1FlowDetokenizeRequest batch, int batchNumber, int batchSize
     ) {
-        List<ErrorRecord> errorRecords = new ArrayList<>();
+        List<BulkDetokenizeResponseRecord> allRecords = new ArrayList<>();
         Throwable cause = ex.getCause();
         if (cause instanceof ApiClientApiException) {
             ApiClientApiException apiException = (ApiClientApiException) cause;
@@ -328,6 +417,7 @@ public final class Utils extends BaseUtils {
             Object rawBody = apiException.body();
             Map<String, Object> responseBody = (rawBody instanceof Map) ? (Map<String, Object>) rawBody : null;
             int indexNumber = batchNumber * batchSize;
+            int tokenCount = batch.getTokens().isPresent() ? batch.getTokens().get().size() : 0;
             if (responseBody != null) {
                 if (responseBody.containsKey("response")) {
                     Object recordss = responseBody.get("response");
@@ -336,8 +426,8 @@ public final class Utils extends BaseUtils {
                         for (Object record : recordsList) {
                             if (record instanceof Map) {
                                 Map<String, Object> recordMap = (Map<String, Object>) record;
-                                ErrorRecord err = createErrorRecord(recordMap, indexNumber, requestId);
-                                errorRecords.add(err);
+                                BulkDetokenizeResponseRecord err = createDetokenizeErrorRecord(recordMap, indexNumber, requestId);
+                                allRecords.add(err);
                                 indexNumber++;
                             }
                         }
@@ -346,38 +436,40 @@ public final class Utils extends BaseUtils {
                     Object errField = responseBody.get("error");
                     Map<String, Object> recordMap = (errField instanceof Map) ? (Map<String, Object>) errField : null;
                     String fallbackMsg = (errField instanceof String) ? (String) errField : null;
-                    int tokenCount = batch.getTokens().isPresent() ? batch.getTokens().get().size() : 0;
                     for (int j = 0; j < tokenCount; j++) {
-                        ErrorRecord err = (recordMap != null)
-                                ? createErrorRecord(recordMap, indexNumber, requestId)
-                                : new ErrorRecord(indexNumber, fallbackMsg != null ? fallbackMsg : apiException.getMessage(), apiException.statusCode(), requestId);
-                        errorRecords.add(err);
+                        BulkDetokenizeResponseRecord err = null;
+                        if (recordMap != null) {
+                            err = createDetokenizeErrorRecord(recordMap, indexNumber, requestId);
+                        } else {
+                            String errorMessage = null;
+                            if (fallbackMsg != null) {
+                                errorMessage = fallbackMsg;
+                            } else {
+                                errorMessage = apiException.getMessage();
+                            }
+                            err = new BulkDetokenizeResponseRecord(indexNumber, null, null, null, null, apiException.statusCode(), errorMessage, requestId);
+                        }
+                        allRecords.add(err);
                         indexNumber++;
                     }
                 }
             }
-            if (errorRecords.isEmpty()) {
-                int tokenCount = batch.getTokens().isPresent() ? batch.getTokens().get().size() : 0;
+
+            if (allRecords.isEmpty()) {
                 for (int j = 0; j < tokenCount; j++) {
-                    errorRecords.add(new ErrorRecord(indexNumber, apiException.getMessage(), apiException.statusCode(), requestId));
+                    allRecords.add(new BulkDetokenizeResponseRecord(indexNumber, null, null, null, null, apiException.statusCode(), apiException.getMessage(), requestId));
                     indexNumber++;
                 }
             }
         } else {
             int indexNumber = batchNumber * batchSize;
             for (int j = 0; j < batch.getTokens().get().size(); j++) {
-                ErrorRecord err = new ErrorRecord(indexNumber, ex.getMessage(), 500);
-                errorRecords.add(err);
+                BulkDetokenizeResponseRecord err = new BulkDetokenizeResponseRecord(indexNumber, null, null, null, null, 500, ex.getMessage(), null);
+                allRecords.add(err);
                 indexNumber++;
             }
         }
-        List<BulkDetokenizeResponseRecord> records = new ArrayList<>();
-        for (ErrorRecord errorRecord : errorRecords) {
-            records.add(new BulkDetokenizeResponseRecord(
-                    errorRecord.getIndex(), null, null, null, null,
-                    errorRecord.getCode(), errorRecord.getError()));
-        }
-        return records;
+        return allRecords;
     }
 
     public static List<ErrorRecord> handleBulkDeleteTokensBatchException(
@@ -515,7 +607,8 @@ public final class Utils extends BaseUtils {
                         current.getTokens().orElse(null),
                         current.getHashedData().orElse(null),
                         current.getHttpCode().orElse(current.getError().isPresent() ? 500 : 200),
-                        current.getError().orElse(null)));
+                        current.getError().orElse(null),
+                        null));
                 indexNumber++;
             }
             formattedResponse = new BulkInsertResponse(records);
@@ -538,7 +631,8 @@ public final class Utils extends BaseUtils {
                         current.getTokenGroupName().orElse(null),
                         current.getMetadata().orElse(null),
                         current.getHttpCode().orElse(current.getError().isPresent() ? 500 : 200),
-                        current.getError().orElse(null)));
+                        current.getError().orElse(null),
+                        null));
                 indexNumber++;
             }
             return new BulkDetokenizeResponse(records);

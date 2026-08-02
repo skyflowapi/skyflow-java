@@ -3,6 +3,7 @@ package com.skyflow.vault.data;
 import java.util.Map;
 
 public class DetokenizeResponseRecord extends BaseDetokenizeRecordResponse {
+    // Passed straight through from V1FlowDetokenizeResponseObject.getValue() (Optional<Object>).
     private final Object value;
     private final String tokenGroupName;
     private final Map<String, Object> metadata;

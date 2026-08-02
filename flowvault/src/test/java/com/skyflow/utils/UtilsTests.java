@@ -690,6 +690,239 @@ public class UtilsTests {
         Assert.assertNull(errors.get(0).getHashedData());
     }
 
+    @Test
+    public void testHandleBulkInsertBatchException_recordsBodyCarriesTableAndSkyflowId() {
+        // createInsertErrorRecord now builds a BulkInsertResponseRecord directly, so per-record
+        // table/id data from the error body survives instead of being nulled out.
+        Map<String, Object> recordMap = new HashMap<>();
+        recordMap.put("tableName", "cards");
+        recordMap.put("error", "duplicate");
+        recordMap.put("httpCode", 409);
+        Map<String, Object> body = new HashMap<>();
+        body.put("records", Collections.singletonList(recordMap));
+        ApiClientApiException apiEx = new ApiClientApiException("insert failed", 409, body);
+        RuntimeException wrapper = new RuntimeException(apiEx);
+
+        List<V1InsertRecordData> batch = Collections.singletonList(
+                V1InsertRecordData.builder().data(new HashMap<>()).build());
+        List<BulkInsertResponseRecord> records = Utils.handleBulkInsertBatchException(wrapper, batch, 0, 50);
+
+        Assert.assertEquals(1, records.size());
+        Assert.assertEquals("cards", records.get(0).getTableName());
+        Assert.assertEquals("duplicate", records.get(0).getError());
+        Assert.assertEquals(409, records.get(0).getHttpCode());
+    }
+
+    @Test
+    public void testHandleBulkInsertBatchException_recordsBodyFallsBackToUnknownError() {
+        // An entry with no error/message key still produces a record rather than being skipped.
+        Map<String, Object> recordMap = new HashMap<>();
+        recordMap.put("httpCode", 500);
+        Map<String, Object> body = new HashMap<>();
+        body.put("records", Collections.singletonList(recordMap));
+        ApiClientApiException apiEx = new ApiClientApiException("insert failed", 500, body);
+        RuntimeException wrapper = new RuntimeException(apiEx);
+
+        List<V1InsertRecordData> batch = Collections.singletonList(
+                V1InsertRecordData.builder().data(new HashMap<>()).build());
+        List<BulkInsertResponseRecord> records = Utils.handleBulkInsertBatchException(wrapper, batch, 0, 50);
+
+        Assert.assertEquals(1, records.size());
+        Assert.assertEquals("Unknown error", records.get(0).getError());
+        Assert.assertEquals(500, records.get(0).getHttpCode());
+    }
+
+    @Test
+    public void testHandleBulkInsertBatchException_indexOffsetAcrossBatches() {
+        Map<String, Object> body = new HashMap<>();
+        body.put("error", "auth error");
+        ApiClientApiException apiEx = new ApiClientApiException("insert failed", 401, body);
+        RuntimeException wrapper = new RuntimeException(apiEx);
+
+        List<V1InsertRecordData> batch = Arrays.asList(
+                V1InsertRecordData.builder().data(new HashMap<>()).build(),
+                V1InsertRecordData.builder().data(new HashMap<>()).build());
+        List<BulkInsertResponseRecord> records = Utils.handleBulkInsertBatchException(wrapper, batch, 2, 50);
+
+        Assert.assertEquals(100, records.get(0).getIndex());
+        Assert.assertEquals(101, records.get(1).getIndex());
+    }
+
+    @Test
+    public void testHandleBulkInsertBatchException_genericExceptionHasNoRequestId() {
+        // A non-API failure has no response headers to read a request id from.
+        RuntimeException ex = new RuntimeException("boom");
+        List<V1InsertRecordData> batch = Collections.singletonList(
+                V1InsertRecordData.builder().data(new HashMap<>()).build());
+
+        List<BulkInsertResponseRecord> records = Utils.handleBulkInsertBatchException(ex, batch, 0, 50);
+
+        Assert.assertEquals(1, records.size());
+        Assert.assertNull(records.get(0).getRequestId());
+        Assert.assertEquals("boom", records.get(0).getError());
+    }
+
+    // ── createInsertErrorRecord / createDetokenizeErrorRecord branch coverage ─
+
+    @Test
+    public void testCreateInsertErrorRecord_nullRecordMapReturnsNull() {
+        Assert.assertNull(Utils.createInsertErrorRecord(null, 0, "req-1"));
+        Assert.assertNull(Utils.createDetokenizeErrorRecord(null, 0, "req-1"));
+    }
+
+    @Test
+    public void testCreateErrorRecords_snakeCaseHttpCodeKey() {
+        Map<String, Object> recordMap = new HashMap<>();
+        recordMap.put("http_code", 409);
+        recordMap.put("error", "duplicate");
+
+        Assert.assertEquals(409, Utils.createInsertErrorRecord(recordMap, 0, null).getHttpCode());
+        Assert.assertEquals(409, Utils.createDetokenizeErrorRecord(recordMap, 0, null).getHttpCode());
+    }
+
+    @Test
+    public void testCreateErrorRecords_statusCodeKey() {
+        Map<String, Object> recordMap = new HashMap<>();
+        recordMap.put("statusCode", 422);
+        recordMap.put("error", "unprocessable");
+
+        Assert.assertEquals(422, Utils.createInsertErrorRecord(recordMap, 0, null).getHttpCode());
+        Assert.assertEquals(422, Utils.createDetokenizeErrorRecord(recordMap, 0, null).getHttpCode());
+    }
+
+    @Test
+    public void testCreateErrorRecords_noHttpCodeKeyDefaultsTo500() {
+        Map<String, Object> recordMap = new HashMap<>();
+        recordMap.put("error", "no code supplied");
+
+        Assert.assertEquals(500, Utils.createInsertErrorRecord(recordMap, 0, null).getHttpCode());
+        Assert.assertEquals(500, Utils.createDetokenizeErrorRecord(recordMap, 0, null).getHttpCode());
+    }
+
+    @Test
+    public void testCreateErrorRecords_messageKeyIsUsedWhenErrorKeyAbsent() {
+        Map<String, Object> recordMap = new HashMap<>();
+        recordMap.put("message", "vault not found");
+        recordMap.put("httpCode", 404);
+
+        Assert.assertEquals("vault not found", Utils.createInsertErrorRecord(recordMap, 0, null).getError());
+        Assert.assertEquals("vault not found", Utils.createDetokenizeErrorRecord(recordMap, 0, null).getError());
+    }
+
+    @Test
+    public void testCreateInsertErrorRecord_readsSkyflowIdUsingWireCasing() {
+        // The API returns the id as "skyflowID" — matching @JsonProperty("skyflowID") on the
+        // generated V1RecordResponseObject — even though the SDK exposes it as getSkyflowId().
+        Map<String, Object> recordMap = new HashMap<>();
+        recordMap.put("skyflowID", "id-1");
+        recordMap.put("tableName", "cards");
+        recordMap.put("error", "duplicate");
+
+        BulkInsertResponseRecord record = Utils.createInsertErrorRecord(recordMap, 0, null);
+
+        Assert.assertEquals("id-1", record.getSkyflowId());
+        Assert.assertEquals("cards", record.getTableName());
+    }
+
+    @Test
+    public void testCreateErrorRecords_requestIdIsCarried() {
+        Map<String, Object> recordMap = new HashMap<>();
+        recordMap.put("error", "boom");
+
+        Assert.assertEquals("req-7", Utils.createInsertErrorRecord(recordMap, 3, "req-7").getRequestId());
+        Assert.assertEquals("req-7", Utils.createDetokenizeErrorRecord(recordMap, 3, "req-7").getRequestId());
+        Assert.assertEquals(3, Utils.createInsertErrorRecord(recordMap, 3, "req-7").getIndex());
+    }
+
+    // ── handleBulkInsertBatchException, remaining branches ────────────────────
+
+    @Test
+    public void testHandleBulkInsertBatchException_errorFieldAsObjectUsesHelper() {
+        // The API's structured error envelope: {"error": {message, httpCode, ...}}
+        Map<String, Object> errorObject = new HashMap<>();
+        errorObject.put("message", "vault not found");
+        errorObject.put("httpCode", 404);
+        Map<String, Object> body = new HashMap<>();
+        body.put("error", errorObject);
+        ApiClientApiException apiEx = new ApiClientApiException("insert failed", 404, body);
+        RuntimeException wrapper = new RuntimeException(apiEx);
+
+        List<V1InsertRecordData> batch = Arrays.asList(
+                V1InsertRecordData.builder().data(new HashMap<>()).build(),
+                V1InsertRecordData.builder().data(new HashMap<>()).build());
+        List<BulkInsertResponseRecord> records = Utils.handleBulkInsertBatchException(wrapper, batch, 0, 50);
+
+        Assert.assertEquals(2, records.size());
+        for (BulkInsertResponseRecord record : records) {
+            Assert.assertEquals("vault not found", record.getError());
+            Assert.assertEquals(404, record.getHttpCode());
+        }
+    }
+
+    @Test
+    public void testHandleBulkInsertBatchException_errorFieldNeitherMapNorStringUsesApiMessage() {
+        Map<String, Object> body = new HashMap<>();
+        body.put("error", 500);
+        ApiClientApiException apiEx = new ApiClientApiException("insert failed", 500, body);
+        RuntimeException wrapper = new RuntimeException(apiEx);
+
+        List<V1InsertRecordData> batch = Collections.singletonList(
+                V1InsertRecordData.builder().data(new HashMap<>()).build());
+        List<BulkInsertResponseRecord> records = Utils.handleBulkInsertBatchException(wrapper, batch, 0, 50);
+
+        Assert.assertEquals(1, records.size());
+        Assert.assertEquals("insert failed", records.get(0).getError());
+    }
+
+    @Test
+    public void testHandleBulkInsertBatchException_recordsNotAListFallsBackToBatchWideError() {
+        Map<String, Object> body = new HashMap<>();
+        body.put("records", "not-a-list");
+        ApiClientApiException apiEx = new ApiClientApiException("insert failed", 400, body);
+        RuntimeException wrapper = new RuntimeException(apiEx);
+
+        List<V1InsertRecordData> batch = Collections.singletonList(
+                V1InsertRecordData.builder().data(new HashMap<>()).build());
+        List<BulkInsertResponseRecord> records = Utils.handleBulkInsertBatchException(wrapper, batch, 0, 50);
+
+        Assert.assertEquals(1, records.size());
+        Assert.assertEquals("insert failed", records.get(0).getError());
+        Assert.assertEquals(400, records.get(0).getHttpCode());
+    }
+
+    @Test
+    public void testHandleBulkInsertBatchException_nonMapEntriesAreSkipped() {
+        Map<String, Object> body = new HashMap<>();
+        body.put("records", Arrays.asList("not-a-map", null));
+        ApiClientApiException apiEx = new ApiClientApiException("insert failed", 400, body);
+        RuntimeException wrapper = new RuntimeException(apiEx);
+
+        List<V1InsertRecordData> batch = Collections.singletonList(
+                V1InsertRecordData.builder().data(new HashMap<>()).build());
+        List<BulkInsertResponseRecord> records = Utils.handleBulkInsertBatchException(wrapper, batch, 0, 50);
+
+        // No entry parsed, so the batch-wide fallback fires instead.
+        Assert.assertEquals(1, records.size());
+        Assert.assertEquals("insert failed", records.get(0).getError());
+    }
+
+    @Test
+    public void testHandleBulkInsertBatchException_bodyWithNeitherRecordsNorErrorKey() {
+        // A map body that matches neither branch falls through to the batch-wide fallback.
+        Map<String, Object> body = new HashMap<>();
+        body.put("unexpected", "shape");
+        ApiClientApiException apiEx = new ApiClientApiException("insert failed", 503, body);
+        RuntimeException wrapper = new RuntimeException(apiEx);
+
+        List<V1InsertRecordData> batch = Collections.singletonList(
+                V1InsertRecordData.builder().data(new HashMap<>()).build());
+        List<BulkInsertResponseRecord> records = Utils.handleBulkInsertBatchException(wrapper, batch, 0, 50);
+
+        Assert.assertEquals(1, records.size());
+        Assert.assertEquals("insert failed", records.get(0).getError());
+        Assert.assertEquals(503, records.get(0).getHttpCode());
+    }
+
     // ── handleBulkDetokenizeBatchException ────────────────────────────────────
 
     @Test
@@ -712,10 +945,214 @@ public class UtilsTests {
         Assert.assertEquals(404, errors.get(0).getHttpCode());
         Assert.assertEquals("token not found", errors.get(0).getError());
         Assert.assertEquals(0, errors.get(0).getIndex());
-        // Projected error records carry no token/group/metadata data.
+        // This entry carried no token/group of its own, so those stay null.
         Assert.assertNull(errors.get(0).getToken());
         Assert.assertNull(errors.get(0).getTokenGroupName());
         Assert.assertNull(errors.get(0).getMetadata());
+    }
+
+    @Test
+    public void testHandleBulkDetokenizeBatchException_responseBodyCarriesTokenAndGroup() {
+        // createDetokenizeErrorRecord builds a BulkDetokenizeResponseRecord directly, so the
+        // failing token echoed back by the API survives instead of being nulled out.
+        Map<String, Object> errorRecordMap = new HashMap<>();
+        errorRecordMap.put("token", "tok-bad");
+        errorRecordMap.put("tokenGroupName", "email_group");
+        errorRecordMap.put("error", "token not found");
+        errorRecordMap.put("httpCode", 404);
+        Map<String, Object> body = new HashMap<>();
+        body.put("response", Collections.singletonList(errorRecordMap));
+        ApiClientApiException apiEx = new ApiClientApiException("detokenize failed", 404, body);
+        RuntimeException wrapper = new RuntimeException(apiEx);
+
+        V1FlowDetokenizeRequest batch = V1FlowDetokenizeRequest.builder()
+                .vaultId("vault123")
+                .tokens(Collections.singletonList("tok-bad"))
+                .build();
+        List<BulkDetokenizeResponseRecord> records = Utils.handleBulkDetokenizeBatchException(wrapper, batch, 0, 50);
+
+        Assert.assertEquals(1, records.size());
+        Assert.assertEquals("tok-bad", records.get(0).getToken());
+        Assert.assertEquals("email_group", records.get(0).getTokenGroupName());
+        Assert.assertEquals("token not found", records.get(0).getError());
+        Assert.assertEquals(404, records.get(0).getHttpCode());
+    }
+
+    @Test
+    public void testHandleBulkDetokenizeBatchException_responseBodyFallsBackToUnknownError() {
+        Map<String, Object> errorRecordMap = new HashMap<>();
+        errorRecordMap.put("httpCode", 500);
+        Map<String, Object> body = new HashMap<>();
+        body.put("response", Collections.singletonList(errorRecordMap));
+        ApiClientApiException apiEx = new ApiClientApiException("detokenize failed", 500, body);
+        RuntimeException wrapper = new RuntimeException(apiEx);
+
+        V1FlowDetokenizeRequest batch = V1FlowDetokenizeRequest.builder()
+                .vaultId("vault123")
+                .tokens(Collections.singletonList("t1"))
+                .build();
+        List<BulkDetokenizeResponseRecord> records = Utils.handleBulkDetokenizeBatchException(wrapper, batch, 0, 50);
+
+        Assert.assertEquals(1, records.size());
+        Assert.assertEquals("Unknown error", records.get(0).getError());
+        Assert.assertEquals(500, records.get(0).getHttpCode());
+    }
+
+    @Test
+    public void testHandleBulkDetokenizeBatchException_topLevelErrorAppliesToEveryToken() {
+        Map<String, Object> body = new HashMap<>();
+        body.put("error", "top level auth error");
+        ApiClientApiException apiEx = new ApiClientApiException("detokenize failed", 401, body);
+        RuntimeException wrapper = new RuntimeException(apiEx);
+
+        V1FlowDetokenizeRequest batch = V1FlowDetokenizeRequest.builder()
+                .vaultId("vault123")
+                .tokens(Arrays.asList("t1", "t2"))
+                .build();
+        List<BulkDetokenizeResponseRecord> records = Utils.handleBulkDetokenizeBatchException(wrapper, batch, 2, 50);
+
+        Assert.assertEquals(2, records.size());
+        Assert.assertEquals("top level auth error", records.get(0).getError());
+        Assert.assertEquals(401, records.get(0).getHttpCode());
+        // index continues from the batch offset
+        Assert.assertEquals(100, records.get(0).getIndex());
+        Assert.assertEquals(101, records.get(1).getIndex());
+    }
+
+    @Test
+    public void testHandleBulkDetokenizeBatchException_errorFieldAsObjectUsesHelper() {
+        Map<String, Object> errorObject = new HashMap<>();
+        errorObject.put("message", "vault not found");
+        errorObject.put("httpCode", 404);
+        Map<String, Object> body = new HashMap<>();
+        body.put("error", errorObject);
+        ApiClientApiException apiEx = new ApiClientApiException("detokenize failed", 404, body);
+        RuntimeException wrapper = new RuntimeException(apiEx);
+
+        V1FlowDetokenizeRequest batch = V1FlowDetokenizeRequest.builder()
+                .vaultId("vault123")
+                .tokens(Arrays.asList("t1", "t2"))
+                .build();
+        List<BulkDetokenizeResponseRecord> records = Utils.handleBulkDetokenizeBatchException(wrapper, batch, 0, 50);
+
+        Assert.assertEquals(2, records.size());
+        for (BulkDetokenizeResponseRecord record : records) {
+            Assert.assertEquals("vault not found", record.getError());
+            Assert.assertEquals(404, record.getHttpCode());
+        }
+    }
+
+    @Test
+    public void testHandleBulkDetokenizeBatchException_errorFieldNeitherMapNorStringUsesApiMessage() {
+        Map<String, Object> body = new HashMap<>();
+        body.put("error", 500);
+        ApiClientApiException apiEx = new ApiClientApiException("detokenize failed", 500, body);
+        RuntimeException wrapper = new RuntimeException(apiEx);
+
+        V1FlowDetokenizeRequest batch = V1FlowDetokenizeRequest.builder()
+                .vaultId("vault123")
+                .tokens(Collections.singletonList("t1"))
+                .build();
+        List<BulkDetokenizeResponseRecord> records = Utils.handleBulkDetokenizeBatchException(wrapper, batch, 0, 50);
+
+        Assert.assertEquals(1, records.size());
+        Assert.assertEquals("detokenize failed", records.get(0).getError());
+    }
+
+    @Test
+    public void testHandleBulkDetokenizeBatchException_responseNotAListFallsBackToBatchWideError() {
+        Map<String, Object> body = new HashMap<>();
+        body.put("response", "not-a-list");
+        ApiClientApiException apiEx = new ApiClientApiException("detokenize failed", 400, body);
+        RuntimeException wrapper = new RuntimeException(apiEx);
+
+        V1FlowDetokenizeRequest batch = V1FlowDetokenizeRequest.builder()
+                .vaultId("vault123")
+                .tokens(Collections.singletonList("t1"))
+                .build();
+        List<BulkDetokenizeResponseRecord> records = Utils.handleBulkDetokenizeBatchException(wrapper, batch, 0, 50);
+
+        Assert.assertEquals(1, records.size());
+        Assert.assertEquals("detokenize failed", records.get(0).getError());
+    }
+
+    @Test
+    public void testHandleBulkDetokenizeBatchException_nonMapEntriesAreSkipped() {
+        Map<String, Object> body = new HashMap<>();
+        body.put("response", Arrays.asList("not-a-map", null));
+        ApiClientApiException apiEx = new ApiClientApiException("detokenize failed", 400, body);
+        RuntimeException wrapper = new RuntimeException(apiEx);
+
+        V1FlowDetokenizeRequest batch = V1FlowDetokenizeRequest.builder()
+                .vaultId("vault123")
+                .tokens(Collections.singletonList("t1"))
+                .build();
+        List<BulkDetokenizeResponseRecord> records = Utils.handleBulkDetokenizeBatchException(wrapper, batch, 0, 50);
+
+        Assert.assertEquals(1, records.size());
+        Assert.assertEquals("detokenize failed", records.get(0).getError());
+    }
+
+    @Test
+    public void testHandleBulkDetokenizeBatchException_batchWithNoTokensProducesNoRecords() {
+        Map<String, Object> body = new HashMap<>();
+        body.put("error", "auth error");
+        ApiClientApiException apiEx = new ApiClientApiException("detokenize failed", 401, body);
+        RuntimeException wrapper = new RuntimeException(apiEx);
+
+        V1FlowDetokenizeRequest batch = V1FlowDetokenizeRequest.builder().vaultId("vault123").build();
+        List<BulkDetokenizeResponseRecord> records = Utils.handleBulkDetokenizeBatchException(wrapper, batch, 0, 50);
+
+        Assert.assertTrue(records.isEmpty());
+    }
+
+    @Test
+    public void testHandleBulkDetokenizeBatchException_bodyWithNeitherResponseNorErrorKey() {
+        Map<String, Object> body = new HashMap<>();
+        body.put("unexpected", "shape");
+        ApiClientApiException apiEx = new ApiClientApiException("detokenize failed", 503, body);
+        RuntimeException wrapper = new RuntimeException(apiEx);
+
+        V1FlowDetokenizeRequest batch = V1FlowDetokenizeRequest.builder()
+                .vaultId("vault123")
+                .tokens(Collections.singletonList("t1"))
+                .build();
+        List<BulkDetokenizeResponseRecord> records = Utils.handleBulkDetokenizeBatchException(wrapper, batch, 0, 50);
+
+        Assert.assertEquals(1, records.size());
+        Assert.assertEquals("detokenize failed", records.get(0).getError());
+        Assert.assertEquals(503, records.get(0).getHttpCode());
+    }
+
+    // ── formatBulk*Response, empty/absent bodies ──────────────────────────────
+
+    @Test
+    public void testFormatBulkResponses_nullResponseReturnsNull() {
+        Assert.assertNull(Utils.formatBulkInsertResponse(null, 0, 50, null));
+        Assert.assertNull(Utils.formatBulkDetokenizeResponse(null, 0, 50, null));
+    }
+
+    @Test
+    public void testFormatBulkResponses_absentRecordsReturnsNull() {
+        Assert.assertNull(Utils.formatBulkInsertResponse(
+                V1InsertResponse.builder().build(), 0, 50, null));
+        Assert.assertNull(Utils.formatBulkDetokenizeResponse(
+                V1FlowDetokenizeResponse.builder().build(), 0, 50, null));
+    }
+
+    @Test
+    public void testHandleBulkDetokenizeBatchException_genericExceptionHasNoRequestId() {
+        RuntimeException ex = new RuntimeException("boom");
+        V1FlowDetokenizeRequest batch = V1FlowDetokenizeRequest.builder()
+                .vaultId("vault123")
+                .tokens(Collections.singletonList("t1"))
+                .build();
+
+        List<BulkDetokenizeResponseRecord> records = Utils.handleBulkDetokenizeBatchException(ex, batch, 0, 50);
+
+        Assert.assertEquals(1, records.size());
+        Assert.assertNull(records.get(0).getRequestId());
+        Assert.assertEquals("boom", records.get(0).getError());
     }
 
     @Test
