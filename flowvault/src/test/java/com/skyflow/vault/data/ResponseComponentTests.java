@@ -5,15 +5,16 @@ import org.junit.Test;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
  * Tests for the response/success/summary building-block classes that carry real
  * constructor logic or toString() serialization: {@link Success}, {@link Summary},
- * {@link Token}, {@link TokenizeData}, {@link TokenizeSuccess}, {@link TokenizeSummary},
- * {@link DeleteTokensSuccess}, {@link DeleteTokensSummary}, {@link DetokenizeSummary},
+ * {@link Token}, {@link TokenizeResponseToken}, {@link TokenizeResponseRecord},
+ * {@link BulkTokenizeResponseRecord}, {@link TokenizeSummary},
+ * {@link DeleteTokensRecord}, {@link BulkDeleteTokensResponseRecord},
+ * {@link DeleteTokensSummary}, {@link DetokenizeSummary},
  * {@link ErrorRecord} and {@link DetokenizeResponseObject}.
  */
 public class ResponseComponentTests {
@@ -76,57 +77,50 @@ public class ResponseComponentTests {
         Assert.assertEquals("group-name", token.getTokenGroupName());
     }
 
-    // ── TokenizeData ─────────────────────────────────────────────────────────
-    // Note: TokenizeData has an `index` field set in the constructor but exposes
-    // no getter for it - only getValue()/getTokens() are accessible.
+    // ── TokenizeResponseToken ────────────────────────────────────────────────
 
     @Test
-    public void testTokenizeData_getValueAndEmptyTokensOnConstruction() {
-        TokenizeData data = new TokenizeData("plain-value", 0);
-        Assert.assertEquals("plain-value", data.getValue());
-        Assert.assertNotNull(data.getTokens());
-        Assert.assertTrue(data.getTokens().isEmpty());
+    public void testTokenizeResponseToken_successValues() {
+        TokenizeResponseToken token = new TokenizeResponseToken("group1", "tok-abc", 200, null);
+        Assert.assertEquals("group1", token.getTokenGroupName());
+        Assert.assertEquals("tok-abc", token.getToken());
+        Assert.assertEquals(Integer.valueOf(200), token.getHttpCode());
+        Assert.assertNull(token.getError());
     }
 
     @Test
-    public void testTokenizeData_addTokenPopulatesTokensMap() {
-        TokenizeData data = new TokenizeData("plain-value", 1);
-        data.addToken("group1", "tok-1");
-        data.addToken("group2", "tok-2");
-
-        Map<String, String> expected = new LinkedHashMap<>();
-        expected.put("group1", "tok-1");
-        expected.put("group2", "tok-2");
-        Assert.assertEquals(expected, data.getTokens());
+    public void testTokenizeResponseToken_errorValues() {
+        TokenizeResponseToken token = new TokenizeResponseToken("group2", null, 400, "bad group");
+        Assert.assertNull(token.getToken());
+        Assert.assertEquals("bad group", token.getError());
+        Assert.assertEquals(Integer.valueOf(400), token.getHttpCode());
     }
 
     @Test
-    public void testTokenizeData_toStringNotNull() {
-        TokenizeData data = new TokenizeData("value", 0);
-        Assert.assertNotNull(data.toString());
+    public void testTokenizeResponseToken_toStringSerializesNulls() {
+        Assert.assertTrue(new TokenizeResponseToken("group1", "tok-abc", 200, null)
+                .toString().contains("\"error\":null"));
     }
 
-    // ── TokenizeSuccess ──────────────────────────────────────────────────────
+    // ── TokenizeResponseRecord / BulkTokenizeResponseRecord ──────────────────
 
     @Test
-    public void testTokenizeSuccess_getIndexAndValueAndEmptyTokensOnConstruction() {
-        TokenizeSuccess success = new TokenizeSuccess(3, "value-1");
-        Assert.assertEquals(3, success.getIndex());
-        Assert.assertEquals("value-1", success.getValue());
-        Assert.assertNotNull(success.getTokens());
-        Assert.assertTrue(success.getTokens().isEmpty());
-    }
-
-    @Test
-    public void testTokenizeSuccess_addTokenPopulatesTokensMap() {
-        TokenizeSuccess success = new TokenizeSuccess(0, "value-1");
-        success.addToken("group1", "tok-1");
-        Assert.assertEquals("tok-1", success.getTokens().get("group1"));
+    public void testTokenizeResponseRecord_gettersReturnConstructorValues() {
+        List<TokenizeResponseToken> tokens = Collections.singletonList(
+                new TokenizeResponseToken("group1", "tok-abc", 200, null));
+        TokenizeResponseRecord record = new TokenizeResponseRecord("value1", tokens);
+        Assert.assertEquals("value1", record.getValue());
+        Assert.assertEquals(tokens, record.getTokens());
     }
 
     @Test
-    public void testTokenizeSuccess_toStringNotNull() {
-        Assert.assertNotNull(new TokenizeSuccess(0, "value").toString());
+    public void testBulkTokenizeResponseRecord_carriesIndexAndIsATokenizeResponseRecord() {
+        BulkTokenizeResponseRecord record = new BulkTokenizeResponseRecord(7, "value1",
+                Collections.singletonList(new TokenizeResponseToken("group1", "tok-abc", 200, null)));
+        Assert.assertEquals(7, record.getIndex());
+        Assert.assertEquals("value1", record.getValue());
+        Assert.assertTrue(record instanceof TokenizeResponseRecord);
+        Assert.assertNotNull(record.toString());
     }
 
     // ── TokenizeSummary ──────────────────────────────────────────────────────
@@ -154,18 +148,48 @@ public class ResponseComponentTests {
         Assert.assertNotNull(new TokenizeSummary(1, 1, 0, 0).toString());
     }
 
-    // ── DeleteTokensSuccess ──────────────────────────────────────────────────
+    // ── DeleteTokensRecord ───────────────────────────────────────────────────
 
     @Test
-    public void testDeleteTokensSuccess_gettersReturnConstructorValues() {
-        DeleteTokensSuccess success = new DeleteTokensSuccess(1, "tok-1");
-        Assert.assertEquals(1, success.getIndex());
-        Assert.assertEquals("tok-1", success.getToken());
+    public void testDeleteTokensRecord_gettersReturnConstructorValues() {
+        DeleteTokensRecord record = new DeleteTokensRecord("tok-1", 200, null);
+        Assert.assertEquals("tok-1", record.getToken());
+        Assert.assertEquals(Integer.valueOf(200), record.getHttpCode());
+        Assert.assertNull(record.getError());
     }
 
     @Test
-    public void testDeleteTokensSuccess_toStringNotNull() {
-        Assert.assertNotNull(new DeleteTokensSuccess(0, "tok-1").toString());
+    public void testDeleteTokensRecord_carriesErrorDetails() {
+        DeleteTokensRecord record = new DeleteTokensRecord("tok-2", 404, "Token not found");
+        Assert.assertEquals("tok-2", record.getToken());
+        Assert.assertEquals(Integer.valueOf(404), record.getHttpCode());
+        Assert.assertEquals("Token not found", record.getError());
+    }
+
+    @Test
+    public void testDeleteTokensRecord_toStringSerializesNulls() {
+        Assert.assertTrue(new DeleteTokensRecord("tok-1", 200, null).toString().contains("\"error\":null"));
+    }
+
+    // ── BulkDeleteTokensResponseRecord ───────────────────────────────────────
+
+    @Test
+    public void testBulkDeleteTokensResponseRecord_gettersReturnConstructorValues() {
+        BulkDeleteTokensResponseRecord record = new BulkDeleteTokensResponseRecord(1, "tok-1", 200, null);
+        Assert.assertEquals(1, record.getIndex());
+        Assert.assertEquals("tok-1", record.getToken());
+        Assert.assertEquals(Integer.valueOf(200), record.getHttpCode());
+        Assert.assertNull(record.getError());
+    }
+
+    @Test
+    public void testBulkDeleteTokensResponseRecord_isADeleteTokensRecord() {
+        Assert.assertTrue(new BulkDeleteTokensResponseRecord(0, "tok-1", 200, null) instanceof DeleteTokensRecord);
+    }
+
+    @Test
+    public void testBulkDeleteTokensResponseRecord_toStringNotNull() {
+        Assert.assertNotNull(new BulkDeleteTokensResponseRecord(0, "tok-1", 200, null).toString());
     }
 
     // ── DeleteTokensSummary ──────────────────────────────────────────────────

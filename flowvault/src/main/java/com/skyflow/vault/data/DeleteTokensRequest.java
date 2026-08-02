@@ -3,10 +3,10 @@ package com.skyflow.vault.data;
 import java.util.List;
 
 public class DeleteTokensRequest {
-    private final DeleteTokensRequestBuilder builder;
+    private final List<String> tokens;
 
-    private DeleteTokensRequest(DeleteTokensRequestBuilder builder) {
-        this.builder = builder;
+    protected DeleteTokensRequest(List<String> tokens) {
+        this.tokens = tokens;
     }
 
     public static DeleteTokensRequestBuilder builder() {
@@ -14,13 +14,13 @@ public class DeleteTokensRequest {
     }
 
     public List<String> getTokens() {
-        return this.builder.tokens;
+        return this.tokens;
     }
 
-    public static final class DeleteTokensRequestBuilder {
-        private List<String> tokens;
+    public static class DeleteTokensRequestBuilder {
+        protected List<String> tokens;
 
-        private DeleteTokensRequestBuilder() {}
+        protected DeleteTokensRequestBuilder() {}
 
         public DeleteTokensRequestBuilder tokens(List<String> tokens) {
             this.tokens = tokens;
@@ -28,7 +28,7 @@ public class DeleteTokensRequest {
         }
 
         public DeleteTokensRequest build() {
-            return new DeleteTokensRequest(this);
+            return new DeleteTokensRequest(this.tokens);
         }
     }
 }

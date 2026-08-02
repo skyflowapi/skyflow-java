@@ -132,6 +132,8 @@ public enum ErrorLogs {
     EMPTY_TOKEN_GROUP_NAMES_IN_TOKENIZE_RECORD("Invalid %s1 request. TokenGroupNames in TokenizeRecord can not be null or empty."),
     EMPTY_TOKEN_GROUP_NAME_IN_TOKENIZE_RECORD("Invalid %s1 request. Token group name in TokenizeRecord can not be null or empty at index %s2."),
     TOKENIZE_DATA_SIZE_EXCEED("Maximum number of tokenize records exceeded. The limit is 10000."),
+    MISSING_INDEX_IN_BULK_TOKENIZE_RECORD("Invalid %s1 request. Index in BulkTokenizeRequestRecord can not be null at position %s2."),
+    DUPLICATE_INDEX_IN_BULK_TOKENIZE_RECORD("Invalid %s1 request. Duplicate index %s2 in BulkTokenizeRequestRecord."),
     DELETE_REQUEST_REJECTED("Delete request resulted in failure."),
     DELETE_TOKENS_REQUEST_NULL("Invalid %s1 request. DeleteTokens request can not be null."),
     EMPTY_DELETE_TOKENS_DATA("Invalid %s1 request. Delete tokens data can not be empty."),

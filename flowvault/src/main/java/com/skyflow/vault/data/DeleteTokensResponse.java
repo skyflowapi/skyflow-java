@@ -1,22 +1,24 @@
 package com.skyflow.vault.data;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
 import java.util.List;
 
 public class DeleteTokensResponse {
-    private final List<String> tokens;
-    private final ArrayList<HashMap<String, Object>> errors;
+    private final List<DeleteTokensRecord> records;
 
-    public DeleteTokensResponse(List<String> tokens, ArrayList<HashMap<String, Object>> errors) {
-        this.tokens = tokens;
-        this.errors = errors;
+    public DeleteTokensResponse(List<DeleteTokensRecord> records) {
+        this.records = records;
     }
 
-    public List<String> getTokens() {
-        return tokens;
+    public List<DeleteTokensRecord> getRecords() {
+        return records;
     }
-    public ArrayList<HashMap<String, Object>> getErrors(){
-        return this.errors;
+
+    @Override
+    public String toString() {
+        Gson gson = new GsonBuilder().serializeNulls().create();
+        return gson.toJson(this);
     }
 }

@@ -1,34 +1,34 @@
 package com.skyflow.vault.data;
 
-import java.util.ArrayList;
+import java.util.List;
 
 public class TokenizeRequest {
-    private final TokenizeRequestBuilder builder;
+    private final List<? extends TokenizeRequestRecord> records;
 
-    private TokenizeRequest(TokenizeRequestBuilder builder) {
-        this.builder = builder;
+    protected TokenizeRequest(List<? extends TokenizeRequestRecord> records) {
+        this.records = records;
     }
 
     public static TokenizeRequestBuilder builder() {
         return new TokenizeRequestBuilder();
     }
 
-    public ArrayList<TokenizeRecord> getData() {
-        return this.builder.data;
+    public List<? extends TokenizeRequestRecord> getRecords() {
+        return this.records;
     }
 
-    public static final class TokenizeRequestBuilder {
-        private ArrayList<TokenizeRecord> data;
+    public static class TokenizeRequestBuilder {
+        protected List<? extends TokenizeRequestRecord> records;
 
-        private TokenizeRequestBuilder() {}
+        protected TokenizeRequestBuilder() {}
 
-        public TokenizeRequestBuilder data(ArrayList<TokenizeRecord> data) {
-            this.data = data;
+        public TokenizeRequestBuilder records(List<? extends TokenizeRequestRecord> records) {
+            this.records = records;
             return this;
         }
 
         public TokenizeRequest build() {
-            return new TokenizeRequest(this);
+            return new TokenizeRequest(this.records);
         }
     }
 }

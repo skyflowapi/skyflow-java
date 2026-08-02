@@ -1,26 +1,24 @@
 package com.skyflow.vault.data;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
 import java.util.List;
 
 public class TokenizeResponse {
-    private List<TokenizeData> tokenizedData;
-    private final ArrayList<HashMap<String, Object>> errors;
+    private final List<TokenizeResponseRecord> response;
 
-    public TokenizeResponse(ArrayList<HashMap<String, Object>> errors) {
-        this.errors = errors;
+    public TokenizeResponse(List<TokenizeResponseRecord> response) {
+        this.response = response;
     }
-    public TokenizeResponse(){
-        this.errors = new ArrayList<>();
+
+    public List<TokenizeResponseRecord> getResponse() {
+        return response;
     }
-    public List<TokenizeData> getTokenizedData(){
-        return this.tokenizedData;
-    }
-    public void setTokenizedData(List<TokenizeData> tokenizedData) {
-        this.tokenizedData = tokenizedData;
-    }
-    public ArrayList<HashMap<String, Object>> getErrors(){
-        return this.errors;
+
+    @Override
+    public String toString() {
+        Gson gson = new GsonBuilder().serializeNulls().create();
+        return gson.toJson(this);
     }
 }

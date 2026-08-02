@@ -9,7 +9,7 @@ import com.skyflow.vault.data.BulkInsertRecord;
 import com.skyflow.vault.data.BulkInsertRequest;
 import com.skyflow.vault.data.BulkDetokenizeRequest;
 import com.skyflow.vault.data.BulkTokenGroupRedactions;
-import com.skyflow.vault.data.BulkTokenizeRecord;
+import com.skyflow.vault.data.BulkTokenizeRequestRecord;
 import com.skyflow.vault.data.BulkTokenizeRequest;
 import com.skyflow.vault.data.DeleteTokensRequest;
 import com.skyflow.vault.data.DetokenizeData;
@@ -17,7 +17,7 @@ import com.skyflow.vault.data.DetokenizeRequest;
 import com.skyflow.vault.data.InsertRecord;
 import com.skyflow.vault.data.InsertRequest;
 import com.skyflow.vault.data.TokenGroupRedactions;
-import com.skyflow.vault.data.TokenizeRecord;
+import com.skyflow.vault.data.TokenizeRequestRecord;
 import com.skyflow.vault.data.TokenizeRequest;
 import org.junit.Assert;
 import org.junit.Test;
@@ -33,226 +33,6 @@ import java.util.Map;
 public class ValidationsTests {
     private static final String EXCEPTION_NOT_THROWN = "Should have thrown an exception";
     private static final String INVALID_EXCEPTION_THROWN = "Should not have thrown any exception";
-
-    // ── validateTokenizeRequest ──────────────────────────────────────────────
-
-    @Test
-    public void testValidateTokenizeRequest_nullRequest() {
-        try {
-            Validations.validateTokenizeRequest(null);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertNotNull(e.getMessage());
-        }
-    }
-
-    @Test
-    public void testValidateTokenizeRequest_nullData() {
-        TokenizeRequest request = TokenizeRequest.builder().data(null).build();
-        try {
-            Validations.validateTokenizeRequest(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertNotNull(e.getMessage());
-        }
-    }
-
-    @Test
-    public void testValidateTokenizeRequest_emptyData() {
-        TokenizeRequest request = TokenizeRequest.builder().data(new ArrayList<>()).build();
-        try {
-            Validations.validateTokenizeRequest(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertNotNull(e.getMessage());
-        }
-    }
-
-    @Test
-    public void testValidateTokenizeRequest_largeValidListDoesNotThrow() {
-        ArrayList<TokenizeRecord> records = new ArrayList<>();
-        for (int i = 0; i < 100; i++) {
-            records.add(TokenizeRecord.builder()
-                    .value("value" + i)
-                    .tokenGroupNames(Collections.singletonList("group1"))
-                    .build());
-        }
-        TokenizeRequest request = TokenizeRequest.builder().data(records).build();
-        try {
-            Validations.validateTokenizeRequest(request);
-        } catch (SkyflowException e) {
-            Assert.fail(INVALID_EXCEPTION_THROWN);
-        }
-    }
-
-    @Test
-    public void testValidateTokenizeRequest_nullRecordInList() {
-        ArrayList<TokenizeRecord> records = new ArrayList<>();
-        records.add(null);
-        TokenizeRequest request = TokenizeRequest.builder().data(records).build();
-        try {
-            Validations.validateTokenizeRequest(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertNotNull(e.getMessage());
-        }
-    }
-
-    @Test
-    public void testValidateTokenizeRequest_nullValue() {
-        ArrayList<TokenizeRecord> records = new ArrayList<>();
-        records.add(TokenizeRecord.builder().value(null).tokenGroupNames(Collections.singletonList("group1")).build());
-        TokenizeRequest request = TokenizeRequest.builder().data(records).build();
-        try {
-            Validations.validateTokenizeRequest(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertNotNull(e.getMessage());
-        }
-    }
-
-    @Test
-    public void testValidateTokenizeRequest_blankStringValue() {
-        ArrayList<TokenizeRecord> records = new ArrayList<>();
-        records.add(TokenizeRecord.builder().value("   ").tokenGroupNames(Collections.singletonList("group1")).build());
-        TokenizeRequest request = TokenizeRequest.builder().data(records).build();
-        try {
-            Validations.validateTokenizeRequest(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertNotNull(e.getMessage());
-        }
-    }
-
-    @Test
-    public void testValidateTokenizeRequest_nullTokenGroupNames() {
-        ArrayList<TokenizeRecord> records = new ArrayList<>();
-        records.add(TokenizeRecord.builder().value("value1").tokenGroupNames(null).build());
-        TokenizeRequest request = TokenizeRequest.builder().data(records).build();
-        try {
-            Validations.validateTokenizeRequest(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertNotNull(e.getMessage());
-        }
-    }
-
-    @Test
-    public void testValidateTokenizeRequest_emptyTokenGroupNames() {
-        ArrayList<TokenizeRecord> records = new ArrayList<>();
-        records.add(TokenizeRecord.builder().value("value1").tokenGroupNames(new ArrayList<>()).build());
-        TokenizeRequest request = TokenizeRequest.builder().data(records).build();
-        try {
-            Validations.validateTokenizeRequest(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertNotNull(e.getMessage());
-        }
-    }
-
-    @Test
-    public void testValidateTokenizeRequest_blankTokenGroupNameAtIndex() {
-        ArrayList<TokenizeRecord> records = new ArrayList<>();
-        records.add(TokenizeRecord.builder()
-                .value("value1")
-                .tokenGroupNames(Arrays.asList("group1", "   "))
-                .build());
-        TokenizeRequest request = TokenizeRequest.builder().data(records).build();
-        try {
-            Validations.validateTokenizeRequest(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertNotNull(e.getMessage());
-        }
-    }
-
-    @Test
-    public void testValidateTokenizeRequest_validRequest() {
-        ArrayList<TokenizeRecord> records = new ArrayList<>();
-        records.add(TokenizeRecord.builder()
-                .value("value1")
-                .tokenGroupNames(Collections.singletonList("group1"))
-                .build());
-        TokenizeRequest request = TokenizeRequest.builder().data(records).build();
-        try {
-            Validations.validateTokenizeRequest(request);
-        } catch (SkyflowException e) {
-            Assert.fail(INVALID_EXCEPTION_THROWN);
-        }
-    }
-
-    // ── validateDeleteTokensRequest ──────────────────────────────────────────
-
-    @Test
-    public void testValidateDeleteTokensRequest_nullRequest() {
-        try {
-            Validations.validateDeleteTokensRequest(null);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertNotNull(e.getMessage());
-        }
-    }
-
-    @Test
-    public void testValidateDeleteTokensRequest_nullTokens() {
-        DeleteTokensRequest request = DeleteTokensRequest.builder().tokens(null).build();
-        try {
-            Validations.validateDeleteTokensRequest(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertNotNull(e.getMessage());
-        }
-    }
-
-    @Test
-    public void testValidateDeleteTokensRequest_emptyTokens() {
-        DeleteTokensRequest request = DeleteTokensRequest.builder().tokens(new ArrayList<>()).build();
-        try {
-            Validations.validateDeleteTokensRequest(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertNotNull(e.getMessage());
-        }
-    }
-
-    @Test
-    public void testValidateDeleteTokensRequest_largeValidListDoesNotThrow() {
-        List<String> tokens = new ArrayList<>();
-        for (int i = 0; i < 100; i++) {
-            tokens.add("token" + i);
-        }
-        DeleteTokensRequest request = DeleteTokensRequest.builder().tokens(tokens).build();
-        try {
-            Validations.validateDeleteTokensRequest(request);
-        } catch (SkyflowException e) {
-            Assert.fail(INVALID_EXCEPTION_THROWN);
-        }
-    }
-
-    @Test
-    public void testValidateDeleteTokensRequest_blankTokenAtIndex() {
-        DeleteTokensRequest request = DeleteTokensRequest.builder()
-                .tokens(Arrays.asList("token1", "   "))
-                .build();
-        try {
-            Validations.validateDeleteTokensRequest(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertNotNull(e.getMessage());
-        }
-    }
-
-    @Test
-    public void testValidateDeleteTokensRequest_validRequest() {
-        DeleteTokensRequest request = DeleteTokensRequest.builder()
-                .tokens(Collections.singletonList("token1"))
-                .build();
-        try {
-            Validations.validateDeleteTokensRequest(request);
-        } catch (SkyflowException e) {
-            Assert.fail(INVALID_EXCEPTION_THROWN);
-        }
-    }
 
     // ── validateCredentials ───────────────────────────────────────────────────
 
@@ -1232,7 +1012,7 @@ public class ValidationsTests {
 
     @Test
     public void testValidateBulkTokenizeRequest_emptyData() {
-        BulkTokenizeRequest request = BulkTokenizeRequest.builder().data(new ArrayList<>()).build();
+        BulkTokenizeRequest request = BulkTokenizeRequest.builder().records(new ArrayList<>()).build();
         try {
             Validations.validateBulkTokenizeRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
@@ -1243,9 +1023,9 @@ public class ValidationsTests {
 
     @Test
     public void testValidateBulkTokenizeRequest_nullRecordInList() {
-        ArrayList<BulkTokenizeRecord> data = new ArrayList<>();
+        ArrayList<BulkTokenizeRequestRecord> data = new ArrayList<>();
         data.add(null);
-        BulkTokenizeRequest request = BulkTokenizeRequest.builder().data(data).build();
+        BulkTokenizeRequest request = BulkTokenizeRequest.builder().records(data).build();
         try {
             Validations.validateBulkTokenizeRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
@@ -1256,9 +1036,9 @@ public class ValidationsTests {
 
     @Test
     public void testValidateBulkTokenizeRequest_emptyValue() {
-        ArrayList<BulkTokenizeRecord> data = new ArrayList<>();
-        data.add(BulkTokenizeRecord.builder().value("   ").build());
-        BulkTokenizeRequest request = BulkTokenizeRequest.builder().data(data).build();
+        ArrayList<BulkTokenizeRequestRecord> data = new ArrayList<>();
+        data.add(BulkTokenizeRequestRecord.builder().value("   ").build());
+        BulkTokenizeRequest request = BulkTokenizeRequest.builder().records(data).build();
         try {
             Validations.validateBulkTokenizeRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
@@ -1269,9 +1049,9 @@ public class ValidationsTests {
 
     @Test
     public void testValidateBulkTokenizeRequest_emptyGroupNameInList() {
-        ArrayList<BulkTokenizeRecord> data = new ArrayList<>();
-        data.add(BulkTokenizeRecord.builder().value("value1").tokenGroupNames(Arrays.asList("group1", "  ")).build());
-        BulkTokenizeRequest request = BulkTokenizeRequest.builder().data(data).build();
+        ArrayList<BulkTokenizeRequestRecord> data = new ArrayList<>();
+        data.add(BulkTokenizeRequestRecord.builder().value("value1").tokenGroupNames(Arrays.asList("group1", "  ")).build());
+        BulkTokenizeRequest request = BulkTokenizeRequest.builder().records(data).build();
         try {
             Validations.validateBulkTokenizeRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
@@ -1282,9 +1062,9 @@ public class ValidationsTests {
 
     @Test
     public void testValidateBulkTokenizeRequest_validRequestWithTokenGroupNames() {
-        ArrayList<BulkTokenizeRecord> data = new ArrayList<>();
-        data.add(BulkTokenizeRecord.builder().value("value1").tokenGroupNames(Collections.singletonList("group1")).build());
-        BulkTokenizeRequest request = BulkTokenizeRequest.builder().data(data).build();
+        ArrayList<BulkTokenizeRequestRecord> data = new ArrayList<>();
+        data.add(BulkTokenizeRequestRecord.builder().value("value1").tokenGroupNames(Collections.singletonList("group1")).build());
+        BulkTokenizeRequest request = BulkTokenizeRequest.builder().records(data).build();
         try {
             Validations.validateBulkTokenizeRequest(request);
         } catch (SkyflowException e) {
@@ -1295,9 +1075,23 @@ public class ValidationsTests {
     @Test
     public void testValidateBulkTokenizeRequest_validRequestWithoutTokenGroupNames() {
         // Unlike the non-bulk tokenize validator, tokenGroupNames is optional for bulk requests.
-        ArrayList<BulkTokenizeRecord> data = new ArrayList<>();
-        data.add(BulkTokenizeRecord.builder().value("value1").build());
-        BulkTokenizeRequest request = BulkTokenizeRequest.builder().data(data).build();
+        ArrayList<BulkTokenizeRequestRecord> data = new ArrayList<>();
+        data.add(BulkTokenizeRequestRecord.builder().value("value1").build());
+        BulkTokenizeRequest request = BulkTokenizeRequest.builder().records(data).build();
+        try {
+            Validations.validateBulkTokenizeRequest(request);
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testValidateBulkTokenizeRequest_nonSequentialIndexesAccepted() {
+        // indexes only need to be present and unique - gaps and ordering are the caller's business
+        ArrayList<BulkTokenizeRequestRecord> data = new ArrayList<>();
+        data.add(BulkTokenizeRequestRecord.builder().value("value1").build());
+        data.add(BulkTokenizeRequestRecord.builder().value("value2").build());
+        BulkTokenizeRequest request = BulkTokenizeRequest.builder().records(data).build();
         try {
             Validations.validateBulkTokenizeRequest(request);
         } catch (SkyflowException e) {

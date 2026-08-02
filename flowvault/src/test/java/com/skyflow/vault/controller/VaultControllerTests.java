@@ -35,7 +35,8 @@ import com.skyflow.vault.data.BulkDetokenizeResponse;
 import com.skyflow.vault.data.BulkInsertRecord;
 import com.skyflow.vault.data.BulkInsertRequest;
 import com.skyflow.vault.data.BulkInsertResponse;
-import com.skyflow.vault.data.BulkTokenizeRecord;
+import com.skyflow.vault.data.BulkTokenizeRequestRecord;
+import com.skyflow.vault.data.BulkTokenizeResponseRecord;
 import com.skyflow.vault.data.BulkTokenizeRequest;
 import com.skyflow.vault.data.BulkTokenizeResponse;
 import com.skyflow.vault.data.DeleteTokensRequest;
@@ -58,7 +59,7 @@ import com.skyflow.vault.data.RequestInterceptor;
 import com.skyflow.vault.data.Success;
 import com.skyflow.vault.data.Token;
 import com.skyflow.vault.data.TokenizeOptions;
-import com.skyflow.vault.data.TokenizeRecord;
+import com.skyflow.vault.data.TokenizeRequestRecord;
 import com.skyflow.vault.data.TokenizeRequest;
 import com.skyflow.vault.data.TokenizeResponse;
 import okhttp3.Protocol;
@@ -296,187 +297,6 @@ public class VaultControllerTests {
         VaultController controller = createControllerWithMock(mockApi);
         try {
             controller.detokenize(null);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertNotNull(e.getMessage());
-        }
-    }
-
-    // ── tokenize ──────────────────────────────────────────────────────────────
-
-    @Test
-    public void testTokenize_success() throws Exception {
-        ApiClient mockApi = Mockito.mock(ApiClient.class);
-        RawFlowserviceClient mockRaw = mockRawFlowservice(mockApi);
-
-        FlowTokenizeResponseObjectToken token = FlowTokenizeResponseObjectToken.builder()
-                .tokenGroupName("group1")
-                .token("tok-abc")
-                .build();
-        V1FlowTokenizeResponseObject responseObject = V1FlowTokenizeResponseObject.builder()
-                .value("value1")
-                .tokens(Collections.singletonList(token))
-                .build();
-        V1FlowTokenizeResponse body = V1FlowTokenizeResponse.builder()
-                .response(Collections.singletonList(responseObject))
-                .build();
-        ApiClientHttpResponse<V1FlowTokenizeResponse> httpResp =
-                new ApiClientHttpResponse<>(body, buildOkHttpResponse());
-        when(mockRaw.tokenize(any(), any())).thenReturn(httpResp);
-
-        VaultController controller = createControllerWithMock(mockApi);
-
-        ArrayList<TokenizeRecord> records = new ArrayList<>();
-        records.add(TokenizeRecord.builder()
-                .value("value1")
-                .tokenGroupNames(Collections.singletonList("group1"))
-                .build());
-        TokenizeRequest request = TokenizeRequest.builder().data(records).build();
-
-        TokenizeResponse response = controller.tokenize(request);
-        Assert.assertNotNull(INVALID_EXCEPTION_THROWN, response);
-        Assert.assertEquals(1, response.getTokenizedData().size());
-        Assert.assertEquals("tok-abc", response.getTokenizedData().get(0).getTokens().get("group1"));
-        Assert.assertTrue(response.getErrors().isEmpty());
-    }
-
-    @Test
-    public void testTokenize_apiErrorThrowsSkyflowException() throws Exception {
-        ApiClient mockApi = Mockito.mock(ApiClient.class);
-        RawFlowserviceClient mockRaw = mockRawFlowservice(mockApi);
-        when(mockRaw.tokenize(any(), any()))
-                .thenThrow(new ApiClientApiException("tokenize failed", 401, "unauthorized"));
-
-        VaultController controller = createControllerWithMock(mockApi);
-
-        ArrayList<TokenizeRecord> records = new ArrayList<>();
-        records.add(TokenizeRecord.builder()
-                .value("value1")
-                .tokenGroupNames(Collections.singletonList("group1"))
-                .build());
-        TokenizeRequest request = TokenizeRequest.builder().data(records).build();
-
-        try {
-            controller.tokenize(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertEquals(401, e.getHttpCode());
-        }
-    }
-
-    @Test
-    public void testTokenize_networkErrorThrowsSkyflowException() throws Exception {
-        ApiClient mockApi = Mockito.mock(ApiClient.class);
-        RawFlowserviceClient mockRaw = mockRawFlowservice(mockApi);
-        when(mockRaw.tokenize(any(), any()))
-                .thenThrow(new ApiClientException("Network error executing HTTP request"));
-
-        VaultController controller = createControllerWithMock(mockApi);
-
-        ArrayList<TokenizeRecord> records = new ArrayList<>();
-        records.add(TokenizeRecord.builder()
-                .value("value1")
-                .tokenGroupNames(Collections.singletonList("group1"))
-                .build());
-        TokenizeRequest request = TokenizeRequest.builder().data(records).build();
-
-        try {
-            controller.tokenize(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertNotNull(e.getMessage());
-        }
-    }
-
-    @Test
-    public void testTokenize_nullRequestThrowsSkyflowException() throws Exception {
-        ApiClient mockApi = Mockito.mock(ApiClient.class);
-        VaultController controller = createControllerWithMock(mockApi);
-        try {
-            controller.tokenize(null);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertNotNull(e.getMessage());
-        }
-    }
-
-    // ── deleteTokens ──────────────────────────────────────────────────────────
-
-    @Test
-    public void testDeleteTokens_success() throws Exception {
-        ApiClient mockApi = Mockito.mock(ApiClient.class);
-        RawFlowserviceClient mockRaw = mockRawFlowservice(mockApi);
-
-        V1DeleteTokenResponseObject record = V1DeleteTokenResponseObject.builder()
-                .value("token1")
-                .build();
-        V1FlowDeleteTokenResponse body = V1FlowDeleteTokenResponse.builder()
-                .tokens(Collections.singletonList(record))
-                .build();
-        ApiClientHttpResponse<V1FlowDeleteTokenResponse> httpResp =
-                new ApiClientHttpResponse<>(body, buildOkHttpResponse());
-        when(mockRaw.deletetoken(any(), any())).thenReturn(httpResp);
-
-        VaultController controller = createControllerWithMock(mockApi);
-
-        DeleteTokensRequest request = DeleteTokensRequest.builder()
-                .tokens(Collections.singletonList("token1"))
-                .build();
-
-        DeleteTokensResponse response = controller.deleteTokens(request);
-        Assert.assertNotNull(INVALID_EXCEPTION_THROWN, response);
-        Assert.assertEquals(Collections.singletonList("token1"), response.getTokens());
-        Assert.assertTrue(response.getErrors().isEmpty());
-    }
-
-    @Test
-    public void testDeleteTokens_apiErrorThrowsSkyflowException() throws Exception {
-        ApiClient mockApi = Mockito.mock(ApiClient.class);
-        RawFlowserviceClient mockRaw = mockRawFlowservice(mockApi);
-        when(mockRaw.deletetoken(any(), any()))
-                .thenThrow(new ApiClientApiException("delete failed", 404, "not found"));
-
-        VaultController controller = createControllerWithMock(mockApi);
-
-        DeleteTokensRequest request = DeleteTokensRequest.builder()
-                .tokens(Collections.singletonList("token1"))
-                .build();
-
-        try {
-            controller.deleteTokens(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertEquals(404, e.getHttpCode());
-        }
-    }
-
-    @Test
-    public void testDeleteTokens_networkErrorThrowsSkyflowException() throws Exception {
-        ApiClient mockApi = Mockito.mock(ApiClient.class);
-        RawFlowserviceClient mockRaw = mockRawFlowservice(mockApi);
-        when(mockRaw.deletetoken(any(), any()))
-                .thenThrow(new ApiClientException("Network error executing HTTP request"));
-
-        VaultController controller = createControllerWithMock(mockApi);
-
-        DeleteTokensRequest request = DeleteTokensRequest.builder()
-                .tokens(Collections.singletonList("token1"))
-                .build();
-
-        try {
-            controller.deleteTokens(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertNotNull(e.getMessage());
-        }
-    }
-
-    @Test
-    public void testDeleteTokens_nullRequestThrowsSkyflowException() throws Exception {
-        ApiClient mockApi = Mockito.mock(ApiClient.class);
-        VaultController controller = createControllerWithMock(mockApi);
-        try {
-            controller.deleteTokens(null);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertNotNull(e.getMessage());
@@ -742,9 +562,10 @@ public class VaultControllerTests {
 
         BulkDeleteTokensResponse response = controller.bulkDeleteTokens(request);
         Assert.assertNotNull(INVALID_EXCEPTION_THROWN, response);
-        Assert.assertEquals(1, response.getSuccess().size());
-        Assert.assertEquals("token1", response.getSuccess().get(0).getToken());
-        Assert.assertTrue(response.getErrors().isEmpty());
+        Assert.assertEquals(1, response.getRecords().size());
+        Assert.assertEquals("token1", response.getRecords().get(0).getToken());
+        Assert.assertNull(response.getRecords().get(0).getError());
+        Assert.assertEquals(Integer.valueOf(200), response.getRecords().get(0).getHttpCode());
     }
 
     @Test
@@ -778,7 +599,8 @@ public class VaultControllerTests {
 
         BulkDeleteTokensResponse response = controller.bulkDeleteTokensAsync(request).get(5, TimeUnit.SECONDS);
         Assert.assertNotNull(INVALID_EXCEPTION_THROWN, response);
-        Assert.assertEquals(1, response.getSuccess().size());
+        Assert.assertEquals(1, response.getRecords().size());
+        Assert.assertNull(response.getRecords().get(0).getError());
     }
 
     // ── bulkTokenize ──────────────────────────────────────────────────────────
@@ -799,15 +621,17 @@ public class VaultControllerTests {
 
         VaultController controller = createControllerWithMock(mockApi);
 
-        ArrayList<BulkTokenizeRecord> records = new ArrayList<>();
-        records.add(BulkTokenizeRecord.builder().value("value1").tokenGroupNames(Collections.singletonList("group1")).build());
-        BulkTokenizeRequest request = BulkTokenizeRequest.builder().data(records).build();
+        List<BulkTokenizeRequestRecord> records = Collections.singletonList(
+                BulkTokenizeRequestRecord.builder().value("value1")
+                        .tokenGroupNames(Collections.singletonList("group1")).build());
+        BulkTokenizeRequest request = BulkTokenizeRequest.builder().records(records).build();
 
         BulkTokenizeResponse response = controller.bulkTokenize(request);
         Assert.assertNotNull(INVALID_EXCEPTION_THROWN, response);
-        Assert.assertEquals(1, response.getSuccess().size());
-        Assert.assertEquals("tok-abc", response.getSuccess().get(0).getTokens().get("group1"));
-        Assert.assertTrue(response.getErrors().isEmpty());
+        Assert.assertEquals(1, response.getRecords().size());
+        Assert.assertEquals(0, response.getRecords().get(0).getIndex());
+        Assert.assertEquals("tok-abc", response.getRecords().get(0).getTokens().get(0).getToken());
+        Assert.assertNull(response.getRecords().get(0).getTokens().get(0).getError());
     }
 
     @Test
@@ -838,13 +662,15 @@ public class VaultControllerTests {
 
         VaultController controller = createControllerWithMock(mockApi);
 
-        ArrayList<BulkTokenizeRecord> records = new ArrayList<>();
-        records.add(BulkTokenizeRecord.builder().value("value1").tokenGroupNames(Collections.singletonList("group1")).build());
-        BulkTokenizeRequest request = BulkTokenizeRequest.builder().data(records).build();
+        List<BulkTokenizeRequestRecord> records = Collections.singletonList(
+                BulkTokenizeRequestRecord.builder().value("value1")
+                        .tokenGroupNames(Collections.singletonList("group1")).build());
+        BulkTokenizeRequest request = BulkTokenizeRequest.builder().records(records).build();
 
         BulkTokenizeResponse response = controller.bulkTokenizeAsync(request).get(5, TimeUnit.SECONDS);
         Assert.assertNotNull(INVALID_EXCEPTION_THROWN, response);
-        Assert.assertEquals(1, response.getSuccess().size());
+        Assert.assertEquals(1, response.getRecords().size());
+        Assert.assertNull(response.getRecords().get(0).getTokens().get(0).getError());
     }
 
     // ── additional bulk API-error coverage ───────────────────────────────────
@@ -894,9 +720,10 @@ public class VaultControllerTests {
 
         BulkDeleteTokensResponse response = controller.bulkDeleteTokens(request);
         Assert.assertNotNull(INVALID_EXCEPTION_THROWN, response);
-        Assert.assertTrue(response.getSuccess().isEmpty());
-        Assert.assertEquals(1, response.getErrors().size());
-        Assert.assertEquals(404, response.getErrors().get(0).getCode());
+        Assert.assertEquals(1, response.getRecords().size());
+        Assert.assertEquals(Integer.valueOf(404), response.getRecords().get(0).getHttpCode());
+        Assert.assertNotNull(response.getRecords().get(0).getError());
+        Assert.assertEquals("token1", response.getRecords().get(0).getToken());
     }
 
     @Test
@@ -914,9 +741,10 @@ public class VaultControllerTests {
 
         BulkDeleteTokensResponse response = controller.bulkDeleteTokensAsync(request).get(5, TimeUnit.SECONDS);
         Assert.assertNotNull(INVALID_EXCEPTION_THROWN, response);
-        Assert.assertTrue(response.getSuccess().isEmpty());
-        Assert.assertEquals(1, response.getErrors().size());
-        Assert.assertEquals(404, response.getErrors().get(0).getCode());
+        Assert.assertEquals(1, response.getRecords().size());
+        Assert.assertEquals(Integer.valueOf(404), response.getRecords().get(0).getHttpCode());
+        Assert.assertNotNull(response.getRecords().get(0).getError());
+        Assert.assertEquals("token1", response.getRecords().get(0).getToken());
     }
 
     @Test
@@ -928,15 +756,18 @@ public class VaultControllerTests {
 
         VaultController controller = createControllerWithMock(mockApi);
 
-        ArrayList<BulkTokenizeRecord> records = new ArrayList<>();
-        records.add(BulkTokenizeRecord.builder().value("value1").tokenGroupNames(Collections.singletonList("group1")).build());
-        BulkTokenizeRequest request = BulkTokenizeRequest.builder().data(records).build();
+        List<BulkTokenizeRequestRecord> records = Collections.singletonList(
+                BulkTokenizeRequestRecord.builder().value("value1")
+                        .tokenGroupNames(Collections.singletonList("group1")).build());
+        BulkTokenizeRequest request = BulkTokenizeRequest.builder().records(records).build();
 
         BulkTokenizeResponse response = controller.bulkTokenize(request);
         Assert.assertNotNull(INVALID_EXCEPTION_THROWN, response);
-        Assert.assertTrue(response.getSuccess().isEmpty());
-        Assert.assertEquals(1, response.getErrors().size());
-        Assert.assertEquals(400, response.getErrors().get(0).getCode());
+        Assert.assertEquals(1, response.getRecords().size());
+        Assert.assertEquals(0, response.getRecords().get(0).getIndex());
+        Assert.assertEquals(Integer.valueOf(400),
+                response.getRecords().get(0).getTokens().get(0).getHttpCode());
+        Assert.assertNotNull(response.getRecords().get(0).getTokens().get(0).getError());
     }
 
     @Test
@@ -948,15 +779,18 @@ public class VaultControllerTests {
 
         VaultController controller = createControllerWithMock(mockApi);
 
-        ArrayList<BulkTokenizeRecord> records = new ArrayList<>();
-        records.add(BulkTokenizeRecord.builder().value("value1").tokenGroupNames(Collections.singletonList("group1")).build());
-        BulkTokenizeRequest request = BulkTokenizeRequest.builder().data(records).build();
+        List<BulkTokenizeRequestRecord> records = Collections.singletonList(
+                BulkTokenizeRequestRecord.builder().value("value1")
+                        .tokenGroupNames(Collections.singletonList("group1")).build());
+        BulkTokenizeRequest request = BulkTokenizeRequest.builder().records(records).build();
 
         BulkTokenizeResponse response = controller.bulkTokenizeAsync(request).get(5, TimeUnit.SECONDS);
         Assert.assertNotNull(INVALID_EXCEPTION_THROWN, response);
-        Assert.assertTrue(response.getSuccess().isEmpty());
-        Assert.assertEquals(1, response.getErrors().size());
-        Assert.assertEquals(400, response.getErrors().get(0).getCode());
+        Assert.assertEquals(1, response.getRecords().size());
+        Assert.assertEquals(0, response.getRecords().get(0).getIndex());
+        Assert.assertEquals(Integer.valueOf(400),
+                response.getRecords().get(0).getTokens().get(0).getHttpCode());
+        Assert.assertNotNull(response.getRecords().get(0).getTokens().get(0).getError());
     }
 
     @Test
@@ -1149,7 +983,7 @@ public class VaultControllerTests {
     }
 
     @Test
-    public void testTokenize_interceptorAddsCustomHeader() throws Exception {
+    public void testBulkTokenize_interceptorAddsCustomHeader() throws Exception {
         ApiClient mockApi = Mockito.mock(ApiClient.class);
         RawFlowserviceClient mockRaw = mockRawFlowservice(mockApi);
 
@@ -1164,14 +998,16 @@ public class VaultControllerTests {
 
         VaultController controller = createControllerWithMock(mockApi);
 
-        ArrayList<TokenizeRecord> records = new ArrayList<>();
-        records.add(TokenizeRecord.builder().value("value1").tokenGroupNames(Collections.singletonList("group1")).build());
-        TokenizeRequest request = TokenizeRequest.builder().data(records).build();
+        BulkTokenizeRequest request = BulkTokenizeRequest.builder()
+                .records(Collections.singletonList(BulkTokenizeRequestRecord.builder()
+                        .value("value1")
+                        .tokenGroupNames(Collections.singletonList("group1")).build()))
+                .build();
 
         RequestInterceptor interceptor = ctx -> ctx.addHeader(CustomHeaderKey.SkyflowAccountID, "acct-123");
         TokenizeOptions options = TokenizeOptions.builder().interceptor(interceptor).build();
 
-        controller.tokenize(request, options);
+        controller.bulkTokenize(request, options);
 
         ArgumentCaptor<RequestOptions> captor = ArgumentCaptor.forClass(RequestOptions.class);
         Mockito.verify(mockRaw).tokenize(any(), captor.capture());

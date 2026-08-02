@@ -85,41 +85,51 @@ public class RequestResponseWrapperTests {
 
     @Test
     public void testTokenizeRequest_getterReturnsBuilderValue() {
-        ArrayList<TokenizeRecord> data = new ArrayList<>(Collections.singletonList(
-                TokenizeRecord.builder().value("v1").build()));
-        TokenizeRequest request = TokenizeRequest.builder().data(data).build();
-        Assert.assertEquals(data, request.getData());
+        List<TokenizeRequestRecord> records = Collections.singletonList(
+                TokenizeRequestRecord.builder().value("v1").build());
+        TokenizeRequest request = TokenizeRequest.builder().records(records).build();
+        Assert.assertEquals(records, request.getRecords());
+    }
+
+    @Test
+    public void testBulkTokenizeRequest_isATokenizeRequest() {
+        BulkTokenizeRequest request = BulkTokenizeRequest.builder()
+                .records(Collections.singletonList(
+                        BulkTokenizeRequestRecord.builder().value("v1").build()))
+                .build();
+        Assert.assertTrue(request instanceof TokenizeRequest);
+        // the inherited accessor sees the same records, widened
+        Assert.assertEquals(1, ((TokenizeRequest) request).getRecords().size());
     }
 
     @Test
     public void testTokenizeRequest_defaultIsNull() {
         TokenizeRequest request = TokenizeRequest.builder().build();
-        Assert.assertNull(request.getData());
+        Assert.assertNull(request.getRecords());
     }
 
     // ── TokenizeResponse ─────────────────────────────────────────────────────
 
     @Test
-    public void testTokenizeResponse_defaultConstructorInitializesEmptyErrors() {
-        TokenizeResponse response = new TokenizeResponse();
-        Assert.assertNotNull(response.getErrors());
-        Assert.assertTrue(response.getErrors().isEmpty());
-        Assert.assertNull(response.getTokenizedData());
+    public void testTokenizeResponse_gettersReturnConstructorValues() {
+        List<TokenizeResponseRecord> records = Collections.singletonList(
+                new TokenizeResponseRecord("value1", Collections.singletonList(
+                        new TokenizeResponseToken("group1", "tok-abc", 200, null))));
+
+        TokenizeResponse response = new TokenizeResponse(records);
+
+        Assert.assertEquals(records, response.getResponse());
+        Assert.assertEquals("value1", response.getResponse().get(0).getValue());
+        Assert.assertEquals("tok-abc", response.getResponse().get(0).getTokens().get(0).getToken());
+        Assert.assertNull(response.getResponse().get(0).getTokens().get(0).getError());
     }
 
     @Test
-    public void testTokenizeResponse_errorsConstructorAndTokenizedDataSetter() {
-        ArrayList<HashMap<String, Object>> errors = new ArrayList<>();
-        HashMap<String, Object> error = new HashMap<>();
-        error.put("error", "failed");
-        errors.add(error);
-
-        TokenizeResponse response = new TokenizeResponse(errors);
-        Assert.assertEquals(errors, response.getErrors());
-
-        List<TokenizeData> tokenizedData = Collections.singletonList(new TokenizeData("v1", 0));
-        response.setTokenizedData(tokenizedData);
-        Assert.assertEquals(tokenizedData, response.getTokenizedData());
+    public void testTokenizeResponse_toStringSerializesNulls() {
+        TokenizeResponse response = new TokenizeResponse(Collections.singletonList(
+                new TokenizeResponseRecord("value1", Collections.singletonList(
+                        new TokenizeResponseToken("group1", "tok-abc", 200, null)))));
+        Assert.assertTrue(response.toString().contains("\"error\":null"));
     }
 
     // ── DetokenizeRequest ────────────────────────────────────────────────────
@@ -243,16 +253,16 @@ public class RequestResponseWrapperTests {
 
     @Test
     public void testBulkTokenizeRequest_getterReturnsBuilderValue() {
-        ArrayList<BulkTokenizeRecord> data = new ArrayList<>(Collections.singletonList(
-                BulkTokenizeRecord.builder().value("v1").build()));
-        BulkTokenizeRequest request = BulkTokenizeRequest.builder().data(data).build();
-        Assert.assertEquals(data, request.getData());
+        List<BulkTokenizeRequestRecord> records = Collections.singletonList(
+                BulkTokenizeRequestRecord.builder().value("v1").build());
+        BulkTokenizeRequest request = BulkTokenizeRequest.builder().records(records).build();
+        Assert.assertEquals(records, request.getRecords());
     }
 
     @Test
     public void testBulkTokenizeRequest_defaultIsNull() {
         BulkTokenizeRequest request = BulkTokenizeRequest.builder().build();
-        Assert.assertNull(request.getData());
+        Assert.assertNull(request.getRecords());
     }
 
     // ── BulkInsertRequest ────────────────────────────────────────────────────
@@ -289,15 +299,16 @@ public class RequestResponseWrapperTests {
 
     @Test
     public void testDeleteTokensResponse_gettersReturnConstructorValues() {
-        List<String> tokens = Arrays.asList("tok-1", "tok-2");
-        ArrayList<HashMap<String, Object>> errors = new ArrayList<>();
-        HashMap<String, Object> error = new HashMap<>();
-        error.put("error", "failed");
-        errors.add(error);
+        List<DeleteTokensRecord> records = Arrays.asList(
+                new DeleteTokensRecord("tok-1", 200, null),
+                new DeleteTokensRecord("tok-2", 404, "Token not found"));
 
-        DeleteTokensResponse response = new DeleteTokensResponse(tokens, errors);
+        DeleteTokensResponse response = new DeleteTokensResponse(records);
 
-        Assert.assertEquals(tokens, response.getTokens());
-        Assert.assertEquals(errors, response.getErrors());
+        Assert.assertEquals(records, response.getRecords());
+        Assert.assertEquals("tok-1", response.getRecords().get(0).getToken());
+        Assert.assertNull(response.getRecords().get(0).getError());
+        Assert.assertEquals("Token not found", response.getRecords().get(1).getError());
+        Assert.assertEquals(Integer.valueOf(404), response.getRecords().get(1).getHttpCode());
     }
 }

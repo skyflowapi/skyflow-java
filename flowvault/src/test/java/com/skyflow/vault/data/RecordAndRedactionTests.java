@@ -12,7 +12,7 @@ import java.util.Map;
 /**
  * Tests for the plain record/redaction data holders: {@link TokenGroupRedactions},
  * {@link BulkTokenGroupRedactions}, {@link InsertRecord}, {@link BulkInsertRecord},
- * {@link TokenizeRecord} and {@link BulkTokenizeRecord}. None of these classes perform
+ * {@link TokenizeRequestRecord} and {@link BulkTokenizeRequestRecord}. None of these classes perform
  * validation in their builders, so coverage here is builder-construction plus getters.
  */
 public class RecordAndRedactionTests {
@@ -117,12 +117,12 @@ public class RecordAndRedactionTests {
         Assert.assertNull(record.getUpsertType());
     }
 
-    // ── TokenizeRecord ───────────────────────────────────────────────────────
+    // ── TokenizeRequestRecord ───────────────────────────────────────────────────────
 
     @Test
     public void testTokenizeRecord_gettersReturnBuilderValues() {
         List<String> groups = Arrays.asList("group1", "group2");
-        TokenizeRecord record = TokenizeRecord.builder()
+        TokenizeRequestRecord record = TokenizeRequestRecord.builder()
                 .value("secret-value")
                 .tokenGroupNames(groups)
                 .build();
@@ -133,29 +133,39 @@ public class RecordAndRedactionTests {
 
     @Test
     public void testTokenizeRecord_defaultsAreNull() {
-        TokenizeRecord record = TokenizeRecord.builder().build();
+        TokenizeRequestRecord record = TokenizeRequestRecord.builder().build();
         Assert.assertNull(record.getValue());
         Assert.assertNull(record.getTokenGroupNames());
     }
 
-    // ── BulkTokenizeRecord ───────────────────────────────────────────────────
+    // ── BulkTokenizeRequestRecord ───────────────────────────────────────────────────
 
     @Test
     public void testBulkTokenizeRecord_gettersReturnBuilderValues() {
         List<String> groups = Arrays.asList("group3");
-        BulkTokenizeRecord record = BulkTokenizeRecord.builder()
+        BulkTokenizeRequestRecord record = BulkTokenizeRequestRecord.builder()
                 .value(12345)
+                .token("byot-token")
                 .tokenGroupNames(groups)
                 .build();
 
         Assert.assertEquals(12345, record.getValue());
+        Assert.assertEquals("byot-token", record.getToken());
         Assert.assertEquals(groups, record.getTokenGroupNames());
     }
 
     @Test
     public void testBulkTokenizeRecord_defaultsAreNull() {
-        BulkTokenizeRecord record = BulkTokenizeRecord.builder().build();
+        BulkTokenizeRequestRecord record = BulkTokenizeRequestRecord.builder().build();
         Assert.assertNull(record.getValue());
+        Assert.assertNull(record.getToken());
         Assert.assertNull(record.getTokenGroupNames());
+    }
+
+    @Test
+    public void testBulkTokenizeRecord_isATokenizeRequestRecord() {
+        // the bulk record adds nothing today; it must still satisfy the parent contract
+        BulkTokenizeRequestRecord record = BulkTokenizeRequestRecord.builder().value("v1").build();
+        Assert.assertTrue(record instanceof TokenizeRequestRecord);
     }
 }
