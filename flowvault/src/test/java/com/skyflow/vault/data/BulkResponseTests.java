@@ -6,46 +6,47 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Tests for the Bulk*Response classes: {@link BulkInsertResponse}, {@link BulkDetokenizeResponse},
  * {@link BulkDeleteTokensResponse} and {@link BulkTokenizeResponse}.
  *
- * <p>Each has a 2-arg constructor (success/errors only, summary and originalPayload-derived
- * fields stay null) and a 3-arg constructor (adds originalPayload and computes a summary).
- * BulkInsertResponse/BulkDetokenizeResponse additionally derive a retry list from the
- * originalPayload, filtering on a "5xx except 529" retryable-status rule.
+ * <p>BulkDeleteTokensResponse/BulkTokenizeResponse each have a 2-arg constructor (success/errors
+ * only, summary and originalPayload-derived fields stay null) and a 3-arg constructor (adds
+ * originalPayload and computes a summary). BulkInsertResponse and BulkDetokenizeResponse instead
+ * carry a single unified {@code records} list, with a 1-arg (per-batch) and a 2-arg (final,
+ * summary-computing) constructor. Both additionally derive a retry list from the originalPayload,
+ * filtering on a "5xx except 529" retryable-status rule.
  */
 public class BulkResponseTests {
 
     // ── BulkInsertResponse ───────────────────────────────────────────────────
 
     @Test
-    public void testBulkInsertResponse_twoArgConstructorLeavesSummaryAndRetryDependenciesNull() {
-        List<Success> success = Collections.emptyList();
-        List<ErrorRecord> errors = Collections.emptyList();
+    public void testBulkInsertResponse_oneArgConstructorLeavesSummaryAndRetryDependenciesNull() {
+        List<BulkInsertResponseRecord> records = Collections.emptyList();
 
-        BulkInsertResponse response = new BulkInsertResponse(success, errors);
+        BulkInsertResponse response = new BulkInsertResponse(records);
 
         Assert.assertNull(response.getSummary());
-        Assert.assertEquals(success, response.getSuccess());
-        Assert.assertEquals(errors, response.getErrors());
-        // No errors, so the retry list is empty and originalPayload (null) is never dereferenced.
+        Assert.assertEquals(records, response.getRecords());
+        // No failed records, so the retry list is empty and originalPayload (null) is never dereferenced.
         Assert.assertTrue(response.getRecordsToRetry().isEmpty());
     }
 
     @Test
-    public void testBulkInsertResponse_threeArgConstructorComputesSummary() {
-        List<Success> success = Collections.singletonList(
-                new Success(0, "id-1", null, null, "table1"));
-        List<ErrorRecord> errors = Collections.singletonList(
-                new ErrorRecord(1, "failed", 400));
-        ArrayList<BulkInsertRecord> originalPayload = new ArrayList<>(Arrays.asList(
-                BulkInsertRecord.builder().table("table1").build(),
-                BulkInsertRecord.builder().table("table1").build()));
+    public void testBulkInsertResponse_twoArgConstructorComputesSummary() {
+        List<BulkInsertResponseRecord> records = Arrays.asList(
+                new BulkInsertResponseRecord(0, "table1", "id-1", null, null, 200, null),
+                new BulkInsertResponseRecord(1, null, null, null, null, 400, "failed"));
+        List<InsertRequestRecord> originalPayload = new ArrayList<>(Arrays.asList(
+                BulkInsertRequestRecord.builder().tableName("table1").build(),
+                BulkInsertRequestRecord.builder().tableName("table1").build()));
 
-        BulkInsertResponse response = new BulkInsertResponse(success, errors, originalPayload);
+        BulkInsertResponse response = new BulkInsertResponse(records, originalPayload);
 
         Assert.assertNotNull(response.getSummary());
         Assert.assertEquals(2, response.getSummary().getTotalRecords());
@@ -54,24 +55,45 @@ public class BulkResponseTests {
     }
 
     @Test
+    public void testBulkInsertResponse_recordsPreserveIndexAndInheritedFields() {
+        Map<String, Object> fields = new HashMap<>();
+        fields.put("name", "token-name");
+        Map<String, Object> hashedData = new HashMap<>();
+        hashedData.put("name", "hashed-name");
+
+        BulkInsertResponseRecord record = new BulkInsertResponseRecord(
+                7, "table1", "id-1", fields, hashedData, 200, null);
+
+        BulkInsertResponse response = new BulkInsertResponse(Collections.singletonList(record));
+
+        BulkInsertResponseRecord actual = response.getRecords().get(0);
+        Assert.assertEquals(7, actual.getIndex());
+        Assert.assertEquals("table1", actual.getTableName());
+        Assert.assertEquals("id-1", actual.getSkyflowId());
+        Assert.assertEquals(fields, actual.getFields());
+        Assert.assertEquals(hashedData, actual.getHashedData());
+        Assert.assertEquals(200, actual.getHttpCode());
+        Assert.assertNull(actual.getError());
+    }
+
+    @Test
     public void testBulkInsertResponse_getRecordsToRetryFiltersRetryableStatusCodesOnly() {
-        BulkInsertRecord record0 = BulkInsertRecord.builder().table("t0").build();
-        BulkInsertRecord record1 = BulkInsertRecord.builder().table("t1").build();
-        BulkInsertRecord record2 = BulkInsertRecord.builder().table("t2").build();
-        BulkInsertRecord record3 = BulkInsertRecord.builder().table("t3").build();
-        ArrayList<BulkInsertRecord> originalPayload = new ArrayList<>(
+        BulkInsertRequestRecord record0 = BulkInsertRequestRecord.builder().tableName("t0").build();
+        BulkInsertRequestRecord record1 = BulkInsertRequestRecord.builder().tableName("t1").build();
+        BulkInsertRequestRecord record2 = BulkInsertRequestRecord.builder().tableName("t2").build();
+        BulkInsertRequestRecord record3 = BulkInsertRequestRecord.builder().tableName("t3").build();
+        List<InsertRequestRecord> originalPayload = new ArrayList<>(
                 Arrays.asList(record0, record1, record2, record3));
 
-        List<ErrorRecord> errors = Arrays.asList(
-                new ErrorRecord(0, "server error", 500),   // retryable (lower bound)
-                new ErrorRecord(1, "bad request", 400),    // not retryable
-                new ErrorRecord(2, "server error", 599),   // retryable (upper bound)
-                new ErrorRecord(3, "special case", 529));  // explicitly excluded
+        List<BulkInsertResponseRecord> records = Arrays.asList(
+                new BulkInsertResponseRecord(0, null, null, null, null, 500, "server error"),  // retryable (lower bound)
+                new BulkInsertResponseRecord(1, null, null, null, null, 400, "bad request"),   // not retryable
+                new BulkInsertResponseRecord(2, null, null, null, null, 599, "server error"),  // retryable (upper bound)
+                new BulkInsertResponseRecord(3, null, null, null, null, 529, "special case")); // explicitly excluded
 
-        BulkInsertResponse response = new BulkInsertResponse(
-                Collections.emptyList(), errors, originalPayload);
+        BulkInsertResponse response = new BulkInsertResponse(records, originalPayload);
 
-        ArrayList<BulkInsertRecord> recordsToRetry = response.getRecordsToRetry();
+        List<BulkInsertRequestRecord> recordsToRetry = response.getRecordsToRetry();
 
         Assert.assertEquals(2, recordsToRetry.size());
         Assert.assertTrue(recordsToRetry.contains(record0));
@@ -82,51 +104,96 @@ public class BulkResponseTests {
 
     @Test
     public void testBulkInsertResponse_toStringNotNull() {
-        BulkInsertResponse response = new BulkInsertResponse(Collections.emptyList(), Collections.emptyList());
+        BulkInsertResponse response = new BulkInsertResponse(Collections.<BulkInsertResponseRecord>emptyList());
         Assert.assertNotNull(response.toString());
+    }
+
+    @Test
+    public void testBulkInsertResponse_toStringSerializesSummaryAndRecordsButNotInternals() {
+        List<BulkInsertResponseRecord> records = Collections.singletonList(
+                new BulkInsertResponseRecord(0, "table1", "id-1", null, null, 200, null));
+        List<InsertRequestRecord> originalPayload = new ArrayList<InsertRequestRecord>(
+                Collections.singletonList(BulkInsertRequestRecord.builder().tableName("table1").build()));
+
+        BulkInsertResponse response = new BulkInsertResponse(records, originalPayload);
+        // Populate the lazily-derived internal so we can prove it is still excluded.
+        response.getRecordsToRetry();
+        String json = response.toString();
+
+        Assert.assertTrue(json.contains("summary"));
+        Assert.assertTrue(json.contains("records"));
+        // serializeNulls() spells out the nulls on each record.
+        Assert.assertTrue(json.contains("\"error\":null"));
+        // transient internals stay out of the JSON.
+        Assert.assertFalse(json.contains("originalPayload"));
+        Assert.assertFalse(json.contains("recordsToRetry"));
+    }
+
+    @Test
+    public void testBulkInsertResponse_getRecordsToRetryOnPerBatchResponseDoesNotThrow() {
+        // The 1-arg constructor leaves originalPayload null. A 5xx record must not NPE here.
+        List<BulkInsertResponseRecord> records = Collections.singletonList(
+                new BulkInsertResponseRecord(0, null, null, null, null, 500, "server error"));
+
+        BulkInsertResponse response = new BulkInsertResponse(records);
+
+        Assert.assertTrue(response.getRecordsToRetry().isEmpty());
     }
 
     // ── BulkDetokenizeResponse ───────────────────────────────────────────────
 
     @Test
-    public void testBulkDetokenizeResponse_twoArgConstructorLeavesSummaryNull() {
-        List<DetokenizeResponseObject> success = Collections.emptyList();
-        List<ErrorRecord> errors = Collections.emptyList();
+    public void testBulkDetokenizeResponse_oneArgConstructorLeavesSummaryAndRetryDependenciesNull() {
+        List<BulkDetokenizeResponseRecord> records = Collections.emptyList();
 
-        BulkDetokenizeResponse response = new BulkDetokenizeResponse(success, errors);
+        BulkDetokenizeResponse response = new BulkDetokenizeResponse(records);
 
         Assert.assertNull(response.getSummary());
-        Assert.assertEquals(success, response.getSuccess());
-        Assert.assertEquals(errors, response.getErrors());
+        Assert.assertEquals(records, response.getRecords());
+        // No retryable records, so originalPayload (null) is never dereferenced.
         Assert.assertTrue(response.getTokensToRetry().isEmpty());
     }
 
     @Test
-    public void testBulkDetokenizeResponse_threeArgConstructorComputesSummary() {
-        List<DetokenizeResponseObject> success = Collections.singletonList(
-                new DetokenizeResponseObject(0, "tok-1", "value", "group1", null, null));
-        List<ErrorRecord> errors = Collections.singletonList(new ErrorRecord(1, "failed", 404));
+    public void testBulkDetokenizeResponse_twoArgConstructorComputesSummary() {
+        List<BulkDetokenizeResponseRecord> records = Arrays.asList(
+                new BulkDetokenizeResponseRecord(0, "tok-1", "secret-value", "group1", null, 200, null),
+                new BulkDetokenizeResponseRecord(1, "tok-2", null, null, null, 404, "failed"));
         List<String> originalPayload = Arrays.asList("tok-1", "tok-2");
 
-        BulkDetokenizeResponse response = new BulkDetokenizeResponse(success, errors, originalPayload);
+        BulkDetokenizeResponse response = new BulkDetokenizeResponse(records, originalPayload);
 
         Assert.assertNotNull(response.getSummary());
         Assert.assertEquals(2, response.getSummary().getTotalTokens());
         Assert.assertEquals(1, response.getSummary().getTotalDetokenized());
         Assert.assertEquals(1, response.getSummary().getTotalFailed());
+        Assert.assertEquals(records, response.getRecords());
+    }
+
+    @Test
+    public void testBulkDetokenizeResponse_summaryTotalTokensComesFromOriginalPayloadNotRecords() {
+        // Only one of the three submitted tokens came back, so totalTokens tracks the payload size.
+        List<BulkDetokenizeResponseRecord> records = Collections.singletonList(
+                new BulkDetokenizeResponseRecord(0, "tok-0", "plain-0", "group1", null, 200, null));
+        List<String> originalPayload = Arrays.asList("tok-0", "tok-1", "tok-2");
+
+        BulkDetokenizeResponse response = new BulkDetokenizeResponse(records, originalPayload);
+
+        Assert.assertEquals(3, response.getSummary().getTotalTokens());
+        Assert.assertEquals(1, response.getSummary().getTotalDetokenized());
+        Assert.assertEquals(0, response.getSummary().getTotalFailed());
     }
 
     @Test
     public void testBulkDetokenizeResponse_getTokensToRetryFiltersRetryableStatusCodesOnly() {
         List<String> originalPayload = Arrays.asList("tok-0", "tok-1", "tok-2", "tok-3");
-        List<ErrorRecord> errors = Arrays.asList(
-                new ErrorRecord(0, "server error", 500),
-                new ErrorRecord(1, "bad request", 400),
-                new ErrorRecord(2, "server error", 599),
-                new ErrorRecord(3, "special case", 529));
+        List<BulkDetokenizeResponseRecord> records = Arrays.asList(
+                new BulkDetokenizeResponseRecord(0, null, null, null, null, 500, "server error"),
+                new BulkDetokenizeResponseRecord(1, null, null, null, null, 400, "bad request"),
+                new BulkDetokenizeResponseRecord(2, null, null, null, null, 599, "server error"),
+                new BulkDetokenizeResponseRecord(3, null, null, null, null, 529, "special case"));
 
-        BulkDetokenizeResponse response = new BulkDetokenizeResponse(
-                Collections.emptyList(), errors, originalPayload);
+        BulkDetokenizeResponse response = new BulkDetokenizeResponse(records, originalPayload);
 
         List<String> tokensToRetry = response.getTokensToRetry();
 
@@ -139,8 +206,48 @@ public class BulkResponseTests {
 
     @Test
     public void testBulkDetokenizeResponse_toStringNotNull() {
-        BulkDetokenizeResponse response = new BulkDetokenizeResponse(Collections.emptyList(), Collections.emptyList());
+        BulkDetokenizeResponse response = new BulkDetokenizeResponse(Collections.emptyList());
         Assert.assertNotNull(response.toString());
+    }
+
+    @Test
+    public void testBulkDetokenizeResponse_toStringSerializesSummaryAndRecordsButNotInternals() {
+        List<BulkDetokenizeResponseRecord> records = Collections.singletonList(
+                new BulkDetokenizeResponseRecord(0, "tok-0", "plain-0", "group1", null, 200, null));
+        List<String> originalPayload = Collections.singletonList("tok-0");
+
+        BulkDetokenizeResponse response = new BulkDetokenizeResponse(records, originalPayload);
+        // Populate the lazily-derived internal so we can prove it is still excluded.
+        response.getTokensToRetry();
+        String json = response.toString();
+
+        Assert.assertTrue(json.contains("summary"));
+        Assert.assertTrue(json.contains("records"));
+        // serializeNulls() spells out the nulls on each record.
+        Assert.assertTrue(json.contains("\"error\":null"));
+        // transient internals stay out of the JSON.
+        Assert.assertFalse(json.contains("originalPayload"));
+        Assert.assertFalse(json.contains("tokensToRetry"));
+    }
+
+    @Test
+    public void testBulkDetokenizeResponse_getTokensToRetryOnPerBatchResponseDoesNotThrow() {
+        List<BulkDetokenizeResponseRecord> records = Collections.singletonList(
+                new BulkDetokenizeResponseRecord(0, "tok-0", null, null, null, 500, "server error"));
+
+        BulkDetokenizeResponse response = new BulkDetokenizeResponse(records);
+
+        Assert.assertTrue(response.getTokensToRetry().isEmpty());
+    }
+
+    @Test
+    public void testBulkDetokenizeResponse_recordsExposeDetokenizedValue() {
+        List<BulkDetokenizeResponseRecord> records = Collections.singletonList(
+                new BulkDetokenizeResponseRecord(0, "tok-0", "john@example.com", "group1", null, 200, null));
+
+        BulkDetokenizeResponse response = new BulkDetokenizeResponse(records);
+
+        Assert.assertEquals("john@example.com", response.getRecords().get(0).getValue());
     }
 
     // ── BulkDeleteTokensResponse ─────────────────────────────────────────────

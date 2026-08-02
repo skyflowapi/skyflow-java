@@ -6,36 +6,19 @@ import org.junit.Test;
 public class BaseInsertRequestTests {
 
     @Test
-    public void testBuilderSetsTable() {
-        BaseInsertRequest.BaseInsertRequestBuilder builder = new BaseInsertRequest.BaseInsertRequestBuilder();
-        builder.table("test_table");
-        BaseInsertRequest request = new BaseInsertRequest(builder);
+    public void testInstantiationDoesNotThrow() {
+        BaseInsertRequest request = new BaseInsertRequest();
 
-        Assert.assertEquals("test_table", request.getTable());
+        Assert.assertNotNull(request);
     }
 
     @Test
-    public void testBuilderTableMethodReturnsSameBuilderInstance() {
-        BaseInsertRequest.BaseInsertRequestBuilder builder = new BaseInsertRequest.BaseInsertRequestBuilder();
-        BaseInsertRequest.BaseInsertRequestBuilder returned = builder.table("test_table");
+    public void testUsableAsExtensionPointForSubclasses() {
+        // BaseInsertRequest carries no state of its own; it exists purely so module-specific
+        // InsertRequest classes (v2's and flowvault's) share a supertype. Verify the subtype relationship holds.
+        BaseInsertRequest request = new BaseInsertRequest() {
+        };
 
-        Assert.assertSame(builder, returned);
-    }
-
-    @Test
-    public void testNullTableWhenNeverSet() {
-        BaseInsertRequest.BaseInsertRequestBuilder builder = new BaseInsertRequest.BaseInsertRequestBuilder();
-        BaseInsertRequest request = new BaseInsertRequest(builder);
-
-        Assert.assertNull(request.getTable());
-    }
-
-    @Test
-    public void testEmptyTable() {
-        BaseInsertRequest.BaseInsertRequestBuilder builder = new BaseInsertRequest.BaseInsertRequestBuilder();
-        builder.table("");
-        BaseInsertRequest request = new BaseInsertRequest(builder);
-
-        Assert.assertEquals("", request.getTable());
+        Assert.assertTrue(request instanceof BaseInsertRequest);
     }
 }

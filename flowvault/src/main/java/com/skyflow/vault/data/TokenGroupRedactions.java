@@ -1,6 +1,6 @@
 package com.skyflow.vault.data;
 
-public class TokenGroupRedactions {
+public class TokenGroupRedactions extends BaseDetokenizeData {
     private final TokenGroupRedactionsBuilder builder;
 
     private TokenGroupRedactions(TokenGroupRedactionsBuilder builder) {
