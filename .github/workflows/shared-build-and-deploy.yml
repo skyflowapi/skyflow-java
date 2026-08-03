@@ -87,6 +87,16 @@ on:
       test-reusable-token:
         required: true
 
+      # Reusable workflows do NOT inherit the caller's secrets: anything referenced below must be
+      # declared here AND passed by every caller, otherwise it silently resolves to an empty string.
+      # An empty `token:` is what made actions/checkout fail with
+      # "Error: Input required and not supplied: token".
+      pat-actions:
+        required: true
+
+      test-credentials-file-string:
+        required: true
+
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -98,7 +108,7 @@ jobs:
           # checkout and reused for the automated version-bump push below, so
           # that push satisfies the branch-protection ruleset's repo-admin
           # bypass (github-actions[bot] is not a bypass actor). See SK-2986.
-          token: ${{ secrets.PAT_ACTIONS }}
+          token: ${{ secrets.pat-actions }}
 
       - name: Set up maven or jfrog repository
         uses: actions/setup-java@v4
@@ -212,7 +222,7 @@ jobs:
         uses: jsdaniell/create-json@1.1.2
         with:
           name: "credentials.json"
-          json: ${{ secrets.TEST_CREDENTIALS_FILE_STRING }}
+          json: ${{ secrets.test-credentials-file-string }}
 
       # Tests load these with Dotenv.load()/relative paths, which resolve
       # against the *module* directory - Maven runs each module's tests with
