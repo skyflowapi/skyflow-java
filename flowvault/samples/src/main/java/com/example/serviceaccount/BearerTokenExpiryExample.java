@@ -5,20 +5,20 @@ import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.Env;
 import com.skyflow.enums.LogLevel;
-import com.skyflow.enums.RedactionType;
 import com.skyflow.errors.SkyflowException;
-import com.skyflow.vault.tokens.DetokenizeData;
-import com.skyflow.vault.tokens.DetokenizeRequest;
-import com.skyflow.vault.tokens.DetokenizeResponse;
-import io.github.cdimascio.dotenv.Dotenv;
+import com.skyflow.vault.data.BulkDetokenizeRequest;
+import com.skyflow.vault.data.BulkDetokenizeResponse;
+
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This example demonstrates how to configure and use the Skyflow SDK
  * to detokenize sensitive data stored in a Skyflow vault.
  * It includes setting up credentials, configuring the vault, and
- * making a detokenization request. The code also implements a retry
- * mechanism to handle unauthorized access errors (HTTP 401).
+ * making a bulk detokenization request. The code also implements a retry
+ * mechanism to handle unauthorized access errors (HTTP 401), e.g. when
+ * the bearer token minted from the credentials has expired.
  */
 public class BearerTokenExpiryExample {
     public static void main(String[] args) {
@@ -60,27 +60,24 @@ public class BearerTokenExpiryExample {
 
     /**
      * Method to detokenize data using the Skyflow client.
-     * It sends a detokenization request with a list of tokens and prints the response.
+     * It sends a bulk detokenization request with a list of tokens and prints the response.
      *
      * @param skyflowClient The Skyflow client instance used for detokenization.
      * @throws SkyflowException If an error occurs during the detokenization process.
      */
     public static void detokenizeData(Skyflow skyflowClient) throws SkyflowException {
         // Creating a list of tokens to be detokenized
-        DetokenizeData detokenizeDataToken1 = new DetokenizeData("<YOUR_TOKEN_VALUE_1>", RedactionType.PLAIN_TEXT);
-        DetokenizeData detokenizeDataToken2 = new DetokenizeData("<YOUR_TOKEN_VALUE_2>");
-        ArrayList<DetokenizeData> detokenizeDataList = new ArrayList<>();
-        detokenizeDataList.add(detokenizeDataToken1); // First token
-        detokenizeDataList.add(detokenizeDataToken2); // Second token
+        List<String> tokens = new ArrayList<>();
+        tokens.add("<YOUR_TOKEN_VALUE_1>"); // First token
+        tokens.add("<YOUR_TOKEN_VALUE_2>"); // Second token
 
-        // Building a detokenization request with the token list and configuration
-        DetokenizeRequest detokenizeRequest = DetokenizeRequest.builder()
-                .detokenizeData(detokenizeDataList) // Adding tokens to the request
-                .continueOnError(false) // Stop on error
+        // Building a bulk detokenization request with the token list
+        BulkDetokenizeRequest detokenizeRequest = BulkDetokenizeRequest.builder()
+                .tokens(tokens) // Adding tokens to the request
                 .build();
 
         // Sending the detokenization request and receiving the response
-        DetokenizeResponse detokenizeResponse = skyflowClient.vault().detokenize(detokenizeRequest);
+        BulkDetokenizeResponse detokenizeResponse = skyflowClient.vault().bulkDetokenize(detokenizeRequest);
 
         // Printing the detokenized response
         System.out.println(detokenizeResponse);
