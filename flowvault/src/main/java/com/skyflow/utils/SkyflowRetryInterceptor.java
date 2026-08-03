@@ -20,7 +20,7 @@ import java.util.Random;
  */
 public final class SkyflowRetryInterceptor implements Interceptor {
 
-    /** Fraction of the computed delay applied as random jitter, to avoid synchronised retries. */
+    /** Fraction of the computed delay applied as random jitter, so retries do not align. */
     private static final double JITTER_FACTOR = 0.2;
 
     private final int maxRetries;
