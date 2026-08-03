@@ -9,7 +9,7 @@ import com.skyflow.enums.LogLevel;
 import com.skyflow.vault.data.BulkInsertRequest;
 import com.skyflow.vault.data.BulkInsertRequestRecord;
 import com.skyflow.vault.data.BulkInsertResponse;
-import com.skyflow.vault.data.InsertOptions;
+import com.skyflow.vault.data.BulkInsertOptions;
 import com.skyflow.vault.data.InsertRequestRecord;
 import com.skyflow.vault.data.UpsertOptions;
 
@@ -83,7 +83,7 @@ public class CustomHeaderExample {
                     .build();
 
             // Step 7: Attach a custom header through the interceptor
-            InsertOptions options = InsertOptions.builder()
+            BulkInsertOptions options = BulkInsertOptions.builder()
                     .interceptor(ctx -> {
                         ctx.addHeader(CustomHeaderKey.REQUEST_ID_HEADER, getRequestId()); // pass the request id here
                     })
