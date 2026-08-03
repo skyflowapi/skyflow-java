@@ -8,3 +8,6 @@ docs/superpowers/
 
 # local sample configuration - may hold credentials
 .env
+
+# comparison jars built for the contract gate (japicmp reads them off disk; never artifacts)
+api-report/build/

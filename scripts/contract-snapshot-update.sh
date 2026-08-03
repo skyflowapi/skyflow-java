@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Regenerates a module's contract-testing baseline (<module>/api-report/*.baseline.jar)
+# Regenerates a module's contract-testing baseline (repo-root api-report/*.baseline.jar)
 # from the CURRENT working tree and overwrites the committed snapshot.
 #
 # Run this after an intentional public API change, review the resulting git diff on
@@ -40,16 +40,17 @@ for MODULE in "${MODULES[@]}"; do
     echo "=== $MODULE ==="
     mvn -B package -pl "common,$MODULE" -am -DskipTests -Dmaven.javadoc.skip=true -Dgpg.skip=true
 
-    # the comparison-only jar, which merges com.skyflow:common into the module
-    SHADED_JAR=$(ls "$MODULE"/target/"$ARTIFACT"-*-with-common.jar 2>/dev/null | head -n1)
+    # The comparison-only jar merging com.skyflow:common. It is written to api-report/build/
+    # rather than the module's target/ so that nothing inside a published module can pick it
+    # up; it is deliberately not a Maven artifact, so it is never installed or deployed.
+    SHADED_JAR=$(ls api-report/build/"$ARTIFACT"-*-with-common.jar 2>/dev/null | head -n1)
     if [ -z "$SHADED_JAR" ]; then
-        echo "Error: could not find $MODULE/target/$ARTIFACT-*-with-common.jar. Did the build succeed?"
+        echo "Error: could not find api-report/build/$ARTIFACT-*-with-common.jar. Did the build succeed?"
         exit 1
     fi
 
-    mkdir -p "$MODULE/api-report"
-    cp "$SHADED_JAR" "$MODULE/api-report/$ARTIFACT.baseline.jar"
-    echo "Updated $MODULE/api-report/$ARTIFACT.baseline.jar from $SHADED_JAR"
+    cp "$SHADED_JAR" "api-report/$ARTIFACT.baseline.jar"
+    echo "Updated api-report/$ARTIFACT.baseline.jar from $SHADED_JAR"
 done
 
 echo "--------------------------"

@@ -78,12 +78,11 @@
                 </executions>
             </plugin>
             <plugin>
-                <!-- Comparison-only jar (classifier "with-common") merging com.skyflow:common,
-                     mirroring skyvault. The published artifact is untouched: shadedArtifactAttached
-                     keeps the main jar as it was. This exists so japicmp compares the whole surface
-                     a consumer actually gets, since classes a customer imports (Credentials,
-                     SkyflowException, BearerToken) live in common and would otherwise read as
-                     missing - japicmp only sees what is physically inside the jars it is given. -->
+                <!-- Comparison-only jar merging com.skyflow:common, mirroring skyvault. It exists so
+                     japicmp compares the whole surface a consumer actually gets, since classes a
+                     customer imports (Credentials, SkyflowException, BearerToken) live in common and
+                     would otherwise read as missing - japicmp only sees what is physically inside the
+                     jars it is given. Build-time only: it is never an artifact. -->
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
                 <version>3.6.0</version>
@@ -95,8 +94,13 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
-                            <shadedArtifactAttached>true</shadedArtifactAttached>
-                            <shadedClassifierName>with-common</shadedClassifierName>
+                            <!-- outputFile, NOT shadedArtifactAttached. Attaching makes this a real
+                                 project artifact, and Maven installs and DEPLOYS attached artifacts -
+                                 a -with-common.jar would ship to jfrog and Maven Central alongside
+                                 the real one. outputFile writes the file to disk for japicmp to read
+                                 and attaches nothing. -->
+                            <outputFile>${project.basedir}/../api-report/build/${project.build.finalName}-with-common.jar</outputFile>
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
                             <artifactSet>
                                 <includes>
                                     <include>com.skyflow:common</include>
@@ -117,12 +121,12 @@
                          after an intentional public API change, then commit the updated jar. -->
                     <oldVersion>
                         <file>
-                            <path>${project.basedir}/api-report/skyflow-flowvault-java.baseline.jar</path>
+                            <path>${project.basedir}/../api-report/skyflow-flowvault-java.baseline.jar</path>
                         </file>
                     </oldVersion>
                     <newVersion>
                         <file>
-                            <path>${project.build.directory}/${project.build.finalName}-with-common.jar</path>
+                            <path>${project.basedir}/../api-report/build/${project.build.finalName}-with-common.jar</path>
                         </file>
                     </newVersion>
                     <parameter>
