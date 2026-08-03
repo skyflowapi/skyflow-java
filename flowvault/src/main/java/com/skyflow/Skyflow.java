@@ -55,6 +55,8 @@ public final class Skyflow extends BaseSkyflow<Skyflow, VaultConfig> {
         private Integer readTimeout;
         private Integer writeTimeout;
         private Integer maxRetries;
+        private Long initialRetryDelayMillis;
+        private Long maxRetryDelayMillis;
 
         @Override
         protected void validateVaultConfig(VaultConfig vaultConfig) throws SkyflowException {
@@ -65,7 +67,8 @@ public final class Skyflow extends BaseSkyflow<Skyflow, VaultConfig> {
         protected void onVaultConfigAdded(VaultConfig vaultConfig) throws SkyflowException {
             VaultController controller = new VaultController(vaultConfig, this.skyflowCredentials);
             controller.setCommonHttpConfig(this.timeout, this.connectTimeout, this.readTimeout,
-                    this.writeTimeout, this.maxRetries);
+                    this.writeTimeout, this.maxRetries, this.initialRetryDelayMillis,
+                    this.maxRetryDelayMillis);
             this.vaultClientsMap.put(vaultConfig.getVaultId(), controller);
             LogUtil.printInfoLog(Utils.parameterizedString(InfoLogs.VAULT_CONTROLLER_INITIALIZED.getLog(), vaultConfig.getVaultId()));
         }
@@ -82,7 +85,8 @@ public final class Skyflow extends BaseSkyflow<Skyflow, VaultConfig> {
                 updated.setVaultConfig(updatedConfig);
             }
             updated.setCommonHttpConfig(this.timeout, this.connectTimeout, this.readTimeout,
-                    this.writeTimeout, this.maxRetries);
+                    this.writeTimeout, this.maxRetries, this.initialRetryDelayMillis,
+                    this.maxRetryDelayMillis);
         }
 
         @Override
@@ -141,6 +145,12 @@ public final class Skyflow extends BaseSkyflow<Skyflow, VaultConfig> {
             }
             if (incoming.getMaxRetries() != null) {
                 merged.setMaxRetries(incoming.getMaxRetries());
+            }
+            if (incoming.getInitialRetryDelayMillis() != null) {
+                merged.setInitialRetryDelayMillis(incoming.getInitialRetryDelayMillis());
+            }
+            if (incoming.getMaxRetryDelayMillis() != null) {
+                merged.setMaxRetryDelayMillis(incoming.getMaxRetryDelayMillis());
             }
             // The HTTP settings above are resolved lazily on the next request, but the URL is
             // resolved once in the VaultClient constructor — which already ran with the old value.
@@ -232,11 +242,38 @@ public final class Skyflow extends BaseSkyflow<Skyflow, VaultConfig> {
             return this;
         }
 
+        /**
+         * Backoff before the first retry, in milliseconds. Default 500. Only applies when
+         * {@code maxRetries} is greater than zero.
+         * <p>
+         * <b>Precedence:</b> a vault that sets {@link VaultConfig#setInitialRetryDelayMillis(Long)}
+         * wins; this value applies only to vaults that leave it unset.
+         */
+        public SkyflowClientBuilder initialRetryDelayMillis(long initialRetryDelayMillis) {
+            this.initialRetryDelayMillis = initialRetryDelayMillis;
+            propagateHttpConfig();
+            return this;
+        }
+
+        /**
+         * Ceiling the exponential backoff grows to, in milliseconds. Default 2000. Only applies
+         * when {@code maxRetries} is greater than zero.
+         * <p>
+         * <b>Precedence:</b> a vault that sets {@link VaultConfig#setMaxRetryDelayMillis(Long)}
+         * wins; this value applies only to vaults that leave it unset.
+         */
+        public SkyflowClientBuilder maxRetryDelayMillis(long maxRetryDelayMillis) {
+            this.maxRetryDelayMillis = maxRetryDelayMillis;
+            propagateHttpConfig();
+            return this;
+        }
+
         /** Push the current client-wide HTTP settings onto every vault controller built so far. */
         private void propagateHttpConfig() {
             for (VaultController vault : this.vaultClientsMap.values()) {
                 vault.setCommonHttpConfig(this.timeout, this.connectTimeout, this.readTimeout,
-                        this.writeTimeout, this.maxRetries);
+                        this.writeTimeout, this.maxRetries, this.initialRetryDelayMillis,
+                        this.maxRetryDelayMillis);
             }
         }
 

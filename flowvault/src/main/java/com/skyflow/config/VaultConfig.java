@@ -21,6 +21,8 @@ public class VaultConfig extends BaseVaultConfig {
     private Integer readTimeout;     // per-attempt response-read timeout, in seconds
     private Integer writeTimeout;    // per-attempt request-write timeout, in seconds
     private Integer maxRetries;      // retry attempts after the first failure
+    private Long initialRetryDelayMillis; // backoff before the first retry, in milliseconds
+    private Long maxRetryDelayMillis;     // ceiling the exponential backoff grows to, in milliseconds
 
     public VaultConfig() {
         super();
@@ -30,6 +32,8 @@ public class VaultConfig extends BaseVaultConfig {
         this.readTimeout = null;
         this.writeTimeout = null;
         this.maxRetries = null;
+        this.initialRetryDelayMillis = null;
+        this.maxRetryDelayMillis = null;
     }
 
     public String getVaultUrl() {
@@ -112,6 +116,37 @@ public class VaultConfig extends BaseVaultConfig {
      */
     public void setMaxRetries(Integer maxRetries) {
         this.maxRetries = maxRetries;
+    }
+
+
+    public Long getInitialRetryDelayMillis() {
+        return initialRetryDelayMillis;
+    }
+
+    /**
+     * Backoff before the first retry, in milliseconds, for this vault.
+     * <p>
+     * Takes precedence over the client-wide {@code Skyflow.builder().initialRetryDelayMillis(...)}.
+     * Leave unset (null) to inherit that value, or the SDK default of 500 ms if it is also unset.
+     * Only applies when {@code maxRetries} is greater than zero.
+     */
+    public void setInitialRetryDelayMillis(Long initialRetryDelayMillis) {
+        this.initialRetryDelayMillis = initialRetryDelayMillis;
+    }
+
+    public Long getMaxRetryDelayMillis() {
+        return maxRetryDelayMillis;
+    }
+
+    /**
+     * Ceiling the exponential backoff grows to, in milliseconds, for this vault.
+     * <p>
+     * Takes precedence over the client-wide {@code Skyflow.builder().maxRetryDelayMillis(...)}.
+     * Leave unset (null) to inherit that value, or the SDK default of 2000 ms if it is also unset.
+     * Only applies when {@code maxRetries} is greater than zero.
+     */
+    public void setMaxRetryDelayMillis(Long maxRetryDelayMillis) {
+        this.maxRetryDelayMillis = maxRetryDelayMillis;
     }
 
 }

@@ -644,20 +644,8 @@ public final class VaultController extends VaultClient {
         int batchSize = Constants.TOKENIZE_BATCH_SIZE;
         int concurrencyLimit;
         try {
-            String userProvidedBatchSize = System.getenv("TOKENIZE_BATCH_SIZE");
-            String userProvidedConcurrencyLimit = System.getenv("TOKENIZE_CONCURRENCY_LIMIT");
-
-            Dotenv dotenv = null;
-            try {
-                dotenv = Dotenv.load();
-            } catch (DotenvException ignored) {}
-
-            if (userProvidedBatchSize == null && dotenv != null) {
-                userProvidedBatchSize = dotenv.get("TOKENIZE_BATCH_SIZE");
-            }
-            if (userProvidedConcurrencyLimit == null && dotenv != null) {
-                userProvidedConcurrencyLimit = dotenv.get("TOKENIZE_CONCURRENCY_LIMIT");
-            }
+            String userProvidedBatchSize = settingResolver.apply("TOKENIZE_BATCH_SIZE");
+            String userProvidedConcurrencyLimit = settingResolver.apply("TOKENIZE_CONCURRENCY_LIMIT");
 
             if (userProvidedBatchSize != null) {
                 try {
@@ -712,22 +700,8 @@ public final class VaultController extends VaultClient {
         int batchSize = Constants.DETOKENIZE_BATCH_SIZE;
         int concurrencyLimit;
         try {
-            String userProvidedBatchSize = System.getenv("DETOKENIZE_BATCH_SIZE");
-            String userProvidedConcurrencyLimit = System.getenv("DETOKENIZE_CONCURRENCY_LIMIT");
-
-            Dotenv dotenv = null;
-            try {
-                dotenv = Dotenv.load();
-            } catch (DotenvException ignored) {
-                // ignore the case if .env file is not found
-            }
-
-            if (userProvidedBatchSize == null && dotenv != null) {
-                userProvidedBatchSize = dotenv.get("DETOKENIZE_BATCH_SIZE");
-            }
-            if (userProvidedConcurrencyLimit == null && dotenv != null) {
-                userProvidedConcurrencyLimit = dotenv.get("DETOKENIZE_CONCURRENCY_LIMIT");
-            }
+            String userProvidedBatchSize = settingResolver.apply("DETOKENIZE_BATCH_SIZE");
+            String userProvidedConcurrencyLimit = settingResolver.apply("DETOKENIZE_CONCURRENCY_LIMIT");
 
             if (userProvidedBatchSize != null) {
                 try {
@@ -929,22 +903,8 @@ public final class VaultController extends VaultClient {
         int batchSize = Constants.INSERT_BATCH_SIZE;
         int concurrencyLimit;
         try {
-            String userProvidedBatchSize = System.getenv("INSERT_BATCH_SIZE");
-            String userProvidedConcurrencyLimit = System.getenv("INSERT_CONCURRENCY_LIMIT");
-
-            Dotenv dotenv = null;
-            try {
-                dotenv = Dotenv.load();
-            } catch (DotenvException ignored) {
-                // ignore the case if .env file is not found
-            }
-
-            if (userProvidedBatchSize == null && dotenv != null) {
-                userProvidedBatchSize = dotenv.get("INSERT_BATCH_SIZE");
-            }
-            if (userProvidedConcurrencyLimit == null && dotenv != null) {
-                userProvidedConcurrencyLimit = dotenv.get("INSERT_CONCURRENCY_LIMIT");
-            }
+            String userProvidedBatchSize = settingResolver.apply("INSERT_BATCH_SIZE");
+            String userProvidedConcurrencyLimit = settingResolver.apply("INSERT_CONCURRENCY_LIMIT");
 
             if (userProvidedBatchSize != null) {
                 try {

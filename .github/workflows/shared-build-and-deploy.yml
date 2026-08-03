@@ -135,7 +135,7 @@ jobs:
         run: |
           # Surefire runs each module's tests with the module directory as the working
           # directory, so dotenv and ./credentials.json lookups miss the repo-root copies.
-          for module in common v2 flowvault; do
+          for module in common skyvault flowvault; do
             cp .env "$module/.env"
             cp credentials.json "$module/credentials.json"
           done
