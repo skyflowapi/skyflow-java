@@ -78,12 +78,17 @@
                 </executions>
             </plugin>
             <plugin>
-                <!-- Comparison-only jar (classifier "with-common") merging com.skyflow:common,
-                     mirroring skyvault. The published artifact is untouched: shadedArtifactAttached
-                     keeps the main jar as it was. This exists so japicmp compares the whole surface
-                     a consumer actually gets, since classes a customer imports (Credentials,
-                     SkyflowException, BearerToken) live in common and would otherwise read as
-                     missing - japicmp only sees what is physically inside the jars it is given. -->
+                <!-- Comparison-only jar merging com.skyflow:common, mirroring skyvault. This
+                     exists so japicmp compares the whole surface a consumer actually gets, since
+                     classes a customer imports (Credentials, SkyflowException, BearerToken) live
+                     in common and would otherwise read as missing - japicmp only sees what is
+                     physically inside the jars it is given.
+                     Written with outputFile, NOT shadedArtifactAttached: attaching it made it a
+                     secondary artifact, and every attached artifact is deployed, so this
+                     build-internal jar was being published to Maven Central as a permanent
+                     -with-common classifier. outputFile writes the jar and neither replaces the
+                     main artifact nor attaches it. The path is unchanged, so the japicmp
+                     newVersion path below still resolves. -->
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
                 <version>3.6.0</version>
@@ -95,8 +100,7 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
-                            <shadedArtifactAttached>true</shadedArtifactAttached>
-                            <shadedClassifierName>with-common</shadedClassifierName>
+                            <outputFile>${project.build.directory}/${project.build.finalName}-with-common.jar</outputFile>
                             <artifactSet>
                                 <includes>
                                     <include>com.skyflow:common</include>
