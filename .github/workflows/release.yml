@@ -1,20 +1,11 @@
 name: Public release
 
-# Triggered by publishing a GitHub Release (the UI flow), not by a raw tag push.
+# Triggered by publishing a GitHub Release, not a raw tag push: the Release
+# carries both facts needed here - target_commitish (the branch picked in the
+# UI; a tag records only a commit) and tag_name (module prefix + version).
 #
-# That matters because a Release carries both facts this pipeline needs, and a
-# bare tag carries neither reliably:
-#   - target_commitish : the branch selected in the release UI. A git tag records
-#                        only a commit, never a branch, so this previously had to
-#                        be guessed by matching a branch tip to the tagged commit.
-#     That guess failed whenever the tip moved on (re-runs always failed) and
-#     silently picked an unrelated branch when several shared a tip.
-#   - tag_name         : carries the module prefix and the version.
-#
-# Beta and final releases share this one workflow: 'release' events cannot be
-# filtered by tag pattern, so two workflows would both fire on every release.
-# They also behaved identically in shared-build-and-deploy.yml, so nothing is
-# lost by merging them - only the reported tag type differs.
+# Beta and final share this workflow - 'release' events cannot be filtered by
+# tag pattern, and both behaved identically downstream. Kind comes from the tag.
 
 on:
   release:
@@ -46,8 +37,7 @@ jobs:
           VERSION="${TAG#*/}"      # flowvault/v1.0.0 -> v1.0.0
           VERSION="${VERSION#v}"   # v1.0.0           -> 1.0.0
 
-          # Tag prefix -> module directory. Both now match the directory name
-          # directly, since v2/ was renamed to skyvault/.
+          # Tag prefix -> module directory (both match the directory name).
           case "$PREFIX" in
             flowvault) MODULE="flowvault" ;;
             skyvault)  MODULE="skyvault" ;;

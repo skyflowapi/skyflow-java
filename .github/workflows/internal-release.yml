@@ -1,12 +1,8 @@
 name: Publish module to the JFROG Artifactory
 on:
   push:
-    # '**' not '*.*': GitHub Actions glob '*' does not match '/', so the old
-    # '*.*' pattern failed to ignore slash-containing tags like
-    # 'flowvault/v1.0.0' - a public release tag would also fire this internal
-    # workflow (and, since the ref isn't a flowvault-release/* branch,
-    # resolve-module fell through to skyvault, publishing the wrong module).
-    # '**' matches every tag, so this stays strictly branch-triggered.
+    # '**' not '*.*': Actions glob '*' does not match '/', so '*.*' let slash
+    # tags (flowvault/v1.0.0) through and fired this branch-only workflow.
     tags-ignore:
       - '**'
     paths-ignore:
@@ -20,25 +16,14 @@ on:
 jobs:
   resolve-module:
     runs-on: ubuntu-latest
-    # Skip this workflow's own version-bump commit, or the release loops:
-    # bump -> push -> release -> bump -> ...
-    #
-    # The bump is force-pushed using PAT_ACTIONS, and PAT-authenticated pushes
-    # DO trigger workflows - GITHUB_TOKEN pushes deliberately do not. So this
-    # guard only becomes load-bearing once the PAT is wired up correctly, which
-    # is why the loop appeared the moment that was fixed. It existed on the v3
-    # branch and was lost in the modularization; without it the workflow
-    # re-fires roughly every 30 seconds indefinitely.
-    #
-    # build-and-deploy needs this job, so skipping here skips the whole run.
+    # Skip our own bump commit, or this loops: bump -> push -> release -> bump.
+    # PAT-authenticated pushes DO trigger workflows; GITHUB_TOKEN pushes do not.
+    # build-and-deploy needs this job, so skipping here skips the run.
     if: ${{ !contains(github.event.head_commit.message, '[AUTOMATED]') }}
     outputs:
       module: ${{ steps.set-module.outputs.module }}
     steps:
-      # Matched explicitly rather than with an if/else that defaults to one
-      # module. A catch-all else is how a flowvault tag previously ended up
-      # publishing skyvault: anything unrecognised silently became skyvault.
-      # An unmatched branch now fails instead of guessing.
+      # Explicit match, no catch-all: defaulting once published the wrong module.
       - name: Resolve module from branch name
         id: set-module
         env:

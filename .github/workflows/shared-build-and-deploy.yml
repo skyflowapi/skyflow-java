@@ -87,10 +87,8 @@ on:
       test-reusable-token:
         required: true
 
-      # Reusable workflows do NOT inherit the caller's secrets: anything referenced below must be
-      # declared here AND passed by every caller, otherwise it silently resolves to an empty string.
-      # An empty `token:` is what made actions/checkout fail with
-      # "Error: Input required and not supplied: token".
+      # Reusable workflows do NOT inherit caller secrets: anything used below must
+      # be declared here AND passed by every caller, or it resolves to "" silently.
       pat-actions:
         required: true
 
@@ -104,10 +102,8 @@ jobs:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
-          # PAT of the skyflow-service-it admin service account. Persisted by
-          # checkout and reused for the automated version-bump push below, so
-          # that push satisfies the branch-protection ruleset's repo-admin
-          # bypass (github-actions[bot] is not a bypass actor). See SK-2986.
+          # Admin service-account PAT: persisted by checkout and reused for the
+          # version-bump push, which needs the ruleset's admin bypass. SK-2986.
           token: ${{ secrets.pat-actions }}
 
       - name: Set up maven or jfrog repository
@@ -142,18 +138,10 @@ jobs:
         with:
           fallback: 1.0.0
 
-      # Version resolution, in priority order:
-      #   1. inputs.version - set by beta/public callers, which parse it out
-      #      of a <module>/v<semver> tag (the tag text itself isn't a valid
-      #      Maven version, so it can't be used directly).
-      #   2. internal - reads the module's OWN committed pom. Git tags are a
-      #      flat, repo-wide namespace with no module awareness, so a tag
-      #      lookup cannot tell one module's version lineage from another's:
-      #      it stamped a v3 tag (3.0.0-beta.13) onto both flowvault AND skyvault
-      #      internal builds. A module's own pom is inherently per-module.
-      #   3. Fallback - previoustag. Now unreachable in practice: all three
-      #      callers either set inputs.version (release.yml, beta-release.yml)
-      #      or are internal (internal-release.yml). Kept as a safety net.
+      # Version priority: inputs.version (beta/public, parsed from the tag) >
+      # the module's own pom (internal) > previoustag (unreachable; a safety net).
+      # Tags are a flat repo-wide namespace with no module awareness, which is why
+      # internal reads the pom - a tag lookup stamped a v3 version onto every module.
       - name: Bump Version
         id: bump-version
         run: |
@@ -184,9 +172,8 @@ jobs:
 
           git add ${{ inputs.module }}/pom.xml
 
-          # Nothing staged means the pom already held this version - the normal
-          # case when someone correctly sets it before tagging. That is success,
-          # not failure; a bare 'git commit' would exit 1 and abort the release.
+          # Nothing staged = pom already at this version (normal if set before
+          # tagging). That is success; a bare 'git commit' would exit 1 here.
           if git diff --cached --quiet; then
             echo "::notice::pom already at the target version - nothing to commit"
             exit 0
@@ -224,12 +211,6 @@ jobs:
           name: "credentials.json"
           json: ${{ secrets.test-credentials-file-string }}
 
-      # Tests load these with Dotenv.load()/relative paths, which resolve
-      # against the *module* directory - Maven runs each module's tests with
-      # that module as the working dir. A repo-root .env was correct when this
-      # was a single-module build, but since the common/skyvault/flowvault split it
-      # leaves module tests unable to find their config. Discovered by glob so
-      # this survives module renames/additions.
       - name: Distribute test fixtures to modules
         run: |
           # Surefire runs each module's tests with the module directory as the working
@@ -239,18 +220,12 @@ jobs:
             cp credentials.json "$module/credentials.json"
           done
 
-      # 'verify' rather than 'deploy' for a dry run: the deploy plugin (and
-      # the central-publishing extension bound to it) is never invoked at
-      # all, so there is no upload path to accidentally leave enabled.
-      # Everything up to and including packaging, tests and GPG signing
-      # still runs, so this exercises the same build the real release would.
+      # Dry run uses 'verify', not 'deploy', so the deploy plugin and the
+      # central-publishing extension are never invoked at all.
       #
-      # Javadoc is skipped for internal (JFrog) builds only: these are dev
-      # snapshots that nobody browses docs for, and strict doclint on the
-      # pinned JDK 11 fails the release on HTML nits in comments. Beta/public
-      # must NOT skip it - Sonatype requires the -javadoc.jar and rejects a
-      # bundle without one, so a doclint error there is a real break to fix
-      # at the source.
+      # Javadoc is skipped for internal builds only - doclint on JDK 11 fails on
+      # comment nits. Beta/public must NOT skip it: Sonatype rejects a bundle
+      # with no -javadoc.jar.
       - name: Publish package
         run: |
           if [[ "${{ inputs.dry-run }}" == "true" ]]; then
