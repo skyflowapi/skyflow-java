@@ -554,6 +554,93 @@ public class ValidationsTests {
         }
     }
 
+    @Test
+    public void testValidateInsertRequest_validRequestWithTokens() {
+        Map<String, Object> tokens = new HashMap<>();
+        tokens.put("name", "tok-abc");
+        ArrayList<InsertRequestRecord> records = new ArrayList<>();
+        records.add(InsertRequestRecord.builder().tableName("table1").tokens(tokens).build());
+        InsertRequest request = InsertRequest.builder().records(records).build();
+        try {
+            Validations.validateInsertRequest(request);
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testValidateInsertRequest_emptyTokensMapThrows() {
+        ArrayList<InsertRequestRecord> records = new ArrayList<>();
+        records.add(InsertRequestRecord.builder().tableName("table1").tokens(new HashMap<>()).build());
+        InsertRequest request = InsertRequest.builder().records(records).build();
+        try {
+            Validations.validateInsertRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.EmptyTokens.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateInsertRequest_nullKeyInTokensThrows() {
+        Map<String, Object> tokens = new HashMap<>();
+        tokens.put(null, "tok-abc");
+        ArrayList<InsertRequestRecord> records = new ArrayList<>();
+        records.add(InsertRequestRecord.builder().tableName("table1").tokens(tokens).build());
+        InsertRequest request = InsertRequest.builder().records(records).build();
+        try {
+            Validations.validateInsertRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.EmptyKeyInTokens.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateInsertRequest_blankKeyInTokensThrows() {
+        Map<String, Object> tokens = new HashMap<>();
+        tokens.put("   ", "tok-abc");
+        ArrayList<InsertRequestRecord> records = new ArrayList<>();
+        records.add(InsertRequestRecord.builder().tableName("table1").tokens(tokens).build());
+        InsertRequest request = InsertRequest.builder().records(records).build();
+        try {
+            Validations.validateInsertRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.EmptyKeyInTokens.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateInsertRequest_nullValueInTokensThrows() {
+        Map<String, Object> tokens = new HashMap<>();
+        tokens.put("name", null);
+        ArrayList<InsertRequestRecord> records = new ArrayList<>();
+        records.add(InsertRequestRecord.builder().tableName("table1").tokens(tokens).build());
+        InsertRequest request = InsertRequest.builder().records(records).build();
+        try {
+            Validations.validateInsertRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.EmptyValueInTokens.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateInsertRequest_blankValueInTokensThrows() {
+        Map<String, Object> tokens = new HashMap<>();
+        tokens.put("name", "   ");
+        ArrayList<InsertRequestRecord> records = new ArrayList<>();
+        records.add(InsertRequestRecord.builder().tableName("table1").tokens(tokens).build());
+        InsertRequest request = InsertRequest.builder().records(records).build();
+        try {
+            Validations.validateInsertRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.EmptyValueInTokens.getMessage(), e.getMessage());
+        }
+    }
+
     // ── validateDetokenizeRequest ─────────────────────────────────────────────
 
     @Test
@@ -872,13 +959,16 @@ public class ValidationsTests {
     }
 
     @Test
-    public void testValidateBulkInsertRequest_validRequestWithUpsert() {
+    public void testValidateBulkInsertRequest_validRequestWithUpsertAndTokens() {
         Map<String, Object> data = new HashMap<>();
         data.put("name", "john");
+        Map<String, Object> tokens = new HashMap<>();
+        tokens.put("name", "tok-abc");
         ArrayList<InsertRequestRecord> records = new ArrayList<>();
         records.add(BulkInsertRequestRecord.builder()
                 .tableName("table1")
                 .data(data)
+                .tokens(tokens)
                 .upsert(UpsertOptions.builder()
                         .updateType("REPLACE")
                         .uniqueColumns(Collections.singletonList("email"))

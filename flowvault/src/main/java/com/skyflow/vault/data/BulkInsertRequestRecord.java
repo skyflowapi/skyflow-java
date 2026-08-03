@@ -32,6 +32,12 @@ public class BulkInsertRequestRecord extends InsertRequestRecord {
         }
 
         @Override
+        public BulkInsertRequestRecordBuilder tokens(Map<String, Object> tokens) {
+            super.tokens(tokens);
+            return this;
+        }
+
+        @Override
         public BulkInsertRequestRecordBuilder upsert(UpsertOptions upsert) {
             super.upsert(upsert);
             return this;

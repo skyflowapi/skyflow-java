@@ -205,6 +205,37 @@ public class Validations extends BaseValidations {
                     }
                 }
             }
+            validateInsertRecordTokens(record.getTokens());
+        }
+    }
+
+    // Tokens are optional on an insert record, but when supplied the map must not be empty and
+    // every entry must have a non-blank key and value — mirroring the checks on data above.
+    private static void validateInsertRecordTokens(Map<String, Object> tokens) throws SkyflowException {
+        if (tokens == null) {
+            return;
+        }
+        if (tokens.isEmpty()) {
+            LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.EMPTY_TOKENS.getLog(), InterfaceName.INSERT.getName()
+            ));
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyTokens.getMessage());
+        }
+        for (String key : tokens.keySet()) {
+            if (key == null || key.trim().isEmpty()) {
+                LogUtil.printErrorLog(Utils.parameterizedString(
+                        ErrorLogs.EMPTY_OR_NULL_KEY_IN_TOKENS.getLog(), InterfaceName.INSERT.getName()
+                ));
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyKeyInTokens.getMessage());
+            }
+            Object value = tokens.get(key);
+            if (value == null || value.toString().trim().isEmpty()) {
+                LogUtil.printErrorLog(Utils.parameterizedString(
+                        ErrorLogs.EMPTY_OR_NULL_VALUE_IN_TOKENS.getLog(),
+                        InterfaceName.INSERT.getName(), key
+                ));
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyValueInTokens.getMessage());
+            }
         }
     }
 

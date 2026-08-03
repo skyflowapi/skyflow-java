@@ -148,6 +148,9 @@ public final class Utils extends BaseUtils {
             if (hasText(record.getTableName())) {
                 data.tableName(record.getTableName());
             }
+            if (record.getTokens() != null && !record.getTokens().isEmpty()) {
+                data.tokens(record.getTokens());
+            }
             UpsertOptions recordUpsert = record.getUpsert();
             if (recordUpsert != null && recordUpsert.getUniqueColumns() != null
                     && !recordUpsert.getUniqueColumns().isEmpty()) {

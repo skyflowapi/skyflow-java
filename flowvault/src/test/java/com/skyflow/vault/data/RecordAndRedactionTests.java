@@ -45,6 +45,8 @@ public class RecordAndRedactionTests {
     public void testInsertRequestRecord_gettersReturnBuilderValues() {
         Map<String, Object> data = new HashMap<>();
         data.put("name", "John");
+        Map<String, Object> tokens = new HashMap<>();
+        tokens.put("name", "token-value");
         UpsertOptions upsert = UpsertOptions.builder()
                 .uniqueColumns(Arrays.asList("id"))
                 .updateType("UPDATE")
@@ -53,11 +55,13 @@ public class RecordAndRedactionTests {
         InsertRequestRecord record = InsertRequestRecord.builder()
                 .tableName("persons")
                 .data(data)
+                .tokens(tokens)
                 .upsert(upsert)
                 .build();
 
         Assert.assertEquals("persons", record.getTableName());
         Assert.assertEquals(data, record.getData());
+        Assert.assertEquals(tokens, record.getTokens());
         Assert.assertEquals(upsert, record.getUpsert());
     }
 
@@ -66,6 +70,7 @@ public class RecordAndRedactionTests {
         InsertRequestRecord record = InsertRequestRecord.builder().build();
         Assert.assertNull(record.getTableName());
         Assert.assertNull(record.getData());
+        Assert.assertNull(record.getTokens());
         Assert.assertNull(record.getUpsert());
     }
 
@@ -75,6 +80,8 @@ public class RecordAndRedactionTests {
     public void testBulkInsertRequestRecord_gettersReturnBuilderValues() {
         Map<String, Object> data = new HashMap<>();
         data.put("name", "Jane");
+        Map<String, Object> tokens = new HashMap<>();
+        tokens.put("name", "token-1");
         UpsertOptions upsert = UpsertOptions.builder()
                 .updateType("REPLACE")
                 .uniqueColumns(Arrays.asList("id"))
@@ -83,11 +90,13 @@ public class RecordAndRedactionTests {
         BulkInsertRequestRecord record = BulkInsertRequestRecord.builder()
                 .tableName("persons")
                 .data(data)
+                .tokens(tokens)
                 .upsert(upsert)
                 .build();
 
         Assert.assertEquals("persons", record.getTableName());
         Assert.assertEquals(data, record.getData());
+        Assert.assertEquals(tokens, record.getTokens());
         Assert.assertEquals(upsert, record.getUpsert());
         Assert.assertEquals("REPLACE", record.getUpsert().getUpdateType());
         Assert.assertEquals(Arrays.asList("id"), record.getUpsert().getUniqueColumns());
@@ -98,6 +107,7 @@ public class RecordAndRedactionTests {
         BulkInsertRequestRecord record = BulkInsertRequestRecord.builder().build();
         Assert.assertNull(record.getTableName());
         Assert.assertNull(record.getData());
+        Assert.assertNull(record.getTokens());
         Assert.assertNull(record.getUpsert());
     }
 

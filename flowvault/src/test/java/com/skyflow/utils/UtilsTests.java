@@ -259,6 +259,24 @@ public class UtilsTests {
     }
 
     @Test
+    public void testGetInsertRequestBody_withTokens() {
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", "john");
+        Map<String, Object> tokens = new HashMap<>();
+        tokens.put("name", "tok-abc");
+        InsertRequestRecord record = InsertRequestRecord.builder().tableName("table1").data(data).tokens(tokens).build();
+        ArrayList<InsertRequestRecord> records = new ArrayList<>();
+        records.add(record);
+        InsertRequest request = InsertRequest.builder().records(records).build();
+        VaultConfig config = new VaultConfig();
+        config.setVaultId("vault123");
+
+        V1InsertRequest body = Utils.getInsertRequestBody(request, config);
+
+        Assert.assertEquals(tokens, body.getRecords().get().get(0).getTokens().get());
+    }
+
+    @Test
     public void testGetInsertRequestBody_withUpsertAtRequestLevel() {
         Map<String, Object> data = new HashMap<>();
         data.put("name", "john");

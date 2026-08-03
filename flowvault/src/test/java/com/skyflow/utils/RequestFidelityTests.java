@@ -74,6 +74,8 @@ public class RequestFidelityTests {
     public void testBulkInsert_everyRecordFieldReachesWire() {
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("name", "john");
+        Map<String, Object> tokens = new LinkedHashMap<>();
+        tokens.put("name", "tok-abc");
         UpsertOptions upsert = UpsertOptions.builder()
                 .updateType("UPDATE")
                 .uniqueColumns(Arrays.asList("email", "phone"))
@@ -82,6 +84,7 @@ public class RequestFidelityTests {
         BulkInsertRequestRecord record = BulkInsertRequestRecord.builder()
                 .tableName("cards")
                 .data(data)
+                .tokens(tokens)
                 .upsert(upsert)
                 .build();
         BulkInsertRequest request = BulkInsertRequest.builder()
@@ -97,6 +100,7 @@ public class RequestFidelityTests {
         Assert.assertEquals("cards", wire.getTableName().get());
         // The user's own map instances must be handed to the wire object untouched.
         Assert.assertSame(data, wire.getData().get());
+        Assert.assertSame(tokens, wire.getTokens().get());
         Assert.assertEquals(FlowEnumUpdateType.UPDATE, wire.getUpsert().get().getUpdateType().get());
         Assert.assertEquals(Arrays.asList("email", "phone"), wire.getUpsert().get().getUniqueColumns().get());
     }
@@ -106,10 +110,13 @@ public class RequestFidelityTests {
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("name", NON_ASCII_NAME);
         data.put("street address", "12 東京都 千代田区");
+        Map<String, Object> tokens = new LinkedHashMap<>();
+        tokens.put("name", "tök-ábc 123");
 
         BulkInsertRequestRecord record = BulkInsertRequestRecord.builder()
                 .tableName(NON_ASCII_TABLE)
                 .data(data)
+                .tokens(tokens)
                 .build();
         BulkInsertRequest request = BulkInsertRequest.builder()
                 .tableName(SPACED_TABLE)
@@ -123,6 +130,7 @@ public class RequestFidelityTests {
         Assert.assertEquals(NON_ASCII_TABLE, wire.getTableName().get());
         Assert.assertEquals(NON_ASCII_NAME, wire.getData().get().get("name"));
         Assert.assertEquals("12 東京都 千代田区", wire.getData().get().get("street address"));
+        Assert.assertEquals("tök-ábc 123", wire.getTokens().get().get("name"));
     }
 
     @Test
@@ -515,6 +523,65 @@ public class RequestFidelityTests {
         BulkInsertRequest request = BulkInsertRequest.builder().records(recordList(record)).build();
         return Utils.getBulkInsertRequestBody(request, vaultConfig())
                 .getRecords().get().get(0).getUpsert().get();
+    }
+
+    // ── insert: tokens map ───────────────────────────────────────────────────
+
+    @Test
+    public void testBulkInsert_emptyTokensMapIsOmittedFromWire() {
+        // Validations.validateInsertRequest rejects an explicitly-set-but-empty tokens map before
+        // the body builder runs; this pins the builder's own behavior when called directly.
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", "john");
+        BulkInsertRequestRecord record = BulkInsertRequestRecord.builder()
+                .tableName("cards")
+                .data(data)
+                .tokens(new HashMap<>())
+                .build();
+        BulkInsertRequest request = BulkInsertRequest.builder().records(recordList(record)).build();
+
+        V1InsertRequest body = Utils.getBulkInsertRequestBody(request, vaultConfig());
+
+        Assert.assertFalse(body.getRecords().get().get(0).getTokens().isPresent());
+    }
+
+    @Test
+    public void testBulkInsert_nullTokensMapIsOmittedFromWire() {
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", "john");
+        BulkInsertRequestRecord record = BulkInsertRequestRecord.builder()
+                .tableName("cards")
+                .data(data)
+                .build();
+        BulkInsertRequest request = BulkInsertRequest.builder().records(recordList(record)).build();
+
+        V1InsertRequest body = Utils.getBulkInsertRequestBody(request, vaultConfig());
+
+        Assert.assertFalse(body.getRecords().get().get(0).getTokens().isPresent());
+    }
+
+    @Test
+    public void testBulkInsert_multiValueTokensMapReachesWireVerbatim() {
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", "john");
+        Map<String, Object> tokens = new LinkedHashMap<>();
+        tokens.put("name", "tok-1");
+        tokens.put("ssn", "tok-2");
+        tokens.put("nested", Collections.singletonMap("group", "tok-3"));
+        BulkInsertRequestRecord record = BulkInsertRequestRecord.builder()
+                .tableName("cards")
+                .data(data)
+                .tokens(tokens)
+                .build();
+        BulkInsertRequest request = BulkInsertRequest.builder().records(recordList(record)).build();
+
+        V1InsertRequest body = Utils.getBulkInsertRequestBody(request, vaultConfig());
+
+        Map<String, Object> wireTokens = body.getRecords().get().get(0).getTokens().get();
+        Assert.assertSame(tokens, wireTokens);
+        Assert.assertEquals("tok-1", wireTokens.get("name"));
+        Assert.assertEquals("tok-2", wireTokens.get("ssn"));
+        Assert.assertEquals(Collections.singletonMap("group", "tok-3"), wireTokens.get("nested"));
     }
 
     // ─────────────────────────────────────────────────────────────────────────
