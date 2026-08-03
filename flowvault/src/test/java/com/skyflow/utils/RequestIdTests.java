@@ -216,6 +216,45 @@ public class RequestIdTests {
     }
 
     @Test
+    public void testTokenize_transportFailureReportsTheInnermostCause() {
+        // a mistyped cluster id surfaces as UnknownHostException three levels down: the future
+        // wraps ApiClientException("Network error..."), which wraps the real cause. Reporting the
+        // wrapper tells the caller nothing, so the innermost cause must win.
+        java.net.UnknownHostException dns = new java.net.UnknownHostException(
+                "badcluster.skyvault.skyflowapis.dev: nodename nor servname provided, or not known");
+        Throwable ex = new RuntimeException(
+                new com.skyflow.generated.rest.core.ApiClientException(
+                        "Network error executing HTTP request", dns));
+
+        List<BulkTokenizeResponseRecord> records = Utils.handleBulkTokenizeBatchException(
+                ex, Collections.singletonList(tokenizeRecord("v0", "g1")), 0);
+
+        String error = records.get(0).getTokens().get(0).getError();
+        Assert.assertTrue("expected the DNS failure, got: " + error,
+                error.contains("UnknownHostException"));
+        Assert.assertTrue(error.contains("badcluster.skyvault.skyflowapis.dev"));
+    }
+
+    @Test
+    public void testDelete_transportFailureReportsTheInnermostCause() {
+        java.net.UnknownHostException dns = new java.net.UnknownHostException(
+                "badcluster.skyvault.skyflowapis.dev: nodename nor servname provided, or not known");
+        Throwable ex = new RuntimeException(
+                new com.skyflow.generated.rest.core.ApiClientException(
+                        "Network error executing HTTP request", dns));
+
+        List<BulkDeleteTokensResponseRecord> records =
+                Utils.handleBulkDeleteTokensBatchException(ex, deleteBatch("t0", "t1"), 0, 50);
+
+        Assert.assertEquals(2, records.size());
+        for (BulkDeleteTokensResponseRecord record : records) {
+            Assert.assertTrue("expected the DNS failure, got: " + record.getError(),
+                    record.getError().contains("UnknownHostException"));
+            Assert.assertEquals(Integer.valueOf(500), record.getHttpCode());
+        }
+    }
+
+    @Test
     public void testTokenize_transportFailureHasNoRequestId() {
         // never reached the API, so there is no call to point at
         List<BulkTokenizeResponseRecord> records = Utils.handleBulkTokenizeBatchException(
