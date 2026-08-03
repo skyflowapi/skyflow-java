@@ -6,7 +6,8 @@ import java.util.List;
  * A record in a bulk tokenize request.
  *
  * <p>Carries nothing beyond {@link TokenizeRequestRecord} today. It exists as its own type so the
- * bulk request has somewhere to grow, mirroring the {@link BulkInsertRecord} / {@link InsertRecord}
+ * bulk request has somewhere to grow, mirroring the {@link BulkInsertRequestRecord} /
+ * {@link InsertRequestRecord}
  * split. The index that correlates a record with its result is assigned by the SDK from list
  * position and appears only on {@link BulkTokenizeResponseRecord} — callers never supply it.
  */
