@@ -138,6 +138,15 @@ public class SkyflowExceptionTest {
         Assert.assertTrue(str.contains("details: null"));
     }
 
+    // Regression: skyvault used to ship its own copy of this class whose getHttpCode()
+    // unboxed the null Integer and threw NPE for every constructor that takes no code.
+    @Test
+    public void testGetHttpCodeIsZeroWhenNoCodeWasSet() {
+        Assert.assertEquals(0, new SkyflowException("local failure").getHttpCode());
+        Assert.assertEquals(0, new SkyflowException(new RuntimeException("boom")).getHttpCode());
+        Assert.assertEquals(0, new SkyflowException("local failure", new RuntimeException("boom")).getHttpCode());
+    }
+
     @Test
     public void testZeroHttpCodeDefaultsTo400() {
         Map<String, List<String>> headers = new HashMap<>();

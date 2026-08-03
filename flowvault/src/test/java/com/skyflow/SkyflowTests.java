@@ -442,6 +442,73 @@ public class SkyflowTests {
         }
     }
 
+    // ── vault(vaultId) ────────────────────────────────────────────────────────
+
+    @Test
+    public void testVaultById_returnsTheControllerForTheConfiguredId() throws SkyflowException {
+        Skyflow client = Skyflow.builder().addVaultConfig(buildConfig("vault1", "cluster1")).build();
+        Assert.assertSame(client.vault(), client.vault("vault1"));
+    }
+
+    @Test
+    public void testVaultById_selectsTheMatchingVaultAmongSeveral() throws SkyflowException {
+        VaultConfig first = buildConfig("vault1", "cluster1");
+        first.setVaultUrl("https://first.example.com");
+        VaultConfig second = buildConfig("vault2", "cluster2");
+        second.setVaultUrl("https://second.example.com");
+        Skyflow client = Skyflow.builder().addVaultConfig(first).addVaultConfig(second).build();
+
+        Assert.assertEquals("https://first.example.com", client.vault("vault1").currentVaultURL);
+        Assert.assertEquals("https://second.example.com", client.vault("vault2").currentVaultURL);
+    }
+
+    @Test
+    public void testVaultById_nullIdResolvesToTheFirstConfiguredVault() throws SkyflowException {
+        Skyflow client = Skyflow.builder()
+                .addVaultConfig(buildConfig("vault1", "cluster1"))
+                .addVaultConfig(buildConfig("vault2", "cluster2"))
+                .build();
+        Assert.assertSame(client.vault(), client.vault(null));
+    }
+
+    @Test
+    public void testVaultById_throwsForUnknownVaultId() throws SkyflowException {
+        Skyflow client = Skyflow.builder().addVaultConfig(buildConfig("vault1", "cluster1")).build();
+        try {
+            client.vault("vault-unknown");
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertNotNull(e.getMessage());
+        }
+    }
+
+    @Test
+    public void testVaultById_throwsWhenNoConfigExists() {
+        try {
+            Skyflow.builder().build().vault("vault1");
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertNotNull(e.getMessage());
+        }
+    }
+
+    @Test
+    public void testVaultById_removedVaultThrowsWhileOthersStillResolve() throws SkyflowException {
+        Skyflow client = Skyflow.builder()
+                .addVaultConfig(buildConfig("vault1", "cluster1"))
+                .addVaultConfig(buildConfig("vault2", "cluster2"))
+                .build();
+        client.removeVaultConfig("vault1");
+
+        Assert.assertNotNull(client.vault("vault2"));
+        try {
+            client.vault("vault1");
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertNotNull(e.getMessage());
+        }
+    }
+
     // ── getVaultConfig ────────────────────────────────────────────────────────
 
     @Test

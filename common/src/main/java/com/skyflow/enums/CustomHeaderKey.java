@@ -1,9 +1,9 @@
 package com.skyflow.enums;
 
 public enum CustomHeaderKey {
-    SkyflowAccountId("x-skyflow-account-id"),
-    SkyflowAccountName("x-skyflow-account-name"),
-    RequestIdHeader("x-request-id");
+    SKYFLOW_ACCOUNT_ID("x-skyflow-account-id"),
+    SKYFLOW_ACCOUNT_NAME("x-skyflow-account-name"),
+    REQUEST_ID_HEADER("x-request-id");
 
     private final String value;
 

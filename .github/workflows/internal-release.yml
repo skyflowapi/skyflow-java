@@ -1,13 +1,21 @@
 name: Publish module to the JFROG Artifactory
 on:
   push:
+    # '**' not '*.*': GitHub Actions glob '*' does not match '/', so the old
+    # '*.*' pattern failed to ignore slash-containing tags like
+    # 'flowvault/v1.0.0' - a public release tag would also fire this internal
+    # workflow (and, since the ref isn't a flowvault-release/* branch,
+    # resolve-module fell through to skyvault, publishing the wrong module).
+    # '**' matches every tag, so this stays strictly branch-triggered.
     tags-ignore:
-      - '*.*'
+      - '**'
     paths-ignore:
       - "*.md"
     branches:
-      - release/*
       - flowvault-release/*
+      - skyvault-release/*
+      # Legacy: predates the per-module naming, still maps to skyvault.
+      - release/*
 
 jobs:
   resolve-module:
@@ -15,14 +23,26 @@ jobs:
     outputs:
       module: ${{ steps.set-module.outputs.module }}
     steps:
+      # Matched explicitly rather than with an if/else that defaults to one
+      # module. A catch-all else is how a flowvault tag previously ended up
+      # publishing skyvault: anything unrecognised silently became skyvault.
+      # An unmatched branch now fails instead of guessing.
       - name: Resolve module from branch name
         id: set-module
+        env:
+          BRANCH: ${{ github.ref_name }}
         run: |
-          if [[ "${{ github.ref_name }}" == flowvault-release/* ]]; then
-            echo "module=flowvault" >> "$GITHUB_OUTPUT"
-          else
-            echo "module=skyvault" >> "$GITHUB_OUTPUT"
-          fi
+          case "$BRANCH" in
+            flowvault-release/*) MODULE="flowvault" ;;
+            skyvault-release/*)  MODULE="skyvault" ;;
+            release/*)           MODULE="skyvault" ;;
+            *)
+              echo "::error::Branch '$BRANCH' does not map to a module."
+              exit 1
+              ;;
+          esac
+          echo "Branch '$BRANCH' -> module '$MODULE'"
+          echo "module=$MODULE" >> "$GITHUB_OUTPUT"
 
   build-and-deploy:
     needs: resolve-module
