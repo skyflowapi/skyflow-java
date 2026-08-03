@@ -49,10 +49,10 @@ import com.skyflow.vault.data.BulkInsertResponse;
 import com.skyflow.vault.data.BulkInsertResponseRecord;
 import com.skyflow.vault.data.BulkTokenizeRequest;
 import com.skyflow.vault.data.BulkTokenizeResponse;
+import com.skyflow.vault.data.BulkDetokenizeOptions;
+import com.skyflow.vault.data.BulkInsertOptions;
 import com.skyflow.vault.data.DeleteTokensOptions;
-import com.skyflow.vault.data.DetokenizeOptions;
 import com.skyflow.vault.data.ErrorRecord;
-import com.skyflow.vault.data.InsertOptions;
 import com.skyflow.vault.data.InsertRequestRecord;
 import com.skyflow.vault.data.RequestContext;
 import com.skyflow.vault.data.RequestInterceptor;
@@ -98,7 +98,7 @@ public final class VaultController extends VaultClient {
         return bulkInsert(insertRequest, null);
     }
 
-    public BulkInsertResponse bulkInsert(BulkInsertRequest insertRequest, InsertOptions options) throws SkyflowException {
+    public BulkInsertResponse bulkInsert(BulkInsertRequest insertRequest, BulkInsertOptions options) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.INSERT_TRIGGERED.getLog());
         try {
             LogUtil.printInfoLog(InfoLogs.VALIDATE_INSERT_REQUEST.getLog());
@@ -128,7 +128,7 @@ public final class VaultController extends VaultClient {
         return bulkInsertAsync(insertRequest, null);
     }
 
-    public CompletableFuture<BulkInsertResponse> bulkInsertAsync(BulkInsertRequest insertRequest, InsertOptions options) throws SkyflowException {
+    public CompletableFuture<BulkInsertResponse> bulkInsertAsync(BulkInsertRequest insertRequest, BulkInsertOptions options) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.INSERT_TRIGGERED.getLog());
         try {
             LogUtil.printInfoLog(InfoLogs.VALIDATE_INSERT_REQUEST.getLog());
@@ -166,7 +166,7 @@ public final class VaultController extends VaultClient {
         return bulkDetokenize(detokenizeRequest, null);
     }
 
-    public BulkDetokenizeResponse bulkDetokenize(BulkDetokenizeRequest detokenizeRequest, DetokenizeOptions options) throws SkyflowException {
+    public BulkDetokenizeResponse bulkDetokenize(BulkDetokenizeRequest detokenizeRequest, BulkDetokenizeOptions options) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.DETOKENIZE_TRIGGERED.getLog());
         try {
             LogUtil.printInfoLog(InfoLogs.VALIDATE_DETOKENIZE_REQUEST.getLog());
@@ -193,7 +193,7 @@ public final class VaultController extends VaultClient {
         return bulkDetokenizeAsync(detokenizeRequest, null);
     }
 
-    public CompletableFuture<BulkDetokenizeResponse> bulkDetokenizeAsync(BulkDetokenizeRequest detokenizeRequest, DetokenizeOptions options) throws SkyflowException {
+    public CompletableFuture<BulkDetokenizeResponse> bulkDetokenizeAsync(BulkDetokenizeRequest detokenizeRequest, BulkDetokenizeOptions options) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.DETOKENIZE_TRIGGERED.getLog());
         ExecutorService executor = null;
         try {
