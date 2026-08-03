@@ -177,7 +177,11 @@
                         <configuration>
                             <publishingServerId>central</publishingServerId>
                             <tokenAuth>true</tokenAuth>
-                            <autoPublish>true</autoPublish>
+                            <!-- See flowvault/pom.xml: releases stage as VALIDATED in the
+                                 Central Portal and need a human to click Publish. Note this
+                                 changes v2's behaviour - releases no longer go live on their
+                                 own once mvn deploy succeeds. -->
+                            <autoPublish>false</autoPublish>
                         </configuration>
                     </plugin>
                 </plugins>

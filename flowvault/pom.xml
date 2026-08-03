@@ -118,7 +118,13 @@
                         <configuration>
                             <publishingServerId>central</publishingServerId>
                             <tokenAuth>true</tokenAuth>
-                            <autoPublish>true</autoPublish>
+                            <!-- Uploads and validates, then holds the deployment in the
+                                 Central Portal as VALIDATED until a human clicks Publish
+                                 (or Drop to discard it). Maven Central is immutable - a
+                                 published version can never be edited or removed - so this
+                                 is the only chance to check coordinates, jar contents and
+                                 POM metadata before it is permanent. -->
+                            <autoPublish>false</autoPublish>
                         </configuration>
                     </plugin>
                 </plugins>
