@@ -1,9 +1,15 @@
 package com.skyflow.vault.data;
 
-public final class DeleteTokensOptions {
+/**
+ * Per-call options for delete tokens.
+ *
+ * <p>Subclassed by {@link BulkDeleteTokensOptions} so the bulk interfaces can take their own options
+ * type while sharing this one's settings, mirroring how {@link BulkDeleteTokensRequest} extends {@link DeleteTokensRequest}.
+ */
+public class DeleteTokensOptions {
     private final RequestInterceptor interceptor;
 
-    private DeleteTokensOptions(Builder builder) {
+    protected DeleteTokensOptions(Builder builder) {
         this.interceptor = builder.interceptor;
     }
 
@@ -15,8 +21,10 @@ public final class DeleteTokensOptions {
         return new Builder();
     }
 
-    public static final class Builder {
+    public static class Builder {
         private RequestInterceptor interceptor;
+
+        protected Builder() {}
 
         public Builder interceptor(RequestInterceptor interceptor) {
             this.interceptor = interceptor;

@@ -23,22 +23,29 @@ import com.skyflow.generated.rest.types.V1InsertResponse;
 import com.skyflow.generated.rest.types.V1RecordResponseObject;
 import com.skyflow.vault.data.BulkDeleteTokensRequest;
 import com.skyflow.vault.data.BulkDeleteTokensResponse;
+import com.skyflow.vault.data.BulkDeleteTokensResponseRecord;
 import com.skyflow.vault.data.BulkDetokenizeRequest;
 import com.skyflow.vault.data.BulkDetokenizeResponse;
 import com.skyflow.vault.data.BulkDetokenizeResponseRecord;
 import com.skyflow.vault.data.BulkInsertRequestRecord;
 import com.skyflow.vault.data.BulkInsertRequest;
 import com.skyflow.vault.data.BulkInsertResponse;
+import com.skyflow.vault.data.BulkTokenizeRequestRecord;
 import com.skyflow.vault.data.BulkInsertResponseRecord;
-import com.skyflow.vault.data.BulkTokenizeRecord;
 import com.skyflow.vault.data.BulkTokenizeRequest;
 import com.skyflow.vault.data.BulkTokenizeResponse;
 import com.skyflow.vault.data.ErrorRecord;
 import com.skyflow.vault.data.InsertRequestRecord;
 import com.skyflow.vault.data.InsertRequest;
 import com.skyflow.vault.data.TokenGroupRedactions;
+import com.skyflow.vault.data.BulkTokenizeResponseRecord;
+import com.skyflow.vault.data.TokenizeResponseRecord;
+import com.skyflow.vault.data.TokenizeRequestRecord;
+import com.skyflow.vault.data.TokenizeRequest;
+import com.skyflow.vault.data.TokenizeResponse;
 import com.skyflow.vault.data.UpsertOptions;
 import org.junit.After;
+import com.skyflow.vault.data.TokenizeResponseToken;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -235,7 +242,7 @@ public class UtilsTests {
     }
 
     @Test
-    public void testGetInsertRequestBody_fallsBackToRequestLevelTableName() {
+    public void testGetInsertRequestBody_keepsRequestLevelTableNameOnEnvelopeOnly() {
         Map<String, Object> data = new HashMap<>();
         data.put("name", "john");
         InsertRequestRecord record = InsertRequestRecord.builder().data(data).build();
@@ -248,7 +255,7 @@ public class UtilsTests {
         V1InsertRequest body = Utils.getInsertRequestBody(request, config);
 
         Assert.assertEquals("table1", body.getTableName().get());
-        Assert.assertEquals("table1", body.getRecords().get().get(0).getTableName().get());
+        Assert.assertFalse(body.getRecords().get().get(0).getTableName().isPresent());
     }
 
     @Test
@@ -289,9 +296,11 @@ public class UtilsTests {
 
         V1InsertRequest body = Utils.getInsertRequestBody(request, config);
 
-        Assert.assertTrue(body.getRecords().get().get(0).getUpsert().isPresent());
-        Assert.assertEquals(Collections.singletonList("email"), body.getRecords().get().get(0).getUpsert().get().getUniqueColumns().get());
-        Assert.assertEquals(FlowEnumUpdateType.UPDATE, body.getRecords().get().get(0).getUpsert().get().getUpdateType().get());
+        // Request-level upsert stays on the envelope; it is not copied onto the records.
+        Assert.assertFalse(body.getRecords().get().get(0).getUpsert().isPresent());
+        Assert.assertTrue(body.getUpsert().isPresent());
+        Assert.assertEquals(Collections.singletonList("email"), body.getUpsert().get().getUniqueColumns().get());
+        Assert.assertEquals(FlowEnumUpdateType.UPDATE, body.getUpsert().get().getUpdateType().get());
     }
 
     @Test
@@ -342,7 +351,7 @@ public class UtilsTests {
         Assert.assertEquals("vault123", body.getVaultId().get());
         Assert.assertEquals("table1", body.getTableName().get());
         Assert.assertEquals(1, body.getRecords().get().size());
-        Assert.assertEquals("table1", body.getRecords().get().get(0).getTableName().get());
+        Assert.assertFalse(body.getRecords().get().get(0).getTableName().isPresent());
         Assert.assertEquals(data, body.getRecords().get().get(0).getData().get());
     }
 
@@ -366,9 +375,11 @@ public class UtilsTests {
 
         V1InsertRequest body = Utils.getBulkInsertRequestBody(request, config);
 
-        Assert.assertTrue(body.getRecords().get().get(0).getUpsert().isPresent());
-        Assert.assertEquals(Collections.singletonList("email"), body.getRecords().get().get(0).getUpsert().get().getUniqueColumns().get());
-        Assert.assertEquals(FlowEnumUpdateType.UPDATE, body.getRecords().get().get(0).getUpsert().get().getUpdateType().get());
+        // Request-level upsert stays on the envelope; it is not copied onto the records.
+        Assert.assertFalse(body.getRecords().get().get(0).getUpsert().isPresent());
+        Assert.assertTrue(body.getUpsert().isPresent());
+        Assert.assertEquals(Collections.singletonList("email"), body.getUpsert().get().getUniqueColumns().get());
+        Assert.assertEquals(FlowEnumUpdateType.UPDATE, body.getUpsert().get().getUpdateType().get());
     }
 
     @Test
@@ -448,20 +459,33 @@ public class UtilsTests {
 
     @Test
     public void testGetBulkTokenizeRequestBody_buildsCorrectRequest() {
-        BulkTokenizeRecord record = BulkTokenizeRecord.builder()
-                .value("value1")
-                .tokenGroupNames(Collections.singletonList("group1"))
-                .build();
-        ArrayList<BulkTokenizeRecord> data = new ArrayList<>();
-        data.add(record);
-        BulkTokenizeRequest request = BulkTokenizeRequest.builder().data(data).build();
+        List<BulkTokenizeRequestRecord> records = Collections.singletonList(
+                BulkTokenizeRequestRecord.builder()
+                        .value("value1")
+                        .tokenGroupNames(Collections.singletonList("group1"))
+                        .build());
 
-        V1FlowTokenizeRequest body = Utils.getBulkTokenizeRequestBody(request, "vault123");
+        V1FlowTokenizeRequest body = Utils.getBulkTokenizeRequestBody(records, "vault123");
 
         Assert.assertEquals("vault123", body.getVaultId().get());
         Assert.assertEquals(1, body.getData().get().size());
         Assert.assertEquals("value1", body.getData().get().get(0).getValue().get());
         Assert.assertEquals(Collections.singletonList("group1"), body.getData().get().get(0).getTokenGroupNames().get());
+        Assert.assertFalse(body.getData().get().get(0).getToken().isPresent());
+    }
+
+    @Test
+    public void testGetBulkTokenizeRequestBody_carriesByotToken() {
+        List<BulkTokenizeRequestRecord> records = Collections.singletonList(
+                BulkTokenizeRequestRecord.builder()
+                        .value("value1")
+                        .token("my-own-token")
+                        .tokenGroupNames(Collections.singletonList("group1"))
+                        .build());
+
+        V1FlowTokenizeRequest body = Utils.getBulkTokenizeRequestBody(records, "vault123");
+
+        Assert.assertEquals("my-own-token", body.getData().get().get(0).getToken().get());
     }
 
     // ── createBulkInsertBatches ────────────────────────────────────────────────
@@ -550,21 +574,16 @@ public class UtilsTests {
 
     @Test
     public void testCreateBulkTokenizeBatches_splitsData() {
-        com.skyflow.generated.rest.types.V1FlowTokenizeRequestObject obj1 =
-                com.skyflow.generated.rest.types.V1FlowTokenizeRequestObject.builder().value("v1").build();
-        com.skyflow.generated.rest.types.V1FlowTokenizeRequestObject obj2 =
-                com.skyflow.generated.rest.types.V1FlowTokenizeRequestObject.builder().value("v2").build();
-        V1FlowTokenizeRequest request = V1FlowTokenizeRequest.builder()
-                .vaultId("vault123")
-                .data(Arrays.asList(obj1, obj2))
-                .build();
+        List<BulkTokenizeRequestRecord> records = Arrays.asList(
+                BulkTokenizeRequestRecord.builder().value("v1").build(),
+                BulkTokenizeRequestRecord.builder().value("v2").build());
 
-        List<V1FlowTokenizeRequest> batches = Utils.createBulkTokenizeBatches(request, 1);
+        List<List<BulkTokenizeRequestRecord>> batches = Utils.createBulkTokenizeBatches(records, 1);
 
         Assert.assertEquals(2, batches.size());
-        Assert.assertEquals(1, batches.get(0).getData().get().size());
-        Assert.assertEquals("v1", batches.get(0).getData().get().get(0).getValue().get());
-        Assert.assertEquals("v2", batches.get(1).getData().get().get(0).getValue().get());
+        Assert.assertEquals(1, batches.get(0).size());
+        Assert.assertEquals("v1", batches.get(0).get(0).getValue());
+        Assert.assertEquals("v2", batches.get(1).get(0).getValue());
     }
 
     // ── createErrorRecord ──────────────────────────────────────────────────────
@@ -762,6 +781,37 @@ public class UtilsTests {
         Assert.assertEquals("boom", records.get(0).getError());
     }
 
+    @Test
+    public void testHandleBulkInsertBatchException_nonApiCauseUsesCauseMessage() {
+        // Cause is non-null but not an ApiClientApiException: the message ladder should
+        // pick up the cause's own message rather than the outer wrapper's.
+        RuntimeException ex = new RuntimeException("wrapper", new IllegalStateException("inner boom"));
+        List<V1InsertRecordData> batch = Collections.singletonList(
+                V1InsertRecordData.builder().data(new HashMap<>()).build());
+
+        List<BulkInsertResponseRecord> records = Utils.handleBulkInsertBatchException(ex, batch, 0, 50);
+
+        Assert.assertEquals(1, records.size());
+        Assert.assertEquals(500, records.get(0).getHttpCode());
+        Assert.assertEquals("inner boom", records.get(0).getError());
+    }
+
+    @Test
+    public void testHandleBulkInsertBatchException_nonApiCauseWithNestedCauseUsesNestedToString() {
+        // When the cause itself wraps another throwable, the ladder resolves the message
+        // down to the nested cause's toString().
+        RuntimeException ex = new RuntimeException("wrapper",
+                new IllegalStateException("inner boom", new IllegalArgumentException("root cause")));
+        List<V1InsertRecordData> batch = Collections.singletonList(
+                V1InsertRecordData.builder().data(new HashMap<>()).build());
+
+        List<BulkInsertResponseRecord> records = Utils.handleBulkInsertBatchException(ex, batch, 0, 50);
+
+        Assert.assertEquals(1, records.size());
+        Assert.assertEquals(500, records.get(0).getHttpCode());
+        Assert.assertEquals("java.lang.IllegalArgumentException: root cause", records.get(0).getError());
+    }
+
     // ── createInsertErrorRecord / createDetokenizeErrorRecord branch coverage ─
 
     @Test
@@ -797,6 +847,98 @@ public class UtilsTests {
 
         Assert.assertEquals(500, Utils.createInsertErrorRecord(recordMap, 0, null).getHttpCode());
         Assert.assertEquals(500, Utils.createDetokenizeErrorRecord(recordMap, 0, null).getHttpCode());
+    }
+
+    // ── error-record building: keys present with explicit null values ────────
+    // Regression: the vault sends "skyflowID": null / "tableName": null on failed records, and
+    // containsKey() is true for those. Reading them unguarded threw NPE and masked the real error.
+
+    @Test
+    public void testCreateInsertErrorRecord_nullSkyflowIdAndTableNameDoNotThrow() {
+        Map<String, Object> recordMap = new HashMap<>();
+        recordMap.put("skyflowID", null);
+        recordMap.put("tableName", null);
+        recordMap.put("error", "Invalid request. Table not found.");
+        recordMap.put("httpCode", 400);
+
+        BulkInsertResponseRecord record = Utils.createInsertErrorRecord(recordMap, 0, "req-1");
+
+        Assert.assertNull(record.getSkyflowId());
+        Assert.assertNull(record.getTableName());
+        Assert.assertEquals(400, record.getHttpCode());
+        Assert.assertEquals("Invalid request. Table not found.", record.getError());
+    }
+
+    @Test
+    public void testCreateDetokenizeErrorRecord_nullTokenFieldsDoNotThrow() {
+        Map<String, Object> recordMap = new HashMap<>();
+        recordMap.put("token", null);
+        recordMap.put("tokenGroupName", null);
+        recordMap.put("error", "Token not found.");
+        recordMap.put("httpCode", 404);
+
+        BulkDetokenizeResponseRecord record = Utils.createDetokenizeErrorRecord(recordMap, 0, "req-1");
+
+        Assert.assertNull(record.getToken());
+        Assert.assertNull(record.getTokenGroupName());
+        Assert.assertEquals(404, record.getHttpCode());
+        Assert.assertEquals("Token not found.", record.getError());
+    }
+
+    @Test
+    public void testCreateErrorRecords_nullHttpCodeValueFallsBackTo500() {
+        Map<String, Object> recordMap = new HashMap<>();
+        recordMap.put("httpCode", null);
+        recordMap.put("error", "boom");
+
+        Assert.assertEquals(500, Utils.createErrorRecord(recordMap, 0, null).getCode());
+        Assert.assertEquals(500, Utils.createInsertErrorRecord(recordMap, 0, null).getHttpCode());
+        Assert.assertEquals(500, Utils.createDetokenizeErrorRecord(recordMap, 0, null).getHttpCode());
+    }
+
+    @Test
+    public void testCreateErrorRecords_nonIntegerHttpCodeIsCoerced() {
+        Map<String, Object> asLong = new HashMap<>();
+        asLong.put("httpCode", 409L);
+        asLong.put("error", "conflict");
+        Assert.assertEquals(409, Utils.createInsertErrorRecord(asLong, 0, null).getHttpCode());
+
+        Map<String, Object> asDouble = new HashMap<>();
+        asDouble.put("httpCode", 503.0d);
+        asDouble.put("error", "unavailable");
+        Assert.assertEquals(503, Utils.createInsertErrorRecord(asDouble, 0, null).getHttpCode());
+
+        Map<String, Object> asText = new HashMap<>();
+        asText.put("httpCode", "422");
+        asText.put("error", "unprocessable");
+        Assert.assertEquals(422, Utils.createInsertErrorRecord(asText, 0, null).getHttpCode());
+    }
+
+    @Test
+    public void testCreateErrorRecords_nonStringErrorDoesNotThrow() {
+        Map<String, Object> nested = new HashMap<>();
+        nested.put("detail", "inner");
+        Map<String, Object> recordMap = new HashMap<>();
+        recordMap.put("error", nested);
+        recordMap.put("httpCode", 500);
+
+        Assert.assertNotNull(Utils.createInsertErrorRecord(recordMap, 0, null).getError());
+        Assert.assertNotNull(Utils.createErrorRecord(recordMap, 0, null).getError());
+    }
+
+    @Test
+    public void testCreateErrorRecords_nullErrorValueFallsThroughToMessage() {
+        // A null error text would make the record read as a SUCCESS downstream, since failures are
+        // counted by getError() != null.
+        Map<String, Object> withMessage = new HashMap<>();
+        withMessage.put("error", null);
+        withMessage.put("message", "vault unreachable");
+        Assert.assertEquals("vault unreachable", Utils.createInsertErrorRecord(withMessage, 0, null).getError());
+
+        Map<String, Object> withNeither = new HashMap<>();
+        withNeither.put("error", null);
+        withNeither.put("message", null);
+        Assert.assertEquals("Unknown error", Utils.createInsertErrorRecord(withNeither, 0, null).getError());
     }
 
     @Test
@@ -1170,6 +1312,24 @@ public class UtilsTests {
         Assert.assertEquals("boom", errors.get(0).getError());
     }
 
+    @Test
+    public void testHandleBulkDetokenizeBatchException_nonApiCauseUsesCauseMessage() {
+        // Cause is non-null but not an ApiClientApiException: the message ladder resolves the
+        // nested cause's toString() rather than the outer wrapper's message.
+        RuntimeException ex = new RuntimeException("wrapper",
+                new IllegalStateException("inner boom", new IllegalArgumentException("root cause")));
+        V1FlowDetokenizeRequest batch = V1FlowDetokenizeRequest.builder()
+                .vaultId("vault123")
+                .tokens(Collections.singletonList("t1"))
+                .build();
+
+        List<BulkDetokenizeResponseRecord> records = Utils.handleBulkDetokenizeBatchException(ex, batch, 0, 50);
+
+        Assert.assertEquals(1, records.size());
+        Assert.assertEquals(500, records.get(0).getHttpCode());
+        Assert.assertEquals("java.lang.IllegalArgumentException: root cause", records.get(0).getError());
+    }
+
     // ── handleBulkDeleteTokensBatchException ──────────────────────────────────
 
     @Test
@@ -1186,11 +1346,14 @@ public class UtilsTests {
                 .vaultId("vault123")
                 .tokens(Collections.singletonList("t1"))
                 .build();
-        List<ErrorRecord> errors = Utils.handleBulkDeleteTokensBatchException(wrapper, batch, 0, 50);
+        List<BulkDeleteTokensResponseRecord> errors = Utils.handleBulkDeleteTokensBatchException(wrapper, batch, 0, 50);
 
         Assert.assertEquals(1, errors.size());
-        Assert.assertEquals(404, errors.get(0).getCode());
+        Assert.assertEquals(Integer.valueOf(404), errors.get(0).getHttpCode());
         Assert.assertEquals("not found", errors.get(0).getError());
+        // token comes from the batch we sent, so an error record is never missing it
+        Assert.assertEquals("t1", errors.get(0).getToken());
+        Assert.assertEquals(0, errors.get(0).getIndex());
     }
 
     @Test
@@ -1204,11 +1367,12 @@ public class UtilsTests {
                 .vaultId("vault123")
                 .tokens(Collections.singletonList("t1"))
                 .build();
-        List<ErrorRecord> errors = Utils.handleBulkDeleteTokensBatchException(wrapper, batch, 0, 50);
+        List<BulkDeleteTokensResponseRecord> errors = Utils.handleBulkDeleteTokensBatchException(wrapper, batch, 0, 50);
 
         Assert.assertEquals(1, errors.size());
-        Assert.assertEquals(403, errors.get(0).getCode());
+        Assert.assertEquals(Integer.valueOf(403), errors.get(0).getHttpCode());
         Assert.assertEquals("top level delete error", errors.get(0).getError());
+        Assert.assertEquals("t1", errors.get(0).getToken());
     }
 
     @Test
@@ -1219,47 +1383,302 @@ public class UtilsTests {
                 .tokens(Collections.singletonList("t1"))
                 .build();
 
-        List<ErrorRecord> errors = Utils.handleBulkDeleteTokensBatchException(ex, batch, 0, 50);
+        List<BulkDeleteTokensResponseRecord> errors = Utils.handleBulkDeleteTokensBatchException(ex, batch, 0, 50);
 
         Assert.assertEquals(1, errors.size());
-        Assert.assertEquals(500, errors.get(0).getCode());
+        Assert.assertEquals(Integer.valueOf(500), errors.get(0).getHttpCode());
+        Assert.assertEquals("t1", errors.get(0).getToken());
+    }
+
+    @Test
+    public void testHandleBulkDeleteTokensBatchException_errorFieldAsObjectUsesHelper() {
+        // Structured error envelope {"error": {message, httpCode}} → parsed per token via the helper.
+        Map<String, Object> errorObject = new HashMap<>();
+        errorObject.put("message", "vault not found");
+        errorObject.put("httpCode", 404);
+        Map<String, Object> body = new HashMap<>();
+        body.put("error", errorObject);
+        ApiClientApiException apiEx = new ApiClientApiException("delete failed", 404, body);
+        RuntimeException wrapper = new RuntimeException(apiEx);
+
+        V1FlowDeleteTokenRequest batch = V1FlowDeleteTokenRequest.builder()
+                .vaultId("vault123")
+                .tokens(Collections.singletonList("t1"))
+                .build();
+        List<BulkDeleteTokensResponseRecord> errors = Utils.handleBulkDeleteTokensBatchException(wrapper, batch, 0, 50);
+
+        Assert.assertEquals(1, errors.size());
+        Assert.assertEquals(Integer.valueOf(404), errors.get(0).getHttpCode());
+        Assert.assertEquals("vault not found", errors.get(0).getError());
+        Assert.assertEquals("t1", errors.get(0).getToken());
+    }
+
+    @Test
+    public void testHandleBulkDeleteTokensBatchException_errorFieldNeitherMapNorStringUsesApiMessage() {
+        Map<String, Object> body = new HashMap<>();
+        body.put("error", 500);
+        ApiClientApiException apiEx = new ApiClientApiException("delete failed", 500, body);
+        RuntimeException wrapper = new RuntimeException(apiEx);
+
+        V1FlowDeleteTokenRequest batch = V1FlowDeleteTokenRequest.builder()
+                .vaultId("vault123")
+                .tokens(Collections.singletonList("t1"))
+                .build();
+        List<BulkDeleteTokensResponseRecord> errors = Utils.handleBulkDeleteTokensBatchException(wrapper, batch, 0, 50);
+
+        Assert.assertEquals(1, errors.size());
+        Assert.assertEquals("delete failed", errors.get(0).getError());
+    }
+
+    @Test
+    public void testHandleBulkDeleteTokensBatchException_bodyWithNeitherTokensNorErrorKey() {
+        // A map body matching neither branch falls through to the batch-wide fallback.
+        Map<String, Object> body = new HashMap<>();
+        body.put("unexpected", "shape");
+        ApiClientApiException apiEx = new ApiClientApiException("delete failed", 503, body);
+        RuntimeException wrapper = new RuntimeException(apiEx);
+
+        V1FlowDeleteTokenRequest batch = V1FlowDeleteTokenRequest.builder()
+                .vaultId("vault123")
+                .tokens(Arrays.asList("t1", "t2"))
+                .build();
+        List<BulkDeleteTokensResponseRecord> errors = Utils.handleBulkDeleteTokensBatchException(wrapper, batch, 1, 50);
+
+        Assert.assertEquals(2, errors.size());
+        Assert.assertEquals(Integer.valueOf(503), errors.get(0).getHttpCode());
+        Assert.assertEquals("delete failed", errors.get(0).getError());
+        // startIndex = batchNumber * batchSize = 50
+        Assert.assertEquals(50, errors.get(0).getIndex());
+        Assert.assertEquals(51, errors.get(1).getIndex());
+        Assert.assertEquals("t2", errors.get(1).getToken());
+    }
+
+    @Test
+    public void testHandleBulkDeleteTokensBatchException_tokensNotAListFallsBackToBatchWideError() {
+        Map<String, Object> body = new HashMap<>();
+        body.put("tokens", "not-a-list");
+        ApiClientApiException apiEx = new ApiClientApiException("delete failed", 400, body);
+        RuntimeException wrapper = new RuntimeException(apiEx);
+
+        V1FlowDeleteTokenRequest batch = V1FlowDeleteTokenRequest.builder()
+                .vaultId("vault123")
+                .tokens(Collections.singletonList("t1"))
+                .build();
+        List<BulkDeleteTokensResponseRecord> errors = Utils.handleBulkDeleteTokensBatchException(wrapper, batch, 0, 50);
+
+        Assert.assertEquals(1, errors.size());
+        Assert.assertEquals("delete failed", errors.get(0).getError());
+        Assert.assertEquals("t1", errors.get(0).getToken());
+    }
+
+    @Test
+    public void testHandleBulkDeleteTokensBatchException_nonMapEntriesAreSkipped() {
+        Map<String, Object> body = new HashMap<>();
+        body.put("tokens", Arrays.asList("not-a-map", null));
+        ApiClientApiException apiEx = new ApiClientApiException("delete failed", 400, body);
+        RuntimeException wrapper = new RuntimeException(apiEx);
+
+        V1FlowDeleteTokenRequest batch = V1FlowDeleteTokenRequest.builder()
+                .vaultId("vault123")
+                .tokens(Collections.singletonList("t1"))
+                .build();
+        List<BulkDeleteTokensResponseRecord> errors = Utils.handleBulkDeleteTokensBatchException(wrapper, batch, 0, 50);
+
+        // No entry parsed, so the batch-wide fallback fires instead.
+        Assert.assertEquals(1, errors.size());
+        Assert.assertEquals("delete failed", errors.get(0).getError());
+    }
+
+    @Test
+    public void testHandleBulkDeleteTokensBatchException_recordEchoesValueAndReadsHttpCodeAndMessage() {
+        // createDeleteTokensErrorRecord: http_code key, "message" key, and an echoed "value" token.
+        Map<String, Object> tokenMap = new HashMap<>();
+        tokenMap.put("http_code", 409);
+        tokenMap.put("message", "already deleted");
+        tokenMap.put("value", "echoed-token");
+        Map<String, Object> body = new HashMap<>();
+        body.put("tokens", Collections.singletonList(tokenMap));
+        ApiClientApiException apiEx = new ApiClientApiException("delete failed", 409, body);
+        RuntimeException wrapper = new RuntimeException(apiEx);
+
+        V1FlowDeleteTokenRequest batch = V1FlowDeleteTokenRequest.builder()
+                .vaultId("vault123")
+                .tokens(Collections.singletonList("requested-token"))
+                .build();
+        List<BulkDeleteTokensResponseRecord> errors = Utils.handleBulkDeleteTokensBatchException(wrapper, batch, 0, 50);
+
+        Assert.assertEquals(1, errors.size());
+        Assert.assertEquals(Integer.valueOf(409), errors.get(0).getHttpCode());
+        Assert.assertEquals("already deleted", errors.get(0).getError());
+        // the echoed "value" wins over the token from the request batch
+        Assert.assertEquals("echoed-token", errors.get(0).getToken());
+    }
+
+    @Test
+    public void testHandleBulkDeleteTokensBatchException_recordUsesStatusCodeAndUnknownError() {
+        // createDeleteTokensErrorRecord: statusCode key and the no-error/no-message fallback.
+        Map<String, Object> tokenMap = new HashMap<>();
+        tokenMap.put("statusCode", 410);
+        Map<String, Object> body = new HashMap<>();
+        body.put("tokens", Collections.singletonList(tokenMap));
+        ApiClientApiException apiEx = new ApiClientApiException("delete failed", 410, body);
+        RuntimeException wrapper = new RuntimeException(apiEx);
+
+        V1FlowDeleteTokenRequest batch = V1FlowDeleteTokenRequest.builder()
+                .vaultId("vault123")
+                .tokens(Collections.singletonList("t1"))
+                .build();
+        List<BulkDeleteTokensResponseRecord> errors = Utils.handleBulkDeleteTokensBatchException(wrapper, batch, 0, 50);
+
+        Assert.assertEquals(1, errors.size());
+        Assert.assertEquals(Integer.valueOf(410), errors.get(0).getHttpCode());
+        Assert.assertEquals("Unknown error", errors.get(0).getError());
+        // no echoed value, so the requested token is reported
+        Assert.assertEquals("t1", errors.get(0).getToken());
     }
 
     // ── handleBulkTokenizeBatchException ───────────────────────────────────────
 
+    private static List<BulkTokenizeRequestRecord> tokenizeBatch(String value, String... groups) {
+        return Collections.singletonList(BulkTokenizeRequestRecord.builder()
+                .value(value).tokenGroupNames(Arrays.asList(groups)).build());
+    }
+
     @Test
-    public void testHandleBulkTokenizeBatchException_apiExceptionWithResponseBody() {
-        Map<String, Object> errorRecordMap = new HashMap<>();
-        errorRecordMap.put("error", "invalid value");
-        errorRecordMap.put("httpCode", 400);
+    public void testHandleBulkTokenizeBatchException_apiExceptionFailsEveryTokenGroup() {
         Map<String, Object> body = new HashMap<>();
-        body.put("response", Collections.singletonList(errorRecordMap));
+        body.put("error", "invalid value");
         ApiClientApiException apiEx = new ApiClientApiException("tokenize failed", 400, body);
         RuntimeException wrapper = new RuntimeException(apiEx);
 
-        V1FlowTokenizeRequest batch = V1FlowTokenizeRequest.builder()
-                .vaultId("vault123")
-                .data(Collections.singletonList(com.skyflow.generated.rest.types.V1FlowTokenizeRequestObject.builder().value("v1").build()))
-                .build();
-        List<ErrorRecord> errors = Utils.handleBulkTokenizeBatchException(wrapper, batch, 0, 50);
+        List<BulkTokenizeResponseRecord> errors = Utils.handleBulkTokenizeBatchException(
+                wrapper, tokenizeBatch("v1", "group1", "group2"), 0);
 
         Assert.assertEquals(1, errors.size());
-        Assert.assertEquals(400, errors.get(0).getCode());
-        Assert.assertEquals("invalid value", errors.get(0).getError());
+        BulkTokenizeResponseRecord record = errors.get(0);
+        // index is derived from the batch position; the value is echoed from the request
+        Assert.assertEquals(0, record.getIndex());
+        Assert.assertEquals("v1", record.getValue());
+        // one failed token entry per requested group
+        Assert.assertEquals(2, record.getTokens().size());
+        Assert.assertEquals("group1", record.getTokens().get(0).getTokenGroupName());
+        Assert.assertEquals("invalid value", record.getTokens().get(0).getError());
+        Assert.assertEquals(Integer.valueOf(400), record.getTokens().get(0).getHttpCode());
+        Assert.assertEquals("group2", record.getTokens().get(1).getTokenGroupName());
+        Assert.assertEquals("invalid value", record.getTokens().get(1).getError());
     }
 
     @Test
     public void testHandleBulkTokenizeBatchException_genericException() {
         RuntimeException ex = new RuntimeException("boom");
-        V1FlowTokenizeRequest batch = V1FlowTokenizeRequest.builder()
-                .vaultId("vault123")
-                .data(Collections.singletonList(com.skyflow.generated.rest.types.V1FlowTokenizeRequestObject.builder().value("v1").build()))
-                .build();
 
-        List<ErrorRecord> errors = Utils.handleBulkTokenizeBatchException(ex, batch, 0, 50);
+        // this batch starts at index 3 in the caller's list
+        List<BulkTokenizeResponseRecord> errors = Utils.handleBulkTokenizeBatchException(
+                ex, tokenizeBatch("v1", "group1"), 3);
 
         Assert.assertEquals(1, errors.size());
-        Assert.assertEquals(500, errors.get(0).getCode());
+        Assert.assertEquals(3, errors.get(0).getIndex());
+        Assert.assertEquals(Integer.valueOf(500), errors.get(0).getTokens().get(0).getHttpCode());
+        Assert.assertEquals("boom", errors.get(0).getTokens().get(0).getError());
+    }
+
+    @Test
+    public void testHandleBulkTokenizeBatchException_indexesRunConsecutivelyFromBatchStart() {
+        RuntimeException ex = new RuntimeException("boom");
+        List<BulkTokenizeRequestRecord> batch = Arrays.asList(
+                BulkTokenizeRequestRecord.builder().value("v1").build(),
+                BulkTokenizeRequestRecord.builder().value("v2").build());
+
+        // this batch starts at index 20, so it covers 20 and 21
+        List<BulkTokenizeResponseRecord> errors = Utils.handleBulkTokenizeBatchException(ex, batch, 20);
+
+        Assert.assertEquals(2, errors.size());
+        Assert.assertEquals(20, errors.get(0).getIndex());
+        Assert.assertEquals("v1", errors.get(0).getValue());
+        Assert.assertEquals(21, errors.get(1).getIndex());
+        Assert.assertEquals("v2", errors.get(1).getValue());
+    }
+
+    @Test
+    public void testHandleBulkTokenizeBatchException_noTokenGroupsStillReportsOneEntry() {
+        RuntimeException ex = new RuntimeException("boom");
+        List<BulkTokenizeRequestRecord> batch = Collections.singletonList(
+                BulkTokenizeRequestRecord.builder().value("v1").build());
+
+        List<BulkTokenizeResponseRecord> errors = Utils.handleBulkTokenizeBatchException(ex, batch, 0);
+
+        Assert.assertEquals(1, errors.get(0).getTokens().size());
+        Assert.assertNull(errors.get(0).getTokens().get(0).getTokenGroupName());
+        Assert.assertEquals("boom", errors.get(0).getTokens().get(0).getError());
+    }
+
+    @Test
+    public void testHandleBulkTokenizeBatchException_errorBodyWithResponseArrayRebuildsRecords() {
+        // A 4xx whose body echoes the per-row "response" array is rebuilt via tokenizeRecordsFromErrorBody
+        // rather than summarized by the bare status code.
+        Map<String, Object> tokenRow = new HashMap<>();
+        tokenRow.put("tokenGroupName", "group1");
+        tokenRow.put("error", "BYOT token should contain one token group");
+        tokenRow.put("httpCode", 400);
+        Map<String, Object> responseRow = new HashMap<>();
+        responseRow.put("value", "v1");
+        responseRow.put("tokens", Collections.singletonList(tokenRow));
+        Map<String, Object> body = new HashMap<>();
+        body.put("response", Collections.singletonList(responseRow));
+        ApiClientApiException apiEx = new ApiClientApiException("tokenize failed", 400, body);
+        RuntimeException wrapper = new RuntimeException(apiEx);
+
+        List<BulkTokenizeResponseRecord> errors = Utils.handleBulkTokenizeBatchException(
+                wrapper, tokenizeBatch("v1", "group1"), 0);
+
+        Assert.assertEquals(1, errors.size());
+        Assert.assertEquals("v1", errors.get(0).getValue());
+        Assert.assertEquals(1, errors.get(0).getTokens().size());
+        Assert.assertEquals("group1", errors.get(0).getTokens().get(0).getTokenGroupName());
+        Assert.assertEquals("BYOT token should contain one token group",
+                errors.get(0).getTokens().get(0).getError());
+        Assert.assertEquals(Integer.valueOf(400), errors.get(0).getTokens().get(0).getHttpCode());
+    }
+
+    @Test
+    public void testHandleBulkTokenizeBatchException_errorFieldAsObjectUsesStructuredMessage() {
+        // extractBatchErrorMessage reads {"error": {message}} when the body has no per-row response.
+        Map<String, Object> errorObject = new HashMap<>();
+        errorObject.put("message", "vault not found");
+        Map<String, Object> body = new HashMap<>();
+        body.put("error", errorObject);
+        ApiClientApiException apiEx = new ApiClientApiException("tokenize failed", 404, body);
+        RuntimeException wrapper = new RuntimeException(apiEx);
+
+        List<BulkTokenizeResponseRecord> errors = Utils.handleBulkTokenizeBatchException(
+                wrapper, tokenizeBatch("v1", "group1"), 0);
+
+        Assert.assertEquals(1, errors.size());
+        Assert.assertEquals("vault not found", errors.get(0).getTokens().get(0).getError());
+        Assert.assertEquals(Integer.valueOf(404), errors.get(0).getTokens().get(0).getHttpCode());
+    }
+
+    @Test
+    public void testHandleBulkTokenizeBatchException_nonMapBodyUsesApiMessage() {
+        // Body is not a map, so extractBatchErrorMessage falls back to the exception's own message.
+        ApiClientApiException apiEx = new ApiClientApiException("tokenize failed", 500, "raw string body");
+        RuntimeException wrapper = new RuntimeException(apiEx);
+
+        List<BulkTokenizeResponseRecord> errors = Utils.handleBulkTokenizeBatchException(
+                wrapper, tokenizeBatch("v1", "group1"), 0);
+
+        Assert.assertEquals(1, errors.size());
+        Assert.assertEquals("tokenize failed", errors.get(0).getTokens().get(0).getError());
+        Assert.assertEquals(Integer.valueOf(500), errors.get(0).getTokens().get(0).getHttpCode());
+    }
+
+    @Test
+    public void testHandleBulkTokenizeBatchException_nullBatchReturnsEmpty() {
+        RuntimeException ex = new RuntimeException("boom");
+
+        List<BulkTokenizeResponseRecord> errors = Utils.handleBulkTokenizeBatchException(ex, null, 0);
+
+        Assert.assertTrue(errors.isEmpty());
     }
 
     // ── formatBulkInsertResponse ───────────────────────────────────────────────
@@ -1378,6 +1797,47 @@ public class UtilsTests {
 
     // ── formatBulkDeleteTokensResponse ─────────────────────────────────────────
 
+    private static V1FlowDeleteTokenRequest deleteBatchOf(String... tokens) {
+        return V1FlowDeleteTokenRequest.builder()
+                .vaultId("vault123")
+                .tokens(Arrays.asList(tokens))
+                .build();
+    }
+
+    @Test
+    public void testFormatBulkDeleteTokensResponse_duplicateTokenRelaysEachRowVerbatim() {
+        // the same token sent twice: the API decides each position independently, and has been
+        // observed returning both 200,200 and 200,404 for the identical request. Whatever it says
+        // must reach the caller unchanged - no deduplication, no normalising one row against the other.
+        String token = "e5874be2-940a-4c74-9c08-dc6c1e8c6f9b";
+        String message = "DeleteToken failed. Token " + token + " is invalid. Specify a valid token.";
+        V1FlowDeleteTokenResponse response = V1FlowDeleteTokenResponse.builder()
+                .tokens(Arrays.asList(
+                        V1DeleteTokenResponseObject.builder().value(token).httpCode(200).build(),
+                        V1DeleteTokenResponseObject.builder()
+                                .value(token).error(message).httpCode(404).build()))
+                .build();
+
+        BulkDeleteTokensResponse result = Utils.formatBulkDeleteTokensResponse(
+                response, deleteBatchOf(token, token), 0, 50, new HashMap<>());
+        BulkDeleteTokensResponse withPayload = new BulkDeleteTokensResponse(
+                result.getRecords(), Arrays.asList(token, token));
+
+        Assert.assertEquals(2, withPayload.getRecords().size());
+        Assert.assertEquals(0, withPayload.getRecords().get(0).getIndex());
+        Assert.assertEquals(Integer.valueOf(200), withPayload.getRecords().get(0).getHttpCode());
+        Assert.assertNull(withPayload.getRecords().get(0).getError());
+        Assert.assertEquals(1, withPayload.getRecords().get(1).getIndex());
+        Assert.assertEquals(Integer.valueOf(404), withPayload.getRecords().get(1).getHttpCode());
+        Assert.assertEquals(message, withPayload.getRecords().get(1).getError());
+        // the summary follows the rows, so a duplicate that the API rejected is not counted deleted
+        Assert.assertEquals(2, withPayload.getSummary().getTotalTokens());
+        Assert.assertEquals(1, withPayload.getSummary().getTotalDeleted());
+        Assert.assertEquals(1, withPayload.getSummary().getTotalFailed());
+        // 404 is not retryable, so nothing is offered for resubmission
+        Assert.assertTrue(withPayload.getTokensToRetry().isEmpty());
+    }
+
     @Test
     public void testFormatBulkDeleteTokensResponse_success() {
         V1DeleteTokenResponseObject record = V1DeleteTokenResponseObject.builder()
@@ -1387,11 +1847,14 @@ public class UtilsTests {
                 .tokens(Collections.singletonList(record))
                 .build();
 
-        BulkDeleteTokensResponse result = Utils.formatBulkDeleteTokensResponse(response, 0, 50, new HashMap<>());
+        BulkDeleteTokensResponse result = Utils.formatBulkDeleteTokensResponse(
+                response, deleteBatchOf("token1"), 0, 50, new HashMap<>());
 
-        Assert.assertEquals(1, result.getSuccess().size());
-        Assert.assertEquals("token1", result.getSuccess().get(0).getToken());
-        Assert.assertTrue(result.getErrors().isEmpty());
+        Assert.assertEquals(1, result.getRecords().size());
+        Assert.assertEquals("token1", result.getRecords().get(0).getToken());
+        Assert.assertEquals(Integer.valueOf(200), result.getRecords().get(0).getHttpCode());
+        Assert.assertNull(result.getRecords().get(0).getError());
+        Assert.assertEquals(0, result.getRecords().get(0).getIndex());
     }
 
     @Test
@@ -1404,10 +1867,14 @@ public class UtilsTests {
                 .tokens(Collections.singletonList(record))
                 .build();
 
-        BulkDeleteTokensResponse result = Utils.formatBulkDeleteTokensResponse(response, 0, 50, new HashMap<>());
+        BulkDeleteTokensResponse result = Utils.formatBulkDeleteTokensResponse(
+                response, deleteBatchOf("token1"), 0, 50, new HashMap<>());
 
-        Assert.assertEquals(1, result.getErrors().size());
-        Assert.assertEquals(404, result.getErrors().get(0).getCode());
+        Assert.assertEquals(1, result.getRecords().size());
+        Assert.assertEquals(Integer.valueOf(404), result.getRecords().get(0).getHttpCode());
+        Assert.assertEquals("token not found", result.getRecords().get(0).getError());
+        // API omitted the echoed value, so the token falls back to the one we sent
+        Assert.assertEquals("token1", result.getRecords().get(0).getToken());
     }
 
     @Test
@@ -1420,77 +1887,99 @@ public class UtilsTests {
                 .tokens(Collections.singletonList(record))
                 .build();
 
-        BulkDeleteTokensResponse result = Utils.formatBulkDeleteTokensResponse(response, 0, 50, new HashMap<>());
+        BulkDeleteTokensResponse result = Utils.formatBulkDeleteTokensResponse(
+                response, deleteBatchOf("token1"), 0, 50, new HashMap<>());
 
-        Assert.assertTrue(result.getErrors().isEmpty());
-        Assert.assertEquals(1, result.getSuccess().size());
-        Assert.assertEquals("token1", result.getSuccess().get(0).getToken());
+        Assert.assertEquals(1, result.getRecords().size());
+        Assert.assertNull(result.getRecords().get(0).getError());
+        Assert.assertEquals("token1", result.getRecords().get(0).getToken());
+    }
+
+    @Test
+    public void testFormatBulkDeleteTokensResponse_indexesOffsetByBatch() {
+        V1FlowDeleteTokenResponse response = V1FlowDeleteTokenResponse.builder()
+                .tokens(Arrays.asList(
+                        V1DeleteTokenResponseObject.builder().value("token3").build(),
+                        V1DeleteTokenResponseObject.builder().value("token4").build()))
+                .build();
+
+        // batch 1 with batchSize 2 => indexes continue at 2
+        BulkDeleteTokensResponse result = Utils.formatBulkDeleteTokensResponse(
+                response, deleteBatchOf("token3", "token4"), 1, 2, new HashMap<>());
+
+        Assert.assertEquals(2, result.getRecords().get(0).getIndex());
+        Assert.assertEquals(3, result.getRecords().get(1).getIndex());
     }
 
     @Test
     public void testFormatBulkDeleteTokensResponse_emptyResponseReturnsNull() {
         V1FlowDeleteTokenResponse response = V1FlowDeleteTokenResponse.builder().build();
-        Assert.assertNull(Utils.formatBulkDeleteTokensResponse(response, 0, 50, new HashMap<>()));
+        Assert.assertNull(Utils.formatBulkDeleteTokensResponse(
+                response, deleteBatchOf("token1"), 0, 50, new HashMap<>()));
     }
 
     // ── formatBulkTokenizeResponse ─────────────────────────────────────────────
 
+    private static V1FlowTokenizeResponse tokenizeWire(V1FlowTokenizeResponseObject... records) {
+        return V1FlowTokenizeResponse.builder().response(java.util.Arrays.asList(records)).build();
+    }
+
     @Test
     public void testFormatBulkTokenizeResponse_success() {
-        FlowTokenizeResponseObjectToken token = FlowTokenizeResponseObjectToken.builder()
-                .tokenGroupName("group1")
-                .token("tok-abc")
-                .build();
-        V1FlowTokenizeResponseObject responseObject = V1FlowTokenizeResponseObject.builder()
+        V1FlowTokenizeResponse response = tokenizeWire(V1FlowTokenizeResponseObject.builder()
                 .value("value1")
-                .tokens(Collections.singletonList(token))
-                .build();
-        V1FlowTokenizeResponse response = V1FlowTokenizeResponse.builder()
-                .response(Collections.singletonList(responseObject))
-                .build();
-        V1FlowTokenizeRequest batchRequest = V1FlowTokenizeRequest.builder()
-                .vaultId("vault123")
-                .data(Collections.singletonList(com.skyflow.generated.rest.types.V1FlowTokenizeRequestObject.builder().value("value1").build()))
-                .build();
+                .tokens(Collections.singletonList(FlowTokenizeResponseObjectToken.builder()
+                        .tokenGroupName("group1").token("tok-abc").build()))
+                .build());
 
-        BulkTokenizeResponse result = Utils.formatBulkTokenizeResponse(response, batchRequest, 0, 50, new HashMap<>());
+        BulkTokenizeResponse result = Utils.formatBulkTokenizeResponse(
+                response, tokenizeBatch("value1", "group1"), 0, new HashMap<>());
 
-        Assert.assertEquals(1, result.getSuccess().size());
-        Assert.assertEquals("tok-abc", result.getSuccess().get(0).getTokens().get("group1"));
-        Assert.assertTrue(result.getErrors().isEmpty());
+        Assert.assertEquals(1, result.getRecords().size());
+        BulkTokenizeResponseRecord record = result.getRecords().get(0);
+        Assert.assertEquals(0, record.getIndex());
+        Assert.assertEquals("value1", record.getValue());
+        Assert.assertEquals("tok-abc", record.getTokens().get(0).getToken());
+        Assert.assertNull(record.getTokens().get(0).getError());
     }
 
     @Test
     public void testFormatBulkTokenizeResponse_tokenError() {
-        FlowTokenizeResponseObjectToken token = FlowTokenizeResponseObjectToken.builder()
-                .tokenGroupName("group1")
-                .error("invalid value")
-                .httpCode(400)
-                .build();
-        V1FlowTokenizeResponseObject responseObject = V1FlowTokenizeResponseObject.builder()
+        V1FlowTokenizeResponse response = tokenizeWire(V1FlowTokenizeResponseObject.builder()
                 .value("value1")
-                .tokens(Collections.singletonList(token))
-                .build();
-        V1FlowTokenizeResponse response = V1FlowTokenizeResponse.builder()
-                .response(Collections.singletonList(responseObject))
-                .build();
-        V1FlowTokenizeRequest batchRequest = V1FlowTokenizeRequest.builder()
-                .vaultId("vault123")
-                .data(Collections.singletonList(com.skyflow.generated.rest.types.V1FlowTokenizeRequestObject.builder().value("value1").build()))
-                .build();
+                .tokens(Collections.singletonList(FlowTokenizeResponseObjectToken.builder()
+                        .tokenGroupName("group1").error("invalid value").httpCode(400).build()))
+                .build());
 
-        BulkTokenizeResponse result = Utils.formatBulkTokenizeResponse(response, batchRequest, 0, 50, new HashMap<>());
+        BulkTokenizeResponse result = Utils.formatBulkTokenizeResponse(
+                response, tokenizeBatch("value1", "group1"), 0, new HashMap<>());
 
-        Assert.assertTrue(result.getSuccess().isEmpty());
-        Assert.assertEquals(1, result.getErrors().size());
-        Assert.assertEquals(400, result.getErrors().get(0).getCode());
+        Assert.assertEquals(1, result.getRecords().size());
+        TokenizeResponseToken token = result.getRecords().get(0).getTokens().get(0);
+        Assert.assertEquals(Integer.valueOf(400), token.getHttpCode());
+        Assert.assertEquals("invalid value", token.getError());
+    }
+
+    @Test
+    public void testFormatBulkTokenizeResponse_derivesIndexFromBatchPosition() {
+        V1FlowTokenizeResponse response = tokenizeWire(V1FlowTokenizeResponseObject.builder()
+                .value("value1")
+                .tokens(Collections.singletonList(FlowTokenizeResponseObjectToken.builder()
+                        .tokenGroupName("group1").token("tok-abc").build()))
+                .build());
+
+        // this batch starts at index 40 in the caller's list
+        BulkTokenizeResponse result = Utils.formatBulkTokenizeResponse(
+                response, tokenizeBatch("value1", "group1"), 40, new HashMap<>());
+
+        Assert.assertEquals(40, result.getRecords().get(0).getIndex());
     }
 
     @Test
     public void testFormatBulkTokenizeResponse_emptyResponseReturnsNull() {
-        V1FlowTokenizeResponse response = V1FlowTokenizeResponse.builder().build();
-        V1FlowTokenizeRequest batchRequest = V1FlowTokenizeRequest.builder().vaultId("vault123").build();
-        Assert.assertNull(Utils.formatBulkTokenizeResponse(response, batchRequest, 0, 50, new HashMap<>()));
+        Assert.assertNull(Utils.formatBulkTokenizeResponse(
+                V1FlowTokenizeResponse.builder().build(),
+                tokenizeBatch("value1", "group1"), 0, new HashMap<>()));
     }
 
     // Tests for getQueryRequestBody / buildQueryResponse / getGetRequestBody / buildGetResponse

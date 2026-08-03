@@ -2,7 +2,9 @@ package com.skyflow.vault.controller;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.function.Function;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -22,6 +24,7 @@ import com.skyflow.generated.rest.resources.flowservice.requests.V1InsertRequest
 import com.skyflow.generated.rest.types.V1FlowDeleteTokenResponse;
 import com.skyflow.generated.rest.types.V1FlowTokenizeResponse;
 import com.skyflow.generated.rest.types.V1InsertRecordData;
+import com.skyflow.generated.rest.types.V1Upsert;
 import com.skyflow.generated.rest.types.V1InsertResponse;
 import com.skyflow.logs.ErrorLogs;
 import com.skyflow.logs.InfoLogs;
@@ -30,7 +33,13 @@ import com.skyflow.utils.Constants;
 import com.skyflow.utils.Utils;
 import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.utils.validations.Validations;
+import com.skyflow.vault.data.BulkDeleteTokensOptions;
+import com.skyflow.vault.data.BulkTokenizeOptions;
 import com.skyflow.vault.data.BulkDeleteTokensRequest;
+import com.skyflow.vault.data.BulkDeleteTokensResponseRecord;
+import com.skyflow.vault.data.BulkTokenizeRequestRecord;
+import com.skyflow.vault.data.BulkTokenizeResponseRecord;
+import com.skyflow.vault.data.TokenizeResponseToken;
 import com.skyflow.vault.data.BulkDeleteTokensResponse;
 import com.skyflow.vault.data.BulkDetokenizeRequest;
 import com.skyflow.vault.data.BulkDetokenizeResponse;
@@ -38,19 +47,16 @@ import com.skyflow.vault.data.BulkDetokenizeResponseRecord;
 import com.skyflow.vault.data.BulkInsertRequest;
 import com.skyflow.vault.data.BulkInsertResponse;
 import com.skyflow.vault.data.BulkInsertResponseRecord;
-import com.skyflow.vault.data.BulkTokenizeRecord;
 import com.skyflow.vault.data.BulkTokenizeRequest;
 import com.skyflow.vault.data.BulkTokenizeResponse;
+import com.skyflow.vault.data.BulkDetokenizeOptions;
+import com.skyflow.vault.data.BulkInsertOptions;
 import com.skyflow.vault.data.DeleteTokensOptions;
-import com.skyflow.vault.data.DeleteTokensSuccess;
-import com.skyflow.vault.data.DetokenizeOptions;
 import com.skyflow.vault.data.ErrorRecord;
-import com.skyflow.vault.data.InsertOptions;
 import com.skyflow.vault.data.InsertRequestRecord;
 import com.skyflow.vault.data.RequestContext;
 import com.skyflow.vault.data.RequestInterceptor;
 import com.skyflow.vault.data.TokenizeOptions;
-import com.skyflow.vault.data.TokenizeSuccess;
 
 import io.github.cdimascio.dotenv.Dotenv;
 import io.github.cdimascio.dotenv.DotenvException;
@@ -92,7 +98,7 @@ public final class VaultController extends VaultClient {
         return bulkInsert(insertRequest, null);
     }
 
-    public BulkInsertResponse bulkInsert(BulkInsertRequest insertRequest, InsertOptions options) throws SkyflowException {
+    public BulkInsertResponse bulkInsert(BulkInsertRequest insertRequest, BulkInsertOptions options) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.INSERT_TRIGGERED.getLog());
         try {
             LogUtil.printInfoLog(InfoLogs.VALIDATE_INSERT_REQUEST.getLog());
@@ -122,7 +128,7 @@ public final class VaultController extends VaultClient {
         return bulkInsertAsync(insertRequest, null);
     }
 
-    public CompletableFuture<BulkInsertResponse> bulkInsertAsync(BulkInsertRequest insertRequest, InsertOptions options) throws SkyflowException {
+    public CompletableFuture<BulkInsertResponse> bulkInsertAsync(BulkInsertRequest insertRequest, BulkInsertOptions options) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.INSERT_TRIGGERED.getLog());
         try {
             LogUtil.printInfoLog(InfoLogs.VALIDATE_INSERT_REQUEST.getLog());
@@ -160,7 +166,7 @@ public final class VaultController extends VaultClient {
         return bulkDetokenize(detokenizeRequest, null);
     }
 
-    public BulkDetokenizeResponse bulkDetokenize(BulkDetokenizeRequest detokenizeRequest, DetokenizeOptions options) throws SkyflowException {
+    public BulkDetokenizeResponse bulkDetokenize(BulkDetokenizeRequest detokenizeRequest, BulkDetokenizeOptions options) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.DETOKENIZE_TRIGGERED.getLog());
         try {
             LogUtil.printInfoLog(InfoLogs.VALIDATE_DETOKENIZE_REQUEST.getLog());
@@ -187,7 +193,7 @@ public final class VaultController extends VaultClient {
         return bulkDetokenizeAsync(detokenizeRequest, null);
     }
 
-    public CompletableFuture<BulkDetokenizeResponse> bulkDetokenizeAsync(BulkDetokenizeRequest detokenizeRequest, DetokenizeOptions options) throws SkyflowException {
+    public CompletableFuture<BulkDetokenizeResponse> bulkDetokenizeAsync(BulkDetokenizeRequest detokenizeRequest, BulkDetokenizeOptions options) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.DETOKENIZE_TRIGGERED.getLog());
         ExecutorService executor = null;
         try {
@@ -240,7 +246,7 @@ public final class VaultController extends VaultClient {
         return bulkDeleteTokens(deleteTokensRequest, null);
     }
 
-    public BulkDeleteTokensResponse bulkDeleteTokens(BulkDeleteTokensRequest deleteTokensRequest, DeleteTokensOptions options) throws SkyflowException {
+    public BulkDeleteTokensResponse bulkDeleteTokens(BulkDeleteTokensRequest deleteTokensRequest, BulkDeleteTokensOptions options) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.DELETE_TOKENS_TRIGGERED.getLog());
         try {
             LogUtil.printInfoLog(InfoLogs.VALIDATE_DELETE_TOKENS_REQUEST.getLog());
@@ -265,7 +271,7 @@ public final class VaultController extends VaultClient {
         return bulkDeleteTokensAsync(deleteTokensRequest, null);
     }
 
-    public CompletableFuture<BulkDeleteTokensResponse> bulkDeleteTokensAsync(BulkDeleteTokensRequest deleteTokensRequest, DeleteTokensOptions options) throws SkyflowException {
+    public CompletableFuture<BulkDeleteTokensResponse> bulkDeleteTokensAsync(BulkDeleteTokensRequest deleteTokensRequest, BulkDeleteTokensOptions options) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.DELETE_TOKENS_TRIGGERED.getLog());
         ExecutorService executor = null;
         try {
@@ -279,8 +285,7 @@ public final class VaultController extends VaultClient {
 
             LogUtil.printInfoLog(InfoLogs.PROCESSING_BATCHES.getLog());
 
-            List<ErrorRecord> errorTokens = Collections.synchronizedList(new ArrayList<>());
-            List<DeleteTokensSuccess> successRecords = Collections.synchronizedList(new ArrayList<>());
+            List<BulkDeleteTokensResponseRecord> responseRecords = Collections.synchronizedList(new ArrayList<>());
 
             List<com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDeleteTokenRequest> batches =
                     Utils.createBulkDeleteTokensBatches(request, cfg.batchSize);
@@ -293,17 +298,13 @@ public final class VaultController extends VaultClient {
                     .thenApply(v -> {
                         for (CompletableFuture<BulkDeleteTokensResponse> future : futures) {
                             BulkDeleteTokensResponse futureResponse = future.join();
-                            if (futureResponse != null) {
-                                if (futureResponse.getSuccess() != null) {
-                                    successRecords.addAll(futureResponse.getSuccess());
-                                }
-                                if (futureResponse.getErrors() != null) {
-                                    errorTokens.addAll(futureResponse.getErrors());
-                                }
+                            if (futureResponse != null && futureResponse.getRecords() != null) {
+                                responseRecords.addAll(futureResponse.getRecords());
                             }
                         }
                         LogUtil.printInfoLog(InfoLogs.DELETE_TOKENS_REQUEST_RESOLVED.getLog());
-                        return new BulkDeleteTokensResponse(successRecords, errorTokens, deleteTokensRequest.getTokens());
+                        return new BulkDeleteTokensResponse(
+                                sortByIndex(responseRecords), deleteTokensRequest.getTokens());
                     });
         } catch (ApiClientApiException e) {
             String bodyString = gson.toJson(e.body());
@@ -326,17 +327,15 @@ public final class VaultController extends VaultClient {
         return bulkTokenize(tokenizeRequest, null);
     }
 
-    public BulkTokenizeResponse bulkTokenize(BulkTokenizeRequest tokenizeRequest, TokenizeOptions options) throws SkyflowException {
+    public BulkTokenizeResponse bulkTokenize(BulkTokenizeRequest tokenizeRequest, BulkTokenizeOptions options) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.TOKENIZE_TRIGGERED.getLog());
         try {
             LogUtil.printInfoLog(InfoLogs.VALIDATING_TOKENIZE_REQUEST.getLog());
             Validations.validateBulkTokenizeRequest(tokenizeRequest);
-            BatchConfig cfg = configureTokenizeConcurrencyAndBatchSize(tokenizeRequest.getData().size());
+            BatchConfig cfg = configureTokenizeConcurrencyAndBatchSize(tokenizeRequest.getRecords().size());
             setBearerToken();
-            com.skyflow.generated.rest.resources.flowservice.requests.V1FlowTokenizeRequest request =
-                    Utils.getBulkTokenizeRequestBody(tokenizeRequest, this.getVaultConfig().getVaultId());
             RequestInterceptor interceptor = options != null ? options.getInterceptor() : null;
-            return this.processBulkTokenizeSync(request, tokenizeRequest.getData(), interceptor, cfg);
+            return this.processBulkTokenizeSync(tokenizeRequest.getRecords(), interceptor, cfg);
         } catch (ApiClientApiException e) {
             String bodyString = gson.toJson(e.body());
             LogUtil.printErrorLog(ErrorLogs.TOKENIZE_REQUEST_REJECTED.getLog());
@@ -354,45 +353,38 @@ public final class VaultController extends VaultClient {
         return bulkTokenizeAsync(tokenizeRequest, null);
     }
 
-    public CompletableFuture<BulkTokenizeResponse> bulkTokenizeAsync(BulkTokenizeRequest tokenizeRequest, TokenizeOptions options) throws SkyflowException {
+    public CompletableFuture<BulkTokenizeResponse> bulkTokenizeAsync(BulkTokenizeRequest tokenizeRequest, BulkTokenizeOptions options) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.TOKENIZE_TRIGGERED.getLog());
         ExecutorService executor = null;
         try {
             LogUtil.printInfoLog(InfoLogs.VALIDATING_TOKENIZE_REQUEST.getLog());
             Validations.validateBulkTokenizeRequest(tokenizeRequest);
-            BatchConfig cfg = configureTokenizeConcurrencyAndBatchSize(tokenizeRequest.getData().size());
+            BatchConfig cfg = configureTokenizeConcurrencyAndBatchSize(tokenizeRequest.getRecords().size());
             setBearerToken();
-            com.skyflow.generated.rest.resources.flowservice.requests.V1FlowTokenizeRequest request =
-                    Utils.getBulkTokenizeRequestBody(tokenizeRequest, this.getVaultConfig().getVaultId());
             RequestInterceptor interceptor = options != null ? options.getInterceptor() : null;
 
             LogUtil.printInfoLog(InfoLogs.PROCESSING_BATCHES.getLog());
 
-            List<ErrorRecord> errorRecords = Collections.synchronizedList(new ArrayList<>());
-            List<TokenizeSuccess> successRecords = Collections.synchronizedList(new ArrayList<>());
+            List<BulkTokenizeResponseRecord> responseRecords = Collections.synchronizedList(new ArrayList<>());
 
-            List<com.skyflow.generated.rest.resources.flowservice.requests.V1FlowTokenizeRequest> batches =
-                    Utils.createBulkTokenizeBatches(request, cfg.batchSize);
+            List<List<BulkTokenizeRequestRecord>> batches =
+                    Utils.createBulkTokenizeBatches(tokenizeRequest.getRecords(), cfg.batchSize);
 
             executor = Executors.newFixedThreadPool(cfg.concurrencyLimit);
             List<CompletableFuture<BulkTokenizeResponse>> futures =
-                    this.tokenizeBatchFutures(executor, batches, interceptor, cfg.batchSize);
+                    this.tokenizeBatchFutures(executor, batches, interceptor);
 
             return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
                     .thenApply(v -> {
                         for (CompletableFuture<BulkTokenizeResponse> future : futures) {
                             BulkTokenizeResponse futureResponse = future.join();
-                            if (futureResponse != null) {
-                                if (futureResponse.getSuccess() != null) {
-                                    successRecords.addAll(futureResponse.getSuccess());
-                                }
-                                if (futureResponse.getErrors() != null) {
-                                    errorRecords.addAll(futureResponse.getErrors());
-                                }
+                            if (futureResponse != null && futureResponse.getRecords() != null) {
+                                responseRecords.addAll(futureResponse.getRecords());
                             }
                         }
                         LogUtil.printInfoLog(InfoLogs.TOKENIZE_REQUEST_RESOLVED.getLog());
-                        return new BulkTokenizeResponse(successRecords, errorRecords, tokenizeRequest.getData());
+                        return new BulkTokenizeResponse(
+                                sortTokenizeByIndex(responseRecords), tokenizeRequest.getRecords());
                     });
         } catch (ApiClientApiException e) {
             String bodyString = gson.toJson(e.body());
@@ -418,8 +410,7 @@ public final class VaultController extends VaultClient {
             BatchConfig cfg
     ) throws ExecutionException, InterruptedException, SkyflowException {
         LogUtil.printInfoLog(InfoLogs.PROCESSING_BATCHES.getLog());
-        List<ErrorRecord> errorRecords = Collections.synchronizedList(new ArrayList<>());
-        List<DeleteTokensSuccess> successRecords = new ArrayList<>();
+        List<BulkDeleteTokensResponseRecord> responseRecords = new ArrayList<>();
         ExecutorService executor = Executors.newFixedThreadPool(cfg.concurrencyLimit);
         List<com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDeleteTokenRequest> batches =
                 Utils.createBulkDeleteTokensBatches(deleteTokensRequest, cfg.batchSize);
@@ -433,9 +424,8 @@ public final class VaultController extends VaultClient {
             }
             for (CompletableFuture<BulkDeleteTokensResponse> future : futures) {
                 BulkDeleteTokensResponse futureResponse = future.get();
-                if (futureResponse != null) {
-                    if (futureResponse.getSuccess() != null) successRecords.addAll(futureResponse.getSuccess());
-                    if (futureResponse.getErrors() != null) errorRecords.addAll(futureResponse.getErrors());
+                if (futureResponse != null && futureResponse.getRecords() != null) {
+                    responseRecords.addAll(futureResponse.getRecords());
                 }
             }
         } catch (Exception e) {
@@ -444,9 +434,20 @@ public final class VaultController extends VaultClient {
         } finally {
             executor.shutdown();
         }
-        BulkDeleteTokensResponse response = new BulkDeleteTokensResponse(successRecords, errorRecords, originalTokens);
+        BulkDeleteTokensResponse response =
+                new BulkDeleteTokensResponse(sortByIndex(responseRecords), originalTokens);
         LogUtil.printInfoLog(InfoLogs.DELETE_TOKENS_REQUEST_RESOLVED.getLog());
         return response;
+    }
+
+    /**
+     * Batches complete concurrently, so order the unified records by their position in the original
+     * request before handing them back to the caller.
+     */
+    private static List<BulkDeleteTokensResponseRecord> sortByIndex(List<BulkDeleteTokensResponseRecord> records) {
+        List<BulkDeleteTokensResponseRecord> sorted = new ArrayList<>(records);
+        sorted.sort(Comparator.comparingInt(BulkDeleteTokensResponseRecord::getIndex));
+        return sorted;
     }
 
     private List<CompletableFuture<BulkDeleteTokensResponse>> deleteTokensBatchFutures(
@@ -465,11 +466,12 @@ public final class VaultController extends VaultClient {
                     .supplyAsync(() -> processDeleteTokensBatch(batch, ctx), executor)
                     .handle((result, ex) -> {
                         if (ex != null) {
-                            List<ErrorRecord> batchErrors =
+                            List<BulkDeleteTokensResponseRecord> batchErrors =
                                     Utils.handleBulkDeleteTokensBatchException(ex, batch, index, batchSize);
-                            return new BulkDeleteTokensResponse(new ArrayList<>(), batchErrors);
+                            return new BulkDeleteTokensResponse(batchErrors);
                         }
-                        return Utils.formatBulkDeleteTokensResponse(result.body(), index, batchSize, result.headers());
+                        return Utils.formatBulkDeleteTokensResponse(
+                                result.body(), batch, index, batchSize, result.headers());
                     });
             futures.add(future);
         }
@@ -482,24 +484,32 @@ public final class VaultController extends VaultClient {
         return this.getRecordsApi().withRawResponse().deletetoken(batch, buildRequestOptions(ctx));
     }
 
+    /**
+     * Resolves a user-tunable batching setting: process environment first, then a {@code .env} file.
+     * Package-private and swappable purely so tests can drive batching and concurrency without
+     * mutating the JVM environment — deliberately not public, so it stays out of the frozen
+     * public API surface.
+     */
+    static Function<String, String> settingResolver = VaultController::resolveSettingFromEnvironment;
+
+    private static String resolveSettingFromEnvironment(String key) {
+        String value = System.getenv(key);
+        if (value == null) {
+            try {
+                value = Dotenv.load().get(key);
+            } catch (DotenvException ignored) {
+                // no .env available — environment-only
+            }
+        }
+        return value;
+    }
+
     private BatchConfig configureDeleteTokensConcurrencyAndBatchSize(int totalRequests) {
         int batchSize = Constants.DELETE_TOKENS_BATCH_SIZE;
         int concurrencyLimit;
         try {
-            String userProvidedBatchSize = System.getenv("DELETE_TOKENS_BATCH_SIZE");
-            String userProvidedConcurrencyLimit = System.getenv("DELETE_TOKENS_CONCURRENCY_LIMIT");
-
-            Dotenv dotenv = null;
-            try {
-                dotenv = Dotenv.load();
-            } catch (DotenvException ignored) {}
-
-            if (userProvidedBatchSize == null && dotenv != null) {
-                userProvidedBatchSize = dotenv.get("DELETE_TOKENS_BATCH_SIZE");
-            }
-            if (userProvidedConcurrencyLimit == null && dotenv != null) {
-                userProvidedConcurrencyLimit = dotenv.get("DELETE_TOKENS_CONCURRENCY_LIMIT");
-            }
+            String userProvidedBatchSize = settingResolver.apply("DELETE_TOKENS_BATCH_SIZE");
+            String userProvidedConcurrencyLimit = settingResolver.apply("DELETE_TOKENS_CONCURRENCY_LIMIT");
 
             if (userProvidedBatchSize != null) {
                 try {
@@ -551,35 +561,27 @@ public final class VaultController extends VaultClient {
     }
 
     private BulkTokenizeResponse processBulkTokenizeSync(
-            com.skyflow.generated.rest.resources.flowservice.requests.V1FlowTokenizeRequest tokenizeRequest,
-            ArrayList<BulkTokenizeRecord> originalData,
+            List<BulkTokenizeRequestRecord> originalRecords,
             RequestInterceptor interceptor,
             BatchConfig cfg
     ) throws ExecutionException, InterruptedException, SkyflowException {
         LogUtil.printInfoLog(InfoLogs.PROCESSING_BATCHES.getLog());
-        List<ErrorRecord> errorRecords = Collections.synchronizedList(new ArrayList<>());
-        List<TokenizeSuccess> successRecords = new ArrayList<>();
+        List<BulkTokenizeResponseRecord> responseRecords = new ArrayList<>();
         ExecutorService executor = Executors.newFixedThreadPool(cfg.concurrencyLimit);
-        List<com.skyflow.generated.rest.resources.flowservice.requests.V1FlowTokenizeRequest> batches =
-                Utils.createBulkTokenizeBatches(tokenizeRequest, cfg.batchSize);
+        List<List<BulkTokenizeRequestRecord>> batches =
+                Utils.createBulkTokenizeBatches(originalRecords, cfg.batchSize);
         try {
             List<CompletableFuture<BulkTokenizeResponse>> futures =
-                    this.tokenizeBatchFutures(executor, batches, interceptor, cfg.batchSize);
+                    this.tokenizeBatchFutures(executor, batches, interceptor);
             try {
-                CompletableFuture<Void> allFutures = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
-                allFutures.join();
+                CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
             } catch (Exception e) {
                 // individual batch errors are already captured
             }
             for (CompletableFuture<BulkTokenizeResponse> future : futures) {
                 BulkTokenizeResponse futureResponse = future.get();
-                if (futureResponse != null) {
-                    if (futureResponse.getSuccess() != null) {
-                        successRecords.addAll(futureResponse.getSuccess());
-                    }
-                    if (futureResponse.getErrors() != null) {
-                        errorRecords.addAll(futureResponse.getErrors());
-                    }
+                if (futureResponse != null && futureResponse.getRecords() != null) {
+                    responseRecords.addAll(futureResponse.getRecords());
                 }
             }
         } catch (Exception e) {
@@ -588,32 +590,44 @@ public final class VaultController extends VaultClient {
         } finally {
             executor.shutdown();
         }
-        BulkTokenizeResponse response = new BulkTokenizeResponse(successRecords, errorRecords, originalData);
+        BulkTokenizeResponse response =
+                new BulkTokenizeResponse(sortTokenizeByIndex(responseRecords), originalRecords);
         LogUtil.printInfoLog(InfoLogs.TOKENIZE_REQUEST_RESOLVED.getLog());
         return response;
     }
 
+    /** Batches complete concurrently; order results by the index the SDK assigned each record. */
+    private static List<BulkTokenizeResponseRecord> sortTokenizeByIndex(List<BulkTokenizeResponseRecord> records) {
+        List<BulkTokenizeResponseRecord> sorted = new ArrayList<>(records);
+        sorted.sort(Comparator.comparingInt(BulkTokenizeResponseRecord::getIndex));
+        return sorted;
+    }
+
     private List<CompletableFuture<BulkTokenizeResponse>> tokenizeBatchFutures(
             ExecutorService executor,
-            List<com.skyflow.generated.rest.resources.flowservice.requests.V1FlowTokenizeRequest> batches,
-            RequestInterceptor interceptor,
-            int batchSize) {
+            List<List<BulkTokenizeRequestRecord>> batches,
+            RequestInterceptor interceptor) {
         List<CompletableFuture<BulkTokenizeResponse>> futures = new ArrayList<>();
         if (batches == null) return futures;
-        for (int batchIndex = 0; batchIndex < batches.size(); batchIndex++) {
-            final int index = batchIndex;
-            com.skyflow.generated.rest.resources.flowservice.requests.V1FlowTokenizeRequest batch = batches.get(index);
+        // batches are contiguous but not uniformly sized - a batch is cut short when it would
+        // otherwise repeat a value - so track where each one starts rather than deriving it
+        int nextStartIndex = 0;
+        for (List<BulkTokenizeRequestRecord> batchRecords : batches) {
+            final int startIndex = nextStartIndex;
+            nextStartIndex += batchRecords.size();
+            com.skyflow.generated.rest.resources.flowservice.requests.V1FlowTokenizeRequest batch =
+                    Utils.getBulkTokenizeRequestBody(batchRecords, this.getVaultConfig().getVaultId());
             RequestContext ctx = new RequestContext("TOKENIZE");
             if (interceptor != null) interceptor.intercept(ctx);
             CompletableFuture<BulkTokenizeResponse> future = CompletableFuture
                     .supplyAsync(() -> processTokenizeBatch(batch, ctx), executor)
                     .handle((result, ex) -> {
                         if (ex != null) {
-                            List<ErrorRecord> batchErrors =
-                                    Utils.handleBulkTokenizeBatchException(ex, batch, index, batchSize);
-                            return new BulkTokenizeResponse(new ArrayList<>(), batchErrors);
+                            return new BulkTokenizeResponse(Utils.handleBulkTokenizeBatchException(
+                                    ex, batchRecords, startIndex));
                         }
-                        return Utils.formatBulkTokenizeResponse(result.body(), batch, index, batchSize, result.headers());
+                        return Utils.formatBulkTokenizeResponse(
+                                result.body(), batchRecords, startIndex, result.headers());
                     });
             futures.add(future);
         }
@@ -630,20 +644,8 @@ public final class VaultController extends VaultClient {
         int batchSize = Constants.TOKENIZE_BATCH_SIZE;
         int concurrencyLimit;
         try {
-            String userProvidedBatchSize = System.getenv("TOKENIZE_BATCH_SIZE");
-            String userProvidedConcurrencyLimit = System.getenv("TOKENIZE_CONCURRENCY_LIMIT");
-
-            Dotenv dotenv = null;
-            try {
-                dotenv = Dotenv.load();
-            } catch (DotenvException ignored) {}
-
-            if (userProvidedBatchSize == null && dotenv != null) {
-                userProvidedBatchSize = dotenv.get("TOKENIZE_BATCH_SIZE");
-            }
-            if (userProvidedConcurrencyLimit == null && dotenv != null) {
-                userProvidedConcurrencyLimit = dotenv.get("TOKENIZE_CONCURRENCY_LIMIT");
-            }
+            String userProvidedBatchSize = settingResolver.apply("TOKENIZE_BATCH_SIZE");
+            String userProvidedConcurrencyLimit = settingResolver.apply("TOKENIZE_CONCURRENCY_LIMIT");
 
             if (userProvidedBatchSize != null) {
                 try {
@@ -698,22 +700,8 @@ public final class VaultController extends VaultClient {
         int batchSize = Constants.DETOKENIZE_BATCH_SIZE;
         int concurrencyLimit;
         try {
-            String userProvidedBatchSize = System.getenv("DETOKENIZE_BATCH_SIZE");
-            String userProvidedConcurrencyLimit = System.getenv("DETOKENIZE_CONCURRENCY_LIMIT");
-
-            Dotenv dotenv = null;
-            try {
-                dotenv = Dotenv.load();
-            } catch (DotenvException ignored) {
-                // ignore the case if .env file is not found
-            }
-
-            if (userProvidedBatchSize == null && dotenv != null) {
-                userProvidedBatchSize = dotenv.get("DETOKENIZE_BATCH_SIZE");
-            }
-            if (userProvidedConcurrencyLimit == null && dotenv != null) {
-                userProvidedConcurrencyLimit = dotenv.get("DETOKENIZE_CONCURRENCY_LIMIT");
-            }
+            String userProvidedBatchSize = settingResolver.apply("DETOKENIZE_BATCH_SIZE");
+            String userProvidedConcurrencyLimit = settingResolver.apply("DETOKENIZE_CONCURRENCY_LIMIT");
 
             if (userProvidedBatchSize != null) {
                 try {
@@ -877,7 +865,11 @@ public final class VaultController extends VaultClient {
                 RequestContext ctx = new RequestContext("INSERT");
                 if (interceptor != null) interceptor.intercept(ctx);
                 CompletableFuture<BulkInsertResponse> future = CompletableFuture
-                        .supplyAsync(() -> insertBatch(batch, insertRequest.getTableName().isPresent() ? insertRequest.getTableName().get() : null, ctx), executor)
+                        .supplyAsync(() -> insertBatch(
+                                batch,
+                                insertRequest.getTableName().isPresent() ? insertRequest.getTableName().get() : null,
+                                insertRequest.getUpsert().isPresent() ? insertRequest.getUpsert().get() : null,
+                                ctx), executor)
                         .thenApply(response -> Utils.formatBulkInsertResponse(response.body(), batchNumber, cfg.batchSize, response.headers()))
                         .exceptionally(ex -> new BulkInsertResponse(
                                 Utils.handleBulkInsertBatchException(ex, batch, batchNumber, cfg.batchSize)));
@@ -889,14 +881,19 @@ public final class VaultController extends VaultClient {
         return futures;
     }
 
-    // Upsert is not carried at the envelope level: getInsertRequestBody pushes it down onto every
-    // record, so each batch already has it.
-    private ApiClientHttpResponse<V1InsertResponse> insertBatch(List<V1InsertRecordData> batch, String tableName, RequestContext ctx) {
+    // tableName and upsert live on the envelope when the caller set them at the request level, and
+    // batching rebuilds the envelope per batch — so both have to be re-applied here or they are
+    // silently dropped for every batch after the body was built.
+    private ApiClientHttpResponse<V1InsertResponse> insertBatch(List<V1InsertRecordData> batch, String tableName,
+                                                                V1Upsert upsert, RequestContext ctx) {
         V1InsertRequest.Builder req = V1InsertRequest.builder()
                 .vaultId(this.getVaultConfig().getVaultId())
                 .records(batch);
         if (tableName != null && !tableName.isEmpty()) {
             req.tableName(tableName);
+        }
+        if (upsert != null) {
+            req.upsert(upsert);
         }
         V1InsertRequest request = req.build();
         return this.getRecordsApi().withRawResponse().insert(request, buildRequestOptions(ctx));
@@ -906,22 +903,8 @@ public final class VaultController extends VaultClient {
         int batchSize = Constants.INSERT_BATCH_SIZE;
         int concurrencyLimit;
         try {
-            String userProvidedBatchSize = System.getenv("INSERT_BATCH_SIZE");
-            String userProvidedConcurrencyLimit = System.getenv("INSERT_CONCURRENCY_LIMIT");
-
-            Dotenv dotenv = null;
-            try {
-                dotenv = Dotenv.load();
-            } catch (DotenvException ignored) {
-                // ignore the case if .env file is not found
-            }
-
-            if (userProvidedBatchSize == null && dotenv != null) {
-                userProvidedBatchSize = dotenv.get("INSERT_BATCH_SIZE");
-            }
-            if (userProvidedConcurrencyLimit == null && dotenv != null) {
-                userProvidedConcurrencyLimit = dotenv.get("INSERT_CONCURRENCY_LIMIT");
-            }
+            String userProvidedBatchSize = settingResolver.apply("INSERT_BATCH_SIZE");
+            String userProvidedConcurrencyLimit = settingResolver.apply("INSERT_CONCURRENCY_LIMIT");
 
             if (userProvidedBatchSize != null) {
                 try {

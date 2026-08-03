@@ -80,51 +80,53 @@ public class RequestResponseWrapperTests {
     // ── UpsertOptions ────────────────────────────────────────────────────────
 
     @Test
-    public void testUpsertOptions_gettersReturnBuilderValues() {
-        List<String> uniqueColumns = Arrays.asList("id", "email");
-        UpsertOptions upsert = UpsertOptions.builder()
-                .updateType("REPLACE")
-                .uniqueColumns(uniqueColumns)
+    public void testTokenizeRequest_getterReturnsBuilderValue() {
+        List<TokenizeRequestRecord> records = Collections.singletonList(
+                TokenizeRequestRecord.builder().value("v1").build());
+        TokenizeRequest request = TokenizeRequest.builder().records(records).build();
+        Assert.assertEquals(records, request.getRecords());
+    }
+
+    @Test
+    public void testBulkTokenizeRequest_isATokenizeRequest() {
+        BulkTokenizeRequest request = BulkTokenizeRequest.builder()
+                .records(Collections.singletonList(
+                        BulkTokenizeRequestRecord.builder().value("v1").build()))
                 .build();
-
-        Assert.assertEquals("REPLACE", upsert.getUpdateType());
-        Assert.assertEquals(uniqueColumns, upsert.getUniqueColumns());
-    }
-
-    // Tests for InsertResponse were removed: the class no longer exists (bulk-only module).
-
-    // ── InsertResponseRecord ─────────────────────────────────────────────────
-
-    @Test
-    public void testInsertResponseRecord_gettersReturnConstructorValues() {
-        Map<String, Object> fields = new HashMap<>();
-        fields.put("name", "tok-abc");
-        Map<String, Object> hashedData = new HashMap<>();
-        hashedData.put("name", "hashed-value");
-
-        InsertResponseRecord record = new InsertResponseRecord(
-                "persons", "id-1", fields, hashedData, 200, null);
-
-        Assert.assertEquals("persons", record.getTableName());
-        Assert.assertEquals("id-1", record.getSkyflowId());
-        Assert.assertEquals(fields, record.getFields());
-        Assert.assertEquals(hashedData, record.getHashedData());
-        Assert.assertEquals(200, record.getHttpCode());
-        Assert.assertNull(record.getError());
+        Assert.assertTrue(request instanceof TokenizeRequest);
+        // the inherited accessor sees the same records, widened
+        Assert.assertEquals(1, ((TokenizeRequest) request).getRecords().size());
     }
 
     @Test
-    public void testInsertResponseRecord_errorCase() {
-        InsertResponseRecord record = new InsertResponseRecord(
-                "persons", null, null, null, 400, "insert failed");
-
-        Assert.assertEquals("persons", record.getTableName());
-        Assert.assertNull(record.getSkyflowId());
-        Assert.assertEquals("insert failed", record.getError());
-        Assert.assertEquals(400, record.getHttpCode());
+    public void testTokenizeRequest_defaultIsNull() {
+        TokenizeRequest request = TokenizeRequest.builder().build();
+        Assert.assertNull(request.getRecords());
     }
 
-    // Tests for TokenizeRequest / TokenizeResponse were removed: those classes no longer exist (bulk-only module).
+    // ── TokenizeResponse ─────────────────────────────────────────────────────
+
+    @Test
+    public void testTokenizeResponse_gettersReturnConstructorValues() {
+        List<TokenizeResponseRecord> records = Collections.singletonList(
+                new TokenizeResponseRecord("value1", Collections.singletonList(
+                        new TokenizeResponseToken("group1", "tok-abc", 200, null))));
+
+        TokenizeResponse response = new TokenizeResponse(records);
+
+        Assert.assertEquals(records, response.getResponse());
+        Assert.assertEquals("value1", response.getResponse().get(0).getValue());
+        Assert.assertEquals("tok-abc", response.getResponse().get(0).getTokens().get(0).getToken());
+        Assert.assertNull(response.getResponse().get(0).getTokens().get(0).getError());
+    }
+
+    @Test
+    public void testTokenizeResponse_toStringSerializesNulls() {
+        TokenizeResponse response = new TokenizeResponse(Collections.singletonList(
+                new TokenizeResponseRecord("value1", Collections.singletonList(
+                        new TokenizeResponseToken("group1", "tok-abc", 200, null)))));
+        Assert.assertTrue(response.toString().contains("\"error\":null"));
+    }
 
     // ── DetokenizeRequest ────────────────────────────────────────────────────
 
@@ -234,16 +236,16 @@ public class RequestResponseWrapperTests {
 
     @Test
     public void testBulkTokenizeRequest_getterReturnsBuilderValue() {
-        ArrayList<BulkTokenizeRecord> data = new ArrayList<>(Collections.singletonList(
-                BulkTokenizeRecord.builder().value("v1").build()));
-        BulkTokenizeRequest request = BulkTokenizeRequest.builder().data(data).build();
-        Assert.assertEquals(data, request.getData());
+        List<BulkTokenizeRequestRecord> records = Collections.singletonList(
+                BulkTokenizeRequestRecord.builder().value("v1").build());
+        BulkTokenizeRequest request = BulkTokenizeRequest.builder().records(records).build();
+        Assert.assertEquals(records, request.getRecords());
     }
 
     @Test
     public void testBulkTokenizeRequest_defaultIsNull() {
         BulkTokenizeRequest request = BulkTokenizeRequest.builder().build();
-        Assert.assertNull(request.getData());
+        Assert.assertNull(request.getRecords());
     }
 
     // ── BulkInsertRequest ────────────────────────────────────────────────────
@@ -279,10 +281,18 @@ public class RequestResponseWrapperTests {
     }
 
     @Test
-    public void testBulkInsertRequest_isAnInsertRequest() {
-        InsertRequest request = BulkInsertRequest.builder().tableName("persons").build();
-        Assert.assertTrue(request instanceof BulkInsertRequest);
-        Assert.assertEquals("persons", request.getTableName());
+    public void testDeleteTokensResponse_gettersReturnConstructorValues() {
+        List<DeleteTokensRecord> records = Arrays.asList(
+                new DeleteTokensRecord("tok-1", 200, null),
+                new DeleteTokensRecord("tok-2", 404, "Token not found"));
+
+        DeleteTokensResponse response = new DeleteTokensResponse(records);
+
+        Assert.assertEquals(records, response.getRecords());
+        Assert.assertEquals("tok-1", response.getRecords().get(0).getToken());
+        Assert.assertNull(response.getRecords().get(0).getError());
+        Assert.assertEquals("Token not found", response.getRecords().get(1).getError());
+        Assert.assertEquals(Integer.valueOf(404), response.getRecords().get(1).getHttpCode());
     }
 
     // Tests for DeleteTokensResponse were removed: the class no longer exists (bulk-only module).

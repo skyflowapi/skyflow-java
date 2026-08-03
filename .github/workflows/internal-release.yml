@@ -21,7 +21,7 @@ jobs:
           if [[ "${{ github.ref_name }}" == flowvault-release/* ]]; then
             echo "module=flowvault" >> "$GITHUB_OUTPUT"
           else
-            echo "module=v2" >> "$GITHUB_OUTPUT"
+            echo "module=skyvault" >> "$GITHUB_OUTPUT"
           fi
 
   build-and-deploy:

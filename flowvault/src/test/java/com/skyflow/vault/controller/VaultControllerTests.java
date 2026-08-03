@@ -22,6 +22,8 @@ import com.skyflow.generated.rest.types.V1FlowTokenizeResponseObject;
 import com.skyflow.generated.rest.types.V1InsertResponse;
 import com.skyflow.generated.rest.types.V1RecordResponseObject;
 import com.skyflow.utils.Constants;
+import com.skyflow.vault.data.BulkDeleteTokensOptions;
+import com.skyflow.vault.data.BulkTokenizeOptions;
 import com.skyflow.vault.data.BulkDeleteTokensRequest;
 import com.skyflow.vault.data.BulkDeleteTokensResponse;
 import com.skyflow.vault.data.BulkDetokenizeRequest;
@@ -29,17 +31,21 @@ import com.skyflow.vault.data.BulkDetokenizeResponse;
 import com.skyflow.vault.data.BulkInsertRequestRecord;
 import com.skyflow.vault.data.BulkInsertRequest;
 import com.skyflow.vault.data.BulkInsertResponse;
+import com.skyflow.vault.data.BulkTokenizeRequestRecord;
+import com.skyflow.vault.data.BulkTokenizeResponseRecord;
 import com.skyflow.vault.data.BulkInsertResponseRecord;
-import com.skyflow.vault.data.BulkTokenizeRecord;
 import com.skyflow.vault.data.BulkTokenizeRequest;
 import com.skyflow.vault.data.BulkTokenizeResponse;
+import com.skyflow.vault.data.BulkDetokenizeOptions;
+import com.skyflow.vault.data.BulkInsertOptions;
 import com.skyflow.vault.data.DeleteTokensOptions;
-import com.skyflow.vault.data.DetokenizeOptions;
-import com.skyflow.vault.data.InsertOptions;
 import com.skyflow.vault.data.InsertRequestRecord;
 import com.skyflow.vault.data.RequestInterceptor;
 import com.skyflow.vault.data.TokenGroupRedactions;
 import com.skyflow.vault.data.TokenizeOptions;
+import com.skyflow.vault.data.TokenizeRequestRecord;
+import com.skyflow.vault.data.TokenizeRequest;
+import com.skyflow.vault.data.TokenizeResponse;
 import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -192,7 +198,7 @@ public class VaultControllerTests {
         BulkInsertRequest request = BulkInsertRequest.builder().records(records).build();
 
         RequestInterceptor interceptor = ctx -> ctx.addHeader(CustomHeaderKey.SkyflowAccountId, "acct-123");
-        InsertOptions options = InsertOptions.builder().interceptor(interceptor).build();
+        BulkInsertOptions options = BulkInsertOptions.builder().interceptor(interceptor).build();
 
         controller.bulkInsert(request, options);
 
@@ -306,9 +312,10 @@ public class VaultControllerTests {
 
         BulkDeleteTokensResponse response = controller.bulkDeleteTokens(request);
         Assert.assertNotNull(INVALID_EXCEPTION_THROWN, response);
-        Assert.assertEquals(1, response.getSuccess().size());
-        Assert.assertEquals("token1", response.getSuccess().get(0).getToken());
-        Assert.assertTrue(response.getErrors().isEmpty());
+        Assert.assertEquals(1, response.getRecords().size());
+        Assert.assertEquals("token1", response.getRecords().get(0).getToken());
+        Assert.assertNull(response.getRecords().get(0).getError());
+        Assert.assertEquals(Integer.valueOf(200), response.getRecords().get(0).getHttpCode());
     }
 
     @Test
@@ -342,7 +349,8 @@ public class VaultControllerTests {
 
         BulkDeleteTokensResponse response = controller.bulkDeleteTokensAsync(request).get(5, TimeUnit.SECONDS);
         Assert.assertNotNull(INVALID_EXCEPTION_THROWN, response);
-        Assert.assertEquals(1, response.getSuccess().size());
+        Assert.assertEquals(1, response.getRecords().size());
+        Assert.assertNull(response.getRecords().get(0).getError());
     }
 
     // ── bulkTokenize ──────────────────────────────────────────────────────────
@@ -363,15 +371,17 @@ public class VaultControllerTests {
 
         VaultController controller = createControllerWithMock(mockApi);
 
-        ArrayList<BulkTokenizeRecord> records = new ArrayList<>();
-        records.add(BulkTokenizeRecord.builder().value("value1").tokenGroupNames(Collections.singletonList("group1")).build());
-        BulkTokenizeRequest request = BulkTokenizeRequest.builder().data(records).build();
+        List<BulkTokenizeRequestRecord> records = Collections.singletonList(
+                BulkTokenizeRequestRecord.builder().value("value1")
+                        .tokenGroupNames(Collections.singletonList("group1")).build());
+        BulkTokenizeRequest request = BulkTokenizeRequest.builder().records(records).build();
 
         BulkTokenizeResponse response = controller.bulkTokenize(request);
         Assert.assertNotNull(INVALID_EXCEPTION_THROWN, response);
-        Assert.assertEquals(1, response.getSuccess().size());
-        Assert.assertEquals("tok-abc", response.getSuccess().get(0).getTokens().get("group1"));
-        Assert.assertTrue(response.getErrors().isEmpty());
+        Assert.assertEquals(1, response.getRecords().size());
+        Assert.assertEquals(0, response.getRecords().get(0).getIndex());
+        Assert.assertEquals("tok-abc", response.getRecords().get(0).getTokens().get(0).getToken());
+        Assert.assertNull(response.getRecords().get(0).getTokens().get(0).getError());
     }
 
     @Test
@@ -402,13 +412,15 @@ public class VaultControllerTests {
 
         VaultController controller = createControllerWithMock(mockApi);
 
-        ArrayList<BulkTokenizeRecord> records = new ArrayList<>();
-        records.add(BulkTokenizeRecord.builder().value("value1").tokenGroupNames(Collections.singletonList("group1")).build());
-        BulkTokenizeRequest request = BulkTokenizeRequest.builder().data(records).build();
+        List<BulkTokenizeRequestRecord> records = Collections.singletonList(
+                BulkTokenizeRequestRecord.builder().value("value1")
+                        .tokenGroupNames(Collections.singletonList("group1")).build());
+        BulkTokenizeRequest request = BulkTokenizeRequest.builder().records(records).build();
 
         BulkTokenizeResponse response = controller.bulkTokenizeAsync(request).get(5, TimeUnit.SECONDS);
         Assert.assertNotNull(INVALID_EXCEPTION_THROWN, response);
-        Assert.assertEquals(1, response.getSuccess().size());
+        Assert.assertEquals(1, response.getRecords().size());
+        Assert.assertNull(response.getRecords().get(0).getTokens().get(0).getError());
     }
 
     // ── additional bulk API-error coverage ───────────────────────────────────
@@ -459,9 +471,10 @@ public class VaultControllerTests {
 
         BulkDeleteTokensResponse response = controller.bulkDeleteTokens(request);
         Assert.assertNotNull(INVALID_EXCEPTION_THROWN, response);
-        Assert.assertTrue(response.getSuccess().isEmpty());
-        Assert.assertEquals(1, response.getErrors().size());
-        Assert.assertEquals(404, response.getErrors().get(0).getCode());
+        Assert.assertEquals(1, response.getRecords().size());
+        Assert.assertEquals(Integer.valueOf(404), response.getRecords().get(0).getHttpCode());
+        Assert.assertNotNull(response.getRecords().get(0).getError());
+        Assert.assertEquals("token1", response.getRecords().get(0).getToken());
     }
 
     @Test
@@ -479,9 +492,10 @@ public class VaultControllerTests {
 
         BulkDeleteTokensResponse response = controller.bulkDeleteTokensAsync(request).get(5, TimeUnit.SECONDS);
         Assert.assertNotNull(INVALID_EXCEPTION_THROWN, response);
-        Assert.assertTrue(response.getSuccess().isEmpty());
-        Assert.assertEquals(1, response.getErrors().size());
-        Assert.assertEquals(404, response.getErrors().get(0).getCode());
+        Assert.assertEquals(1, response.getRecords().size());
+        Assert.assertEquals(Integer.valueOf(404), response.getRecords().get(0).getHttpCode());
+        Assert.assertNotNull(response.getRecords().get(0).getError());
+        Assert.assertEquals("token1", response.getRecords().get(0).getToken());
     }
 
     @Test
@@ -493,15 +507,18 @@ public class VaultControllerTests {
 
         VaultController controller = createControllerWithMock(mockApi);
 
-        ArrayList<BulkTokenizeRecord> records = new ArrayList<>();
-        records.add(BulkTokenizeRecord.builder().value("value1").tokenGroupNames(Collections.singletonList("group1")).build());
-        BulkTokenizeRequest request = BulkTokenizeRequest.builder().data(records).build();
+        List<BulkTokenizeRequestRecord> records = Collections.singletonList(
+                BulkTokenizeRequestRecord.builder().value("value1")
+                        .tokenGroupNames(Collections.singletonList("group1")).build());
+        BulkTokenizeRequest request = BulkTokenizeRequest.builder().records(records).build();
 
         BulkTokenizeResponse response = controller.bulkTokenize(request);
         Assert.assertNotNull(INVALID_EXCEPTION_THROWN, response);
-        Assert.assertTrue(response.getSuccess().isEmpty());
-        Assert.assertEquals(1, response.getErrors().size());
-        Assert.assertEquals(400, response.getErrors().get(0).getCode());
+        Assert.assertEquals(1, response.getRecords().size());
+        Assert.assertEquals(0, response.getRecords().get(0).getIndex());
+        Assert.assertEquals(Integer.valueOf(400),
+                response.getRecords().get(0).getTokens().get(0).getHttpCode());
+        Assert.assertNotNull(response.getRecords().get(0).getTokens().get(0).getError());
     }
 
     @Test
@@ -513,15 +530,18 @@ public class VaultControllerTests {
 
         VaultController controller = createControllerWithMock(mockApi);
 
-        ArrayList<BulkTokenizeRecord> records = new ArrayList<>();
-        records.add(BulkTokenizeRecord.builder().value("value1").tokenGroupNames(Collections.singletonList("group1")).build());
-        BulkTokenizeRequest request = BulkTokenizeRequest.builder().data(records).build();
+        List<BulkTokenizeRequestRecord> records = Collections.singletonList(
+                BulkTokenizeRequestRecord.builder().value("value1")
+                        .tokenGroupNames(Collections.singletonList("group1")).build());
+        BulkTokenizeRequest request = BulkTokenizeRequest.builder().records(records).build();
 
         BulkTokenizeResponse response = controller.bulkTokenizeAsync(request).get(5, TimeUnit.SECONDS);
         Assert.assertNotNull(INVALID_EXCEPTION_THROWN, response);
-        Assert.assertTrue(response.getSuccess().isEmpty());
-        Assert.assertEquals(1, response.getErrors().size());
-        Assert.assertEquals(400, response.getErrors().get(0).getCode());
+        Assert.assertEquals(1, response.getRecords().size());
+        Assert.assertEquals(0, response.getRecords().get(0).getIndex());
+        Assert.assertEquals(Integer.valueOf(400),
+                response.getRecords().get(0).getTokens().get(0).getHttpCode());
+        Assert.assertNotNull(response.getRecords().get(0).getTokens().get(0).getError());
     }
 
     @Test
@@ -868,7 +888,8 @@ public class VaultControllerTests {
             Assert.assertEquals("cards", sent.getTableName().get());
             Assert.assertEquals("vault123", sent.getVaultId().get());
             for (com.skyflow.generated.rest.types.V1InsertRecordData record : sent.getRecords().get()) {
-                Assert.assertEquals("cards", record.getTableName().get());
+                // The name rides the envelope only — duplicating it per record is rejected by the vault.
+                Assert.assertFalse(record.getTableName().isPresent());
                 Assert.assertEquals(String.valueOf(expectedPos), record.getData().get().get("pos"));
                 expectedPos++;
             }
@@ -912,7 +933,7 @@ public class VaultControllerTests {
                 .build();
 
         CountingInterceptor interceptor = new CountingInterceptor();
-        controller.bulkInsert(request, InsertOptions.builder().interceptor(interceptor).build());
+        controller.bulkInsert(request, BulkInsertOptions.builder().interceptor(interceptor).build());
 
         ArgumentCaptor<RequestOptions> captor = ArgumentCaptor.forClass(RequestOptions.class);
         Mockito.verify(mockRaw, Mockito.times(EXPECTED_BATCH_COUNT)).insert(any(), captor.capture());
@@ -981,7 +1002,7 @@ public class VaultControllerTests {
         BulkDetokenizeRequest request = BulkDetokenizeRequest.builder().tokens(multiBatchTokens()).build();
 
         CountingInterceptor interceptor = new CountingInterceptor();
-        controller.bulkDetokenize(request, DetokenizeOptions.builder().interceptor(interceptor).build());
+        controller.bulkDetokenize(request, BulkDetokenizeOptions.builder().interceptor(interceptor).build());
 
         ArgumentCaptor<RequestOptions> captor = ArgumentCaptor.forClass(RequestOptions.class);
         Mockito.verify(mockRaw, Mockito.times(EXPECTED_BATCH_COUNT)).detokenize(any(), captor.capture());
@@ -1013,10 +1034,10 @@ public class VaultControllerTests {
         }
         Assert.assertEquals(tokens, flattened);
 
-        Assert.assertEquals(MULTI_BATCH_ITEM_COUNT, response.getSuccess().size());
+        Assert.assertEquals(MULTI_BATCH_ITEM_COUNT, response.getRecords().size());
         for (int i = 0; i < MULTI_BATCH_ITEM_COUNT; i++) {
-            Assert.assertEquals(i, response.getSuccess().get(i).getIndex());
-            Assert.assertEquals(tokens.get(i), response.getSuccess().get(i).getToken());
+            Assert.assertEquals(i, response.getRecords().get(i).getIndex());
+            Assert.assertEquals(tokens.get(i), response.getRecords().get(i).getToken());
         }
     }
 
@@ -1030,7 +1051,7 @@ public class VaultControllerTests {
         BulkDeleteTokensRequest request = BulkDeleteTokensRequest.builder().tokens(multiBatchTokens()).build();
 
         CountingInterceptor interceptor = new CountingInterceptor();
-        controller.bulkDeleteTokens(request, DeleteTokensOptions.builder().interceptor(interceptor).build());
+        controller.bulkDeleteTokens(request, BulkDeleteTokensOptions.builder().interceptor(interceptor).build());
 
         ArgumentCaptor<RequestOptions> captor = ArgumentCaptor.forClass(RequestOptions.class);
         Mockito.verify(mockRaw, Mockito.times(EXPECTED_BATCH_COUNT)).deletetoken(any(), captor.capture());
@@ -1046,14 +1067,14 @@ public class VaultControllerTests {
         stubTokenizeEcho(mockRaw);
 
         VaultController controller = createControllerWithMock(mockApi);
-        ArrayList<BulkTokenizeRecord> data = new ArrayList<>();
+        ArrayList<BulkTokenizeRequestRecord> records = new ArrayList<>();
         for (int i = 0; i < MULTI_BATCH_ITEM_COUNT; i++) {
-            data.add(BulkTokenizeRecord.builder()
+            records.add(BulkTokenizeRequestRecord.builder()
                     .value("value-" + i)
                     .tokenGroupNames(Collections.singletonList("group1"))
                     .build());
         }
-        BulkTokenizeRequest request = BulkTokenizeRequest.builder().data(data).build();
+        BulkTokenizeRequest request = BulkTokenizeRequest.builder().records(records).build();
 
         controller.bulkTokenize(request);
 
@@ -1082,14 +1103,14 @@ public class VaultControllerTests {
         stubTokenizeEcho(mockRaw);
 
         VaultController controller = createControllerWithMock(mockApi);
-        ArrayList<BulkTokenizeRecord> data = new ArrayList<>();
+        ArrayList<BulkTokenizeRequestRecord> records = new ArrayList<>();
         for (int i = 0; i < MULTI_BATCH_ITEM_COUNT; i++) {
-            data.add(BulkTokenizeRecord.builder().value("value-" + i).build());
+            records.add(BulkTokenizeRequestRecord.builder().value("value-" + i).build());
         }
-        BulkTokenizeRequest request = BulkTokenizeRequest.builder().data(data).build();
+        BulkTokenizeRequest request = BulkTokenizeRequest.builder().records(records).build();
 
         CountingInterceptor interceptor = new CountingInterceptor();
-        controller.bulkTokenize(request, TokenizeOptions.builder().interceptor(interceptor).build());
+        controller.bulkTokenize(request, BulkTokenizeOptions.builder().interceptor(interceptor).build());
 
         ArgumentCaptor<RequestOptions> captor = ArgumentCaptor.forClass(RequestOptions.class);
         Mockito.verify(mockRaw, Mockito.times(EXPECTED_BATCH_COUNT)).tokenize(any(), captor.capture());

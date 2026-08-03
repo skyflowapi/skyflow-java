@@ -1,0 +1,88 @@
+package com.example.vault;
+
+import com.skyflow.Skyflow;
+import com.skyflow.config.Credentials;
+import com.skyflow.config.VaultConfig;
+import com.skyflow.enums.Env;
+import com.skyflow.enums.LogLevel;
+import com.skyflow.errors.SkyflowException;
+
+/**
+ * This sample demonstrates how to configure HTTP timeout and retry behavior in the Skyflow Java SDK.
+ *
+ * <p>Configurable settings (all optional):
+ * <ul>
+ *   <li>{@code timeout}          – overall call timeout in <b>seconds</b> (bounds the whole
+ *       request including retries and backoff). Default: 60.</li>
+ *   <li>{@code connectTimeout}   – per-attempt connection-establishment timeout in <b>seconds</b>.
+ *       Default: 10 (the underlying HTTP client default).</li>
+ *   <li>{@code readTimeout}      – per-attempt response-read timeout in <b>seconds</b>.
+ *       Default: 10.</li>
+ *   <li>{@code writeTimeout}     – per-attempt request-write timeout in <b>seconds</b>.
+ *       Default: 10.</li>
+ *   <li>{@code maxRetries}       – retry attempts after the first failure (retries on HTTP
+ *       408 / 429 / 5xx). Default: 0 — retries are OFF unless you set this (avoids auto-retrying
+ *       non-idempotent writes).</li>
+ * </ul>
+ *
+ * <p><b>Backoff is not configurable.</b> When {@code maxRetries} is greater than 0 the SDK backs off
+ * exponentially with jitter between attempts; there is no builder or {@code VaultConfig} setter to
+ * tune the delay.
+ *
+ * <p><b>How they relate:</b> {@code timeout} is the <i>total</i> ceiling for the whole call (all
+ * attempts + backoff). {@code connectTimeout}/{@code readTimeout}/{@code writeTimeout} each bound a
+ * single <i>phase of one attempt</i>; because they are per attempt, their sum across retries can
+ * exceed {@code timeout}, but {@code timeout} always wins and cuts the call off.
+ *
+ * <p><b>Two levels + precedence:</b> set client-wide defaults on {@code Skyflow.builder()}, and/or
+ * per-vault overrides on {@code VaultConfig}. The most specific value wins, resolved per field:
+ * <b>per-vault &rarr; client-wide &rarr; SDK default</b>.
+ */
+public class TimeoutAndRetryConfigExample {
+
+    public static void main(String[] args) {
+        try {
+            // Step 1: Initialize credentials with the path to your service account key file
+            String filePath = "<YOUR_CREDENTIALS_FILE_PATH>";
+            Credentials credentials = new Credentials();
+            credentials.setPath(filePath);
+
+            // Step 2: Configure the vault. Optionally override timeout/retry settings for THIS vault only.
+            VaultConfig vaultConfig = new VaultConfig();
+            vaultConfig.setVaultId("<YOUR_VAULT_ID>");
+            vaultConfig.setClusterId("<YOUR_CLUSTER_ID>");
+            vaultConfig.setEnv(Env.PROD);
+            vaultConfig.setCredentials(credentials);
+            // Per-vault overrides (optional). Any field left unset inherits the client-wide default below,
+            // and then the SDK default.
+            vaultConfig.setTimeout(30);                 // seconds  – tighter overall ceiling for this vault
+            vaultConfig.setConnectTimeout(5);           // seconds  – fail fast if the connection stalls
+            vaultConfig.setReadTimeout(20);             // seconds  – allow a slower response read
+            vaultConfig.setWriteTimeout(5);             // seconds  – bound the request write
+            vaultConfig.setMaxRetries(2);               // fewer retries for this vault
+
+            // Step 3: Create the Skyflow client. Client-wide defaults apply to every vault
+            //         unless that vault overrides them (as above).
+            Skyflow skyflowClient = Skyflow.builder()
+                    .setLogLevel(LogLevel.ERROR)
+                    .timeout(60)                        // seconds  – client-wide overall call timeout
+                    .connectTimeout(10)                 // seconds  – client-wide per-attempt connect timeout
+                    .readTimeout(15)                    // seconds  – client-wide per-attempt read timeout
+                    .writeTimeout(10)                   // seconds  – client-wide per-attempt write timeout
+                    .maxRetries(3)                      // client-wide retry attempts
+                    .addVaultConfig(vaultConfig)
+                    .build();
+
+            // Step 4: Use the client as usual. Requests now fail fast at the configured timeout and
+            //         retry transient 408/429/5xx responses with exponential backoff + jitter.
+            System.out.println("Skyflow client configured with custom timeout & retry settings: " + skyflowClient);
+
+            // Example (uncomment and fill in a real request to try it):
+            // BulkDetokenizeResponse response = skyflowClient.vault().bulkDetokenize(detokenizeRequest);
+            // System.out.println(response);
+        } catch (SkyflowException e) {
+            // Step 5: Handle any errors that occur during the process
+            System.err.println("Error in Skyflow operations: " + e.getMessage());
+        }
+    }
+}

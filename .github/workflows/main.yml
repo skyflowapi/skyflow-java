@@ -34,7 +34,7 @@ jobs:
         run: |
           # Surefire runs each module's tests with the module directory as the working
           # directory, so dotenv and ./credentials.json lookups miss the repo-root copies.
-          for module in common v2 flowvault; do
+          for module in common skyvault flowvault; do
             cp .env "$module/.env"
             cp credentials.json "$module/credentials.json"
           done
@@ -42,10 +42,53 @@ jobs:
       - name: Build & Run tests with Maven
         run: mvn -B package -f pom.xml -Dmaven.javadoc.skip=true
 
-      - name: Codecov
-        uses: codecov/codecov-action@v2.1.0
+      # JaCoCo records packages as "com/skyflow/..." with no module prefix, and all three
+      # modules share the com.skyflow package (deliberate split-package convention). So
+      # "com/skyflow/config/VaultConfig.java" matches BOTH skyvault and flowvault, Codecov
+      # resolves it to one of them, and the other module's file silently reports no data.
+      # Prefixing each report with its own source root makes every path unique and match the
+      # repo exactly, so all three modules' files are attributed correctly.
+      - name: Qualify JaCoCo report paths with their module
+        run: |
+          for module in common skyvault flowvault; do
+            report="$module/target/site/jacoco/jacoco.xml"
+            if [ ! -f "$report" ]; then
+              echo "Error: expected $report to exist after the build."
+              exit 1
+            fi
+            tmp="$(mktemp)"
+            sed "s|<package name=\"|<package name=\"$module/src/main/java/|g" "$report" > "$tmp"
+            mv "$tmp" "$report"
+          done
+
+      # One upload per module, each with its own flag, so Codecov reports per-module
+      # coverage instead of merging three same-named package trees into one number.
+      - name: Codecov (common)
+        uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_REPO_UPLOAD_TOKEN }}
-          files: target/site/jacoco/jacoco.xml
-          name: codecov-skyflow-java
+          files: common/target/site/jacoco/jacoco.xml
+          flags: common
+          name: codecov-common
           verbose: true
+          fail_ci_if_error: true
+
+      - name: Codecov (skyvault)
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_REPO_UPLOAD_TOKEN }}
+          files: skyvault/target/site/jacoco/jacoco.xml
+          flags: skyvault
+          name: codecov-skyvault
+          verbose: true
+          fail_ci_if_error: true
+
+      - name: Codecov (flowvault)
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_REPO_UPLOAD_TOKEN }}
+          files: flowvault/target/site/jacoco/jacoco.xml
+          flags: flowvault
+          name: codecov-flowvault
+          verbose: true
+          fail_ci_if_error: true

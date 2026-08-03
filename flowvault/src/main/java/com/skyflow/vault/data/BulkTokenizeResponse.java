@@ -4,77 +4,127 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.Expose;
 
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 public class BulkTokenizeResponse {
     @Expose(serialize = true)
     private TokenizeSummary summary;
 
     @Expose(serialize = true)
-    private List<TokenizeSuccess> success;
+    private List<BulkTokenizeResponseRecord> records;
 
-    @Expose(serialize = true)
-    private List<ErrorRecord> errors;
+    private List<BulkTokenizeRequestRecord> originalPayload;
+    private List<BulkTokenizeRequestRecord> recordsToRetry;
 
-    private List<BulkTokenizeRecord> originalPayload;
-
-    public BulkTokenizeResponse(List<TokenizeSuccess> success, List<ErrorRecord> errors) {
-        this.success = success;
-        this.errors = errors;
+    public BulkTokenizeResponse(List<BulkTokenizeResponseRecord> records) {
+        this.records = records;
     }
 
-    public BulkTokenizeResponse(List<TokenizeSuccess> success, List<ErrorRecord> errors, List<BulkTokenizeRecord> originalPayload) {
-        this.success = success;
-        this.errors = errors;
+    public BulkTokenizeResponse(List<BulkTokenizeResponseRecord> records,
+                                List<BulkTokenizeRequestRecord> originalPayload) {
+        this.records = records;
         this.originalPayload = originalPayload;
+        this.summary = buildSummary(this.records, this.originalPayload);
+    }
 
-        int totalTokens = originalPayload.size();
-
-        // Collect indices that appear in success and in errors
-        Set<Integer> successIndices = new HashSet<>();
-        for (TokenizeSuccess s : this.success) {
-            successIndices.add(s.getIndex());
-        }
-        Set<Integer> errorIndices = new HashSet<>();
-        for (ErrorRecord e : this.errors) {
-            errorIndices.add(e.getIndex());
-        }
-
-        // totalTokenized  = ALL token groups succeeded   (in success, NOT in errors)
-        // totalPartial    = SOME succeeded, SOME failed  (in both success AND errors)
-        // totalFailed     = ALL token groups failed      (in errors, NOT in success)
+    /**
+     * {@code totalTokens} counts the input values submitted. The remaining three classify each
+     * value by how its token groups fared, so together they sum to the number of values.
+     */
+    private static TokenizeSummary buildSummary(List<BulkTokenizeResponseRecord> records,
+                                                List<BulkTokenizeRequestRecord> originalPayload) {
         int totalTokenized = 0;
         int totalPartial = 0;
         int totalFailed = 0;
-        for (int i = 0; i < totalTokens; i++) {
-            boolean hasSuccess = successIndices.contains(i);
-            boolean hasError   = errorIndices.contains(i);
-            if (hasSuccess && !hasError)       totalTokenized++;
-            else if (hasSuccess && hasError)   totalPartial++;
-            else if (!hasSuccess && hasError)  totalFailed++;
-            // else: index not present in either (shouldn't happen in practice)
+        if (records != null) {
+            for (BulkTokenizeResponseRecord record : records) {
+                int succeeded = 0;
+                int failed = 0;
+                if (record.getTokens() != null) {
+                    for (TokenizeResponseToken token : record.getTokens()) {
+                        if (token.getError() == null) {
+                            succeeded++;
+                        } else {
+                            failed++;
+                        }
+                    }
+                }
+                if (succeeded > 0 && failed > 0) {
+                    totalPartial++;
+                } else if (succeeded > 0) {
+                    totalTokenized++;
+                } else {
+                    // no token groups came back, or every one of them failed
+                    totalFailed++;
+                }
+            }
         }
-
-        this.summary = new TokenizeSummary(totalTokens, totalTokenized, totalPartial, totalFailed);
+        int totalTokens = originalPayload != null
+                ? originalPayload.size()
+                : (records != null ? records.size() : 0);
+        return new TokenizeSummary(totalTokens, totalTokenized, totalPartial, totalFailed);
     }
 
     public TokenizeSummary getSummary() {
         return summary;
     }
 
-    public List<TokenizeSuccess> getSuccess() {
-        return success;
+    public List<BulkTokenizeResponseRecord> getRecords() {
+        return records;
     }
 
-    public List<ErrorRecord> getErrors() {
-        return errors;
+    /**
+     * The records that failed with a retryable status, ready to be resubmitted as a new bulk request.
+     *
+     * <p>Retryable means a 5xx other than 529, matching the rule used elsewhere in the SDK. The
+     * caller's original record objects are returned unchanged — they carry no index, exactly as they
+     * were supplied. Records where nothing failed retryably are omitted.
+     */
+    public List<BulkTokenizeRequestRecord> getRecordsToRetry() {
+        if (recordsToRetry == null) {
+            recordsToRetry = new ArrayList<>();
+            if (records != null && originalPayload != null) {
+                for (BulkTokenizeResponseRecord record : records) {
+                    // the SDK assigns the index from the record's position in originalPayload, so a
+                    // positional lookup is exact
+                    int index = record.getIndex();
+                    if (index < 0 || index >= originalPayload.size() || !hasRetryableFailure(record)) {
+                        continue;
+                    }
+                    recordsToRetry.add(originalPayload.get(index));
+                }
+            }
+        }
+        return recordsToRetry;
+    }
+
+    private static boolean hasRetryableFailure(BulkTokenizeResponseRecord record) {
+        if (record.getTokens() == null) {
+            return false;
+        }
+        for (TokenizeResponseToken token : record.getTokens()) {
+            if (isRetryable(token)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean isRetryable(TokenizeResponseToken token) {
+        Integer httpCode = token.getHttpCode();
+        return token.getError() != null
+                && httpCode != null
+                && httpCode >= 500 && httpCode <= 599
+                && httpCode != 529;
     }
 
     @Override
     public String toString() {
-        Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
+        Gson gson = new GsonBuilder()
+                .excludeFieldsWithoutExposeAnnotation()
+                .serializeNulls()
+                .create();
         return gson.toJson(this);
     }
 }

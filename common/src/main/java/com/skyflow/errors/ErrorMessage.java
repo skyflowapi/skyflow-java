@@ -154,6 +154,8 @@ public enum ErrorMessage {
     EmptyTokenGroupNamesInTokenizeRecord("%s0 Validation error. TokenGroupNames in TokenizeRecord is null or empty. Specify at least one token group name."),
     EmptyTokenGroupNameInTokenizeRecord("%s0 Validation error. Token group name in TokenizeRecord is null or empty. Specify a valid token group name."),
     TokenizeDataSizeExceedError("%s0 Maximum number of tokenize records exceeded. The limit is 10000."),
+    MissingIndexInBulkTokenizeRecord("%s0 Validation error. Index in BulkTokenizeRequestRecord is null. Specify an index for every record."),
+    DuplicateIndexInBulkTokenizeRecord("%s0 Validation error. Duplicate index in BulkTokenizeRequestRecord. Specify a unique index for every record."),
 
     // Connection
     InvalidRequestHeaders("%s0 Validation error. Request headers aren't valid. Specify valid request headers."),

@@ -16,6 +16,7 @@ import com.skyflow.vault.data.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -411,17 +412,18 @@ public class Validations extends BaseValidations {
             ));
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.TokenizeRequestNull.getMessage());
         }
-        List<BulkTokenizeRecord> data = request.getData();
-        if (data == null || data.isEmpty()) {
+        List<BulkTokenizeRequestRecord> records = request.getRecords();
+        if (records == null || records.isEmpty()) {
             LogUtil.printErrorLog(Utils.parameterizedString(
                     ErrorLogs.EMPTY_TOKENIZE_DATA.getLog(), InterfaceName.TOKENIZE.getName()
             ));
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyTokenizeData.getMessage());
         }
-        validateBulkDataSize(data.size(), ErrorLogs.TOKENIZE_DATA_SIZE_EXCEED,
+        validateBulkDataSize(records.size(), ErrorLogs.TOKENIZE_DATA_SIZE_EXCEED,
                 ErrorMessage.TokenizeDataSizeExceedError, InterfaceName.TOKENIZE);
-        for (int i = 0; i < data.size(); i++) {
-            BulkTokenizeRecord record = data.get(i);
+
+        for (int i = 0; i < records.size(); i++) {
+            BulkTokenizeRequestRecord record = records.get(i);
             if (record == null) {
                 LogUtil.printErrorLog(Utils.parameterizedString(
                         ErrorLogs.TOKENIZE_RECORD_NULL.getLog(), InterfaceName.TOKENIZE.getName()
