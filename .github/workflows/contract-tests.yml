@@ -47,7 +47,7 @@ jobs:
         if: failure()
         run: |
           echo "### API surface changes detected in ${{ matrix.module }} ###"
-          echo "Compared against ${{ matrix.module }}/api-report/${{ matrix.artifact }}.baseline.jar."
+          echo "Compared against api-report/${{ matrix.artifact }}.baseline.jar."
           echo "If this change is intentional, run:"
           echo "    scripts/contract-snapshot-update.sh ${{ matrix.module }}"
           echo "and commit the updated baseline jar."
@@ -75,7 +75,7 @@ jobs:
         if: always() && github.event.pull_request
         run: |
           git fetch origin "${{ github.event.pull_request.base.ref }}" --depth=1
-          BASELINE="${{ matrix.module }}/api-report/${{ matrix.artifact }}.baseline.jar"
+          BASELINE="api-report/${{ matrix.artifact }}.baseline.jar"
           if ! git diff --name-only "origin/${{ github.event.pull_request.base.ref }}" HEAD -- "$BASELINE" | grep -q .; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
           elif git cat-file -e "origin/${{ github.event.pull_request.base.ref }}:$BASELINE" 2>/dev/null; then
@@ -91,7 +91,7 @@ jobs:
       - name: Diff old vs new contract baseline
         if: always() && (steps.baseline-diff-check.outputs.changed == 'true' || steps.baseline-diff-check.outputs.changed == 'new')
         run: |
-          BASELINE="${{ matrix.module }}/api-report/${{ matrix.artifact }}.baseline.jar"
+          BASELINE="api-report/${{ matrix.artifact }}.baseline.jar"
 
           if [ "${{ steps.baseline-diff-check.outputs.changed }}" = "new" ]; then
             {
@@ -140,8 +140,8 @@ jobs:
               ? `## Contract baseline added (\`${module}\`)`
               : `## Contract baseline change detected (\`${module}\`)`;
             const preamble = isNew
-              ? `This PR adds \`${module}/api-report/${artifact}.baseline.jar\`, the approved public API contract for this module.`
-              : `This PR updates \`${module}/api-report/${artifact}.baseline.jar\` (the approved public API contract). Here is exactly what it changes, comparing the baseline on \`${{ github.event.pull_request.base.ref }}\` against the baseline committed in this PR:`;
+              ? `This PR adds \`api-report/${artifact}.baseline.jar\`, the approved public API contract for this module.`
+              : `This PR updates \`api-report/${artifact}.baseline.jar\` (the approved public API contract). Here is exactly what it changes, comparing the baseline on \`${{ github.event.pull_request.base.ref }}\` against the baseline committed in this PR:`;
             const body = `${marker}\n${heading}\n\n${preamble}\n\n${summary}`;
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
