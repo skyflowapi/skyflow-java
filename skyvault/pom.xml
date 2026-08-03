@@ -197,11 +197,11 @@
                     <plugin>
                         <groupId>org.sonatype.central</groupId>
                         <artifactId>central-publishing-maven-plugin</artifactId>
-                        <version>0.4.0</version>
+                        <!-- See flowvault/pom.xml for why 0.11.0 and why tokenAuth is gone. -->
+                        <version>0.11.0</version>
                         <extensions>true</extensions>
                         <configuration>
                             <publishingServerId>central</publishingServerId>
-                            <tokenAuth>true</tokenAuth>
                             <!-- See flowvault/pom.xml: releases stage as VALIDATED in the
                                  Central Portal and need a human to click Publish. Note this
                                  changes v2's behaviour - releases no longer go live on their
