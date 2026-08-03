@@ -27,7 +27,7 @@
     </developers>
     <modules>
         <module>common</module>
-        <module>v2</module>
+        <module>skyvault</module>
         <module>flowvault</module>
     </modules>
     <scm>
@@ -149,7 +149,7 @@
                 Tests read secrets through Dotenv, which resolves .env against the JVM's working
                 directory - for Surefire that is the module's basedir. CI writes a single .env at
                 the repo root, which every module could see before the build was split into
-                common/v2/flowvault, and none can see since. Copy it into each module before tests
+                common/skyvault/flowvault, and none can see since. Copy it into each module before tests
                 run rather than moving Surefire's working directory, because other tests locate
                 fixtures by module-relative paths such as ./src/test/resources/notJson.txt and would
                 break if that moved. Silently does nothing when no root .env exists, which is the

@@ -29,23 +29,23 @@ jobs:
           cache: 'maven'
 
       - name: Verify API surface snapshot
-        run: mvn -B install -pl common,v2 -am -DskipTests -Dmaven.javadoc.skip=true -Dgpg.skip=true
+        run: mvn -B install -pl common,skyvault -am -DskipTests -Dmaven.javadoc.skip=true -Dgpg.skip=true
 
       - name: Show API surface diff
         if: failure()
         run: |
           echo "### API surface changes detected ###"
-          echo "See v2/target/japicmp/default-cli.diff for the full comparison against v2/api-report/skyflow-java.baseline.jar."
+          echo "See skyvault/target/japicmp/default-cli.diff for the full comparison against skyvault/api-report/skyflow-java.baseline.jar."
           echo "If this change is intentional, run scripts/contract-snapshot-update.sh and commit the updated baseline jar."
           echo ""
-          cat v2/target/japicmp/default-cli.diff || true
+          cat skyvault/target/japicmp/default-cli.diff || true
 
       - name: Upload API surface diff on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: api-surface-diff
-          path: v2/target/japicmp/**
+          path: skyvault/target/japicmp/**
           retention-days: 7
 
       # The step above only shows a diff when the CURRENT build differs from the
@@ -61,7 +61,7 @@ jobs:
         if: always() && github.event.pull_request
         run: |
           git fetch origin "${{ github.event.pull_request.base.ref }}" --depth=1
-          if git diff --name-only "origin/${{ github.event.pull_request.base.ref }}" HEAD -- v2/api-report/skyflow-java.baseline.jar | grep -q .; then
+          if git diff --name-only "origin/${{ github.event.pull_request.base.ref }}" HEAD -- skyvault/api-report/skyflow-java.baseline.jar | grep -q .; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
           else
             echo "changed=false" >> "$GITHUB_OUTPUT"
@@ -71,16 +71,16 @@ jobs:
         if: always() && steps.baseline-diff-check.outputs.changed == 'true'
         run: |
           curl -sL -o /tmp/japicmp-cli.jar "https://repo.maven.apache.org/maven2/com/github/siom79/japicmp/japicmp/0.26.0/japicmp-0.26.0-jar-with-dependencies.jar"
-          mvn -q -B dependency:build-classpath -pl v2 -Dmdep.outputFile=/tmp/v2-classpath.txt -Dmaven.javadoc.skip=true -Dgpg.skip=true
-          git show "origin/${{ github.event.pull_request.base.ref }}:v2/api-report/skyflow-java.baseline.jar" > /tmp/old-baseline.jar
+          mvn -q -B dependency:build-classpath -pl skyvault -Dmdep.outputFile=/tmp/skyvault-classpath.txt -Dmaven.javadoc.skip=true -Dgpg.skip=true
+          git show "origin/${{ github.event.pull_request.base.ref }}:skyvault/api-report/skyflow-java.baseline.jar" > /tmp/old-baseline.jar
 
           java -jar /tmp/japicmp-cli.jar \
             -o /tmp/old-baseline.jar \
-            -n v2/api-report/skyflow-java.baseline.jar \
+            -n skyvault/api-report/skyflow-java.baseline.jar \
             -a protected \
             -e "com.skyflow.generated.*;com.skyflow.utils.*" \
-            --old-classpath "$(cat /tmp/v2-classpath.txt)" \
-            --new-classpath "$(cat /tmp/v2-classpath.txt)" \
+            --old-classpath "$(cat /tmp/skyvault-classpath.txt)" \
+            --new-classpath "$(cat /tmp/skyvault-classpath.txt)" \
             -m \
             --markdown > /tmp/contract-baseline-diff.md || true
 
@@ -94,7 +94,7 @@ jobs:
             const fs = require('fs');
             const summary = fs.readFileSync('/tmp/contract-baseline-diff.md', 'utf8');
             const marker = '<!-- contract-baseline-diff -->';
-            const body = `${marker}\n## Contract baseline change detected\n\nThis PR updates \`v2/api-report/skyflow-java.baseline.jar\` (the approved public API contract). Here is exactly what it changes, comparing the baseline on \`${{ github.event.pull_request.base.ref }}\` against the baseline committed in this PR:\n\n${summary}`;
+            const body = `${marker}\n## Contract baseline change detected\n\nThis PR updates \`skyvault/api-report/skyflow-java.baseline.jar\` (the approved public API contract). Here is exactly what it changes, comparing the baseline on \`${{ github.event.pull_request.base.ref }}\` against the baseline committed in this PR:\n\n${summary}`;
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
