@@ -8,12 +8,14 @@ This repository hosts Skyflow's Java SDKs for integrating Skyflow into a Java ba
 
 ## Which package do I want?
 
-| Package | Artifact | README | Vault Type |
-|---|---|---|---|
-| **skyvault** | `com.skyflow:skyflow-java` | [skyvault/README.md](skyvault/README.md) | Privacy DB |
-| **flowvault** | `com.skyflow:skyflow-flowvault-java` | [flowvault/README.md](flowvault/README.md) | Flow DB |
+| Package | Artifact | README | Vault Type | Version line |
+|---|---|---|---|---|
+| **skyvault** | `com.skyflow:skyflow-java` | [skyvault/README.md](skyvault/README.md) | Privacy DB | 2.x |
+| **flowvault** | `com.skyflow:skyflow-flowvault-java` | [flowvault/README.md](flowvault/README.md) | Flow DB | 1.x |
 
 `flowvault` shares auth/client setup with `skyvault` — both depend on the `common` module.
+
+> **The two artifacts are versioned independently.** `flowvault` is a new SDK starting at `1.0.0`; its lower version number reflects a first release, not an older or lesser SDK than `skyvault` 2.x. Upgrade each on its own version line.
 
 > Migrating from v1? See skyvault's **[Migration Guide](docs/migrate_to_v2.md)**. V1 is in maintenance mode and will reach End of Life on October 31, 2026.
 
