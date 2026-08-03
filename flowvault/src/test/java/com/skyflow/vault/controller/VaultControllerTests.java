@@ -22,6 +22,8 @@ import com.skyflow.generated.rest.types.V1FlowTokenizeResponseObject;
 import com.skyflow.generated.rest.types.V1InsertResponse;
 import com.skyflow.generated.rest.types.V1RecordResponseObject;
 import com.skyflow.utils.Constants;
+import com.skyflow.vault.data.BulkDeleteTokensOptions;
+import com.skyflow.vault.data.BulkTokenizeOptions;
 import com.skyflow.vault.data.BulkDeleteTokensRequest;
 import com.skyflow.vault.data.BulkDeleteTokensResponse;
 import com.skyflow.vault.data.BulkDetokenizeRequest;
@@ -1049,7 +1051,7 @@ public class VaultControllerTests {
         BulkDeleteTokensRequest request = BulkDeleteTokensRequest.builder().tokens(multiBatchTokens()).build();
 
         CountingInterceptor interceptor = new CountingInterceptor();
-        controller.bulkDeleteTokens(request, DeleteTokensOptions.builder().interceptor(interceptor).build());
+        controller.bulkDeleteTokens(request, BulkDeleteTokensOptions.builder().interceptor(interceptor).build());
 
         ArgumentCaptor<RequestOptions> captor = ArgumentCaptor.forClass(RequestOptions.class);
         Mockito.verify(mockRaw, Mockito.times(EXPECTED_BATCH_COUNT)).deletetoken(any(), captor.capture());
@@ -1108,7 +1110,7 @@ public class VaultControllerTests {
         BulkTokenizeRequest request = BulkTokenizeRequest.builder().records(records).build();
 
         CountingInterceptor interceptor = new CountingInterceptor();
-        controller.bulkTokenize(request, TokenizeOptions.builder().interceptor(interceptor).build());
+        controller.bulkTokenize(request, BulkTokenizeOptions.builder().interceptor(interceptor).build());
 
         ArgumentCaptor<RequestOptions> captor = ArgumentCaptor.forClass(RequestOptions.class);
         Mockito.verify(mockRaw, Mockito.times(EXPECTED_BATCH_COUNT)).tokenize(any(), captor.capture());

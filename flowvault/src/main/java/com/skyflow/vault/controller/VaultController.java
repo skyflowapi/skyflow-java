@@ -33,6 +33,8 @@ import com.skyflow.utils.Constants;
 import com.skyflow.utils.Utils;
 import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.utils.validations.Validations;
+import com.skyflow.vault.data.BulkDeleteTokensOptions;
+import com.skyflow.vault.data.BulkTokenizeOptions;
 import com.skyflow.vault.data.BulkDeleteTokensRequest;
 import com.skyflow.vault.data.BulkDeleteTokensResponseRecord;
 import com.skyflow.vault.data.BulkTokenizeRequestRecord;
@@ -244,7 +246,7 @@ public final class VaultController extends VaultClient {
         return bulkDeleteTokens(deleteTokensRequest, null);
     }
 
-    public BulkDeleteTokensResponse bulkDeleteTokens(BulkDeleteTokensRequest deleteTokensRequest, DeleteTokensOptions options) throws SkyflowException {
+    public BulkDeleteTokensResponse bulkDeleteTokens(BulkDeleteTokensRequest deleteTokensRequest, BulkDeleteTokensOptions options) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.DELETE_TOKENS_TRIGGERED.getLog());
         try {
             LogUtil.printInfoLog(InfoLogs.VALIDATE_DELETE_TOKENS_REQUEST.getLog());
@@ -269,7 +271,7 @@ public final class VaultController extends VaultClient {
         return bulkDeleteTokensAsync(deleteTokensRequest, null);
     }
 
-    public CompletableFuture<BulkDeleteTokensResponse> bulkDeleteTokensAsync(BulkDeleteTokensRequest deleteTokensRequest, DeleteTokensOptions options) throws SkyflowException {
+    public CompletableFuture<BulkDeleteTokensResponse> bulkDeleteTokensAsync(BulkDeleteTokensRequest deleteTokensRequest, BulkDeleteTokensOptions options) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.DELETE_TOKENS_TRIGGERED.getLog());
         ExecutorService executor = null;
         try {
@@ -325,7 +327,7 @@ public final class VaultController extends VaultClient {
         return bulkTokenize(tokenizeRequest, null);
     }
 
-    public BulkTokenizeResponse bulkTokenize(BulkTokenizeRequest tokenizeRequest, TokenizeOptions options) throws SkyflowException {
+    public BulkTokenizeResponse bulkTokenize(BulkTokenizeRequest tokenizeRequest, BulkTokenizeOptions options) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.TOKENIZE_TRIGGERED.getLog());
         try {
             LogUtil.printInfoLog(InfoLogs.VALIDATING_TOKENIZE_REQUEST.getLog());
@@ -351,7 +353,7 @@ public final class VaultController extends VaultClient {
         return bulkTokenizeAsync(tokenizeRequest, null);
     }
 
-    public CompletableFuture<BulkTokenizeResponse> bulkTokenizeAsync(BulkTokenizeRequest tokenizeRequest, TokenizeOptions options) throws SkyflowException {
+    public CompletableFuture<BulkTokenizeResponse> bulkTokenizeAsync(BulkTokenizeRequest tokenizeRequest, BulkTokenizeOptions options) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.TOKENIZE_TRIGGERED.getLog());
         ExecutorService executor = null;
         try {

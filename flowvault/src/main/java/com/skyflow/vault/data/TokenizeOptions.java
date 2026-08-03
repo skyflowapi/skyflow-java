@@ -1,9 +1,15 @@
 package com.skyflow.vault.data;
 
-public final class TokenizeOptions {
+/**
+ * Per-call options for tokenize.
+ *
+ * <p>Subclassed by {@link BulkTokenizeOptions} so the bulk interfaces can take their own options
+ * type while sharing this one's settings, mirroring how {@link BulkTokenizeRequest} extends {@link TokenizeRequest}.
+ */
+public class TokenizeOptions {
     private final RequestInterceptor interceptor;
 
-    private TokenizeOptions(Builder builder) {
+    protected TokenizeOptions(Builder builder) {
         this.interceptor = builder.interceptor;
     }
 
@@ -15,8 +21,10 @@ public final class TokenizeOptions {
         return new Builder();
     }
 
-    public static final class Builder {
+    public static class Builder {
         private RequestInterceptor interceptor;
+
+        protected Builder() {}
 
         public Builder interceptor(RequestInterceptor interceptor) {
             this.interceptor = interceptor;
