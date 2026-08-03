@@ -27,7 +27,7 @@ public final class Constants extends BaseConstants {
     public static final Integer TOKENIZE_CONCURRENCY_LIMIT = 1;
     public static final Integer MAX_TOKENIZE_BATCH_SIZE = 1000;
     public static final Integer MAX_TOKENIZE_CONCURRENCY_LIMIT = 10;
-    public static final String DEFAULT_SDK_VERSION = "v3";
+    public static final String DEFAULT_SDK_VERSION = "1.0.0";
     public static final String CONTEXT_KEY_REGEX = "^[a-zA-Z0-9_]+$";
 
     static {
