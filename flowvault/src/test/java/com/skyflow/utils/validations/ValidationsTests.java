@@ -568,6 +568,79 @@ public class ValidationsTests {
         }
     }
 
+    @Test
+    public void testValidateInsertRequest_emptyTokensMapThrows() {
+        ArrayList<InsertRequestRecord> records = new ArrayList<>();
+        records.add(InsertRequestRecord.builder().tableName("table1").tokens(new HashMap<>()).build());
+        InsertRequest request = InsertRequest.builder().records(records).build();
+        try {
+            Validations.validateInsertRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.EmptyTokens.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateInsertRequest_nullKeyInTokensThrows() {
+        Map<String, Object> tokens = new HashMap<>();
+        tokens.put(null, "tok-abc");
+        ArrayList<InsertRequestRecord> records = new ArrayList<>();
+        records.add(InsertRequestRecord.builder().tableName("table1").tokens(tokens).build());
+        InsertRequest request = InsertRequest.builder().records(records).build();
+        try {
+            Validations.validateInsertRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.EmptyKeyInTokens.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateInsertRequest_blankKeyInTokensThrows() {
+        Map<String, Object> tokens = new HashMap<>();
+        tokens.put("   ", "tok-abc");
+        ArrayList<InsertRequestRecord> records = new ArrayList<>();
+        records.add(InsertRequestRecord.builder().tableName("table1").tokens(tokens).build());
+        InsertRequest request = InsertRequest.builder().records(records).build();
+        try {
+            Validations.validateInsertRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.EmptyKeyInTokens.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateInsertRequest_nullValueInTokensThrows() {
+        Map<String, Object> tokens = new HashMap<>();
+        tokens.put("name", null);
+        ArrayList<InsertRequestRecord> records = new ArrayList<>();
+        records.add(InsertRequestRecord.builder().tableName("table1").tokens(tokens).build());
+        InsertRequest request = InsertRequest.builder().records(records).build();
+        try {
+            Validations.validateInsertRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.EmptyValueInTokens.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateInsertRequest_blankValueInTokensThrows() {
+        Map<String, Object> tokens = new HashMap<>();
+        tokens.put("name", "   ");
+        ArrayList<InsertRequestRecord> records = new ArrayList<>();
+        records.add(InsertRequestRecord.builder().tableName("table1").tokens(tokens).build());
+        InsertRequest request = InsertRequest.builder().records(records).build();
+        try {
+            Validations.validateInsertRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.EmptyValueInTokens.getMessage(), e.getMessage());
+        }
+    }
+
     // ── validateDetokenizeRequest ─────────────────────────────────────────────
 
     @Test

@@ -528,9 +528,9 @@ public class RequestFidelityTests {
     // ── insert: tokens map ───────────────────────────────────────────────────
 
     @Test
-    public void testBulkInsert_emptyTokensMapIsOmittedFromWire_knownGap() {
-        // KNOWN GAP: an explicitly-set-but-empty tokens map is dropped rather than sent as {}.
-        // Pinning current behavior — a caller cannot distinguish "no tokens" from "empty tokens".
+    public void testBulkInsert_emptyTokensMapIsOmittedFromWire() {
+        // Validations.validateInsertRequest rejects an explicitly-set-but-empty tokens map before
+        // the body builder runs; this pins the builder's own behavior when called directly.
         Map<String, Object> data = new HashMap<>();
         data.put("name", "john");
         BulkInsertRequestRecord record = BulkInsertRequestRecord.builder()
