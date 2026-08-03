@@ -6,7 +6,7 @@ import org.junit.Test;
 /**
  * Tests for the single-field options/builder classes: {@link InsertOptions},
  * {@link DetokenizeOptions}, {@link TokenizeOptions} and {@link DeleteTokensOptions},
- * plus the bulk specialisations {@link BulkInsertOptions} and {@link BulkDetokenizeOptions}.
+ * plus the bulk specializations {@link BulkInsertOptions} and {@link BulkDetokenizeOptions}.
  * Each class simply wraps a {@link RequestInterceptor} with no validation.
  */
 public class OptionsTests {
@@ -48,7 +48,7 @@ public class OptionsTests {
     public void testBulkInsertOptions_withInterceptor() {
         BulkInsertOptions options = BulkInsertOptions.builder().interceptor(INTERCEPTOR).build();
         Assert.assertSame(INTERCEPTOR, options.getInterceptor());
-        // BulkInsertOptions is a specialisation of InsertOptions, so it flows anywhere the base does
+        // BulkInsertOptions is a specialization of InsertOptions, so it flows anywhere the base does
         Assert.assertTrue(options instanceof InsertOptions);
     }
 

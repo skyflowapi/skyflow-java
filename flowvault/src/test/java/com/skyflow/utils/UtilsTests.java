@@ -1615,7 +1615,7 @@ public class UtilsTests {
     @Test
     public void testHandleBulkTokenizeBatchException_errorBodyWithResponseArrayRebuildsRecords() {
         // A 4xx whose body echoes the per-row "response" array is rebuilt via tokenizeRecordsFromErrorBody
-        // rather than summarised by the bare status code.
+        // rather than summarized by the bare status code.
         Map<String, Object> tokenRow = new HashMap<>();
         tokenRow.put("tokenGroupName", "group1");
         tokenRow.put("error", "BYOT token should contain one token group");
@@ -1661,7 +1661,7 @@ public class UtilsTests {
     @Test
     public void testHandleBulkTokenizeBatchException_nonMapBodyUsesApiMessage() {
         // Body is not a map, so extractBatchErrorMessage falls back to the exception's own message.
-        ApiClientApiException apiEx = new ApiClientApiException("tokenize failed", 500, "unparseable");
+        ApiClientApiException apiEx = new ApiClientApiException("tokenize failed", 500, "raw string body");
         RuntimeException wrapper = new RuntimeException(apiEx);
 
         List<BulkTokenizeResponseRecord> errors = Utils.handleBulkTokenizeBatchException(
