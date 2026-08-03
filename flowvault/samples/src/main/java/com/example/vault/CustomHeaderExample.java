@@ -24,8 +24,8 @@ import java.util.concurrent.CompletionException;
  * This sample demonstrates how to attach custom headers to outgoing requests via a request
  * interceptor on the options object.
  *
- * <p>Available keys on {@link CustomHeaderKey}: {@code SkyflowAccountId} ({@code x-skyflow-account-id}),
- * {@code SkyflowAccountName} ({@code x-skyflow-account-name}) and {@code RequestIdHeader}
+ * <p>Available keys on {@link CustomHeaderKey}: {@code SKYFLOW_ACCOUNT_ID} ({@code x-skyflow-account-id}),
+ * {@code SKYFLOW_ACCOUNT_NAME} ({@code x-skyflow-account-name}) and {@code REQUEST_ID_HEADER}
  * ({@code x-request-id}).
  *
  * <p>The interceptor runs once per batch, so a per-request value such as a request id is generated
@@ -85,7 +85,7 @@ public class CustomHeaderExample {
             // Step 7: Attach a custom header through the interceptor
             InsertOptions options = InsertOptions.builder()
                     .interceptor(ctx -> {
-                        ctx.addHeader(CustomHeaderKey.RequestIdHeader, getRequestId()); // pass the request id here
+                        ctx.addHeader(CustomHeaderKey.REQUEST_ID_HEADER, getRequestId()); // pass the request id here
                     })
                     .build();
 

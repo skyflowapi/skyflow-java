@@ -8,12 +8,12 @@ public class RequestInterceptorTests {
 
     @Test
     public void testInterceptMutatesRequestContext() {
-        RequestInterceptor interceptor = context -> context.addHeader(CustomHeaderKey.SkyflowAccountId, "account-id-value");
+        RequestInterceptor interceptor = context -> context.addHeader(CustomHeaderKey.SKYFLOW_ACCOUNT_ID, "account-id-value");
         RequestContext context = new RequestContext("INSERT");
 
         interceptor.intercept(context);
 
-        Assert.assertEquals("account-id-value", context.getHeaders().get(CustomHeaderKey.SkyflowAccountId));
+        Assert.assertEquals("account-id-value", context.getHeaders().get(CustomHeaderKey.SKYFLOW_ACCOUNT_ID));
     }
 
     @Test

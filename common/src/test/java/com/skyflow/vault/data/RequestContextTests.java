@@ -32,29 +32,29 @@ public class RequestContextTests {
     @Test
     public void testAddHeaderIsReflectedInGetHeaders() {
         RequestContext context = new RequestContext("INSERT");
-        context.addHeader(CustomHeaderKey.SkyflowAccountId, "account-id-value");
+        context.addHeader(CustomHeaderKey.SKYFLOW_ACCOUNT_ID, "account-id-value");
 
         Map<CustomHeaderKey, String> headers = context.getHeaders();
 
         Assert.assertEquals(1, headers.size());
-        Assert.assertEquals("account-id-value", headers.get(CustomHeaderKey.SkyflowAccountId));
+        Assert.assertEquals("account-id-value", headers.get(CustomHeaderKey.SKYFLOW_ACCOUNT_ID));
     }
 
     @Test
     public void testAddHeaderOverwritesExistingValueForSameKey() {
         RequestContext context = new RequestContext("INSERT");
-        context.addHeader(CustomHeaderKey.SkyflowAccountId, "first-value");
-        context.addHeader(CustomHeaderKey.SkyflowAccountId, "second-value");
+        context.addHeader(CustomHeaderKey.SKYFLOW_ACCOUNT_ID, "first-value");
+        context.addHeader(CustomHeaderKey.SKYFLOW_ACCOUNT_ID, "second-value");
 
         Assert.assertEquals(1, context.getHeaders().size());
-        Assert.assertEquals("second-value", context.getHeaders().get(CustomHeaderKey.SkyflowAccountId));
+        Assert.assertEquals("second-value", context.getHeaders().get(CustomHeaderKey.SKYFLOW_ACCOUNT_ID));
     }
 
     @Test
     public void testAddMultipleDistinctHeaders() {
         RequestContext context = new RequestContext("DETOKENIZE");
-        context.addHeader(CustomHeaderKey.SkyflowAccountId, "account-id-value");
-        context.addHeader(CustomHeaderKey.SkyflowAccountName, "account-name-value");
+        context.addHeader(CustomHeaderKey.SKYFLOW_ACCOUNT_ID, "account-id-value");
+        context.addHeader(CustomHeaderKey.SKYFLOW_ACCOUNT_NAME, "account-name-value");
 
         Assert.assertEquals(2, context.getHeaders().size());
     }
@@ -63,6 +63,6 @@ public class RequestContextTests {
     public void testGetHeadersReturnsUnmodifiableMap() {
         RequestContext context = new RequestContext("INSERT");
 
-        context.getHeaders().put(CustomHeaderKey.RequestIdHeader, "request-id-value");
+        context.getHeaders().put(CustomHeaderKey.REQUEST_ID_HEADER, "request-id-value");
     }
 }

@@ -197,14 +197,14 @@ public class VaultControllerTests {
         records.add(BulkInsertRequestRecord.builder().tableName("table1").data(data).build());
         BulkInsertRequest request = BulkInsertRequest.builder().records(records).build();
 
-        RequestInterceptor interceptor = ctx -> ctx.addHeader(CustomHeaderKey.SkyflowAccountId, "acct-123");
+        RequestInterceptor interceptor = ctx -> ctx.addHeader(CustomHeaderKey.SKYFLOW_ACCOUNT_ID, "acct-123");
         BulkInsertOptions options = BulkInsertOptions.builder().interceptor(interceptor).build();
 
         controller.bulkInsert(request, options);
 
         ArgumentCaptor<RequestOptions> captor = ArgumentCaptor.forClass(RequestOptions.class);
         Mockito.verify(mockRaw).insert(any(), captor.capture());
-        Assert.assertEquals("acct-123", captor.getValue().getHeaders().get(CustomHeaderKey.SkyflowAccountId.toString()));
+        Assert.assertEquals("acct-123", captor.getValue().getHeaders().get(CustomHeaderKey.SKYFLOW_ACCOUNT_ID.toString()));
     }
 
     // ── bulkDetokenize ────────────────────────────────────────────────────────
@@ -741,7 +741,7 @@ public class VaultControllerTests {
                 callNumber = contexts.size();
                 contexts.add(context);
             }
-            context.addHeader(CustomHeaderKey.SkyflowAccountId, "batch-" + callNumber);
+            context.addHeader(CustomHeaderKey.SKYFLOW_ACCOUNT_ID, "batch-" + callNumber);
         }
 
         int callCount() {
@@ -781,7 +781,7 @@ public class VaultControllerTests {
         Assert.assertEquals(EXPECTED_BATCH_COUNT, capturedOptions.size());
         java.util.Set<String> headerValues = new java.util.HashSet<>();
         for (RequestOptions options : capturedOptions) {
-            String value = options.getHeaders().get(CustomHeaderKey.SkyflowAccountId.toString());
+            String value = options.getHeaders().get(CustomHeaderKey.SKYFLOW_ACCOUNT_ID.toString());
             Assert.assertNotNull("Interceptor header missing on a batch", value);
             headerValues.add(value);
         }

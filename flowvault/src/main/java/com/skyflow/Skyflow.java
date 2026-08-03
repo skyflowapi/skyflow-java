@@ -59,6 +59,11 @@ public final class Skyflow extends BaseSkyflow<Skyflow, VaultConfig> {
         return resolveOrThrow(this.builder.vaultClientsMap, null, ErrorLogs.VAULT_CONFIG_DOES_NOT_EXIST, ErrorMessage.VaultIdNotInConfigList);
     }
 
+    public VaultController vault(String vaultId) throws SkyflowException {
+        return resolveOrThrow(this.builder.vaultClientsMap, vaultId, ErrorLogs.VAULT_CONFIG_DOES_NOT_EXIST, ErrorMessage.VaultIdNotInConfigList);
+    }
+
+
     public static final class SkyflowClientBuilder extends BaseSkyflowClientBuilder<VaultConfig> {
         private final LinkedHashMap<String, VaultController> vaultClientsMap = new LinkedHashMap<>();
         // Client-wide HTTP config. Resolution per vault, most specific first:

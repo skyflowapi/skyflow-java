@@ -38,16 +38,16 @@ public class RequestContextTests {
     @Test
     public void testHeadersStillWorkAlongsideTheBatchPosition() {
         RequestContext context = new RequestContext("DETOKENIZE", 1, 3);
-        context.addHeader(CustomHeaderKey.RequestIdHeader, "req-" + context.getBatchIndex());
+        context.addHeader(CustomHeaderKey.REQUEST_ID_HEADER, "req-" + context.getBatchIndex());
 
-        Assert.assertEquals("req-1", context.getHeaders().get(CustomHeaderKey.RequestIdHeader));
+        Assert.assertEquals("req-1", context.getHeaders().get(CustomHeaderKey.REQUEST_ID_HEADER));
     }
 
     @Test
     public void testHeadersRemainUnmodifiable() {
         RequestContext context = new RequestContext("INSERT", 0, 1);
         try {
-            context.getHeaders().put(CustomHeaderKey.RequestIdHeader, "x");
+            context.getHeaders().put(CustomHeaderKey.REQUEST_ID_HEADER, "x");
             Assert.fail("the exposed header map must not be mutable");
         } catch (UnsupportedOperationException expected) {
             Assert.assertTrue(true);
