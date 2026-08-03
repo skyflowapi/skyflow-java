@@ -1,9 +1,9 @@
 name: PR CI Checks (flowvault)
 
-# flowvault is a folder under main, alongside v2 and v3 - not a branch.
+# flowvault is a folder under main, alongside skyvault - not a branch.
 # This workflow fires for PRs targeting main or a flowvault-release/* branch
 # that actually touch flowvault or its common dependency, and only builds/tests
-# those two modules. v3 keeps its own CI in pr.yml; v2 is untouched here.
+# those two modules. skyvault is covered by pr.yml, not here.
 
 on:
   pull_request:

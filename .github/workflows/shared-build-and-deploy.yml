@@ -134,7 +134,7 @@ jobs:
       #   2. internal - reads the module's OWN committed pom. Git tags are a
       #      flat, repo-wide namespace with no module awareness, so a tag
       #      lookup cannot tell one module's version lineage from another's:
-      #      it stamped a v3 tag (3.0.0-beta.13) onto both flowvault AND v2
+      #      it stamped a v3 tag (3.0.0-beta.13) onto both flowvault AND skyvault
       #      internal builds. A module's own pom is inherently per-module.
       #   3. Fallback - previoustag. Now unreachable in practice: all three
       #      callers either set inputs.version (release.yml, beta-release.yml)
@@ -212,7 +212,7 @@ jobs:
       # Tests load these with Dotenv.load()/relative paths, which resolve
       # against the *module* directory - Maven runs each module's tests with
       # that module as the working dir. A repo-root .env was correct when this
-      # was a single-module build, but since the common/v2/flowvault split it
+      # was a single-module build, but since the common/skyvault/flowvault split it
       # leaves module tests unable to find their config. Discovered by glob so
       # this survives module renames/additions.
       - name: Distribute test fixtures to modules

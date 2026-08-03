@@ -46,11 +46,11 @@ jobs:
           VERSION="${TAG#*/}"      # flowvault/v1.0.0 -> v1.0.0
           VERSION="${VERSION#v}"   # v1.0.0           -> 1.0.0
 
-          # Tag prefix -> module directory. These differ for skyvault on purpose:
-          # the tag uses the product name, the directory is still 'v2'.
+          # Tag prefix -> module directory. Both now match the directory name
+          # directly, since v2/ was renamed to skyvault/.
           case "$PREFIX" in
             flowvault) MODULE="flowvault" ;;
-            skyvault)  MODULE="v2" ;;
+            skyvault)  MODULE="skyvault" ;;
             *)
               echo "::error::Unknown module prefix '$PREFIX' in tag '$TAG'"
               exit 1
