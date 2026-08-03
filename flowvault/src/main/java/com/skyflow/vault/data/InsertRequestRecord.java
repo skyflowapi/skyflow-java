@@ -18,10 +18,6 @@ public class InsertRequestRecord {
         return this.builder.data;
     }
 
-    public Map<String, Object> getTokens() {
-        return this.builder.tokens;
-    }
-
     public UpsertOptions getUpsert() {
         return this.builder.upsert;
     }
@@ -30,7 +26,6 @@ public class InsertRequestRecord {
     public static class InsertRequestRecordBuilder {
         private String tableName;
         private Map<String, Object> data;
-        private Map<String, Object> tokens;
         private UpsertOptions upsert;
 
         public InsertRequestRecordBuilder tableName(String tableName) {
@@ -40,11 +35,6 @@ public class InsertRequestRecord {
 
         public InsertRequestRecordBuilder data(Map<String, Object> data) {
             this.data = data;
-            return this;
-        }
-
-        public InsertRequestRecordBuilder tokens(Map<String, Object> tokens) {
-            this.tokens = tokens;
             return this;
         }
 

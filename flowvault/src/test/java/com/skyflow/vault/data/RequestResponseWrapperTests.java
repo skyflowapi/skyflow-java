@@ -60,20 +60,16 @@ public class RequestResponseWrapperTests {
     public void testInsertRequestRecord_gettersReturnBuilderValues() {
         Map<String, Object> data = new HashMap<>();
         data.put("name", "john");
-        Map<String, Object> tokens = new HashMap<>();
-        tokens.put("name", "tok-abc");
         UpsertOptions upsert = UpsertOptions.builder().uniqueColumns(Arrays.asList("id")).build();
 
         InsertRequestRecord record = InsertRequestRecord.builder()
                 .tableName("persons")
                 .data(data)
-                .tokens(tokens)
                 .upsert(upsert)
                 .build();
 
         Assert.assertEquals("persons", record.getTableName());
         Assert.assertEquals(data, record.getData());
-        Assert.assertEquals(tokens, record.getTokens());
         Assert.assertEquals(upsert, record.getUpsert());
     }
 

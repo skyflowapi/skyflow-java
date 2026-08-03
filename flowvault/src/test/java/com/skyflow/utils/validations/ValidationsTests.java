@@ -554,20 +554,6 @@ public class ValidationsTests {
         }
     }
 
-    @Test
-    public void testValidateInsertRequest_validRequestWithTokens() {
-        Map<String, Object> tokens = new HashMap<>();
-        tokens.put("name", "tok-abc");
-        ArrayList<InsertRequestRecord> records = new ArrayList<>();
-        records.add(InsertRequestRecord.builder().tableName("table1").tokens(tokens).build());
-        InsertRequest request = InsertRequest.builder().records(records).build();
-        try {
-            Validations.validateInsertRequest(request);
-        } catch (SkyflowException e) {
-            Assert.fail(INVALID_EXCEPTION_THROWN);
-        }
-    }
-
     // ── validateDetokenizeRequest ─────────────────────────────────────────────
 
     @Test
