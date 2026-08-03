@@ -20,6 +20,18 @@ on:
 jobs:
   resolve-module:
     runs-on: ubuntu-latest
+    # Skip this workflow's own version-bump commit, or the release loops:
+    # bump -> push -> release -> bump -> ...
+    #
+    # The bump is force-pushed using PAT_ACTIONS, and PAT-authenticated pushes
+    # DO trigger workflows - GITHUB_TOKEN pushes deliberately do not. So this
+    # guard only becomes load-bearing once the PAT is wired up correctly, which
+    # is why the loop appeared the moment that was fixed. It existed on the v3
+    # branch and was lost in the modularization; without it the workflow
+    # re-fires roughly every 30 seconds indefinitely.
+    #
+    # build-and-deploy needs this job, so skipping here skips the whole run.
+    if: ${{ !contains(github.event.head_commit.message, '[AUTOMATED]') }}
     outputs:
       module: ${{ steps.set-module.outputs.module }}
     steps:
