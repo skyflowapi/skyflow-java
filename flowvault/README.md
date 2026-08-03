@@ -28,6 +28,7 @@ The `flowvault` module is a Skyflow Java SDK built for high-throughput vault ope
   - [Timeouts and retries](#timeouts-and-retries)
   - [Logging](#logging)
 - [VaultController — Bulk operations](#vaultcontroller--bulk-operations)
+  - [Batching and concurrency](#batching-and-concurrency)
 - [Bulk Insert](#bulk-insert)
 - [Bulk Tokenize](#bulk-tokenize)
 - [Bulk Detokenize](#bulk-detokenize)
@@ -306,6 +307,36 @@ Every bulk response has the same two-part shape:
 - a **records** list — one entry per submitted record or token, in input order, each carrying its own `index`, `httpCode`, and `error`
 
 That per-record shape is the point of these APIs; see [Error Handling](#error-handling) for the full model.
+
+## Batching and concurrency
+
+Batch size and concurrency are configured **per operation** through environment variables — there is no builder or options API for them. Each value is read from the process environment first, then from a `.env` file in the working directory.
+
+| Operation | Batch size variable | Default | Max | Concurrency variable | Default | Max |
+|-----------|--------------------|---------|-----|---------------------|---------|-----|
+| Bulk insert | `INSERT_BATCH_SIZE` | 50 | 1000 | `INSERT_CONCURRENCY_LIMIT` | 1 | 10 |
+| Bulk tokenize | `TOKENIZE_BATCH_SIZE` | 50 | 1000 | `TOKENIZE_CONCURRENCY_LIMIT` | 1 | 10 |
+| Bulk detokenize | `DETOKENIZE_BATCH_SIZE` | 50 | 1000 | `DETOKENIZE_CONCURRENCY_LIMIT` | 1 | 10 |
+| Bulk delete tokens | `DELETE_TOKENS_BATCH_SIZE` | 50 | 1000 | `DELETE_TOKENS_CONCURRENCY_LIMIT` | 1 | 10 |
+
+Concurrency defaults to **1**, so batches are sent one after another unless you raise the limit.
+
+How each value is resolved:
+
+- **Batch size** — `min(yourValue, max)`. Above the max, the SDK logs a warning and uses the max. Zero, negative, or non-numeric values log a warning and fall back to the default.
+- **Concurrency** — `min(yourValue, max, batchCount)`, where `batchCount = ceil(itemCount / batchSize)`. Concurrency never exceeds the number of batches there are to run. Same warning-and-fallback behaviour for invalid values.
+
+Those warnings are emitted at `WARN`, which the default `ERROR` level hides — set `LogLevel.WARN` or below to see them (see [Logging](#logging)).
+
+For example, 500 records with `INSERT_BATCH_SIZE=100` and `INSERT_CONCURRENCY_LIMIT=10` produces 5 batches, all 5 in flight at once — the concurrency is capped to 5, not 10.
+
+```dotenv
+# .env
+INSERT_BATCH_SIZE=100
+INSERT_CONCURRENCY_LIMIT=5
+```
+
+The 10,000-item ceiling per bulk call is a separate, fixed limit and is not configurable.
 
 # Bulk Insert
 
