@@ -872,16 +872,13 @@ public class ValidationsTests {
     }
 
     @Test
-    public void testValidateBulkInsertRequest_validRequestWithUpsertAndTokens() {
+    public void testValidateBulkInsertRequest_validRequestWithUpsert() {
         Map<String, Object> data = new HashMap<>();
         data.put("name", "john");
-        Map<String, Object> tokens = new HashMap<>();
-        tokens.put("name", "tok-abc");
         ArrayList<InsertRequestRecord> records = new ArrayList<>();
         records.add(BulkInsertRequestRecord.builder()
                 .tableName("table1")
                 .data(data)
-                .tokens(tokens)
                 .upsert(UpsertOptions.builder()
                         .updateType("REPLACE")
                         .uniqueColumns(Collections.singletonList("email"))
