@@ -50,11 +50,17 @@ on:
       test-reusable-token:
         required: true
 
+      PAT_ACTIONS:
+        required: true
+
+      test-credentials-file-string:
+        required: true
+
 jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           # PAT of the skyflow-service-it admin service account. Persisted by
@@ -134,7 +140,7 @@ jobs:
         uses: jsdaniell/create-json@1.1.2
         with:
           name: "credentials.json"
-          json: ${{ secrets.TEST_CREDENTIALS_FILE_STRING }}
+          json: ${{ secrets.test-credentials-file-string }}
 
       - name: Distribute test fixtures to modules
         run: |
