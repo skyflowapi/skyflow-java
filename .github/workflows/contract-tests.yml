@@ -76,16 +76,33 @@ jobs:
         run: |
           git fetch origin "${{ github.event.pull_request.base.ref }}" --depth=1
           BASELINE="${{ matrix.module }}/api-report/${{ matrix.artifact }}.baseline.jar"
-          if git diff --name-only "origin/${{ github.event.pull_request.base.ref }}" HEAD -- "$BASELINE" | grep -q .; then
+          if ! git diff --name-only "origin/${{ github.event.pull_request.base.ref }}" HEAD -- "$BASELINE" | grep -q .; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          elif git cat-file -e "origin/${{ github.event.pull_request.base.ref }}:$BASELINE" 2>/dev/null; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
           else
-            echo "changed=false" >> "$GITHUB_OUTPUT"
+            # Added by this PR rather than modified: the module is getting its
+            # first baseline. git diff reports an addition as a change, but there
+            # is no old snapshot to `git show`, so a plain "true" here would send
+            # the next step into `git show <base>:<path>` and exit 128.
+            echo "changed=new" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Diff old vs new contract baseline
-        if: always() && steps.baseline-diff-check.outputs.changed == 'true'
+        if: always() && (steps.baseline-diff-check.outputs.changed == 'true' || steps.baseline-diff-check.outputs.changed == 'new')
         run: |
           BASELINE="${{ matrix.module }}/api-report/${{ matrix.artifact }}.baseline.jar"
+
+          if [ "${{ steps.baseline-diff-check.outputs.changed }}" = "new" ]; then
+            {
+              echo "\`$BASELINE\` is **new in this PR** - \`${{ matrix.module }}\` had no committed baseline before, so there is nothing to diff against."
+              echo ""
+              echo "This snapshot becomes the approved contract: every later PR is compared against it, and any incompatible change fails the \`Contract Tests (${{ matrix.module }})\` job until someone regenerates it deliberately. Review it as the starting point, not as a change."
+            } > /tmp/contract-baseline-diff.md
+            cat /tmp/contract-baseline-diff.md
+            exit 0
+          fi
+
           curl -sL -o /tmp/japicmp-cli.jar "https://repo.maven.apache.org/maven2/com/github/siom79/japicmp/japicmp/0.26.0/japicmp-0.26.0-jar-with-dependencies.jar"
           mvn -q -B dependency:build-classpath -pl ${{ matrix.module }} -Dmdep.outputFile=/tmp/module-classpath.txt -Dmaven.javadoc.skip=true -Dgpg.skip=true
           git show "origin/${{ github.event.pull_request.base.ref }}:$BASELINE" > /tmp/old-baseline.jar
@@ -100,13 +117,16 @@ jobs:
             --old-classpath "$(cat /tmp/module-classpath.txt)" \
             --new-classpath "$(cat /tmp/module-classpath.txt)" \
             -m \
+            --ignore-missing-classes \
             --markdown > /tmp/contract-baseline-diff.md || true
 
           cat /tmp/contract-baseline-diff.md
 
       - name: Comment contract baseline change on PR
-        if: always() && steps.baseline-diff-check.outputs.changed == 'true'
+        if: always() && (steps.baseline-diff-check.outputs.changed == 'true' || steps.baseline-diff-check.outputs.changed == 'new')
         uses: actions/github-script@v7
+        env:
+          BASELINE_STATE: ${{ steps.baseline-diff-check.outputs.changed }}
         with:
           script: |
             const fs = require('fs');
@@ -115,7 +135,14 @@ jobs:
             const summary = fs.readFileSync('/tmp/contract-baseline-diff.md', 'utf8');
             // per-module marker so the two matrix jobs update their own comment
             const marker = `<!-- contract-baseline-diff:${module} -->`;
-            const body = `${marker}\n## Contract baseline change detected (\`${module}\`)\n\nThis PR updates \`${module}/api-report/${artifact}.baseline.jar\` (the approved public API contract). Here is exactly what it changes, comparing the baseline on \`${{ github.event.pull_request.base.ref }}\` against the baseline committed in this PR:\n\n${summary}`;
+            const isNew = process.env.BASELINE_STATE === 'new';
+            const heading = isNew
+              ? `## Contract baseline added (\`${module}\`)`
+              : `## Contract baseline change detected (\`${module}\`)`;
+            const preamble = isNew
+              ? `This PR adds \`${module}/api-report/${artifact}.baseline.jar\`, the approved public API contract for this module.`
+              : `This PR updates \`${module}/api-report/${artifact}.baseline.jar\` (the approved public API contract). Here is exactly what it changes, comparing the baseline on \`${{ github.event.pull_request.base.ref }}\` against the baseline committed in this PR:`;
+            const body = `${marker}\n${heading}\n\n${preamble}\n\n${summary}`;
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
