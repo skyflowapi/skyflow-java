@@ -119,10 +119,35 @@
                         <ignoreMissingClasses>false</ignoreMissingClasses>
                         <breakBuildOnBinaryIncompatibleModifications>true</breakBuildOnBinaryIncompatibleModifications>
                         <breakBuildOnSourceIncompatibleModifications>true</breakBuildOnSourceIncompatibleModifications>
-                        <excludes>
-                            <exclude>com.skyflow.generated.*</exclude>
-                            <exclude>com.skyflow.utils.*</exclude>
-                        </excludes>
+                        <!-- An allowlist, not a blocklist: the contract is exactly what a customer
+                             imports. Everything unlisted - com.skyflow.generated.*, com.skyflow.logs,
+                             com.skyflow.utils.* - is internal and free to change without a baseline
+                             update. Note japicmp compares signatures only, never method bodies, so
+                             the controller entry below gates its method signatures, not how they
+                             are implemented. Kept identical to flowvault's list, minus the packages
+                             that module does not have.
+
+                             com.skyflow.VaultClient is deliberately NOT listed. Every one of its
+                             members is protected - generated-client getters, request-body builders,
+                             bearer-token refresh - so it has no public API, and it only ever showed
+                             up here because accessModifier=protected sweeps protected members in.
+                             Its subclasses (VaultController, DetectController) are final, so no
+                             customer can subclass their way to a protected member either. Please
+                             do not add it back. -->
+                        <includes>
+                            <include>com.skyflow.Skyflow</include>
+                            <include>com.skyflow.config</include>
+                            <include>com.skyflow.enums</include>
+                            <include>com.skyflow.errors</include>
+                            <include>com.skyflow.serviceaccount.util</include>
+                            <include>com.skyflow.vault.audit</include>
+                            <include>com.skyflow.vault.bin</include>
+                            <include>com.skyflow.vault.connection</include>
+                            <include>com.skyflow.vault.controller</include>
+                            <include>com.skyflow.vault.data</include>
+                            <include>com.skyflow.vault.detect</include>
+                            <include>com.skyflow.vault.tokens</include>
+                        </includes>
                         <skipXmlReport>false</skipXmlReport>
                         <skipHtmlReport>false</skipHtmlReport>
                     </parameter>

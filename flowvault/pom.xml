@@ -77,6 +77,96 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <!-- Comparison-only jar (classifier "with-common") merging com.skyflow:common,
+                     mirroring skyvault. The published artifact is untouched: shadedArtifactAttached
+                     keeps the main jar as it was. This exists so japicmp compares the whole surface
+                     a consumer actually gets, since classes a customer imports (Credentials,
+                     SkyflowException, BearerToken) live in common and would otherwise read as
+                     missing - japicmp only sees what is physically inside the jars it is given. -->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.6.0</version>
+                <executions>
+                    <execution>
+                        <id>shade-for-japicmp</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <shadedArtifactAttached>true</shadedArtifactAttached>
+                            <shadedClassifierName>with-common</shadedClassifierName>
+                            <artifactSet>
+                                <includes>
+                                    <include>com.skyflow:common</include>
+                                </includes>
+                            </artifactSet>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>com.github.siom79.japicmp</groupId>
+                <artifactId>japicmp-maven-plugin</artifactId>
+                <version>0.26.0</version>
+                <configuration>
+                    <!-- No published version is pulled. "Old" is the committed contract snapshot,
+                         a jar built from the last code state a human deliberately approved as the
+                         contract. Regenerate with scripts/contract-snapshot-update.sh flowvault
+                         after an intentional public API change, then commit the updated jar. -->
+                    <oldVersion>
+                        <file>
+                            <path>${project.basedir}/api-report/skyflow-flowvault-java.baseline.jar</path>
+                        </file>
+                    </oldVersion>
+                    <newVersion>
+                        <file>
+                            <path>${project.build.directory}/${project.build.finalName}-with-common.jar</path>
+                        </file>
+                    </newVersion>
+                    <parameter>
+                        <accessModifier>protected</accessModifier>
+                        <onlyModified>true</onlyModified>
+                        <ignoreMissingClasses>true</ignoreMissingClasses>
+                        <breakBuildOnBinaryIncompatibleModifications>true</breakBuildOnBinaryIncompatibleModifications>
+                        <breakBuildOnSourceIncompatibleModifications>true</breakBuildOnSourceIncompatibleModifications>
+                        <!-- An allowlist, not a blocklist: the contract is exactly what a customer
+                             imports. Everything unlisted - com.skyflow.generated.*, com.skyflow.logs,
+                             com.skyflow.utils.* - is internal and free to change without a baseline
+                             update. Note japicmp compares signatures only, never method bodies, so
+                             the controller entries below gate its method signatures, not how they
+                             are implemented.
+
+                             com.skyflow.VaultClient is deliberately NOT listed. Every one of its
+                             members is protected - generated-client getters, HTTP config, bearer-token
+                             refresh - so it has no public API, and it only ever showed up here
+                             because accessModifier=protected sweeps protected members in. Its
+                             subclass (VaultController) is final, so no customer can subclass their
+                             way to a protected member either. Please do not add it back. -->
+                        <includes>
+                            <include>com.skyflow.Skyflow</include>
+                            <include>com.skyflow.config</include>
+                            <include>com.skyflow.enums</include>
+                            <include>com.skyflow.errors</include>
+                            <include>com.skyflow.serviceaccount.util</include>
+                            <include>com.skyflow.vault.controller</include>
+                            <include>com.skyflow.vault.data</include>
+                        </includes>
+                        <skipXmlReport>false</skipXmlReport>
+                        <skipHtmlReport>false</skipHtmlReport>
+                    </parameter>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>default-cli</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>cmp</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
