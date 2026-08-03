@@ -1,52 +1,146 @@
-comment: false
+# Post a summary on every PR, broken down by flag (module) and component so all three of
+# common / skyvault / flowvault are visible at a glance. require_changes: false keeps the
+# comment on PRs that touch only one module, so the other two still report their coverage.
+comment:
+  layout: "header, diff, flags, components, files, footer"
+  behavior: default
+  require_changes: false
 
+# A project + patch status per module, so each of the three gets its own PR check rather
+# than being averaged into one repo-wide number. informational keeps them advisory - they
+# report the delta without blocking the merge.
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 1%
+      common:
+        flags:
+          - common
+        target: auto
+        threshold: 1%
+        informational: true
+      skyvault:
+        flags:
+          - skyvault
+        target: auto
+        threshold: 1%
+        informational: true
+      flowvault:
+        flags:
+          - flowvault
+        target: auto
+        threshold: 1%
+        informational: true
+    patch:
+      default:
+        target: auto
+        threshold: 1%
+        informational: true
+
+# One flag per Maven module. Each module is uploaded separately in CI so its coverage is
+# reported on its own rather than merged into a single repo-wide number. carryforward keeps
+# the last known coverage for a module when a run does not upload it (e.g. a partial build).
+flags:
+  common:
+    paths:
+      - common/src/main/java/
+    carryforward: true
+  skyvault:
+    paths:
+      - skyvault/src/main/java/
+    carryforward: true
+  flowvault:
+    paths:
+      - flowvault/src/main/java/
+    carryforward: true
+
+# Components give two independent breakdowns of the same coverage data:
+#   - one per module, so a drop can be traced to common / skyvault / flowvault
+#   - one per package, so a drop can be traced to controllers / data / utils / ...
+#
+# Package paths are prefixed with **/ (quoted - a bare leading * is a YAML alias) so they
+# match every module. All three modules share the com.skyflow package name, so the JaCoCo
+# reports are rewritten in CI to carry their module's source root; without that, a path like
+# com/skyflow/config/VaultConfig.java is ambiguous and Codecov attributes it to a single
+# module while the others report no data. See the "Qualify JaCoCo report paths" CI step.
 component_management:
   default_rules:
     statuses:
       - type: project
         target: auto
   individual_components:
+    # -- per module ------------------------------------------------------------
+    - component_id: module_common
+      name: "Module: common"
+      paths:
+        - "common/src/main/java/**"
+    - component_id: module_skyvault
+      name: "Module: skyvault"
+      paths:
+        - "skyvault/src/main/java/**"
+    - component_id: module_flowvault
+      name: "Module: flowvault"
+      paths:
+        - "flowvault/src/main/java/**"
+    # -- per package, across all modules ---------------------------------------
     - component_id: service_account
       name: Service Account
       paths:
-        - src/main/java/com/skyflow/serviceaccount/**
+        - "**/src/main/java/com/skyflow/serviceaccount/**"
     - component_id: vault_data
       name: Vault Data
       paths:
-        - src/main/java/com/skyflow/vault/data/**
+        - "**/src/main/java/com/skyflow/vault/data/**"
     - component_id: vault_tokens
       name: Vault Tokens
       paths:
-        - src/main/java/com/skyflow/vault/tokens/**
+        - "**/src/main/java/com/skyflow/vault/tokens/**"
     - component_id: vault_connection
       name: Vault Connection
       paths:
-        - src/main/java/com/skyflow/vault/connection/**
+        - "**/src/main/java/com/skyflow/vault/connection/**"
     - component_id: vault_controller
       name: Vault Controller
       paths:
-        - src/main/java/com/skyflow/vault/controller/**
+        - "**/src/main/java/com/skyflow/vault/controller/**"
     - component_id: vault_detect
       name: Detect
       paths:
-        - src/main/java/com/skyflow/vault/detect/**
+        - "**/src/main/java/com/skyflow/vault/detect/**"
     - component_id: vault_audit
       name: Audit
       paths:
-        - src/main/java/com/skyflow/vault/audit/**
+        - "**/src/main/java/com/skyflow/vault/audit/**"
     - component_id: vault_bin
       name: BIN Lookup
       paths:
-        - src/main/java/com/skyflow/vault/bin/**
+        - "**/src/main/java/com/skyflow/vault/bin/**"
     - component_id: config
       name: Config
       paths:
-        - src/main/java/com/skyflow/config/**
+        - "**/src/main/java/com/skyflow/config/**"
     - component_id: utils
       name: Utils
       paths:
-        - src/main/java/com/skyflow/utils/**
+        - "**/src/main/java/com/skyflow/utils/**"
     - component_id: errors
       name: Errors
       paths:
-        - src/main/java/com/skyflow/errors/**
+        - "**/src/main/java/com/skyflow/errors/**"
+    - component_id: enums
+      name: Enums
+      paths:
+        - "**/src/main/java/com/skyflow/enums/**"
+    - component_id: logs
+      name: Logs
+      paths:
+        - "**/src/main/java/com/skyflow/logs/**"
+
+# Generated REST/auth clients and sample code are not hand-written and are already excluded
+# from the JaCoCo reports by the root pom; ignore them here too so they never skew a target.
+ignore:
+  - "**/src/main/java/com/skyflow/generated/**"
+  - "**/samples/**"
+  - "**/src/test/**"

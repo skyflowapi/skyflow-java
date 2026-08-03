@@ -1,26 +1,62 @@
-name: Publish package to the JFROG Artifactory
+name: Publish module to the JFROG Artifactory
 on:
   push:
+    # '**' not '*.*': Actions glob '*' does not match '/', so '*.*' let slash
+    # tags (flowvault/v1.0.0) through and fired this branch-only workflow.
     tags-ignore:
-      - '*.*'
+      - '**'
     paths-ignore:
       - "*.md"
     branches:
+      - flowvault-release/*
+      - skyvault-release/*
+      # Legacy: predates the per-module naming, still maps to skyvault.
       - release/*
 
 jobs:
+  resolve-module:
+    runs-on: ubuntu-latest
+    # Skip our own bump commit, or this loops: bump -> push -> release -> bump.
+    # PAT-authenticated pushes DO trigger workflows; GITHUB_TOKEN pushes do not.
+    # build-and-deploy needs this job, so skipping here skips the run.
+    if: ${{ !contains(github.event.head_commit.message, '[AUTOMATED]') }}
+    outputs:
+      module: ${{ steps.set-module.outputs.module }}
+    steps:
+      # Explicit match, no catch-all: defaulting once published the wrong module.
+      - name: Resolve module from branch name
+        id: set-module
+        env:
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          case "$BRANCH" in
+            flowvault-release/*) MODULE="flowvault" ;;
+            skyvault-release/*)  MODULE="skyvault" ;;
+            release/*)           MODULE="skyvault" ;;
+            *)
+              echo "::error::Branch '$BRANCH' does not map to a module."
+              exit 1
+              ;;
+          esac
+          echo "Branch '$BRANCH' -> module '$MODULE'"
+          echo "module=$MODULE" >> "$GITHUB_OUTPUT"
+
   build-and-deploy:
+    needs: resolve-module
     uses: ./.github/workflows/shared-build-and-deploy.yml
     with:
       ref: ${{ github.ref_name }}
       server-id: central
       profile: jfrog
       tag: 'internal'
+      module: ${{ needs.resolve-module.outputs.module }}
     secrets:
       server-username: ${{ secrets.ARTIFACTORY_USERNAME }}
       server-password: ${{ secrets.ARTIFACTORY_PASSWORD }}
       gpg-key: ${{ secrets.JFROG_GPG_KEY }}
       gpg-passphrase: ${{ secrets.JFROG_GPG_PASSPHRASE }}
-      skyflow-credentials: ${{ secrets.SKYFLOW_CREDENTIALS }} >> .env
-      test-expired-token: ${{ secrets.TEST_EXPIRED_TOKEN }} >> .env
-      test-reusable-token: ${{ secrets.TEST_REUSABLE_TOKEN }} >> .env
+      skyflow-credentials: ${{ secrets.SKYFLOW_CREDENTIALS }}
+      test-expired-token: ${{ secrets.TEST_EXPIRED_TOKEN }}
+      test-reusable-token: ${{ secrets.TEST_REUSABLE_TOKEN }}
+      pat-actions: ${{ secrets.PAT_ACTIONS }}
+      test-credentials-file-string: ${{ secrets.TEST_CREDENTIALS_FILE_STRING }}
