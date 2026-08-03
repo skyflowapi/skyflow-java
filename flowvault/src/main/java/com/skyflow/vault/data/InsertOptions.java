@@ -1,9 +1,9 @@
 package com.skyflow.vault.data;
 
-public final class InsertOptions {
+public class InsertOptions {
     private final RequestInterceptor interceptor;
 
-    private InsertOptions(Builder builder) {
+    protected InsertOptions(Builder builder) {
         this.interceptor = builder.interceptor;
     }
 
@@ -15,8 +15,11 @@ public final class InsertOptions {
         return new Builder();
     }
 
-    public static final class Builder {
+    public static class Builder {
         private RequestInterceptor interceptor;
+
+        protected Builder() {
+        }
 
         public Builder interceptor(RequestInterceptor interceptor) {
             this.interceptor = interceptor;

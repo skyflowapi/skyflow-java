@@ -2,9 +2,7 @@ package com.skyflow.utils;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import com.google.gson.JsonObject;
 import com.skyflow.config.VaultConfig;
@@ -61,12 +59,8 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
 
 public final class Utils extends BaseUtils {
 
@@ -445,7 +439,20 @@ public final class Utils extends BaseUtils {
         } else {
             int indexNumber = batchNumber > 0 ? batchNumber * batchSize : 0;
             for (int j = 0; j < batch.size(); j++) {
-                BulkInsertResponseRecord err = new BulkInsertResponseRecord(indexNumber, null, null, null, null, 500, ex.getMessage(), null);
+                String message = null;
+                if (cause != null && cause.getMessage() != null){
+                    message = cause.getMessage();
+                }
+                if (cause != null && cause.getLocalizedMessage() !=null) {
+                    message = cause.getLocalizedMessage();
+                }
+                if (cause != null && cause.getCause() !=null) {
+                    message = cause.getCause().toString();
+                }
+                if (message == null || message.isEmpty() || message.trim().isEmpty()){
+                    message = ex.getMessage();
+                }
+                BulkInsertResponseRecord err = new BulkInsertResponseRecord(indexNumber, null, null, null, null, 500, message, null);
                 allRecords.add(err);
                 indexNumber++;
             }
@@ -512,8 +519,21 @@ public final class Utils extends BaseUtils {
             }
         } else {
             int indexNumber = batchNumber * batchSize;
+            String message = null;
+            if (cause != null && cause.getMessage() != null){
+                message = cause.getMessage();
+            }
+            if (cause != null && cause.getLocalizedMessage() !=null) {
+                message = cause.getLocalizedMessage();
+            }
+            if (cause != null && cause.getCause() !=null) {
+                message = cause.getCause().toString();
+            }
+            if (message == null || message.isEmpty() || message.trim().isEmpty()){
+                message = ex.getMessage();
+            }
             for (int j = 0; j < batch.getTokens().get().size(); j++) {
-                BulkDetokenizeResponseRecord err = new BulkDetokenizeResponseRecord(indexNumber, null, null, null, null, 500, ex.getMessage(), null);
+                BulkDetokenizeResponseRecord err = new BulkDetokenizeResponseRecord(indexNumber, null, null, null, null, 500, message, null);
                 allRecords.add(err);
                 indexNumber++;
             }
@@ -712,6 +732,10 @@ public final class Utils extends BaseUtils {
             int recordsSize = record.size();
             for (int index = 0; index < recordsSize; index++) {
                 V1RecordResponseObject current = record.get(index);
+                String reqID = null;
+                if(current.getError().isPresent()){
+                    reqID = extractRequestId(headers);
+                }
                 records.add(new BulkInsertResponseRecord(
                         indexNumber,
                         current.getTableName().orElse(null),
@@ -720,7 +744,7 @@ public final class Utils extends BaseUtils {
                         current.getHashedData().orElse(null),
                         current.getHttpCode().orElse(current.getError().isPresent() ? 500 : 200),
                         current.getError().orElse(null),
-                        null));
+                        reqID));
                 indexNumber++;
             }
             formattedResponse = new BulkInsertResponse(records);
@@ -736,15 +760,27 @@ public final class Utils extends BaseUtils {
             int recordsSize = record.size();
             for (int index = 0; index < recordsSize; index++) {
                 V1FlowDetokenizeResponseObject current = record.get(index);
+                Map<String, Object> data = null;
+                if(current.getMetadata().isPresent()){
+                    data = current.getMetadata().get();
+                    if (data.containsKey("skyflowID")) {
+                        Object value = data.remove("skyflowID");
+                        data.put("skyflowId", value);
+                    }
+                }
+                String reqID = null;
+                if(current.getError().isPresent()){
+                    reqID = extractRequestId(headers);
+                }
                 records.add(new BulkDetokenizeResponseRecord(
                         indexNumber,
                         current.getToken().orElse(null),
                         current.getValue().orElse(null),
                         current.getTokenGroupName().orElse(null),
-                        current.getMetadata().orElse(null),
+                        data,
                         current.getHttpCode().orElse(current.getError().isPresent() ? 500 : 200),
                         current.getError().orElse(null),
-                        null));
+                        reqID));
                 indexNumber++;
             }
             return new BulkDetokenizeResponse(records);
