@@ -161,6 +161,79 @@ public class SkyflowTests {
         }
     }
 
+    // ── updateVaultConfig validates the incoming config, not the merged result ──
+
+    @Test
+    public void testUpdateVaultConfig_partialUpdateWithoutClusterIdOrVaultUrlIsRejected() throws SkyflowException {
+        // mergeVaultConfig only copies non-null fields across, which implies "send just what you
+        // want to change". But updateVaultConfigTemplate validates the INCOMING config first, and
+        // validateVaultConfiguration requires clusterId or vaultUrl - so a partial update is
+        // rejected even though the merge would have preserved the existing values.
+        Skyflow.SkyflowClientBuilder builder = Skyflow.builder().addVaultConfig(buildConfig("vault1", "cluster1"));
+
+        VaultConfig partial = new VaultConfig();
+        partial.setVaultId("vault1");
+        partial.setTimeout(30);
+
+        try {
+            builder.updateVaultConfig(partial);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertTrue(e.getMessage().contains("clusterId"));
+        }
+    }
+
+    @Test
+    public void testUpdateVaultConfig_rejectedPartialUpdateChangesNothing() throws SkyflowException {
+        Skyflow.SkyflowClientBuilder builder = Skyflow.builder().addVaultConfig(buildConfig("vault1", "cluster1"));
+
+        VaultConfig partial = new VaultConfig();
+        partial.setVaultId("vault1");
+        partial.setTimeout(30);
+        try {
+            builder.updateVaultConfig(partial);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException expected) {
+            // asserted above
+        }
+
+        Skyflow client = builder.build();
+        Assert.assertEquals("cluster1", client.getVaultConfig("vault1").getClusterId());
+        Assert.assertNull("the rejected timeout must not have been applied",
+                client.getVaultConfig("vault1").getTimeout());
+    }
+
+    @Test
+    public void testUpdateVaultConfig_partialUpdateIsAcceptedWhenClusterIdIsRepeated() throws SkyflowException {
+        // The workaround: resend clusterId even when it is not changing.
+        Skyflow.SkyflowClientBuilder builder = Skyflow.builder().addVaultConfig(buildConfig("vault1", "cluster1"));
+
+        VaultConfig update = new VaultConfig();
+        update.setVaultId("vault1");
+        update.setClusterId("cluster1");
+        update.setTimeout(30);
+
+        Skyflow client = builder.updateVaultConfig(update).build();
+
+        Assert.assertEquals(Integer.valueOf(30), client.getVaultConfig("vault1").getTimeout());
+        Assert.assertEquals("cluster1", client.getVaultConfig("vault1").getClusterId());
+    }
+
+    @Test
+    public void testUpdateVaultConfig_vaultUrlAloneSatisfiesTheRequirement() throws SkyflowException {
+        Skyflow.SkyflowClientBuilder builder = Skyflow.builder().addVaultConfig(buildConfig("vault1", "cluster1"));
+
+        VaultConfig update = new VaultConfig();
+        update.setVaultId("vault1");
+        update.setVaultUrl("https://custom.example.com");
+        update.setTimeout(30);
+
+        Skyflow client = builder.updateVaultConfig(update).build();
+
+        Assert.assertEquals("https://custom.example.com", client.vault().currentVaultURL);
+        Assert.assertEquals(Integer.valueOf(30), client.getVaultConfig("vault1").getTimeout());
+    }
+
     // ── Client management lifecycles ─────────────────────────────────────────
     // Whole add/update/remove sequences, asserting both the stored config and the controller
     // behind vault() stay in step at every stage.

@@ -763,6 +763,20 @@ public class VaultControllerTests {
         }
         Assert.assertEquals(EXPECTED_BATCH_COUNT, identities.size());
 
+        // Each context must also report where its batch sits in the request, so an interceptor can
+        // tag batches apart (per-batch correlation id, "batch 3 of 12" logging). Every index in
+        // 0..n-1 must appear exactly once, and every context must agree on the total.
+        java.util.Set<Integer> batchIndexes = new java.util.HashSet<>();
+        for (com.skyflow.vault.data.RequestContext ctx : interceptor.contexts()) {
+            Assert.assertEquals("totalBatches must be the real batch count",
+                    EXPECTED_BATCH_COUNT, ctx.getTotalBatches());
+            Assert.assertTrue("batchIndex out of range: " + ctx.getBatchIndex(),
+                    ctx.getBatchIndex() >= 0 && ctx.getBatchIndex() < EXPECTED_BATCH_COUNT);
+            batchIndexes.add(ctx.getBatchIndex());
+        }
+        Assert.assertEquals("every batch position must appear exactly once",
+                EXPECTED_BATCH_COUNT, batchIndexes.size());
+
         // The header the interceptor set on each context must reach that batch's RequestOptions.
         Assert.assertEquals(EXPECTED_BATCH_COUNT, capturedOptions.size());
         java.util.Set<String> headerValues = new java.util.HashSet<>();

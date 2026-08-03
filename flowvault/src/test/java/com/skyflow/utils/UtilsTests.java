@@ -1985,4 +1985,61 @@ public class UtilsTests {
     // Tests for getQueryRequestBody / buildQueryResponse / getGetRequestBody / buildGetResponse
     // were removed: get and query Utils helpers no longer exist (bulk-only module).
 
+    // ── deleteTokens error records must survive any JSON number type ──────────
+    // recordMap holds deserialised JSON: Gson gives Double for numbers bound to Object, Jackson
+    // gives Integer or Long by magnitude. A blind (Integer) cast turned a real API error into a
+    // ClassCastException, so each representation is covered here.
+
+    private static BulkDeleteTokensResponseRecord deleteError(Object httpCode) {
+        Map<String, Object> recordMap = new HashMap<>();
+        if (httpCode != null) {
+            recordMap.put("http_code", httpCode);
+        }
+        recordMap.put("error", "Token not found");
+        recordMap.put("value", "tok-1");
+        Map<String, Object> body = new HashMap<>();
+        body.put("tokens", Collections.singletonList(recordMap));
+        V1FlowDeleteTokenRequest batch = V1FlowDeleteTokenRequest.builder()
+                .vaultId("vault123")
+                .tokens(Collections.singletonList("tok-1"))
+                .build();
+        List<BulkDeleteTokensResponseRecord> records = Utils.handleBulkDeleteTokensBatchException(
+                new RuntimeException(new ApiClientApiException("delete failed", 500, body)),
+                batch, 0, 50);
+        return records.get(0);
+    }
+
+    @Test
+    public void testDeleteTokensErrorRecord_acceptsIntegerHttpCode() {
+        Assert.assertEquals(Integer.valueOf(404), deleteError(404).getHttpCode());
+    }
+
+    @Test
+    public void testDeleteTokensErrorRecord_acceptsDoubleHttpCode() {
+        // Gson deserialises JSON numbers as Double when the target type is Object.
+        Assert.assertEquals(Integer.valueOf(404), deleteError(404.0d).getHttpCode());
+    }
+
+    @Test
+    public void testDeleteTokensErrorRecord_acceptsLongHttpCode() {
+        Assert.assertEquals(Integer.valueOf(404), deleteError(404L).getHttpCode());
+    }
+
+    @Test
+    public void testDeleteTokensErrorRecord_acceptsStringHttpCode() {
+        Assert.assertEquals(Integer.valueOf(404), deleteError("404").getHttpCode());
+    }
+
+    @Test
+    public void testDeleteTokensErrorRecord_fallsBackTo500WhenTheCodeIsUnusable() {
+        Assert.assertEquals(Integer.valueOf(500), deleteError("not-a-number").getHttpCode());
+        Assert.assertEquals(Integer.valueOf(500), deleteError(null).getHttpCode());
+    }
+
+    @Test
+    public void testDeleteTokensErrorRecord_keepsTheErrorAndEchoedToken() {
+        BulkDeleteTokensResponseRecord record = deleteError(404);
+        Assert.assertEquals("Token not found", record.getError());
+        Assert.assertEquals("tok-1", record.getToken());
+    }
 }

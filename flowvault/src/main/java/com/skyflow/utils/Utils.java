@@ -636,18 +636,15 @@ public final class Utils extends BaseUtils {
 
     private static BulkDeleteTokensResponseRecord createDeleteTokensErrorRecord(
             Map<String, Object> recordMap, int index, String requestedToken, String requestId) {
-        int code = 500;
-        if (recordMap.containsKey("http_code")) {
-            code = (Integer) recordMap.get("http_code");
-        } else if (recordMap.containsKey("httpCode")) {
-            code = (Integer) recordMap.get("httpCode");
-        } else if (recordMap.containsKey("statusCode")) {
-            code = (Integer) recordMap.get("statusCode");
+        // Read through the shared helpers rather than casting: recordMap holds deserialised JSON,
+        // so a status can arrive as Double or String depending on the parser, and a blind
+        // (Integer) cast would turn a real API error into a ClassCastException.
+        int code = readHttpCode(recordMap, 500);
+        String message = readErrorMessage(recordMap);
+        String token = readString(recordMap, "value");
+        if (token == null) {
+            token = requestedToken;
         }
-        String message = recordMap.containsKey("error") ? (String) recordMap.get("error") :
-                recordMap.containsKey("message") ? (String) recordMap.get("message") : "Unknown error";
-        Object echoedToken = recordMap.get("value");
-        String token = (echoedToken instanceof String) ? (String) echoedToken : requestedToken;
         return new BulkDeleteTokensResponseRecord(index, token, code, message, requestId);
     }
 

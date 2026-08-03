@@ -69,7 +69,10 @@ abstract class BaseSkyflow<Self extends BaseSkyflow<Self, V>, V extends BaseVaul
                                            ErrorLogs errorLog, ErrorMessage errorMessage) throws SkyflowException {
         T value = key != null ? map.get(key) : map.values().stream().findFirst().orElse(null);
         if (value == null) {
-            LogUtil.printErrorLog(errorLog.getLog());
+            // The log line carries a %s1 placeholder for the id. Callers that resolve the single
+            // configured entry pass no key, so say so rather than emitting the raw placeholder.
+            LogUtil.printErrorLog(BaseUtils.parameterizedString(
+                    errorLog.getLog(), key != null ? key : "not specified"));
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), errorMessage.getMessage());
         }
         return value;

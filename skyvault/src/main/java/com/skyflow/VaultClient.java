@@ -45,6 +45,16 @@ import java.util.stream.Collectors;
 
 
 public class VaultClient extends BaseVaultClient<VaultConfig> {
+
+    /**
+     * Restores the concrete descriptor from skyflow-java 2.1.1. BaseVaultClient declares this as
+     * {@code V getVaultConfig()}, which erases to BaseVaultConfig; VaultController and
+     * DetectController are compiled against the concrete form.
+     */
+    @Override
+    protected VaultConfig getVaultConfig() {
+        return super.getVaultConfig();
+    }
     private final ApiClientBuilder apiClientBuilder;
     private ApiClient apiClient;
 
