@@ -1,20 +1,90 @@
 name: Public release
+
+# Triggered by publishing a GitHub Release (the UI flow), not by a raw tag push.
+#
+# That matters because a Release carries both facts this pipeline needs, and a
+# bare tag carries neither reliably:
+#   - target_commitish : the branch selected in the release UI. A git tag records
+#                        only a commit, never a branch, so this previously had to
+#                        be guessed by matching a branch tip to the tagged commit.
+#     That guess failed whenever the tip moved on (re-runs always failed) and
+#     silently picked an unrelated branch when several shared a tip.
+#   - tag_name         : carries the module prefix and the version.
+#
+# Beta and final releases share this one workflow: 'release' events cannot be
+# filtered by tag pattern, so two workflows would both fire on every release.
+# They also behaved identically in shared-build-and-deploy.yml, so nothing is
+# lost by merging them - only the reported tag type differs.
+
 on:
-  push:
-    tags: '[0-9]+.[0-9]+.[0-9]+'
+  release:
+    types: [published]
+
 jobs:
+  resolve-release:
+    runs-on: ubuntu-latest
+    outputs:
+      module: ${{ steps.parse.outputs.module }}
+      version: ${{ steps.parse.outputs.version }}
+      kind: ${{ steps.parse.outputs.kind }}
+    steps:
+      - name: Parse module, version and release kind from the tag
+        id: parse
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+          BRANCH: ${{ github.event.release.target_commitish }}
+        run: |
+          # Expected: <module>/v<semver>[-beta.N]  e.g. flowvault/v1.0.0,
+          # skyvault/v2.1.2, flowvault/v1.0.0-beta.1
+          if [[ ! "$TAG" =~ ^[a-z]+/v[0-9]+\.[0-9]+\.[0-9]+(-beta\.[0-9]+)?$ ]]; then
+            echo "::error::Tag '$TAG' is not <module>/v<semver>[-beta.N]." \
+                 "Examples: flowvault/v1.0.0, skyvault/v2.1.2, flowvault/v1.0.0-beta.1"
+            exit 1
+          fi
+
+          PREFIX="${TAG%%/*}"      # flowvault/v1.0.0 -> flowvault
+          VERSION="${TAG#*/}"      # flowvault/v1.0.0 -> v1.0.0
+          VERSION="${VERSION#v}"   # v1.0.0           -> 1.0.0
+
+          # Tag prefix -> module directory. These differ for skyvault on purpose:
+          # the tag uses the product name, the directory is still 'v2'.
+          case "$PREFIX" in
+            flowvault) MODULE="flowvault" ;;
+            skyvault)  MODULE="v2" ;;
+            *)
+              echo "::error::Unknown module prefix '$PREFIX' in tag '$TAG'"
+              exit 1
+              ;;
+          esac
+
+          if [[ "$VERSION" == *-beta.* ]]; then KIND="beta"; else KIND="public"; fi
+
+          if [ -z "$BRANCH" ]; then
+            echo "::error::Release has no target_commitish - cannot determine the release branch."
+            exit 1
+          fi
+
+          echo "Tag '$TAG' -> module='$MODULE' version='$VERSION' kind='$KIND' branch='$BRANCH'"
+          echo "module=$MODULE"   >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "kind=$KIND"       >> "$GITHUB_OUTPUT"
+
   build-and-deploy:
+    needs: resolve-release
     uses: ./.github/workflows/shared-build-and-deploy.yml
     with:
-      ref: ${{ github.ref_name }}
+      ref: ${{ github.event.release.tag_name }}
       server-id: central
       profile: maven-central
-      tag: 'public'
+      tag: ${{ needs.resolve-release.outputs.kind }}
+      module: ${{ needs.resolve-release.outputs.module }}
+      version: ${{ needs.resolve-release.outputs.version }}
+      release-branch: ${{ github.event.release.target_commitish }}
     secrets:
       server-username: ${{ secrets.CENTRAL_PUBLISHER_PORTAL_USERNAME }}
       server-password: ${{ secrets.CENTRAL_PUBLISHER_PORTAL_PASSWORD }}
       gpg-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
       gpg-passphrase: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
-      skyflow-credentials: ${{ secrets.SKYFLOW_CREDENTIALS }} >> .env
-      test-expired-token: ${{ secrets.TEST_EXPIRED_TOKEN }} >> .env
-      test-reusable-token: ${{ secrets.TEST_REUSABLE_TOKEN }} >> .env
+      skyflow-credentials: ${{ secrets.SKYFLOW_CREDENTIALS }}
+      test-expired-token: ${{ secrets.TEST_EXPIRED_TOKEN }}
+      test-reusable-token: ${{ secrets.TEST_REUSABLE_TOKEN }}

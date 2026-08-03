@@ -1,8 +1,14 @@
 name: Publish module to the JFROG Artifactory
 on:
   push:
+    # '**' not '*.*': GitHub Actions glob '*' does not match '/', so the old
+    # '*.*' pattern failed to ignore slash-containing tags like
+    # 'flowvault/v1.0.0' - a public release tag would also fire this internal
+    # workflow (and, since the ref isn't a flowvault-release/* branch,
+    # resolve-module fell through to v2, publishing the wrong module).
+    # '**' matches every tag, so this stays strictly branch-triggered.
     tags-ignore:
-      - '*.*'
+      - '**'
     paths-ignore:
       - "*.md"
     branches:
