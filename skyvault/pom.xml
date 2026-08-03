@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.skyflow</groupId>
+        <artifactId>skyflow</artifactId>
+        <version>1.0.0</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>skyflow-java</artifactId>
+    <version>3.0.0-beta.13-dev.f842cd2d</version>
+    <groupId>com.skyflow</groupId>
+
+    <properties>
+        <maven.deploy.skip>false</maven.deploy.skip>
+        <maven.compiler.source>8</maven.compiler.source>
+        <maven.compiler.target>8</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <sdk.version>${project.version}</sdk.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.skyflow</groupId>
+            <artifactId>common</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.6.0</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <artifactSet>
+                                <includes>
+                                    <include>com.skyflow:common</include>
+                                </includes>
+                            </artifactSet>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <!-- Produces an additional, comparison-only jar (classifier "with-common")
+                     that merges in com.skyflow:common, same pattern flowvault already uses.
+                     The real published skyflow-java-2.1.1.jar is untouched (shadedArtifactAttached
+                     keeps the main artifact slim) - this attached jar exists only so japicmp can
+                     compare an apples-to-apples "everything a v2 consumer actually gets" surface
+                     against the old 2.1.0 baseline, which was a single self-contained jar
+                     (predating the common/v2 split). Without this, classes that moved into
+                     common (Credentials, ErrorCode, BearerToken, Token, etc.) would show up as
+                     false-positive "removed" classes, since japicmp only compares what's
+                     physically inside the two jars it's given. -->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.6.0</version>
+                <executions>
+                    <execution>
+                        <id>shade-for-japicmp</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <shadedArtifactAttached>true</shadedArtifactAttached>
+                            <shadedClassifierName>with-common</shadedClassifierName>
+                            <artifactSet>
+                                <includes>
+                                    <include>com.skyflow:common</include>
+                                </includes>
+                            </artifactSet>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>com.github.siom79.japicmp</groupId>
+                <artifactId>japicmp-maven-plugin</artifactId>
+                <version>0.26.0</version>
+                <configuration>
+                    <!-- No published version is pulled for this comparison. "Old" is the
+                         committed contract snapshot (api-report/skyflow-java.baseline.jar) -
+                         a jar built from the last code state a human deliberately approved as
+                         the contract, same role as skyflow-node's committed api-report/*.api.md.
+                         Regenerate it with scripts/contract-snapshot-update.sh after an
+                         intentional public API change, then commit the updated jar. -->
+                    <oldVersion>
+                        <file>
+                            <path>${project.basedir}/api-report/skyflow-java.baseline.jar</path>
+                        </file>
+                    </oldVersion>
+                    <newVersion>
+                        <file>
+                            <path>${project.build.directory}/${project.build.finalName}-with-common.jar</path>
+                        </file>
+                    </newVersion>
+                    <parameter>
+                        <accessModifier>protected</accessModifier>
+                        <onlyModified>true</onlyModified>
+                        <ignoreMissingClasses>false</ignoreMissingClasses>
+                        <breakBuildOnBinaryIncompatibleModifications>true</breakBuildOnBinaryIncompatibleModifications>
+                        <breakBuildOnSourceIncompatibleModifications>true</breakBuildOnSourceIncompatibleModifications>
+                        <excludes>
+                            <exclude>com.skyflow.generated.*</exclude>
+                            <exclude>com.skyflow.utils.*</exclude>
+                        </excludes>
+                        <skipXmlReport>false</skipXmlReport>
+                        <skipHtmlReport>false</skipHtmlReport>
+                    </parameter>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>default-cli</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>cmp</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+        <profiles>
+        <profile>
+            <id>jfrog</id>
+            <distributionManagement>
+                <repository>
+                    <id>central</id>
+                    <name>prekarilabs.jfrog.io-releases</name>
+                    <url>https://prekarilabs.jfrog.io/artifactory/skyflow-java</url>
+                </repository>
+                <snapshotRepository>
+                    <id>snapshots</id>
+                    <name>prekarilabs.jfrog.io-snapshots</name>
+                    <url>https://prekarilabs.jfrog.io/artifactory/skyflow-java</url>
+                </snapshotRepository>
+            </distributionManagement>
+        </profile>
+        <profile>
+            <id>maven-central</id>
+            <distributionManagement>
+                <repository>
+                    <id>central</id>
+                    <url>https://central.sonatype.com/api/v1/publisher/upload</url>
+                </repository>
+                <snapshotRepository>
+                    <id>central-snapshots</id>
+                    <url>https://central.sonatype.com/api/v1/publisher/upload</url>
+                </snapshotRepository>
+            </distributionManagement>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
+                        <version>0.4.0</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <publishingServerId>central</publishingServerId>
+                            <tokenAuth>true</tokenAuth>
+                            <autoPublish>true</autoPublish>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+</project>

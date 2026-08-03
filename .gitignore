@@ -5,3 +5,6 @@ target
 RUNNING_SAMPLES.md
 
 docs/superpowers/
+
+# local sample configuration - may hold credentials
+.env

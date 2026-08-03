@@ -6,6 +6,7 @@
     "**/*.{java,md,xml,yml,yaml,json,txt,properties}"
   ],
   "words": [
+    "japicmp",
     "Skyflow",
     "skyflow",
     "skyflowapi",
@@ -96,9 +97,18 @@
     "nocreds",
     "nodir",
     "detok",
-    "qhdmceurtnlz",
     "ngrok",
-    "obac"
+    "obac",
+    "siom",
+    "vaultid",
+    "recordss",
+    "synthesise",
+    "synthesised",
+    "deserialise",
+    "deserialised",
+    "unmodelled",
+    "recordss",
+    "rarr"
   ],
   "languageSettings": [
     {
@@ -118,7 +128,8 @@
     "**/target/**",
     "*.lock",
     "Rule/**",
-    "src/main/java/com/skyflow/generated/**",
+    "**/src/main/java/com/skyflow/generated/**",
+    "**/generated/**",
     "**/*.ts",
     "**/processed-*",
     "samples/src/main/java/com/example/credentials.json",

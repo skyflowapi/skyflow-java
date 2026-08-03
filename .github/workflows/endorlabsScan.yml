@@ -36,6 +36,15 @@ jobs:
           name: "credentials.json"
           json: ${{ secrets.TEST_CREDENTIALS_FILE_STRING }}
 
+      - name: Distribute test fixtures to modules
+        run: |
+          # Surefire runs each module's tests with the module directory as the working
+          # directory, so dotenv and ./credentials.json lookups miss the repo-root copies.
+          for module in common skyvault flowvault; do
+            cp .env "$module/.env"
+            cp credentials.json "$module/credentials.json"
+          done
+
       - name: Compile Package
         run: mvn -B package -f pom.xml -Dmaven.javadoc.skip=true
 
