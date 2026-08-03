@@ -60,16 +60,18 @@
                 </executions>
             </plugin>
             <plugin>
-                <!-- Produces an additional, comparison-only jar (classifier "with-common")
-                     that merges in com.skyflow:common, same pattern flowvault already uses.
-                     The real published skyflow-java-2.1.1.jar is untouched (shadedArtifactAttached
-                     keeps the main artifact slim) - this attached jar exists only so japicmp can
-                     compare an apples-to-apples "everything a v2 consumer actually gets" surface
+                <!-- Produces an additional, comparison-only jar that merges in
+                     com.skyflow:common, same pattern flowvault already uses. It exists only so
+                     japicmp can compare an apples-to-apples "everything a v2 consumer gets" surface
                      against the old 2.1.0 baseline, which was a single self-contained jar
                      (predating the common/v2 split). Without this, classes that moved into
                      common (Credentials, ErrorCode, BearerToken, Token, etc.) would show up as
                      false-positive "removed" classes, since japicmp only compares what's
-                     physically inside the two jars it's given. -->
+                     physically inside the two jars it's given.
+                     Written with outputFile rather than shadedArtifactAttached: attaching it made
+                     it a secondary artifact, and attached artifacts are deployed, so a jar
+                     documented here as comparison-only was being published. outputFile keeps it
+                     on disk without attaching. Path unchanged, so japicmp still resolves it. -->
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
                 <version>3.6.0</version>
@@ -81,8 +83,7 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
-                            <shadedArtifactAttached>true</shadedArtifactAttached>
-                            <shadedClassifierName>with-common</shadedClassifierName>
+                            <outputFile>${project.build.directory}/${project.build.finalName}-with-common.jar</outputFile>
                             <artifactSet>
                                 <includes>
                                     <include>com.skyflow:common</include>
@@ -197,11 +198,11 @@
                     <plugin>
                         <groupId>org.sonatype.central</groupId>
                         <artifactId>central-publishing-maven-plugin</artifactId>
-                        <version>0.4.0</version>
+                        <!-- See flowvault/pom.xml for why 0.11.0 and why tokenAuth is gone. -->
+                        <version>0.11.0</version>
                         <extensions>true</extensions>
                         <configuration>
                             <publishingServerId>central</publishingServerId>
-                            <tokenAuth>true</tokenAuth>
                             <!-- See flowvault/pom.xml: releases stage as VALIDATED in the
                                  Central Portal and need a human to click Publish. Note this
                                  changes v2's behaviour - releases no longer go live on their

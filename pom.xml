@@ -232,15 +232,12 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
                 <version>3.3.0</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>test-jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                </configuration>
+                <!-- No test-jar execution. The 'test-jar' goal ATTACHES the jar as a secondary
+                     artifact, and every attached artifact gets deployed - so it was being
+                     published to Maven Central as a permanent -tests.jar classifier alongside
+                     the SDK. Nothing in this repo depends on a test-jar (no <type>test-jar</type>
+                     dependency anywhere), and the release build's own tests run in-module, so
+                     generating it served no purpose. -->
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
