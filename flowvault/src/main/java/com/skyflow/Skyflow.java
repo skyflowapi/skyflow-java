@@ -40,9 +40,29 @@ public final class Skyflow extends BaseSkyflow<Skyflow, VaultConfig> {
         return (VaultConfig) array[0];
     }
 
+    /**
+     * Updates a vault's configuration on an already-built client.
+     * <p>
+     * BaseSkyflow.updateVaultConfig goes straight to the template, bypassing the builder's own
+     * override, so the flowvault-specific fields have to be carried across here too — otherwise
+     * a vaultUrl or HTTP setting supplied through this entry point would be silently dropped
+     * while the same call on the builder honoured it.
+     */
+    @Override
+    public Skyflow updateVaultConfig(VaultConfig vaultConfig) throws SkyflowException {
+        super.updateVaultConfig(vaultConfig);
+        this.builder.carryVaultOverrides(vaultConfig);
+        return this;
+    }
+
     public VaultController vault() throws SkyflowException {
         return resolveOrThrow(this.builder.vaultClientsMap, null, ErrorLogs.VAULT_CONFIG_DOES_NOT_EXIST, ErrorMessage.VaultIdNotInConfigList);
     }
+
+    public VaultController vault(String vaultId) throws SkyflowException {
+        return resolveOrThrow(this.builder.vaultClientsMap, vaultId, ErrorLogs.VAULT_CONFIG_DOES_NOT_EXIST, ErrorMessage.VaultIdNotInConfigList);
+    }
+
 
     public static final class SkyflowClientBuilder extends BaseSkyflowClientBuilder<VaultConfig> {
         private final LinkedHashMap<String, VaultController> vaultClientsMap = new LinkedHashMap<>();

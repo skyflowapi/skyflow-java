@@ -1,0 +1,86 @@
+name: PR CI Checks (flowvault)
+
+# flowvault is a folder under main, alongside skyvault - not a branch.
+# This workflow fires for PRs targeting main or a flowvault-release/* branch
+# that actually touch flowvault or its common dependency, and only builds/tests
+# those two modules. skyvault is covered by pr.yml, not here.
+
+on:
+  pull_request:
+    branches: [ "main", "flowvault-release/**" ]
+    paths:
+      - "flowvault/**"
+      - "common/**"
+      - "pom.xml"
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "11"
+          cache: "maven"
+
+      # package (not verify/install) deliberately stops short of any japicmp
+      # contract gate bound to a module's `verify` phase - that's a separate
+      # check. This job only proves flowvault (and common) compile and package.
+      - name: Build flowvault
+        run: |
+          mvn -B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn \
+            clean package -pl flowvault -am -DskipTests -Dmaven.javadoc.skip=true -Dgpg.skip=true
+
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "11"
+          cache: "maven"
+
+      - name: create-json
+        id: create-json
+        uses: jsdaniell/create-json@1.1.2
+        with:
+          name: "credentials.json"
+          json: ${{ secrets.TEST_CREDENTIALS_FILE_STRING }}
+
+      - name: create env
+        id: create-env
+        run: |
+          for dir in common flowvault; do
+            if [ -f "$dir/pom.xml" ]; then
+              cp credentials.json "$dir/credentials.json"
+              {
+                echo "SKYFLOW_CREDENTIALS=${{ secrets.SKYFLOW_CREDENTIALS }}"
+                echo "TEST_EXPIRED_TOKEN=${{ secrets.TEST_EXPIRED_TOKEN }}"
+                echo "TEST_REUSABLE_TOKEN=${{ secrets.TEST_REUSABLE_TOKEN }}"
+              } >> "$dir/.env"
+            fi
+          done
+
+      # jacoco:report is already bound to the `test` phase in the root pom
+      # (prepare-agent + report executions), so `mvn test` alone regenerates
+      # coverage - no need to invoke jacoco:report again on the command line.
+      - name: Run flowvault unit tests
+        run: |
+          mvn -B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn \
+            clean test -pl flowvault -am -Dmaven.javadoc.skip=true -Dgpg.skip=true
+
+      - name: Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_REPO_UPLOAD_TOKEN }}
+          files: flowvault/target/site/jacoco/jacoco.xml
+          flags: unittests-flowvault
+          name: codecov-skyflow-java-flowvault
+          fail_ci_if_error: true
+          verbose: true

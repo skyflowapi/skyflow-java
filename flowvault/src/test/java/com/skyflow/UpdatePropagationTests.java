@@ -176,6 +176,63 @@ public class UpdatePropagationTests {
         Assert.assertEquals("vault-token", after.token);
     }
 
+    // ── the SAME must hold via the built client, not just the builder ─────────
+    // BaseSkyflow.updateVaultConfig bypasses the builder's override, so both entry points need
+    // covering. A sample calling client.updateVaultConfig(...) is what exposed this gap.
+
+    @Test
+    public void testUpdateVaultConfigOnClient_carriesHttpSettings() throws SkyflowException {
+        Skyflow client = Skyflow.builder().addVaultConfig(buildConfig("vault1", "cluster1")).build();
+
+        VaultConfig update = buildConfig("vault1", "cluster1");
+        update.setTimeout(30);
+        update.setMaxRetries(4);
+        client.updateVaultConfig(update);
+
+        Assert.assertEquals(Integer.valueOf(30), client.getVaultConfig("vault1").getTimeout());
+        Assert.assertEquals(Integer.valueOf(4), client.getVaultConfig("vault1").getMaxRetries());
+    }
+
+    @Test
+    public void testUpdateVaultConfigOnClient_httpSettingsReachTheHttpClient() throws SkyflowException {
+        Skyflow client = Skyflow.builder().addVaultConfig(buildConfig("vault1", "cluster1")).build();
+
+        VaultConfig update = buildConfig("vault1", "cluster1");
+        update.setTimeout(30);
+        client.updateVaultConfig(update);
+
+        VaultController vault = client.vault();
+        vault.updateExecutorInHTTP();
+        Assert.assertEquals(30_000, vault.sharedHttpClient.callTimeoutMillis());
+    }
+
+    @Test
+    public void testUpdateVaultConfigOnClient_carriesVaultUrl() throws SkyflowException {
+        VaultConfig config = buildConfig("vault1", "cluster1");
+        config.setVaultUrl("https://first.example.com");
+        Skyflow client = Skyflow.builder().addVaultConfig(config).build();
+
+        VaultConfig update = buildConfig("vault1", "cluster1");
+        update.setVaultUrl("https://second.example.com");
+        client.updateVaultConfig(update);
+
+        Assert.assertEquals("https://second.example.com", client.getVaultConfig("vault1").getVaultUrl());
+        Assert.assertEquals("https://second.example.com", client.vault().currentVaultURL);
+    }
+
+    @Test
+    public void testUpdateVaultConfigOnClient_retryDelaysAreCarried() throws SkyflowException {
+        Skyflow client = Skyflow.builder().addVaultConfig(buildConfig("vault1", "cluster1")).build();
+
+        VaultConfig update = buildConfig("vault1", "cluster1");
+        update.setInitialRetryDelayMillis(250L);
+        update.setMaxRetryDelayMillis(4000L);
+        client.updateVaultConfig(update);
+
+        Assert.assertEquals(Long.valueOf(250L), client.getVaultConfig("vault1").getInitialRetryDelayMillis());
+        Assert.assertEquals(Long.valueOf(4000L), client.getVaultConfig("vault1").getMaxRetryDelayMillis());
+    }
+
     // ── Credentials updates reach every controller ───────────────────────────
 
     @Test

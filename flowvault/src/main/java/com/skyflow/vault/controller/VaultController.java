@@ -460,7 +460,7 @@ public final class VaultController extends VaultClient {
         for (int batchIndex = 0; batchIndex < batches.size(); batchIndex++) {
             final int index = batchIndex;
             com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDeleteTokenRequest batch = batches.get(index);
-            RequestContext ctx = new RequestContext("DELETE_TOKENS");
+            RequestContext ctx = new RequestContext("DELETE_TOKENS", batchIndex, batches.size());
             if (interceptor != null) interceptor.intercept(ctx);
             CompletableFuture<BulkDeleteTokensResponse> future = CompletableFuture
                     .supplyAsync(() -> processDeleteTokensBatch(batch, ctx), executor)
@@ -612,12 +612,14 @@ public final class VaultController extends VaultClient {
         // batches are contiguous but not uniformly sized - a batch is cut short when it would
         // otherwise repeat a value - so track where each one starts rather than deriving it
         int nextStartIndex = 0;
+        int batchPosition = 0;
         for (List<BulkTokenizeRequestRecord> batchRecords : batches) {
             final int startIndex = nextStartIndex;
             nextStartIndex += batchRecords.size();
+            final int batchIndex = batchPosition++;
             com.skyflow.generated.rest.resources.flowservice.requests.V1FlowTokenizeRequest batch =
                     Utils.getBulkTokenizeRequestBody(batchRecords, this.getVaultConfig().getVaultId());
-            RequestContext ctx = new RequestContext("TOKENIZE");
+            RequestContext ctx = new RequestContext("TOKENIZE", batchIndex, batches.size());
             if (interceptor != null) interceptor.intercept(ctx);
             CompletableFuture<BulkTokenizeResponse> future = CompletableFuture
                     .supplyAsync(() -> processTokenizeBatch(batch, ctx), executor)
@@ -830,7 +832,7 @@ public final class VaultController extends VaultClient {
         for (int batchIndex = 0; batchIndex < batches.size(); batchIndex++) {
             com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest batch = batches.get(batchIndex);
             int batchNumber = batchIndex;
-            RequestContext ctx = new RequestContext("DETOKENIZE");
+            RequestContext ctx = new RequestContext("DETOKENIZE", batchIndex, batches.size());
             if (interceptor != null) interceptor.intercept(ctx);
             CompletableFuture<BulkDetokenizeResponse> future = CompletableFuture
                     .supplyAsync(() -> processDetokenizeBatch(batch, ctx), executor)
@@ -862,7 +864,7 @@ public final class VaultController extends VaultClient {
             for (int batchIndex = 0; batchIndex < batches.size(); batchIndex++) {
                 List<V1InsertRecordData> batch = batches.get(batchIndex);
                 int batchNumber = batchIndex;
-                RequestContext ctx = new RequestContext("INSERT");
+                RequestContext ctx = new RequestContext("INSERT", batchIndex, batches.size());
                 if (interceptor != null) interceptor.intercept(ctx);
                 CompletableFuture<BulkInsertResponse> future = CompletableFuture
                         .supplyAsync(() -> insertBatch(

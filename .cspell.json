@@ -108,7 +108,9 @@
     "deserialised",
     "unmodelled",
     "recordss",
-    "rarr"
+    "rarr",
+    "servname",
+    "nodename"
   ],
   "languageSettings": [
     {

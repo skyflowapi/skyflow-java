@@ -27,7 +27,44 @@ on:
         required: false
         type: string
         default: ''
-      
+
+      version:
+        description: >-
+          Explicit version to release. Set by tag-triggered (beta/public)
+          callers, which parse it out of a <module>/v<semver> tag - the raw
+          tag text is not itself a usable Maven version. When empty, the
+          version is derived as before (see the Bump Version step).
+        required: false
+        type: string
+        default: ''
+
+      release-branch:
+        description: >-
+          Branch that receives the version-bump commit, for beta/public
+          releases. Supplied by the caller from the GitHub Release's
+          target_commitish - i.e. the branch the human picked in the release
+          UI. This used to be guessed by matching a branch tip to the tagged
+          commit, which broke whenever the tip moved on (re-runs always
+          failed) and silently picked an unrelated branch when several shared
+          a tip. A tag records only a commit, never a branch, so the branch
+          has to be supplied rather than inferred.
+        required: false
+        type: string
+        default: ''
+
+      dry-run:
+        description: >-
+          Validate the release pipeline WITHOUT publishing anything.
+          Everything still runs - tag parsing, version resolution, the pom
+          bump, the full build, tests and GPG signing - but 'mvn verify'
+          replaces 'mvn deploy' (so the deploy plugin never runs at all,
+          rather than being asked politely to skip) and the version-bump
+          commit is not pushed. Publishing to Maven Central is immutable,
+          so this is the only safe way to exercise the public path.
+        required: false
+        type: boolean
+        default: false
+
     secrets:
       server-username:
         required: true
@@ -50,6 +87,14 @@ on:
       test-reusable-token:
         required: true
 
+      # Reusable workflows do NOT inherit caller secrets: anything used below must
+      # be declared here AND passed by every caller, or it resolves to "" silently.
+      pat-actions:
+        required: true
+
+      test-credentials-file-string:
+        required: true
+
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -57,6 +102,9 @@ jobs:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
+          # Admin service-account PAT: persisted by checkout and reused for the
+          # version-bump push, which needs the ruleset's admin bypass. SK-2986.
+          token: ${{ secrets.pat-actions }}
 
       - name: Set up maven or jfrog repository
         uses: actions/setup-java@v4
@@ -69,18 +117,20 @@ jobs:
           gpg-private-key: ${{ secrets.gpg-key }} # Value of the GPG private key to import
           gpg-passphrase: GPG_PASSPHRASE # env variable for GPG private key passphrase
 
-      - name: Resolve Branch for the Tagged Commit
-        id: resolve-branch
+      - name: Validate release branch input
         if: ${{ inputs.tag == 'beta' || inputs.tag == 'public' }}
         run: |
-          TAG_COMMIT=$(git rev-list -n 1 ${{ github.ref_name }})
-          BRANCH_NAME=$(git for-each-ref --points-at="$TAG_COMMIT" --format='%(refname:short)' refs/remotes/origin | grep -v '/HEAD$' | sed 's#^origin/##' | head -n 1)
-          if [ -z "$BRANCH_NAME" ]; then
-            echo "Error: Could not resolve branch for the tag."
+          if [ -z "${{ inputs.release-branch }}" ]; then
+            echo "::error::release-branch is required for ${{ inputs.tag }} releases."
             exit 1
           fi
-          echo "Resolved Branch Name: $BRANCH_NAME"
-          echo "branch_name=$BRANCH_NAME" >> $GITHUB_ENV
+          # The tagged commit must actually be on that branch, otherwise the
+          # bump would land somewhere the release was never cut from.
+          if ! git merge-base --is-ancestor HEAD "origin/${{ inputs.release-branch }}"; then
+            echo "::error::Tagged commit is not an ancestor of origin/${{ inputs.release-branch }}."
+            exit 1
+          fi
+          echo "Release branch: ${{ inputs.release-branch }}"
 
       - name: Get Previous tag
         id: previoustag
@@ -88,13 +138,27 @@ jobs:
         with:
           fallback: 1.0.0
 
+      # Version priority: inputs.version (beta/public, parsed from the tag) >
+      # the module's own pom (internal) > previoustag (unreachable; a safety net).
+      # Tags are a flat repo-wide namespace with no module awareness, which is why
+      # internal reads the pom - a tag lookup stamped a v3 version onto every module.
       - name: Bump Version
+        id: bump-version
         run: |
-          chmod +x ./scripts/bump_version.sh
-          if ${{ inputs.tag == 'internal' }}; then
-            ./scripts/bump_version.sh "${{ steps.previoustag.outputs.tag }}" "$(git rev-parse --short "$GITHUB_SHA")" "${{ inputs.module }}"
+          chmod +x ./scripts/bump_version.sh ./scripts/current_module_version.sh
+          if [ -n "${{ inputs.version }}" ]; then
+            BASE_VERSION="${{ inputs.version }}"
+          elif ${{ inputs.tag == 'internal' }}; then
+            BASE_VERSION=$(./scripts/current_module_version.sh "${{ inputs.module }}")
           else
-            ./scripts/bump_version.sh "${{ steps.previoustag.outputs.tag }}" "" "${{ inputs.module }}"
+            BASE_VERSION="${{ steps.previoustag.outputs.tag }}"
+          fi
+          echo "base_version=$BASE_VERSION" >> "$GITHUB_OUTPUT"
+
+          if ${{ inputs.tag == 'internal' }}; then
+            ./scripts/bump_version.sh "$BASE_VERSION" "$(git rev-parse --short "$GITHUB_SHA")" "${{ inputs.module }}"
+          else
+            ./scripts/bump_version.sh "$BASE_VERSION" "" "${{ inputs.module }}"
           fi
 
       - name: Commit changes
@@ -103,17 +167,33 @@ jobs:
           git config user.email ${{ github.actor }}@users.noreply.github.com
 
           if [[ "${{ inputs.tag }}" == "beta" || "${{ inputs.tag }}" == "public" ]]; then
-            git checkout ${{ env.branch_name }}
+            git checkout ${{ inputs.release-branch }}
           fi
 
           git add ${{ inputs.module }}/pom.xml
+
+          # Nothing staged = pom already at this version (normal if set before
+          # tagging). That is success; a bare 'git commit' would exit 1 here.
+          if git diff --cached --quiet; then
+            echo "::notice::pom already at the target version - nothing to commit"
+            exit 0
+          fi
+
           if [[ "${{ inputs.tag }}" == "internal" ]]; then
-            git commit -m "[AUTOMATED] Private Release ${{ steps.previoustag.outputs.tag }}-dev-$(git rev-parse --short $GITHUB_SHA)"
-            git push origin ${{ github.ref_name }} -f
+            git commit -m "[AUTOMATED] Private Release ${{ steps.bump-version.outputs.base_version }}-dev-$(git rev-parse --short $GITHUB_SHA)"
+            if [[ "${{ inputs.dry-run }}" == "true" ]]; then
+              echo "::notice::DRY RUN - not pushing the version-bump commit"
+            else
+              git push origin ${{ github.ref_name }} -f
+            fi
           fi
           if [[ "${{ inputs.tag }}" == "beta" || "${{ inputs.tag }}" == "public" ]]; then
-            git commit -m "[AUTOMATED] Public Release - ${{ steps.previoustag.outputs.tag }}"
-            git push origin ${{ env.branch_name }}
+            git commit -m "[AUTOMATED] Public Release - ${{ steps.bump-version.outputs.base_version }}"
+            if [[ "${{ inputs.dry-run }}" == "true" ]]; then
+              echo "::notice::DRY RUN - not pushing the version-bump commit"
+            else
+              git push origin ${{ inputs.release-branch }}
+            fi
           fi
 
       - name: Create env
@@ -129,7 +209,7 @@ jobs:
         uses: jsdaniell/create-json@1.1.2
         with:
           name: "credentials.json"
-          json: ${{ secrets.TEST_CREDENTIALS_FILE_STRING }}
+          json: ${{ secrets.test-credentials-file-string }}
 
       - name: Distribute test fixtures to modules
         run: |
@@ -140,16 +220,25 @@ jobs:
             cp credentials.json "$module/credentials.json"
           done
 
+      # Dry run uses 'verify', not 'deploy', so the deploy plugin and the
+      # central-publishing extension are never invoked at all.
+      #
+      # Javadoc is skipped for internal builds only - doclint on JDK 11 fails on
+      # comment nits. Beta/public must NOT skip it: Sonatype rejects a bundle
+      # with no -javadoc.jar.
       - name: Publish package
         run: |
-          if [[ "${{ inputs.tag }}" == "internal" ]]; then
-            # Javadoc is skipped for internal (JFrog) builds only: these are dev snapshots that
-            # nobody browses docs for, and strict doclint on the pinned JDK 11 fails the release
-            # on HTML nits in comments. Beta/public below must keep it — Sonatype requires the
-            # -javadoc.jar, so any doclint error there is a real break to fix at the source.
+          if [[ "${{ inputs.dry-run }}" == "true" ]]; then
+            echo "::notice::DRY RUN - running 'verify' instead of 'deploy'; nothing will be published"
+            if [[ "${{ inputs.tag }}" == "internal" ]]; then
+              mvn --batch-mode -pl ${{ inputs.module }} -am verify -P jfrog -DskipTests -Dmaven.javadoc.skip=true
+            else
+              mvn --batch-mode -pl ${{ inputs.module }} -am verify -P ${{ inputs.profile }}
+            fi
+          elif [[ "${{ inputs.tag }}" == "internal" ]]; then
             mvn --batch-mode -pl ${{ inputs.module }} -am deploy -P jfrog -DskipTests -Dmaven.javadoc.skip=true
           elif [[ "${{ inputs.tag }}" == "beta" || "${{ inputs.tag }}" == "public" ]]; then
-            mvn --batch-mode -pl ${{ inputs.module }} -am deploy -P ${{ inputs.profile }} -Dmaven.javadoc.skip=true
+            mvn --batch-mode -pl ${{ inputs.module }} -am deploy -P ${{ inputs.profile }}
           fi
 
         env:

@@ -35,6 +35,43 @@ public final class Skyflow extends BaseSkyflow<Skyflow, VaultConfig> {
         return new SkyflowClientBuilder();
     }
 
+    // ── Covariant overrides ───────────────────────────────────────────────────
+    // BaseSkyflow declares these as `Self` / `V`, which erase to BaseSkyflow and BaseVaultConfig.
+    // Source callers are unaffected because javac resolves the type parameters, but a consumer
+    // JAR compiled against skyflow-java 2.1.1 references the concrete descriptors and would fail
+    // with NoSuchMethodError against an erased-only surface. Re-declaring them keeps the published
+    // 2.x binary contract intact; each one just delegates.
+
+    @Override
+    public Skyflow addVaultConfig(VaultConfig vaultConfig) throws SkyflowException {
+        return super.addVaultConfig(vaultConfig);
+    }
+
+    @Override
+    public VaultConfig getVaultConfig(String vaultId) {
+        return super.getVaultConfig(vaultId);
+    }
+
+    @Override
+    public Skyflow updateVaultConfig(VaultConfig vaultConfig) throws SkyflowException {
+        return super.updateVaultConfig(vaultConfig);
+    }
+
+    @Override
+    public Skyflow removeVaultConfig(String vaultId) throws SkyflowException {
+        return super.removeVaultConfig(vaultId);
+    }
+
+    @Override
+    public Skyflow updateSkyflowCredentials(Credentials credentials) throws SkyflowException {
+        return super.updateSkyflowCredentials(credentials);
+    }
+
+    @Override
+    public Skyflow setLogLevel(LogLevel logLevel) {
+        return super.setLogLevel(logLevel);
+    }
+
     public Skyflow addConnectionConfig(ConnectionConfig connectionConfig) throws SkyflowException {
         this.builder.addConnectionConfig(connectionConfig);
         return this;

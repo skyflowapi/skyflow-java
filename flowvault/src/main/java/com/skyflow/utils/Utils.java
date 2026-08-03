@@ -538,6 +538,32 @@ public final class Utils extends BaseUtils {
         return allRecords;
     }
 
+    /**
+     * Best available description of a failure that never reached the API.
+     *
+     * <p>The generated client wraps transport failures as "Network error executing HTTP request",
+     * which says nothing about what actually went wrong, and the future wraps that again. Walk down
+     * to the innermost cause so the caller sees the real problem - for a mistyped cluster id that is
+     * {@code java.net.UnknownHostException: <host>: nodename nor servname provided, or not known}
+     * rather than the generic wrapper. Mirrors the order bulk insert and detokenize already use.
+     */
+    private static String describeTransportFailure(Throwable ex, Throwable cause) {
+        String message = null;
+        if (cause != null && cause.getMessage() != null) {
+            message = cause.getMessage();
+        }
+        if (cause != null && cause.getLocalizedMessage() != null) {
+            message = cause.getLocalizedMessage();
+        }
+        if (cause != null && cause.getCause() != null) {
+            message = cause.getCause().toString();
+        }
+        if (message == null || message.trim().isEmpty()) {
+            message = ex.getMessage();
+        }
+        return message;
+    }
+
     public static List<BulkDeleteTokensResponseRecord> handleBulkDeleteTokensBatchException(
             Throwable ex,
             com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDeleteTokenRequest batch,
@@ -592,9 +618,10 @@ public final class Utils extends BaseUtils {
             }
         } else {
             // a transport-level failure never reached the API, so there is no id to report
+            String message = describeTransportFailure(ex, cause);
             for (int position = 0; position < batchTokens.size(); position++) {
                 errorRecords.add(new BulkDeleteTokensResponseRecord(
-                        startIndex + position, tokenAt(batchTokens, position), 500, ex.getMessage()));
+                        startIndex + position, tokenAt(batchTokens, position), 500, message));
             }
         }
         return errorRecords;
@@ -606,18 +633,15 @@ public final class Utils extends BaseUtils {
 
     private static BulkDeleteTokensResponseRecord createDeleteTokensErrorRecord(
             Map<String, Object> recordMap, int index, String requestedToken, String requestId) {
-        int code = 500;
-        if (recordMap.containsKey("http_code")) {
-            code = (Integer) recordMap.get("http_code");
-        } else if (recordMap.containsKey("httpCode")) {
-            code = (Integer) recordMap.get("httpCode");
-        } else if (recordMap.containsKey("statusCode")) {
-            code = (Integer) recordMap.get("statusCode");
+        // Read through the shared helpers rather than casting: recordMap holds deserialised JSON,
+        // so a status can arrive as Double or String depending on the parser, and a blind
+        // (Integer) cast would turn a real API error into a ClassCastException.
+        int code = readHttpCode(recordMap, 500);
+        String message = readErrorMessage(recordMap);
+        String token = readString(recordMap, "value");
+        if (token == null) {
+            token = requestedToken;
         }
-        String message = recordMap.containsKey("error") ? (String) recordMap.get("error") :
-                recordMap.containsKey("message") ? (String) recordMap.get("message") : "Unknown error";
-        Object echoedToken = recordMap.get("value");
-        String token = (echoedToken instanceof String) ? (String) echoedToken : requestedToken;
         return new BulkDeleteTokensResponseRecord(index, token, code, message, requestId);
     }
 
@@ -642,7 +666,7 @@ public final class Utils extends BaseUtils {
         } else {
             // a transport-level failure never reached the API, so there is no id to report
             httpCode = 500;
-            message = ex.getMessage();
+            message = describeTransportFailure(ex, cause);
         }
         // a batch-level failure fails every token group of every value in that batch
         List<BulkTokenizeResponseRecord> errorRecords = new ArrayList<>();
@@ -714,10 +738,6 @@ public final class Utils extends BaseUtils {
             }
         }
         return apiException.getMessage();
-    }
-
-    private static BulkTokenizeRequestRecord recordAt(List<BulkTokenizeRequestRecord> records, int position) {
-        return (records != null && position < records.size()) ? records.get(position) : null;
     }
 
     public static BulkInsertResponse formatBulkInsertResponse(V1InsertResponse response, int batch, int batchSize, Map<String, List<String>> headers) {
