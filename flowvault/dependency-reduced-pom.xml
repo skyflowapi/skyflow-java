@@ -9,7 +9,7 @@
   <artifactId>skyflow-flowvault-java</artifactId>
   <name>${project.groupId}:${project.artifactId}</name>
   <version>1.0.0</version>
-  <description>Skyflow V3 SDK for the Java programming language</description>
+  <description>Skyflow FlowVault SDK for the Java programming language</description>
   <url>https://github.com/skyflowapi/skyflow-java/tree/main</url>
   <developers>
     <developer>

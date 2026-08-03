@@ -14,7 +14,7 @@
     <version>1.0.0</version>
     <packaging>jar</packaging>
     <name>${project.groupId}:${project.artifactId}</name>
-    <description>Skyflow V3 SDK for the Java programming language</description>
+    <description>Skyflow FlowVault SDK for the Java programming language</description>
     <url>https://github.com/skyflowapi/skyflow-java/tree/main</url>
 
     <licenses>
