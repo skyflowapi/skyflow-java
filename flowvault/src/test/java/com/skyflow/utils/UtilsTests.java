@@ -2016,7 +2016,7 @@ public class UtilsTests {
 
     @Test
     public void testDeleteTokensErrorRecord_acceptsDoubleHttpCode() {
-        // Gson deserialises JSON numbers as Double when the target type is Object.
+        // Gson maps a JSON number to Double when the target type is Object.
         Assert.assertEquals(Integer.valueOf(404), deleteError(404.0d).getHttpCode());
     }
 
