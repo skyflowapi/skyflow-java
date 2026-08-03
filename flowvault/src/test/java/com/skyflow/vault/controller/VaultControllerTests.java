@@ -34,9 +34,9 @@ import com.skyflow.vault.data.BulkTokenizeResponseRecord;
 import com.skyflow.vault.data.BulkInsertResponseRecord;
 import com.skyflow.vault.data.BulkTokenizeRequest;
 import com.skyflow.vault.data.BulkTokenizeResponse;
+import com.skyflow.vault.data.BulkDetokenizeOptions;
+import com.skyflow.vault.data.BulkInsertOptions;
 import com.skyflow.vault.data.DeleteTokensOptions;
-import com.skyflow.vault.data.DetokenizeOptions;
-import com.skyflow.vault.data.InsertOptions;
 import com.skyflow.vault.data.InsertRequestRecord;
 import com.skyflow.vault.data.RequestInterceptor;
 import com.skyflow.vault.data.TokenGroupRedactions;
@@ -196,7 +196,7 @@ public class VaultControllerTests {
         BulkInsertRequest request = BulkInsertRequest.builder().records(records).build();
 
         RequestInterceptor interceptor = ctx -> ctx.addHeader(CustomHeaderKey.SkyflowAccountId, "acct-123");
-        InsertOptions options = InsertOptions.builder().interceptor(interceptor).build();
+        BulkInsertOptions options = BulkInsertOptions.builder().interceptor(interceptor).build();
 
         controller.bulkInsert(request, options);
 
@@ -931,7 +931,7 @@ public class VaultControllerTests {
                 .build();
 
         CountingInterceptor interceptor = new CountingInterceptor();
-        controller.bulkInsert(request, InsertOptions.builder().interceptor(interceptor).build());
+        controller.bulkInsert(request, BulkInsertOptions.builder().interceptor(interceptor).build());
 
         ArgumentCaptor<RequestOptions> captor = ArgumentCaptor.forClass(RequestOptions.class);
         Mockito.verify(mockRaw, Mockito.times(EXPECTED_BATCH_COUNT)).insert(any(), captor.capture());
@@ -1000,7 +1000,7 @@ public class VaultControllerTests {
         BulkDetokenizeRequest request = BulkDetokenizeRequest.builder().tokens(multiBatchTokens()).build();
 
         CountingInterceptor interceptor = new CountingInterceptor();
-        controller.bulkDetokenize(request, DetokenizeOptions.builder().interceptor(interceptor).build());
+        controller.bulkDetokenize(request, BulkDetokenizeOptions.builder().interceptor(interceptor).build());
 
         ArgumentCaptor<RequestOptions> captor = ArgumentCaptor.forClass(RequestOptions.class);
         Mockito.verify(mockRaw, Mockito.times(EXPECTED_BATCH_COUNT)).detokenize(any(), captor.capture());

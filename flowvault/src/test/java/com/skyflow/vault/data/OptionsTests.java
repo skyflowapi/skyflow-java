@@ -5,7 +5,8 @@ import org.junit.Test;
 
 /**
  * Tests for the single-field options/builder classes: {@link InsertOptions},
- * {@link DetokenizeOptions}, {@link TokenizeOptions} and {@link DeleteTokensOptions}.
+ * {@link DetokenizeOptions}, {@link TokenizeOptions} and {@link DeleteTokensOptions},
+ * plus the bulk specialisations {@link BulkInsertOptions} and {@link BulkDetokenizeOptions}.
  * Each class simply wraps a {@link RequestInterceptor} with no validation.
  */
 public class OptionsTests {
@@ -38,6 +39,37 @@ public class OptionsTests {
     @Test
     public void testDetokenizeOptions_withoutInterceptor() {
         DetokenizeOptions options = DetokenizeOptions.builder().build();
+        Assert.assertNull(options.getInterceptor());
+    }
+
+    // ── BulkInsertOptions ────────────────────────────────────────────────────
+
+    @Test
+    public void testBulkInsertOptions_withInterceptor() {
+        BulkInsertOptions options = BulkInsertOptions.builder().interceptor(INTERCEPTOR).build();
+        Assert.assertSame(INTERCEPTOR, options.getInterceptor());
+        // BulkInsertOptions is a specialisation of InsertOptions, so it flows anywhere the base does
+        Assert.assertTrue(options instanceof InsertOptions);
+    }
+
+    @Test
+    public void testBulkInsertOptions_withoutInterceptor() {
+        BulkInsertOptions options = BulkInsertOptions.builder().build();
+        Assert.assertNull(options.getInterceptor());
+    }
+
+    // ── BulkDetokenizeOptions ────────────────────────────────────────────────
+
+    @Test
+    public void testBulkDetokenizeOptions_withInterceptor() {
+        BulkDetokenizeOptions options = BulkDetokenizeOptions.builder().interceptor(INTERCEPTOR).build();
+        Assert.assertSame(INTERCEPTOR, options.getInterceptor());
+        Assert.assertTrue(options instanceof DetokenizeOptions);
+    }
+
+    @Test
+    public void testBulkDetokenizeOptions_withoutInterceptor() {
+        BulkDetokenizeOptions options = BulkDetokenizeOptions.builder().build();
         Assert.assertNull(options.getInterceptor());
     }
 

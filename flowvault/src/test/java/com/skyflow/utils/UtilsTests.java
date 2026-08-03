@@ -700,7 +700,7 @@ public class UtilsTests {
 
         Assert.assertEquals(1, errors.size());
         Assert.assertEquals(500, errors.get(0).getHttpCode());
-//        Assert.assertEquals("boom", errors.get(0).getError());
+        Assert.assertEquals("boom", errors.get(0).getError());
         Assert.assertEquals(2, errors.get(0).getIndex());
         // Projected error records carry no table/id/field data.
         Assert.assertNull(errors.get(0).getTableName());
@@ -778,7 +778,38 @@ public class UtilsTests {
 
         Assert.assertEquals(1, records.size());
         Assert.assertNull(records.get(0).getRequestId());
-//        Assert.assertEquals("boom", records.get(0).getError());
+        Assert.assertEquals("boom", records.get(0).getError());
+    }
+
+    @Test
+    public void testHandleBulkInsertBatchException_nonApiCauseUsesCauseMessage() {
+        // Cause is non-null but not an ApiClientApiException: the message ladder should
+        // pick up the cause's own message rather than the outer wrapper's.
+        RuntimeException ex = new RuntimeException("wrapper", new IllegalStateException("inner boom"));
+        List<V1InsertRecordData> batch = Collections.singletonList(
+                V1InsertRecordData.builder().data(new HashMap<>()).build());
+
+        List<BulkInsertResponseRecord> records = Utils.handleBulkInsertBatchException(ex, batch, 0, 50);
+
+        Assert.assertEquals(1, records.size());
+        Assert.assertEquals(500, records.get(0).getHttpCode());
+        Assert.assertEquals("inner boom", records.get(0).getError());
+    }
+
+    @Test
+    public void testHandleBulkInsertBatchException_nonApiCauseWithNestedCauseUsesNestedToString() {
+        // When the cause itself wraps another throwable, the ladder resolves the message
+        // down to the nested cause's toString().
+        RuntimeException ex = new RuntimeException("wrapper",
+                new IllegalStateException("inner boom", new IllegalArgumentException("root cause")));
+        List<V1InsertRecordData> batch = Collections.singletonList(
+                V1InsertRecordData.builder().data(new HashMap<>()).build());
+
+        List<BulkInsertResponseRecord> records = Utils.handleBulkInsertBatchException(ex, batch, 0, 50);
+
+        Assert.assertEquals(1, records.size());
+        Assert.assertEquals(500, records.get(0).getHttpCode());
+        Assert.assertEquals("java.lang.IllegalArgumentException: root cause", records.get(0).getError());
     }
 
     // ── createInsertErrorRecord / createDetokenizeErrorRecord branch coverage ─
@@ -1281,6 +1312,24 @@ public class UtilsTests {
         Assert.assertEquals("boom", errors.get(0).getError());
     }
 
+    @Test
+    public void testHandleBulkDetokenizeBatchException_nonApiCauseUsesCauseMessage() {
+        // Cause is non-null but not an ApiClientApiException: the message ladder resolves the
+        // nested cause's toString() rather than the outer wrapper's message.
+        RuntimeException ex = new RuntimeException("wrapper",
+                new IllegalStateException("inner boom", new IllegalArgumentException("root cause")));
+        V1FlowDetokenizeRequest batch = V1FlowDetokenizeRequest.builder()
+                .vaultId("vault123")
+                .tokens(Collections.singletonList("t1"))
+                .build();
+
+        List<BulkDetokenizeResponseRecord> records = Utils.handleBulkDetokenizeBatchException(ex, batch, 0, 50);
+
+        Assert.assertEquals(1, records.size());
+        Assert.assertEquals(500, records.get(0).getHttpCode());
+        Assert.assertEquals("java.lang.IllegalArgumentException: root cause", records.get(0).getError());
+    }
+
     // ── handleBulkDeleteTokensBatchException ──────────────────────────────────
 
     @Test
@@ -1338,6 +1387,153 @@ public class UtilsTests {
 
         Assert.assertEquals(1, errors.size());
         Assert.assertEquals(Integer.valueOf(500), errors.get(0).getHttpCode());
+        Assert.assertEquals("t1", errors.get(0).getToken());
+    }
+
+    @Test
+    public void testHandleBulkDeleteTokensBatchException_errorFieldAsObjectUsesHelper() {
+        // Structured error envelope {"error": {message, httpCode}} → parsed per token via the helper.
+        Map<String, Object> errorObject = new HashMap<>();
+        errorObject.put("message", "vault not found");
+        errorObject.put("httpCode", 404);
+        Map<String, Object> body = new HashMap<>();
+        body.put("error", errorObject);
+        ApiClientApiException apiEx = new ApiClientApiException("delete failed", 404, body);
+        RuntimeException wrapper = new RuntimeException(apiEx);
+
+        V1FlowDeleteTokenRequest batch = V1FlowDeleteTokenRequest.builder()
+                .vaultId("vault123")
+                .tokens(Collections.singletonList("t1"))
+                .build();
+        List<BulkDeleteTokensResponseRecord> errors = Utils.handleBulkDeleteTokensBatchException(wrapper, batch, 0, 50);
+
+        Assert.assertEquals(1, errors.size());
+        Assert.assertEquals(Integer.valueOf(404), errors.get(0).getHttpCode());
+        Assert.assertEquals("vault not found", errors.get(0).getError());
+        Assert.assertEquals("t1", errors.get(0).getToken());
+    }
+
+    @Test
+    public void testHandleBulkDeleteTokensBatchException_errorFieldNeitherMapNorStringUsesApiMessage() {
+        Map<String, Object> body = new HashMap<>();
+        body.put("error", 500);
+        ApiClientApiException apiEx = new ApiClientApiException("delete failed", 500, body);
+        RuntimeException wrapper = new RuntimeException(apiEx);
+
+        V1FlowDeleteTokenRequest batch = V1FlowDeleteTokenRequest.builder()
+                .vaultId("vault123")
+                .tokens(Collections.singletonList("t1"))
+                .build();
+        List<BulkDeleteTokensResponseRecord> errors = Utils.handleBulkDeleteTokensBatchException(wrapper, batch, 0, 50);
+
+        Assert.assertEquals(1, errors.size());
+        Assert.assertEquals("delete failed", errors.get(0).getError());
+    }
+
+    @Test
+    public void testHandleBulkDeleteTokensBatchException_bodyWithNeitherTokensNorErrorKey() {
+        // A map body matching neither branch falls through to the batch-wide fallback.
+        Map<String, Object> body = new HashMap<>();
+        body.put("unexpected", "shape");
+        ApiClientApiException apiEx = new ApiClientApiException("delete failed", 503, body);
+        RuntimeException wrapper = new RuntimeException(apiEx);
+
+        V1FlowDeleteTokenRequest batch = V1FlowDeleteTokenRequest.builder()
+                .vaultId("vault123")
+                .tokens(Arrays.asList("t1", "t2"))
+                .build();
+        List<BulkDeleteTokensResponseRecord> errors = Utils.handleBulkDeleteTokensBatchException(wrapper, batch, 1, 50);
+
+        Assert.assertEquals(2, errors.size());
+        Assert.assertEquals(Integer.valueOf(503), errors.get(0).getHttpCode());
+        Assert.assertEquals("delete failed", errors.get(0).getError());
+        // startIndex = batchNumber * batchSize = 50
+        Assert.assertEquals(50, errors.get(0).getIndex());
+        Assert.assertEquals(51, errors.get(1).getIndex());
+        Assert.assertEquals("t2", errors.get(1).getToken());
+    }
+
+    @Test
+    public void testHandleBulkDeleteTokensBatchException_tokensNotAListFallsBackToBatchWideError() {
+        Map<String, Object> body = new HashMap<>();
+        body.put("tokens", "not-a-list");
+        ApiClientApiException apiEx = new ApiClientApiException("delete failed", 400, body);
+        RuntimeException wrapper = new RuntimeException(apiEx);
+
+        V1FlowDeleteTokenRequest batch = V1FlowDeleteTokenRequest.builder()
+                .vaultId("vault123")
+                .tokens(Collections.singletonList("t1"))
+                .build();
+        List<BulkDeleteTokensResponseRecord> errors = Utils.handleBulkDeleteTokensBatchException(wrapper, batch, 0, 50);
+
+        Assert.assertEquals(1, errors.size());
+        Assert.assertEquals("delete failed", errors.get(0).getError());
+        Assert.assertEquals("t1", errors.get(0).getToken());
+    }
+
+    @Test
+    public void testHandleBulkDeleteTokensBatchException_nonMapEntriesAreSkipped() {
+        Map<String, Object> body = new HashMap<>();
+        body.put("tokens", Arrays.asList("not-a-map", null));
+        ApiClientApiException apiEx = new ApiClientApiException("delete failed", 400, body);
+        RuntimeException wrapper = new RuntimeException(apiEx);
+
+        V1FlowDeleteTokenRequest batch = V1FlowDeleteTokenRequest.builder()
+                .vaultId("vault123")
+                .tokens(Collections.singletonList("t1"))
+                .build();
+        List<BulkDeleteTokensResponseRecord> errors = Utils.handleBulkDeleteTokensBatchException(wrapper, batch, 0, 50);
+
+        // No entry parsed, so the batch-wide fallback fires instead.
+        Assert.assertEquals(1, errors.size());
+        Assert.assertEquals("delete failed", errors.get(0).getError());
+    }
+
+    @Test
+    public void testHandleBulkDeleteTokensBatchException_recordEchoesValueAndReadsHttpCodeAndMessage() {
+        // createDeleteTokensErrorRecord: http_code key, "message" key, and an echoed "value" token.
+        Map<String, Object> tokenMap = new HashMap<>();
+        tokenMap.put("http_code", 409);
+        tokenMap.put("message", "already deleted");
+        tokenMap.put("value", "echoed-token");
+        Map<String, Object> body = new HashMap<>();
+        body.put("tokens", Collections.singletonList(tokenMap));
+        ApiClientApiException apiEx = new ApiClientApiException("delete failed", 409, body);
+        RuntimeException wrapper = new RuntimeException(apiEx);
+
+        V1FlowDeleteTokenRequest batch = V1FlowDeleteTokenRequest.builder()
+                .vaultId("vault123")
+                .tokens(Collections.singletonList("requested-token"))
+                .build();
+        List<BulkDeleteTokensResponseRecord> errors = Utils.handleBulkDeleteTokensBatchException(wrapper, batch, 0, 50);
+
+        Assert.assertEquals(1, errors.size());
+        Assert.assertEquals(Integer.valueOf(409), errors.get(0).getHttpCode());
+        Assert.assertEquals("already deleted", errors.get(0).getError());
+        // the echoed "value" wins over the token from the request batch
+        Assert.assertEquals("echoed-token", errors.get(0).getToken());
+    }
+
+    @Test
+    public void testHandleBulkDeleteTokensBatchException_recordUsesStatusCodeAndUnknownError() {
+        // createDeleteTokensErrorRecord: statusCode key and the no-error/no-message fallback.
+        Map<String, Object> tokenMap = new HashMap<>();
+        tokenMap.put("statusCode", 410);
+        Map<String, Object> body = new HashMap<>();
+        body.put("tokens", Collections.singletonList(tokenMap));
+        ApiClientApiException apiEx = new ApiClientApiException("delete failed", 410, body);
+        RuntimeException wrapper = new RuntimeException(apiEx);
+
+        V1FlowDeleteTokenRequest batch = V1FlowDeleteTokenRequest.builder()
+                .vaultId("vault123")
+                .tokens(Collections.singletonList("t1"))
+                .build();
+        List<BulkDeleteTokensResponseRecord> errors = Utils.handleBulkDeleteTokensBatchException(wrapper, batch, 0, 50);
+
+        Assert.assertEquals(1, errors.size());
+        Assert.assertEquals(Integer.valueOf(410), errors.get(0).getHttpCode());
+        Assert.assertEquals("Unknown error", errors.get(0).getError());
+        // no echoed value, so the requested token is reported
         Assert.assertEquals("t1", errors.get(0).getToken());
     }
 
@@ -1414,6 +1610,75 @@ public class UtilsTests {
         Assert.assertEquals(1, errors.get(0).getTokens().size());
         Assert.assertNull(errors.get(0).getTokens().get(0).getTokenGroupName());
         Assert.assertEquals("boom", errors.get(0).getTokens().get(0).getError());
+    }
+
+    @Test
+    public void testHandleBulkTokenizeBatchException_errorBodyWithResponseArrayRebuildsRecords() {
+        // A 4xx whose body echoes the per-row "response" array is rebuilt via tokenizeRecordsFromErrorBody
+        // rather than summarised by the bare status code.
+        Map<String, Object> tokenRow = new HashMap<>();
+        tokenRow.put("tokenGroupName", "group1");
+        tokenRow.put("error", "BYOT token should contain one token group");
+        tokenRow.put("httpCode", 400);
+        Map<String, Object> responseRow = new HashMap<>();
+        responseRow.put("value", "v1");
+        responseRow.put("tokens", Collections.singletonList(tokenRow));
+        Map<String, Object> body = new HashMap<>();
+        body.put("response", Collections.singletonList(responseRow));
+        ApiClientApiException apiEx = new ApiClientApiException("tokenize failed", 400, body);
+        RuntimeException wrapper = new RuntimeException(apiEx);
+
+        List<BulkTokenizeResponseRecord> errors = Utils.handleBulkTokenizeBatchException(
+                wrapper, tokenizeBatch("v1", "group1"), 0);
+
+        Assert.assertEquals(1, errors.size());
+        Assert.assertEquals("v1", errors.get(0).getValue());
+        Assert.assertEquals(1, errors.get(0).getTokens().size());
+        Assert.assertEquals("group1", errors.get(0).getTokens().get(0).getTokenGroupName());
+        Assert.assertEquals("BYOT token should contain one token group",
+                errors.get(0).getTokens().get(0).getError());
+        Assert.assertEquals(Integer.valueOf(400), errors.get(0).getTokens().get(0).getHttpCode());
+    }
+
+    @Test
+    public void testHandleBulkTokenizeBatchException_errorFieldAsObjectUsesStructuredMessage() {
+        // extractBatchErrorMessage reads {"error": {message}} when the body has no per-row response.
+        Map<String, Object> errorObject = new HashMap<>();
+        errorObject.put("message", "vault not found");
+        Map<String, Object> body = new HashMap<>();
+        body.put("error", errorObject);
+        ApiClientApiException apiEx = new ApiClientApiException("tokenize failed", 404, body);
+        RuntimeException wrapper = new RuntimeException(apiEx);
+
+        List<BulkTokenizeResponseRecord> errors = Utils.handleBulkTokenizeBatchException(
+                wrapper, tokenizeBatch("v1", "group1"), 0);
+
+        Assert.assertEquals(1, errors.size());
+        Assert.assertEquals("vault not found", errors.get(0).getTokens().get(0).getError());
+        Assert.assertEquals(Integer.valueOf(404), errors.get(0).getTokens().get(0).getHttpCode());
+    }
+
+    @Test
+    public void testHandleBulkTokenizeBatchException_nonMapBodyUsesApiMessage() {
+        // Body is not a map, so extractBatchErrorMessage falls back to the exception's own message.
+        ApiClientApiException apiEx = new ApiClientApiException("tokenize failed", 500, "unparseable");
+        RuntimeException wrapper = new RuntimeException(apiEx);
+
+        List<BulkTokenizeResponseRecord> errors = Utils.handleBulkTokenizeBatchException(
+                wrapper, tokenizeBatch("v1", "group1"), 0);
+
+        Assert.assertEquals(1, errors.size());
+        Assert.assertEquals("tokenize failed", errors.get(0).getTokens().get(0).getError());
+        Assert.assertEquals(Integer.valueOf(500), errors.get(0).getTokens().get(0).getHttpCode());
+    }
+
+    @Test
+    public void testHandleBulkTokenizeBatchException_nullBatchReturnsEmpty() {
+        RuntimeException ex = new RuntimeException("boom");
+
+        List<BulkTokenizeResponseRecord> errors = Utils.handleBulkTokenizeBatchException(ex, null, 0);
+
+        Assert.assertTrue(errors.isEmpty());
     }
 
     // ── formatBulkInsertResponse ───────────────────────────────────────────────

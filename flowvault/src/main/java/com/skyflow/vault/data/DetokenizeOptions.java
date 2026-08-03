@@ -1,9 +1,9 @@
 package com.skyflow.vault.data;
 
-public final class DetokenizeOptions {
+public class DetokenizeOptions {
     private final RequestInterceptor interceptor;
 
-    private DetokenizeOptions(Builder builder) {
+    protected DetokenizeOptions(Builder builder) {
         this.interceptor = builder.interceptor;
     }
 
@@ -15,8 +15,11 @@ public final class DetokenizeOptions {
         return new Builder();
     }
 
-    public static final class Builder {
+    public static class Builder {
         private RequestInterceptor interceptor;
+
+        protected Builder() {
+        }
 
         public Builder interceptor(RequestInterceptor interceptor) {
             this.interceptor = interceptor;
