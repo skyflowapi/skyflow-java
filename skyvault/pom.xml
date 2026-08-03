@@ -125,10 +125,17 @@
                              update. Note japicmp compares signatures only, never method bodies, so
                              the controller entry below gates its method signatures, not how they
                              are implemented. Kept identical to flowvault's list, minus the packages
-                             that module does not have. -->
+                             that module does not have.
+
+                             com.skyflow.VaultClient is deliberately NOT listed. Every one of its
+                             members is protected - generated-client getters, request-body builders,
+                             bearer-token refresh - so it has no public API, and it only ever showed
+                             up here because accessModifier=protected sweeps protected members in.
+                             Its subclasses (VaultController, DetectController) are final, so no
+                             customer can subclass their way to a protected member either. Please
+                             do not add it back. -->
                         <includes>
                             <include>com.skyflow.Skyflow</include>
-                            <include>com.skyflow.VaultClient</include>
                             <include>com.skyflow.config</include>
                             <include>com.skyflow.enums</include>
                             <include>com.skyflow.errors</include>

@@ -113,7 +113,7 @@ jobs:
             -o /tmp/old-baseline.jar \
             -n "$BASELINE" \
             -a protected \
-            -i "com.skyflow.Skyflow;com.skyflow.VaultClient;com.skyflow.config;com.skyflow.enums;com.skyflow.errors;com.skyflow.serviceaccount.util;com.skyflow.vault.audit;com.skyflow.vault.bin;com.skyflow.vault.connection;com.skyflow.vault.controller;com.skyflow.vault.data;com.skyflow.vault.detect;com.skyflow.vault.tokens" \
+            -i "com.skyflow.Skyflow;com.skyflow.config;com.skyflow.enums;com.skyflow.errors;com.skyflow.serviceaccount.util;com.skyflow.vault.audit;com.skyflow.vault.bin;com.skyflow.vault.connection;com.skyflow.vault.controller;com.skyflow.vault.data;com.skyflow.vault.detect;com.skyflow.vault.tokens" \
             --old-classpath "$(cat /tmp/module-classpath.txt)" \
             --new-classpath "$(cat /tmp/module-classpath.txt)" \
             -m \
