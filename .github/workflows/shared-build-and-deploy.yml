@@ -87,6 +87,21 @@ on:
       test-reusable-token:
         required: true
 
+      # A reusable workflow only sees secrets declared here AND passed by the
+      # caller - repo secrets are NOT in scope, unlike in a normal workflow.
+      # Both of these were referenced by their repo names without being
+      # declared, so they silently evaluated to empty:
+      #   PAT_ACTIONS                  -> checkout failed with
+      #                                   "Input required and not supplied: token"
+      #   TEST_CREDENTIALS_FILE_STRING -> credentials.json was written empty on
+      #                                   every release build, with no error
+      # required: true makes a missing value fail at the call site instead.
+      pat-actions:
+        required: true
+
+      test-credentials-file-string:
+        required: true
+
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -94,6 +109,11 @@ jobs:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
+          # PAT of the skyflow-service-it admin service account. Persisted by
+          # checkout and reused for the automated version-bump push below, so
+          # that push satisfies the branch-protection ruleset's repo-admin
+          # bypass (github-actions[bot] is not a bypass actor). See SK-2986.
+          token: ${{ secrets.pat-actions }}
 
       - name: Set up maven or jfrog repository
         uses: actions/setup-java@v4
@@ -207,7 +227,7 @@ jobs:
         uses: jsdaniell/create-json@1.1.2
         with:
           name: "credentials.json"
-          json: ${{ secrets.TEST_CREDENTIALS_FILE_STRING }}
+          json: ${{ secrets.test-credentials-file-string }}
 
       # Tests load these with Dotenv.load()/relative paths, which resolve
       # against the *module* directory - Maven runs each module's tests with
