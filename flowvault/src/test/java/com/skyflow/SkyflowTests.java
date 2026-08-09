@@ -5,20 +5,55 @@ import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.Env;
 import com.skyflow.enums.LogLevel;
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.vault.controller.VaultController;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
 
 public class SkyflowTests {
     private static final String EXCEPTION_NOT_THROWN = "Should have thrown an exception";
     private static final String INVALID_EXCEPTION_THROWN = "Should not have thrown any exception";
 
     private static VaultConfig buildConfig(String vaultId, String clusterId) {
+        return buildConfig(vaultId, clusterId, Env.DEV);
+    }
+
+    private static VaultConfig buildConfig(String vaultId, String clusterId, Env env) {
         VaultConfig config = new VaultConfig();
         config.setVaultId(vaultId);
         config.setClusterId(clusterId);
-        config.setEnv(Env.DEV);
+        config.setEnv(env);
         return config;
+    }
+
+    // setupLogger calls LogManager.reset(), clearing all handlers, so the capturing
+    // handler must be attached after setupLogger runs (see LogUtilLevelTests).
+    private static class CapturingHandler extends Handler {
+        final List<LogRecord> records = new ArrayList<>();
+
+        @Override
+        public void publish(LogRecord record) {
+            records.add(record);
+        }
+
+        @Override public void flush() {}
+        @Override public void close() {}
+    }
+
+    private static CapturingHandler attachCapture(LogLevel logLevel) {
+        LogUtil.setupLogger(logLevel);
+        CapturingHandler handler = new CapturingHandler();
+        handler.setLevel(Level.ALL);
+        Logger.getLogger(LogUtil.class.getName()).addHandler(handler);
+        return handler;
     }
 
     // ── addVaultConfig ────────────────────────────────────────────────────────
@@ -515,5 +550,52 @@ public class SkyflowTests {
     public void testGetVaultConfig_returnsNullForUnknownVaultId() throws SkyflowException {
         Skyflow client = Skyflow.builder().addVaultConfig(buildConfig("vault1", "cluster1")).build();
         Assert.assertNull(client.getVaultConfig("vault-unknown"));
+    }
+
+    // ── SK-2963: beta-build-in-prod warning ──────────────────────────────────
+
+    @Test
+    public void testAnyVaultIsProd_emptyCollectionIsFalse() {
+        Assert.assertFalse(Skyflow.SkyflowClientBuilder.anyVaultIsProd(new ArrayList<>()));
+    }
+
+    @Test
+    public void testAnyVaultIsProd_noVaultIsProd() {
+        List<VaultConfig> configs = Arrays.asList(
+                buildConfig("vault1", "cluster1", Env.DEV),
+                buildConfig("vault2", "cluster2", Env.SANDBOX),
+                buildConfig("vault3", "cluster3", Env.STAGE));
+        Assert.assertFalse(Skyflow.SkyflowClientBuilder.anyVaultIsProd(configs));
+    }
+
+    @Test
+    public void testAnyVaultIsProd_oneOfManyIsProd() {
+        List<VaultConfig> configs = Arrays.asList(
+                buildConfig("vault1", "cluster1", Env.DEV),
+                buildConfig("vault2", "cluster2", Env.PROD));
+        Assert.assertTrue(Skyflow.SkyflowClientBuilder.anyVaultIsProd(configs));
+    }
+
+    @Test
+    public void testAnyVaultIsProd_allProd() {
+        List<VaultConfig> configs = Arrays.asList(
+                buildConfig("vault1", "cluster1", Env.PROD),
+                buildConfig("vault2", "cluster2", Env.PROD));
+        Assert.assertTrue(Skyflow.SkyflowClientBuilder.anyVaultIsProd(configs));
+    }
+
+    // build() itself is wired against Constants.SDK_VERSION, which is a clean GA
+    // version in this checkout, so this only exercises the "stays silent" path
+    // end-to-end. isNonGaVersion's own beta/dev detection is covered directly in
+    // common's BaseUtilsTests; anyVaultIsProd's PROD-detection is covered above.
+    @Test
+    public void testBuild_currentGaVersionNeverWarnsEvenAgainstProdVault() throws SkyflowException {
+        CapturingHandler handler = attachCapture(LogLevel.WARN);
+
+        Skyflow.builder().addVaultConfig(buildConfig("vault1", "cluster1", Env.PROD)).build();
+
+        boolean betaWarningLogged = handler.records.stream()
+                .anyMatch(r -> r.getLevel().equals(Level.WARNING) && r.getMessage().contains("beta/pre-release build"));
+        Assert.assertFalse("A GA build must never emit the beta-build warning", betaWarningLogged);
     }
 }

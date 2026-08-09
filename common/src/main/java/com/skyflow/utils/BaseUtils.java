@@ -10,6 +10,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Base64;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import com.google.gson.JsonObject;
 import com.skyflow.config.BaseCredentials;
@@ -108,6 +109,14 @@ public class BaseUtils {
             base = base.replace("%s" + (index + 1), args[index]);
         }
         return base;
+    }
+
+    // Beta/dev builds are published as <major>.<minor>.<patch>-beta.<n> or
+    // -dev.<sha> (see scripts/bump_version.sh); a plain public release has no suffix.
+    private static final Pattern GA_VERSION_PATTERN = Pattern.compile("^\\d+\\.\\d+\\.\\d+$");
+
+    public static boolean isNonGaVersion(String version) {
+        return version == null || !GA_VERSION_PATTERN.matcher(version).matches();
     }
 
     protected static JsonObject getCommonMetrics() {

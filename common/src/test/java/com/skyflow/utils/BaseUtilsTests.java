@@ -241,4 +241,40 @@ public class BaseUtilsTests {
         Assert.assertNotNull(metrics.get(BaseConstants.SDK_METRIC_RUNTIME_DETAILS));
         Assert.assertNotNull(metrics.get(BaseConstants.SDK_METRIC_CLIENT_OS_DETAILS));
     }
+
+    // ── isNonGaVersion (SK-2963: beta-build-in-prod warning) ────────────────────
+
+    @Test
+    public void testIsNonGaVersion_plainSemverIsGa() {
+        Assert.assertFalse(BaseUtils.isNonGaVersion("1.0.0"));
+        Assert.assertFalse(BaseUtils.isNonGaVersion("2.11.3"));
+    }
+
+    @Test
+    public void testIsNonGaVersion_betaSuffixIsNonGa() {
+        Assert.assertTrue(BaseUtils.isNonGaVersion("2.1.0-beta.1"));
+    }
+
+    @Test
+    public void testIsNonGaVersion_devSuffixIsNonGa() {
+        Assert.assertTrue(BaseUtils.isNonGaVersion("2.1.0-dev.18f8f1ba"));
+    }
+
+    @Test
+    public void testIsNonGaVersion_combinedBetaDevSuffixIsNonGa() {
+        // Real convention seen in the wild, e.g. flowvault samples pom.xml:
+        // 3.0.0-beta.13-dev.18f8f1ba
+        Assert.assertTrue(BaseUtils.isNonGaVersion("3.0.0-beta.13-dev.18f8f1ba"));
+    }
+
+    @Test
+    public void testIsNonGaVersion_nullIsTreatedAsNonGa() {
+        Assert.assertTrue(BaseUtils.isNonGaVersion(null));
+    }
+
+    @Test
+    public void testIsNonGaVersion_nonSemverStringIsNonGa() {
+        Assert.assertTrue(BaseUtils.isNonGaVersion("v2"));
+        Assert.assertTrue(BaseUtils.isNonGaVersion(""));
+    }
 }
