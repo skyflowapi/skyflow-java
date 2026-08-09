@@ -301,7 +301,7 @@ public final class Skyflow extends BaseSkyflow<Skyflow, VaultConfig> {
         }
 
         public Skyflow build() {
-            if (Utils.isNonGaVersion(Constants.SDK_VERSION) && anyVaultIsProd(this.vaultConfigMap.values())) {
+            if (shouldWarnBetaBuildInProd(Constants.SDK_VERSION, this.vaultConfigMap.values())) {
                 LogUtil.printWarningLog(Utils.parameterizedString(
                         WarningLogs.BETA_BUILD_WARNING.getLog(), Constants.SDK_VERSION));
             }
@@ -309,7 +309,12 @@ public final class Skyflow extends BaseSkyflow<Skyflow, VaultConfig> {
         }
 
         // Package-private so it's directly unit-testable without needing a non-GA
-        // Constants.SDK_VERSION on the test classpath.
+        // Constants.SDK_VERSION on the test classpath: build() is otherwise only
+        // exercisable end-to-end against whatever GA version this checkout ships.
+        static boolean shouldWarnBetaBuildInProd(String sdkVersion, Collection<VaultConfig> vaultConfigs) {
+            return Utils.isNonGaVersion(sdkVersion) && anyVaultIsProd(vaultConfigs);
+        }
+
         static boolean anyVaultIsProd(Collection<VaultConfig> vaultConfigs) {
             for (VaultConfig vaultConfig : vaultConfigs) {
                 if (vaultConfig.getEnv() == Env.PROD) {

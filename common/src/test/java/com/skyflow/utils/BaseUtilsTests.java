@@ -6,6 +6,7 @@ import com.skyflow.enums.Env;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.logs.WarningLogs;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -276,5 +277,22 @@ public class BaseUtilsTests {
     public void testIsNonGaVersion_nonSemverStringIsNonGa() {
         Assert.assertTrue(BaseUtils.isNonGaVersion("v2"));
         Assert.assertTrue(BaseUtils.isNonGaVersion(""));
+    }
+
+    @Test
+    public void testIsNonGaVersion_zeroMajorPlainSemverIsTreatedAsGa() {
+        // Known cross-SDK design limitation, not unique to Java: a pre-1.0 version with no
+        // explicit pre-release suffix (e.g. "0.9.0") fully matches major.minor.patch and is
+        // therefore classified as GA here. Documenting the current behavior so a future change
+        // is a deliberate decision (flagged to the SK-2963 design owner) rather than a silent
+        // regression either way.
+        Assert.assertFalse(BaseUtils.isNonGaVersion("0.9.0"));
+    }
+
+    @Test
+    public void testBetaBuildWarningMessage_interpolatesVersionCorrectly() {
+        String message = BaseUtils.parameterizedString(WarningLogs.BETA_BUILD_WARNING.getLog(), "1.2.3-beta.1");
+        Assert.assertTrue(message.contains("v1.2.3-beta.1"));
+        Assert.assertFalse("Placeholder must be fully substituted", message.contains("%s1"));
     }
 }

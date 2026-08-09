@@ -584,6 +584,28 @@ public class SkyflowTests {
         Assert.assertTrue(Skyflow.SkyflowClientBuilder.anyVaultIsProd(configs));
     }
 
+    // shouldWarnBetaBuildInProd is the exact predicate build() gates on. Constants.SDK_VERSION
+    // is a clean GA version in this checkout, so build() itself can never be driven down the
+    // "fires" branch end-to-end here; testing this predicate directly with an injected version
+    // string is what actually covers the && combination (e.g. would catch it being swapped for ||).
+    @Test
+    public void testShouldWarnBetaBuildInProd_betaVersionAndProdVault_isTrue() {
+        List<VaultConfig> configs = Arrays.asList(buildConfig("vault1", "cluster1", Env.PROD));
+        Assert.assertTrue(Skyflow.SkyflowClientBuilder.shouldWarnBetaBuildInProd("1.0.0-beta.1", configs));
+    }
+
+    @Test
+    public void testShouldWarnBetaBuildInProd_gaVersionAndProdVault_isFalse() {
+        List<VaultConfig> configs = Arrays.asList(buildConfig("vault1", "cluster1", Env.PROD));
+        Assert.assertFalse(Skyflow.SkyflowClientBuilder.shouldWarnBetaBuildInProd("1.0.0", configs));
+    }
+
+    @Test
+    public void testShouldWarnBetaBuildInProd_betaVersionAndNoProdVault_isFalse() {
+        List<VaultConfig> configs = Arrays.asList(buildConfig("vault1", "cluster1", Env.DEV));
+        Assert.assertFalse(Skyflow.SkyflowClientBuilder.shouldWarnBetaBuildInProd("1.0.0-beta.1", configs));
+    }
+
     // build() itself is wired against Constants.SDK_VERSION, which is a clean GA
     // version in this checkout, so this only exercises the "stays silent" path
     // end-to-end. isNonGaVersion's own beta/dev detection is covered directly in
