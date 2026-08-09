@@ -3,6 +3,7 @@ Version=$1
 CommitHash=$2
 Module=$3
 PomFile="$GITHUB_WORKSPACE/$Module/pom.xml"
+ReadmeFile="$GITHUB_WORKSPACE/$Module/README.md"
 
 if [ -z "$Version" ]; then
     echo "Error: Version argument is required."
@@ -22,6 +23,8 @@ if [ -z "$CommitHash" ]; then
         }
         { print }
     ' "$PomFile" > tempfile && cat tempfile > "$PomFile" && rm -f tempfile
+
+    "$GITHUB_WORKSPACE/scripts/toggle_beta_banner.sh" "$ReadmeFile" "$Version"
 
     echo "--------------------------"
     echo "Done. Main project version now at $Version"
