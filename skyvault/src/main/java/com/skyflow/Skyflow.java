@@ -3,12 +3,15 @@ package com.skyflow;
 import com.skyflow.config.ConnectionConfig;
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
+import com.skyflow.enums.Env;
 import com.skyflow.enums.LogLevel;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.logs.ErrorLogs;
 import com.skyflow.logs.InfoLogs;
+import com.skyflow.logs.WarningLogs;
+import com.skyflow.utils.Constants;
 import com.skyflow.utils.Utils;
 import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.utils.validations.Validations;
@@ -16,6 +19,7 @@ import com.skyflow.vault.controller.ConnectionController;
 import com.skyflow.vault.controller.DetectController;
 import com.skyflow.vault.controller.VaultController;
 
+import java.util.Collection;
 import java.util.LinkedHashMap;
 
 public final class Skyflow extends BaseSkyflow<Skyflow, VaultConfig> {
@@ -249,7 +253,27 @@ public final class Skyflow extends BaseSkyflow<Skyflow, VaultConfig> {
         }
 
         public Skyflow build() {
+            if (shouldWarnBetaBuildInProd(Constants.SDK_VERSION, this.vaultConfigMap.values())) {
+                LogUtil.printWarningLog(Utils.parameterizedString(
+                        WarningLogs.BETA_BUILD_WARNING.getLog(), Constants.SDK_VERSION));
+            }
             return new Skyflow(this);
+        }
+
+        // Package-private so it's directly unit-testable without needing a non-GA
+        // Constants.SDK_VERSION on the test classpath: build() is otherwise only
+        // exercisable end-to-end against whatever GA version this checkout ships.
+        static boolean shouldWarnBetaBuildInProd(String sdkVersion, Collection<VaultConfig> vaultConfigs) {
+            return Utils.isNonGaVersion(sdkVersion) && anyVaultIsProd(vaultConfigs);
+        }
+
+        static boolean anyVaultIsProd(Collection<VaultConfig> vaultConfigs) {
+            for (VaultConfig vaultConfig : vaultConfigs) {
+                if (vaultConfig.getEnv() == Env.PROD) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         private ConnectionConfig findAndUpdateConnectionConfig(ConnectionConfig connectionConfig) {

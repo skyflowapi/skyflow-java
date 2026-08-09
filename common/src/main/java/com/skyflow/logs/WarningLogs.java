@@ -8,7 +8,8 @@ public enum WarningLogs {
     EMPTY_DELETE_TOKENS_RESPONSE("DeleteTokens response did not include any token results."),
     INCOMPLETE_DELETE_TOKENS_RESPONSE("DeleteTokens response did not account for all requested tokens."),
     EMPTY_TOKENIZE_RESPONSE("Tokenize response did not include any record results."),
-    INCOMPLETE_TOKENIZE_RESPONSE("Tokenize response did not account for all requested records.")
+    INCOMPLETE_TOKENIZE_RESPONSE("Tokenize response did not account for all requested records."),
+    BETA_BUILD_WARNING("This is a beta/pre-release build of the Skyflow SDK (v%s1). Beta builds are intended for acceptance testing only - you appear to be connecting to a Production vault. Contact your Skyflow representative before using this build in Production.")
     ;
 
     private final String log;

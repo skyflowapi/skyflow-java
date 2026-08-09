@@ -16,6 +16,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Handler;
 import java.util.logging.Level;
@@ -534,5 +535,83 @@ public class SkyflowTests {
         } catch (Exception e) {
             Assert.fail("Reflection failed: " + e.getMessage());
         }
+    }
+
+    // ── SK-2963: beta-build-in-prod warning ──────────────────────────────────
+
+    private static VaultConfig betaTestVaultConfig(String vaultId, String clusterId, Env env) {
+        VaultConfig config = new VaultConfig();
+        config.setVaultId(vaultId);
+        config.setClusterId(clusterId);
+        config.setEnv(env);
+        return config;
+    }
+
+    @Test
+    public void testAnyVaultIsProd_emptyCollectionIsFalse() {
+        Assert.assertFalse(Skyflow.SkyflowClientBuilder.anyVaultIsProd(new ArrayList<>()));
+    }
+
+    @Test
+    public void testAnyVaultIsProd_noVaultIsProd() {
+        List<VaultConfig> configs = Arrays.asList(
+                betaTestVaultConfig("vault1", "cluster1", Env.DEV),
+                betaTestVaultConfig("vault2", "cluster2", Env.SANDBOX),
+                betaTestVaultConfig("vault3", "cluster3", Env.STAGE));
+        Assert.assertFalse(Skyflow.SkyflowClientBuilder.anyVaultIsProd(configs));
+    }
+
+    @Test
+    public void testAnyVaultIsProd_oneOfManyIsProd() {
+        List<VaultConfig> configs = Arrays.asList(
+                betaTestVaultConfig("vault1", "cluster1", Env.DEV),
+                betaTestVaultConfig("vault2", "cluster2", Env.PROD));
+        Assert.assertTrue(Skyflow.SkyflowClientBuilder.anyVaultIsProd(configs));
+    }
+
+    @Test
+    public void testAnyVaultIsProd_allProd() {
+        List<VaultConfig> configs = Arrays.asList(
+                betaTestVaultConfig("vault1", "cluster1", Env.PROD),
+                betaTestVaultConfig("vault2", "cluster2", Env.PROD));
+        Assert.assertTrue(Skyflow.SkyflowClientBuilder.anyVaultIsProd(configs));
+    }
+
+    // shouldWarnBetaBuildInProd is the exact predicate build() gates on. Constants.SDK_VERSION
+    // is a clean GA version in this checkout, so build() itself can never be driven down the
+    // "fires" branch end-to-end here; testing this predicate directly with an injected version
+    // string is what actually covers the && combination (e.g. would catch it being swapped for ||).
+    @Test
+    public void testShouldWarnBetaBuildInProd_betaVersionAndProdVault_isTrue() {
+        List<VaultConfig> configs = Arrays.asList(betaTestVaultConfig("vault1", "cluster1", Env.PROD));
+        Assert.assertTrue(Skyflow.SkyflowClientBuilder.shouldWarnBetaBuildInProd("1.0.0-beta.1", configs));
+    }
+
+    @Test
+    public void testShouldWarnBetaBuildInProd_gaVersionAndProdVault_isFalse() {
+        List<VaultConfig> configs = Arrays.asList(betaTestVaultConfig("vault1", "cluster1", Env.PROD));
+        Assert.assertFalse(Skyflow.SkyflowClientBuilder.shouldWarnBetaBuildInProd("1.0.0", configs));
+    }
+
+    @Test
+    public void testShouldWarnBetaBuildInProd_betaVersionAndNoProdVault_isFalse() {
+        List<VaultConfig> configs = Arrays.asList(betaTestVaultConfig("vault1", "cluster1", Env.DEV));
+        Assert.assertFalse(Skyflow.SkyflowClientBuilder.shouldWarnBetaBuildInProd("1.0.0-beta.1", configs));
+    }
+
+    // build() itself is wired against Constants.SDK_VERSION, which is a clean GA
+    // version in this checkout, so this only exercises the "stays silent" path
+    // end-to-end. isNonGaVersion's own beta/dev detection is covered directly in
+    // common's BaseUtilsTests; anyVaultIsProd's PROD-detection is covered above.
+    @Test
+    public void testBuild_currentGaVersionNeverWarnsEvenAgainstProdVault() throws SkyflowException {
+        LogUtil.setupLogger(LogLevel.WARN);
+        CapturingHandler handler = attachCapture();
+
+        Skyflow.builder().addVaultConfig(betaTestVaultConfig("vault1", "cluster1", Env.PROD)).build();
+
+        boolean betaWarningLogged = handler.records.stream()
+                .anyMatch(r -> r.getLevel().equals(Level.WARNING) && r.getMessage().contains("beta/pre-release build"));
+        Assert.assertFalse("A GA build must never emit the beta-build warning", betaWarningLogged);
     }
 }
