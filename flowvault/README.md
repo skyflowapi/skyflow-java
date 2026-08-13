@@ -437,9 +437,17 @@ Sample response:
       "requestId": null,
       "tableName": "table1",
       "skyflowId": "9fac9201-7b8a-4446-93f8-5244e1213bd1",
-      "tokens": { "card_number": "5484-7829-1702-9110", "cardholder_name": "b2308e2a-c1f5-469b-97b7-1f193159399b" },
+      "tokens": {
+        "card_number": [
+          { "token": "5484-7829-1702-9110", "tokenGroupName": "card_number_cg" }
+        ],
+        "cardholder_name": [
+          { "token": "b2308e2a-c1f5-469b-97b7-1f193159399b", "tokenGroupName": "deterministic_string" },
+          { "token": "f1a2b3c4-d5e6-7890-abcd-ef1234567890", "tokenGroupName": "vault_token_group" }
+        ]
+      },
       "data": { "card_number": "4111-1111-1111-1111", "cardholder_name": "John Doe" },
-      "hashedData": null,
+      "hashedData": { "card_number": "b6e6d...c3f9" },
       "httpCode": 200,
       "error": null
     },
@@ -455,6 +463,17 @@ Sample response:
       "error": "Insert failed. Column email is invalid."
     }
   ]
+}
+```
+
+`tokens` is a per-column map, and its value is always a **list** of `{token, tokenGroupName}` entries — one entry per token group configured on that column, so a column with a single token group still comes back as a one-element list, not a bare string. The API models this generically (`Object`, not a fixed type) to stay flexible, so the SDK does too — there is currently no typed accessor for it, you cast/iterate it yourself:
+
+```java
+@SuppressWarnings("unchecked")
+List<Map<String, Object>> cardNumberTokens =
+        (List<Map<String, Object>>) (Object) record.getTokens().get("card_number");
+for (Map<String, Object> entry : cardNumberTokens) {
+    System.out.println(entry.get("tokenGroupName") + " -> " + entry.get("token"));
 }
 ```
 
@@ -598,7 +617,7 @@ Sample response:
       "requestId": null,
       "value": "4111111111111111",
       "tokenGroupName": "card_number_cg",
-      "metadata": {},
+      "metadata": { "skyflowId": "9fac9201-7b8a-4446-93f8-5244e1213bd1", "tableName": "table1" },
       "httpCode": 200,
       "token": "5479-4229-4622-1393",
       "error": null
@@ -616,6 +635,8 @@ Sample response:
   ]
 }
 ```
+
+`metadata` typically carries the token's `skyflowId`/`tableName` on success; it's `null` (not `{}`) when the API returns nothing for it.
 
 Use `detokenizeResponse.getTokensToRetry()` to get back only the tokens worth resubmitting.
 
