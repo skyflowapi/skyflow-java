@@ -51,6 +51,7 @@
     "dotenv",
     "powermock",
     "mvn",
+    "codehaus",
     "sonatype",
     "jfrog",
     "prekarilabs",
