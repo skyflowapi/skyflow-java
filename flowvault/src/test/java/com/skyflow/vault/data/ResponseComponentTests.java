@@ -3,6 +3,7 @@ package com.skyflow.vault.data;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -10,17 +11,18 @@ import java.util.Map;
 
 /**
  * Tests for the response/success/summary building-block classes that carry real
- * constructor logic or toString() serialization: {@link Success}, {@link Summary},
- * {@link Token}, {@link TokenizeResponseToken}, {@link TokenizeResponseRecord},
- * {@link BulkTokenizeResponseRecord}, {@link TokenizeSummary},
+ * constructor logic or toString() serialization: {@link Token}, {@link TokenizeResponseToken},
+ * {@link TokenizeResponseRecord}, {@link BulkTokenizeResponseRecord}, {@link TokenizeSummary},
  * {@link DeleteTokensRecord}, {@link BulkDeleteTokensResponseRecord},
  * {@link DeleteTokensSummary}, {@link DetokenizeSummary},
  * {@link ErrorRecord} and {@link DetokenizeResponseObject}.
  */
 public class ResponseComponentTests {
 
-    // Tests for Success, Summary and Token were removed: the bulk insert response contract
-    // replaced those classes with BulkInsertResponseRecord / BulkSummary, covered below.
+    // Tests for Success and Summary were removed: the bulk insert response contract replaced
+    // those classes with BulkInsertResponseRecord / BulkSummary, covered below. Token was removed
+    // in the same rework, then reintroduced as the typed accessor for InsertResponseRecord's
+    // getTokens() map - see the InsertResponseRecord section below.
 
     // ── BulkInsertResponseRecord ─────────────────────────────────────────────
 
@@ -46,6 +48,9 @@ public class ResponseComponentTests {
         Assert.assertEquals(hashedData, record.getHashedData());
         Assert.assertEquals(200, record.getHttpCode());
         Assert.assertNull(record.getError());
+        // getTokenDetails() is inherited unchanged from InsertResponseRecord - confirm it works
+        // on the subclass callers actually receive, not just the base class.
+        Assert.assertEquals("tok-1", record.getTokenDetails().get("name").get(0).getToken());
     }
 
     @Test
@@ -105,6 +110,7 @@ public class ResponseComponentTests {
         Assert.assertNull(record.getFields());
         Assert.assertNull(record.getData());
         Assert.assertNull(record.getHashedData());
+        Assert.assertNull(record.getTokenDetails());
     }
 
     @Test
@@ -117,6 +123,106 @@ public class ResponseComponentTests {
         Assert.assertTrue(json.contains("\"index\":0"));
         Assert.assertTrue(json.contains("\"tokens\":null"));
         Assert.assertTrue(json.contains("\"data\":null"));
+    }
+
+    // ── Token / InsertResponseRecord.getTokenDetails() ────────────────────────
+
+    @Test
+    public void testToken_gettersReturnConstructorValues() {
+        Token token = new Token("tok-1", "group1");
+        Assert.assertEquals("tok-1", token.getToken());
+        Assert.assertEquals("group1", token.getTokenGroupName());
+    }
+
+    @Test
+    public void testToken_toStringSerializesFields() {
+        Token token = new Token("tok-1", "group1");
+        String json = token.toString();
+        Assert.assertTrue(json.contains("tok-1"));
+        Assert.assertTrue(json.contains("group1"));
+    }
+
+    @Test
+    public void testGetTokenDetails_returnsNullWhenTokensIsNull() {
+        InsertResponseRecord record = new InsertResponseRecord(
+                "table1", "id-1", null, null, null, 200, null);
+        Assert.assertNull(record.getTokenDetails());
+    }
+
+    @Test
+    public void testGetTokenDetails_parsesAListOfTokenGroupEntriesPerColumn() {
+        // The real, tested API shape for a column tokenized against more than one group -
+        // see VaultControllerTests.testBulkInsert_successWithListOfMapsTokenShape.
+        Map<String, Object> entry1 = new HashMap<>();
+        entry1.put("token", "tok-a");
+        entry1.put("tokenGroupName", "tg1");
+        Map<String, Object> entry2 = new HashMap<>();
+        entry2.put("token", "tok-b");
+        entry2.put("tokenGroupName", "tg2");
+
+        Map<String, Object> tokens = new HashMap<>();
+        tokens.put("col1", Arrays.asList(entry1, entry2));
+
+        InsertResponseRecord record = new InsertResponseRecord(
+                "table1", "id-1", tokens, null, null, 200, null);
+
+        List<Token> col1 = record.getTokenDetails().get("col1");
+        Assert.assertEquals(2, col1.size());
+        Assert.assertEquals("tok-a", col1.get(0).getToken());
+        Assert.assertEquals("tg1", col1.get(0).getTokenGroupName());
+        Assert.assertEquals("tok-b", col1.get(1).getToken());
+        Assert.assertEquals("tg2", col1.get(1).getTokenGroupName());
+    }
+
+    @Test
+    public void testGetTokenDetails_parsesASingleTokenGroupEntryNotWrappedInAList() {
+        Map<String, Object> entry = new HashMap<>();
+        entry.put("token", "tok-a");
+        entry.put("tokenGroupName", "tg1");
+
+        Map<String, Object> tokens = new HashMap<>();
+        tokens.put("col1", entry);
+
+        InsertResponseRecord record = new InsertResponseRecord(
+                "table1", "id-1", tokens, null, null, 200, null);
+
+        List<Token> col1 = record.getTokenDetails().get("col1");
+        Assert.assertEquals(1, col1.size());
+        Assert.assertEquals("tok-a", col1.get(0).getToken());
+        Assert.assertEquals("tg1", col1.get(0).getTokenGroupName());
+    }
+
+    @Test
+    public void testGetTokenDetails_parsesABareTokenValueWithNoGroupInfo() {
+        Map<String, Object> tokens = new HashMap<>();
+        tokens.put("col1", "tok-abc");
+
+        InsertResponseRecord record = new InsertResponseRecord(
+                "table1", "id-1", tokens, null, null, 200, null);
+
+        List<Token> col1 = record.getTokenDetails().get("col1");
+        Assert.assertEquals(1, col1.size());
+        Assert.assertEquals("tok-abc", col1.get(0).getToken());
+        Assert.assertNull(col1.get(0).getTokenGroupName());
+    }
+
+    @Test
+    public void testGetTokenDetails_handlesMultipleColumnsIndependently() {
+        Map<String, Object> groupedEntry = new HashMap<>();
+        groupedEntry.put("token", "tok-a");
+        groupedEntry.put("tokenGroupName", "tg1");
+
+        Map<String, Object> tokens = new HashMap<>();
+        tokens.put("col1", Collections.singletonList(groupedEntry));
+        tokens.put("col2", "tok-bare");
+
+        InsertResponseRecord record = new InsertResponseRecord(
+                "table1", "id-1", tokens, null, null, 200, null);
+
+        Map<String, List<Token>> details = record.getTokenDetails();
+        Assert.assertEquals("tg1", details.get("col1").get(0).getTokenGroupName());
+        Assert.assertEquals("tok-bare", details.get("col2").get(0).getToken());
+        Assert.assertNull(details.get("col2").get(0).getTokenGroupName());
     }
 
     // ── BulkSummary ──────────────────────────────────────────────────────────

@@ -482,18 +482,17 @@ Sample response:
 }
 ```
 
-`tokens` is a per-column map, and its value is always a **list** of `{token, tokenGroupName}` entries — one entry per token group configured on that column, so a column with a single token group still comes back as a one-element list, not a bare string. The API models this generically (`Object`, not a fixed type) to stay flexible, so the SDK does too — there is currently no typed accessor for it, you cast/iterate it yourself:
+`tokens` is a per-column map, and its value is always a **list** of `{token, tokenGroupName}` entries — one entry per token group configured on that column, so a column with a single token group still comes back as a one-element list, not a bare string. The API models this generically (`Object`, not a fixed type) to stay flexible, so `getTokens()` does too. For a typed view of the same data, use `getTokenDetails()` instead — it parses `getTokens()` into `Map<String, List<Token>>`, with `Token.getToken()`/`Token.getTokenGroupName()`, no casting required:
 
 ```java
-@SuppressWarnings("unchecked")
-List<Map<String, Object>> cardNumberTokens =
-        (List<Map<String, Object>>) (Object) record.getTokens().get("card_number");
-for (Map<String, Object> entry : cardNumberTokens) {
-    System.out.println(entry.get("tokenGroupName") + " -> " + entry.get("token"));
+for (Token token : record.getTokenDetails().get("card_number")) {
+    System.out.println(token.getTokenGroupName() + " -> " + token.getToken());
 }
 ```
 
-Accessors: `insertResponse.getSummary()`, `insertResponse.getRecords()`, and on each record `getIndex()`, `getTableName()`, `getSkyflowId()`, `getTokens()`, `getData()`, `getHashedData()`, `getHttpCode()`, `getError()`, `getRequestId()`.
+`getTokenDetails()` is a computed view derived from `getTokens()` on every call, not a separately-stored field, so the two can never disagree. It returns `null` when `getTokens()` is `null` (e.g. a failed record), and it also accepts a column value that's a single `{token, tokenGroupName}` entry not wrapped in a list, or a bare token value with no group information — normalizing every shape into a `List<Token>` rather than throwing on an unexpected one.
+
+Accessors: `insertResponse.getSummary()`, `insertResponse.getRecords()`, and on each record `getIndex()`, `getTableName()`, `getSkyflowId()`, `getTokens()`, `getTokenDetails()`, `getData()`, `getHashedData()`, `getHttpCode()`, `getError()`, `getRequestId()`.
 
 > **Deprecation notice:** `getFields()` is deprecated in favor of `getTokens()` — it is kept only for backward compatibility and will be removed in a future release. Update call sites to `getTokens()`.
 
@@ -655,8 +654,6 @@ Sample response:
   ]
 }
 ```
-
-`metadata` typically carries `table` and the token's `skyflowId` on success — the API's own field definition documents its value as `{"table": "table1", "skyflowID": "4524524534623"}` (note the wire key is `skyflowID`, uppercase-ID); the SDK renames that one key to `skyflowId` before returning it, but leaves `table` as-is. It's `null` (not `{}`) when the API returns nothing for it.
 
 Use `detokenizeResponse.getTokensToRetry()` to get back only the tokens worth resubmitting.
 
