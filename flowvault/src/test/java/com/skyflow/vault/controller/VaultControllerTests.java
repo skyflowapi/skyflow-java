@@ -706,8 +706,10 @@ public class VaultControllerTests {
 
         BulkInsertResponseRecord inserted = response.getRecords().get(0);
         Assert.assertNotNull(inserted.getTokens());
-        // getFields() is deprecated but still delegates to getTokens() for backward compatibility.
-        Assert.assertEquals(inserted.getTokens(), inserted.getFields());
+        // getFields() is deprecated and now renders getTokens()'s typed data back into its
+        // original raw shape - a lossless round trip for this input, so it equals the raw map
+        // the mock returned in the first place.
+        Assert.assertEquals(tokens, inserted.getFields());
         // The wire type's List<Map> token shape is parsed into typed Token objects - no casting.
         List<Token> field1Tokens = inserted.getTokens().get("field1");
         Assert.assertEquals(1, field1Tokens.size());
