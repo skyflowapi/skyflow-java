@@ -767,7 +767,7 @@ Every bulk response exposes `getSummary()` and `getRecords()`. The records list 
 | `getError()` | failures only | Error message for this item. `null` means this item succeeded. |
 | `getRequestId()` | failures only | The `x-request-id` of the batch this item was in — quote it in support escalations. Items from the same batch share one id. |
 
-The success payload sits alongside those fields on the same object: `getSkyflowId()`/`getTokens()`/`getData()` for insert (`getFields()` is a deprecated alias for `getTokens()`), `getValue()`/`getTokenGroupName()`/`getMetadata()` for detokenize, `getTokens()` for tokenize, `getToken()` for delete.
+The success payload sits alongside those fields on the same object: `getSkyflowId()`/`getTokens()`/`getData()` for insert (`getFields()` is deprecated — it returns the same data in its original, pre-typed `Map<String, Object>` shape, not `getTokens()`'s `Token` objects), `getValue()`/`getTokenGroupName()`/`getMetadata()` for detokenize, `getTokens()` for tokenize, `getToken()` for delete.
 
 Summaries per operation:
 

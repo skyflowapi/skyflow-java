@@ -100,4 +100,35 @@ public class Token {
         }
         return null;
     }
+
+    /**
+     * The inverse of {@link #parseTokens(Map)}: renders parsed {@link Token} objects back into
+     * the generic {@code Map<String, Object>} shape {@code getFields()} returned before it was
+     * deprecated, for callers who haven't migrated to {@link InsertResponseRecord#getTokens()}
+     * yet. Each column's value becomes a {@code List<Map<String, Object>>}, one map per
+     * {@code Token} with {@code "token"}/{@code "tokenGroupName"} keys — this doesn't reproduce
+     * the exact original wire shape (a single-group column may originally have been a bare
+     * value or an unwrapped map rather than a one-element list), since that distinction is lost
+     * once parsed, but it's a consistent, self-describing shape every caller can read the same
+     * way regardless of how many groups a column has.
+     *
+     * <p>Returns {@code null} when {@code tokens} is {@code null}.
+     */
+    static Map<String, Object> toRawTokens(Map<String, List<Token>> tokens) {
+        if (tokens == null) {
+            return null;
+        }
+        Map<String, Object> raw = new LinkedHashMap<>();
+        for (Map.Entry<String, List<Token>> entry : tokens.entrySet()) {
+            List<Map<String, Object>> rawEntries = new ArrayList<>();
+            for (Token token : entry.getValue()) {
+                Map<String, Object> rawEntry = new LinkedHashMap<>();
+                rawEntry.put("token", token.getToken());
+                rawEntry.put("tokenGroupName", token.getTokenGroupName());
+                rawEntries.add(rawEntry);
+            }
+            raw.put(entry.getKey(), rawEntries);
+        }
+        return raw;
+    }
 }
