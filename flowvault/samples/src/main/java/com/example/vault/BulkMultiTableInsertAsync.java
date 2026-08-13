@@ -8,6 +8,7 @@ import com.skyflow.enums.LogLevel;
 import com.skyflow.vault.data.BulkInsertRequest;
 import com.skyflow.vault.data.BulkInsertRequestRecord;
 import com.skyflow.vault.data.BulkInsertResponse;
+import com.skyflow.vault.data.BulkInsertResponseRecord;
 import com.skyflow.vault.data.InsertRequestRecord;
 import com.skyflow.vault.data.UpsertOptions;
 
@@ -23,7 +24,8 @@ import java.util.concurrent.CompletionException;
  * 1. Setting up credentials and vault configuration
  * 2. Creating multiple records to be inserted
  * 3. Building and executing an async bulk insert request
- * 4. Handling the insert response or errors using CompletableFuture
+ * 4. Reading the per-record outcome and the summary from the response
+ * 5. Handling the insert response or errors using CompletableFuture
  *
  * <p>Multi-table mode: the table name is set on <b>every</b> record instead of on the request.
  * The SDK rejects a request that sets it at both levels, or on only some of the records.
@@ -58,7 +60,7 @@ public class BulkMultiTableInsertAsync {
             List<String> upsertColumns = new ArrayList<>();
             upsertColumns.add("<YOUR_COLUMN_NAME_1>");
 
-            // upsert is optional; when updateType is omitted the vault defaults to "UPDATE".
+            // upsert is optional; when updateType is omitted the vault treats it the same as "UPDATE".
             // Set .updateType("REPLACE") to replace the matched row instead.
             UpsertOptions upsert = UpsertOptions.builder()
                     .uniqueColumns(upsertColumns)
@@ -94,13 +96,34 @@ public class BulkMultiTableInsertAsync {
 
             // Step 8: Execute the async bulk insert operation and handle response using callbacks
             CompletableFuture<BulkInsertResponse> future = skyflowClient.vault().bulkInsertAsync(request);
-            // Add success and error callbacks
             future.thenAccept(response -> {
                 System.out.println("Async bulk insert resolved with response:\t" + response);
+
+                // Read the summary, then walk the per-record outcomes. A record succeeded when
+                // its error is null; requestId identifies the batch an error came from and is
+                // set on failures only.
+                System.out.println("inserted:\t" + response.getSummary().getTotalInserted()
+                        + " of " + response.getSummary().getTotalRecords());
+
+                for (BulkInsertResponseRecord record : response.getRecords()) {
+                    if (record.getError() == null) {
+                        System.out.printf("[%d] %s -> skyflowId=%s tokens=%s%n",
+                                record.getIndex(), record.getTableName(), record.getSkyflowId(), record.getTokens());
+                    } else {
+                        System.out.printf("[%d] failed (%d): %s [requestId=%s]%n",
+                                record.getIndex(), record.getHttpCode(), record.getError(), record.getRequestId());
+                    }
+                }
+
+                // Records that failed with a retryable status (5xx other than 529) come back
+                // unchanged and can be resubmitted as-is.
+                if (!response.getRecordsToRetry().isEmpty()) {
+                    System.out.println("records to retry:\t" + response.getRecordsToRetry().size());
+                }
             }).exceptionally(throwable -> {
                 System.err.println("Async bulk insert rejected with error:\t" + throwable.getMessage());
                 throw new CompletionException(throwable);
-            });
+            }).join(); // sample-run only: block so main() doesn't exit before the async callback prints
         } catch (Exception e) {
             // Step 9: Handle any synchronous errors that occur during setup
             System.err.println("Error in Skyflow operations:\t" + e.getMessage());

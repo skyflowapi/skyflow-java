@@ -4,7 +4,7 @@ The `flowvault` module is a Skyflow Java SDK built for high-throughput vault ope
 
 > Meant for **Flow DB** vaults.
 
-> **`flowvault` is a new SDK, versioned independently of `skyvault`.** It starts at `1.0.0` while `skyvault` (`com.skyflow:skyflow-java`) is at `2.x`. The two artifacts have separate version lines, so a lower `flowvault` version number does not mean it is older or behind — it is a first release, not a downgrade. Upgrade each artifact on its own.
+> **`flowvault` is a new SDK, versioned independently of `skyvault`.** It started at `1.0.0` while `skyvault` (`com.skyflow:skyflow-java`) is at `2.x`. The two artifacts have separate version lines, so a lower `flowvault` version number does not mean it is older or behind — it is a first release, not a downgrade. Upgrade each artifact on its own.
 
 [![CI](https://img.shields.io/static/v1?label=CI&message=passing&color=green?style=plastic&logo=github)](https://github.com/skyflowapi/skyflow-java/actions)
 [![License](https://img.shields.io/github/license/skyflowapi/skyflow-java)](https://github.com/skyflowapi/skyflow-java/blob/main/LICENSE)
@@ -58,7 +58,7 @@ The `flowvault` module is a Skyflow Java SDK built for high-throughput vault ope
 ### Gradle users
 
 ```
-implementation 'com.skyflow:skyflow-flowvault-java:1.0.0'
+implementation 'com.skyflow:skyflow-flowvault-java:1.0.1'
 ```
 
 ### Maven users
@@ -67,7 +67,7 @@ implementation 'com.skyflow:skyflow-flowvault-java:1.0.0'
 <dependency>
     <groupId>com.skyflow</groupId>
     <artifactId>skyflow-flowvault-java</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
 </dependency>
 ```
 
@@ -97,7 +97,7 @@ Skyflow skyflowClient = Skyflow.builder()
 VaultController vault = skyflowClient.vault();
 ```
 
-`flowvault`'s `vault()` takes no arguments — it always resolves to the first vault added to the builder. Use one client per vault if you need to talk to more than one.
+`vault()` with no arguments returns the controller for the first vault added to the builder. To talk to more than one vault from a single client, register each with `addVaultConfig(...)` and fetch each controller by ID: `skyflowClient.vault("<VAULT_ID>")`.
 
 # Authenticate
 
@@ -249,6 +249,8 @@ public class InitFlowVaultClient {
 
 Every method throws `SkyflowException` on validation errors and returns the builder for chaining.
 
+Once built, `skyflowClient.vault()` returns the first registered vault's controller; `skyflowClient.vault("<VAULT_ID>")` returns the controller for a specific registered vault, which is how one client talks to more than one vault.
+
 ## Timeouts and retries
 
 Each HTTP setting resolves **most specific first**: the value on `VaultConfig`, else the client-wide value on `Skyflow.builder()`, else the SDK default. Only `null` means "inherit" — an explicit `0` is a real value and overrides the level below it.
@@ -346,7 +348,7 @@ Insert many records — even across different tables — in a single call. Each 
 
 - `tableName` must be specified at exactly one level: either on the request (`BulkInsertRequest.builder().tableName(...)`) or on **every** record (`BulkInsertRequestRecord.builder().tableName(...)`) — not both, and not neither.
 - `upsert` is optional, but wherever you supply it, it must sit at the same level as `tableName`. Request-level `tableName` pairs with request-level `upsert`; record-level `tableName` pairs with per-record `upsert`.
-- `UpsertOptions` requires `uniqueColumns`. `updateType` accepts `"UPDATE"` (the default) or `"REPLACE"`.
+- `UpsertOptions` requires `uniqueColumns`. `updateType` accepts `"UPDATE"` or `"REPLACE"` — if omitted, the SDK sends no `updateType` at all, and the vault treats that the same as `"UPDATE"`.
 
 ### Construct a bulk insert request
 
@@ -675,16 +677,16 @@ To include custom HTTP headers on an outgoing bulk request, pass a `RequestInter
 
 | `CustomHeaderKey` | HTTP header name |
 |---|---|
-| `SkyflowAccountId` | `x-skyflow-account-id` |
-| `SkyflowAccountName` | `x-skyflow-account-name` |
-| `RequestIdHeader` | `x-request-id` |
+| `SKYFLOW_ACCOUNT_ID` | `x-skyflow-account-id` |
+| `SKYFLOW_ACCOUNT_NAME` | `x-skyflow-account-name` |
+| `REQUEST_ID_HEADER` | `x-request-id` |
 
 ```java
 import com.skyflow.enums.CustomHeaderKey;
 import com.skyflow.vault.data.BulkInsertOptions;
 
 BulkInsertOptions options = BulkInsertOptions.builder()
-        .interceptor(context -> context.addHeader(CustomHeaderKey.RequestIdHeader, "<YOUR_REQUEST_ID>"))
+        .interceptor(context -> context.addHeader(CustomHeaderKey.REQUEST_ID_HEADER, "<YOUR_REQUEST_ID>"))
         .build();
 
 BulkInsertResponse insertResponse = vault.bulkInsert(insertRequest, options);
@@ -809,7 +811,7 @@ vault.bulkInsertAsync(insertRequest)
 |---|---|---|
 | HTTP status code | `getHttpCode()` | Integer status code (e.g. `400`, `404`, `500`). |
 | Message | `getMessage()` | Human-readable description of the error. |
-| HTTP status string | `getHttpStatus()` | Status string from the server (e.g. `"BAD_REQUEST"`). |
+| HTTP status string | `getHttpStatus()` | Status string from the server (e.g. `"Bad Request"` for a client-side validation error; for API errors, whatever string the server returns). |
 | gRPC code | `getGrpcCode()` | gRPC status code from the server. |
 | Request ID | `getRequestId()` | The `x-request-id` header — useful for support escalations. |
 | Details | `getDetails()` | `JsonArray` of additional error context from the server. Empty array for validation errors, `null` if the server response omitted the field. |

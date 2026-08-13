@@ -8,6 +8,7 @@ import com.skyflow.enums.LogLevel;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.vault.data.BulkDetokenizeRequest;
 import com.skyflow.vault.data.BulkDetokenizeResponse;
+import com.skyflow.vault.data.BulkDetokenizeResponseRecord;
 import com.skyflow.vault.data.TokenGroupRedactions;
 
 import java.util.ArrayList;
@@ -20,7 +21,8 @@ import java.util.List;
  * 2. Creating a list of tokens to detokenize
  * 3. Configuring token group redactions
  * 4. Building and executing a bulk detokenize request
- * 5. Handling the detokenize response or any potential errors
+ * 5. Reading the per-token outcome and the summary from the response
+ * 6. Handling the detokenize response or any potential errors
  */
 public class BulkDetokenizeSync {
 
@@ -44,7 +46,10 @@ public class BulkDetokenizeSync {
                     .addVaultConfig(vaultConfig)
                     .build();
 
-            // Step 4: Prepare list of tokens to detokenize
+            // Step 4: Prepare list of tokens to detokenize. The SDK assigns each token an index
+            // from its position in this list and returns it on the matching response record, so
+            // results stay correlated even though large requests are split into batches that run
+            // concurrently.
             List<String> tokens = new ArrayList<>();
             tokens.add("<YOUR_TOKEN_1>");
             tokens.add("<YOUR_TOKEN_2>");
@@ -66,8 +71,40 @@ public class BulkDetokenizeSync {
             // Step 7: Execute the bulk detokenize operation and print the response
             BulkDetokenizeResponse detokenizeResponse = skyflowClient.vault().bulkDetokenize(detokenizeRequest);
             System.out.println(detokenizeResponse);
+
+            // Step 8: Read the summary. totalTokens counts the tokens you submitted, and the
+            // other two classify each one, so together they sum to that count.
+            System.out.println("total tokens:\t" + detokenizeResponse.getSummary().getTotalTokens());
+            System.out.println("detokenized:\t" + detokenizeResponse.getSummary().getTotalDetokenized());
+            System.out.println("failed:\t\t" + detokenizeResponse.getSummary().getTotalFailed());
+
+            // Step 9: Walk the per-token outcomes. A record succeeded when its error is null;
+            // requestId identifies the batch an error came from and is set on failures only.
+            for (BulkDetokenizeResponseRecord record : detokenizeResponse.getRecords()) {
+                if (record.getError() == null) {
+                    System.out.printf("[%d] %s -> value=%s group=%s%n",
+                            record.getIndex(), record.getToken(), record.getValue(), record.getTokenGroupName());
+                } else {
+                    System.out.printf("[%d] %s failed (%d): %s [requestId=%s]%n",
+                            record.getIndex(), record.getToken(), record.getHttpCode(),
+                            record.getError(), record.getRequestId());
+                }
+            }
+
+            // Step 10: Optionally retry the tokens that failed with a retryable status (5xx other
+            // than 529). A token that simply does not exist fails with a 4xx, so it is not included.
+            List<String> tokensToRetry = detokenizeResponse.getTokensToRetry();
+            if (!tokensToRetry.isEmpty()) {
+                System.out.println("retrying:\t" + tokensToRetry);
+                BulkDetokenizeResponse retryResponse = skyflowClient.vault().bulkDetokenize(
+                        BulkDetokenizeRequest.builder()
+                                .tokens(tokensToRetry)
+                                .tokenGroupRedactions(tokenGroupRedactions)
+                                .build());
+                System.out.println("retry response:\t" + retryResponse);
+            }
         } catch (SkyflowException e) {
-            // Step 8: Handle any errors that occur during the process
+            // Step 11: Handle any errors that occur during the process
             System.err.println("Error in Skyflow operations: " + e.getMessage());
         }
     }
