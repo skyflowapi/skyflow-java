@@ -358,6 +358,8 @@ The 10,000-item ceiling per bulk call is a separate, fixed limit and is not conf
 
 Insert many records — even across different tables — in a single call. Each record is a `BulkInsertRequestRecord` with its own `data` and, optionally, its own `tableName` and `upsert`.
 
+> **Vault type supported:** structured (schema) vaults — inserts into a table's columns. See [Schema vs. schemaless vaults](#schema-vs-schemaless-vaults).
+
 **Note:**
 
 - `tableName` must be specified at exactly one level: either on the request (`BulkInsertRequest.builder().tableName(...)`) or on **every** record (`BulkInsertRequestRecord.builder().tableName(...)`) — not both, and not neither.
@@ -501,6 +503,8 @@ Use `insertResponse.getRecordsToRetry()` to get back only the `BulkInsertRequest
 
 Tokenize many values in one call. Each value can be tokenized against one or more named token groups.
 
+> **Vault type supported:** schemaless vaults — tokenizes a raw value directly against named token groups, with no table involved. See [Schema vs. schemaless vaults](#schema-vs-schemaless-vaults).
+
 ### Construct a bulk tokenize request
 
 ```java
@@ -576,6 +580,8 @@ Tokenize reports at **two** levels: one entry per input value in `records`, and 
 # Bulk Detokenize
 
 Detokenize many tokens in one call, optionally overriding the redaction applied per token group via `tokenGroupRedactions`.
+
+> **Vault type supported:** both — detokenizing only needs the token itself, not a table, so it works regardless of which kind of vault the token came from. See [Schema vs. schemaless vaults](#schema-vs-schemaless-vaults).
 
 ### Construct a bulk detokenize request
 
@@ -655,6 +661,8 @@ Use `detokenizeResponse.getTokensToRetry()` to get back only the tokens worth re
 # Bulk Delete Tokens
 
 Delete many tokens in one call.
+
+> **Vault type supported:** schemaless vaults. See [Schema vs. schemaless vaults](#schema-vs-schemaless-vaults).
 
 ### Construct a bulk delete tokens request
 
