@@ -73,8 +73,14 @@ public class BulkResponseTests {
         Assert.assertEquals("table1", actual.getTableName());
         Assert.assertEquals("id-1", actual.getSkyflowId());
         Assert.assertEquals(tokens, actual.getTokens());
-        // getFields() is deprecated but still delegates to getTokens() for backward compatibility.
-        Assert.assertEquals(tokens, actual.getFields());
+        // getFields() is deprecated, and now returns its original (pre-typed) shape - a Map<String,
+        // Object> rendered back from the typed getTokens() data, not getTokens()'s value itself.
+        Map<String, Object> rawToken = new HashMap<>();
+        rawToken.put("token", "token-name");
+        rawToken.put("tokenGroupName", "group1");
+        Map<String, Object> expectedFields = new HashMap<>();
+        expectedFields.put("name", Collections.singletonList(rawToken));
+        Assert.assertEquals(expectedFields, actual.getFields());
         Assert.assertEquals(data, actual.getData());
         Assert.assertEquals(hashedData, actual.getHashedData());
         Assert.assertEquals(200, actual.getHttpCode());

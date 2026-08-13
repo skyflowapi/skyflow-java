@@ -55,12 +55,15 @@ public class InsertResponseRecord {
     }
 
     /**
-     * @deprecated Response key 'fields' is deprecated. Use {@link #getTokens()} instead.
+     * @deprecated Response key 'fields' is deprecated. Use {@link #getTokens()} instead. This
+     * still returns {@code Map<String, Object>}, matching its original (pre-typed) contract —
+     * see {@link Token#toRawTokens(Map)} for how {@link #getTokens()}'s typed data is rendered
+     * back into that generic shape.
      */
     @Deprecated(since = "1.0.2", forRemoval = true)
-    public Map<String, List<Token>> getFields() {
+    public Map<String, Object> getFields() {
         LogUtil.printWarningLog(InfoLogs.DEPRECATED_INSERT_FIELDS_GETTER.getLog());
-        return getTokens();
+        return Token.toRawTokens(getTokens());
     }
 
     public Map<String, Object> getData() {

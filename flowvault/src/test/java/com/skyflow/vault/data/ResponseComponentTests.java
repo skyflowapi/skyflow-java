@@ -19,6 +19,18 @@ import java.util.Map;
  */
 public class ResponseComponentTests {
 
+    // getFields()'s deprecated, pre-typed shape for a single column with one token group -
+    // {"name": [{"token": "tok-1", "tokenGroupName": "group1"}]} - matching
+    // tokens.put("name", Collections.singletonList(new Token("tok-1", "group1"))).
+    private static Map<String, Object> singleColumnRawFields() {
+        Map<String, Object> rawToken = new HashMap<>();
+        rawToken.put("token", "tok-1");
+        rawToken.put("tokenGroupName", "group1");
+        Map<String, Object> rawFields = new HashMap<>();
+        rawFields.put("name", Collections.singletonList(rawToken));
+        return rawFields;
+    }
+
     // Tests for Success and Summary were removed: the bulk insert response contract replaced
     // those classes with BulkInsertResponseRecord / BulkSummary, covered below. Token was removed
     // in the same rework, then reintroduced (with the same shape it had before) as the type
@@ -42,8 +54,9 @@ public class ResponseComponentTests {
         Assert.assertEquals("persons", record.getTableName());
         Assert.assertEquals("skyflow-id-1", record.getSkyflowId());
         Assert.assertEquals(tokens, record.getTokens());
-        // getFields() is deprecated but still delegates to getTokens() for backward compatibility.
-        Assert.assertEquals(tokens, record.getFields());
+        // getFields() is deprecated, and now returns its original (pre-typed) shape - a Map<String,
+        // Object> rendered back from the typed getTokens() data, not getTokens()'s value itself.
+        Assert.assertEquals(singleColumnRawFields(), record.getFields());
         Assert.assertEquals(data, record.getData());
         Assert.assertEquals(hashedData, record.getHashedData());
         Assert.assertEquals(200, record.getHttpCode());
@@ -67,7 +80,7 @@ public class ResponseComponentTests {
                 2, "persons", "skyflow-id-1", tokens, hashedData, 200, null, null);
 
         Assert.assertEquals(tokens, record.getTokens());
-        Assert.assertEquals(tokens, record.getFields());
+        Assert.assertEquals(singleColumnRawFields(), record.getFields());
         Assert.assertNull(record.getData());
         Assert.assertEquals(hashedData, record.getHashedData());
     }
@@ -89,7 +102,7 @@ public class ResponseComponentTests {
         Assert.assertEquals("persons", record.getTableName());
         Assert.assertEquals("skyflow-id-1", record.getSkyflowId());
         Assert.assertEquals(tokens, record.getTokens());
-        Assert.assertEquals(tokens, record.getFields());
+        Assert.assertEquals(singleColumnRawFields(), record.getFields());
         Assert.assertNull(record.getData());
         Assert.assertEquals(hashedData, record.getHashedData());
         Assert.assertEquals(200, record.getHttpCode());
@@ -252,6 +265,53 @@ public class ResponseComponentTests {
         List<Token> col1 = Token.parseTokens(rawTokens).get("col1");
         Assert.assertEquals(1, col1.size());
         Assert.assertEquals("tok-a", col1.get(0).getToken());
+    }
+
+    @Test
+    public void testToRawTokens_returnsNullWhenTokensIsNull() {
+        Assert.assertNull(Token.toRawTokens(null));
+    }
+
+    @Test
+    public void testToRawTokens_rendersEachTokenAsAMapWithBothKeys() {
+        Map<String, List<Token>> tokens = new HashMap<>();
+        tokens.put("col1", Collections.singletonList(new Token("tok-a", "tg1")));
+
+        Map<String, Object> raw = Token.toRawTokens(tokens);
+
+        List<?> col1 = (List<?>) raw.get("col1");
+        Assert.assertEquals(1, col1.size());
+        Map<?, ?> entry = (Map<?, ?>) col1.get(0);
+        Assert.assertEquals("tok-a", entry.get("token"));
+        Assert.assertEquals("tg1", entry.get("tokenGroupName"));
+    }
+
+    @Test
+    public void testToRawTokens_rendersMultipleTokenGroupsAsSeparateMapEntries() {
+        Map<String, List<Token>> tokens = new HashMap<>();
+        tokens.put("col1", Arrays.asList(new Token("tok-a", "tg1"), new Token("tok-b", "tg2")));
+
+        List<?> col1 = (List<?>) Token.toRawTokens(tokens).get("col1");
+
+        Assert.assertEquals(2, col1.size());
+        Assert.assertEquals("tok-a", ((Map<?, ?>) col1.get(0)).get("token"));
+        Assert.assertEquals("tok-b", ((Map<?, ?>) col1.get(1)).get("token"));
+    }
+
+    @Test
+    public void testToRawTokens_isTheInverseOfParseTokensForMapShapedInput() {
+        // parseTokens() followed by toRawTokens() round-trips losslessly when every column's raw
+        // value was already a {token, tokenGroupName} map (or list of them) - the shape toRawTokens
+        // always produces. Only the bare-value case (see UtilsTests) loses information on the way.
+        Map<String, Object> entry = new HashMap<>();
+        entry.put("token", "tok-a");
+        entry.put("tokenGroupName", "tg1");
+        Map<String, Object> rawTokens = new HashMap<>();
+        rawTokens.put("col1", Collections.singletonList(entry));
+
+        Map<String, Object> roundTripped = Token.toRawTokens(Token.parseTokens(rawTokens));
+
+        Assert.assertEquals(rawTokens, roundTripped);
     }
 
     // ── BulkSummary ──────────────────────────────────────────────────────────

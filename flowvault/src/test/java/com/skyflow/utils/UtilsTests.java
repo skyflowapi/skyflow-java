@@ -1704,8 +1704,14 @@ public class UtilsTests {
         // The wire type's raw tokens map is parsed into typed Token objects before reaching the
         // caller - see ResponseComponentTests's Token.parseTokens() tests for the parsing logic.
         Assert.assertEquals("tok-abc", inserted.getTokens().get("name").get(0).getToken());
-        // getFields() is deprecated but still delegates to getTokens() for backward compatibility.
-        Assert.assertEquals("tok-abc", inserted.getFields().get("name").get(0).getToken());
+        // getFields() is deprecated, and now renders that typed data back into its original
+        // Map<String, Object> shape rather than returning getTokens()'s value directly - a bare
+        // string column comes back as a one-element List<Map> instead of the original bare value,
+        // since that distinction is lost once the raw data is parsed into Token objects.
+        Object nameField = inserted.getFields().get("name");
+        Map<?, ?> nameToken = (Map<?, ?>) ((List<?>) nameField).get(0);
+        Assert.assertEquals("tok-abc", nameToken.get("token"));
+        Assert.assertNull(nameToken.get("tokenGroupName"));
         Assert.assertEquals(data, inserted.getData());
         Assert.assertEquals(0, inserted.getIndex());
         Assert.assertEquals(200, inserted.getHttpCode());
