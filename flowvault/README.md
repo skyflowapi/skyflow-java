@@ -28,6 +28,7 @@ The `flowvault` module is a Skyflow Java SDK built for high-throughput vault ope
   - [Timeouts and retries](#timeouts-and-retries)
   - [Logging](#logging)
 - [VaultController — Bulk operations](#vaultcontroller--bulk-operations)
+  - [Schema vs. schemaless vaults](#schema-vs-schemaless-vaults)
   - [Batching and concurrency](#batching-and-concurrency)
 - [Bulk Insert](#bulk-insert)
 - [Bulk Tokenize](#bulk-tokenize)
@@ -298,6 +299,19 @@ The SDK logs through `java.util.logging` at `LogLevel.ERROR` by default. Levels 
 | `bulkDetokenizeAsync(BulkDetokenizeRequest)` | same | `CompletableFuture<BulkDetokenizeResponse>` | Async variant of `bulkDetokenize` |
 | `bulkDeleteTokens(BulkDeleteTokensRequest)` | `BulkDeleteTokensRequest`, optional `BulkDeleteTokensOptions` | `BulkDeleteTokensResponse` | Delete many tokens in one call |
 | `bulkDeleteTokensAsync(BulkDeleteTokensRequest)` | same | `CompletableFuture<BulkDeleteTokensResponse>` | Async variant of `bulkDeleteTokens` |
+
+## Schema vs. schemaless vaults
+
+Which of these operations makes sense depends on whether the vault is **structured** (has a schema — tables and columns) or **schemaless** (stores standalone tokens with no table structure):
+
+| Operation | Supported on |
+|---|---|
+| `bulkInsert` / `bulkInsertAsync` | Structured (schema) vaults — inserts into a table's columns. |
+| `bulkTokenize` / `bulkTokenizeAsync` | Schemaless vaults — tokenizes a raw value directly against named token groups, with no table involved. |
+| `bulkDeleteTokens` / `bulkDeleteTokensAsync` | Schemaless vaults. |
+| `bulkDetokenize` / `bulkDetokenizeAsync` | Both — detokenizing only needs the token itself, not a table, so it works regardless of which kind of vault the token came from. |
+
+This reflects supported use cases, not something the SDK validates or blocks — nothing stops you from calling, say, `bulkTokenize` against a structured vault; it just isn't the intended usage and isn't a scenario the SDK is tested against.
 
 Each method also accepts an optional options object (`BulkInsertOptions`, `BulkTokenizeOptions`, `BulkDetokenizeOptions`, `BulkDeleteTokensOptions`) — see [Custom Request Headers](#custom-request-headers).
 
