@@ -225,6 +225,59 @@ public class ResponseComponentTests {
         Assert.assertNull(details.get("col2").get(0).getTokenGroupName());
     }
 
+    @Test
+    public void testGetTokenDetails_omitsAColumnWithANullValue() {
+        Map<String, Object> entry = new HashMap<>();
+        entry.put("token", "tok-a");
+        entry.put("tokenGroupName", "tg1");
+
+        Map<String, Object> tokens = new HashMap<>();
+        tokens.put("col1", entry);
+        tokens.put("col2", null);
+
+        InsertResponseRecord record = new InsertResponseRecord(
+                "table1", "id-1", tokens, null, null, 200, null);
+
+        Map<String, List<Token>> details = record.getTokenDetails();
+        Assert.assertTrue(details.containsKey("col1"));
+        Assert.assertFalse(details.containsKey("col2"));
+    }
+
+    @Test
+    public void testGetTokenDetails_mapEntryMissingTokenGroupNameKeyParsesAsNull() {
+        Map<String, Object> entry = new HashMap<>();
+        entry.put("token", "tok-a");
+        // no "tokenGroupName" key at all - distinct from the bare-value case, since here the
+        // raw entry is still a Map, just missing one of the two expected keys.
+
+        Map<String, Object> tokens = new HashMap<>();
+        tokens.put("col1", entry);
+
+        InsertResponseRecord record = new InsertResponseRecord(
+                "table1", "id-1", tokens, null, null, 200, null);
+
+        List<Token> col1 = record.getTokenDetails().get("col1");
+        Assert.assertEquals("tok-a", col1.get(0).getToken());
+        Assert.assertNull(col1.get(0).getTokenGroupName());
+    }
+
+    @Test
+    public void testGetTokenDetails_skipsNullEntriesWithinAList() {
+        Map<String, Object> entry = new HashMap<>();
+        entry.put("token", "tok-a");
+        entry.put("tokenGroupName", "tg1");
+
+        Map<String, Object> tokens = new HashMap<>();
+        tokens.put("col1", Arrays.asList(entry, null));
+
+        InsertResponseRecord record = new InsertResponseRecord(
+                "table1", "id-1", tokens, null, null, 200, null);
+
+        List<Token> col1 = record.getTokenDetails().get("col1");
+        Assert.assertEquals(1, col1.size());
+        Assert.assertEquals("tok-a", col1.get(0).getToken());
+    }
+
     // ── BulkSummary ──────────────────────────────────────────────────────────
 
     @Test

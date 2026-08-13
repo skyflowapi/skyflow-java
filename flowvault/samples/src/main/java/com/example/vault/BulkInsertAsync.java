@@ -10,11 +10,13 @@ import com.skyflow.vault.data.BulkInsertRequestRecord;
 import com.skyflow.vault.data.BulkInsertResponse;
 import com.skyflow.vault.data.BulkInsertResponseRecord;
 import com.skyflow.vault.data.InsertRequestRecord;
+import com.skyflow.vault.data.Token;
 import com.skyflow.vault.data.UpsertOptions;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
@@ -105,8 +107,16 @@ public class BulkInsertAsync {
 
                 for (BulkInsertResponseRecord record : response.getRecords()) {
                     if (record.getError() == null) {
-                        System.out.printf("[%d] %s -> skyflowId=%s tokens=%s%n",
-                                record.getIndex(), record.getTableName(), record.getSkyflowId(), record.getTokens());
+                        System.out.printf("[%d] %s -> skyflowId=%s%n",
+                                record.getIndex(), record.getTableName(), record.getSkyflowId());
+                        // getTokenDetails() is a typed view of getTokens(): Map<String, List<Token>>
+                        // instead of Map<String, Object>, so no casting to read token/tokenGroupName.
+                        for (Map.Entry<String, List<Token>> column : record.getTokenDetails().entrySet()) {
+                            for (Token token : column.getValue()) {
+                                System.out.printf("    %s[%s] -> %s%n",
+                                        column.getKey(), token.getTokenGroupName(), token.getToken());
+                            }
+                        }
                     } else {
                         System.out.printf("[%d] failed (%d): %s [requestId=%s]%n",
                                 record.getIndex(), record.getHttpCode(), record.getError(), record.getRequestId());
