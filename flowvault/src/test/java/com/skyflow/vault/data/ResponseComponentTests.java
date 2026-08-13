@@ -68,6 +68,30 @@ public class ResponseComponentTests {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
+    public void testInsertResponseRecord_deprecatedConstructorDefaultsDataToNull() {
+        // BulkInsertResponseRecord's deprecated constructor delegates straight to the new
+        // 7-arg super constructor, so it never exercises InsertResponseRecord's own deprecated
+        // 6-arg constructor. Cover that one directly.
+        Map<String, Object> tokens = new HashMap<>();
+        tokens.put("name", "tok-1");
+        Map<String, Object> hashedData = new HashMap<>();
+        hashedData.put("name", "hashed-1");
+
+        InsertResponseRecord record = new InsertResponseRecord(
+                "persons", "skyflow-id-1", tokens, hashedData, 200, null);
+
+        Assert.assertEquals("persons", record.getTableName());
+        Assert.assertEquals("skyflow-id-1", record.getSkyflowId());
+        Assert.assertEquals(tokens, record.getTokens());
+        Assert.assertEquals(tokens, record.getFields());
+        Assert.assertNull(record.getData());
+        Assert.assertEquals(hashedData, record.getHashedData());
+        Assert.assertEquals(200, record.getHttpCode());
+        Assert.assertNull(record.getError());
+    }
+
+    @Test
     public void testBulkInsertResponseRecord_errorCase() {
         BulkInsertResponseRecord record = new BulkInsertResponseRecord(
                 3, null, null, null, null, null, 500, "Internal Server Error", null);
