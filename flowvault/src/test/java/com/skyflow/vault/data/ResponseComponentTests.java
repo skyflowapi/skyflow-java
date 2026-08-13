@@ -26,46 +26,73 @@ public class ResponseComponentTests {
 
     @Test
     public void testBulkInsertResponseRecord_gettersReturnConstructorValues() {
-        Map<String, Object> fields = new HashMap<>();
-        fields.put("name", "tok-1");
+        Map<String, Object> tokens = new HashMap<>();
+        tokens.put("name", "tok-1");
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", "john");
         Map<String, Object> hashedData = new HashMap<>();
         hashedData.put("name", "hashed-1");
 
         BulkInsertResponseRecord record = new BulkInsertResponseRecord(
-                2, "persons", "skyflow-id-1", fields, hashedData, 200, null, null);
+                2, "persons", "skyflow-id-1", tokens, data, hashedData, 200, null, null);
 
         Assert.assertEquals(2, record.getIndex());
         Assert.assertEquals("persons", record.getTableName());
         Assert.assertEquals("skyflow-id-1", record.getSkyflowId());
-        Assert.assertEquals(fields, record.getFields());
+        Assert.assertEquals(tokens, record.getTokens());
+        // getFields() is deprecated but still delegates to getTokens() for backward compatibility.
+        Assert.assertEquals(tokens, record.getFields());
+        Assert.assertEquals(data, record.getData());
         Assert.assertEquals(hashedData, record.getHashedData());
         Assert.assertEquals(200, record.getHttpCode());
         Assert.assertNull(record.getError());
     }
 
     @Test
+    @SuppressWarnings("deprecation")
+    public void testBulkInsertResponseRecord_deprecatedConstructorAndGetFieldsStillWork() {
+        Map<String, Object> tokens = new HashMap<>();
+        tokens.put("name", "tok-1");
+        Map<String, Object> hashedData = new HashMap<>();
+        hashedData.put("name", "hashed-1");
+
+        // The pre-existing (data-less) constructor overload and getFields() are both deprecated,
+        // but must keep working unchanged for callers who haven't migrated yet.
+        BulkInsertResponseRecord record = new BulkInsertResponseRecord(
+                2, "persons", "skyflow-id-1", tokens, hashedData, 200, null, null);
+
+        Assert.assertEquals(tokens, record.getTokens());
+        Assert.assertEquals(tokens, record.getFields());
+        Assert.assertNull(record.getData());
+        Assert.assertEquals(hashedData, record.getHashedData());
+    }
+
+    @Test
     public void testBulkInsertResponseRecord_errorCase() {
         BulkInsertResponseRecord record = new BulkInsertResponseRecord(
-                3, null, null, null, null, 500, "Internal Server Error", null);
+                3, null, null, null, null, null, 500, "Internal Server Error", null);
 
         Assert.assertEquals(3, record.getIndex());
         Assert.assertEquals(500, record.getHttpCode());
         Assert.assertEquals("Internal Server Error", record.getError());
         Assert.assertNull(record.getTableName());
         Assert.assertNull(record.getSkyflowId());
+        Assert.assertNull(record.getTokens());
         Assert.assertNull(record.getFields());
+        Assert.assertNull(record.getData());
         Assert.assertNull(record.getHashedData());
     }
 
     @Test
     public void testBulkInsertResponseRecord_toStringSerializesNulls() {
         BulkInsertResponseRecord record = new BulkInsertResponseRecord(
-                0, "persons", "skyflow-id-2", null, null, 200, null, null);
+                0, "persons", "skyflow-id-2", null, null, null, 200, null, null);
         String json = record.toString();
         Assert.assertNotNull(json);
         Assert.assertTrue(json.contains("skyflow-id-2"));
         Assert.assertTrue(json.contains("\"index\":0"));
-        Assert.assertTrue(json.contains("\"fields\":null"));
+        Assert.assertTrue(json.contains("\"tokens\":null"));
+        Assert.assertTrue(json.contains("\"data\":null"));
     }
 
     // ── BulkSummary ──────────────────────────────────────────────────────────

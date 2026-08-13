@@ -40,8 +40,8 @@ public class BulkResponseTests {
     @Test
     public void testBulkInsertResponse_twoArgConstructorComputesSummary() {
         List<BulkInsertResponseRecord> records = Arrays.asList(
-                new BulkInsertResponseRecord(0, "table1", "id-1", null, null, 200, null, null),
-                new BulkInsertResponseRecord(1, null, null, null, null, 400, "failed", null));
+                new BulkInsertResponseRecord(0, "table1", "id-1", null, null, null, 200, null, null),
+                new BulkInsertResponseRecord(1, null, null, null, null, null, 400, "failed", null));
         List<InsertRequestRecord> originalPayload = new ArrayList<>(Arrays.asList(
                 BulkInsertRequestRecord.builder().tableName("table1").build(),
                 BulkInsertRequestRecord.builder().tableName("table1").build()));
@@ -56,13 +56,15 @@ public class BulkResponseTests {
 
     @Test
     public void testBulkInsertResponse_recordsPreserveIndexAndInheritedFields() {
-        Map<String, Object> fields = new HashMap<>();
-        fields.put("name", "token-name");
+        Map<String, Object> tokens = new HashMap<>();
+        tokens.put("name", "token-name");
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", "john");
         Map<String, Object> hashedData = new HashMap<>();
         hashedData.put("name", "hashed-name");
 
         BulkInsertResponseRecord record = new BulkInsertResponseRecord(
-                7, "table1", "id-1", fields, hashedData, 200, null, null);
+                7, "table1", "id-1", tokens, data, hashedData, 200, null, null);
 
         BulkInsertResponse response = new BulkInsertResponse(Collections.singletonList(record));
 
@@ -70,7 +72,10 @@ public class BulkResponseTests {
         Assert.assertEquals(7, actual.getIndex());
         Assert.assertEquals("table1", actual.getTableName());
         Assert.assertEquals("id-1", actual.getSkyflowId());
-        Assert.assertEquals(fields, actual.getFields());
+        Assert.assertEquals(tokens, actual.getTokens());
+        // getFields() is deprecated but still delegates to getTokens() for backward compatibility.
+        Assert.assertEquals(tokens, actual.getFields());
+        Assert.assertEquals(data, actual.getData());
         Assert.assertEquals(hashedData, actual.getHashedData());
         Assert.assertEquals(200, actual.getHttpCode());
         Assert.assertNull(actual.getError());
@@ -86,10 +91,10 @@ public class BulkResponseTests {
                 Arrays.asList(record0, record1, record2, record3));
 
         List<BulkInsertResponseRecord> records = Arrays.asList(
-                new BulkInsertResponseRecord(0, null, null, null, null, 500, "server error", null),  // retryable (lower bound)
-                new BulkInsertResponseRecord(1, null, null, null, null, 400, "bad request", null),   // not retryable
-                new BulkInsertResponseRecord(2, null, null, null, null, 599, "server error", null),  // retryable (upper bound)
-                new BulkInsertResponseRecord(3, null, null, null, null, 529, "special case", null)); // explicitly excluded
+                new BulkInsertResponseRecord(0, null, null, null, null, null, 500, "server error", null),  // retryable (lower bound)
+                new BulkInsertResponseRecord(1, null, null, null, null, null, 400, "bad request", null),   // not retryable
+                new BulkInsertResponseRecord(2, null, null, null, null, null, 599, "server error", null),  // retryable (upper bound)
+                new BulkInsertResponseRecord(3, null, null, null, null, null, 529, "special case", null)); // explicitly excluded
 
         BulkInsertResponse response = new BulkInsertResponse(records, originalPayload);
 
@@ -111,7 +116,7 @@ public class BulkResponseTests {
     @Test
     public void testBulkInsertResponse_toStringSerializesSummaryAndRecordsButNotInternals() {
         List<BulkInsertResponseRecord> records = Collections.singletonList(
-                new BulkInsertResponseRecord(0, "table1", "id-1", null, null, 200, null, null));
+                new BulkInsertResponseRecord(0, "table1", "id-1", null, null, null, 200, null, null));
         List<InsertRequestRecord> originalPayload = new ArrayList<InsertRequestRecord>(
                 Collections.singletonList(BulkInsertRequestRecord.builder().tableName("table1").build()));
 
@@ -133,7 +138,7 @@ public class BulkResponseTests {
     public void testBulkInsertResponse_getRecordsToRetryOnPerBatchResponseDoesNotThrow() {
         // The 1-arg constructor leaves originalPayload null. A 5xx record must not NPE here.
         List<BulkInsertResponseRecord> records = Collections.singletonList(
-                new BulkInsertResponseRecord(0, null, null, null, null, 500, "server error", null));
+                new BulkInsertResponseRecord(0, null, null, null, null, null, 500, "server error", null));
 
         BulkInsertResponse response = new BulkInsertResponse(records);
 

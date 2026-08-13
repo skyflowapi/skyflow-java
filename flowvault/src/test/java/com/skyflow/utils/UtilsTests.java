@@ -1687,9 +1687,12 @@ public class UtilsTests {
     public void testFormatBulkInsertResponse_success() {
         Map<String, Object> tokens = new HashMap<>();
         tokens.put("name", "tok-abc");
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", "john");
         V1RecordResponseObject record = V1RecordResponseObject.builder()
                 .skyflowId("sky-id-1")
                 .tokens(tokens)
+                .data(data)
                 .build();
         V1InsertResponse response = V1InsertResponse.builder().records(Collections.singletonList(record)).build();
 
@@ -1698,7 +1701,10 @@ public class UtilsTests {
         Assert.assertEquals(1, result.getRecords().size());
         BulkInsertResponseRecord inserted = result.getRecords().get(0);
         Assert.assertEquals("sky-id-1", inserted.getSkyflowId());
+        Assert.assertEquals(tokens, inserted.getTokens());
+        // getFields() is deprecated but still delegates to getTokens() for backward compatibility.
         Assert.assertEquals(tokens, inserted.getFields());
+        Assert.assertEquals(data, inserted.getData());
         Assert.assertEquals(0, inserted.getIndex());
         Assert.assertEquals(200, inserted.getHttpCode());
         Assert.assertNull(inserted.getError());

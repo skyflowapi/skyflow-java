@@ -351,7 +351,7 @@ public final class Utils extends BaseUtils {
             String skyflowID = readString(recordMap, "skyflowID");
             String tableName = readString(recordMap, "tableName");
             String message = readErrorMessage(recordMap);
-            err = new BulkInsertResponseRecord(indexNumber, tableName, skyflowID, null, null, code, message, requestId);
+            err = new BulkInsertResponseRecord(indexNumber, tableName, skyflowID, null, null, null, code, message, requestId);
         }
         return err;
     }
@@ -421,7 +421,7 @@ public final class Utils extends BaseUtils {
                             } else {
                                 errorMessage = apiException.getMessage();
                             }
-                            err = new BulkInsertResponseRecord(indexNumber, null, null, null, null, apiException.statusCode(), errorMessage, requestId);
+                            err = new BulkInsertResponseRecord(indexNumber, null, null, null, null, null, apiException.statusCode(), errorMessage, requestId);
 
                         }
                         allRecords.add(err);
@@ -432,7 +432,7 @@ public final class Utils extends BaseUtils {
 
             if (allRecords.isEmpty()) {
                 for (int j = 0; j < batch.size(); j++) {
-                    allRecords.add(new BulkInsertResponseRecord(indexNumber, null, null, null, null, apiException.statusCode(), apiException.getMessage(), requestId));
+                    allRecords.add(new BulkInsertResponseRecord(indexNumber, null, null, null, null, null, apiException.statusCode(), apiException.getMessage(), requestId));
                     indexNumber++;
                 }
             }
@@ -452,7 +452,7 @@ public final class Utils extends BaseUtils {
                 if (message == null || message.isEmpty() || message.trim().isEmpty()){
                     message = ex.getMessage();
                 }
-                BulkInsertResponseRecord err = new BulkInsertResponseRecord(indexNumber, null, null, null, null, 500, message, null);
+                BulkInsertResponseRecord err = new BulkInsertResponseRecord(indexNumber, null, null, null, null, null, 500, message, null);
                 allRecords.add(err);
                 indexNumber++;
             }
@@ -761,6 +761,7 @@ public final class Utils extends BaseUtils {
                         current.getTableName().orElse(null),
                         current.getSkyflowId().orElse(null),
                         current.getTokens().orElse(null),
+                        current.getData().orElse(null),
                         current.getHashedData().orElse(null),
                         current.getHttpCode().orElse(current.getError().isPresent() ? 500 : 200),
                         current.getError().orElse(null),

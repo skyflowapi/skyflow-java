@@ -435,7 +435,8 @@ Sample response:
       "requestId": null,
       "tableName": "table1",
       "skyflowId": "9fac9201-7b8a-4446-93f8-5244e1213bd1",
-      "fields": { "card_number": "5484-7829-1702-9110", "cardholder_name": "b2308e2a-c1f5-469b-97b7-1f193159399b" },
+      "tokens": { "card_number": "5484-7829-1702-9110", "cardholder_name": "b2308e2a-c1f5-469b-97b7-1f193159399b" },
+      "data": { "card_number": "4111-1111-1111-1111", "cardholder_name": "John Doe" },
       "hashedData": null,
       "httpCode": 200,
       "error": null
@@ -445,7 +446,8 @@ Sample response:
       "requestId": "a1b2c3d4-...",
       "tableName": "table2",
       "skyflowId": null,
-      "fields": null,
+      "tokens": null,
+      "data": null,
       "hashedData": null,
       "httpCode": 400,
       "error": "Insert failed. Column email is invalid."
@@ -454,7 +456,9 @@ Sample response:
 }
 ```
 
-Accessors: `insertResponse.getSummary()`, `insertResponse.getRecords()`, and on each record `getIndex()`, `getTableName()`, `getSkyflowId()`, `getFields()`, `getHashedData()`, `getHttpCode()`, `getError()`, `getRequestId()`.
+Accessors: `insertResponse.getSummary()`, `insertResponse.getRecords()`, and on each record `getIndex()`, `getTableName()`, `getSkyflowId()`, `getTokens()`, `getData()`, `getHashedData()`, `getHttpCode()`, `getError()`, `getRequestId()`.
+
+> **Deprecation notice:** `getFields()` is deprecated in favor of `getTokens()` — it is kept only for backward compatibility and will be removed in a future release. Update call sites to `getTokens()`.
 
 Use `insertResponse.getRecordsToRetry()` to get back only the `BulkInsertRequestRecord`s worth resubmitting — see [Retrying the failed records](#retrying-the-failed-records).
 
@@ -721,7 +725,7 @@ Every bulk response exposes `getSummary()` and `getRecords()`. The records list 
 | `getError()` | failures only | Error message for this item. `null` means this item succeeded. |
 | `getRequestId()` | failures only | The `x-request-id` of the batch this item was in — quote it in support escalations. Items from the same batch share one id. |
 
-The success payload sits alongside those fields on the same object: `getSkyflowId()`/`getFields()` for insert, `getValue()`/`getTokenGroupName()`/`getMetadata()` for detokenize, `getTokens()` for tokenize, `getToken()` for delete.
+The success payload sits alongside those fields on the same object: `getSkyflowId()`/`getTokens()`/`getData()` for insert (`getFields()` is a deprecated alias for `getTokens()`), `getValue()`/`getTokenGroupName()`/`getMetadata()` for detokenize, `getTokens()` for tokenize, `getToken()` for delete.
 
 Summaries per operation:
 
