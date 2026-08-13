@@ -637,7 +637,7 @@ Sample response:
       "requestId": null,
       "value": "4111111111111111",
       "tokenGroupName": "card_number_cg",
-      "metadata": {},
+      "metadata": { "table": "table1", "skyflowId": "9fac9201-7b8a-4446-93f8-5244e1213bd1" },
       "httpCode": 200,
       "token": "5479-4229-4622-1393",
       "error": null
@@ -655,6 +655,8 @@ Sample response:
   ]
 }
 ```
+
+`metadata` typically carries `table` and the token's `skyflowId` on success — the API's own field definition documents its value as `{"table": "table1", "skyflowID": "4524524534623"}` (note the wire key is `skyflowID`, uppercase-ID); the SDK renames that one key to `skyflowId` before returning it, but leaves `table` as-is. It's `null` (not `{}`) when the API returns nothing for it.
 
 Use `detokenizeResponse.getTokensToRetry()` to get back only the tokens worth resubmitting.
 
