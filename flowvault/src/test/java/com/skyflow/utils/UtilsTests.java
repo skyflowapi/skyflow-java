@@ -1701,9 +1701,11 @@ public class UtilsTests {
         Assert.assertEquals(1, result.getRecords().size());
         BulkInsertResponseRecord inserted = result.getRecords().get(0);
         Assert.assertEquals("sky-id-1", inserted.getSkyflowId());
-        Assert.assertEquals(tokens, inserted.getTokens());
+        // The wire type's raw tokens map is parsed into typed Token objects before reaching the
+        // caller - see ResponseComponentTests's Token.parseTokens() tests for the parsing logic.
+        Assert.assertEquals("tok-abc", inserted.getTokens().get("name").get(0).getToken());
         // getFields() is deprecated but still delegates to getTokens() for backward compatibility.
-        Assert.assertEquals(tokens, inserted.getFields());
+        Assert.assertEquals("tok-abc", inserted.getFields().get("name").get(0).getToken());
         Assert.assertEquals(data, inserted.getData());
         Assert.assertEquals(0, inserted.getIndex());
         Assert.assertEquals(200, inserted.getHttpCode());

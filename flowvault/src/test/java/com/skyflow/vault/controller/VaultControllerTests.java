@@ -41,6 +41,7 @@ import com.skyflow.vault.data.BulkInsertOptions;
 import com.skyflow.vault.data.DeleteTokensOptions;
 import com.skyflow.vault.data.InsertRequestRecord;
 import com.skyflow.vault.data.RequestInterceptor;
+import com.skyflow.vault.data.Token;
 import com.skyflow.vault.data.TokenGroupRedactions;
 import com.skyflow.vault.data.TokenizeOptions;
 import com.skyflow.vault.data.TokenizeRequestRecord;
@@ -707,13 +708,11 @@ public class VaultControllerTests {
         Assert.assertNotNull(inserted.getTokens());
         // getFields() is deprecated but still delegates to getTokens() for backward compatibility.
         Assert.assertEquals(inserted.getTokens(), inserted.getFields());
-        // The token map is surfaced verbatim as `tokens`, so a List<Map> token shape survives intact.
-        Object field1Tokens = inserted.getTokens().get("field1");
-        Assert.assertTrue(field1Tokens instanceof List);
-        Assert.assertEquals(1, ((List<?>) field1Tokens).size());
-        Map<?, ?> field1Token = (Map<?, ?>) ((List<?>) field1Tokens).get(0);
-        Assert.assertEquals("tok-xyz", field1Token.get("token"));
-        Assert.assertEquals("group1", field1Token.get("tokenGroupName"));
+        // The wire type's List<Map> token shape is parsed into typed Token objects - no casting.
+        List<Token> field1Tokens = inserted.getTokens().get("field1");
+        Assert.assertEquals(1, field1Tokens.size());
+        Assert.assertEquals("tok-xyz", field1Tokens.get(0).getToken());
+        Assert.assertEquals("group1", field1Tokens.get(0).getTokenGroupName());
     }
 
     // Tests for the unary query / get controller methods were removed: VaultController is bulk-only now.

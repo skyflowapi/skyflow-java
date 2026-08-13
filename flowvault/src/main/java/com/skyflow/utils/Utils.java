@@ -49,6 +49,7 @@ import com.skyflow.vault.data.BulkTokenizeResponse;
 import com.skyflow.vault.data.ErrorRecord;
 import com.skyflow.vault.data.InsertRequest;
 import com.skyflow.vault.data.InsertRequestRecord;
+import com.skyflow.vault.data.Token;
 import com.skyflow.vault.data.TokenGroupRedactions;
 import com.skyflow.vault.data.UpsertOptions;
 
@@ -760,7 +761,7 @@ public final class Utils extends BaseUtils {
                         indexNumber,
                         current.getTableName().orElse(null),
                         current.getSkyflowId().orElse(null),
-                        current.getTokens().orElse(null),
+                        Token.parseTokens(current.getTokens().orElse(null)),
                         current.getData().orElse(null),
                         current.getHashedData().orElse(null),
                         current.getHttpCode().orElse(current.getError().isPresent() ? 500 : 200),

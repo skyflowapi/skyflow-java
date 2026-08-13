@@ -482,17 +482,17 @@ Sample response:
 }
 ```
 
-`tokens` is a per-column map, and its value is always a **list** of `{token, tokenGroupName}` entries — one entry per token group configured on that column, so a column with a single token group still comes back as a one-element list, not a bare string. The API models this generically (`Object`, not a fixed type) to stay flexible, so `getTokens()` does too. For a typed view of the same data, use `getTokenDetails()` instead — it parses `getTokens()` into `Map<String, List<Token>>`, with `Token.getToken()`/`Token.getTokenGroupName()`, no casting required:
+`getTokens()` returns `Map<String, List<Token>>` — one entry per token group configured on that column, so a column with a single token group still comes back as a one-element list, not a bare string. On the wire the API models this generically (`Object`, not a fixed type) to stay flexible, but the SDK parses it into `Token` objects before handing it back, so callers get `Token.getToken()`/`Token.getTokenGroupName()` directly with no casting required:
 
 ```java
-for (Token token : record.getTokenDetails().get("card_number")) {
+for (Token token : record.getTokens().get("card_number")) {
     System.out.println(token.getTokenGroupName() + " -> " + token.getToken());
 }
 ```
 
-`getTokenDetails()` is a computed view derived from `getTokens()` on every call, not a separately-stored field, so the two can never disagree. It returns `null` when `getTokens()` is `null` (e.g. a failed record), and it also accepts a column value that's a single `{token, tokenGroupName}` entry not wrapped in a list, or a bare token value with no group information — normalizing every shape into a `List<Token>` rather than throwing on an unexpected one.
+The parser (`Token.parseTokens()`) normalizes every shape the raw wire value is known to take — a list of `{token, tokenGroupName}` entries, a single such entry not wrapped in a list, or a bare token value with no group information — into a consistent `List<Token>`, rather than throwing on an unexpected one. `getTokens()` returns `null` when the record has no tokens (e.g. a failed record).
 
-Accessors: `insertResponse.getSummary()`, `insertResponse.getRecords()`, and on each record `getIndex()`, `getTableName()`, `getSkyflowId()`, `getTokens()`, `getTokenDetails()`, `getData()`, `getHashedData()`, `getHttpCode()`, `getError()`, `getRequestId()`.
+Accessors: `insertResponse.getSummary()`, `insertResponse.getRecords()`, and on each record `getIndex()`, `getTableName()`, `getSkyflowId()`, `getTokens()`, `getData()`, `getHashedData()`, `getHttpCode()`, `getError()`, `getRequestId()`.
 
 > **Deprecation notice:** `getFields()` is deprecated in favor of `getTokens()` — it is kept only for backward compatibility and will be removed in a future release. Update call sites to `getTokens()`.
 

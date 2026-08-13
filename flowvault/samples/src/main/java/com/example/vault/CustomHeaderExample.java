@@ -108,9 +108,9 @@ public class CustomHeaderExample {
                 for (BulkInsertResponseRecord record : response.getRecords()) {
                     if (record.getError() == null) {
                         System.out.printf("[%d] skyflowId=%s%n", record.getIndex(), record.getSkyflowId());
-                        // getTokenDetails() is a typed view of getTokens(): Map<String, List<Token>>
-                        // instead of Map<String, Object>, so no casting to read token/tokenGroupName.
-                        for (Map.Entry<String, List<Token>> column : record.getTokenDetails().entrySet()) {
+                        // getTokens() returns a typed Map<String, List<Token>>
+                        // - no casting needed to read token/tokenGroupName.
+                        for (Map.Entry<String, List<Token>> column : record.getTokens().entrySet()) {
                             for (Token token : column.getValue()) {
                                 System.out.printf("    %s[%s] -> %s%n",
                                         column.getKey(), token.getTokenGroupName(), token.getToken());

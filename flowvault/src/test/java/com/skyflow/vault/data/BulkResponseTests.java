@@ -56,8 +56,8 @@ public class BulkResponseTests {
 
     @Test
     public void testBulkInsertResponse_recordsPreserveIndexAndInheritedFields() {
-        Map<String, Object> tokens = new HashMap<>();
-        tokens.put("name", "token-name");
+        Map<String, List<Token>> tokens = new HashMap<>();
+        tokens.put("name", Collections.singletonList(new Token("token-name", "group1")));
         Map<String, Object> data = new HashMap<>();
         data.put("name", "john");
         Map<String, Object> hashedData = new HashMap<>();
