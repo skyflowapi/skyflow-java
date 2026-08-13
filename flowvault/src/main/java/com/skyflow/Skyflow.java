@@ -36,8 +36,7 @@ public final class Skyflow extends BaseSkyflow<Skyflow, VaultConfig> {
     }
 
     public VaultConfig getVaultConfig() {
-        Object[] array = this.builder.vaultConfigMap.values().toArray();
-        return (VaultConfig) array[0];
+        return this.builder.vaultConfigMap.values().stream().findFirst().orElse(null);
     }
 
     /**
