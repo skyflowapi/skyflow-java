@@ -640,7 +640,7 @@ Sample response:
       "requestId": null,
       "value": "4111111111111111",
       "tokenGroupName": "card_number_cg",
-      "metadata": { "table": "table1", "skyflowId": "9fac9201-7b8a-4446-93f8-5244e1213bd1" },
+      "metadata": { "skyflowId": "9fac9201-7b8a-4446-93f8-5244e1213bd1", "tableName": "table1" },
       "httpCode": 200,
       "token": "5479-4229-4622-1393",
       "error": null
@@ -656,6 +656,16 @@ Sample response:
       "error": "Token Not Found"
     }
   ]
+}
+```
+
+`record.getMetadata()` is typed as a `DetokenizeMetadata` with `getSkyflowId()`/`getTableName()` — no casting into the raw map required (`null` on records that errored, same as above):
+
+```java
+for (BulkDetokenizeResponseRecord record : detokenizeResponse.getRecords()) {
+    if (record.getMetadata() != null) {
+        System.out.println(record.getMetadata().getSkyflowId() + " / " + record.getMetadata().getTableName());
+    }
 }
 ```
 
