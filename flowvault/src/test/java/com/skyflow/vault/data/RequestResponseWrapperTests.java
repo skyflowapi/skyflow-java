@@ -158,8 +158,7 @@ public class RequestResponseWrapperTests {
 
     @Test
     public void testDetokenizeResponseRecord_gettersReturnConstructorValues() {
-        Map<String, Object> metadata = new HashMap<>();
-        metadata.put("key", "value");
+        DetokenizeMetadata metadata = new DetokenizeMetadata("skyflow-id-1", "table1");
 
         DetokenizeResponseRecord response = new DetokenizeResponseRecord(
                 "tok-1", "secret-value", "group1", metadata, 200, null);

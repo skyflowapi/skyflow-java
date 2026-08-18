@@ -111,7 +111,9 @@
     "recordss",
     "rarr",
     "servname",
-    "nodename"
+    "nodename",
+    "flowdb",
+    "unrenamed"
   ],
   "languageSettings": [
     {

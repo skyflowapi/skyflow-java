@@ -41,6 +41,7 @@ import com.skyflow.vault.data.BulkDeleteTokensResponse;
 import com.skyflow.vault.data.BulkDetokenizeRequest;
 import com.skyflow.vault.data.BulkDetokenizeResponse;
 import com.skyflow.vault.data.BulkDetokenizeResponseRecord;
+import com.skyflow.vault.data.DetokenizeMetadata;
 import com.skyflow.vault.data.BulkInsertRequest;
 import com.skyflow.vault.data.BulkInsertResponse;
 import com.skyflow.vault.data.BulkInsertResponseRecord;
@@ -782,14 +783,7 @@ public final class Utils extends BaseUtils {
             int recordsSize = record.size();
             for (int index = 0; index < recordsSize; index++) {
                 V1FlowDetokenizeResponseObject current = record.get(index);
-                Map<String, Object> data = null;
-                if(current.getMetadata().isPresent()){
-                    data = current.getMetadata().get();
-                    if (data.containsKey("skyflowID")) {
-                        Object value = data.remove("skyflowID");
-                        data.put("skyflowId", value);
-                    }
-                }
+                DetokenizeMetadata metadata = DetokenizeMetadata.parseMetadata(current.getMetadata().orElse(null));
                 String reqID = null;
                 if(current.getError().isPresent()){
                     reqID = extractRequestId(headers);
@@ -799,7 +793,7 @@ public final class Utils extends BaseUtils {
                         current.getToken().orElse(null),
                         current.getValue().orElse(null),
                         current.getTokenGroupName().orElse(null),
-                        data,
+                        metadata,
                         current.getHttpCode().orElse(current.getError().isPresent() ? 500 : 200),
                         current.getError().orElse(null),
                         reqID));

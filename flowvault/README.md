@@ -580,6 +580,18 @@ Sample response:
 
 Tokenize reports at **two** levels: one entry per input value in `records`, and inside each of those, one entry per requested token group in `tokens`. Because a single value can map to several token groups, the summary distinguishes fully tokenized values (`totalTokenized`), partially tokenized values where some groups succeeded and others failed (`totalPartial`), and fully failed values (`totalFailed`). The three always add up to `totalTokens`, which counts input values, not tokens produced.
 
+```java
+for (BulkTokenizeResponseRecord record : tokenizeResponse.getRecords()) {
+    for (TokenizeResponseToken token : record.getTokens()) {
+        if (token.getError() == null) {
+            System.out.println(record.getValue() + " -> " + token.getTokenGroupName() + " = " + token.getToken());
+        } else {
+            System.out.println(record.getValue() + " -> " + token.getTokenGroupName() + " failed: " + token.getError());
+        }
+    }
+}
+```
+
 # Bulk Detokenize
 
 Detokenize many tokens in one call, optionally overriding the redaction applied per token group via `tokenGroupRedactions`.
@@ -640,7 +652,7 @@ Sample response:
       "requestId": null,
       "value": "4111111111111111",
       "tokenGroupName": "card_number_cg",
-      "metadata": { "table": "table1", "skyflowId": "9fac9201-7b8a-4446-93f8-5244e1213bd1" },
+      "metadata": { "skyflowId": "9fac9201-7b8a-4446-93f8-5244e1213bd1", "tableName": "table1" },
       "httpCode": 200,
       "token": "5479-4229-4622-1393",
       "error": null
@@ -656,6 +668,16 @@ Sample response:
       "error": "Token Not Found"
     }
   ]
+}
+```
+
+`record.getMetadata()` is typed as a `DetokenizeMetadata` with `getSkyflowId()`/`getTableName()` — no casting into the raw map required (`null` on records that errored, same as above):
+
+```java
+for (BulkDetokenizeResponseRecord record : detokenizeResponse.getRecords()) {
+    if (record.getMetadata() != null) {
+        System.out.println(record.getMetadata().getSkyflowId() + " / " + record.getMetadata().getTableName());
+    }
 }
 ```
 
@@ -710,6 +732,16 @@ Sample response:
     { "index": 0, "token": "5479-4229-4622-1393", "httpCode": 200, "error": null, "requestId": null },
     { "index": 1, "token": "a1b2c3d4-e5f6-7890-abcd-ef1234567890", "httpCode": 200, "error": null, "requestId": null }
   ]
+}
+```
+
+```java
+for (BulkDeleteTokensResponseRecord record : deleteTokensResponse.getRecords()) {
+    if (record.getError() == null) {
+        System.out.println(record.getToken() + " deleted");
+    } else {
+        System.out.println(record.getToken() + " failed (" + record.getHttpCode() + "): " + record.getError());
+    }
 }
 ```
 
