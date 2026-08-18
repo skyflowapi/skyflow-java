@@ -496,6 +496,8 @@ for (BulkInsertResponseRecord record : insertResponse.getRecords()) {
 
 The parser (`Token.parseTokens()`) normalizes every shape the raw wire value is known to take — a list of `{token, tokenGroupName}` entries, a single such entry not wrapped in a list, or a bare token value with no group information — into a consistent `List<Token>`, rather than throwing on an unexpected one. `getTokens()` returns `null` when the record has no tokens (e.g. a failed record).
 
+For a structured column (e.g. an object or array value), each entry also carries `getPath()` — the location within that column's own value the token came from, such as `"street"` or `"phone_numbers[0].type"`. It's `null` for a flat column, where there's nothing to point into.
+
 Accessors: `insertResponse.getSummary()`, `insertResponse.getRecords()`, and on each record `getIndex()`, `getTableName()`, `getSkyflowId()`, `getTokens()`, `getData()`, `getHashedData()`, `getHttpCode()`, `getError()`, `getRequestId()`.
 
 > **Deprecation notice:** `getFields()` is deprecated in favor of `getTokens()` — it is kept only for backward compatibility and will be removed in a future release. Update call sites to `getTokens()`.

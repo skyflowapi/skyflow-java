@@ -144,6 +144,7 @@ public class ResponseComponentTests {
         Token token = new Token("tok-1", "group1");
         Assert.assertEquals("tok-1", token.getToken());
         Assert.assertEquals("group1", token.getTokenGroupName());
+        Assert.assertNull(token.getPath());
     }
 
     @Test
@@ -152,6 +153,14 @@ public class ResponseComponentTests {
         String json = token.toString();
         Assert.assertTrue(json.contains("tok-1"));
         Assert.assertTrue(json.contains("group1"));
+    }
+
+    @Test
+    public void testToken_threeArgConstructorSetsPath() {
+        Token token = new Token("tok-1", "group1", "street");
+        Assert.assertEquals("tok-1", token.getToken());
+        Assert.assertEquals("group1", token.getTokenGroupName());
+        Assert.assertEquals("street", token.getPath());
     }
 
     @Test
@@ -254,6 +263,36 @@ public class ResponseComponentTests {
     }
 
     @Test
+    public void testParseTokens_parsesPathForANestedColumnValue() {
+        // Real shape observed for a structured column (e.g. an "address" object) tokenized
+        // per nested field - see flowdb_dp_apis.proto's own example response.
+        Map<String, Object> entry = new HashMap<>();
+        entry.put("token", "tok-a");
+        entry.put("tokenGroupName", "tg1");
+        entry.put("path", "phone_numbers[0].type");
+
+        Map<String, Object> rawTokens = new HashMap<>();
+        rawTokens.put("address", Collections.singletonList(entry));
+
+        List<Token> address = Token.parseTokens(rawTokens).get("address");
+        Assert.assertEquals("phone_numbers[0].type", address.get(0).getPath());
+    }
+
+    @Test
+    public void testParseTokens_mapEntryMissingPathKeyParsesAsNull() {
+        Map<String, Object> entry = new HashMap<>();
+        entry.put("token", "tok-a");
+        entry.put("tokenGroupName", "tg1");
+        // no "path" key - the normal case for a flat (non-structured) column.
+
+        Map<String, Object> rawTokens = new HashMap<>();
+        rawTokens.put("col1", entry);
+
+        List<Token> col1 = Token.parseTokens(rawTokens).get("col1");
+        Assert.assertNull(col1.get(0).getPath());
+    }
+
+    @Test
     public void testParseTokens_skipsNullEntriesWithinAList() {
         Map<String, Object> entry = new HashMap<>();
         entry.put("token", "tok-a");
@@ -284,6 +323,19 @@ public class ResponseComponentTests {
         Map<?, ?> entry = (Map<?, ?>) col1.get(0);
         Assert.assertEquals("tok-a", entry.get("token"));
         Assert.assertEquals("tg1", entry.get("tokenGroupName"));
+        // No path was set on the Token, so the rendered map has no such key at all - not a
+        // "path": null entry - keeping the path-less shape identical to before path existed.
+        Assert.assertFalse(entry.containsKey("path"));
+    }
+
+    @Test
+    public void testToRawTokens_rendersPathWhenPresent() {
+        Map<String, List<Token>> tokens = new HashMap<>();
+        tokens.put("address", Collections.singletonList(new Token("tok-a", "tg1", "street")));
+
+        Map<?, ?> entry = (Map<?, ?>) ((List<?>) Token.toRawTokens(tokens).get("address")).get(0);
+
+        Assert.assertEquals("street", entry.get("path"));
     }
 
     @Test
