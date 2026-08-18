@@ -485,8 +485,12 @@ Sample response:
 `getTokens()` returns `Map<String, List<Token>>` — one entry per token group configured on that column, so a column with a single token group still comes back as a one-element list, not a bare string. On the wire the API models this generically (`Object`, not a fixed type) to stay flexible, but the SDK parses it into `Token` objects before handing it back, so callers get `Token.getToken()`/`Token.getTokenGroupName()` directly with no casting required:
 
 ```java
-for (Token token : record.getTokens().get("card_number")) {
-    System.out.println(token.getTokenGroupName() + " -> " + token.getToken());
+for (BulkInsertResponseRecord record : insertResponse.getRecords()) {
+    if (record.getTokens() != null) {
+        for (Token token : record.getTokens().get("card_number")) {
+            System.out.println(token.getTokenGroupName() + " -> " + token.getToken());
+        }
+    }
 }
 ```
 
