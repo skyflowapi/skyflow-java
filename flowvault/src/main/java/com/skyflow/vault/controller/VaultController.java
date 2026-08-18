@@ -157,6 +157,12 @@ public final class VaultController extends VaultClient {
             String bodyString = gson.toJson(e.body());
             LogUtil.printErrorLog(ErrorLogs.INSERT_RECORDS_REJECTED.getLog());
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
+        } catch (SkyflowException e) {
+            LogUtil.printErrorLog(ErrorLogs.INSERT_RECORDS_REJECTED.getLog());
+            throw e;
+        } catch (Exception e) {
+            LogUtil.printErrorLog(ErrorLogs.INSERT_RECORDS_REJECTED.getLog());
+            throw new SkyflowException(e.getMessage());
         }
     }
 
@@ -763,9 +769,9 @@ public final class VaultController extends VaultClient {
     ) throws ExecutionException, InterruptedException, SkyflowException {
         LogUtil.printInfoLog(InfoLogs.PROCESSING_BATCHES.getLog());
         List<BulkInsertResponseRecord> records = new ArrayList<>();
-        List<CompletableFuture<BulkInsertResponse>> futures = this.insertBatchFutures(insertRequest, interceptor, cfg);
 
         try {
+            List<CompletableFuture<BulkInsertResponse>> futures = this.insertBatchFutures(insertRequest, interceptor, cfg);
             CompletableFuture<Void> allFutures = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
             try {
                 allFutures.join();
