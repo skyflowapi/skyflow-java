@@ -769,9 +769,9 @@ public final class VaultController extends VaultClient {
     ) throws ExecutionException, InterruptedException, SkyflowException {
         LogUtil.printInfoLog(InfoLogs.PROCESSING_BATCHES.getLog());
         List<BulkInsertResponseRecord> records = new ArrayList<>();
+        List<CompletableFuture<BulkInsertResponse>> futures = this.insertBatchFutures(insertRequest, interceptor, cfg);
 
         try {
-            List<CompletableFuture<BulkInsertResponse>> futures = this.insertBatchFutures(insertRequest, interceptor, cfg);
             CompletableFuture<Void> allFutures = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
             try {
                 allFutures.join();
