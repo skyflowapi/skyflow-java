@@ -157,6 +157,12 @@ public final class VaultController extends VaultClient {
             String bodyString = gson.toJson(e.body());
             LogUtil.printErrorLog(ErrorLogs.INSERT_RECORDS_REJECTED.getLog());
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
+        } catch (SkyflowException e) {
+            LogUtil.printErrorLog(ErrorLogs.INSERT_RECORDS_REJECTED.getLog());
+            throw e;
+        } catch (Exception e) {
+            LogUtil.printErrorLog(ErrorLogs.INSERT_RECORDS_REJECTED.getLog());
+            throw new SkyflowException(e.getMessage());
         }
     }
 

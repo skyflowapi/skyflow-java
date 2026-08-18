@@ -179,6 +179,37 @@ public class VaultControllerTests {
     }
 
     @Test
+    public void testBulkInsertAsync_unexpectedExceptionWrappedAsSkyflowException() throws Exception {
+        // Regression test: bulkInsertAsync's synchronous setup (before the batch futures exist)
+        // must wrap any unexpected exception in SkyflowException, same as every other bulk async
+        // method - not just ApiClientApiException. A RequestInterceptor is invoked synchronously
+        // per batch inside insertBatchFutures, so a caller interceptor that throws is a realistic
+        // way to trigger this without reaching into internals.
+        ApiClient mockApi = Mockito.mock(ApiClient.class);
+        VaultController controller = createControllerWithMock(mockApi);
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", "john");
+        ArrayList<InsertRequestRecord> records = new ArrayList<>();
+        records.add(BulkInsertRequestRecord.builder().tableName("table1").data(data).build());
+        BulkInsertRequest request = BulkInsertRequest.builder().records(records).build();
+
+        RequestInterceptor interceptor = ctx -> {
+            throw new IllegalStateException("interceptor blew up");
+        };
+        BulkInsertOptions options = BulkInsertOptions.builder().interceptor(interceptor).build();
+
+        try {
+            controller.bulkInsertAsync(request, options);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals("interceptor blew up", e.getMessage());
+        } catch (IllegalStateException e) {
+            Assert.fail("Expected SkyflowException, got IllegalStateException");
+        }
+    }
+
+    @Test
     public void testBulkInsert_interceptorAddsCustomHeader() throws Exception {
         ApiClient mockApi = Mockito.mock(ApiClient.class);
         RawFlowserviceClient mockRaw = mockRawFlowservice(mockApi);
