@@ -24,8 +24,19 @@ public class BulkInsertResponse {
     ) {
         this.records = records;
         this.originalPayload = originalPayload;
-        int totalFailed = (int) records.stream().filter(record -> record.getError() != null).count();
-        this.summary = new BulkSummary(originalPayload.size(), records.size() - totalFailed, totalFailed);
+        this.summary = buildSummary(records, originalPayload);
+    }
+
+    private static BulkSummary buildSummary(List<BulkInsertResponseRecord> records,
+                                             List<InsertRequestRecord> originalPayload) {
+        int totalFailed = records != null
+                ? (int) records.stream().filter(record -> record.getError() != null).count()
+                : 0;
+        int totalInserted = (records != null ? records.size() : 0) - totalFailed;
+        int totalRecords = originalPayload != null
+                ? originalPayload.size()
+                : (records != null ? records.size() : 0);
+        return new BulkSummary(totalRecords, totalInserted, totalFailed);
     }
 
     public BulkSummary getSummary() {

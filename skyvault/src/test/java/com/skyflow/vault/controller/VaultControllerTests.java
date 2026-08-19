@@ -1348,4 +1348,146 @@ public class VaultControllerTests {
             Assert.assertEquals(403, e.getHttpCode());
         }
     }
+
+    // --- insert(null) must throw SkyflowException, not NullPointerException ---
+    // (continueOnError used to be read before validation ran)
+
+    @Test
+    public void testInsertNullRequestThrowsSkyflowExceptionNotNPE() {
+        try {
+            skyflowClient.vault().insert(null);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(
+                    Utils.parameterizedString(ErrorMessage.InsertRequestNull.getMessage(), Constants.SDK_PREFIX),
+                    e.getMessage()
+            );
+        } catch (NullPointerException e) {
+            Assert.fail("insert(null) should throw SkyflowException, not NullPointerException");
+        }
+    }
+
+    // --- extractRequestId — missing/empty header must return null, not throw ---
+
+    @Test
+    public void testExtractRequestId_nullHeadersMapReturnsNull() throws Exception {
+        Method method = VaultController.class.getDeclaredMethod("extractRequestId", Map.class);
+        method.setAccessible(true);
+        String result = (String) method.invoke(null, (Map<String, List<String>>) null);
+        Assert.assertNull(result);
+    }
+
+    @Test
+    public void testExtractRequestId_emptyHeadersMapReturnsNull() throws Exception {
+        Method method = VaultController.class.getDeclaredMethod("extractRequestId", Map.class);
+        method.setAccessible(true);
+        String result = (String) method.invoke(null, new HashMap<String, List<String>>());
+        Assert.assertNull(result);
+    }
+
+    @Test
+    public void testExtractRequestId_emptyValueListReturnsNull() throws Exception {
+        Map<String, List<String>> headers = new HashMap<>();
+        headers.put(Constants.REQUEST_ID_HEADER_KEY, Collections.<String>emptyList());
+
+        Method method = VaultController.class.getDeclaredMethod("extractRequestId", Map.class);
+        method.setAccessible(true);
+        String result = (String) method.invoke(null, headers);
+        Assert.assertNull(result);
+    }
+
+    @Test
+    public void testExtractRequestId_presentValueReturnsFirst() throws Exception {
+        Map<String, List<String>> headers = new HashMap<>();
+        headers.put(Constants.REQUEST_ID_HEADER_KEY, Collections.singletonList("req-abc-123"));
+
+        Method method = VaultController.class.getDeclaredMethod("extractRequestId", Map.class);
+        method.setAccessible(true);
+        String result = (String) method.invoke(null, headers);
+        Assert.assertEquals("req-abc-123", result);
+    }
+
+    // --- detokenize error record with missing x-request-id header must not throw ---
+
+    @Test
+    public void testDetokenize_missingRequestIdHeaderDoesNotThrowAndRequestIdIsNull() throws Exception {
+        ApiClient mockApi = Mockito.mock(ApiClient.class);
+        TokensClient mockTokens = Mockito.mock(TokensClient.class);
+        RawTokensClient mockRawTokens = Mockito.mock(RawTokensClient.class);
+        when(mockApi.tokens()).thenReturn(mockTokens);
+        when(mockTokens.withRawResponse()).thenReturn(mockRawTokens);
+
+        V1DetokenizeRecordResponse errRecord = V1DetokenizeRecordResponse.builder()
+                .token("tok-bad")
+                .error("token not found")
+                .build();
+        V1DetokenizeResponse detokBody = V1DetokenizeResponse.builder()
+                .records(Collections.singletonList(errRecord))
+                .build();
+        // Deliberately no REQUEST_ID_HEADER_KEY header set (unlike buildOkHttpResponse())
+        Response rawResp = new Response.Builder()
+                .request(new Request.Builder().url("https://dummy.example.com").build())
+                .protocol(Protocol.HTTP_1_1)
+                .code(200)
+                .message("OK")
+                .build();
+        ApiClientHttpResponse<V1DetokenizeResponse> httpResp = new ApiClientHttpResponse<>(detokBody, rawResp);
+        when(mockRawTokens.recordServiceDetokenize(anyString(), any(), any())).thenReturn(httpResp);
+
+        VaultController controller = createControllerWithMock(mockApi);
+
+        ArrayList<DetokenizeData> detokenizeDataList = new ArrayList<>();
+        detokenizeDataList.add(new DetokenizeData("tok-bad"));
+        DetokenizeRequest request = DetokenizeRequest.builder()
+                .detokenizeData(detokenizeDataList)
+                .build();
+
+        DetokenizeResponse response = controller.detokenize(request);
+        Assert.assertNotNull(INVALID_EXCEPTION_THROWN, response);
+        Assert.assertNotNull("errors should not be null", response.getErrors());
+        Assert.assertEquals(1, response.getErrors().size());
+        Assert.assertNull("requestId should be null when header is missing", response.getErrors().get(0).getRequestId());
+    }
+
+    // --- getFormattedBatchInsertRecord — missing "Body" key must not throw ---
+
+    @Test
+    public void testGetFormattedBatchInsertRecord_missingBodyKeyDoesNotThrow() throws Exception {
+        HashMap<String, Object> recordWithoutBody = new HashMap<>();
+        recordWithoutBody.put("notBody", "irrelevant");
+
+        Method method = VaultController.class.getDeclaredMethod(
+                "getFormattedBatchInsertRecord", Object.class, Integer.class);
+        method.setAccessible(true);
+        @SuppressWarnings("unchecked")
+        HashMap<String, Object> result = (HashMap<String, Object>) method.invoke(null, recordWithoutBody, 0);
+
+        Assert.assertNotNull(result);
+        Assert.assertFalse("skyflowId should not be present when Body is missing", result.containsKey("skyflowId"));
+        Assert.assertEquals(0, result.get("requestIndex"));
+    }
+
+    // --- get() — absent records Optional must return empty data, not throw ---
+
+    @Test
+    public void testGet_recordsOptionalAbsentReturnsEmptyData() throws Exception {
+        ApiClient mockApi = Mockito.mock(ApiClient.class);
+        RecordsClient mockRecords = Mockito.mock(RecordsClient.class);
+        when(mockApi.records()).thenReturn(mockRecords);
+
+        V1BulkGetRecordResponse getResp = V1BulkGetRecordResponse.builder().build();
+        when(mockRecords.recordServiceBulkGetRecord(anyString(), anyString(), any(), any())).thenReturn(getResp);
+
+        VaultController controller = createControllerWithMock(mockApi);
+
+        ArrayList<String> ids = new ArrayList<>();
+        ids.add("id-missing-records");
+        GetRequest request = GetRequest.builder().table("test_table").ids(ids).build();
+
+        GetResponse response = controller.get(request);
+        Assert.assertNotNull(INVALID_EXCEPTION_THROWN, response);
+        Assert.assertNotNull("data should not be null", response.getData());
+        Assert.assertTrue("data should be empty when records Optional is absent", response.getData().isEmpty());
+    }
 }

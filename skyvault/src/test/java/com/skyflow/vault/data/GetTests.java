@@ -399,6 +399,53 @@ public class GetTests {
     }
 
     @Test
+    public void testNullRequestInGetRequestValidations() {
+        try {
+            Validations.validateGetRequest(null);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(
+                    Utils.parameterizedString(ErrorMessage.GetRequestNull.getMessage(), Constants.SDK_PREFIX),
+                    e.getMessage()
+            );
+        }
+    }
+
+    @Test
+    public void testInvalidOrderByInGetRequestValidations() {
+        ids.add(skyflowID);
+        GetRequest request = GetRequest.builder()
+                .table(table).ids(ids).orderBy("invalid").build();
+        try {
+            Validations.validateGetRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(
+                    Utils.parameterizedString(ErrorMessage.InvalidOrderBy.getMessage(), Constants.SDK_PREFIX),
+                    e.getMessage()
+            );
+        }
+    }
+
+    @Test
+    public void testValidOrderByValuesPassInGetRequestValidations() {
+        for (String validOrderBy : new String[]{Constants.ORDER_ASCENDING, Constants.ORDER_DESCENDING, Constants.ORDER_NONE}) {
+            ids.clear();
+            ids.add(skyflowID);
+            GetRequest request = GetRequest.builder()
+                    .table(table).ids(ids).orderBy(validOrderBy).build();
+            try {
+                Validations.validateGetRequest(request);
+                Assert.assertEquals(validOrderBy, request.getOrderBy());
+            } catch (SkyflowException e) {
+                Assert.fail(INVALID_EXCEPTION_THROWN + ": " + validOrderBy);
+            }
+        }
+    }
+
+    @Test
     public void testNoIdsOrColumnNameInGetRequestValidations() {
         GetRequest request = GetRequest.builder().table(table).redactionType(RedactionType.PLAIN_TEXT).build();
         try {

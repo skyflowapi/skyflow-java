@@ -145,7 +145,7 @@ public class VaultClient extends BaseVaultClient<VaultConfig> {
         }
     }
 
-    protected void updateExecutorInHTTP() {
+    protected void updateExecutorInHTTP() throws SkyflowException {
         if (sharedHttpClient == null) {
             int timeoutSeconds = resolveInt(vaultConfig.getTimeout(), commonTimeout, DEFAULT_TIMEOUT_SECONDS);
             int maxRetries = resolveInt(vaultConfig.getMaxRetries(), commonMaxRetries, DEFAULT_MAX_RETRIES);
@@ -158,29 +158,38 @@ public class VaultClient extends BaseVaultClient<VaultConfig> {
             Integer readTimeout = resolveNullableInt(vaultConfig.getReadTimeout(), commonReadTimeout);
             Integer writeTimeout = resolveNullableInt(vaultConfig.getWriteTimeout(), commonWriteTimeout);
 
-            OkHttpClient.Builder httpBuilder = new OkHttpClient.Builder()
-                    .connectionPool(new ConnectionPool(10, 1, TimeUnit.MINUTES))
-                    // Overall ceiling; bounds the whole call including retries.
-                    .callTimeout(timeoutSeconds, TimeUnit.SECONDS)
-                    // OUTER: retries. Must wrap the auth interceptor so each attempt re-reads the
-                    // (possibly refreshed) bearer token rather than replaying a stale one.
-                    .addInterceptor(new SkyflowRetryInterceptor(maxRetries, initialRetryDelayMillis, maxRetryDelayMillis))
-                    .addInterceptor(chain -> {  // INNER: auth
-                        Request requestWithAuth = chain.request().newBuilder()
-                                .header("Authorization", "Bearer " + this.token)
-                                .build();
-                        return chain.proceed(requestWithAuth);
-                    });
-            if (connectTimeout != null) {
-                httpBuilder.connectTimeout(connectTimeout, TimeUnit.SECONDS);
+            // Negative timeout/retry values reach here straight from public config setters with
+            // no validation of their own; our own SkyflowRetryInterceptor throws IllegalArgumentException
+            // and OkHttp's own Builder throws IllegalStateException for those — translate both (and
+            // anything else unexpected from this construction) to SkyflowException so every failure
+            // mode from this SDK is a SkyflowException, never a raw one.
+            try {
+                OkHttpClient.Builder httpBuilder = new OkHttpClient.Builder()
+                        .connectionPool(new ConnectionPool(10, 1, TimeUnit.MINUTES))
+                        // Overall ceiling; bounds the whole call including retries.
+                        .callTimeout(timeoutSeconds, TimeUnit.SECONDS)
+                        // OUTER: retries. Must wrap the auth interceptor so each attempt re-reads the
+                        // (possibly refreshed) bearer token rather than replaying a stale one.
+                        .addInterceptor(new SkyflowRetryInterceptor(maxRetries, initialRetryDelayMillis, maxRetryDelayMillis))
+                        .addInterceptor(chain -> {  // INNER: auth
+                            Request requestWithAuth = chain.request().newBuilder()
+                                    .header("Authorization", "Bearer " + this.token)
+                                    .build();
+                            return chain.proceed(requestWithAuth);
+                        });
+                if (connectTimeout != null) {
+                    httpBuilder.connectTimeout(connectTimeout, TimeUnit.SECONDS);
+                }
+                if (readTimeout != null) {
+                    httpBuilder.readTimeout(readTimeout, TimeUnit.SECONDS);
+                }
+                if (writeTimeout != null) {
+                    httpBuilder.writeTimeout(writeTimeout, TimeUnit.SECONDS);
+                }
+                sharedHttpClient = httpBuilder.build();
+            } catch (RuntimeException e) {
+                throw new SkyflowException(e);
             }
-            if (readTimeout != null) {
-                httpBuilder.readTimeout(readTimeout, TimeUnit.SECONDS);
-            }
-            if (writeTimeout != null) {
-                httpBuilder.writeTimeout(writeTimeout, TimeUnit.SECONDS);
-            }
-            sharedHttpClient = httpBuilder.build();
             apiClientBuilder.httpClient(sharedHttpClient);
         }
     }

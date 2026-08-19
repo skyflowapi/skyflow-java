@@ -419,6 +419,17 @@ public class InvokeConnectionTests {
     }
 
     @Test
+    public void testNullRequestInInvokeConnectionRequestValidations() {
+        try {
+            Validations.validateInvokeConnectionRequest(null);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(ErrorMessage.InvokeConnectionRequestNull.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
     public void testInvokeConnectionResponse() {
         try {
             JsonObject data = new JsonObject();

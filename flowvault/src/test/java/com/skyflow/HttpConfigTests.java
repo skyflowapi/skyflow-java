@@ -31,7 +31,7 @@ public class HttpConfigTests {
     }
 
     /** Builds the shared OkHttp client without needing credentials or a live token. */
-    private static OkHttpClient httpClientOf(VaultClient client) {
+    private static OkHttpClient httpClientOf(VaultClient client) throws SkyflowException {
         client.updateExecutorInHTTP();
         return client.sharedHttpClient;
     }

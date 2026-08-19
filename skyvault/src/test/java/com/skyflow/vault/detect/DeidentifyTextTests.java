@@ -2,6 +2,7 @@ package com.skyflow.vault.detect;
 
 import com.skyflow.enums.DetectEntities;
 import com.skyflow.errors.ErrorCode;
+import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.utils.validations.Validations;
 import org.junit.Assert;
@@ -68,6 +69,17 @@ public class DeidentifyTextTests {
         }
     }
 
+
+    @Test
+    public void testNullRequestInDeidentifyTextRequestValidations() {
+        try {
+            Validations.validateDeidentifyTextRequest(null);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(ErrorMessage.DeidentifyTextRequestNull.getMessage(), e.getMessage());
+        }
+    }
 
     @Test
     public void testNullTextInDeidentifyTextRequestValidations() {

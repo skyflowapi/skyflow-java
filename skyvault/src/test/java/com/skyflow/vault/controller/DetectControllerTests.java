@@ -944,4 +944,98 @@ public class DetectControllerTests {
                 com.skyflow.generated.rest.types.DeidentifyFileResponse.builder().runId("run-euc-dcm").build());
         Assert.assertNotNull(runDeidentifyFileForExtension("dcm", mockFilesClient, buildEntityUniqueCounterTokenFormat()));
     }
+
+    // --- unsupported file extension must throw SkyflowException, not IllegalArgumentException ---
+
+    @Test
+    public void testDeidentifyFile_unsupportedExtensionThrowsSkyflowException() throws Exception {
+        FilesClient mockFilesClient = Mockito.mock(FilesClient.class);
+        try {
+            runDeidentifyFileForExtension("xyz", mockFilesClient);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertNotNull(e.getMessage());
+        }
+    }
+
+    // --- getEntities — output present but empty list must return empty list, not throw ---
+
+    @Test
+    public void testGetEntities_emptyOutputListReturnsEmptyList() throws Exception {
+        DetectRunsResponse response = DetectRunsResponse.builder()
+                .status(DetectRunsResponseStatus.SUCCESS)
+                .output(Collections.<DeidentifiedFileOutput>emptyList())
+                .build();
+
+        java.lang.reflect.Method method = DetectController.class.getDeclaredMethod("getEntities", DetectRunsResponse.class);
+        method.setAccessible(true);
+        java.util.List<?> result = (java.util.List<?>) method.invoke(null, response);
+
+        Assert.assertNotNull(result);
+        Assert.assertTrue("entities should be empty when output list is empty", result.isEmpty());
+    }
+
+    // --- parseDeidentifyFileResponse — FAILED run with absent optional fields must not throw ---
+
+    @Test
+    public void testParseDeidentifyFileResponse_failedRunWithAbsentFieldsDoesNotThrow() throws Exception {
+        DetectRunsResponse response = DetectRunsResponse.builder()
+                .status(DetectRunsResponseStatus.FAILED)
+                .build();
+
+        java.lang.reflect.Method method = DetectController.class.getDeclaredMethod(
+                "parseDeidentifyFileResponse", DetectRunsResponse.class, String.class, String.class);
+        method.setAccessible(true);
+        DeidentifyFileResponse result = (DeidentifyFileResponse) method.invoke(
+                null, response, "run-failed-001", DetectRunsResponseStatus.FAILED.toString());
+
+        Assert.assertNotNull(result);
+        Assert.assertEquals("run-failed-001", result.getRunId());
+    }
+
+    // --- getBaseFileName — filename with no extension must not throw StringIndexOutOfBoundsException ---
+
+    @Test
+    public void testGetBaseFileName_withExtensionStripsIt() throws Exception {
+        java.lang.reflect.Method method = DetectController.class.getDeclaredMethod("getBaseFileName", String.class);
+        method.setAccessible(true);
+        DetectController controller = createDetectControllerWithMock(Mockito.mock(ApiClient.class));
+        String result = (String) method.invoke(controller, "photo.png");
+        Assert.assertEquals("photo", result);
+    }
+
+    @Test
+    public void testGetBaseFileName_withoutExtensionReturnsWholeName() throws Exception {
+        java.lang.reflect.Method method = DetectController.class.getDeclaredMethod("getBaseFileName", String.class);
+        method.setAccessible(true);
+        DetectController controller = createDetectControllerWithMock(Mockito.mock(ApiClient.class));
+        String result = (String) method.invoke(controller, "noextension");
+        Assert.assertEquals("noextension", result);
+    }
+
+    // --- pollForResults — one poll response with absent status must not throw; loop continues ---
+
+    @Test
+    public void testDeidentifyFile_pollAbsentStatusThenSuccess() throws Exception {
+        File tmpFile = File.createTempFile("test-detect-absentstatus", ".txt");
+        tmpFile.deleteOnExit();
+        Files.write(tmpFile.toPath(), "content".getBytes());
+
+        FilesClient mockFilesClient = Mockito.mock(FilesClient.class);
+        ApiClient mockApiClient = Mockito.mock(ApiClient.class);
+        when(mockApiClient.files()).thenReturn(mockFilesClient);
+        when(mockFilesClient.deidentifyText(any())).thenReturn(
+                com.skyflow.generated.rest.types.DeidentifyFileResponse.builder().runId("run-absent-status").build());
+        when(mockFilesClient.getRun(anyString(), any(GetRunRequest.class), any(RequestOptions.class)))
+                .thenReturn(DetectRunsResponse.builder().build())
+                .thenReturn(buildSuccessDetectRunsResponse());
+
+        DetectController controller = createDetectControllerWithMock(mockApiClient);
+        DeidentifyFileRequest request = DeidentifyFileRequest.builder()
+                .file(FileInput.builder().file(tmpFile).build())
+                .build();
+
+        DeidentifyFileResponse response = controller.deidentifyFile(request);
+        Assert.assertNotNull(response);
+    }
 }

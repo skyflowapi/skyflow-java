@@ -88,6 +88,20 @@ public class QueryTests {
     }
 
     @Test
+    public void testNullRequestInQueryRequestValidations() {
+        try {
+            Validations.validateQueryRequest(null);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(
+                    Utils.parameterizedString(ErrorMessage.QueryRequestNull.getMessage(), Constants.SDK_PREFIX),
+                    e.getMessage()
+            );
+        }
+    }
+
+    @Test
     public void testQueryResponse() {
         try {
             ArrayList<HashMap<String, Object>> fields = new ArrayList<>();
