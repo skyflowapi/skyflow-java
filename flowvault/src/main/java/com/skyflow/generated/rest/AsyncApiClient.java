@@ -5,9 +5,8 @@ package com.skyflow.generated.rest;
 
 import com.skyflow.generated.rest.core.ClientOptions;
 import com.skyflow.generated.rest.core.Suppliers;
-import com.skyflow.generated.rest.resources.flowservice.AsyncFlowserviceClient;
 import com.skyflow.generated.rest.resources.records.AsyncRecordsClient;
-
+import com.skyflow.generated.rest.resources.tokens.AsyncTokensClient;
 import java.util.function.Supplier;
 
 public class AsyncApiClient {
@@ -15,20 +14,20 @@ public class AsyncApiClient {
 
     protected final Supplier<AsyncRecordsClient> recordsClient;
 
-    protected final Supplier<AsyncFlowserviceClient> flowserviceClient;
+    protected final Supplier<AsyncTokensClient> tokensClient;
 
     public AsyncApiClient(ClientOptions clientOptions) {
         this.clientOptions = clientOptions;
         this.recordsClient = Suppliers.memoize(() -> new AsyncRecordsClient(clientOptions));
-        this.flowserviceClient = Suppliers.memoize(() -> new AsyncFlowserviceClient(clientOptions));
+        this.tokensClient = Suppliers.memoize(() -> new AsyncTokensClient(clientOptions));
     }
 
     public AsyncRecordsClient records() {
         return this.recordsClient.get();
     }
 
-    public AsyncFlowserviceClient flowservice() {
-        return this.flowserviceClient.get();
+    public AsyncTokensClient tokens() {
+        return this.tokensClient.get();
     }
 
     public static AsyncApiClientBuilder builder() {

@@ -3,12 +3,11 @@
  */
 package com.skyflow.generated.rest.core;
 
-import okhttp3.Response;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import okhttp3.Response;
 
 public final class ApiClientHttpResponse<T> {
 

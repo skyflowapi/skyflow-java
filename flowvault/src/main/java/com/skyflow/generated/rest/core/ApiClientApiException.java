@@ -3,12 +3,11 @@
  */
 package com.skyflow.generated.rest.core;
 
-import okhttp3.Response;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import okhttp3.Response;
 
 /**
  * This exception type will be thrown for any non-2XX API responses.
@@ -68,7 +67,7 @@ public class ApiClientApiException extends ApiClientException {
 
     @Override
     public String toString() {
-        return "ApiClientApiException{" + "message: " + getMessage() + ", statusCode: " + statusCode + ", body: " + body
-                + "}";
+        return "ApiClientApiException{" + "message: " + getMessage() + ", statusCode: " + statusCode + ", body: "
+                + ObjectMappers.stringify(body) + "}";
     }
 }

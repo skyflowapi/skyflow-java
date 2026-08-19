@@ -3,17 +3,15 @@
  */
 package com.skyflow.generated.rest.core;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Objects;
 import okhttp3.MediaType;
 import okhttp3.RequestBody;
-import okhttp3.internal.Util;
 import okio.BufferedSink;
 import okio.Okio;
 import okio.Source;
 import org.jetbrains.annotations.Nullable;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Objects;
 
 /**
  * A custom implementation of OkHttp's RequestBody that wraps an InputStream.
@@ -69,12 +67,8 @@ public class InputStreamRequestBody extends RequestBody {
      */
     @Override
     public void writeTo(BufferedSink sink) throws IOException {
-        Source source = null;
-        try {
-            source = Okio.source(inputStream);
+        try (Source source = Okio.source(inputStream)) {
             sink.writeAll(source);
-        } finally {
-            Util.closeQuietly(Objects.requireNonNull(source));
         }
     }
 }

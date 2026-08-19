@@ -5,8 +5,8 @@ package com.skyflow.generated.rest.resources.records;
 
 import com.skyflow.generated.rest.core.ClientOptions;
 import com.skyflow.generated.rest.core.RequestOptions;
-import com.skyflow.generated.rest.resources.records.requests.V1ExecuteQueryRequest;
-import com.skyflow.generated.rest.types.V1ExecuteQueryResponse;
+import com.skyflow.generated.rest.resources.records.requests.InsertRequest;
+import com.skyflow.generated.rest.types.InsertResponse;
 
 public class RecordsClient {
     protected final ClientOptions clientOptions;
@@ -26,24 +26,16 @@ public class RecordsClient {
     }
 
     /**
-     * Executes a query on the specified vault.
+     * Inserts new records into a vault.
      */
-    public V1ExecuteQueryResponse flowServiceExecuteQuery() {
-        return this.rawClient.flowServiceExecuteQuery().body();
+    public InsertResponse insertRecords(InsertRequest request) {
+        return this.rawClient.insertRecords(request).body();
     }
 
     /**
-     * Executes a query on the specified vault.
+     * Inserts new records into a vault.
      */
-    public V1ExecuteQueryResponse flowServiceExecuteQuery(V1ExecuteQueryRequest request) {
-        return this.rawClient.flowServiceExecuteQuery(request).body();
-    }
-
-    /**
-     * Executes a query on the specified vault.
-     */
-    public V1ExecuteQueryResponse flowServiceExecuteQuery(
-            V1ExecuteQueryRequest request, RequestOptions requestOptions) {
-        return this.rawClient.flowServiceExecuteQuery(request, requestOptions).body();
+    public InsertResponse insertRecords(InsertRequest request, RequestOptions requestOptions) {
+        return this.rawClient.insertRecords(request, requestOptions).body();
     }
 }

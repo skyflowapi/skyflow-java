@@ -4,14 +4,32 @@
 package com.skyflow.generated.rest.resources.records;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.skyflow.generated.rest.core.*;
-import com.skyflow.generated.rest.resources.records.requests.V1ExecuteQueryRequest;
-import com.skyflow.generated.rest.types.V1ExecuteQueryResponse;
-import okhttp3.*;
-import org.jetbrains.annotations.NotNull;
-
+import com.skyflow.generated.rest.core.ApiClientApiException;
+import com.skyflow.generated.rest.core.ApiClientException;
+import com.skyflow.generated.rest.core.ApiClientHttpResponse;
+import com.skyflow.generated.rest.core.ClientOptions;
+import com.skyflow.generated.rest.core.MediaTypes;
+import com.skyflow.generated.rest.core.ObjectMappers;
+import com.skyflow.generated.rest.core.RequestOptions;
+import com.skyflow.generated.rest.core.RetryInterceptor;
+import com.skyflow.generated.rest.errors.BadRequestError;
+import com.skyflow.generated.rest.errors.InternalServerError;
+import com.skyflow.generated.rest.errors.UnauthorizedError;
+import com.skyflow.generated.rest.resources.records.requests.InsertRequest;
+import com.skyflow.generated.rest.types.ErrorResponse;
+import com.skyflow.generated.rest.types.InsertResponse;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.Headers;
+import okhttp3.HttpUrl;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
+import org.jetbrains.annotations.NotNull;
 
 public class AsyncRawRecordsClient {
     protected final ClientOptions clientOptions;
@@ -21,29 +39,25 @@ public class AsyncRawRecordsClient {
     }
 
     /**
-     * Executes a query on the specified vault.
+     * Inserts new records into a vault.
      */
-    public CompletableFuture<ApiClientHttpResponse<V1ExecuteQueryResponse>> flowServiceExecuteQuery() {
-        return flowServiceExecuteQuery(V1ExecuteQueryRequest.builder().build());
+    public CompletableFuture<ApiClientHttpResponse<InsertResponse>> insertRecords(InsertRequest request) {
+        return insertRecords(request, null);
     }
 
     /**
-     * Executes a query on the specified vault.
+     * Inserts new records into a vault.
      */
-    public CompletableFuture<ApiClientHttpResponse<V1ExecuteQueryResponse>> flowServiceExecuteQuery(
-            V1ExecuteQueryRequest request) {
-        return flowServiceExecuteQuery(request, null);
-    }
-
-    /**
-     * Executes a query on the specified vault.
-     */
-    public CompletableFuture<ApiClientHttpResponse<V1ExecuteQueryResponse>> flowServiceExecuteQuery(
-            V1ExecuteQueryRequest request, RequestOptions requestOptions) {
-        HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
+    public CompletableFuture<ApiClientHttpResponse<InsertResponse>> insertRecords(
+            InsertRequest request, RequestOptions requestOptions) {
+        HttpUrl.Builder httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
                 .newBuilder()
-                .addPathSegments("v2/query")
-                .build();
+                .addPathSegments("v2/records/insert");
+        if (requestOptions != null) {
+            requestOptions.getQueryParameters().forEach((_key, _value) -> {
+                httpUrl.addQueryParameter(_key, _value);
+            });
+        }
         RequestBody body;
         try {
             body = RequestBody.create(
@@ -52,7 +66,7 @@ public class AsyncRawRecordsClient {
             throw new ApiClientException("Failed to serialize request", e);
         }
         Request okhttpRequest = new Request.Builder()
-                .url(httpUrl)
+                .url(httpUrl.build())
                 .method("POST", body)
                 .headers(Headers.of(clientOptions.headers(requestOptions)))
                 .addHeader("Content-Type", "application/json")
@@ -62,25 +76,55 @@ public class AsyncRawRecordsClient {
         if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
             client = clientOptions.httpClientWithTimeout(requestOptions);
         }
-        CompletableFuture<ApiClientHttpResponse<V1ExecuteQueryResponse>> future = new CompletableFuture<>();
+        if (requestOptions != null && requestOptions.getMaxRetries().isPresent()) {
+            okhttpRequest = okhttpRequest
+                    .newBuilder()
+                    .tag(
+                            RetryInterceptor.MaxRetriesOverride.class,
+                            new RetryInterceptor.MaxRetriesOverride(
+                                    requestOptions.getMaxRetries().get()))
+                    .build();
+        }
+        CompletableFuture<ApiClientHttpResponse<InsertResponse>> future = new CompletableFuture<>();
         client.newCall(okhttpRequest).enqueue(new Callback() {
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
                 try (ResponseBody responseBody = response.body()) {
+                    String responseBodyString = responseBody != null ? responseBody.string() : "{}";
                     if (response.isSuccessful()) {
                         future.complete(new ApiClientHttpResponse<>(
-                                ObjectMappers.JSON_MAPPER.readValue(
-                                        responseBody.string(), V1ExecuteQueryResponse.class),
+                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, InsertResponse.class),
                                 response));
                         return;
                     }
-                    String responseBodyString = responseBody != null ? responseBody.string() : "{}";
+                    try {
+                        switch (response.code()) {
+                            case 400:
+                                future.completeExceptionally(new BadRequestError(
+                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class),
+                                        response));
+                                return;
+                            case 401:
+                                future.completeExceptionally(new UnauthorizedError(
+                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class),
+                                        response));
+                                return;
+                            case 500:
+                                future.completeExceptionally(new InternalServerError(
+                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class),
+                                        response));
+                                return;
+                        }
+                    } catch (JsonProcessingException ignored) {
+                        // unable to map error response, throwing generic error
+                    }
+                    Object errorBody = ObjectMappers.parseErrorBody(responseBodyString);
                     future.completeExceptionally(new ApiClientApiException(
-                            "Error with status code " + response.code(),
-                            response.code(),
-                            ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                            response));
+                            "Error with status code " + response.code(), response.code(), errorBody, response));
                     return;
+                } catch (JsonProcessingException e) {
+                    future.completeExceptionally(
+                            new ApiClientException("Failed to deserialize response: " + e.getMessage(), e));
                 } catch (IOException e) {
                     future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
                 }
