@@ -4,6 +4,7 @@ import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.DetectEntities;
 import com.skyflow.enums.DetectOutputTranscriptions;
+import com.skyflow.enums.InterfaceName;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
@@ -26,7 +27,9 @@ import com.skyflow.generated.rest.resources.tokens.requests.V1DetokenizePayload;
 import com.skyflow.generated.rest.resources.tokens.requests.V1TokenizePayload;
 import com.skyflow.generated.rest.types.Transformations;
 import com.skyflow.generated.rest.types.*;
+import com.skyflow.logs.ErrorLogs;
 import com.skyflow.utils.Utils;
+import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.vault.data.FileUploadRequest;
 import com.skyflow.vault.data.InsertRequest;
 import com.skyflow.vault.data.UpdateRequest;
@@ -720,7 +723,7 @@ public class VaultClient extends BaseVaultClient<VaultConfig> {
     }
 
     protected com.skyflow.generated.rest.resources.files.requests.DeidentifyFileRequest getDeidentifyGenericFileRequest(
-            DeidentifyFileRequest request, String vaultId, String base64Content, String fileExtension) {
+            DeidentifyFileRequest request, String vaultId, String base64Content, String fileExtension) throws SkyflowException {
 
         List<DeidentifyFileRequestEntityTypesItem> mappedEntityTypes =
                 getEntityTypes(request.getEntities(), DeidentifyFileRequestEntityTypesItem.class);
@@ -752,10 +755,22 @@ public class VaultClient extends BaseVaultClient<VaultConfig> {
                 .entityUnqCounter(entityUniqueCounter)
                 .build();
 
+        FileDataDataFormat dataFormat = null;
+        if (fileExtension != null) {
+            try {
+                dataFormat = FileDataDataFormat.valueOf(fileExtension.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                LogUtil.printErrorLog(Utils.parameterizedString(
+                        ErrorLogs.UNSUPPORTED_FILE_TYPE_TO_DEIDENTIFY.getLog(), InterfaceName.DETECT.getName(), fileExtension));
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), Utils.parameterizedString(
+                        ErrorMessage.UnsupportedFileTypeToDeidentify.getMessage(), fileExtension));
+            }
+        }
+
         FileData file =
                 FileData.builder()
                         .base64(base64Content)
-                        .dataFormat(fileExtension != null ? FileDataDataFormat.valueOf(fileExtension.toUpperCase()) : null)
+                        .dataFormat(dataFormat)
                         .build();
 
         return com.skyflow.generated.rest.resources.files.requests.DeidentifyFileRequest.builder()

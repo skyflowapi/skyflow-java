@@ -3,6 +3,10 @@ package com.skyflow.vault.detect;
 import com.skyflow.enums.DetectEntities;
 import com.skyflow.enums.DetectOutputTranscriptions;
 import com.skyflow.enums.MaskingMethod;
+import com.skyflow.errors.ErrorCode;
+import com.skyflow.errors.ErrorMessage;
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.utils.validations.Validations;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -95,6 +99,20 @@ public class DeidentifyFileRequestTest {
 
         Assert.assertNull(request.getFileInput().getFile());
         Assert.assertNull(request.getFileInput().getFilePath());
+    }
+
+    @Test
+    public void testValidateDeidentifyFileRequestWithNullFileInputThrowsSkyflowException() {
+        DeidentifyFileRequest request = DeidentifyFileRequest.builder()
+                .entities(Collections.singletonList(DetectEntities.DOB))
+                .build();
+        try {
+            Validations.validateDeidentifyFileRequest(request);
+            Assert.fail("Should have thrown an exception");
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(ErrorMessage.EmptyFileAndFilePathInDeIdentifyFile.getMessage(), e.getMessage());
+        }
     }
 
     @Test

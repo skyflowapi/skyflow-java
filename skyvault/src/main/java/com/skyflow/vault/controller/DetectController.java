@@ -11,6 +11,7 @@ import com.skyflow.errors.SkyflowException;
 import com.skyflow.generated.rest.resources.files.requests.*;
 import com.skyflow.generated.rest.types.*;
 import com.skyflow.generated.rest.core.ApiClientApiException;
+import com.skyflow.generated.rest.core.ApiClientException;
 import com.skyflow.generated.rest.core.RequestOptions;
 import com.skyflow.generated.rest.resources.strings.requests.DeidentifyStringRequest;
 import com.skyflow.generated.rest.resources.strings.requests.ReidentifyStringRequest;
@@ -66,6 +67,8 @@ public final class DetectController extends VaultClient {
             String bodyString = extractBodyAsString(ex);
             LogUtil.printErrorLog(ErrorLogs.DEIDENTIFY_TEXT_REQUEST_REJECTED.getLog());
             throw new SkyflowException(ex.statusCode(), ex, ex.headers(), bodyString);
+        } catch (ApiClientException ex) {
+            throw new SkyflowException(ex);
         }
         LogUtil.printInfoLog(InfoLogs.DEIDENTIFY_TEXT_SUCCESS.getLog());
         return deidentifyTextResponse;
@@ -94,6 +97,8 @@ public final class DetectController extends VaultClient {
             String bodyString = extractBodyAsString(ex);
             LogUtil.printErrorLog(ErrorLogs.REIDENTIFY_TEXT_REQUEST_REJECTED.getLog());
             throw new SkyflowException(ex.statusCode(), ex, ex.headers(), bodyString);
+        } catch (ApiClientException ex) {
+            throw new SkyflowException(ex);
         }
         LogUtil.printInfoLog(InfoLogs.REIDENTIFY_TEXT_SUCCESS.getLog());
         return reidentifyTextResponse;
@@ -138,7 +143,7 @@ public final class DetectController extends VaultClient {
                 if (base64File != null) {
                     byte[] decodedBytes = Base64.getDecoder().decode(base64File);
                     String outputDir = request.getOutputDirectory();
-                    String outputFileName = Constants.PROCESSED_FILE_NAME_PREFIX + fileName.substring(0, fileName.lastIndexOf('.')) + "." + response.getExtension();
+                    String outputFileName = Constants.PROCESSED_FILE_NAME_PREFIX + getBaseFileName(fileName) + "." + response.getExtension();
                     File outputFile;
                     if (outputDir != null && !outputDir.isEmpty()) {
                         outputFile = new File(outputDir, outputFileName);
@@ -160,7 +165,7 @@ public final class DetectController extends VaultClient {
                     String outputDir = request.getOutputDirectory();
                     if (entityBase64 != null) {
                         byte[] entityDecodedBytes = Base64.getDecoder().decode(entityBase64);
-                        String entityFileName = Constants.PROCESSED_FILE_NAME_PREFIX + fileName.substring(0, fileName.lastIndexOf('.')) + ".json";
+                        String entityFileName = Constants.PROCESSED_FILE_NAME_PREFIX + getBaseFileName(fileName) + ".json";
                         File entityFile;
                         if (outputDir != null && !outputDir.isEmpty()) {
                             entityFile = new File(outputDir, entityFileName);
@@ -179,12 +184,19 @@ public final class DetectController extends VaultClient {
             String bodyString = extractBodyAsString(e);
             LogUtil.printErrorLog(ErrorLogs.DEIDENTIFY_FILE_REQUEST_REJECTED.getLog());
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
+        } catch (ApiClientException e) {
+            throw new SkyflowException(e);
         }
         return response;
     }
 
     private String getFileExtension(String fileName) {
         return fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
+    }
+
+    private String getBaseFileName(String fileName) {
+        int dotIndex = fileName.lastIndexOf('.');
+        return dotIndex == -1 ? fileName : fileName.substring(0, dotIndex);
     }
 
     private String encodeFileToBase64(File file) throws IOException {
@@ -208,7 +220,7 @@ public final class DetectController extends VaultClient {
                 response = super.getDetectFileAPi()
                         .getRun(runId, getRunRequest, requestOptions);
 
-                DetectRunsResponseStatus status = response.getStatus().get();
+                DetectRunsResponseStatus status = response.getStatus().orElse(null);
 
                 if (DeidentifyFileStatus.IN_PROGRESS.value().equalsIgnoreCase(String.valueOf(status))) {
                     if (currentWaitTime >= maxWaitTime) {
@@ -236,6 +248,8 @@ public final class DetectController extends VaultClient {
                 String bodyString = gson.toJson(e.body());
                 LogUtil.printErrorLog(ErrorLogs.GET_DETECT_RUN_REQUEST_REJECTED.getLog());
                 throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
+            } catch (ApiClientException e) {
+                throw new SkyflowException(e);
             }
         }
 
@@ -250,17 +264,17 @@ public final class DetectController extends VaultClient {
             return new DeidentifyFileResponse(
                     null,
                     null,
-                    response.getOutputType().get().toString(),
+                    response.getOutputType().map(Object::toString).orElse(null),
                     null,
                     null,
                     null,
-                    response.getSize().get(),
-                    response.getDuration().get(),
+                    response.getSize().orElse(null),
+                    response.getDuration().orElse(null),
                     response.getPages().orElse(null),
                     response.getSlides().orElse(null),
                     getEntities(response),
                     runId,
-                    response.getStatus().get().name()
+                    response.getStatus().map(Enum::name).orElse(null)
             );
         }
 
@@ -328,8 +342,8 @@ public final class DetectController extends VaultClient {
     private static synchronized List<FileEntityInfo> getEntities(DetectRunsResponse response) {
         List<FileEntityInfo> entities = new ArrayList<>();
 
-        Optional<List<DeidentifiedFileOutput>> outputs = response.getOutput();
-        DeidentifiedFileOutput deidentifyFileOutput = outputs.isPresent() ? outputs.get().get(0) : null;
+        List<DeidentifiedFileOutput> outputs = response.getOutput().orElse(null);
+        DeidentifiedFileOutput deidentifyFileOutput = outputs != null && !outputs.isEmpty() ? outputs.get(0) : null;
 
         if (deidentifyFileOutput != null) {
             entities.add(new FileEntityInfo(
@@ -432,6 +446,8 @@ public final class DetectController extends VaultClient {
             String bodyString = extractBodyAsString(e);
             LogUtil.printErrorLog(ErrorLogs.GET_DETECT_RUN_REQUEST_REJECTED.getLog());
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
+        } catch (ApiClientException e) {
+            throw new SkyflowException(e);
         }
     }
 }

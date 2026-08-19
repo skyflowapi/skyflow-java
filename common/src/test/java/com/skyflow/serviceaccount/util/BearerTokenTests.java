@@ -6,6 +6,7 @@ import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.generated.auth.rest.core.ApiClientException;
+import com.skyflow.generated.auth.rest.types.V1GetAuthTokenResponse;
 import com.skyflow.utils.BaseConstants;
 import com.skyflow.utils.BaseUtils;
 import org.junit.Assert;
@@ -14,6 +15,8 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.util.ArrayList;
@@ -317,12 +320,58 @@ public class BearerTokenTests {
                     .build();
             bearerToken.getBearerToken();
             Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (ApiClientException e) {
-            // Reaching this network-layer exception (rather than a SkyflowException from key
-            // parsing) confirms getSignedToken() and getScopeUsingRoles() both ran successfully.
-            Assert.assertTrue(e.getCause() instanceof IOException);
+        } catch (SkyflowException e) {
+            // Reaching this network-layer failure (rather than a SkyflowException raised
+            // directly from key parsing) confirms getSignedToken() and getScopeUsingRoles()
+            // both ran successfully. The SDK never leaks a raw ApiClientException — this one is
+            // wrapped, with the original ApiClientException/IOException chain preserved as the cause.
+            Assert.assertTrue(e.getCause() instanceof ApiClientException);
+            Assert.assertTrue(e.getCause().getCause() instanceof IOException);
         } catch (Exception e) {
             Assert.fail(INVALID_EXCEPTION_THROWN + ": " + e);
+        }
+    }
+
+    @Test
+    public void testMalformedPrivateKeyTypeThrowsSkyflowException() {
+        // privateKey present but a JSON object instead of a string — used to surface as a raw
+        // UnsupportedOperationException from JsonElement.getAsString(); now wrapped.
+        JsonObject credentials = new JsonObject();
+        JsonObject notAString = new JsonObject();
+        notAString.addProperty("nested", "value");
+        credentials.add("privateKey", notAString);
+        credentials.addProperty("clientId", "client_id_value");
+        credentials.addProperty("keyId", "key_id_value");
+        credentials.addProperty("tokenUri", "https://localhost:1");
+        String credentialsString = new Gson().toJson(credentials);
+
+        try {
+            BearerToken bearerToken = BearerToken.builder().setCredentials(credentialsString).build();
+            bearerToken.getBearerToken();
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            // httpCode 0 indicates a wrapped local failure (SkyflowException(Throwable) ctor),
+            // distinct from a 400 validation error.
+            Assert.assertEquals(0, e.getHttpCode());
+            Assert.assertTrue(e.getCause() instanceof UnsupportedOperationException);
+        } catch (Exception e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN + ": " + e);
+        }
+    }
+
+    @Test
+    public void testExtractAccessTokenMissingThrowsSkyflowException() throws Exception {
+        V1GetAuthTokenResponse response = V1GetAuthTokenResponse.builder().build();
+        Method method = BearerToken.class.getDeclaredMethod("extractAccessToken", V1GetAuthTokenResponse.class);
+        method.setAccessible(true);
+        try {
+            method.invoke(null, response);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (InvocationTargetException e) {
+            Assert.assertTrue(e.getCause() instanceof SkyflowException);
+            SkyflowException skyflowException = (SkyflowException) e.getCause();
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), skyflowException.getHttpCode());
+            Assert.assertEquals(ErrorMessage.MissingAccessToken.getMessage(), skyflowException.getMessage());
         }
     }
 }

@@ -118,6 +118,20 @@ public class UpdateTests {
     }
 
     @Test
+    public void testNullRequestInUpdateRequestValidations() {
+        try {
+            Validations.validateUpdateRequest(null);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(
+                    Utils.parameterizedString(ErrorMessage.UpdateRequestNull.getMessage(), Constants.SDK_PREFIX),
+                    e.getMessage()
+            );
+        }
+    }
+
+    @Test
     public void testInvalidSkyflowIdTypeInUpdateRequestValidations() {
         dataMap.put("skyflow_id", 123);
         UpdateRequest request = UpdateRequest.builder().table(table).data(dataMap).build();

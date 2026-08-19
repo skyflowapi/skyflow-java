@@ -509,11 +509,66 @@ public class SkyflowTests {
         }
     }
 
-    // ── getVaultConfig ────────────────────────────────────────────────────────
+    // ── getVaultConfig() ──────────────────────────────────────────────────────
+
+    @Test
+    public void testGetVaultConfig_returnsTheOnlyConfiguredVault() throws SkyflowException {
+        // addVaultConfigTemplate stores cloneVaultConfig(vaultConfig), not the same reference,
+        // so compare fields rather than identity against the config passed into addVaultConfig.
+        Skyflow client = Skyflow.builder().addVaultConfig(buildConfig("vault1", "cluster1")).build();
+        Assert.assertEquals("vault1", client.getVaultConfig().getVaultId());
+        Assert.assertEquals("cluster1", client.getVaultConfig().getClusterId());
+    }
+
+    @Test
+    public void testGetVaultConfig_returnsFirstConfiguredVaultAmongSeveral() throws SkyflowException {
+        Skyflow client = Skyflow.builder()
+                .addVaultConfig(buildConfig("vault1", "cluster1"))
+                .addVaultConfig(buildConfig("vault2", "cluster2"))
+                .build();
+
+        Assert.assertEquals("vault1", client.getVaultConfig().getVaultId());
+        // Consistent with vault(): the no-arg accessor always resolves to the first-registered vault.
+        Assert.assertSame(client.getVaultConfig("vault1"), client.getVaultConfig());
+    }
+
+    @Test
+    public void testGetVaultConfig_returnsNullWhenNoConfigExists() {
+        // Regression test: this used to be Object[] array = ...toArray(); return (VaultConfig)
+        // array[0], which threw ArrayIndexOutOfBoundsException on an empty map instead of
+        // failing gracefully like every other lookup in this class.
+        Assert.assertNull(Skyflow.builder().build().getVaultConfig());
+    }
+
+    @Test
+    public void testGetVaultConfig_returnsNullAfterTheOnlyVaultIsRemoved() throws SkyflowException {
+        Skyflow client = Skyflow.builder().addVaultConfig(buildConfig("vault1", "cluster1")).build();
+        client.removeVaultConfig("vault1");
+
+        Assert.assertNull(client.getVaultConfig());
+    }
+
+    @Test
+    public void testGetVaultConfig_fallsBackToTheRemainingVaultAfterTheFirstIsRemoved() throws SkyflowException {
+        Skyflow client = Skyflow.builder()
+                .addVaultConfig(buildConfig("vault1", "cluster1"))
+                .addVaultConfig(buildConfig("vault2", "cluster2"))
+                .build();
+        client.removeVaultConfig("vault1");
+
+        Assert.assertEquals("vault2", client.getVaultConfig().getVaultId());
+    }
+
+    // ── getVaultConfig(vaultId) ───────────────────────────────────────────────
 
     @Test
     public void testGetVaultConfig_returnsNullForUnknownVaultId() throws SkyflowException {
         Skyflow client = Skyflow.builder().addVaultConfig(buildConfig("vault1", "cluster1")).build();
         Assert.assertNull(client.getVaultConfig("vault-unknown"));
+    }
+
+    @Test
+    public void testGetVaultConfig_byIdReturnsNullWhenNoConfigExists() {
+        Assert.assertNull(Skyflow.builder().build().getVaultConfig("vault1"));
     }
 }

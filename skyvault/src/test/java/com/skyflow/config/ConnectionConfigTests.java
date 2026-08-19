@@ -126,4 +126,15 @@ public class ConnectionConfigTests {
             Assert.assertEquals(ErrorMessage.InvalidConnectionUrlFormat.getMessage(), e.getMessage());
         }
     }
+
+    @Test
+    public void testNullConnectionConfigInValidations() {
+        try {
+            Validations.validateConnectionConfig(null);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(ErrorMessage.NullConnectionConfig.getMessage(), e.getMessage());
+        }
+    }
 }

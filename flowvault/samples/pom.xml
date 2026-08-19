@@ -18,7 +18,7 @@
         <dependency>
             <groupId>com.skyflow</groupId>
             <artifactId>skyflow-flowvault-java</artifactId>
-            <version>3.0.0-beta.13-dev.18f8f1ba</version>
+            <version>1.0.1</version>
         </dependency>
 
     </dependencies>

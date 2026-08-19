@@ -1,16 +1,14 @@
 package com.skyflow.vault.data;
 
-import java.util.Map;
-
 public class DetokenizeResponseRecord extends BaseDetokenizeRecordResponse {
     // Passed straight through from V1FlowDetokenizeResponseObject.getValue() (Optional<Object>).
     private final Object value;
     private final String tokenGroupName;
-    private final Map<String, Object> metadata;
+    private final DetokenizeMetadata metadata;
     private final int httpCode;
 
     public DetokenizeResponseRecord(String token, Object value, String tokenGroupName,
-                                     Map<String, Object> metadata, int httpCode, String error) {
+                                     DetokenizeMetadata metadata, int httpCode, String error) {
         super(token, error);
         this.value = value;
         this.tokenGroupName = tokenGroupName;
@@ -26,7 +24,13 @@ public class DetokenizeResponseRecord extends BaseDetokenizeRecordResponse {
         return tokenGroupName;
     }
 
-    public Map<String, Object> getMetadata() {
+    /**
+     * The record's skyflowId/tableName, typed. The API models this generically (see
+     * {@link DetokenizeMetadata#parseMetadata(java.util.Map)}), but the SDK parses it here so
+     * callers get {@link DetokenizeMetadata#getSkyflowId()}/{@link DetokenizeMetadata#getTableName()}
+     * directly, with no casting required.
+     */
+    public DetokenizeMetadata getMetadata() {
         return metadata;
     }
 

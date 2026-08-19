@@ -8,6 +8,7 @@ import com.skyflow.enums.LogLevel;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.vault.data.BulkDetokenizeRequest;
 import com.skyflow.vault.data.BulkDetokenizeResponse;
+import com.skyflow.vault.data.BulkDetokenizeResponseRecord;
 import com.skyflow.vault.data.TokenGroupRedactions;
 
 import java.util.ArrayList;
@@ -22,7 +23,8 @@ import java.util.concurrent.CompletionException;
  * 2. Creating a list of tokens to detokenize
  * 3. Configuring token group redactions
  * 4. Building and executing an async bulk detokenize request
- * 5. Handling the detokenize response or errors using CompletableFuture
+ * 5. Reading the per-token outcome and the summary from the response
+ * 6. Handling the detokenize response or errors using CompletableFuture
  */
 public class BulkDetokenizeAsync {
 
@@ -46,7 +48,9 @@ public class BulkDetokenizeAsync {
                     .addVaultConfig(vaultConfig)
                     .build();
 
-            // Step 4: Prepare list of tokens to detokenize
+            // Step 4: Prepare list of tokens to detokenize. The SDK assigns each token an index
+            // from its position in this list and returns it on the matching response record, so
+            // results stay correlated even though the batches complete out of order.
             List<String> tokens = new ArrayList<>();
             tokens.add("<YOUR_TOKEN_1>");
             tokens.add("<YOUR_TOKEN_2>");
@@ -70,11 +74,35 @@ public class BulkDetokenizeAsync {
                     skyflowClient.vault().bulkDetokenizeAsync(detokenizeRequest);
             future.thenAccept(response -> {
                 System.out.println("Async bulk detokenize resolved with response:\t" + response);
+
+                // Read the summary. totalTokens counts the tokens you submitted, and the other
+                // two classify each one, so together they sum to that count.
+                System.out.println("total tokens:\t" + response.getSummary().getTotalTokens());
+                System.out.println("detokenized:\t" + response.getSummary().getTotalDetokenized());
+                System.out.println("failed:\t\t" + response.getSummary().getTotalFailed());
+
+                // Walk the per-token outcomes. A record succeeded when its error is null;
+                // requestId identifies the batch an error came from and is set on failures only.
+                for (BulkDetokenizeResponseRecord record : response.getRecords()) {
+                    if (record.getError() == null) {
+                        System.out.printf("[%d] %s -> value=%s group=%s%n",
+                                record.getIndex(), record.getToken(), record.getValue(), record.getTokenGroupName());
+                    } else {
+                        System.out.printf("[%d] %s failed (%d): %s [requestId=%s]%n",
+                                record.getIndex(), record.getToken(), record.getHttpCode(),
+                                record.getError(), record.getRequestId());
+                    }
+                }
+
+                // Tokens that failed with a retryable status (5xx other than 529) can be resubmitted
+                if (!response.getTokensToRetry().isEmpty()) {
+                    System.out.println("tokens to retry:\t" + response.getTokensToRetry());
+                }
             }).exceptionally(throwable -> {
                 System.err.println("Async bulk detokenize rejected with error:\t" + throwable.getMessage());
                 throw new CompletionException(throwable);
-            });
-        } catch (SkyflowException e) {
+            }).join(); // sample-run only: block so main() doesn't exit before the async callback prints
+        } catch (Exception e) {
             // Step 8: Handle any synchronous errors that occur during setup
             System.err.println("Error in Skyflow operations: " + e.getMessage());
         }

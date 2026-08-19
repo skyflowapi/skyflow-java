@@ -24,6 +24,7 @@ import com.skyflow.enums.RedactionType;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.generated.rest.core.ApiClientApiException;
+import com.skyflow.generated.rest.core.ApiClientException;
 import com.skyflow.generated.rest.core.ApiClientHttpResponse;
 import com.skyflow.generated.rest.core.RequestOptions;
 import com.skyflow.generated.rest.resources.query.requests.QueryServiceExecuteQueryBody;
@@ -99,10 +100,16 @@ public final class VaultController extends VaultClient
         return data.remove("skyflow_id").toString();
     }
 
+    private static String extractRequestId(Map<String, List<String>> headers) {
+        List<String> values = headers != null ? headers.get(Constants.REQUEST_ID_HEADER_KEY) : null;
+        return (values != null && !values.isEmpty()) ? values.get(0) : null;
+    }
+
     private static synchronized HashMap<String, Object> getFormattedBatchInsertRecord(Object record, Integer requestIndex) {
         HashMap<String, Object> insertRecord = new HashMap<>();
         String jsonString = GSON.toJson(record);
-        JsonObject bodyObject = JsonParser.parseString(jsonString).getAsJsonObject().get("Body").getAsJsonObject();
+        JsonElement bodyElement = JsonParser.parseString(jsonString).getAsJsonObject().get("Body");
+        JsonObject bodyObject = bodyElement != null && bodyElement.isJsonObject() ? bodyElement.getAsJsonObject() : new JsonObject();
         JsonArray records = bodyObject.getAsJsonArray("records");
         JsonPrimitive error = bodyObject.getAsJsonPrimitive("error");
 
@@ -194,10 +201,10 @@ public final class VaultController extends VaultClient
         ApiClientHttpResponse<V1BatchOperationResponse> batchInsertResult = null;
         ArrayList<HashMap<String, Object>> insertedFields = new ArrayList<>();
         ArrayList<HashMap<String, Object>> errorFields = new ArrayList<>();
-        Boolean continueOnError = insertRequest.getContinueOnError();
         try {
             LogUtil.printInfoLog(InfoLogs.VALIDATE_INSERT_REQUEST.getLog());
             Validations.validateInsertRequest(insertRequest);
+            Boolean continueOnError = insertRequest.getContinueOnError();
             setBearerToken();
             if (continueOnError) {
                 RecordServiceBatchOperationBody insertBody = super.getBatchInsertRequestBody(insertRequest);
@@ -216,7 +223,7 @@ public final class VaultController extends VaultClient
                         if (insertRecord.containsKey("skyflowId")) {
                             insertedFields.add(insertRecord);
                         } else {
-                            insertRecord.put("requestId", batchInsertResult.headers().get(Constants.REQUEST_ID_HEADER_KEY).get(0));
+                            insertRecord.put("requestId", extractRequestId(batchInsertResult.headers()));
                             insertRecord.put("httpCode", ErrorCode.INVALID_INPUT.getCode());
                             errorFields.add(insertRecord);
                         }
@@ -237,6 +244,8 @@ public final class VaultController extends VaultClient
             }
         } catch (ApiClientApiException e) {
             throw wrapApiException(e.statusCode(), e, e.headers(), e.body(), ErrorLogs.INSERT_RECORDS_REJECTED);
+        } catch (ApiClientException e) {
+            throw new SkyflowException(e);
         }
         LogUtil.printInfoLog(InfoLogs.INSERT_SUCCESS.getLog());
         if (insertedFields.isEmpty()) {
@@ -262,7 +271,7 @@ public final class VaultController extends VaultClient
             result = super.getTokensApi().withRawResponse().recordServiceDetokenize(super.getVaultConfig().getVaultId(), payload, requestOptions);
             LogUtil.printInfoLog(InfoLogs.DETOKENIZE_REQUEST_RESOLVED.getLog());
             Map<String, List<String>> responseHeaders = result.headers();
-            String requestId = responseHeaders.get(Constants.REQUEST_ID_HEADER_KEY).get(0);
+            String requestId = extractRequestId(responseHeaders);
             Optional<List<V1DetokenizeRecordResponse>> records = result.body().getRecords();
 
             if (records.isPresent()) {
@@ -280,6 +289,8 @@ public final class VaultController extends VaultClient
             }
         } catch (ApiClientApiException e) {
             throw wrapApiException(e.statusCode(), e, e.headers(), e.body(), ErrorLogs.DETOKENIZE_REQUEST_REJECTED);
+        } catch (ApiClientException e) {
+            throw new SkyflowException(e);
         }
 
         if (!errorRecords.isEmpty()) {
@@ -327,14 +338,16 @@ public final class VaultController extends VaultClient
                     requestOptions
             );
             LogUtil.printInfoLog(InfoLogs.GET_REQUEST_RESOLVED.getLog());
-            List<V1FieldRecords> records = result.getRecords().get();
-            if (records != null) {
+            if (result.getRecords().isPresent()) {
+                List<V1FieldRecords> records = result.getRecords().get();
                 for (V1FieldRecords record : records) {
                     data.add(getFormattedGetRecord(record));
                 }
             }
         } catch (ApiClientApiException e) {
             throw wrapApiException(e.statusCode(), e, e.headers(), e.body(), ErrorLogs.GET_REQUEST_REJECTED);
+        } catch (ApiClientException e) {
+            throw new SkyflowException(e);
         }
         LogUtil.printInfoLog(InfoLogs.GET_SUCCESS.getLog());
         return new GetResponse(data, null);
@@ -363,6 +376,8 @@ public final class VaultController extends VaultClient
             tokensMap = getFormattedUpdateRecord(result);
         } catch (ApiClientApiException e) {
             throw wrapApiException(e.statusCode(), e, e.headers(), e.body(), ErrorLogs.UPDATE_REQUEST_REJECTED);
+        } catch (ApiClientException e) {
+            throw new SkyflowException(e);
         }
         LogUtil.printInfoLog(InfoLogs.UPDATE_SUCCESS.getLog());
         return new UpdateResponse(skyflowId, tokensMap);
@@ -384,6 +399,8 @@ public final class VaultController extends VaultClient
             LogUtil.printInfoLog(InfoLogs.DELETE_REQUEST_RESOLVED.getLog());
         } catch (ApiClientApiException e) {
             throw wrapApiException(e.statusCode(), e, e.headers(), e.body(), ErrorLogs.DELETE_REQUEST_REJECTED);
+        } catch (ApiClientException e) {
+            throw new SkyflowException(e);
         }
         LogUtil.printInfoLog(InfoLogs.DELETE_SUCCESS.getLog());
         return new DeleteResponse(result.getRecordIdResponse().orElse(Collections.emptyList()));
@@ -412,6 +429,8 @@ public final class VaultController extends VaultClient
             }
         } catch (ApiClientApiException e) {
             throw wrapApiException(e.statusCode(), e, e.headers(), e.body(), ErrorLogs.QUERY_REQUEST_REJECTED);
+        } catch (ApiClientException e) {
+            throw new SkyflowException(e);
         }
         LogUtil.printInfoLog(InfoLogs.QUERY_SUCCESS.getLog());
         return new QueryResponse(fields);
@@ -438,6 +457,8 @@ public final class VaultController extends VaultClient
             }
         } catch (ApiClientApiException e) {
             throw wrapApiException(e.statusCode(), e, e.headers(), e.body(), ErrorLogs.TOKENIZE_REQUEST_REJECTED);
+        } catch (ApiClientException e) {
+            throw new SkyflowException(e);
         }
         LogUtil.printInfoLog(InfoLogs.TOKENIZE_SUCCESS.getLog());
         return new TokenizeResponse(list);
@@ -475,6 +496,8 @@ public final class VaultController extends VaultClient
 
         } catch (ApiClientApiException e) {
             throw wrapApiException(e.statusCode(), e, e.headers(), e.body(), ErrorLogs.UPLOAD_FILE_REQUEST_REJECTED);
+        } catch (ApiClientException e) {
+            throw new SkyflowException(e);
         } catch (IOException e) {
             LogUtil.printErrorLog(ErrorLogs.UPLOAD_FILE_REQUEST_REJECTED.getLog());
             throw new SkyflowException(e.getMessage(), e);

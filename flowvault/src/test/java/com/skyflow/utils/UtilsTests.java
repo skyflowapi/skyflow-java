@@ -1687,9 +1687,12 @@ public class UtilsTests {
     public void testFormatBulkInsertResponse_success() {
         Map<String, Object> tokens = new HashMap<>();
         tokens.put("name", "tok-abc");
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", "john");
         V1RecordResponseObject record = V1RecordResponseObject.builder()
                 .skyflowId("sky-id-1")
                 .tokens(tokens)
+                .data(data)
                 .build();
         V1InsertResponse response = V1InsertResponse.builder().records(Collections.singletonList(record)).build();
 
@@ -1698,7 +1701,18 @@ public class UtilsTests {
         Assert.assertEquals(1, result.getRecords().size());
         BulkInsertResponseRecord inserted = result.getRecords().get(0);
         Assert.assertEquals("sky-id-1", inserted.getSkyflowId());
-        Assert.assertEquals(tokens, inserted.getFields());
+        // The wire type's raw tokens map is parsed into typed Token objects before reaching the
+        // caller - see ResponseComponentTests's Token.parseTokens() tests for the parsing logic.
+        Assert.assertEquals("tok-abc", inserted.getTokens().get("name").get(0).getToken());
+        // getFields() is deprecated, and now renders that typed data back into its original
+        // Map<String, Object> shape rather than returning getTokens()'s value directly - a bare
+        // string column comes back as a one-element List<Map> instead of the original bare value,
+        // since that distinction is lost once the raw data is parsed into Token objects.
+        Object nameField = inserted.getFields().get("name");
+        Map<?, ?> nameToken = (Map<?, ?>) ((List<?>) nameField).get(0);
+        Assert.assertEquals("tok-abc", nameToken.get("token"));
+        Assert.assertNull(nameToken.get("tokenGroupName"));
+        Assert.assertEquals(data, inserted.getData());
         Assert.assertEquals(0, inserted.getIndex());
         Assert.assertEquals(200, inserted.getHttpCode());
         Assert.assertNull(inserted.getError());

@@ -10,12 +10,15 @@ import com.skyflow.vault.data.BulkInsertRequest;
 import com.skyflow.vault.data.BulkInsertRequestRecord;
 import com.skyflow.vault.data.BulkInsertResponse;
 import com.skyflow.vault.data.BulkInsertOptions;
+import com.skyflow.vault.data.BulkInsertResponseRecord;
 import com.skyflow.vault.data.InsertRequestRecord;
+import com.skyflow.vault.data.Token;
 import com.skyflow.vault.data.UpsertOptions;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -66,7 +69,7 @@ public class CustomHeaderExample {
             }
 
             // Step 5: Configure upsert. uniqueColumns is required; updateType accepts "UPDATE"
-            //         (default) or "REPLACE".
+            //         or "REPLACE" — if omitted, the vault treats it the same as "UPDATE".
             List<String> upsertColumns = new ArrayList<>();
             upsertColumns.add("<UPSERT_COLUMN_NAME>");
 
@@ -92,13 +95,36 @@ public class CustomHeaderExample {
             // Step 8: Execute the async bulk insert operation and handle response using callbacks
             CompletableFuture<BulkInsertResponse> future =
                     skyflowClient.vault().bulkInsertAsync(request, options);
-            // Add success and error callbacks
             future.thenAccept(response -> {
                 System.out.println("Async bulk insert resolved with response:\t" + response);
+
+                // Read the summary, then walk the per-record outcomes. A record succeeded when
+                // its error is null; requestId identifies the batch an error came from and is
+                // set on failures only — the same header this sample attaches to the outgoing
+                // request shows up here on any batch that failed.
+                System.out.println("inserted:\t" + response.getSummary().getTotalInserted()
+                        + " of " + response.getSummary().getTotalRecords());
+
+                for (BulkInsertResponseRecord record : response.getRecords()) {
+                    if (record.getError() == null) {
+                        System.out.printf("[%d] skyflowId=%s%n", record.getIndex(), record.getSkyflowId());
+                        // getTokens() returns a typed Map<String, List<Token>>
+                        // - no casting needed to read token/tokenGroupName.
+                        for (Map.Entry<String, List<Token>> column : record.getTokens().entrySet()) {
+                            for (Token token : column.getValue()) {
+                                System.out.printf("    %s[%s] -> %s%n",
+                                        column.getKey(), token.getTokenGroupName(), token.getToken());
+                            }
+                        }
+                    } else {
+                        System.out.printf("[%d] failed (%d): %s [requestId=%s]%n",
+                                record.getIndex(), record.getHttpCode(), record.getError(), record.getRequestId());
+                    }
+                }
             }).exceptionally(throwable -> {
                 System.err.println("Async bulk insert rejected with error:\t" + throwable.getMessage());
                 throw new CompletionException(throwable);
-            });
+            }).join(); // sample-run only: block so main() doesn't exit before the async callback prints
         } catch (Exception e) {
             // Step 9: Handle any synchronous errors that occur during setup
             System.err.println("Error in Skyflow operations:\t" + e.getMessage());

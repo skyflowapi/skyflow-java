@@ -13,6 +13,8 @@ public final class Constants extends BaseConstants {
     public static final String PROCESSED_FILE_NAME_PREFIX = "processed-";
     public static final String DEIDENTIFIED_FILE_PREFIX = "deidentified";
     public static final String HTTPS_PROTOCOL = "https";
+    public static final String ORDER_DESCENDING = "DESCENDING";
+    public static final String ORDER_NONE = "NONE";
     public static final String CURLY_PLACEHOLDER = "{%s}";
     public static final String EMPTY_STRING = "";
     public static final String QUOTE = "\"";

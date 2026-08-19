@@ -41,6 +41,7 @@ import com.skyflow.vault.data.BulkInsertOptions;
 import com.skyflow.vault.data.DeleteTokensOptions;
 import com.skyflow.vault.data.InsertRequestRecord;
 import com.skyflow.vault.data.RequestInterceptor;
+import com.skyflow.vault.data.Token;
 import com.skyflow.vault.data.TokenGroupRedactions;
 import com.skyflow.vault.data.TokenizeOptions;
 import com.skyflow.vault.data.TokenizeRequestRecord;
@@ -175,6 +176,37 @@ public class VaultControllerTests {
         Assert.assertNotNull(INVALID_EXCEPTION_THROWN, response);
         Assert.assertEquals(1, response.getRecords().size());
         Assert.assertEquals("sky-id-1", response.getRecords().get(0).getSkyflowId());
+    }
+
+    @Test
+    public void testBulkInsertAsync_unexpectedExceptionWrappedAsSkyflowException() throws Exception {
+        // Regression test: bulkInsertAsync's synchronous setup (before the batch futures exist)
+        // must wrap any unexpected exception in SkyflowException, same as every other bulk async
+        // method - not just ApiClientApiException. A RequestInterceptor is invoked synchronously
+        // per batch inside insertBatchFutures, so a caller interceptor that throws is a realistic
+        // way to trigger this without reaching into internals.
+        ApiClient mockApi = Mockito.mock(ApiClient.class);
+        VaultController controller = createControllerWithMock(mockApi);
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", "john");
+        ArrayList<InsertRequestRecord> records = new ArrayList<>();
+        records.add(BulkInsertRequestRecord.builder().tableName("table1").data(data).build());
+        BulkInsertRequest request = BulkInsertRequest.builder().records(records).build();
+
+        RequestInterceptor interceptor = ctx -> {
+            throw new IllegalStateException("interceptor blew up");
+        };
+        BulkInsertOptions options = BulkInsertOptions.builder().interceptor(interceptor).build();
+
+        try {
+            controller.bulkInsertAsync(request, options);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals("interceptor blew up", e.getMessage());
+        } catch (IllegalStateException e) {
+            Assert.fail("Expected SkyflowException, got IllegalStateException");
+        }
     }
 
     @Test
@@ -704,14 +736,16 @@ public class VaultControllerTests {
         Assert.assertEquals(1, response.getRecords().size());
 
         BulkInsertResponseRecord inserted = response.getRecords().get(0);
-        Assert.assertNotNull(inserted.getFields());
-        // The token map is surfaced verbatim as `fields`, so a List<Map> token shape survives intact.
-        Object field1Tokens = inserted.getFields().get("field1");
-        Assert.assertTrue(field1Tokens instanceof List);
-        Assert.assertEquals(1, ((List<?>) field1Tokens).size());
-        Map<?, ?> field1Token = (Map<?, ?>) ((List<?>) field1Tokens).get(0);
-        Assert.assertEquals("tok-xyz", field1Token.get("token"));
-        Assert.assertEquals("group1", field1Token.get("tokenGroupName"));
+        Assert.assertNotNull(inserted.getTokens());
+        // getFields() is deprecated and now renders getTokens()'s typed data back into its
+        // original raw shape - a lossless round trip for this input, so it equals the raw map
+        // the mock returned in the first place.
+        Assert.assertEquals(tokens, inserted.getFields());
+        // The wire type's List<Map> token shape is parsed into typed Token objects - no casting.
+        List<Token> field1Tokens = inserted.getTokens().get("field1");
+        Assert.assertEquals(1, field1Tokens.size());
+        Assert.assertEquals("tok-xyz", field1Tokens.get(0).getToken());
+        Assert.assertEquals("group1", field1Tokens.get(0).getTokenGroupName());
     }
 
     // Tests for the unary query / get controller methods were removed: VaultController is bulk-only now.

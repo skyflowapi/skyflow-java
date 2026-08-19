@@ -6,9 +6,12 @@ public enum ErrorMessage {
     // Client initialization
     VaultIdAlreadyInConfigList("%s0 Validation error. VaultId is present in an existing config. Specify a new vaultId in config."),
     VaultIdNotInConfigList("%s0 Validation error. VaultId is missing from the config. Specify the vaultIds from configs."),
+    NullVaultConfig("%s0 Validation error. VaultConfig object is null. Specify a valid VaultConfig object."),
     ConnectionIdAlreadyInConfigList("%s0 Validation error. ConnectionId is present in an existing config. Specify a connectionId in config."),
     ConnectionIdNotInConfigList("%s0 Validation error. ConnectionId is missing from the config. Specify the connectionIds from configs."),
+    NullConnectionConfig("%s0 Validation error. ConnectionConfig object is null. Specify a valid ConnectionConfig object."),
     EmptyCredentials("%s0 Validation error. Invalid credentials. Credentials must not be empty."),
+    NullCredentials("%s0 Validation error. Credentials object is null. Specify a valid Credentials object."),
 
     // Vault config
     InvalidVaultId("%s0 Initialization failed. Invalid vault ID. Specify a valid vault ID."),
@@ -55,10 +58,12 @@ public enum ErrorMessage {
     MissingTokenType("%s0 Validation error. Token type not present in the response from bearer token generation. Verify your credentials."),
 
     // Insert
+    InsertRequestNull("%s0 Validation error. InsertRequest object is null. Specify a valid InsertRequest object."),
     TableKeyError("%s0 Validation error. 'table' key is missing from the payload. Specify a 'table' key."),
     EmptyTable("%s0 Validation error. 'table' can't be empty. Specify a table."),
     ValuesKeyError("%s0 Validation error. 'values' key is missing from the payload. Specify a 'values' key."),
     EmptyKeyInValues("%s0 Validation error. Invalid key in values. Specify a valid key."),
+    NullValueEntryInValues("%s0 Validation error. Value entry in 'values' is null. Specify a valid value entry."),
     TokensKeyError("%s0 Validation error. 'tokens' key is missing from the payload. Specify a 'tokens' key."),
     EmptyTokens("%s0 Validation error. The 'tokens' field is empty. Specify tokens for one or more fields."),
     EmptyKeyInTokens("%s0 Validation error. Invalid key tokens. Specify a valid key."),
@@ -68,15 +73,19 @@ public enum ErrorMessage {
     NoTokensWithTokenMode("%s0 Validation error. Tokens weren't specified for records while 'tokenMode' was %s1. Specify tokens."),
     MismatchOfFieldsAndTokens("%s0 Validation error. 'fields' and 'tokens' have different columns names. Verify that 'fields' and 'tokens' columns match."),
     InsufficientTokensPassedForTokenModeEnableStrict("%s0 Validation error. 'tokenMode' is set to 'ENABLE_STRICT', but some fields are missing tokens. Specify tokens for all fields."),
+    TokensValuesSizeMismatch("%s0 Validation error. 'tokens' and 'values' must contain the same number of entries."),
+    NullTokensOrValuesEntry("%s0 Validation error. Entry in 'tokens' or 'values' is null. Specify a valid entry."),
     BatchInsertPartialSuccess("%s0 Insert operation completed with partial success."),
     BatchInsertFailure("%s0 Insert operation failed."),
 
     // Detokenize
+    DetokenizeRequestNull("%s0 Validation error. DetokenizeRequest object is null. Specify a valid DetokenizeRequest object."),
     InvalidDetokenizeData("%s0 Validation error. Invalid detokenize data. Specify valid detokenize data."),
     EmptyDetokenizeData("%s0 Validation error. Invalid data tokens. Specify at least one data token."),
     EmptyTokenInDetokenizeData("%s0 Validation error. Invalid data tokens. Specify a valid data token."),
 
     // Get
+    GetRequestNull("%s0 Validation error. GetRequest object is null. Specify a valid GetRequest object."),
     IdsKeyError("%s0 Validation error. 'ids' key is missing from the payload. Specify an 'ids' key."),
     EmptyIds("%s0 Validation error. 'ids' can't be empty. Specify at least one id."),
     EmptyIdInIds("%s0 Validation error. Invalid id in 'ids'. Specify a valid id."),
@@ -87,6 +96,7 @@ public enum ErrorMessage {
     TokensGetColumnNotSupported("%s0 Validation error. Column name and/or column values can't be used when 'returnTokens' is specified. Remove unique column values or 'returnTokens' from the payload."),
     EmptyOffset("%s0 Validation error. 'offset' can't be empty. Specify an offset."),
     EmptyLimit("%s0 Validation error. 'limit' can't be empty. Specify a limit."),
+    InvalidOrderBy("%s0 Validation error. 'orderBy' is invalid. Specify one of 'ASCENDING', 'DESCENDING', 'NONE'."),
     UniqueColumnOrIdsKeyError("%s0 Validation error. 'ids' or 'columnName' key is missing from the payload. Specify the ids or unique 'columnName' in payload."),
     BothIdsAndColumnDetailsSpecified("%s0 Validation error. Both Skyflow IDs and column details can't be specified. Either specify Skyflow IDs or unique column details."),
     ColumnNameKeyError("%s0 Validation error. 'columnName' isn't specified whereas 'columnValues' are specified. Either add 'columnName' or remove 'columnValues'."),
@@ -98,7 +108,11 @@ public enum ErrorMessage {
     TokenKeyError("%s0 Validation error. 'token' key is missing from the payload. Specify a 'token' key."),
     PartialSuccess("%s0 Validation error. Check 'SkyflowError.data' for details."),
 
+    // Delete
+    DeleteRequestNull("%s0 Validation error. DeleteRequest object is null. Specify a valid DeleteRequest object."),
+
     // Update
+    UpdateRequestNull("%s0 Validation error. UpdateRequest object is null. Specify a valid UpdateRequest object."),
     DataKeyError("%s0 Validation error. 'data' key is missing from the payload. Specify a 'data' key."),
     EmptyData("%s0 Validation error. 'data' can't be empty. Specify data."),
     SkyflowIdKeyError("%s0 Validation error. 'skyflow_id' is missing from the data payload. Specify a 'skyflow_id'."),
@@ -106,14 +120,17 @@ public enum ErrorMessage {
     EmptySkyflowId("%s0 Validation error. 'skyflow_id' can't be empty. Specify a skyflow id."),
 
     // Query
+    QueryRequestNull("%s0 Validation error. QueryRequest object is null. Specify a valid QueryRequest object."),
     QueryKeyError("%s0 Validation error. 'query' key is missing from the payload. Specify a 'query' key."),
     EmptyQuery("%s0 Validation error. 'query' can't be empty. Specify a query"),
 
     // Tokenize
+    TokenizeRequestNull("%s0 Validation error. TokenizeRequest object is null. Specify a valid TokenizeRequest object."),
     ColumnValuesKeyErrorTokenize("%s0 Validation error. 'columnValues' key is missing from the payload. Specify a 'columnValues' key."),
     EmptyColumnGroupInColumnValue("%s0 Validation error. Invalid column group in column value. Specify a valid column group."),
 
     // Connection
+    InvokeConnectionRequestNull("%s0 Validation error. InvokeConnectionRequest object is null. Specify a valid InvokeConnectionRequest object."),
     InvalidRequestHeaders("%s0 Validation error. Request headers aren't valid. Specify valid request headers."),
     EmptyRequestHeaders("%s0 Validation error. Request headers are empty. Specify valid request headers."),
     InvalidPathParams("%s0 Validation error. Path parameters aren't valid. Specify valid path parameters."),
@@ -131,7 +148,9 @@ public enum ErrorMessage {
     InvalidBase64("%s0 Validation error. Invalid base64 string in file upload request. Specify a valid base64 string."),
 
     // detect
+    DeidentifyTextRequestNull("%s0 Validation error. DeidentifyTextRequest object is null. Specify a valid DeidentifyTextRequest object."),
     InvalidTextInDeIdentify("%s0 Validation error. The text field is required and must be a non-empty string. Specify a valid text."),
+    ReidentifyTextRequestNull("%s0 Validation error. ReidentifyTextRequest object is null. Specify a valid ReidentifyTextRequest object."),
     InvalidTextInReIdentify("%s0 Validation error. The text field is required and must be a non-empty string. Specify a valid text."),
 
     //Detect Files
@@ -154,6 +173,7 @@ public enum ErrorMessage {
     PollingForResultsFailed("%s0 API error. Polling for results failed. Unable to retrieve the deidentified file"),
     FailedToSaveProcessedFile("%s0 Validation error. Failed to save the processed file. Ensure the output directory is valid and writable."),
     InvalidAudioFileType("%s0 Validation error. The file type is not supported. Specify a valid file type mp3 or wav."),
+    UnsupportedFileTypeToDeidentify("%s0 Validation error. File type '%s1' is not supported for deidentification. Specify a supported file type."),
     // Generic
     ErrorOccurred("%s0 API error. Error occurred.")
     ;

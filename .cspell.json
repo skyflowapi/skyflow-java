@@ -51,6 +51,7 @@
     "dotenv",
     "powermock",
     "mvn",
+    "codehaus",
     "sonatype",
     "jfrog",
     "prekarilabs",
@@ -110,7 +111,9 @@
     "recordss",
     "rarr",
     "servname",
-    "nodename"
+    "nodename",
+    "flowdb",
+    "unrenamed"
   ],
   "languageSettings": [
     {

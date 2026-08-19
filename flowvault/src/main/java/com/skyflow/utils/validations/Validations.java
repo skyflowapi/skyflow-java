@@ -118,6 +118,10 @@ public class Validations extends BaseValidations {
 
 
     public static void validateVaultConfiguration(VaultConfig vaultConfig) throws SkyflowException {
+        if (vaultConfig == null) {
+            LogUtil.printErrorLog(ErrorLogs.VAULT_CONFIG_IS_NULL.getLog());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.NullVaultConfig.getMessage());
+        }
         String vaultId = vaultConfig.getVaultId();
         String clusterId = vaultConfig.getClusterId();
         String vaultUrl = vaultConfig.getVaultUrl();
@@ -454,7 +458,15 @@ public class Validations extends BaseValidations {
                 ErrorMessage.TokenizeDataSizeExceedError, InterfaceName.TOKENIZE);
 
         for (int i = 0; i < records.size(); i++) {
-            BulkTokenizeRequestRecord record = records.get(i);
+            BulkTokenizeRequestRecord record;
+            try {
+                record = records.get(i);
+            } catch (ClassCastException e) {
+                LogUtil.printErrorLog(Utils.parameterizedString(
+                        ErrorLogs.INVALID_BULK_TOKENIZE_RECORD_TYPE.getLog(), InterfaceName.TOKENIZE.getName()
+                ));
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidBulkTokenizeRecordType.getMessage());
+            }
             if (record == null) {
                 LogUtil.printErrorLog(Utils.parameterizedString(
                         ErrorLogs.TOKENIZE_RECORD_NULL.getLog(), InterfaceName.TOKENIZE.getName()

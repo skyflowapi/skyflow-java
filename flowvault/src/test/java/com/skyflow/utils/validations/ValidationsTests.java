@@ -220,6 +220,16 @@ public class ValidationsTests {
     // ── validateVaultConfiguration ────────────────────────────────────────────
 
     @Test
+    public void testValidateVaultConfiguration_nullRequest() {
+        try {
+            Validations.validateVaultConfiguration(null);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.NullVaultConfig.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
     public void testValidateVaultConfiguration_nullVaultId() {
         VaultConfig config = new VaultConfig();
         config.setClusterId("cluster1");

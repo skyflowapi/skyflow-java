@@ -1,5 +1,9 @@
 package com.skyflow.vault.data;
 
+import com.skyflow.errors.ErrorCode;
+import com.skyflow.errors.ErrorMessage;
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.utils.validations.Validations;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -99,6 +103,34 @@ public class RequestResponseWrapperTests {
     }
 
     @Test
+    public void testBulkTokenizeRequest_plainTokenizeRequestRecordBuildsWithoutThrowing() {
+        // The inherited setter's generic signature accepts a plain List<TokenizeRequestRecord>.
+        // No builder in this SDK throws from build() — the type mismatch is deferred to
+        // Validations (see below), consistent with every other request validation.
+        List<TokenizeRequestRecord> plainRecords = Collections.singletonList(
+                TokenizeRequestRecord.builder().value("v1").build());
+        BulkTokenizeRequest request = BulkTokenizeRequest.builder().records(plainRecords).build();
+        Assert.assertNotNull(request);
+    }
+
+    @Test
+    public void testBulkTokenizeRequest_plainTokenizeRequestRecordThrowsSkyflowExceptionOnValidate() {
+        // A caller-side type mistake (plain TokenizeRequestRecord instead of
+        // BulkTokenizeRequestRecord) must surface as a clean SkyflowException at validation
+        // time — never a raw ClassCastException or IllegalArgumentException.
+        List<TokenizeRequestRecord> plainRecords = Collections.singletonList(
+                TokenizeRequestRecord.builder().value("v1").build());
+        BulkTokenizeRequest request = BulkTokenizeRequest.builder().records(plainRecords).build();
+        try {
+            Validations.validateBulkTokenizeRequest(request);
+            Assert.fail("Should have thrown an exception");
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(ErrorMessage.InvalidBulkTokenizeRecordType.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
     public void testTokenizeRequest_defaultIsNull() {
         TokenizeRequest request = TokenizeRequest.builder().build();
         Assert.assertNull(request.getRecords());
@@ -158,8 +190,7 @@ public class RequestResponseWrapperTests {
 
     @Test
     public void testDetokenizeResponseRecord_gettersReturnConstructorValues() {
-        Map<String, Object> metadata = new HashMap<>();
-        metadata.put("key", "value");
+        DetokenizeMetadata metadata = new DetokenizeMetadata("skyflow-id-1", "table1");
 
         DetokenizeResponseRecord response = new DetokenizeResponseRecord(
                 "tok-1", "secret-value", "group1", metadata, 200, null);
