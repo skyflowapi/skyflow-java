@@ -446,6 +446,28 @@ public class GetTests {
     }
 
     @Test
+    public void testNullOrderByBypassingBuilderPassesGetRequestValidations() throws Exception {
+        // GetRequestBuilder.orderBy() coalesces a null argument to ORDER_ASCENDING (and the field
+        // itself defaults to ORDER_ASCENDING), so getOrderBy() can never actually return null
+        // through normal construction. Force it null via reflection to exercise the
+        // "orderBy != null" false branch in validateGetRequest directly.
+        ids.add(skyflowID);
+        GetRequest request = GetRequest.builder().table(table).ids(ids).build();
+        java.lang.reflect.Field builderField = GetRequest.class.getDeclaredField("builder");
+        builderField.setAccessible(true);
+        Object builder = builderField.get(request);
+        java.lang.reflect.Field orderByField = builder.getClass().getDeclaredField("orderBy");
+        orderByField.setAccessible(true);
+        orderByField.set(builder, null);
+
+        try {
+            Validations.validateGetRequest(request);
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN + ": " + e.getMessage());
+        }
+    }
+
+    @Test
     public void testNoIdsOrColumnNameInGetRequestValidations() {
         GetRequest request = GetRequest.builder().table(table).redactionType(RedactionType.PLAIN_TEXT).build();
         try {

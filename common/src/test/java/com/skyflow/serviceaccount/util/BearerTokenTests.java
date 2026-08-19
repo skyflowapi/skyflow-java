@@ -374,4 +374,13 @@ public class BearerTokenTests {
             Assert.assertEquals(ErrorMessage.MissingAccessToken.getMessage(), skyflowException.getMessage());
         }
     }
+
+    @Test
+    public void testExtractAccessTokenPresentReturnsToken() throws Exception {
+        V1GetAuthTokenResponse response = V1GetAuthTokenResponse.builder().accessToken("test-access-token").build();
+        Method method = BearerToken.class.getDeclaredMethod("extractAccessToken", V1GetAuthTokenResponse.class);
+        method.setAccessible(true);
+        Object result = method.invoke(null, response);
+        Assert.assertEquals("test-access-token", result);
+    }
 }

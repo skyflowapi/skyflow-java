@@ -12,6 +12,7 @@ import com.skyflow.errors.HttpStatus;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.generated.rest.ApiClient;
 import com.skyflow.generated.rest.core.ApiClientApiException;
+import com.skyflow.generated.rest.core.ApiClientException;
 import com.skyflow.generated.rest.resources.files.FilesClient;
 import com.skyflow.generated.rest.resources.files.requests.GetRunRequest;
 import com.skyflow.generated.rest.resources.strings.StringsClient;
@@ -209,6 +210,28 @@ public class DetectControllerTests {
         }
     }
 
+    @Test
+    public void testDeidentifyTextApiClientException() throws Exception {
+        // Network-level failure (no HTTP response), as opposed to ApiClientApiException's
+        // rejected-with-a-status-code failure above.
+        StringsClient mockStringsClient = Mockito.mock(StringsClient.class);
+        ApiClient mockApiClient = Mockito.mock(ApiClient.class);
+        when(mockApiClient.strings()).thenReturn(mockStringsClient);
+
+        when(mockStringsClient.deidentifyString(any(), any()))
+                .thenThrow(new ApiClientException("Network error executing HTTP request"));
+
+        DetectController controller = createDetectControllerWithMock(mockApiClient);
+        DeidentifyTextRequest request = DeidentifyTextRequest.builder().text("hello world").build();
+
+        try {
+            controller.deidentifyText(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertTrue(e.getCause() instanceof ApiClientException);
+        }
+    }
+
     // ─── reidentifyText — validation ──────────────────────────────────────────
 
     @Test
@@ -314,6 +337,26 @@ public class DetectControllerTests {
         }
     }
 
+    @Test
+    public void testReidentifyTextApiClientException() throws Exception {
+        StringsClient mockStringsClient = Mockito.mock(StringsClient.class);
+        ApiClient mockApiClient = Mockito.mock(ApiClient.class);
+        when(mockApiClient.strings()).thenReturn(mockStringsClient);
+
+        when(mockStringsClient.reidentifyString(any(), any()))
+                .thenThrow(new ApiClientException("Network error executing HTTP request"));
+
+        DetectController controller = createDetectControllerWithMock(mockApiClient);
+        ReidentifyTextRequest request = ReidentifyTextRequest.builder().text("some text").build();
+
+        try {
+            controller.reidentifyText(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertTrue(e.getCause() instanceof ApiClientException);
+        }
+    }
+
     // ─── getDetectRun — validation ────────────────────────────────────────────
 
     @Test
@@ -390,6 +433,60 @@ public class DetectControllerTests {
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(expectedStatusCode, e.getHttpCode());
+        }
+    }
+
+    @Test
+    public void testGetDetectRunApiClientException() throws Exception {
+        FilesClient mockFilesClient = Mockito.mock(FilesClient.class);
+        ApiClient mockApiClient = Mockito.mock(ApiClient.class);
+        when(mockApiClient.files()).thenReturn(mockFilesClient);
+
+        when(mockFilesClient.getRun(anyString(), any(GetRunRequest.class)))
+                .thenThrow(new ApiClientException("Network error executing HTTP request"));
+
+        DetectController controller = createDetectControllerWithMock(mockApiClient);
+        GetDetectRunRequest request = GetDetectRunRequest.builder().runId("run-abc").build();
+
+        try {
+            controller.getDetectRun(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertTrue(e.getCause() instanceof ApiClientException);
+        }
+    }
+
+    @Test
+    public void testDeidentifyFilePollingApiClientException() throws Exception {
+        // Covers pollForResults' own catch(ApiClientException) — the network-error path hit while
+        // polling getRun, as opposed to the request-time ApiClientApiException covered elsewhere
+        // (see the sibling ApiClientApiException test above). deidentifyFile's own
+        // catch (Exception ex) around the pollForResults() call re-wraps whatever it throws into a
+        // fixed PollingForResultsFailed SkyflowException, so that — not the original cause — is
+        // what actually surfaces here; pollForResults' catch(ApiClientException) still executes
+        // (and is covered) on the way there.
+        File tmpFile = File.createTempFile("test-detect", ".txt");
+        tmpFile.deleteOnExit();
+        Files.write(tmpFile.toPath(), "content for txt".getBytes());
+
+        FilesClient mockFilesClient = Mockito.mock(FilesClient.class);
+        ApiClient mockApiClient = Mockito.mock(ApiClient.class);
+        when(mockApiClient.files()).thenReturn(mockFilesClient);
+        when(mockFilesClient.deidentifyText(any())).thenReturn(
+                com.skyflow.generated.rest.types.DeidentifyFileResponse.builder().runId("run-123").build());
+        when(mockFilesClient.getRun(anyString(), any(GetRunRequest.class), any(RequestOptions.class)))
+                .thenThrow(new ApiClientException("Network error executing HTTP request"));
+
+        DetectController controller = createDetectControllerWithMock(mockApiClient);
+        DeidentifyFileRequest request = DeidentifyFileRequest.builder()
+                .file(FileInput.builder().file(tmpFile).build())
+                .build();
+
+        try {
+            controller.deidentifyFile(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.PollingForResultsFailed.getMessage(), e.getMessage());
         }
     }
 

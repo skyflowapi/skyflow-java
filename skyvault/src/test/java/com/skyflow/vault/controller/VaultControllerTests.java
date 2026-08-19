@@ -13,6 +13,7 @@ import com.skyflow.errors.HttpStatus;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.generated.rest.ApiClient;
 import com.skyflow.generated.rest.core.ApiClientApiException;
+import com.skyflow.generated.rest.core.ApiClientException;
 import com.skyflow.generated.rest.core.ApiClientHttpResponse;
 import com.skyflow.generated.rest.resources.query.QueryClient;
 import com.skyflow.generated.rest.resources.records.RawRecordsClient;
@@ -488,6 +489,32 @@ public class VaultControllerTests {
         }
     }
 
+    @Test
+    public void testInsert_apiClientExceptionThrowsSkyflowException() throws Exception {
+        // Network-level failure (no HTTP response), as opposed to ApiClientApiException's
+        // rejected-with-a-status-code failure above.
+        ApiClient mockApi = Mockito.mock(ApiClient.class);
+        RecordsClient mockRecords = Mockito.mock(RecordsClient.class);
+        when(mockApi.records()).thenReturn(mockRecords);
+        when(mockRecords.recordServiceInsertRecord(anyString(), anyString(), any()))
+                .thenThrow(new ApiClientException("Network error executing HTTP request"));
+
+        VaultController controller = createControllerWithMock(mockApi);
+
+        ArrayList<HashMap<String, Object>> values = new ArrayList<>();
+        HashMap<String, Object> row = new HashMap<>();
+        row.put("card_number", "4111111111111111");
+        values.add(row);
+        InsertRequest request = InsertRequest.builder().table("test_table").values(values).build();
+
+        try {
+            controller.insert(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertTrue(e.getCause() instanceof ApiClientException);
+        }
+    }
+
     // --- insert (batch / continueOnError) ---
 
     @Test
@@ -609,6 +636,32 @@ public class VaultControllerTests {
         }
     }
 
+    @Test
+    public void testDetokenize_apiClientExceptionThrowsSkyflowException() throws Exception {
+        ApiClient mockApi = Mockito.mock(ApiClient.class);
+        TokensClient mockTokens = Mockito.mock(TokensClient.class);
+        RawTokensClient mockRawTokens = Mockito.mock(RawTokensClient.class);
+        when(mockApi.tokens()).thenReturn(mockTokens);
+        when(mockTokens.withRawResponse()).thenReturn(mockRawTokens);
+        when(mockRawTokens.recordServiceDetokenize(anyString(), any(), any()))
+                .thenThrow(new ApiClientException("Network error executing HTTP request"));
+
+        VaultController controller = createControllerWithMock(mockApi);
+
+        ArrayList<DetokenizeData> detokenizeDataList = new ArrayList<>();
+        detokenizeDataList.add(new DetokenizeData("tok-bad"));
+        DetokenizeRequest request = DetokenizeRequest.builder()
+                .detokenizeData(detokenizeDataList)
+                .build();
+
+        try {
+            controller.detokenize(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertTrue(e.getCause() instanceof ApiClientException);
+        }
+    }
+
     // --- get ---
 
     @Test
@@ -661,6 +714,28 @@ public class VaultControllerTests {
         }
     }
 
+    @Test
+    public void testGet_apiClientExceptionThrowsSkyflowException() throws Exception {
+        ApiClient mockApi = Mockito.mock(ApiClient.class);
+        RecordsClient mockRecords = Mockito.mock(RecordsClient.class);
+        when(mockApi.records()).thenReturn(mockRecords);
+        when(mockRecords.recordServiceBulkGetRecord(anyString(), anyString(), any(), any()))
+                .thenThrow(new ApiClientException("Network error executing HTTP request"));
+
+        VaultController controller = createControllerWithMock(mockApi);
+
+        ArrayList<String> ids = new ArrayList<>();
+        ids.add("id-missing");
+        GetRequest request = GetRequest.builder().table("test_table").ids(ids).build();
+
+        try {
+            controller.get(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertTrue(e.getCause() instanceof ApiClientException);
+        }
+    }
+
     // --- update ---
 
     @Test
@@ -704,6 +779,29 @@ public class VaultControllerTests {
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(403, e.getHttpCode());
+        }
+    }
+
+    @Test
+    public void testUpdate_apiClientExceptionThrowsSkyflowException() throws Exception {
+        ApiClient mockApi = Mockito.mock(ApiClient.class);
+        RecordsClient mockRecords = Mockito.mock(RecordsClient.class);
+        when(mockApi.records()).thenReturn(mockRecords);
+        when(mockRecords.recordServiceUpdateRecord(anyString(), anyString(), anyString(), any(), any()))
+                .thenThrow(new ApiClientException("Network error executing HTTP request"));
+
+        VaultController controller = createControllerWithMock(mockApi);
+
+        HashMap<String, Object> data = new HashMap<>();
+        data.put("skyflowId", "id-upd-bad");
+        data.put("card_number", "0000000000000000");
+        UpdateRequest request = UpdateRequest.builder().table("test_table").data(data).build();
+
+        try {
+            controller.update(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertTrue(e.getCause() instanceof ApiClientException);
         }
     }
 
@@ -756,6 +854,28 @@ public class VaultControllerTests {
         }
     }
 
+    @Test
+    public void testDelete_apiClientExceptionThrowsSkyflowException() throws Exception {
+        ApiClient mockApi = Mockito.mock(ApiClient.class);
+        RecordsClient mockRecords = Mockito.mock(RecordsClient.class);
+        when(mockApi.records()).thenReturn(mockRecords);
+        when(mockRecords.recordServiceBulkDeleteRecord(anyString(), anyString(), any(), any()))
+                .thenThrow(new ApiClientException("Network error executing HTTP request"));
+
+        VaultController controller = createControllerWithMock(mockApi);
+
+        ArrayList<String> ids = new ArrayList<>();
+        ids.add("id-bad");
+        DeleteRequest request = DeleteRequest.builder().table("test_table").ids(ids).build();
+
+        try {
+            controller.delete(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertTrue(e.getCause() instanceof ApiClientException);
+        }
+    }
+
     // --- query ---
 
     @Test
@@ -800,6 +920,26 @@ public class VaultControllerTests {
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(400, e.getHttpCode());
+        }
+    }
+
+    @Test
+    public void testQuery_apiClientExceptionThrowsSkyflowException() throws Exception {
+        ApiClient mockApi = Mockito.mock(ApiClient.class);
+        QueryClient mockQuery = Mockito.mock(QueryClient.class);
+        when(mockApi.query()).thenReturn(mockQuery);
+        when(mockQuery.queryServiceExecuteQuery(anyString(), any(), any()))
+                .thenThrow(new ApiClientException("Network error executing HTTP request"));
+
+        VaultController controller = createControllerWithMock(mockApi);
+
+        QueryRequest request = QueryRequest.builder().query("SELECT * FROM test_table LIMIT 1").build();
+
+        try {
+            controller.query(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertTrue(e.getCause() instanceof ApiClientException);
         }
     }
 
@@ -1246,6 +1386,29 @@ public class VaultControllerTests {
         }
     }
 
+    @Test
+    public void testTokenize_apiClientExceptionThrowsSkyflowException() throws Exception {
+        ApiClient mockApi = Mockito.mock(ApiClient.class);
+        TokensClient mockTokens = Mockito.mock(TokensClient.class);
+        when(mockApi.tokens()).thenReturn(mockTokens);
+        when(mockTokens.recordServiceTokenize(anyString(), any(), any()))
+                .thenThrow(new ApiClientException("Network error executing HTTP request"));
+
+        VaultController controller = createControllerWithMock(mockApi);
+
+        ColumnValue cv = ColumnValue.builder().value("test-val").columnGroup("test-group").build();
+        TokenizeRequest request = TokenizeRequest.builder()
+                .values(Collections.singletonList(cv))
+                .build();
+
+        try {
+            controller.tokenize(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertTrue(e.getCause() instanceof ApiClientException);
+        }
+    }
+
     // ─── uploadFile — getFileForFileUpload all three input paths ──────────────
 
     @Test
@@ -1346,6 +1509,33 @@ public class VaultControllerTests {
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(403, e.getHttpCode());
+        }
+    }
+
+    @Test
+    public void testUploadFile_apiClientExceptionThrowsSkyflowException() throws Exception {
+        File tmpFile = File.createTempFile("upload-test-network-err", ".txt");
+        tmpFile.deleteOnExit();
+        java.nio.file.Files.write(tmpFile.toPath(), "data".getBytes());
+
+        ApiClient mockApi = Mockito.mock(ApiClient.class);
+        RecordsClient mockRecords = Mockito.mock(RecordsClient.class);
+        when(mockApi.records()).thenReturn(mockRecords);
+        when(mockRecords.uploadFileV2(anyString(), any(File.class), any(), any()))
+                .thenThrow(new ApiClientException("Network error executing HTTP request"));
+
+        VaultController controller = createControllerWithMock(mockApi);
+        FileUploadRequest request = FileUploadRequest.builder()
+                .table("files_table")
+                .columnName("file_col")
+                .filePath(tmpFile.getAbsolutePath())
+                .build();
+
+        try {
+            controller.uploadFile(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertTrue(e.getCause() instanceof ApiClientException);
         }
     }
 
@@ -1465,6 +1655,28 @@ public class VaultControllerTests {
 
         Assert.assertNotNull(result);
         Assert.assertFalse("skyflowId should not be present when Body is missing", result.containsKey("skyflowId"));
+        Assert.assertEquals(0, result.get("requestIndex"));
+    }
+
+    // --- getFormattedBatchInsertRecord — "Body" present but not a JSON object must not throw ---
+
+    @Test
+    public void testGetFormattedBatchInsertRecord_bodyPresentButNotJsonObjectDoesNotThrow() throws Exception {
+        // GSON's serializeNulls() means a null "Body" value still serializes as a "Body" key
+        // (mapping to JSON null), unlike the missing-key case above — so bodyElement != null
+        // but bodyElement.isJsonObject() is false, the other half of that guard's branch.
+        HashMap<String, Object> recordWithNonObjectBody = new HashMap<>();
+        recordWithNonObjectBody.put("Body", null);
+
+        Method method = VaultController.class.getDeclaredMethod(
+                "getFormattedBatchInsertRecord", Object.class, Integer.class);
+        method.setAccessible(true);
+        @SuppressWarnings("unchecked")
+        HashMap<String, Object> result = (HashMap<String, Object>) method.invoke(null, recordWithNonObjectBody, 0);
+
+        Assert.assertNotNull(result);
+        Assert.assertFalse(
+                "skyflowId should not be present when Body is not a JSON object", result.containsKey("skyflowId"));
         Assert.assertEquals(0, result.get("requestIndex"));
     }
 
