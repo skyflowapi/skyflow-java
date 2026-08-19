@@ -12,7 +12,7 @@
     </parent>
 
     <artifactId>skyflow-flowvault-java</artifactId>
-    <version>1.0.1-dev.75ede823</version>
+    <version>1.0.1-dev.2448f08e</version>
     <packaging>jar</packaging>
     <name>${project.groupId}:${project.artifactId}</name>
     <description>Skyflow FlowVault SDK for the Java programming language</description>
