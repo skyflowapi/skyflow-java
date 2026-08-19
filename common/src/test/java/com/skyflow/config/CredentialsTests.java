@@ -118,6 +118,17 @@ public class CredentialsTests {
     }
 
     @Test
+    public void testNullCredentialsThrowsSkyflowException() {
+        try {
+            BaseValidations.validateCredentials(null);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(ErrorMessage.NullCredentials.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
     public void testEmptyPathInCredentials() {
         try {
             Credentials credentials = new Credentials();

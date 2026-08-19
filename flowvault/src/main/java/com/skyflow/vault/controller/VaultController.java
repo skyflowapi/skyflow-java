@@ -18,6 +18,7 @@ import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.generated.rest.core.ApiClientApiException;
+import com.skyflow.generated.rest.core.ApiClientException;
 import com.skyflow.generated.rest.core.ApiClientHttpResponse;
 import com.skyflow.generated.rest.core.RequestOptions;
 import com.skyflow.generated.rest.resources.flowservice.requests.V1InsertRequest;
@@ -113,6 +114,8 @@ public final class VaultController extends VaultClient {
             String bodyString = gson.toJson(e.body());
             LogUtil.printErrorLog(ErrorLogs.INSERT_RECORDS_REJECTED.getLog());
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
+        } catch (ApiClientException e) {
+            throw new SkyflowException(e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             LogUtil.printErrorLog(ErrorLogs.INSERT_RECORDS_REJECTED.getLog());
@@ -187,6 +190,8 @@ public final class VaultController extends VaultClient {
             String bodyString = gson.toJson(e.body());
             LogUtil.printErrorLog(ErrorLogs.DETOKENIZE_REQUEST_REJECTED.getLog());
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
+        } catch (ApiClientException e) {
+            throw new SkyflowException(e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new SkyflowException(e.getMessage());
@@ -267,6 +272,8 @@ public final class VaultController extends VaultClient {
             String bodyString = gson.toJson(e.body());
             LogUtil.printErrorLog(ErrorLogs.DELETE_REQUEST_REJECTED.getLog());
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
+        } catch (ApiClientException e) {
+            throw new SkyflowException(e);
         } catch (ExecutionException | InterruptedException e) {
             LogUtil.printErrorLog(ErrorLogs.DELETE_REQUEST_REJECTED.getLog());
             throw new SkyflowException(e.getMessage());
@@ -349,6 +356,8 @@ public final class VaultController extends VaultClient {
         } catch (SkyflowException e) {
             LogUtil.printErrorLog(ErrorLogs.TOKENIZE_REQUEST_REJECTED.getLog());
             throw e;
+        } catch (ApiClientException e) {
+            throw new SkyflowException(e);
         } catch (ExecutionException | InterruptedException e) {
             LogUtil.printErrorLog(ErrorLogs.TOKENIZE_REQUEST_REJECTED.getLog());
             throw new SkyflowException(e.getMessage());
@@ -769,9 +778,9 @@ public final class VaultController extends VaultClient {
     ) throws ExecutionException, InterruptedException, SkyflowException {
         LogUtil.printInfoLog(InfoLogs.PROCESSING_BATCHES.getLog());
         List<BulkInsertResponseRecord> records = new ArrayList<>();
-        List<CompletableFuture<BulkInsertResponse>> futures = this.insertBatchFutures(insertRequest, interceptor, cfg);
 
         try {
+            List<CompletableFuture<BulkInsertResponse>> futures = this.insertBatchFutures(insertRequest, interceptor, cfg);
             CompletableFuture<Void> allFutures = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
             try {
                 allFutures.join();

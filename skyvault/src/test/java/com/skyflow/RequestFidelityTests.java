@@ -10,6 +10,8 @@ import com.skyflow.enums.Env;
 import com.skyflow.enums.RedactionType;
 import com.skyflow.enums.RequestMethod;
 import com.skyflow.enums.TokenMode;
+import com.skyflow.errors.ErrorCode;
+import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.generated.rest.ApiClient;
 import com.skyflow.generated.rest.resources.query.QueryClient;
@@ -746,12 +748,13 @@ public class RequestFidelityTests {
     }
 
     /**
-     * KNOWN GAP: {@code orderBy} accepts any String but is mapped with {@code Enum.valueOf}, so an
-     * unrecognised value escapes as a raw {@link IllegalArgumentException} instead of a
-     * {@link SkyflowException}.
+     * FIXED: {@code orderBy} is now validated against the allowed set ({@code ASCENDING},
+     * {@code DESCENDING}, {@code NONE}) before it ever reaches {@code Enum.valueOf}, so an
+     * unrecognised value throws a clean {@link SkyflowException} instead of a raw
+     * {@link IllegalArgumentException}.
      */
     @Test
-    public void testGet_orderByInvalidValueThrowsRawIllegalArgumentException_knownGap() throws Exception {
+    public void testGet_orderByInvalidValueThrowsSkyflowException() throws Exception {
         for (String orderBy : new String[]{"DESC", "descending", "asc"}) {
             RecordsClient mockRecords = Mockito.mock(RecordsClient.class);
             VaultController controller = mockGetController(mockRecords);
@@ -759,9 +762,8 @@ public class RequestFidelityTests {
                 controller.get(GetRequest.builder().table("cards").ids(list("id-1")).orderBy(orderBy).build());
                 Assert.fail("expected an exception for orderBy=" + orderBy);
             } catch (SkyflowException e) {
-                Assert.fail("orderBy=" + orderBy + " should NOT surface as SkyflowException (known gap)");
-            } catch (IllegalArgumentException e) {
-                Assert.assertTrue(e.getMessage().contains(orderBy));
+                Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+                Assert.assertEquals(ErrorMessage.InvalidOrderBy.getMessage(), e.getMessage());
             }
             Mockito.verify(mockRecords, Mockito.never())
                     .recordServiceBulkGetRecord(anyString(), anyString(), any(), any());

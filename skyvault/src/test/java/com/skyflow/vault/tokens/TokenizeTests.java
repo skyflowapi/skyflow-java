@@ -96,6 +96,32 @@ public class TokenizeTests {
     }
 
     @Test
+    public void testNullRequestInTokenizeRequestValidations() {
+        try {
+            Validations.validateTokenizeRequest(null);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(ErrorMessage.TokenizeRequestNull.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testNullElementInColumnValuesInTokenizeRequestValidations() {
+        try {
+            columnValue = ColumnValue.builder().value(value).columnGroup(group).build();
+            columnValues.add(columnValue);
+            columnValues.add(null);
+            TokenizeRequest request = TokenizeRequest.builder().values(columnValues).build();
+            Validations.validateTokenizeRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(ErrorMessage.EmptyValueInColumnValues.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
     public void testNullColumnValueInColumnValuesInTokenizeRequestValidations() {
         try {
             columnValue = ColumnValue.builder().value(null).columnGroup(group).build();

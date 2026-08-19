@@ -34,16 +34,15 @@ public class BulkTokenizeRequest extends TokenizeRequest {
         }
 
         @Override
+        @SuppressWarnings("unchecked")
         public BulkTokenizeRequest build() {
-            List<BulkTokenizeRequestRecord> bulkRecords = null;
-            if (this.records != null) {
-                bulkRecords = new ArrayList<>();
-                for (TokenizeRequestRecord record : this.records) {
-                    // fail fast and clearly if a plain TokenizeRequestRecord was supplied to the
-                    // bulk builder through the inherited setter
-                    bulkRecords.add((BulkTokenizeRequestRecord) record);
-                }
-            }
+            // No other builder in this SDK throws from build() — validation is deferred to the
+            // Validations layer at actual-use time, which is a SkyflowException-declaring method.
+            // A plain TokenizeRequestRecord supplied through the inherited setter can't be verified
+            // here without an immediate (and here, premature) cast; Validations.validateBulkTokenizeRequest
+            // checks each element's real type before use and reports a clean SkyflowException instead.
+            List<? extends TokenizeRequestRecord> copy = this.records == null ? null : new ArrayList<>(this.records);
+            List<BulkTokenizeRequestRecord> bulkRecords = (List<BulkTokenizeRequestRecord>) copy;
             return new BulkTokenizeRequest(bulkRecords);
         }
     }

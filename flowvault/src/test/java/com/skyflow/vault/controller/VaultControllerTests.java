@@ -1164,4 +1164,30 @@ public class VaultControllerTests {
         Mockito.verify(mockRaw, Mockito.times(EXPECTED_BATCH_COUNT)).tokenize(any(), captor.capture());
         assertInterceptorRanOncePerBatch(interceptor, captor.getAllValues());
     }
+
+    @Test
+    public void testBulkInsert_throwingInterceptorWrappedAsSkyflowException() throws Exception {
+        ApiClient mockApi = Mockito.mock(ApiClient.class);
+        RawFlowserviceClient mockRaw = mockRawFlowservice(mockApi);
+        stubInsertEcho(mockRaw);
+        VaultController controller = createControllerWithMock(mockApi);
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", "john");
+        ArrayList<InsertRequestRecord> records = new ArrayList<>();
+        records.add(BulkInsertRequestRecord.builder().tableName("table1").data(data).build());
+        BulkInsertRequest request = BulkInsertRequest.builder().records(records).build();
+
+        RequestInterceptor interceptor = ctx -> {
+            throw new IllegalStateException("sync insert interceptor blew up");
+        };
+        BulkInsertOptions options = BulkInsertOptions.builder().interceptor(interceptor).build();
+
+        try {
+            controller.bulkInsert(request, options);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals("sync insert interceptor blew up", e.getMessage());
+        }
+    }
 }

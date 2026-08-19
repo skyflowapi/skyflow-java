@@ -165,6 +165,9 @@ public class BearerToken {
             String bodyString = GSON.toJson(e.body());
             LogUtil.printErrorLog(ErrorLogs.BEARER_TOKEN_REJECTED.getLog());
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
+        } catch (RuntimeException e) {
+            LogUtil.printErrorLog(ErrorLogs.BEARER_TOKEN_REJECTED.getLog());
+            throw new SkyflowException(e);
         }
     }
 
@@ -203,13 +206,21 @@ public class BearerToken {
         String accessToken = null;
         if (this.credentialsFile != null && Objects.equals(this.credentialsType, "FILE")) {
             response = generateBearerTokenFromCredentials(this.credentialsFile, this.ctx, this.roles);
-            accessToken = response.getAccessToken().get();
+            accessToken = extractAccessToken(response);
         } else if (this.credentialsString != null && Objects.equals(this.credentialsType, "STRING")) {
             response = generateBearerTokenFromCredentialString(this.credentialsString, this.ctx, this.roles);
-            accessToken = response.getAccessToken().get();
+            accessToken = extractAccessToken(response);
         }
         LogUtil.printInfoLog(InfoLogs.GET_BEARER_TOKEN_SUCCESS.getLog());
         return accessToken;
+    }
+
+    private static String extractAccessToken(V1GetAuthTokenResponse response) throws SkyflowException {
+        if (!response.getAccessToken().isPresent()) {
+            LogUtil.printErrorLog(ErrorLogs.MISSING_ACCESS_TOKEN.getLog());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.MissingAccessToken.getMessage());
+        }
+        return response.getAccessToken().get();
     }
 
     // Builder class

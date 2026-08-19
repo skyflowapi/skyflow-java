@@ -31,7 +31,7 @@ public class HttpConfigTests {
     }
 
     /** Builds the shared OkHttp client without needing credentials or a live token. */
-    private static OkHttpClient httpClientOf(VaultClient client) {
+    private static OkHttpClient httpClientOf(VaultClient client) throws SkyflowException {
         client.updateExecutorInHTTP();
         return client.sharedHttpClient;
     }
@@ -336,6 +336,25 @@ public class HttpConfigTests {
 
         Assert.assertSame(builder, builder.initialRetryDelayMillis(100));
         Assert.assertSame(builder, builder.maxRetryDelayMillis(900));
+    }
+
+    // ── Error wrapping ────────────────────────────────────────────────────────
+
+    @Test
+    public void testInvalidMaxRetries_wrapsInterceptorIllegalArgumentAsSkyflowException() throws SkyflowException {
+        // SkyflowRetryInterceptor rejects negative maxRetries with IllegalArgumentException;
+        // updateExecutorInHTTP must translate that (and anything else from client construction)
+        // into a SkyflowException rather than letting it escape raw.
+        VaultConfig config = buildConfig();
+        config.setMaxRetries(-1);
+        VaultClient client = new VaultClient(config, null);
+
+        try {
+            client.updateExecutorInHTTP();
+            Assert.fail("Should have thrown SkyflowException");
+        } catch (SkyflowException e) {
+            Assert.assertTrue(e.getCause() instanceof IllegalArgumentException);
+        }
     }
 
     // ── VaultConfig accessors ─────────────────────────────────────────────────

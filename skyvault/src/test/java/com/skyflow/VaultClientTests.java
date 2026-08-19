@@ -346,7 +346,9 @@ public class VaultClientTests {
     @Test
     public void testSetBearerTokenWithEnvCredentials() {
         try {
-            Dotenv dotenv = Dotenv.load();
+            // Loaded for parity with a local dev environment; not read below, so a missing
+            // .env file (as in CI/sandbox) must not fail this test.
+            Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
             vaultConfig.setCredentials(null);
             vaultClient.updateVaultConfig();
             vaultClient.setCommonCredentials(null);
@@ -843,7 +845,7 @@ public class VaultClientTests {
     }
 
     @Test
-    public void testGetDeidentifyGenericFileRequest_AllFields() {
+    public void testGetDeidentifyGenericFileRequest_AllFields() throws SkyflowException {
         File file = new File("test.custom");
         FileInput fileInput = FileInput.builder().file(file).build();
         List<DetectEntities> entities = Arrays.asList(DetectEntities.NAME, DetectEntities.DOB);
@@ -870,6 +872,24 @@ public class VaultClientTests {
         Assert.assertNotNull(genericRequest.getTokenType());
         Assert.assertTrue(genericRequest.getAllowRegex().isPresent());
         Assert.assertTrue(genericRequest.getRestrictRegex().isPresent());
+    }
+
+    // --- unsupported file extension must throw SkyflowException, not raw IllegalArgumentException ---
+
+    @Test
+    public void testGetDeidentifyGenericFileRequest_UnsupportedExtensionThrowsSkyflowException() {
+        File file = new File("test.xyz");
+        FileInput fileInput = FileInput.builder().file(file).build();
+        DeidentifyFileRequest request = DeidentifyFileRequest.builder().file(fileInput).build();
+
+        try {
+            vaultClient.getDeidentifyGenericFileRequest(request, "vault123", "base64string", "xyz");
+            Assert.fail("Should have thrown an exception");
+        } catch (SkyflowException e) {
+            Assert.assertNotNull(e.getMessage());
+        } catch (IllegalArgumentException e) {
+            Assert.fail("should throw SkyflowException, not raw IllegalArgumentException: " + e);
+        }
     }
 
     @Test

@@ -55,6 +55,46 @@ public class BulkResponseTests {
     }
 
     @Test
+    public void testBulkInsertResponse_twoArgConstructorNullRecordsDoesNotThrow() {
+        List<InsertRequestRecord> originalPayload = new ArrayList<>(Arrays.asList(
+                BulkInsertRequestRecord.builder().tableName("table1").build(),
+                BulkInsertRequestRecord.builder().tableName("table1").build()));
+
+        BulkInsertResponse response = new BulkInsertResponse(null, originalPayload);
+
+        Assert.assertNotNull(response.getSummary());
+        Assert.assertEquals(2, response.getSummary().getTotalRecords());
+        Assert.assertEquals(0, response.getSummary().getTotalInserted());
+        Assert.assertEquals(0, response.getSummary().getTotalFailed());
+    }
+
+    @Test
+    public void testBulkInsertResponse_twoArgConstructorNullOriginalPayloadDoesNotThrow() {
+        List<BulkInsertResponseRecord> records = Arrays.asList(
+                new BulkInsertResponseRecord(0, "table1", "id-1", null, null, null, 200, null, null),
+                new BulkInsertResponseRecord(1, null, null, null, null, null, 400, "failed", null));
+
+        BulkInsertResponse response = new BulkInsertResponse(records, null);
+
+        Assert.assertNotNull(response.getSummary());
+        Assert.assertEquals(records.size(), response.getSummary().getTotalRecords());
+        Assert.assertEquals(1, response.getSummary().getTotalInserted());
+        Assert.assertEquals(1, response.getSummary().getTotalFailed());
+    }
+
+    @Test
+    public void testBulkInsertResponse_twoArgConstructorBothNullDoesNotThrow() {
+        // Neither records nor originalPayload present: totalRecords falls through the nested
+        // ternary's innermost "records != null ? records.size() : 0" to the final 0 branch.
+        BulkInsertResponse response = new BulkInsertResponse(null, null);
+
+        Assert.assertNotNull(response.getSummary());
+        Assert.assertEquals(0, response.getSummary().getTotalRecords());
+        Assert.assertEquals(0, response.getSummary().getTotalInserted());
+        Assert.assertEquals(0, response.getSummary().getTotalFailed());
+    }
+
+    @Test
     public void testBulkInsertResponse_recordsPreserveIndexAndInheritedFields() {
         Map<String, List<Token>> tokens = new HashMap<>();
         tokens.put("name", Collections.singletonList(new Token("token-name", "group1")));
@@ -179,6 +219,44 @@ public class BulkResponseTests {
         Assert.assertEquals(1, response.getSummary().getTotalDetokenized());
         Assert.assertEquals(1, response.getSummary().getTotalFailed());
         Assert.assertEquals(records, response.getRecords());
+    }
+
+    @Test
+    public void testBulkDetokenizeResponse_twoArgConstructorNullRecordsDoesNotThrow() {
+        List<String> originalPayload = Arrays.asList("tok-1", "tok-2");
+
+        BulkDetokenizeResponse response = new BulkDetokenizeResponse(null, originalPayload);
+
+        Assert.assertNotNull(response.getSummary());
+        Assert.assertEquals(2, response.getSummary().getTotalTokens());
+        Assert.assertEquals(0, response.getSummary().getTotalDetokenized());
+        Assert.assertEquals(0, response.getSummary().getTotalFailed());
+    }
+
+    @Test
+    public void testBulkDetokenizeResponse_twoArgConstructorNullOriginalPayloadDoesNotThrow() {
+        List<BulkDetokenizeResponseRecord> records = Arrays.asList(
+                new BulkDetokenizeResponseRecord(0, "tok-1", "secret-value", "group1", null, 200, null, null),
+                new BulkDetokenizeResponseRecord(1, "tok-2", null, null, null, 404, "failed", null));
+
+        BulkDetokenizeResponse response = new BulkDetokenizeResponse(records, null);
+
+        Assert.assertNotNull(response.getSummary());
+        Assert.assertEquals(records.size(), response.getSummary().getTotalTokens());
+        Assert.assertEquals(1, response.getSummary().getTotalDetokenized());
+        Assert.assertEquals(1, response.getSummary().getTotalFailed());
+    }
+
+    @Test
+    public void testBulkDetokenizeResponse_twoArgConstructorBothNullDoesNotThrow() {
+        // Neither records nor originalPayload present: totalTokens falls through the nested
+        // ternary's innermost "records != null ? records.size() : 0" to the final 0 branch.
+        BulkDetokenizeResponse response = new BulkDetokenizeResponse(null, null);
+
+        Assert.assertNotNull(response.getSummary());
+        Assert.assertEquals(0, response.getSummary().getTotalTokens());
+        Assert.assertEquals(0, response.getSummary().getTotalDetokenized());
+        Assert.assertEquals(0, response.getSummary().getTotalFailed());
     }
 
     @Test
