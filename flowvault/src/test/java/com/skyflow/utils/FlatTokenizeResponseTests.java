@@ -339,6 +339,77 @@ public class FlatTokenizeResponseTests {
     }
 
     @Test
+    public void testRejectedRequest_emptyResponseArrayFallsBackToTheStatusCode() {
+        // "response" is present but empty - nothing to rebuild from, so fall back like a body
+        // without a response array at all
+        List<BulkTokenizeRequestRecord> sent = Collections.singletonList(record("v1", "g1"));
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("response", new ArrayList<>());
+
+        List<BulkTokenizeResponseRecord> records =
+                Utils.handleBulkTokenizeBatchException(rejected(500, body), sent, 0);
+
+        Assert.assertEquals(1, records.size());
+        Assert.assertEquals(Integer.valueOf(500), records.get(0).getHttpCode());
+    }
+
+    @Test
+    public void testRejectedRequest_explicitNullResponseArrayFallsBackToTheStatusCode() {
+        // "response" is present in the map but its value is JSON null, not an array - deserialises
+        // to an absent Optional rather than an empty one
+        List<BulkTokenizeRequestRecord> sent = Collections.singletonList(record("v1", "g1"));
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("response", null);
+
+        List<BulkTokenizeResponseRecord> records =
+                Utils.handleBulkTokenizeBatchException(rejected(500, body), sent, 0);
+
+        Assert.assertEquals(1, records.size());
+        Assert.assertEquals(Integer.valueOf(500), records.get(0).getHttpCode());
+    }
+
+    @Test
+    public void testRejectedRequest_unparseableResponseArrayFallsBackToTheStatusCode() {
+        // "response" is present but the wrong shape to deserialise - must not propagate the crash
+        List<BulkTokenizeRequestRecord> sent = Collections.singletonList(record("v1", "g1"));
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("response", "not-an-array");
+
+        List<BulkTokenizeResponseRecord> records =
+                Utils.handleBulkTokenizeBatchException(rejected(500, body), sent, 0);
+
+        Assert.assertEquals(1, records.size());
+        Assert.assertEquals(Integer.valueOf(500), records.get(0).getHttpCode());
+    }
+
+    @Test
+    public void testRejectedRequest_nullBatchWithPerRowBodyStillRebuildsFromTheRows() {
+        // defensive: a null batch can't be correlated against, but a per-row body still has
+        // everything needed to report each row directly
+        Throwable ex = rejected(400, body(row("v1", "g1", "", "bad group", 400)));
+
+        List<BulkTokenizeResponseRecord> records =
+                Utils.handleBulkTokenizeBatchException(ex, null, 0);
+
+        Assert.assertEquals(1, records.size());
+        Assert.assertEquals(0, records.get(0).getIndex());
+        Assert.assertEquals("bad group", records.get(0).getError());
+    }
+
+    @Test
+    public void testRejectedRequest_emptyBatchWithPerRowBodyStillRebuildsFromTheRows() {
+        // same as a null batch - an empty one can't be correlated against either
+        Throwable ex = rejected(400, body(row("v1", "g1", "", "bad group", 400)));
+
+        List<BulkTokenizeResponseRecord> records =
+                Utils.handleBulkTokenizeBatchException(ex, new ArrayList<>(), 0);
+
+        Assert.assertEquals(1, records.size());
+        Assert.assertEquals(0, records.get(0).getIndex());
+        Assert.assertEquals("bad group", records.get(0).getError());
+    }
+
+    @Test
     public void testRejectedRequest_retryableStatusStillSurfacesForRetry() {
         List<BulkTokenizeRequestRecord> sent = Collections.singletonList(record("v1", "g1"));
         Throwable ex = rejected(503, body(row("v1", "g1", "", "service unavailable", 503)));
