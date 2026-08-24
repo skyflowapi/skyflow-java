@@ -1651,6 +1651,39 @@ public class UtilsTests {
     }
 
     @Test
+    public void testHandleBulkTokenizeBatchException_errorFieldAsObjectPrefersNestedErrorOverMessage() {
+        // extractBatchErrorMessage prefers a nested "error" key over "message" when both are present
+        Map<String, Object> errorObject = new HashMap<>();
+        errorObject.put("error", "nested error message");
+        errorObject.put("message", "vault not found");
+        Map<String, Object> body = new HashMap<>();
+        body.put("error", errorObject);
+        ApiClientApiException apiEx = new ApiClientApiException("tokenize failed", 404, body);
+        RuntimeException wrapper = new RuntimeException(apiEx);
+
+        List<BulkTokenizeResponseRecord> errors = Utils.handleBulkTokenizeBatchException(
+                wrapper, tokenizeBatch("v1", "group1"), 0);
+
+        Assert.assertEquals("nested error message", errors.get(0).getError());
+    }
+
+    @Test
+    public void testHandleBulkTokenizeBatchException_errorFieldAsObjectWithoutAStringFallsBackToApiMessage() {
+        // neither "error" nor "message" is a String, so there is nothing usable to read out of it
+        Map<String, Object> errorObject = new HashMap<>();
+        errorObject.put("message", Collections.singletonList("not a string"));
+        Map<String, Object> body = new HashMap<>();
+        body.put("error", errorObject);
+        ApiClientApiException apiEx = new ApiClientApiException("tokenize failed", 404, body);
+        RuntimeException wrapper = new RuntimeException(apiEx);
+
+        List<BulkTokenizeResponseRecord> errors = Utils.handleBulkTokenizeBatchException(
+                wrapper, tokenizeBatch("v1", "group1"), 0);
+
+        Assert.assertEquals("tokenize failed", errors.get(0).getError());
+    }
+
+    @Test
     public void testHandleBulkTokenizeBatchException_nonMapBodyUsesApiMessage() {
         // Body is not a map, so extractBatchErrorMessage falls back to the exception's own message.
         ApiClientApiException apiEx = new ApiClientApiException("tokenize failed", 500, "raw string body");
@@ -1671,6 +1704,19 @@ public class UtilsTests {
         List<BulkTokenizeResponseRecord> errors = Utils.handleBulkTokenizeBatchException(ex, null, 0);
 
         Assert.assertTrue(errors.isEmpty());
+    }
+
+    @Test
+    public void testHandleBulkTokenizeBatchException_emptyGroupListStillReportsOneEntry() {
+        // an explicitly empty token group list, not a null one, must be treated the same way
+        RuntimeException ex = new RuntimeException("boom");
+        List<BulkTokenizeRequestRecord> batch = Collections.singletonList(
+                BulkTokenizeRequestRecord.builder().value("v1").tokenGroupNames(new ArrayList<>()).build());
+
+        List<BulkTokenizeResponseRecord> errors = Utils.handleBulkTokenizeBatchException(ex, batch, 0);
+
+        Assert.assertEquals(1, errors.size());
+        Assert.assertNull(errors.get(0).getTokenGroupName());
     }
 
     // ── formatBulkInsertResponse ───────────────────────────────────────────────
@@ -1977,6 +2023,12 @@ public class UtilsTests {
         Assert.assertNull(Utils.formatBulkTokenizeResponse(
                 V1FlowTokenizeResponse.builder().build(),
                 tokenizeBatch("value1", "group1"), 0, new HashMap<>()));
+    }
+
+    @Test
+    public void testFormatBulkTokenizeResponse_nullResponseReturnsNull() {
+        Assert.assertNull(Utils.formatBulkTokenizeResponse(
+                null, tokenizeBatch("value1", "group1"), 0, new HashMap<>()));
     }
 
     // Tests for getQueryRequestBody / buildQueryResponse / getGetRequestBody / buildGetResponse

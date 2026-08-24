@@ -108,7 +108,42 @@ public class BulkRetryAndSummaryTests {
         Assert.assertNull(new BulkTokenizeResponse(new ArrayList<>()).getSummary());
     }
 
+    @Test
+    public void testTokenizeSummary_classifiesByRowsWhenNoPayloadIsGiven() {
+        // The two-arg constructor can still be called with a null payload; classification then
+        // falls back to the indexes actually present in records instead of the submitted list.
+        List<BulkTokenizeResponseRecord> records = Arrays.asList(
+                row(0, "g1", "t1", 200, null),
+                row(1, "g1", null, 400, "bad group"),
+                row(2, "g1", "t2", 200, null),
+                row(2, "g2", null, 400, "bad group"));
+
+        TokenizeSummary summary = new BulkTokenizeResponse(records, null).getSummary();
+
+        // without a submitted payload to count values from, totalTokens falls back to the row count
+        Assert.assertEquals(4, summary.getTotalTokens());
+        Assert.assertEquals(1, summary.getTotalTokenized());
+        Assert.assertEquals(1, summary.getTotalPartial());
+        Assert.assertEquals(1, summary.getTotalFailed());
+    }
+
+    @Test
+    public void testTokenizeSummary_nullRecordsAndNullPayloadYieldsZeroes() {
+        TokenizeSummary summary = new BulkTokenizeResponse(null, null).getSummary();
+
+        Assert.assertEquals(0, summary.getTotalTokens());
+        Assert.assertEquals(0, summary.getTotalTokenized());
+        Assert.assertEquals(0, summary.getTotalPartial());
+        Assert.assertEquals(0, summary.getTotalFailed());
+    }
+
     // ── BulkTokenizeResponse.getRecordsToRetry ────────────────────────────────
+
+    @Test
+    public void testTokenizeRetry_withNullRecordsReturnsEmpty() {
+        Assert.assertTrue(new BulkTokenizeResponse(null, Collections.singletonList(requestRecord("a")))
+                .getRecordsToRetry().isEmpty());
+    }
 
     @Test
     public void testTokenizeRetry_only5xxFailuresAreReturned() {
