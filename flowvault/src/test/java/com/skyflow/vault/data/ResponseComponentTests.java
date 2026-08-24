@@ -11,7 +11,7 @@ import java.util.Map;
 
 /**
  * Tests for the response/success/summary building-block classes that carry real
- * constructor logic or toString() serialization: {@link Token}, {@link TokenizeResponseToken},
+ * constructor logic or toString() serialization: {@link Token},
  * {@link TokenizeResponseRecord}, {@link BulkTokenizeResponseRecord}, {@link TokenizeSummary},
  * {@link DeleteTokensRecord}, {@link BulkDeleteTokensResponseRecord},
  * {@link DeleteTokensSummary}, {@link DetokenizeSummary}, {@link DetokenizeMetadata},
@@ -390,46 +390,36 @@ public class ResponseComponentTests {
     }
 
 
-    // ── TokenizeResponseToken ────────────────────────────────────────────────
-
-    @Test
-    public void testTokenizeResponseToken_successValues() {
-        TokenizeResponseToken token = new TokenizeResponseToken("group1", "tok-abc", 200, null);
-        Assert.assertEquals("group1", token.getTokenGroupName());
-        Assert.assertEquals("tok-abc", token.getToken());
-        Assert.assertEquals(Integer.valueOf(200), token.getHttpCode());
-        Assert.assertNull(token.getError());
-    }
-
-    @Test
-    public void testTokenizeResponseToken_errorValues() {
-        TokenizeResponseToken token = new TokenizeResponseToken("group2", null, 400, "bad group");
-        Assert.assertNull(token.getToken());
-        Assert.assertEquals("bad group", token.getError());
-        Assert.assertEquals(Integer.valueOf(400), token.getHttpCode());
-    }
-
-    @Test
-    public void testTokenizeResponseToken_toStringSerializesNulls() {
-        Assert.assertTrue(new TokenizeResponseToken("group1", "tok-abc", 200, null)
-                .toString().contains("\"error\":null"));
-    }
-
     // ── TokenizeResponseRecord / BulkTokenizeResponseRecord ──────────────────
 
     @Test
-    public void testTokenizeResponseRecord_gettersReturnConstructorValues() {
-        List<TokenizeResponseToken> tokens = Collections.singletonList(
-                new TokenizeResponseToken("group1", "tok-abc", 200, null));
-        TokenizeResponseRecord record = new TokenizeResponseRecord("value1", tokens);
+    public void testTokenizeResponseRecord_successValues() {
+        TokenizeResponseRecord record = new TokenizeResponseRecord("value1", "group1", "tok-abc", 200, null);
         Assert.assertEquals("value1", record.getValue());
-        Assert.assertEquals(tokens, record.getTokens());
+        Assert.assertEquals("group1", record.getTokenGroupName());
+        Assert.assertEquals("tok-abc", record.getToken());
+        Assert.assertEquals(Integer.valueOf(200), record.getHttpCode());
+        Assert.assertNull(record.getError());
+    }
+
+    @Test
+    public void testTokenizeResponseRecord_errorValues() {
+        TokenizeResponseRecord record = new TokenizeResponseRecord("value1", "group2", null, 400, "bad group");
+        Assert.assertNull(record.getToken());
+        Assert.assertEquals("bad group", record.getError());
+        Assert.assertEquals(Integer.valueOf(400), record.getHttpCode());
+    }
+
+    @Test
+    public void testTokenizeResponseRecord_toStringSerializesNulls() {
+        Assert.assertTrue(new TokenizeResponseRecord("value1", "group1", "tok-abc", 200, null)
+                .toString().contains("\"error\":null"));
     }
 
     @Test
     public void testBulkTokenizeResponseRecord_carriesIndexAndIsATokenizeResponseRecord() {
-        BulkTokenizeResponseRecord record = new BulkTokenizeResponseRecord(7, "value1",
-                Collections.singletonList(new TokenizeResponseToken("group1", "tok-abc", 200, null)));
+        BulkTokenizeResponseRecord record = new BulkTokenizeResponseRecord(
+                7, "value1", "group1", "tok-abc", 200, null, null);
         Assert.assertEquals(7, record.getIndex());
         Assert.assertEquals("value1", record.getValue());
         Assert.assertTrue(record instanceof TokenizeResponseRecord);

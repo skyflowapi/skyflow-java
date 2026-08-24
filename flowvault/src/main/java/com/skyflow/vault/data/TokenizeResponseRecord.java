@@ -4,30 +4,70 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.Expose;
 
-import java.util.List;
-
 /**
- * The tokenization outcome for one input value: every requested token group is reported in
- * {@code tokens}, whether it succeeded or failed.
+ * One (value, token-group) outcome. {@code token} is populated on success and {@code error} on
+ * failure; {@code httpCode} is present on both paths.
+ *
+ * <p>{@code requestId} identifies the API call this outcome came from and is set only when the
+ * outcome is an error, since that is when it is useful for support.
  */
 public class TokenizeResponseRecord {
     @Expose(serialize = true)
     private final Object value;
 
     @Expose(serialize = true)
-    private final List<TokenizeResponseToken> tokens;
+    private final String tokenGroupName;
 
-    public TokenizeResponseRecord(Object value, List<TokenizeResponseToken> tokens) {
+    @Expose(serialize = true)
+    private final String token;
+
+    @Expose(serialize = true)
+    private final Integer httpCode;
+
+    @Expose(serialize = true)
+    private final String error;
+
+    @Expose(serialize = true)
+    private final String requestId;
+
+    public TokenizeResponseRecord(Object value, String tokenGroupName, String token, Integer httpCode, String error) {
+        this(value, tokenGroupName, token, httpCode, error, null);
+    }
+
+    public TokenizeResponseRecord(Object value, String tokenGroupName, String token, Integer httpCode,
+                                  String error, String requestId) {
         this.value = value;
-        this.tokens = tokens;
+        this.tokenGroupName = tokenGroupName;
+        this.token = token;
+        this.httpCode = httpCode;
+        this.error = error;
+        // a successful outcome carries no request id, whatever the caller passed
+        this.requestId = error != null ? requestId : null;
     }
 
     public Object getValue() {
         return value;
     }
 
-    public List<TokenizeResponseToken> getTokens() {
-        return tokens;
+    public String getTokenGroupName() {
+        return tokenGroupName;
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public Integer getHttpCode() {
+        return httpCode;
+    }
+
+    public String getError() {
+        return error;
+    }
+
+    /** The API call this outcome came from; null unless this is an error. */
+    public String getRequestId() {
+        return requestId;
     }
 
     @Override

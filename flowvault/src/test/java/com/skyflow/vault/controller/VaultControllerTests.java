@@ -409,8 +409,8 @@ public class VaultControllerTests {
         Assert.assertNotNull(INVALID_EXCEPTION_THROWN, response);
         Assert.assertEquals(1, response.getRecords().size());
         Assert.assertEquals(0, response.getRecords().get(0).getIndex());
-        Assert.assertEquals("tok-abc", response.getRecords().get(0).getTokens().get(0).getToken());
-        Assert.assertNull(response.getRecords().get(0).getTokens().get(0).getError());
+        Assert.assertEquals("tok-abc", response.getRecords().get(0).getToken());
+        Assert.assertNull(response.getRecords().get(0).getError());
     }
 
     @Test
@@ -447,7 +447,7 @@ public class VaultControllerTests {
         BulkTokenizeResponse response = controller.bulkTokenizeAsync(request).get(5, TimeUnit.SECONDS);
         Assert.assertNotNull(INVALID_EXCEPTION_THROWN, response);
         Assert.assertEquals(1, response.getRecords().size());
-        Assert.assertNull(response.getRecords().get(0).getTokens().get(0).getError());
+        Assert.assertNull(response.getRecords().get(0).getError());
     }
 
     // ── additional bulk API-error coverage ───────────────────────────────────
@@ -543,9 +543,8 @@ public class VaultControllerTests {
         Assert.assertNotNull(INVALID_EXCEPTION_THROWN, response);
         Assert.assertEquals(1, response.getRecords().size());
         Assert.assertEquals(0, response.getRecords().get(0).getIndex());
-        Assert.assertEquals(Integer.valueOf(400),
-                response.getRecords().get(0).getTokens().get(0).getHttpCode());
-        Assert.assertNotNull(response.getRecords().get(0).getTokens().get(0).getError());
+        Assert.assertEquals(Integer.valueOf(400), response.getRecords().get(0).getHttpCode());
+        Assert.assertNotNull(response.getRecords().get(0).getError());
     }
 
     @Test
@@ -566,9 +565,8 @@ public class VaultControllerTests {
         Assert.assertNotNull(INVALID_EXCEPTION_THROWN, response);
         Assert.assertEquals(1, response.getRecords().size());
         Assert.assertEquals(0, response.getRecords().get(0).getIndex());
-        Assert.assertEquals(Integer.valueOf(400),
-                response.getRecords().get(0).getTokens().get(0).getHttpCode());
-        Assert.assertNotNull(response.getRecords().get(0).getTokens().get(0).getError());
+        Assert.assertEquals(Integer.valueOf(400), response.getRecords().get(0).getHttpCode());
+        Assert.assertNotNull(response.getRecords().get(0).getError());
     }
 
     @Test

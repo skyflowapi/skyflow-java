@@ -38,13 +38,11 @@ import com.skyflow.vault.data.InsertRequestRecord;
 import com.skyflow.vault.data.InsertRequest;
 import com.skyflow.vault.data.TokenGroupRedactions;
 import com.skyflow.vault.data.BulkTokenizeResponseRecord;
-import com.skyflow.vault.data.TokenizeResponseRecord;
 import com.skyflow.vault.data.TokenizeRequestRecord;
 import com.skyflow.vault.data.TokenizeRequest;
 import com.skyflow.vault.data.TokenizeResponse;
 import com.skyflow.vault.data.UpsertOptions;
 import org.junit.After;
-import com.skyflow.vault.data.TokenizeResponseToken;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -1553,18 +1551,17 @@ public class UtilsTests {
         List<BulkTokenizeResponseRecord> errors = Utils.handleBulkTokenizeBatchException(
                 wrapper, tokenizeBatch("v1", "group1", "group2"), 0);
 
-        Assert.assertEquals(1, errors.size());
-        BulkTokenizeResponseRecord record = errors.get(0);
         // index is derived from the batch position; the value is echoed from the request
-        Assert.assertEquals(0, record.getIndex());
-        Assert.assertEquals("v1", record.getValue());
-        // one failed token entry per requested group
-        Assert.assertEquals(2, record.getTokens().size());
-        Assert.assertEquals("group1", record.getTokens().get(0).getTokenGroupName());
-        Assert.assertEquals("invalid value", record.getTokens().get(0).getError());
-        Assert.assertEquals(Integer.valueOf(400), record.getTokens().get(0).getHttpCode());
-        Assert.assertEquals("group2", record.getTokens().get(1).getTokenGroupName());
-        Assert.assertEquals("invalid value", record.getTokens().get(1).getError());
+        // one failed record per requested group
+        Assert.assertEquals(2, errors.size());
+        Assert.assertEquals(0, errors.get(0).getIndex());
+        Assert.assertEquals(0, errors.get(1).getIndex());
+        Assert.assertEquals("v1", errors.get(0).getValue());
+        Assert.assertEquals("group1", errors.get(0).getTokenGroupName());
+        Assert.assertEquals("invalid value", errors.get(0).getError());
+        Assert.assertEquals(Integer.valueOf(400), errors.get(0).getHttpCode());
+        Assert.assertEquals("group2", errors.get(1).getTokenGroupName());
+        Assert.assertEquals("invalid value", errors.get(1).getError());
     }
 
     @Test
@@ -1577,8 +1574,8 @@ public class UtilsTests {
 
         Assert.assertEquals(1, errors.size());
         Assert.assertEquals(3, errors.get(0).getIndex());
-        Assert.assertEquals(Integer.valueOf(500), errors.get(0).getTokens().get(0).getHttpCode());
-        Assert.assertEquals("boom", errors.get(0).getTokens().get(0).getError());
+        Assert.assertEquals(Integer.valueOf(500), errors.get(0).getHttpCode());
+        Assert.assertEquals("boom", errors.get(0).getError());
     }
 
     @Test
@@ -1606,9 +1603,9 @@ public class UtilsTests {
 
         List<BulkTokenizeResponseRecord> errors = Utils.handleBulkTokenizeBatchException(ex, batch, 0);
 
-        Assert.assertEquals(1, errors.get(0).getTokens().size());
-        Assert.assertNull(errors.get(0).getTokens().get(0).getTokenGroupName());
-        Assert.assertEquals("boom", errors.get(0).getTokens().get(0).getError());
+        Assert.assertEquals(1, errors.size());
+        Assert.assertNull(errors.get(0).getTokenGroupName());
+        Assert.assertEquals("boom", errors.get(0).getError());
     }
 
     @Test
@@ -1630,11 +1627,9 @@ public class UtilsTests {
 
         Assert.assertEquals(1, errors.size());
         Assert.assertEquals("v1", errors.get(0).getValue());
-        Assert.assertEquals(1, errors.get(0).getTokens().size());
-        Assert.assertEquals("group1", errors.get(0).getTokens().get(0).getTokenGroupName());
-        Assert.assertEquals("BYOT token should contain one token group",
-                errors.get(0).getTokens().get(0).getError());
-        Assert.assertEquals(Integer.valueOf(400), errors.get(0).getTokens().get(0).getHttpCode());
+        Assert.assertEquals("group1", errors.get(0).getTokenGroupName());
+        Assert.assertEquals("BYOT token should contain one token group", errors.get(0).getError());
+        Assert.assertEquals(Integer.valueOf(400), errors.get(0).getHttpCode());
     }
 
     @Test
@@ -1651,8 +1646,8 @@ public class UtilsTests {
                 wrapper, tokenizeBatch("v1", "group1"), 0);
 
         Assert.assertEquals(1, errors.size());
-        Assert.assertEquals("vault not found", errors.get(0).getTokens().get(0).getError());
-        Assert.assertEquals(Integer.valueOf(404), errors.get(0).getTokens().get(0).getHttpCode());
+        Assert.assertEquals("vault not found", errors.get(0).getError());
+        Assert.assertEquals(Integer.valueOf(404), errors.get(0).getHttpCode());
     }
 
     @Test
@@ -1665,8 +1660,8 @@ public class UtilsTests {
                 wrapper, tokenizeBatch("v1", "group1"), 0);
 
         Assert.assertEquals(1, errors.size());
-        Assert.assertEquals("tokenize failed", errors.get(0).getTokens().get(0).getError());
-        Assert.assertEquals(Integer.valueOf(500), errors.get(0).getTokens().get(0).getHttpCode());
+        Assert.assertEquals("tokenize failed", errors.get(0).getError());
+        Assert.assertEquals(Integer.valueOf(500), errors.get(0).getHttpCode());
     }
 
     @Test
@@ -1947,8 +1942,8 @@ public class UtilsTests {
         BulkTokenizeResponseRecord record = result.getRecords().get(0);
         Assert.assertEquals(0, record.getIndex());
         Assert.assertEquals("value1", record.getValue());
-        Assert.assertEquals("tok-abc", record.getTokens().get(0).getToken());
-        Assert.assertNull(record.getTokens().get(0).getError());
+        Assert.assertEquals("tok-abc", record.getToken());
+        Assert.assertNull(record.getError());
     }
 
     @Test
@@ -1960,9 +1955,9 @@ public class UtilsTests {
                 response, tokenizeBatch("value1", "group1"), 0, new HashMap<>());
 
         Assert.assertEquals(1, result.getRecords().size());
-        TokenizeResponseToken token = result.getRecords().get(0).getTokens().get(0);
-        Assert.assertEquals(Integer.valueOf(400), token.getHttpCode());
-        Assert.assertEquals("invalid value", token.getError());
+        BulkTokenizeResponseRecord record = result.getRecords().get(0);
+        Assert.assertEquals(Integer.valueOf(400), record.getHttpCode());
+        Assert.assertEquals("invalid value", record.getError());
     }
 
     @Test

@@ -562,34 +562,20 @@ Sample response:
 {
   "summary": { "totalTokens": 2, "totalTokenized": 1, "totalPartial": 0, "totalFailed": 1 },
   "records": [
-    {
-      "index": 0,
-      "value": "4111111111111111",
-      "tokens": [
-        { "tokenGroupName": "card_number_cg", "token": "5479-4229-4622-1393", "httpCode": 200, "error": null, "requestId": null }
-      ]
-    },
-    {
-      "index": 1,
-      "value": "john.doe@example.com",
-      "tokens": [
-        { "tokenGroupName": "email_cg", "token": null, "httpCode": 400, "error": "Token group email_cg not found.", "requestId": "a1b2c3d4-..." }
-      ]
-    }
+    { "index": 0, "value": "4111111111111111", "tokenGroupName": "card_number_cg", "token": "5479-4229-4622-1393", "httpCode": 200, "error": null, "requestId": null },
+    { "index": 1, "value": "john.doe@example.com", "tokenGroupName": "email_cg", "token": null, "httpCode": 400, "error": "Token group email_cg not found.", "requestId": "a1b2c3d4-..." }
   ]
 }
 ```
 
-Tokenize reports at **two** levels: one entry per input value in `records`, and inside each of those, one entry per requested token group in `tokens`. Because a single value can map to several token groups, the summary distinguishes fully tokenized values (`totalTokenized`), partially tokenized values where some groups succeeded and others failed (`totalPartial`), and fully failed values (`totalFailed`). The three always add up to `totalTokens`, which counts input values, not tokens produced.
+`records` is flat: one entry per (value, token group) outcome, matching the API's own response shape. Because a single value can map to several token groups, several entries can share the same `index` — that's how the SDK tells you which input value an entry belongs to. The summary classifies by index rather than by entry: fully tokenized values (`totalTokenized`), partially tokenized values where some groups succeeded and others failed (`totalPartial`), and fully failed values (`totalFailed`). The three always add up to `totalTokens`, which counts input values, not entries.
 
 ```java
 for (BulkTokenizeResponseRecord record : tokenizeResponse.getRecords()) {
-    for (TokenizeResponseToken token : record.getTokens()) {
-        if (token.getError() == null) {
-            System.out.println(record.getValue() + " -> " + token.getTokenGroupName() + " = " + token.getToken());
-        } else {
-            System.out.println(record.getValue() + " -> " + token.getTokenGroupName() + " failed: " + token.getError());
-        }
+    if (record.getError() == null) {
+        System.out.println(record.getValue() + " -> " + record.getTokenGroupName() + " = " + record.getToken());
+    } else {
+        System.out.println(record.getValue() + " -> " + record.getTokenGroupName() + " failed: " + record.getError());
     }
 }
 ```
@@ -805,7 +791,7 @@ Every bulk response exposes `getSummary()` and `getRecords()`. The records list 
 | `getError()` | failures only | Error message for this item. `null` means this item succeeded. |
 | `getRequestId()` | failures only | The `x-request-id` of the batch this item was in — quote it in support escalations. Items from the same batch share one id. |
 
-The success payload sits alongside those fields on the same object: `getSkyflowId()`/`getTokens()`/`getData()` for insert (`getFields()` is deprecated — it returns the same data in its original, pre-typed `Map<String, Object>` shape, not `getTokens()`'s `Token` objects), `getValue()`/`getTokenGroupName()`/`getMetadata()` for detokenize, `getTokens()` for tokenize, `getToken()` for delete.
+The success payload sits alongside those fields on the same object: `getSkyflowId()`/`getTokens()`/`getData()` for insert (`getFields()` is deprecated — it returns the same data in its original, pre-typed `Map<String, Object>` shape, not `getTokens()`'s `Token` objects), `getValue()`/`getTokenGroupName()`/`getMetadata()` for detokenize, `getValue()`/`getTokenGroupName()`/`getToken()` for tokenize, `getToken()` for delete.
 
 Summaries per operation:
 
@@ -835,18 +821,16 @@ for (BulkInsertResponseRecord record : response.getRecords()) {
 }
 ```
 
-For tokenize, the check is one level deeper, because a single value can partially succeed:
+Tokenize reports one entry per (value, token group) outcome, so a single value can partially succeed — several entries share its `index`:
 
 ```java
 for (BulkTokenizeResponseRecord record : tokenizeResponse.getRecords()) {
-    for (TokenizeResponseToken token : record.getTokens()) {
-        if (token.getError() == null) {
-            System.out.println(record.getIndex() + "/" + token.getTokenGroupName()
-                    + " -> " + token.getToken());
-        } else {
-            System.err.println(record.getIndex() + "/" + token.getTokenGroupName()
-                    + " failed [" + token.getHttpCode() + "] " + token.getError());
-        }
+    if (record.getError() == null) {
+        System.out.println(record.getIndex() + "/" + record.getTokenGroupName()
+                + " -> " + record.getToken());
+    } else {
+        System.err.println(record.getIndex() + "/" + record.getTokenGroupName()
+                + " failed [" + record.getHttpCode() + "] " + record.getError());
     }
 }
 ```
