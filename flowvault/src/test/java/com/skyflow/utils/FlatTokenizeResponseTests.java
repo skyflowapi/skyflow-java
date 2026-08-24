@@ -113,6 +113,31 @@ public class FlatTokenizeResponseTests {
         Assert.assertEquals(1, withPayload.getSummary().getTotalFailed());
     }
 
+    // ── BYOT naming exactly one, invalid, group ─────────────────────────────────
+
+    @Test
+    public void testByotWithSingleInvalidGroup_reportsTheGroupErrorNotTheByotError() {
+        // BYOT naming exactly one group satisfies the "one token group" rule, so a bad group name
+        // fails for the same reason it would on a non-BYOT record, not for naming too many groups.
+        String json = "{\"response\": ["
+                + "{\"value\": \"byot-value\", \"tokenGroupName\": null, \"token\": \"\","
+                + " \"error\": \"Tokenize failed. Token group bad_group is invalid. Specify a valid token group.\","
+                + " \"httpCode\": 400}"
+                + "]}";
+        List<BulkTokenizeRequestRecord> sent = Collections.singletonList(
+                byotRecord("byot-value", "my-own-token", "bad_group"));
+
+        BulkTokenizeResponse result = Utils.formatBulkTokenizeResponse(parse(json), sent, 0, new HashMap<>());
+
+        Assert.assertEquals(1, result.getRecords().size());
+        BulkTokenizeResponseRecord record = result.getRecords().get(0);
+        Assert.assertEquals(0, record.getIndex());
+        Assert.assertEquals("Tokenize failed. Token group bad_group is invalid. Specify a valid token group.",
+                record.getError());
+        Assert.assertEquals(Integer.valueOf(400), record.getHttpCode());
+        Assert.assertNull(record.getToken());
+    }
+
     // ── duplicate token groups within one record ───────────────────────────────
 
     @Test
