@@ -12,7 +12,6 @@ import com.skyflow.generated.rest.core.ApiClientHttpResponse;
 import com.skyflow.generated.rest.core.RequestOptions;
 import com.skyflow.generated.rest.resources.flowservice.FlowserviceClient;
 import com.skyflow.generated.rest.resources.flowservice.RawFlowserviceClient;
-import com.skyflow.generated.rest.types.FlowTokenizeResponseObjectToken;
 import com.skyflow.generated.rest.types.V1DeleteTokenResponseObject;
 import com.skyflow.generated.rest.types.V1FlowDeleteTokenResponse;
 import com.skyflow.generated.rest.types.V1FlowDetokenizeResponse;
@@ -392,10 +391,8 @@ public class VaultControllerTests {
         ApiClient mockApi = Mockito.mock(ApiClient.class);
         RawFlowserviceClient mockRaw = mockRawFlowservice(mockApi);
 
-        FlowTokenizeResponseObjectToken token = FlowTokenizeResponseObjectToken.builder()
-                .tokenGroupName("group1").token("tok-abc").build();
         V1FlowTokenizeResponseObject responseObject = V1FlowTokenizeResponseObject.builder()
-                .value("value1").tokens(Collections.singletonList(token)).build();
+                .value("value1").tokenGroupName("group1").token("tok-abc").build();
         V1FlowTokenizeResponse body = V1FlowTokenizeResponse.builder()
                 .response(Collections.singletonList(responseObject)).build();
         ApiClientHttpResponse<V1FlowTokenizeResponse> httpResp = new ApiClientHttpResponse<>(body, buildOkHttpResponse());
@@ -433,10 +430,8 @@ public class VaultControllerTests {
         ApiClient mockApi = Mockito.mock(ApiClient.class);
         RawFlowserviceClient mockRaw = mockRawFlowservice(mockApi);
 
-        FlowTokenizeResponseObjectToken token = FlowTokenizeResponseObjectToken.builder()
-                .tokenGroupName("group1").token("tok-abc").build();
         V1FlowTokenizeResponseObject responseObject = V1FlowTokenizeResponseObject.builder()
-                .value("value1").tokens(Collections.singletonList(token)).build();
+                .value("value1").tokenGroupName("group1").token("tok-abc").build();
         V1FlowTokenizeResponse body = V1FlowTokenizeResponse.builder()
                 .response(Collections.singletonList(responseObject)).build();
         ApiClientHttpResponse<V1FlowTokenizeResponse> httpResp = new ApiClientHttpResponse<>(body, buildOkHttpResponse());
@@ -896,13 +891,10 @@ public class VaultControllerTests {
                     invocation.getArgument(0);
             List<V1FlowTokenizeResponseObject> responseRecords = new ArrayList<>();
             for (com.skyflow.generated.rest.types.V1FlowTokenizeRequestObject obj : req.getData().get()) {
-                FlowTokenizeResponseObjectToken token = FlowTokenizeResponseObjectToken.builder()
-                        .tokenGroupName("group1")
-                        .token("tok-" + obj.getValue().get())
-                        .build();
                 responseRecords.add(V1FlowTokenizeResponseObject.builder()
                         .value(obj.getValue().get())
-                        .tokens(Collections.singletonList(token))
+                        .tokenGroupName("group1")
+                        .token("tok-" + obj.getValue().get())
                         .build());
             }
             V1FlowTokenizeResponse body = V1FlowTokenizeResponse.builder().response(responseRecords).build();

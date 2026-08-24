@@ -202,14 +202,11 @@ public class FlatTokenizeResponseTests {
     }
 
     @Test
-    public void testGroupedResponseShape_stillFoldsOneRowPerRecord() {
-        // if the API ever returns the nested shape the wire type models, nothing changes
+    public void testMultipleGroupsForOneValue_foldOntoOneRecord() {
         String json = "{\"response\": ["
-                + "{\"value\": \"v0\", \"tokens\": ["
-                + "   {\"tokenGroupName\": \"g1\", \"token\": \"tok-a\", \"httpCode\": 200},"
-                + "   {\"tokenGroupName\": \"g2\", \"token\": \"tok-b\", \"httpCode\": 200}]},"
-                + "{\"value\": \"v1\", \"tokens\": ["
-                + "   {\"tokenGroupName\": \"g1\", \"token\": \"tok-c\", \"httpCode\": 200}]}"
+                + "{\"value\": \"v0\", \"tokenGroupName\": \"g1\", \"token\": \"tok-a\", \"httpCode\": 200},"
+                + "{\"value\": \"v0\", \"tokenGroupName\": \"g2\", \"token\": \"tok-b\", \"httpCode\": 200},"
+                + "{\"value\": \"v1\", \"tokenGroupName\": \"g1\", \"token\": \"tok-c\", \"httpCode\": 200}"
                 + "]}";
         List<BulkTokenizeRequestRecord> sent = Arrays.asList(
                 record("v0", "g1", "g2"), record("v1", "g1"));

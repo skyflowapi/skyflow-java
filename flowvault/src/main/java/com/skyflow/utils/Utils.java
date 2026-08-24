@@ -15,7 +15,6 @@ import com.skyflow.generated.rest.core.ObjectMappers;
 import com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest;
 import com.skyflow.generated.rest.resources.flowservice.requests.V1InsertRequest;
 import com.skyflow.generated.rest.types.FlowEnumUpdateType;
-import com.skyflow.generated.rest.types.FlowTokenizeResponseObjectToken;
 import com.skyflow.generated.rest.types.V1DeleteTokenResponseObject;
 import com.skyflow.generated.rest.types.V1FlowDeleteTokenResponse;
 import com.skyflow.generated.rest.types.V1FlowDetokenizeResponse;
@@ -852,55 +851,18 @@ public final class Utils extends BaseUtils {
 
     private static List<TokenizeResponseToken> buildTokenizeResponseTokens(
             V1FlowTokenizeResponseObject record, String requestId) {
+        boolean failed = record.getError().isPresent()
+                && record.getError().get() != null
+                && !record.getError().get().isEmpty();
         List<TokenizeResponseToken> tokens = new ArrayList<>();
-        if (record.getTokens().isPresent()) {
-            for (FlowTokenizeResponseObjectToken tokenObj : record.getTokens().get()) {
-                boolean failed = tokenObj.getError().isPresent()
-                        && tokenObj.getError().get() != null
-                        && !tokenObj.getError().get().isEmpty();
-                tokens.add(new TokenizeResponseToken(
-                        tokenObj.getTokenGroupName().orElse(null),
-                        tokenObj.getToken().orElse(null),
-                        tokenObj.getHttpCode().orElse(failed ? 500 : 200),
-                        failed ? tokenObj.getError().get() : null,
-                        requestId
-                ));
-            }
-        } else {
-            // the API reports one flat row per (value, token group) instead of a nested tokens
-            // array; the generated type has no fields for those, so they land in additionalProperties
-            TokenizeResponseToken flat = flatToken(record, requestId);
-            if (flat != null) {
-                tokens.add(flat);
-            }
-        }
+        tokens.add(new TokenizeResponseToken(
+                asNonEmptyString(record.getTokenGroupName().orElse(null)),
+                asNonEmptyString(record.getToken().orElse(null)),
+                record.getHttpCode().orElse(failed ? 500 : 200),
+                failed ? record.getError().get() : null,
+                requestId
+        ));
         return tokens;
-    }
-
-    /**
-     * Reads a flat {@code tokenGroupName}/{@code token}/{@code error}/{@code httpCode} row out of
-     * the wire object's unmodelled properties. Returns null when the row carries none of them, so a
-     * genuinely token-less record still reports an empty list rather than a phantom entry.
-     */
-    private static TokenizeResponseToken flatToken(V1FlowTokenizeResponseObject record, String requestId) {
-        Map<String, Object> extras = record.getAdditionalProperties();
-        if (extras == null || extras.isEmpty()) {
-            return null;
-        }
-        boolean carriesTokenFields = extras.containsKey("token")
-                || extras.containsKey("tokenGroupName")
-                || extras.containsKey("error")
-                || extras.containsKey("httpCode");
-        if (!carriesTokenFields) {
-            return null;
-        }
-        String error = asNonEmptyString(extras.get("error"));
-        String token = asNonEmptyString(extras.get("token"));
-        Integer httpCode = extras.get("httpCode") instanceof Number
-                ? ((Number) extras.get("httpCode")).intValue()
-                : (error != null ? 500 : 200);
-        return new TokenizeResponseToken(
-                asNonEmptyString(extras.get("tokenGroupName")), token, httpCode, error, requestId);
     }
 
     /** The API sends "" for a token or error that does not apply; normalise both to null. */
