@@ -40,7 +40,6 @@ import com.skyflow.vault.data.BulkDeleteTokensRequest;
 import com.skyflow.vault.data.BulkDeleteTokensResponseRecord;
 import com.skyflow.vault.data.BulkTokenizeRequestRecord;
 import com.skyflow.vault.data.BulkTokenizeResponseRecord;
-import com.skyflow.vault.data.TokenizeResponseToken;
 import com.skyflow.vault.data.BulkDeleteTokensResponse;
 import com.skyflow.vault.data.BulkDetokenizeRequest;
 import com.skyflow.vault.data.BulkDetokenizeResponse;

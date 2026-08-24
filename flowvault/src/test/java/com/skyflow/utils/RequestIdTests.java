@@ -12,7 +12,6 @@ import com.skyflow.vault.data.BulkDeleteTokensResponseRecord;
 import com.skyflow.vault.data.BulkTokenizeRequestRecord;
 import com.skyflow.vault.data.BulkTokenizeResponse;
 import com.skyflow.vault.data.BulkTokenizeResponseRecord;
-import com.skyflow.vault.data.TokenizeResponseToken;
 import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -96,8 +95,8 @@ public class RequestIdTests {
         BulkTokenizeResponse result = Utils.formatBulkTokenizeResponse(
                 tokenizeWire(json), sent, 0, headers(REQ_ID_A));
 
-        TokenizeResponseToken success = result.getRecords().get(0).getTokens().get(0);
-        TokenizeResponseToken failure = result.getRecords().get(1).getTokens().get(0);
+        BulkTokenizeResponseRecord success = result.getRecords().get(0);
+        BulkTokenizeResponseRecord failure = result.getRecords().get(1);
         Assert.assertNull("a successful token must not carry a request id", success.getRequestId());
         Assert.assertEquals(REQ_ID_A, failure.getRequestId());
     }
@@ -144,10 +143,10 @@ public class RequestIdTests {
         List<BulkTokenizeResponseRecord> merged = new ArrayList<>(first.getRecords());
         merged.addAll(second.getRecords());
         Assert.assertEquals(4, merged.size());
-        Assert.assertEquals(REQ_ID_A, merged.get(0).getTokens().get(0).getRequestId());
-        Assert.assertEquals(REQ_ID_A, merged.get(1).getTokens().get(0).getRequestId());
-        Assert.assertEquals(REQ_ID_B, merged.get(2).getTokens().get(0).getRequestId());
-        Assert.assertEquals(REQ_ID_B, merged.get(3).getTokens().get(0).getRequestId());
+        Assert.assertEquals(REQ_ID_A, merged.get(0).getRequestId());
+        Assert.assertEquals(REQ_ID_A, merged.get(1).getRequestId());
+        Assert.assertEquals(REQ_ID_B, merged.get(2).getRequestId());
+        Assert.assertEquals(REQ_ID_B, merged.get(3).getRequestId());
         Assert.assertEquals(2, merged.get(2).getIndex());
         Assert.assertEquals(3, merged.get(3).getIndex());
     }
@@ -160,7 +159,7 @@ public class RequestIdTests {
                 tokenizeWire(json), Collections.singletonList(tokenizeRecord("v0", "g1")),
                 0, headers(null));
 
-        Assert.assertNull(result.getRecords().get(0).getTokens().get(0).getRequestId());
+        Assert.assertNull(result.getRecords().get(0).getRequestId());
     }
 
     @Test
@@ -173,10 +172,10 @@ public class RequestIdTests {
                 tokenizeWire(json), Collections.singletonList(tokenizeRecord("v0", "g1", "g2")),
                 0, headers(REQ_ID_A));
 
-        List<TokenizeResponseToken> tokens = result.getRecords().get(0).getTokens();
-        Assert.assertEquals(2, tokens.size());
-        Assert.assertNull(tokens.get(0).getRequestId());
-        Assert.assertEquals(REQ_ID_A, tokens.get(1).getRequestId());
+        List<BulkTokenizeResponseRecord> records = result.getRecords();
+        Assert.assertEquals(2, records.size());
+        Assert.assertNull(records.get(0).getRequestId());
+        Assert.assertEquals(REQ_ID_A, records.get(1).getRequestId());
     }
 
     // ── tokenize: rejected requests ────────────────────────────────────────────
@@ -198,7 +197,7 @@ public class RequestIdTests {
         List<BulkTokenizeResponseRecord> records = Utils.handleBulkTokenizeBatchException(
                 ex, Collections.singletonList(tokenizeRecord("v0", "g1")), 0);
 
-        Assert.assertEquals(REQ_ID_B, records.get(0).getTokens().get(0).getRequestId());
+        Assert.assertEquals(REQ_ID_B, records.get(0).getRequestId());
     }
 
     @Test
@@ -209,10 +208,9 @@ public class RequestIdTests {
         List<BulkTokenizeResponseRecord> records = Utils.handleBulkTokenizeBatchException(
                 ex, Collections.singletonList(tokenizeRecord("v0", "g1", "g2")), 0);
 
-        List<TokenizeResponseToken> tokens = records.get(0).getTokens();
-        Assert.assertEquals(2, tokens.size());
-        Assert.assertEquals(REQ_ID_A, tokens.get(0).getRequestId());
-        Assert.assertEquals(REQ_ID_A, tokens.get(1).getRequestId());
+        Assert.assertEquals(2, records.size());
+        Assert.assertEquals(REQ_ID_A, records.get(0).getRequestId());
+        Assert.assertEquals(REQ_ID_A, records.get(1).getRequestId());
     }
 
     @Test
@@ -229,7 +227,7 @@ public class RequestIdTests {
         List<BulkTokenizeResponseRecord> records = Utils.handleBulkTokenizeBatchException(
                 ex, Collections.singletonList(tokenizeRecord("v0", "g1")), 0);
 
-        String error = records.get(0).getTokens().get(0).getError();
+        String error = records.get(0).getError();
         Assert.assertTrue("expected the DNS failure, got: " + error,
                 error.contains("UnknownHostException"));
         Assert.assertTrue(error.contains("badcluster.skyvault.skyflowapis.dev"));
@@ -261,8 +259,8 @@ public class RequestIdTests {
                 new RuntimeException("connection reset"),
                 Collections.singletonList(tokenizeRecord("v0", "g1")), 0);
 
-        Assert.assertNull(records.get(0).getTokens().get(0).getRequestId());
-        Assert.assertEquals("connection reset", records.get(0).getTokens().get(0).getError());
+        Assert.assertNull(records.get(0).getRequestId());
+        Assert.assertEquals("connection reset", records.get(0).getError());
     }
 
     // ── delete: success carries no id, errors carry the batch's ────────────────
@@ -430,11 +428,9 @@ public class RequestIdTests {
     private static Set<String> tokenizeRequestIds(List<BulkTokenizeResponseRecord> records) {
         Set<String> ids = new HashSet<>();
         for (BulkTokenizeResponseRecord record : records) {
-            for (TokenizeResponseToken token : record.getTokens()) {
-                if (token.getError() != null) {
-                    Assert.assertNotNull("every error must carry a request id", token.getRequestId());
-                    ids.add(token.getRequestId());
-                }
+            if (record.getError() != null) {
+                Assert.assertNotNull("every error must carry a request id", record.getRequestId());
+                ids.add(record.getRequestId());
             }
         }
         return ids;

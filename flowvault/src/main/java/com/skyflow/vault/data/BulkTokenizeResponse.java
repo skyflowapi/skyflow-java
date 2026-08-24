@@ -5,7 +5,11 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.Expose;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class BulkTokenizeResponse {
     @Expose(serialize = true)
@@ -34,35 +38,45 @@ public class BulkTokenizeResponse {
      */
     private static TokenizeSummary buildSummary(List<BulkTokenizeResponseRecord> records,
                                                 List<BulkTokenizeRequestRecord> originalPayload) {
+        Map<Integer, int[]> outcomesByIndex = new LinkedHashMap<>(); // index -> [succeeded, failed]
+        if (records != null) {
+            for (BulkTokenizeResponseRecord record : records) {
+                int[] outcomes = outcomesByIndex.computeIfAbsent(record.getIndex(), key -> new int[2]);
+                if (record.getError() == null) {
+                    outcomes[0]++;
+                } else {
+                    outcomes[1]++;
+                }
+            }
+        }
         int totalTokenized = 0;
         int totalPartial = 0;
         int totalFailed = 0;
-        if (records != null) {
-            for (BulkTokenizeResponseRecord record : records) {
-                int succeeded = 0;
-                int failed = 0;
-                if (record.getTokens() != null) {
-                    for (TokenizeResponseToken token : record.getTokens()) {
-                        if (token.getError() == null) {
-                            succeeded++;
-                        } else {
-                            failed++;
-                        }
-                    }
-                }
-                if (succeeded > 0 && failed > 0) {
+        int totalTokens;
+        if (originalPayload != null) {
+            totalTokens = originalPayload.size();
+            for (int index = 0; index < originalPayload.size(); index++) {
+                int[] outcomes = outcomesByIndex.getOrDefault(index, new int[2]);
+                if (outcomes[0] > 0 && outcomes[1] > 0) {
                     totalPartial++;
-                } else if (succeeded > 0) {
+                } else if (outcomes[0] > 0) {
                     totalTokenized++;
                 } else {
-                    // no token groups came back, or every one of them failed
+                    totalFailed++;
+                }
+            }
+        } else {
+            totalTokens = records != null ? records.size() : 0;
+            for (int[] outcomes : outcomesByIndex.values()) {
+                if (outcomes[0] > 0 && outcomes[1] > 0) {
+                    totalPartial++;
+                } else if (outcomes[0] > 0) {
+                    totalTokenized++;
+                } else {
                     totalFailed++;
                 }
             }
         }
-        int totalTokens = originalPayload != null
-                ? originalPayload.size()
-                : (records != null ? records.size() : 0);
         return new TokenizeSummary(totalTokens, totalTokenized, totalPartial, totalFailed);
     }
 
@@ -79,41 +93,33 @@ public class BulkTokenizeResponse {
      *
      * <p>Retryable means a 5xx other than 529, matching the rule used elsewhere in the SDK. The
      * caller's original record objects are returned unchanged — they carry no index, exactly as they
-     * were supplied. Records where nothing failed retryably are omitted.
+     * were supplied.
      */
     public List<BulkTokenizeRequestRecord> getRecordsToRetry() {
         if (recordsToRetry == null) {
             recordsToRetry = new ArrayList<>();
             if (records != null && originalPayload != null) {
+                Set<Integer> retryableIndexes = new LinkedHashSet<>();
                 for (BulkTokenizeResponseRecord record : records) {
+                    if (isRetryable(record)) {
+                        retryableIndexes.add(record.getIndex());
+                    }
+                }
+                for (int index : retryableIndexes) {
                     // the SDK assigns the index from the record's position in originalPayload, so a
                     // positional lookup is exact
-                    int index = record.getIndex();
-                    if (index < 0 || index >= originalPayload.size() || !hasRetryableFailure(record)) {
-                        continue;
+                    if (index >= 0 && index < originalPayload.size()) {
+                        recordsToRetry.add(originalPayload.get(index));
                     }
-                    recordsToRetry.add(originalPayload.get(index));
                 }
             }
         }
         return recordsToRetry;
     }
 
-    private static boolean hasRetryableFailure(BulkTokenizeResponseRecord record) {
-        if (record.getTokens() == null) {
-            return false;
-        }
-        for (TokenizeResponseToken token : record.getTokens()) {
-            if (isRetryable(token)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static boolean isRetryable(TokenizeResponseToken token) {
-        Integer httpCode = token.getHttpCode();
-        return token.getError() != null
+    private static boolean isRetryable(BulkTokenizeResponseRecord record) {
+        Integer httpCode = record.getHttpCode();
+        return record.getError() != null
                 && httpCode != null
                 && httpCode >= 500 && httpCode <= 599
                 && httpCode != 529;

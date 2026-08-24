@@ -97,6 +97,7 @@
     "unrecognised",
     "nocreds",
     "nodir",
+    "noextension",
     "detok",
     "ngrok",
     "obac",

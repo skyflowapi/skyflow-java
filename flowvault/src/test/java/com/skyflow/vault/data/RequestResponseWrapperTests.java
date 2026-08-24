@@ -141,22 +141,20 @@ public class RequestResponseWrapperTests {
     @Test
     public void testTokenizeResponse_gettersReturnConstructorValues() {
         List<TokenizeResponseRecord> records = Collections.singletonList(
-                new TokenizeResponseRecord("value1", Collections.singletonList(
-                        new TokenizeResponseToken("group1", "tok-abc", 200, null))));
+                new TokenizeResponseRecord("value1", "group1", "tok-abc", 200, null));
 
         TokenizeResponse response = new TokenizeResponse(records);
 
         Assert.assertEquals(records, response.getResponse());
         Assert.assertEquals("value1", response.getResponse().get(0).getValue());
-        Assert.assertEquals("tok-abc", response.getResponse().get(0).getTokens().get(0).getToken());
-        Assert.assertNull(response.getResponse().get(0).getTokens().get(0).getError());
+        Assert.assertEquals("tok-abc", response.getResponse().get(0).getToken());
+        Assert.assertNull(response.getResponse().get(0).getError());
     }
 
     @Test
     public void testTokenizeResponse_toStringSerializesNulls() {
         TokenizeResponse response = new TokenizeResponse(Collections.singletonList(
-                new TokenizeResponseRecord("value1", Collections.singletonList(
-                        new TokenizeResponseToken("group1", "tok-abc", 200, null)))));
+                new TokenizeResponseRecord("value1", "group1", "tok-abc", 200, null)));
         Assert.assertTrue(response.toString().contains("\"error\":null"));
     }
 

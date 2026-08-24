@@ -7,28 +7,51 @@ import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.skyflow.generated.rest.core.ObjectMappers;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 
 @JsonInclude(JsonInclude.Include.NON_ABSENT)
 @JsonDeserialize(builder = V1FlowTokenizeResponseObject.Builder.class)
 public final class V1FlowTokenizeResponseObject {
+    private final Optional<String> token;
+
     private final Optional<Object> value;
 
-    private final Optional<List<FlowTokenizeResponseObjectToken>> tokens;
+    private final Optional<String> tokenGroupName;
+
+    private final Optional<String> error;
+
+    private final Optional<Integer> httpCode;
 
     private final Map<String, Object> additionalProperties;
 
     private V1FlowTokenizeResponseObject(
+            Optional<String> token,
             Optional<Object> value,
-            Optional<List<FlowTokenizeResponseObjectToken>> tokens,
+            Optional<String> tokenGroupName,
+            Optional<String> error,
+            Optional<Integer> httpCode,
             Map<String, Object> additionalProperties) {
+        this.token = token;
         this.value = value;
-        this.tokens = tokens;
+        this.tokenGroupName = tokenGroupName;
+        this.error = error;
+        this.httpCode = httpCode;
         this.additionalProperties = additionalProperties;
     }
 
     /**
-     * @return Value of token
+     * @return Token that was generated
+     */
+    @JsonProperty("token")
+    public Optional<String> getToken() {
+        return token;
+    }
+
+    /**
+     * @return Value that was tokenized
      */
     @JsonProperty("value")
     public Optional<Object> getValue() {
@@ -36,11 +59,27 @@ public final class V1FlowTokenizeResponseObject {
     }
 
     /**
-     * @return Token value
+     * @return Name of the token group
      */
-    @JsonProperty("tokens")
-    public Optional<List<FlowTokenizeResponseObjectToken>> getTokens() {
-        return tokens;
+    @JsonProperty("tokenGroupName")
+    public Optional<String> getTokenGroupName() {
+        return tokenGroupName;
+    }
+
+    /**
+     * @return Error if tokenization failed
+     */
+    @JsonProperty("error")
+    public Optional<String> getError() {
+        return error;
+    }
+
+    /**
+     * @return HTTP status code of the response
+     */
+    @JsonProperty("httpCode")
+    public Optional<Integer> getHttpCode() {
+        return httpCode;
     }
 
     @Override
@@ -55,12 +94,16 @@ public final class V1FlowTokenizeResponseObject {
     }
 
     private boolean equalTo(V1FlowTokenizeResponseObject other) {
-        return value.equals(other.value) && tokens.equals(other.tokens);
+        return token.equals(other.token)
+                && value.equals(other.value)
+                && tokenGroupName.equals(other.tokenGroupName)
+                && error.equals(other.error)
+                && httpCode.equals(other.httpCode);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(this.value, this.tokens);
+        return Objects.hash(this.token, this.value, this.tokenGroupName, this.error, this.httpCode);
     }
 
     @Override
@@ -74,9 +117,15 @@ public final class V1FlowTokenizeResponseObject {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static final class Builder {
+        private Optional<String> token = Optional.empty();
+
         private Optional<Object> value = Optional.empty();
 
-        private Optional<List<FlowTokenizeResponseObjectToken>> tokens = Optional.empty();
+        private Optional<String> tokenGroupName = Optional.empty();
+
+        private Optional<String> error = Optional.empty();
+
+        private Optional<Integer> httpCode = Optional.empty();
 
         @JsonAnySetter
         private Map<String, Object> additionalProperties = new HashMap<>();
@@ -84,13 +133,30 @@ public final class V1FlowTokenizeResponseObject {
         private Builder() {}
 
         public Builder from(V1FlowTokenizeResponseObject other) {
+            token(other.getToken());
             value(other.getValue());
-            tokens(other.getTokens());
+            tokenGroupName(other.getTokenGroupName());
+            error(other.getError());
+            httpCode(other.getHttpCode());
             return this;
         }
 
         /**
-         * <p>Value of token</p>
+         * <p>Token that was generated</p>
+         */
+        @JsonSetter(value = "token", nulls = Nulls.SKIP)
+        public Builder token(Optional<String> token) {
+            this.token = token;
+            return this;
+        }
+
+        public Builder token(String token) {
+            this.token = Optional.ofNullable(token);
+            return this;
+        }
+
+        /**
+         * <p>Value that was tokenized</p>
          */
         @JsonSetter(value = "value", nulls = Nulls.SKIP)
         public Builder value(Optional<Object> value) {
@@ -104,21 +170,49 @@ public final class V1FlowTokenizeResponseObject {
         }
 
         /**
-         * <p>Token value</p>
+         * <p>Name of the token group</p>
          */
-        @JsonSetter(value = "tokens", nulls = Nulls.SKIP)
-        public Builder tokens(Optional<List<FlowTokenizeResponseObjectToken>> tokens) {
-            this.tokens = tokens;
+        @JsonSetter(value = "tokenGroupName", nulls = Nulls.SKIP)
+        public Builder tokenGroupName(Optional<String> tokenGroupName) {
+            this.tokenGroupName = tokenGroupName;
             return this;
         }
 
-        public Builder tokens(List<FlowTokenizeResponseObjectToken> tokens) {
-            this.tokens = Optional.ofNullable(tokens);
+        public Builder tokenGroupName(String tokenGroupName) {
+            this.tokenGroupName = Optional.ofNullable(tokenGroupName);
+            return this;
+        }
+
+        /**
+         * <p>Error if tokenization failed</p>
+         */
+        @JsonSetter(value = "error", nulls = Nulls.SKIP)
+        public Builder error(Optional<String> error) {
+            this.error = error;
+            return this;
+        }
+
+        public Builder error(String error) {
+            this.error = Optional.ofNullable(error);
+            return this;
+        }
+
+        /**
+         * <p>HTTP status code of the response</p>
+         */
+        @JsonSetter(value = "httpCode", nulls = Nulls.SKIP)
+        public Builder httpCode(Optional<Integer> httpCode) {
+            this.httpCode = httpCode;
+            return this;
+        }
+
+        public Builder httpCode(Integer httpCode) {
+            this.httpCode = Optional.ofNullable(httpCode);
             return this;
         }
 
         public V1FlowTokenizeResponseObject build() {
-            return new V1FlowTokenizeResponseObject(value, tokens, additionalProperties);
+            return new V1FlowTokenizeResponseObject(token, value, tokenGroupName, error, httpCode, additionalProperties);
         }
     }
 }

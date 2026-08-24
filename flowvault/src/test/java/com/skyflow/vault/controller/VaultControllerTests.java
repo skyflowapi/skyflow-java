@@ -12,7 +12,6 @@ import com.skyflow.generated.rest.core.ApiClientHttpResponse;
 import com.skyflow.generated.rest.core.RequestOptions;
 import com.skyflow.generated.rest.resources.flowservice.FlowserviceClient;
 import com.skyflow.generated.rest.resources.flowservice.RawFlowserviceClient;
-import com.skyflow.generated.rest.types.FlowTokenizeResponseObjectToken;
 import com.skyflow.generated.rest.types.V1DeleteTokenResponseObject;
 import com.skyflow.generated.rest.types.V1FlowDeleteTokenResponse;
 import com.skyflow.generated.rest.types.V1FlowDetokenizeResponse;
@@ -57,6 +56,7 @@ import org.mockito.Mockito;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -392,10 +392,8 @@ public class VaultControllerTests {
         ApiClient mockApi = Mockito.mock(ApiClient.class);
         RawFlowserviceClient mockRaw = mockRawFlowservice(mockApi);
 
-        FlowTokenizeResponseObjectToken token = FlowTokenizeResponseObjectToken.builder()
-                .tokenGroupName("group1").token("tok-abc").build();
         V1FlowTokenizeResponseObject responseObject = V1FlowTokenizeResponseObject.builder()
-                .value("value1").tokens(Collections.singletonList(token)).build();
+                .value("value1").tokenGroupName("group1").token("tok-abc").build();
         V1FlowTokenizeResponse body = V1FlowTokenizeResponse.builder()
                 .response(Collections.singletonList(responseObject)).build();
         ApiClientHttpResponse<V1FlowTokenizeResponse> httpResp = new ApiClientHttpResponse<>(body, buildOkHttpResponse());
@@ -412,8 +410,42 @@ public class VaultControllerTests {
         Assert.assertNotNull(INVALID_EXCEPTION_THROWN, response);
         Assert.assertEquals(1, response.getRecords().size());
         Assert.assertEquals(0, response.getRecords().get(0).getIndex());
-        Assert.assertEquals("tok-abc", response.getRecords().get(0).getTokens().get(0).getToken());
-        Assert.assertNull(response.getRecords().get(0).getTokens().get(0).getError());
+        Assert.assertEquals("tok-abc", response.getRecords().get(0).getToken());
+        Assert.assertNull(response.getRecords().get(0).getError());
+    }
+
+    @Test
+    public void testBulkTokenize_partialFailureWithRetryableGroupIsRetriedAsWhole() throws Exception {
+        // one value, two groups: group1 succeeds, group2 fails with a retryable 503
+        ApiClient mockApi = Mockito.mock(ApiClient.class);
+        RawFlowserviceClient mockRaw = mockRawFlowservice(mockApi);
+
+        V1FlowTokenizeResponseObject succeeded = V1FlowTokenizeResponseObject.builder()
+                .value("value1").tokenGroupName("group1").token("tok-abc").httpCode(200).build();
+        V1FlowTokenizeResponseObject failed = V1FlowTokenizeResponseObject.builder()
+                .value("value1").error("service unavailable").httpCode(503).build();
+        V1FlowTokenizeResponse body = V1FlowTokenizeResponse.builder()
+                .response(Arrays.asList(succeeded, failed)).build();
+        ApiClientHttpResponse<V1FlowTokenizeResponse> httpResp = new ApiClientHttpResponse<>(body, buildOkHttpResponse());
+        when(mockRaw.tokenize(any(), any())).thenReturn(httpResp);
+
+        VaultController controller = createControllerWithMock(mockApi);
+
+        BulkTokenizeRequestRecord requested = BulkTokenizeRequestRecord.builder().value("value1")
+                .tokenGroupNames(Arrays.asList("group1", "group2")).build();
+        BulkTokenizeRequest request = BulkTokenizeRequest.builder()
+                .records(Collections.singletonList(requested)).build();
+
+        BulkTokenizeResponse response = controller.bulkTokenize(request);
+
+        Assert.assertEquals(2, response.getRecords().size());
+        Assert.assertEquals(0, response.getRecords().get(0).getIndex());
+        Assert.assertEquals(0, response.getRecords().get(1).getIndex());
+        Assert.assertEquals(1, response.getSummary().getTotalPartial());
+
+        List<BulkTokenizeRequestRecord> retry = response.getRecordsToRetry();
+        Assert.assertEquals(1, retry.size());
+        Assert.assertSame("must return the caller's own record, groups and all", requested, retry.get(0));
     }
 
     @Test
@@ -433,10 +465,8 @@ public class VaultControllerTests {
         ApiClient mockApi = Mockito.mock(ApiClient.class);
         RawFlowserviceClient mockRaw = mockRawFlowservice(mockApi);
 
-        FlowTokenizeResponseObjectToken token = FlowTokenizeResponseObjectToken.builder()
-                .tokenGroupName("group1").token("tok-abc").build();
         V1FlowTokenizeResponseObject responseObject = V1FlowTokenizeResponseObject.builder()
-                .value("value1").tokens(Collections.singletonList(token)).build();
+                .value("value1").tokenGroupName("group1").token("tok-abc").build();
         V1FlowTokenizeResponse body = V1FlowTokenizeResponse.builder()
                 .response(Collections.singletonList(responseObject)).build();
         ApiClientHttpResponse<V1FlowTokenizeResponse> httpResp = new ApiClientHttpResponse<>(body, buildOkHttpResponse());
@@ -452,7 +482,7 @@ public class VaultControllerTests {
         BulkTokenizeResponse response = controller.bulkTokenizeAsync(request).get(5, TimeUnit.SECONDS);
         Assert.assertNotNull(INVALID_EXCEPTION_THROWN, response);
         Assert.assertEquals(1, response.getRecords().size());
-        Assert.assertNull(response.getRecords().get(0).getTokens().get(0).getError());
+        Assert.assertNull(response.getRecords().get(0).getError());
     }
 
     // ── additional bulk API-error coverage ───────────────────────────────────
@@ -548,9 +578,8 @@ public class VaultControllerTests {
         Assert.assertNotNull(INVALID_EXCEPTION_THROWN, response);
         Assert.assertEquals(1, response.getRecords().size());
         Assert.assertEquals(0, response.getRecords().get(0).getIndex());
-        Assert.assertEquals(Integer.valueOf(400),
-                response.getRecords().get(0).getTokens().get(0).getHttpCode());
-        Assert.assertNotNull(response.getRecords().get(0).getTokens().get(0).getError());
+        Assert.assertEquals(Integer.valueOf(400), response.getRecords().get(0).getHttpCode());
+        Assert.assertNotNull(response.getRecords().get(0).getError());
     }
 
     @Test
@@ -571,9 +600,8 @@ public class VaultControllerTests {
         Assert.assertNotNull(INVALID_EXCEPTION_THROWN, response);
         Assert.assertEquals(1, response.getRecords().size());
         Assert.assertEquals(0, response.getRecords().get(0).getIndex());
-        Assert.assertEquals(Integer.valueOf(400),
-                response.getRecords().get(0).getTokens().get(0).getHttpCode());
-        Assert.assertNotNull(response.getRecords().get(0).getTokens().get(0).getError());
+        Assert.assertEquals(Integer.valueOf(400), response.getRecords().get(0).getHttpCode());
+        Assert.assertNotNull(response.getRecords().get(0).getError());
     }
 
     @Test
@@ -896,13 +924,10 @@ public class VaultControllerTests {
                     invocation.getArgument(0);
             List<V1FlowTokenizeResponseObject> responseRecords = new ArrayList<>();
             for (com.skyflow.generated.rest.types.V1FlowTokenizeRequestObject obj : req.getData().get()) {
-                FlowTokenizeResponseObjectToken token = FlowTokenizeResponseObjectToken.builder()
-                        .tokenGroupName("group1")
-                        .token("tok-" + obj.getValue().get())
-                        .build();
                 responseRecords.add(V1FlowTokenizeResponseObject.builder()
                         .value(obj.getValue().get())
-                        .tokens(Collections.singletonList(token))
+                        .tokenGroupName("group1")
+                        .token("tok-" + obj.getValue().get())
                         .build());
             }
             V1FlowTokenizeResponse body = V1FlowTokenizeResponse.builder().response(responseRecords).build();
