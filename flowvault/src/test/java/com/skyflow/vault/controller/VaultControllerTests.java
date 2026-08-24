@@ -56,6 +56,7 @@ import org.mockito.Mockito;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -411,6 +412,40 @@ public class VaultControllerTests {
         Assert.assertEquals(0, response.getRecords().get(0).getIndex());
         Assert.assertEquals("tok-abc", response.getRecords().get(0).getToken());
         Assert.assertNull(response.getRecords().get(0).getError());
+    }
+
+    @Test
+    public void testBulkTokenize_partialFailureWithRetryableGroupIsRetriedAsWhole() throws Exception {
+        // one value, two groups: group1 succeeds, group2 fails with a retryable 503
+        ApiClient mockApi = Mockito.mock(ApiClient.class);
+        RawFlowserviceClient mockRaw = mockRawFlowservice(mockApi);
+
+        V1FlowTokenizeResponseObject succeeded = V1FlowTokenizeResponseObject.builder()
+                .value("value1").tokenGroupName("group1").token("tok-abc").httpCode(200).build();
+        V1FlowTokenizeResponseObject failed = V1FlowTokenizeResponseObject.builder()
+                .value("value1").error("service unavailable").httpCode(503).build();
+        V1FlowTokenizeResponse body = V1FlowTokenizeResponse.builder()
+                .response(Arrays.asList(succeeded, failed)).build();
+        ApiClientHttpResponse<V1FlowTokenizeResponse> httpResp = new ApiClientHttpResponse<>(body, buildOkHttpResponse());
+        when(mockRaw.tokenize(any(), any())).thenReturn(httpResp);
+
+        VaultController controller = createControllerWithMock(mockApi);
+
+        BulkTokenizeRequestRecord requested = BulkTokenizeRequestRecord.builder().value("value1")
+                .tokenGroupNames(Arrays.asList("group1", "group2")).build();
+        BulkTokenizeRequest request = BulkTokenizeRequest.builder()
+                .records(Collections.singletonList(requested)).build();
+
+        BulkTokenizeResponse response = controller.bulkTokenize(request);
+
+        Assert.assertEquals(2, response.getRecords().size());
+        Assert.assertEquals(0, response.getRecords().get(0).getIndex());
+        Assert.assertEquals(0, response.getRecords().get(1).getIndex());
+        Assert.assertEquals(1, response.getSummary().getTotalPartial());
+
+        List<BulkTokenizeRequestRecord> retry = response.getRecordsToRetry();
+        Assert.assertEquals(1, retry.size());
+        Assert.assertSame("must return the caller's own record, groups and all", requested, retry.get(0));
     }
 
     @Test
