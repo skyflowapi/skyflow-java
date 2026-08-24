@@ -6,7 +6,6 @@ import com.skyflow.generated.rest.types.V1FlowTokenizeResponse;
 import com.skyflow.vault.data.BulkTokenizeRequestRecord;
 import com.skyflow.vault.data.BulkTokenizeResponse;
 import com.skyflow.vault.data.BulkTokenizeResponseRecord;
-import com.skyflow.vault.data.TokenizeResponseToken;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -21,8 +20,8 @@ import java.util.Map;
 /**
  * The API returns one flat row per (value, token group) instead of the nested {@code tokens} array
  * the generated wire type models, and a record rejected outright yields a single row regardless of
- * how many groups it asked for. These cover folding those rows back onto the records that produced
- * them.
+ * how many groups it asked for. These cover assigning each row the index of the record that
+ * produced it.
  */
 public class FlatTokenizeResponseTests {
 
@@ -59,7 +58,7 @@ public class FlatTokenizeResponseTests {
             + "}";
 
     @Test
-    public void testLiveResponse_threeRowsFoldOntoTwoRecords() {
+    public void testLiveResponse_threeRowsStayFlatWithSharedIndexes() {
         Map<String, Object> objectValue = new LinkedHashMap<>();
         objectValue.put("email", "ka@yahoo.com");
         objectValue.put("age", 28);
@@ -71,27 +70,26 @@ public class FlatTokenizeResponseTests {
         BulkTokenizeResponse result =
                 Utils.formatBulkTokenizeResponse(parse(LIVE_RESPONSE), sent, 0, new HashMap<>());
 
-        // two inputs in, two records out - not three
-        Assert.assertEquals(2, result.getRecords().size());
+        // three rows in, three flat records out - the object's two rows share its index
+        Assert.assertEquals(3, result.getRecords().size());
 
         BulkTokenizeResponseRecord byot = result.getRecords().get(0);
         Assert.assertEquals(0, byot.getIndex());
         Assert.assertEquals("byot-input-value", byot.getValue());
-        Assert.assertEquals(1, byot.getTokens().size());
-        Assert.assertEquals("Invalid request. BYOT token should contain one token group.",
-                byot.getTokens().get(0).getError());
-        Assert.assertEquals(Integer.valueOf(400), byot.getTokens().get(0).getHttpCode());
+        Assert.assertEquals("Invalid request. BYOT token should contain one token group.", byot.getError());
+        Assert.assertEquals(Integer.valueOf(400), byot.getHttpCode());
         // the API sends "" for a token that does not apply
-        Assert.assertNull(byot.getTokens().get(0).getToken());
+        Assert.assertNull(byot.getToken());
 
-        BulkTokenizeResponseRecord object = result.getRecords().get(1);
-        Assert.assertEquals(1, object.getIndex());
-        Assert.assertEquals(2, object.getTokens().size());
-        Assert.assertEquals("deterministic_string_tg", object.getTokens().get(0).getTokenGroupName());
-        Assert.assertEquals("cc1179a3-e2be-404e-9a31-4f97f27bf406", object.getTokens().get(0).getToken());
-        Assert.assertNull(object.getTokens().get(0).getError());
+        BulkTokenizeResponseRecord objectRow1 = result.getRecords().get(1);
+        BulkTokenizeResponseRecord objectRow2 = result.getRecords().get(2);
+        Assert.assertEquals(1, objectRow1.getIndex());
+        Assert.assertEquals(1, objectRow2.getIndex());
+        Assert.assertEquals("deterministic_string_tg", objectRow1.getTokenGroupName());
+        Assert.assertEquals("cc1179a3-e2be-404e-9a31-4f97f27bf406", objectRow1.getToken());
+        Assert.assertNull(objectRow1.getError());
         Assert.assertEquals("Tokenize failed. Token group emailTokenGroup is invalid. Specify a valid token group.",
-                object.getTokens().get(1).getError());
+                objectRow2.getError());
     }
 
     @Test
@@ -115,10 +113,35 @@ public class FlatTokenizeResponseTests {
         Assert.assertEquals(1, withPayload.getSummary().getTotalFailed());
     }
 
+    // ── BYOT naming exactly one, invalid, group ─────────────────────────────────
+
+    @Test
+    public void testByotWithSingleInvalidGroup_reportsTheGroupErrorNotTheByotError() {
+        // BYOT naming exactly one group satisfies the "one token group" rule, so a bad group name
+        // fails for the same reason it would on a non-BYOT record, not for naming too many groups.
+        String json = "{\"response\": ["
+                + "{\"value\": \"byot-value\", \"tokenGroupName\": null, \"token\": \"\","
+                + " \"error\": \"Tokenize failed. Token group bad_group is invalid. Specify a valid token group.\","
+                + " \"httpCode\": 400}"
+                + "]}";
+        List<BulkTokenizeRequestRecord> sent = Collections.singletonList(
+                byotRecord("byot-value", "my-own-token", "bad_group"));
+
+        BulkTokenizeResponse result = Utils.formatBulkTokenizeResponse(parse(json), sent, 0, new HashMap<>());
+
+        Assert.assertEquals(1, result.getRecords().size());
+        BulkTokenizeResponseRecord record = result.getRecords().get(0);
+        Assert.assertEquals(0, record.getIndex());
+        Assert.assertEquals("Tokenize failed. Token group bad_group is invalid. Specify a valid token group.",
+                record.getError());
+        Assert.assertEquals(Integer.valueOf(400), record.getHttpCode());
+        Assert.assertNull(record.getToken());
+    }
+
     // ── duplicate token groups within one record ───────────────────────────────
 
     @Test
-    public void testDuplicateTokenGroupsInOneRecord_bothRowsKeptUnderOneRecord() {
+    public void testDuplicateTokenGroupsInOneRecord_bothRowsShareTheSameIndex() {
         String json = "{\"response\": ["
                 + "{\"value\": \"v1\", \"tokenGroupName\": \"g1\", \"token\": \"tok-a\", \"httpCode\": 200},"
                 + "{\"value\": \"v1\", \"tokenGroupName\": \"g1\", \"token\": \"tok-b\", \"httpCode\": 200}"
@@ -127,13 +150,13 @@ public class FlatTokenizeResponseTests {
 
         BulkTokenizeResponse result = Utils.formatBulkTokenizeResponse(parse(json), sent, 0, new HashMap<>());
 
-        // one record asked for the same group twice; both results stay on it rather than
+        // one record asked for the same group twice; both rows share its index rather than
         // collapsing or spilling into a phantom second record
-        Assert.assertEquals(1, result.getRecords().size());
-        List<TokenizeResponseToken> tokens = result.getRecords().get(0).getTokens();
-        Assert.assertEquals(2, tokens.size());
-        Assert.assertEquals("tok-a", tokens.get(0).getToken());
-        Assert.assertEquals("tok-b", tokens.get(1).getToken());
+        Assert.assertEquals(2, result.getRecords().size());
+        Assert.assertEquals(0, result.getRecords().get(0).getIndex());
+        Assert.assertEquals(0, result.getRecords().get(1).getIndex());
+        Assert.assertEquals("tok-a", result.getRecords().get(0).getToken());
+        Assert.assertEquals("tok-b", result.getRecords().get(1).getToken());
     }
 
     // ── boundaries ─────────────────────────────────────────────────────────────
@@ -151,11 +174,12 @@ public class FlatTokenizeResponseTests {
 
         BulkTokenizeResponse result = Utils.formatBulkTokenizeResponse(parse(json), sent, 0, new HashMap<>());
 
-        Assert.assertEquals(2, result.getRecords().size());
-        Assert.assertEquals(1, result.getRecords().get(0).getTokens().size());
-        Assert.assertEquals("rejected", result.getRecords().get(0).getTokens().get(0).getError());
-        Assert.assertEquals(2, result.getRecords().get(1).getTokens().size());
-        Assert.assertEquals("tok-1", result.getRecords().get(1).getTokens().get(0).getToken());
+        Assert.assertEquals(3, result.getRecords().size());
+        Assert.assertEquals(0, result.getRecords().get(0).getIndex());
+        Assert.assertEquals("rejected", result.getRecords().get(0).getError());
+        Assert.assertEquals(1, result.getRecords().get(1).getIndex());
+        Assert.assertEquals(1, result.getRecords().get(2).getIndex());
+        Assert.assertEquals("tok-1", result.getRecords().get(1).getToken());
     }
 
     @Test
@@ -173,7 +197,7 @@ public class FlatTokenizeResponseTests {
     }
 
     @Test
-    public void testRecordTheResponseNeverMentions_stillReportedWithNoTokens() {
+    public void testRecordTheResponseNeverMentions_hasNoFlatRowButStillCountsAsFailed() {
         String json = "{\"response\": ["
                 + "{\"value\": \"v0\", \"tokenGroupName\": \"g1\", \"token\": \"tok-0\", \"httpCode\": 200}"
                 + "]}";
@@ -181,10 +205,12 @@ public class FlatTokenizeResponseTests {
 
         BulkTokenizeResponse result = Utils.formatBulkTokenizeResponse(parse(json), sent, 0, new HashMap<>());
 
-        // the caller must still see a record per input, so indexes stay aligned with their list
-        Assert.assertEquals(2, result.getRecords().size());
-        Assert.assertEquals(1, result.getRecords().get(1).getIndex());
-        Assert.assertTrue(result.getRecords().get(1).getTokens().isEmpty());
+        // v1 got no row at all, so there is nothing flat to report for it - but the summary,
+        // which classifies by input index rather than by row, still counts it as failed
+        Assert.assertEquals(1, result.getRecords().size());
+        Assert.assertEquals(0, result.getRecords().get(0).getIndex());
+        Assert.assertEquals(1,
+                new BulkTokenizeResponse(result.getRecords(), sent).getSummary().getTotalFailed());
     }
 
     @Test
@@ -198,27 +224,26 @@ public class FlatTokenizeResponseTests {
         BulkTokenizeResponse result = Utils.formatBulkTokenizeResponse(parse(json), sent, 0, new HashMap<>());
 
         Assert.assertEquals(2, result.getRecords().size());
-        Assert.assertEquals("tok-9", result.getRecords().get(1).getTokens().get(0).getToken());
+        Assert.assertEquals("tok-9", result.getRecords().get(1).getToken());
     }
 
     @Test
-    public void testGroupedResponseShape_stillFoldsOneRowPerRecord() {
-        // if the API ever returns the nested shape the wire type models, nothing changes
+    public void testMultipleGroupsForOneValue_shareTheSameIndex() {
         String json = "{\"response\": ["
-                + "{\"value\": \"v0\", \"tokens\": ["
-                + "   {\"tokenGroupName\": \"g1\", \"token\": \"tok-a\", \"httpCode\": 200},"
-                + "   {\"tokenGroupName\": \"g2\", \"token\": \"tok-b\", \"httpCode\": 200}]},"
-                + "{\"value\": \"v1\", \"tokens\": ["
-                + "   {\"tokenGroupName\": \"g1\", \"token\": \"tok-c\", \"httpCode\": 200}]}"
+                + "{\"value\": \"v0\", \"tokenGroupName\": \"g1\", \"token\": \"tok-a\", \"httpCode\": 200},"
+                + "{\"value\": \"v0\", \"tokenGroupName\": \"g2\", \"token\": \"tok-b\", \"httpCode\": 200},"
+                + "{\"value\": \"v1\", \"tokenGroupName\": \"g1\", \"token\": \"tok-c\", \"httpCode\": 200}"
                 + "]}";
         List<BulkTokenizeRequestRecord> sent = Arrays.asList(
                 record("v0", "g1", "g2"), record("v1", "g1"));
 
         BulkTokenizeResponse result = Utils.formatBulkTokenizeResponse(parse(json), sent, 0, new HashMap<>());
 
-        Assert.assertEquals(2, result.getRecords().size());
-        Assert.assertEquals(2, result.getRecords().get(0).getTokens().size());
-        Assert.assertEquals("tok-c", result.getRecords().get(1).getTokens().get(0).getToken());
+        Assert.assertEquals(3, result.getRecords().size());
+        Assert.assertEquals(0, result.getRecords().get(0).getIndex());
+        Assert.assertEquals(0, result.getRecords().get(1).getIndex());
+        Assert.assertEquals(1, result.getRecords().get(2).getIndex());
+        Assert.assertEquals("tok-c", result.getRecords().get(2).getToken());
     }
 
     // ── rejected requests still describe each record in the body ───────────────
@@ -255,13 +280,12 @@ public class FlatTokenizeResponseTests {
         List<BulkTokenizeResponseRecord> records =
                 Utils.handleBulkTokenizeBatchException(ex, sent, 0);
 
-        Assert.assertEquals(1, records.size());
         // one entry, matching the API - not one fabricated per requested token group
-        Assert.assertEquals(1, records.get(0).getTokens().size());
+        Assert.assertEquals(1, records.size());
         Assert.assertEquals("Invalid request. BYOT token should contain one token group.",
-                records.get(0).getTokens().get(0).getError());
-        Assert.assertNull(records.get(0).getTokens().get(0).getTokenGroupName());
-        Assert.assertEquals(Integer.valueOf(400), records.get(0).getTokens().get(0).getHttpCode());
+                records.get(0).getError());
+        Assert.assertNull(records.get(0).getTokenGroupName());
+        Assert.assertEquals(Integer.valueOf(400), records.get(0).getHttpCode());
     }
 
     @Test
@@ -279,8 +303,8 @@ public class FlatTokenizeResponseTests {
         Assert.assertEquals(2, records.size());
         Assert.assertEquals(20, records.get(0).getIndex());
         Assert.assertEquals(21, records.get(1).getIndex());
-        Assert.assertEquals(message, records.get(0).getTokens().get(0).getError());
-        Assert.assertEquals(message, records.get(1).getTokens().get(0).getError());
+        Assert.assertEquals(message, records.get(0).getError());
+        Assert.assertEquals(message, records.get(1).getError());
     }
 
     @Test
@@ -292,11 +316,12 @@ public class FlatTokenizeResponseTests {
         List<BulkTokenizeResponseRecord> records =
                 Utils.handleBulkTokenizeBatchException(ex, sent, 0);
 
-        Assert.assertEquals(1, records.size());
-        // no rows to go on, so every requested group is reported as failed
-        Assert.assertEquals(2, records.get(0).getTokens().size());
-        Assert.assertEquals("connection reset", records.get(0).getTokens().get(0).getError());
-        Assert.assertEquals(Integer.valueOf(500), records.get(0).getTokens().get(0).getHttpCode());
+        // no rows to go on, so every requested group is reported as its own failed record
+        Assert.assertEquals(2, records.size());
+        Assert.assertEquals(0, records.get(0).getIndex());
+        Assert.assertEquals(0, records.get(1).getIndex());
+        Assert.assertEquals("connection reset", records.get(0).getError());
+        Assert.assertEquals(Integer.valueOf(500), records.get(0).getHttpCode());
     }
 
     @Test
@@ -309,8 +334,79 @@ public class FlatTokenizeResponseTests {
                 Utils.handleBulkTokenizeBatchException(rejected(504, opaque), sent, 0);
 
         Assert.assertEquals(1, records.size());
-        Assert.assertEquals("gateway timeout", records.get(0).getTokens().get(0).getError());
-        Assert.assertEquals(Integer.valueOf(504), records.get(0).getTokens().get(0).getHttpCode());
+        Assert.assertEquals("gateway timeout", records.get(0).getError());
+        Assert.assertEquals(Integer.valueOf(504), records.get(0).getHttpCode());
+    }
+
+    @Test
+    public void testRejectedRequest_emptyResponseArrayFallsBackToTheStatusCode() {
+        // "response" is present but empty - nothing to rebuild from, so fall back like a body
+        // without a response array at all
+        List<BulkTokenizeRequestRecord> sent = Collections.singletonList(record("v1", "g1"));
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("response", new ArrayList<>());
+
+        List<BulkTokenizeResponseRecord> records =
+                Utils.handleBulkTokenizeBatchException(rejected(500, body), sent, 0);
+
+        Assert.assertEquals(1, records.size());
+        Assert.assertEquals(Integer.valueOf(500), records.get(0).getHttpCode());
+    }
+
+    @Test
+    public void testRejectedRequest_explicitNullResponseArrayFallsBackToTheStatusCode() {
+        // "response" is present in the map but its value is JSON null, not an array - deserialises
+        // to an absent Optional rather than an empty one
+        List<BulkTokenizeRequestRecord> sent = Collections.singletonList(record("v1", "g1"));
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("response", null);
+
+        List<BulkTokenizeResponseRecord> records =
+                Utils.handleBulkTokenizeBatchException(rejected(500, body), sent, 0);
+
+        Assert.assertEquals(1, records.size());
+        Assert.assertEquals(Integer.valueOf(500), records.get(0).getHttpCode());
+    }
+
+    @Test
+    public void testRejectedRequest_unparseableResponseArrayFallsBackToTheStatusCode() {
+        // "response" is present but the wrong shape to deserialise - must not propagate the crash
+        List<BulkTokenizeRequestRecord> sent = Collections.singletonList(record("v1", "g1"));
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("response", "not-an-array");
+
+        List<BulkTokenizeResponseRecord> records =
+                Utils.handleBulkTokenizeBatchException(rejected(500, body), sent, 0);
+
+        Assert.assertEquals(1, records.size());
+        Assert.assertEquals(Integer.valueOf(500), records.get(0).getHttpCode());
+    }
+
+    @Test
+    public void testRejectedRequest_nullBatchWithPerRowBodyStillRebuildsFromTheRows() {
+        // defensive: a null batch can't be correlated against, but a per-row body still has
+        // everything needed to report each row directly
+        Throwable ex = rejected(400, body(row("v1", "g1", "", "bad group", 400)));
+
+        List<BulkTokenizeResponseRecord> records =
+                Utils.handleBulkTokenizeBatchException(ex, null, 0);
+
+        Assert.assertEquals(1, records.size());
+        Assert.assertEquals(0, records.get(0).getIndex());
+        Assert.assertEquals("bad group", records.get(0).getError());
+    }
+
+    @Test
+    public void testRejectedRequest_emptyBatchWithPerRowBodyStillRebuildsFromTheRows() {
+        // same as a null batch - an empty one can't be correlated against either
+        Throwable ex = rejected(400, body(row("v1", "g1", "", "bad group", 400)));
+
+        List<BulkTokenizeResponseRecord> records =
+                Utils.handleBulkTokenizeBatchException(ex, new ArrayList<>(), 0);
+
+        Assert.assertEquals(1, records.size());
+        Assert.assertEquals(0, records.get(0).getIndex());
+        Assert.assertEquals("bad group", records.get(0).getError());
     }
 
     @Test

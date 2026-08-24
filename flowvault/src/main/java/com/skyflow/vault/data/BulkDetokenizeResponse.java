@@ -24,8 +24,19 @@ public class BulkDetokenizeResponse {
     ) {
         this.records = records;
         this.originalPayload = originalPayload;
-        int totalFailed = (int) records.stream().filter(record -> record.getError() != null).count();
-        this.summary = new DetokenizeSummary(originalPayload.size(), records.size() - totalFailed, totalFailed);
+        this.summary = buildSummary(records, originalPayload);
+    }
+
+    private static DetokenizeSummary buildSummary(List<BulkDetokenizeResponseRecord> records,
+                                                    List<String> originalPayload) {
+        int totalFailed = records != null
+                ? (int) records.stream().filter(record -> record.getError() != null).count()
+                : 0;
+        int totalDetokenized = (records != null ? records.size() : 0) - totalFailed;
+        int totalTokens = originalPayload != null
+                ? originalPayload.size()
+                : (records != null ? records.size() : 0);
+        return new DetokenizeSummary(totalTokens, totalDetokenized, totalFailed);
     }
 
     public DetokenizeSummary getSummary() {

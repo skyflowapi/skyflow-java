@@ -157,4 +157,15 @@ public class VaultConfigTests {
             Assert.assertEquals(ErrorMessage.EmptyClusterId.getMessage(), e.getMessage());
         }
     }
+
+    @Test
+    public void testNullVaultConfigInValidations() {
+        try {
+            Validations.validateVaultConfig(null);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(ErrorMessage.NullVaultConfig.getMessage(), e.getMessage());
+        }
+    }
 }

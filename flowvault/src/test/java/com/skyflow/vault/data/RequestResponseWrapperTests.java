@@ -1,5 +1,9 @@
 package com.skyflow.vault.data;
 
+import com.skyflow.errors.ErrorCode;
+import com.skyflow.errors.ErrorMessage;
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.utils.validations.Validations;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -99,6 +103,34 @@ public class RequestResponseWrapperTests {
     }
 
     @Test
+    public void testBulkTokenizeRequest_plainTokenizeRequestRecordBuildsWithoutThrowing() {
+        // The inherited setter's generic signature accepts a plain List<TokenizeRequestRecord>.
+        // No builder in this SDK throws from build() — the type mismatch is deferred to
+        // Validations (see below), consistent with every other request validation.
+        List<TokenizeRequestRecord> plainRecords = Collections.singletonList(
+                TokenizeRequestRecord.builder().value("v1").build());
+        BulkTokenizeRequest request = BulkTokenizeRequest.builder().records(plainRecords).build();
+        Assert.assertNotNull(request);
+    }
+
+    @Test
+    public void testBulkTokenizeRequest_plainTokenizeRequestRecordThrowsSkyflowExceptionOnValidate() {
+        // A caller-side type mistake (plain TokenizeRequestRecord instead of
+        // BulkTokenizeRequestRecord) must surface as a clean SkyflowException at validation
+        // time — never a raw ClassCastException or IllegalArgumentException.
+        List<TokenizeRequestRecord> plainRecords = Collections.singletonList(
+                TokenizeRequestRecord.builder().value("v1").build());
+        BulkTokenizeRequest request = BulkTokenizeRequest.builder().records(plainRecords).build();
+        try {
+            Validations.validateBulkTokenizeRequest(request);
+            Assert.fail("Should have thrown an exception");
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(ErrorMessage.InvalidBulkTokenizeRecordType.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
     public void testTokenizeRequest_defaultIsNull() {
         TokenizeRequest request = TokenizeRequest.builder().build();
         Assert.assertNull(request.getRecords());
@@ -109,22 +141,20 @@ public class RequestResponseWrapperTests {
     @Test
     public void testTokenizeResponse_gettersReturnConstructorValues() {
         List<TokenizeResponseRecord> records = Collections.singletonList(
-                new TokenizeResponseRecord("value1", Collections.singletonList(
-                        new TokenizeResponseToken("group1", "tok-abc", 200, null))));
+                new TokenizeResponseRecord("value1", "group1", "tok-abc", 200, null));
 
         TokenizeResponse response = new TokenizeResponse(records);
 
         Assert.assertEquals(records, response.getResponse());
         Assert.assertEquals("value1", response.getResponse().get(0).getValue());
-        Assert.assertEquals("tok-abc", response.getResponse().get(0).getTokens().get(0).getToken());
-        Assert.assertNull(response.getResponse().get(0).getTokens().get(0).getError());
+        Assert.assertEquals("tok-abc", response.getResponse().get(0).getToken());
+        Assert.assertNull(response.getResponse().get(0).getError());
     }
 
     @Test
     public void testTokenizeResponse_toStringSerializesNulls() {
         TokenizeResponse response = new TokenizeResponse(Collections.singletonList(
-                new TokenizeResponseRecord("value1", Collections.singletonList(
-                        new TokenizeResponseToken("group1", "tok-abc", 200, null)))));
+                new TokenizeResponseRecord("value1", "group1", "tok-abc", 200, null)));
         Assert.assertTrue(response.toString().contains("\"error\":null"));
     }
 
@@ -158,8 +188,7 @@ public class RequestResponseWrapperTests {
 
     @Test
     public void testDetokenizeResponseRecord_gettersReturnConstructorValues() {
-        Map<String, Object> metadata = new HashMap<>();
-        metadata.put("key", "value");
+        DetokenizeMetadata metadata = new DetokenizeMetadata("skyflow-id-1", "table1");
 
         DetokenizeResponseRecord response = new DetokenizeResponseRecord(
                 "tok-1", "secret-value", "group1", metadata, 200, null);

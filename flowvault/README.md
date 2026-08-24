@@ -4,7 +4,7 @@ The `flowvault` module is a Skyflow Java SDK built for high-throughput vault ope
 
 > Meant for **Flow DB** vaults.
 
-> **`flowvault` is a new SDK, versioned independently of `skyvault`.** It starts at `1.0.0` while `skyvault` (`com.skyflow:skyflow-java`) is at `2.x`. The two artifacts have separate version lines, so a lower `flowvault` version number does not mean it is older or behind — it is a first release, not a downgrade. Upgrade each artifact on its own.
+> **`flowvault` is a new SDK, versioned independently of `skyvault`.** It started at `1.0.0` while `skyvault` (`com.skyflow:skyflow-java`) is at `2.x`. The two artifacts have separate version lines, so a lower `flowvault` version number does not mean it is older or behind — it is a first release, not a downgrade. Upgrade each artifact on its own.
 
 [![CI](https://img.shields.io/static/v1?label=CI&message=passing&color=green?style=plastic&logo=github)](https://github.com/skyflowapi/skyflow-java/actions)
 [![License](https://img.shields.io/github/license/skyflowapi/skyflow-java)](https://github.com/skyflowapi/skyflow-java/blob/main/LICENSE)
@@ -28,6 +28,7 @@ The `flowvault` module is a Skyflow Java SDK built for high-throughput vault ope
   - [Timeouts and retries](#timeouts-and-retries)
   - [Logging](#logging)
 - [VaultController — Bulk operations](#vaultcontroller--bulk-operations)
+  - [Schema vs. schemaless vaults](#schema-vs-schemaless-vaults)
   - [Batching and concurrency](#batching-and-concurrency)
 - [Bulk Insert](#bulk-insert)
 - [Bulk Tokenize](#bulk-tokenize)
@@ -58,7 +59,7 @@ The `flowvault` module is a Skyflow Java SDK built for high-throughput vault ope
 ### Gradle users
 
 ```
-implementation 'com.skyflow:skyflow-flowvault-java:1.0.0'
+implementation 'com.skyflow:skyflow-flowvault-java:1.0.1'
 ```
 
 ### Maven users
@@ -67,7 +68,7 @@ implementation 'com.skyflow:skyflow-flowvault-java:1.0.0'
 <dependency>
     <groupId>com.skyflow</groupId>
     <artifactId>skyflow-flowvault-java</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
 </dependency>
 ```
 
@@ -97,7 +98,7 @@ Skyflow skyflowClient = Skyflow.builder()
 VaultController vault = skyflowClient.vault();
 ```
 
-`flowvault`'s `vault()` takes no arguments — it always resolves to the first vault added to the builder. Use one client per vault if you need to talk to more than one.
+`vault()` with no arguments returns the controller for the first vault added to the builder. To talk to more than one vault from a single client, register each with `addVaultConfig(...)` and fetch each controller by ID: `skyflowClient.vault("<VAULT_ID>")`.
 
 # Authenticate
 
@@ -249,6 +250,8 @@ public class InitFlowVaultClient {
 
 Every method throws `SkyflowException` on validation errors and returns the builder for chaining.
 
+Once built, `skyflowClient.vault()` returns the first registered vault's controller; `skyflowClient.vault("<VAULT_ID>")` returns the controller for a specific registered vault, which is how one client talks to more than one vault.
+
 ## Timeouts and retries
 
 Each HTTP setting resolves **most specific first**: the value on `VaultConfig`, else the client-wide value on `Skyflow.builder()`, else the SDK default. Only `null` means "inherit" — an explicit `0` is a real value and overrides the level below it.
@@ -297,6 +300,19 @@ The SDK logs through `java.util.logging` at `LogLevel.ERROR` by default. Levels 
 | `bulkDeleteTokens(BulkDeleteTokensRequest)` | `BulkDeleteTokensRequest`, optional `BulkDeleteTokensOptions` | `BulkDeleteTokensResponse` | Delete many tokens in one call |
 | `bulkDeleteTokensAsync(BulkDeleteTokensRequest)` | same | `CompletableFuture<BulkDeleteTokensResponse>` | Async variant of `bulkDeleteTokens` |
 
+## Schema vs. schemaless vaults
+
+Which of these operations makes sense depends on whether the vault is **structured** (has a schema — tables and columns) or **schemaless** (stores standalone tokens with no table structure):
+
+| Operation | Supported on |
+|---|---|
+| `bulkInsert` / `bulkInsertAsync` | Structured (schema) vaults — inserts into a table's columns. |
+| `bulkTokenize` / `bulkTokenizeAsync` | Schemaless vaults — tokenizes a raw value directly against named token groups, with no table involved. |
+| `bulkDeleteTokens` / `bulkDeleteTokensAsync` | Schemaless vaults. |
+| `bulkDetokenize` / `bulkDetokenizeAsync` | Both — detokenizing only needs the token itself, not a table, so it works regardless of which kind of vault the token came from. |
+
+This reflects supported use cases, not something the SDK validates or blocks — nothing stops you from calling, say, `bulkTokenize` against a structured vault; it just isn't the intended usage and isn't a scenario the SDK is tested against.
+
 Each method also accepts an optional options object (`BulkInsertOptions`, `BulkTokenizeOptions`, `BulkDetokenizeOptions`, `BulkDeleteTokensOptions`) — see [Custom Request Headers](#custom-request-headers).
 
 A single bulk call accepts at most **10,000** records or tokens; anything larger is rejected up front with a `SkyflowException`. Under that ceiling the SDK splits the payload into batches and sends them concurrently, which is why errors from one call can carry different `requestId` values.
@@ -342,11 +358,13 @@ The 10,000-item ceiling per bulk call is a separate, fixed limit and is not conf
 
 Insert many records — even across different tables — in a single call. Each record is a `BulkInsertRequestRecord` with its own `data` and, optionally, its own `tableName` and `upsert`.
 
+> **Vault type supported:** structured (schema) vaults. See [Schema vs. schemaless vaults](#schema-vs-schemaless-vaults).
+
 **Note:**
 
 - `tableName` must be specified at exactly one level: either on the request (`BulkInsertRequest.builder().tableName(...)`) or on **every** record (`BulkInsertRequestRecord.builder().tableName(...)`) — not both, and not neither.
 - `upsert` is optional, but wherever you supply it, it must sit at the same level as `tableName`. Request-level `tableName` pairs with request-level `upsert`; record-level `tableName` pairs with per-record `upsert`.
-- `UpsertOptions` requires `uniqueColumns`. `updateType` accepts `"UPDATE"` (the default) or `"REPLACE"`.
+- `UpsertOptions` requires `uniqueColumns`. `updateType` accepts `"UPDATE"` or `"REPLACE"` — if omitted, the SDK sends no `updateType` at all, and the vault treats that the same as `"UPDATE"`.
 
 ### Construct a bulk insert request
 
@@ -435,8 +453,17 @@ Sample response:
       "requestId": null,
       "tableName": "table1",
       "skyflowId": "9fac9201-7b8a-4446-93f8-5244e1213bd1",
-      "fields": { "card_number": "5484-7829-1702-9110", "cardholder_name": "b2308e2a-c1f5-469b-97b7-1f193159399b" },
-      "hashedData": null,
+      "tokens": {
+        "card_number": [
+          { "token": "5484-7829-1702-9110", "tokenGroupName": "card_number_cg" }
+        ],
+        "cardholder_name": [
+          { "token": "b2308e2a-c1f5-469b-97b7-1f193159399b", "tokenGroupName": "deterministic_string" },
+          { "token": "f1a2b3c4-d5e6-7890-abcd-ef1234567890", "tokenGroupName": "vault_token_group" }
+        ]
+      },
+      "data": { "card_number": "4111-1111-1111-1111", "cardholder_name": "John Doe" },
+      "hashedData": { "card_number": "b6e6d...c3f9" },
       "httpCode": 200,
       "error": null
     },
@@ -445,7 +472,8 @@ Sample response:
       "requestId": "a1b2c3d4-...",
       "tableName": "table2",
       "skyflowId": null,
-      "fields": null,
+      "tokens": null,
+      "data": null,
       "hashedData": null,
       "httpCode": 400,
       "error": "Insert failed. Column email is invalid."
@@ -454,13 +482,33 @@ Sample response:
 }
 ```
 
-Accessors: `insertResponse.getSummary()`, `insertResponse.getRecords()`, and on each record `getIndex()`, `getTableName()`, `getSkyflowId()`, `getFields()`, `getHashedData()`, `getHttpCode()`, `getError()`, `getRequestId()`.
+`getTokens()` returns `Map<String, List<Token>>` — one entry per token group configured on that column, so a column with a single token group still comes back as a one-element list, not a bare string. On the wire the API models this generically (`Object`, not a fixed type) to stay flexible, but the SDK parses it into `Token` objects before handing it back, so callers get `Token.getToken()`/`Token.getTokenGroupName()` directly with no casting required:
+
+```java
+for (BulkInsertResponseRecord record : insertResponse.getRecords()) {
+    if (record.getTokens() != null) {
+        for (Token token : record.getTokens().get("card_number")) {
+            System.out.println(token.getTokenGroupName() + " -> " + token.getToken());
+        }
+    }
+}
+```
+
+The parser (`Token.parseTokens()`) normalizes every shape the raw wire value is known to take — a list of `{token, tokenGroupName}` entries, a single such entry not wrapped in a list, or a bare token value with no group information — into a consistent `List<Token>`, rather than throwing on an unexpected one. `getTokens()` returns `null` when the record has no tokens (e.g. a failed record).
+
+For a structured column (e.g. an object or array value), each entry also carries `getPath()` — the location within that column's own value the token came from, such as `"street"` or `"phone_numbers[0].type"`. It's `null` for a flat column, where there's nothing to point into.
+
+Accessors: `insertResponse.getSummary()`, `insertResponse.getRecords()`, and on each record `getIndex()`, `getTableName()`, `getSkyflowId()`, `getTokens()`, `getData()`, `getHashedData()`, `getHttpCode()`, `getError()`, `getRequestId()`.
+
+> **Deprecation notice:** `getFields()` is deprecated in favor of `getTokens()` — it is kept only for backward compatibility and will be removed in a future release. Update call sites to `getTokens()`.
 
 Use `insertResponse.getRecordsToRetry()` to get back only the `BulkInsertRequestRecord`s worth resubmitting — see [Retrying the failed records](#retrying-the-failed-records).
 
 # Bulk Tokenize
 
 Tokenize many values in one call. Each value can be tokenized against one or more named token groups.
+
+> **Vault type supported:** schemaless vaults. See [Schema vs. schemaless vaults](#schema-vs-schemaless-vaults).
 
 ### Construct a bulk tokenize request
 
@@ -514,29 +562,29 @@ Sample response:
 {
   "summary": { "totalTokens": 2, "totalTokenized": 1, "totalPartial": 0, "totalFailed": 1 },
   "records": [
-    {
-      "index": 0,
-      "value": "4111111111111111",
-      "tokens": [
-        { "tokenGroupName": "card_number_cg", "token": "5479-4229-4622-1393", "httpCode": 200, "error": null, "requestId": null }
-      ]
-    },
-    {
-      "index": 1,
-      "value": "john.doe@example.com",
-      "tokens": [
-        { "tokenGroupName": "email_cg", "token": null, "httpCode": 400, "error": "Token group email_cg not found.", "requestId": "a1b2c3d4-..." }
-      ]
-    }
+    { "index": 0, "value": "4111111111111111", "tokenGroupName": "card_number_cg", "token": "5479-4229-4622-1393", "httpCode": 200, "error": null, "requestId": null },
+    { "index": 1, "value": "john.doe@example.com", "tokenGroupName": "email_cg", "token": null, "httpCode": 400, "error": "Token group email_cg not found.", "requestId": "a1b2c3d4-..." }
   ]
 }
 ```
 
-Tokenize reports at **two** levels: one entry per input value in `records`, and inside each of those, one entry per requested token group in `tokens`. Because a single value can map to several token groups, the summary distinguishes fully tokenized values (`totalTokenized`), partially tokenized values where some groups succeeded and others failed (`totalPartial`), and fully failed values (`totalFailed`). The three always add up to `totalTokens`, which counts input values, not tokens produced.
+`records` is flat: one entry per (value, token group) outcome, matching the API's own response shape. Because a single value can map to several token groups, several entries can share the same `index` — that's how the SDK tells you which input value an entry belongs to. The summary classifies by index rather than by entry: fully tokenized values (`totalTokenized`), partially tokenized values where some groups succeeded and others failed (`totalPartial`), and fully failed values (`totalFailed`). The three always add up to `totalTokens`, which counts input values, not entries.
+
+```java
+for (BulkTokenizeResponseRecord record : tokenizeResponse.getRecords()) {
+    if (record.getError() == null) {
+        System.out.println(record.getValue() + " -> " + record.getTokenGroupName() + " = " + record.getToken());
+    } else {
+        System.out.println(record.getValue() + " -> " + record.getTokenGroupName() + " failed: " + record.getError());
+    }
+}
+```
 
 # Bulk Detokenize
 
 Detokenize many tokens in one call, optionally overriding the redaction applied per token group via `tokenGroupRedactions`.
+
+> **Vault type supported:** both. See [Schema vs. schemaless vaults](#schema-vs-schemaless-vaults).
 
 ### Construct a bulk detokenize request
 
@@ -592,7 +640,7 @@ Sample response:
       "requestId": null,
       "value": "4111111111111111",
       "tokenGroupName": "card_number_cg",
-      "metadata": {},
+      "metadata": { "skyflowId": "9fac9201-7b8a-4446-93f8-5244e1213bd1", "tableName": "table1" },
       "httpCode": 200,
       "token": "5479-4229-4622-1393",
       "error": null
@@ -611,11 +659,23 @@ Sample response:
 }
 ```
 
+`record.getMetadata()` is typed as a `DetokenizeMetadata` with `getSkyflowId()`/`getTableName()` — no casting into the raw map required (`null` on records that errored, same as above):
+
+```java
+for (BulkDetokenizeResponseRecord record : detokenizeResponse.getRecords()) {
+    if (record.getMetadata() != null) {
+        System.out.println(record.getMetadata().getSkyflowId() + " / " + record.getMetadata().getTableName());
+    }
+}
+```
+
 Use `detokenizeResponse.getTokensToRetry()` to get back only the tokens worth resubmitting.
 
 # Bulk Delete Tokens
 
 Delete many tokens in one call.
+
+> **Vault type supported:** schemaless vaults. See [Schema vs. schemaless vaults](#schema-vs-schemaless-vaults).
 
 ### Construct a bulk delete tokens request
 
@@ -663,6 +723,16 @@ Sample response:
 }
 ```
 
+```java
+for (BulkDeleteTokensResponseRecord record : deleteTokensResponse.getRecords()) {
+    if (record.getError() == null) {
+        System.out.println(record.getToken() + " deleted");
+    } else {
+        System.out.println(record.getToken() + " failed (" + record.getHttpCode() + "): " + record.getError());
+    }
+}
+```
+
 Use `deleteTokensResponse.getTokensToRetry()` to get back only the tokens worth resubmitting.
 
 # Custom Request Headers
@@ -671,16 +741,16 @@ To include custom HTTP headers on an outgoing bulk request, pass a `RequestInter
 
 | `CustomHeaderKey` | HTTP header name |
 |---|---|
-| `SkyflowAccountId` | `x-skyflow-account-id` |
-| `SkyflowAccountName` | `x-skyflow-account-name` |
-| `RequestIdHeader` | `x-request-id` |
+| `SKYFLOW_ACCOUNT_ID` | `x-skyflow-account-id` |
+| `SKYFLOW_ACCOUNT_NAME` | `x-skyflow-account-name` |
+| `REQUEST_ID_HEADER` | `x-request-id` |
 
 ```java
 import com.skyflow.enums.CustomHeaderKey;
 import com.skyflow.vault.data.BulkInsertOptions;
 
 BulkInsertOptions options = BulkInsertOptions.builder()
-        .interceptor(context -> context.addHeader(CustomHeaderKey.RequestIdHeader, "<YOUR_REQUEST_ID>"))
+        .interceptor(context -> context.addHeader(CustomHeaderKey.REQUEST_ID_HEADER, "<YOUR_REQUEST_ID>"))
         .build();
 
 BulkInsertResponse insertResponse = vault.bulkInsert(insertRequest, options);
@@ -721,7 +791,7 @@ Every bulk response exposes `getSummary()` and `getRecords()`. The records list 
 | `getError()` | failures only | Error message for this item. `null` means this item succeeded. |
 | `getRequestId()` | failures only | The `x-request-id` of the batch this item was in — quote it in support escalations. Items from the same batch share one id. |
 
-The success payload sits alongside those fields on the same object: `getSkyflowId()`/`getFields()` for insert, `getValue()`/`getTokenGroupName()`/`getMetadata()` for detokenize, `getTokens()` for tokenize, `getToken()` for delete.
+The success payload sits alongside those fields on the same object: `getSkyflowId()`/`getTokens()`/`getData()` for insert (`getFields()` is deprecated — it returns the same data in its original, pre-typed `Map<String, Object>` shape, not `getTokens()`'s `Token` objects), `getValue()`/`getTokenGroupName()`/`getMetadata()` for detokenize, `getValue()`/`getTokenGroupName()`/`getToken()` for tokenize, `getToken()` for delete.
 
 Summaries per operation:
 
@@ -751,18 +821,16 @@ for (BulkInsertResponseRecord record : response.getRecords()) {
 }
 ```
 
-For tokenize, the check is one level deeper, because a single value can partially succeed:
+Tokenize reports one entry per (value, token group) outcome, so a single value can partially succeed — several entries share its `index`:
 
 ```java
 for (BulkTokenizeResponseRecord record : tokenizeResponse.getRecords()) {
-    for (TokenizeResponseToken token : record.getTokens()) {
-        if (token.getError() == null) {
-            System.out.println(record.getIndex() + "/" + token.getTokenGroupName()
-                    + " -> " + token.getToken());
-        } else {
-            System.err.println(record.getIndex() + "/" + token.getTokenGroupName()
-                    + " failed [" + token.getHttpCode() + "] " + token.getError());
-        }
+    if (record.getError() == null) {
+        System.out.println(record.getIndex() + "/" + record.getTokenGroupName()
+                + " -> " + record.getToken());
+    } else {
+        System.err.println(record.getIndex() + "/" + record.getTokenGroupName()
+                + " failed [" + record.getHttpCode() + "] " + record.getError());
     }
 }
 ```
@@ -805,7 +873,7 @@ vault.bulkInsertAsync(insertRequest)
 |---|---|---|
 | HTTP status code | `getHttpCode()` | Integer status code (e.g. `400`, `404`, `500`). |
 | Message | `getMessage()` | Human-readable description of the error. |
-| HTTP status string | `getHttpStatus()` | Status string from the server (e.g. `"BAD_REQUEST"`). |
+| HTTP status string | `getHttpStatus()` | Status string from the server (e.g. `"Bad Request"` for a client-side validation error; for API errors, whatever string the server returns). |
 | gRPC code | `getGrpcCode()` | gRPC status code from the server. |
 | Request ID | `getRequestId()` | The `x-request-id` header — useful for support escalations. |
 | Details | `getDetails()` | `JsonArray` of additional error context from the server. Empty array for validation errors, `null` if the server response omitted the field. |

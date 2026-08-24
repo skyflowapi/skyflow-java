@@ -40,8 +40,8 @@ public class BulkResponseTests {
     @Test
     public void testBulkInsertResponse_twoArgConstructorComputesSummary() {
         List<BulkInsertResponseRecord> records = Arrays.asList(
-                new BulkInsertResponseRecord(0, "table1", "id-1", null, null, 200, null, null),
-                new BulkInsertResponseRecord(1, null, null, null, null, 400, "failed", null));
+                new BulkInsertResponseRecord(0, "table1", "id-1", null, null, null, 200, null, null),
+                new BulkInsertResponseRecord(1, null, null, null, null, null, 400, "failed", null));
         List<InsertRequestRecord> originalPayload = new ArrayList<>(Arrays.asList(
                 BulkInsertRequestRecord.builder().tableName("table1").build(),
                 BulkInsertRequestRecord.builder().tableName("table1").build()));
@@ -55,14 +55,56 @@ public class BulkResponseTests {
     }
 
     @Test
+    public void testBulkInsertResponse_twoArgConstructorNullRecordsDoesNotThrow() {
+        List<InsertRequestRecord> originalPayload = new ArrayList<>(Arrays.asList(
+                BulkInsertRequestRecord.builder().tableName("table1").build(),
+                BulkInsertRequestRecord.builder().tableName("table1").build()));
+
+        BulkInsertResponse response = new BulkInsertResponse(null, originalPayload);
+
+        Assert.assertNotNull(response.getSummary());
+        Assert.assertEquals(2, response.getSummary().getTotalRecords());
+        Assert.assertEquals(0, response.getSummary().getTotalInserted());
+        Assert.assertEquals(0, response.getSummary().getTotalFailed());
+    }
+
+    @Test
+    public void testBulkInsertResponse_twoArgConstructorNullOriginalPayloadDoesNotThrow() {
+        List<BulkInsertResponseRecord> records = Arrays.asList(
+                new BulkInsertResponseRecord(0, "table1", "id-1", null, null, null, 200, null, null),
+                new BulkInsertResponseRecord(1, null, null, null, null, null, 400, "failed", null));
+
+        BulkInsertResponse response = new BulkInsertResponse(records, null);
+
+        Assert.assertNotNull(response.getSummary());
+        Assert.assertEquals(records.size(), response.getSummary().getTotalRecords());
+        Assert.assertEquals(1, response.getSummary().getTotalInserted());
+        Assert.assertEquals(1, response.getSummary().getTotalFailed());
+    }
+
+    @Test
+    public void testBulkInsertResponse_twoArgConstructorBothNullDoesNotThrow() {
+        // Neither records nor originalPayload present: totalRecords falls through the nested
+        // ternary's innermost "records != null ? records.size() : 0" to the final 0 branch.
+        BulkInsertResponse response = new BulkInsertResponse(null, null);
+
+        Assert.assertNotNull(response.getSummary());
+        Assert.assertEquals(0, response.getSummary().getTotalRecords());
+        Assert.assertEquals(0, response.getSummary().getTotalInserted());
+        Assert.assertEquals(0, response.getSummary().getTotalFailed());
+    }
+
+    @Test
     public void testBulkInsertResponse_recordsPreserveIndexAndInheritedFields() {
-        Map<String, Object> fields = new HashMap<>();
-        fields.put("name", "token-name");
+        Map<String, List<Token>> tokens = new HashMap<>();
+        tokens.put("name", Collections.singletonList(new Token("token-name", "group1")));
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", "john");
         Map<String, Object> hashedData = new HashMap<>();
         hashedData.put("name", "hashed-name");
 
         BulkInsertResponseRecord record = new BulkInsertResponseRecord(
-                7, "table1", "id-1", fields, hashedData, 200, null, null);
+                7, "table1", "id-1", tokens, data, hashedData, 200, null, null);
 
         BulkInsertResponse response = new BulkInsertResponse(Collections.singletonList(record));
 
@@ -70,7 +112,16 @@ public class BulkResponseTests {
         Assert.assertEquals(7, actual.getIndex());
         Assert.assertEquals("table1", actual.getTableName());
         Assert.assertEquals("id-1", actual.getSkyflowId());
-        Assert.assertEquals(fields, actual.getFields());
+        Assert.assertEquals(tokens, actual.getTokens());
+        // getFields() is deprecated, and now returns its original (pre-typed) shape - a Map<String,
+        // Object> rendered back from the typed getTokens() data, not getTokens()'s value itself.
+        Map<String, Object> rawToken = new HashMap<>();
+        rawToken.put("token", "token-name");
+        rawToken.put("tokenGroupName", "group1");
+        Map<String, Object> expectedFields = new HashMap<>();
+        expectedFields.put("name", Collections.singletonList(rawToken));
+        Assert.assertEquals(expectedFields, actual.getFields());
+        Assert.assertEquals(data, actual.getData());
         Assert.assertEquals(hashedData, actual.getHashedData());
         Assert.assertEquals(200, actual.getHttpCode());
         Assert.assertNull(actual.getError());
@@ -86,10 +137,10 @@ public class BulkResponseTests {
                 Arrays.asList(record0, record1, record2, record3));
 
         List<BulkInsertResponseRecord> records = Arrays.asList(
-                new BulkInsertResponseRecord(0, null, null, null, null, 500, "server error", null),  // retryable (lower bound)
-                new BulkInsertResponseRecord(1, null, null, null, null, 400, "bad request", null),   // not retryable
-                new BulkInsertResponseRecord(2, null, null, null, null, 599, "server error", null),  // retryable (upper bound)
-                new BulkInsertResponseRecord(3, null, null, null, null, 529, "special case", null)); // explicitly excluded
+                new BulkInsertResponseRecord(0, null, null, null, null, null, 500, "server error", null),  // retryable (lower bound)
+                new BulkInsertResponseRecord(1, null, null, null, null, null, 400, "bad request", null),   // not retryable
+                new BulkInsertResponseRecord(2, null, null, null, null, null, 599, "server error", null),  // retryable (upper bound)
+                new BulkInsertResponseRecord(3, null, null, null, null, null, 529, "special case", null)); // explicitly excluded
 
         BulkInsertResponse response = new BulkInsertResponse(records, originalPayload);
 
@@ -111,7 +162,7 @@ public class BulkResponseTests {
     @Test
     public void testBulkInsertResponse_toStringSerializesSummaryAndRecordsButNotInternals() {
         List<BulkInsertResponseRecord> records = Collections.singletonList(
-                new BulkInsertResponseRecord(0, "table1", "id-1", null, null, 200, null, null));
+                new BulkInsertResponseRecord(0, "table1", "id-1", null, null, null, 200, null, null));
         List<InsertRequestRecord> originalPayload = new ArrayList<InsertRequestRecord>(
                 Collections.singletonList(BulkInsertRequestRecord.builder().tableName("table1").build()));
 
@@ -133,7 +184,7 @@ public class BulkResponseTests {
     public void testBulkInsertResponse_getRecordsToRetryOnPerBatchResponseDoesNotThrow() {
         // The 1-arg constructor leaves originalPayload null. A 5xx record must not NPE here.
         List<BulkInsertResponseRecord> records = Collections.singletonList(
-                new BulkInsertResponseRecord(0, null, null, null, null, 500, "server error", null));
+                new BulkInsertResponseRecord(0, null, null, null, null, null, 500, "server error", null));
 
         BulkInsertResponse response = new BulkInsertResponse(records);
 
@@ -168,6 +219,44 @@ public class BulkResponseTests {
         Assert.assertEquals(1, response.getSummary().getTotalDetokenized());
         Assert.assertEquals(1, response.getSummary().getTotalFailed());
         Assert.assertEquals(records, response.getRecords());
+    }
+
+    @Test
+    public void testBulkDetokenizeResponse_twoArgConstructorNullRecordsDoesNotThrow() {
+        List<String> originalPayload = Arrays.asList("tok-1", "tok-2");
+
+        BulkDetokenizeResponse response = new BulkDetokenizeResponse(null, originalPayload);
+
+        Assert.assertNotNull(response.getSummary());
+        Assert.assertEquals(2, response.getSummary().getTotalTokens());
+        Assert.assertEquals(0, response.getSummary().getTotalDetokenized());
+        Assert.assertEquals(0, response.getSummary().getTotalFailed());
+    }
+
+    @Test
+    public void testBulkDetokenizeResponse_twoArgConstructorNullOriginalPayloadDoesNotThrow() {
+        List<BulkDetokenizeResponseRecord> records = Arrays.asList(
+                new BulkDetokenizeResponseRecord(0, "tok-1", "secret-value", "group1", null, 200, null, null),
+                new BulkDetokenizeResponseRecord(1, "tok-2", null, null, null, 404, "failed", null));
+
+        BulkDetokenizeResponse response = new BulkDetokenizeResponse(records, null);
+
+        Assert.assertNotNull(response.getSummary());
+        Assert.assertEquals(records.size(), response.getSummary().getTotalTokens());
+        Assert.assertEquals(1, response.getSummary().getTotalDetokenized());
+        Assert.assertEquals(1, response.getSummary().getTotalFailed());
+    }
+
+    @Test
+    public void testBulkDetokenizeResponse_twoArgConstructorBothNullDoesNotThrow() {
+        // Neither records nor originalPayload present: totalTokens falls through the nested
+        // ternary's innermost "records != null ? records.size() : 0" to the final 0 branch.
+        BulkDetokenizeResponse response = new BulkDetokenizeResponse(null, null);
+
+        Assert.assertNotNull(response.getSummary());
+        Assert.assertEquals(0, response.getSummary().getTotalTokens());
+        Assert.assertEquals(0, response.getSummary().getTotalDetokenized());
+        Assert.assertEquals(0, response.getSummary().getTotalFailed());
     }
 
     @Test
@@ -347,16 +436,9 @@ public class BulkResponseTests {
 
     // ── BulkTokenizeResponse ─────────────────────────────────────────────────
 
-    private static BulkTokenizeResponseRecord tokenizeRecord(int index, Object value, TokenizeResponseToken... tokens) {
-        return new BulkTokenizeResponseRecord(index, value, Arrays.asList(tokens));
-    }
-
-    private static TokenizeResponseToken okToken(String group, String token) {
-        return new TokenizeResponseToken(group, token, 200, null);
-    }
-
-    private static TokenizeResponseToken failedToken(String group, String error) {
-        return new TokenizeResponseToken(group, null, 400, error);
+    private static BulkTokenizeResponseRecord row(int index, Object value, String group, String token,
+                                                   Integer httpCode, String error) {
+        return new BulkTokenizeResponseRecord(index, value, group, token, httpCode, error, null);
     }
 
     private static List<BulkTokenizeRequestRecord> payloadOf(int size) {
@@ -383,15 +465,16 @@ public class BulkResponseTests {
         // index 1: some ok, some failed -> totalPartial
         // index 2: all groups failed    -> totalFailed
         List<BulkTokenizeResponseRecord> records = Arrays.asList(
-                tokenizeRecord(0, "v0", okToken("g1", "tok-0")),
-                tokenizeRecord(1, "v1", okToken("g1", "tok-1"), failedToken("g2", "partial failure")),
-                tokenizeRecord(2, "v2", failedToken("g1", "full failure")));
+                row(0, "v0", "g1", "tok-0", 200, null),
+                row(1, "v1", "g1", "tok-1", 200, null),
+                row(1, "v1", "g2", null, 400, "partial failure"),
+                row(2, "v2", "g1", null, 400, "full failure"));
 
         BulkTokenizeResponse response = new BulkTokenizeResponse(records, payloadOf(3));
 
         TokenizeSummary summary = response.getSummary();
         Assert.assertNotNull(summary);
-        // totalTokens counts input values submitted, not output token entries
+        // totalTokens counts input values submitted, not output rows
         Assert.assertEquals(3, summary.getTotalTokens());
         Assert.assertEquals(1, summary.getTotalTokenized());
         Assert.assertEquals(1, summary.getTotalPartial());
@@ -399,11 +482,8 @@ public class BulkResponseTests {
     }
 
     @Test
-    public void testBulkTokenizeResponse_recordWithNoTokensCountsAsFailed() {
-        List<BulkTokenizeResponseRecord> records = Collections.singletonList(
-                new BulkTokenizeResponseRecord(0, "v0", Collections.emptyList()));
-
-        BulkTokenizeResponse response = new BulkTokenizeResponse(records, payloadOf(1));
+    public void testBulkTokenizeResponse_valueWithNoRowsCountsAsFailed() {
+        BulkTokenizeResponse response = new BulkTokenizeResponse(new ArrayList<>(), payloadOf(1));
 
         Assert.assertEquals(0, response.getSummary().getTotalTokenized());
         Assert.assertEquals(1, response.getSummary().getTotalFailed());
@@ -412,12 +492,11 @@ public class BulkResponseTests {
     @Test
     public void testBulkTokenizeResponse_getRecordsToRetryReturnsCallerRecordUnchanged() {
         // one value, four groups: only the 503 is retryable, but the whole record comes back
-        List<BulkTokenizeResponseRecord> records = Collections.singletonList(
-                tokenizeRecord(0, "9999999999",
-                        okToken("phone_group", "p1q2r3s4"),
-                        new TokenizeResponseToken("phone_group_2", null, 503, "unavailable"),
-                        new TokenizeResponseToken("phone_group_3", null, 400, "bad group"),
-                        new TokenizeResponseToken("phone_group_4", null, 529, "special case")));
+        List<BulkTokenizeResponseRecord> records = Arrays.asList(
+                row(0, "9999999999", "phone_group", "p1q2r3s4", 200, null),
+                row(0, "9999999999", "phone_group_2", null, 503, "unavailable"),
+                row(0, "9999999999", "phone_group_3", null, 400, "bad group"),
+                row(0, "9999999999", "phone_group_4", null, 529, "special case"));
         BulkTokenizeRequestRecord requested = BulkTokenizeRequestRecord.builder().value("9999999999")
                 .tokenGroupNames(Arrays.asList(
                         "phone_group", "phone_group_2", "phone_group_3", "phone_group_4"))
@@ -438,9 +517,9 @@ public class BulkResponseTests {
     @Test
     public void testBulkTokenizeResponse_getRecordsToRetryOmitsValuesWithoutRetryableFailures() {
         List<BulkTokenizeResponseRecord> records = Arrays.asList(
-                tokenizeRecord(0, "v0", okToken("g1", "tok-0")),
-                tokenizeRecord(1, "v1", failedToken("g1", "bad group")),          // 400, not retryable
-                tokenizeRecord(2, "v2", new TokenizeResponseToken("g1", null, 500, "server error")));
+                row(0, "v0", "g1", "tok-0", 200, null),
+                row(1, "v1", "g1", null, 400, "bad group"),          // not retryable
+                row(2, "v2", "g1", null, 500, "server error"));
 
         List<BulkTokenizeRequestRecord> retry =
                 new BulkTokenizeResponse(records, payloadOf(3)).getRecordsToRetry();
@@ -453,8 +532,8 @@ public class BulkResponseTests {
     public void testBulkTokenizeResponse_getRecordsToRetryLooksUpByIndexNotResponseOrder() {
         // batches finish out of order, so the failing record is not first in the response
         List<BulkTokenizeResponseRecord> records = Arrays.asList(
-                tokenizeRecord(2, "v2", new TokenizeResponseToken("g1", null, 500, "server error")),
-                tokenizeRecord(0, "v0", okToken("g1", "tok-0")));
+                row(2, "v2", "g1", null, 500, "server error"),
+                row(0, "v0", "g1", "tok-0", 200, null));
 
         List<BulkTokenizeRequestRecord> retry =
                 new BulkTokenizeResponse(records, payloadOf(3)).getRecordsToRetry();
@@ -467,9 +546,9 @@ public class BulkResponseTests {
     public void testBulkTokenizeResponse_getRecordsToRetrySkipsIndexOutsidePayload() {
         // a malformed index must not blow up with IndexOutOfBoundsException
         List<BulkTokenizeResponseRecord> records = Arrays.asList(
-                tokenizeRecord(9, "stray", new TokenizeResponseToken("g1", null, 500, "server error")),
-                tokenizeRecord(-1, "stray", new TokenizeResponseToken("g1", null, 500, "server error")),
-                tokenizeRecord(0, "v0", new TokenizeResponseToken("g1", null, 500, "server error")));
+                row(9, "stray", "g1", null, 500, "server error"),
+                row(-1, "stray", "g1", null, 500, "server error"),
+                row(0, "v0", "g1", null, 500, "server error"));
 
         List<BulkTokenizeRequestRecord> retry =
                 new BulkTokenizeResponse(records, payloadOf(1)).getRecordsToRetry();
@@ -481,7 +560,7 @@ public class BulkResponseTests {
     @Test
     public void testBulkTokenizeResponse_getRecordsToRetryCarriesByotToken() {
         List<BulkTokenizeResponseRecord> records = Collections.singletonList(
-                tokenizeRecord(0, "v0", new TokenizeResponseToken("g1", null, 500, "server error")));
+                row(0, "v0", "g1", null, 500, "server error"));
         List<BulkTokenizeRequestRecord> payload = Collections.singletonList(
                 BulkTokenizeRequestRecord.builder().value("v0").token("my-own-token")
                         .tokenGroupNames(Collections.singletonList("g1")).build());
@@ -494,9 +573,9 @@ public class BulkResponseTests {
 
     @Test
     public void testBulkTokenizeResponse_getRecordsToRetryKeepsRequestedGroupsOnBatchFailure() {
-        // a batch-level failure reports no group name on the token entry
+        // a batch-level failure reports no group name on the row
         List<BulkTokenizeResponseRecord> records = Collections.singletonList(
-                tokenizeRecord(0, "v0", new TokenizeResponseToken(null, null, 500, "server error")));
+                row(0, "v0", null, null, 500, "server error"));
         List<BulkTokenizeRequestRecord> payload = Collections.singletonList(
                 BulkTokenizeRequestRecord.builder().value("v0")
                         .tokenGroupNames(Arrays.asList("g1", "g2")).build());
@@ -510,7 +589,7 @@ public class BulkResponseTests {
     @Test
     public void testBulkTokenizeResponse_recordsToRetryNotSerialized() {
         List<BulkTokenizeResponseRecord> records = Collections.singletonList(
-                tokenizeRecord(0, "v0", new TokenizeResponseToken("g1", null, 500, "server error")));
+                row(0, "v0", "g1", null, 500, "server error"));
         BulkTokenizeResponse response = new BulkTokenizeResponse(records, payloadOf(1));
 
         response.getRecordsToRetry();   // populate the lazily-derived field
@@ -521,10 +600,9 @@ public class BulkResponseTests {
     @Test
     public void testBulkTokenizeResponse_toStringMatchesContractShape() {
         List<BulkTokenizeResponseRecord> records = Arrays.asList(
-                tokenizeRecord(0, "john@example.com", okToken("email_group", "a1b2c3d4")),
-                tokenizeRecord(1, "9999999999",
-                        okToken("phone_group", "p1q2r3s4"),
-                        failedToken("phone_group_2", "Invalid token group configuration")));
+                row(0, "john@example.com", "email_group", "a1b2c3d4", 200, null),
+                row(1, "9999999999", "phone_group", "p1q2r3s4", 200, null),
+                row(1, "9999999999", "phone_group_2", null, 400, "Invalid token group configuration"));
 
         String json = new BulkTokenizeResponse(records, payloadOf(2)).toString();
 

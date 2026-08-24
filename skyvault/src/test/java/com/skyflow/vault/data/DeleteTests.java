@@ -63,6 +63,20 @@ public class DeleteTests {
     }
 
     @Test
+    public void testNullRequestInDeleteRequestValidations() {
+        try {
+            Validations.validateDeleteRequest(null);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(
+                    Utils.parameterizedString(ErrorMessage.DeleteRequestNull.getMessage(), Constants.SDK_PREFIX),
+                    e.getMessage()
+            );
+        }
+    }
+
+    @Test
     public void testNoIdsInDeleteRequestValidations() {
         DeleteRequest request = DeleteRequest.builder().table(table).build();
         try {

@@ -394,6 +394,76 @@ public class InsertTests {
     }
 
     @Test
+    public void testNullRequestInInsertRequestValidations() {
+        try {
+            Validations.validateInsertRequest(null);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(
+                    Utils.parameterizedString(ErrorMessage.InsertRequestNull.getMessage(), Constants.SDK_PREFIX),
+                    e.getMessage()
+            );
+        }
+    }
+
+    @Test
+    public void testNullValueEntryInValuesInInsertRequestValidations() {
+        values.add(valueMap);
+        values.add(null);
+        InsertRequest request = InsertRequest.builder().table(table).values(values).build();
+        try {
+            Validations.validateInsertRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(
+                    Utils.parameterizedString(ErrorMessage.NullValueEntryInValues.getMessage(), Constants.SDK_PREFIX),
+                    e.getMessage()
+            );
+        }
+    }
+
+    @Test
+    public void testTokensValuesSizeMismatchWithTokenModeEnableInInsertRequestValidations() {
+        values.add(valueMap);
+        values.add(valueMap);
+        tokens.add(tokenMap);
+        InsertRequest request = InsertRequest.builder()
+                .table(table).values(values).tokens(tokens).tokenMode(TokenMode.ENABLE)
+                .build();
+        try {
+            Validations.validateInsertRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(
+                    Utils.parameterizedString(ErrorMessage.TokensValuesSizeMismatch.getMessage(), Constants.SDK_PREFIX),
+                    e.getMessage()
+            );
+        }
+    }
+
+    @Test
+    public void testNullEntryInTokensOrValuesInInsertRequestValidations() {
+        values.add(valueMap);
+        tokens.add(null);
+        InsertRequest request = InsertRequest.builder()
+                .table(table).values(values).tokens(tokens).tokenMode(TokenMode.ENABLE)
+                .build();
+        try {
+            Validations.validateInsertRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(
+                    Utils.parameterizedString(ErrorMessage.NullTokensOrValuesEntry.getMessage(), Constants.SDK_PREFIX),
+                    e.getMessage()
+            );
+        }
+    }
+
+    @Test
     public void testInsertResponse() {
         try {
             ArrayList<HashMap<String, Object>> errorFields = new ArrayList<>();

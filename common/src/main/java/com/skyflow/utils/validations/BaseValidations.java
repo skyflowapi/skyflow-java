@@ -19,6 +19,10 @@ public class BaseValidations {
     }
 
     public static void validateCredentials(BaseCredentials credentials) throws SkyflowException {
+        if (credentials == null) {
+            LogUtil.printErrorLog(ErrorLogs.CREDENTIALS_IS_NULL.getLog());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.NullCredentials.getMessage());
+        }
         int nonNullMembers = 0;
         String path = credentials.getPath();
         String credentialsString = credentials.getCredentialsString();

@@ -51,6 +51,7 @@
     "dotenv",
     "powermock",
     "mvn",
+    "codehaus",
     "sonatype",
     "jfrog",
     "prekarilabs",
@@ -96,6 +97,7 @@
     "unrecognised",
     "nocreds",
     "nodir",
+    "noextension",
     "detok",
     "ngrok",
     "obac",
@@ -106,11 +108,15 @@
     "synthesised",
     "deserialise",
     "deserialised",
+    "deserialises",
+    "unparseable",
     "unmodelled",
     "recordss",
     "rarr",
     "servname",
-    "nodename"
+    "nodename",
+    "flowdb",
+    "unrenamed"
   ],
   "languageSettings": [
     {

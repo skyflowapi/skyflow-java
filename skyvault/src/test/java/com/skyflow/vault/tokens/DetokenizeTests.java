@@ -145,6 +145,38 @@ public class DetokenizeTests {
     }
 
     @Test
+    public void testNullRequestInDetokenizeRequestValidations() {
+        try {
+            Validations.validateDetokenizeRequest(null);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(
+                    Utils.parameterizedString(ErrorMessage.DetokenizeRequestNull.getMessage(), Constants.SDK_PREFIX),
+                    e.getMessage()
+            );
+        }
+    }
+
+    @Test
+    public void testNullElementInDetokenizeDataListValidations() {
+        detokenizeData.add(maskedRedactionRecord);
+        detokenizeData.add(null);
+
+        DetokenizeRequest request = DetokenizeRequest.builder().detokenizeData(detokenizeData).build();
+        try {
+            Validations.validateDetokenizeRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(
+                    Utils.parameterizedString(ErrorMessage.EmptyTokenInDetokenizeData.getMessage(), Constants.SDK_PREFIX),
+                    e.getMessage()
+            );
+        }
+    }
+
+    @Test
     public void testRedactionAndContinueOnErrorInDetokenizeRequestValidations() {
         detokenizeData.add(plainRedactionRecord);
 

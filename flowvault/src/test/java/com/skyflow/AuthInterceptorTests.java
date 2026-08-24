@@ -34,7 +34,7 @@ public class AuthInterceptorTests {
         return config;
     }
 
-    private static Interceptor authInterceptorOf(VaultClient client) {
+    private static Interceptor authInterceptorOf(VaultClient client) throws SkyflowException {
         client.updateExecutorInHTTP();
         List<Interceptor> interceptors = client.sharedHttpClient.interceptors();
         for (Interceptor interceptor : interceptors) {

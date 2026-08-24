@@ -10,7 +10,6 @@ import com.skyflow.vault.data.BulkTokenizeRequest;
 import com.skyflow.vault.data.BulkTokenizeRequestRecord;
 import com.skyflow.vault.data.BulkTokenizeResponse;
 import com.skyflow.vault.data.BulkTokenizeResponseRecord;
-import com.skyflow.vault.data.TokenizeResponseToken;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -83,15 +82,13 @@ public class BulkTokenizeAsync {
                 // Each value reports one entry per token group, so a value can partially succeed.
                 // requestId identifies the API call an error came from and is set on failures only.
                 for (BulkTokenizeResponseRecord record : response.getRecords()) {
-                    for (TokenizeResponseToken token : record.getTokens()) {
-                        if (token.getError() == null) {
-                            System.out.printf("[%d] group '%s' -> %s%n",
-                                    record.getIndex(), token.getTokenGroupName(), token.getToken());
-                        } else {
-                            System.out.printf("[%d] group '%s' failed (%d): %s [requestId=%s]%n",
-                                    record.getIndex(), token.getTokenGroupName(),
-                                    token.getHttpCode(), token.getError(), token.getRequestId());
-                        }
+                    if (record.getError() == null) {
+                        System.out.printf("[%d] group '%s' -> %s%n",
+                                record.getIndex(), record.getTokenGroupName(), record.getToken());
+                    } else {
+                        System.out.printf("[%d] group '%s' failed (%d): %s [requestId=%s]%n",
+                                record.getIndex(), record.getTokenGroupName(),
+                                record.getHttpCode(), record.getError(), record.getRequestId());
                     }
                 }
 

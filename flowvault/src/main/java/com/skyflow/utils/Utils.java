@@ -15,7 +15,6 @@ import com.skyflow.generated.rest.core.ObjectMappers;
 import com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest;
 import com.skyflow.generated.rest.resources.flowservice.requests.V1InsertRequest;
 import com.skyflow.generated.rest.types.FlowEnumUpdateType;
-import com.skyflow.generated.rest.types.FlowTokenizeResponseObjectToken;
 import com.skyflow.generated.rest.types.V1DeleteTokenResponseObject;
 import com.skyflow.generated.rest.types.V1FlowDeleteTokenResponse;
 import com.skyflow.generated.rest.types.V1FlowDetokenizeResponse;
@@ -36,11 +35,11 @@ import com.skyflow.vault.data.BulkTokenizeRequestRecord;
 import com.skyflow.vault.data.BulkTokenizeResponseRecord;
 import com.skyflow.vault.data.DeleteTokensRecord;
 import com.skyflow.vault.data.TokenizeRequestRecord;
-import com.skyflow.vault.data.TokenizeResponseToken;
 import com.skyflow.vault.data.BulkDeleteTokensResponse;
 import com.skyflow.vault.data.BulkDetokenizeRequest;
 import com.skyflow.vault.data.BulkDetokenizeResponse;
 import com.skyflow.vault.data.BulkDetokenizeResponseRecord;
+import com.skyflow.vault.data.DetokenizeMetadata;
 import com.skyflow.vault.data.BulkInsertRequest;
 import com.skyflow.vault.data.BulkInsertResponse;
 import com.skyflow.vault.data.BulkInsertResponseRecord;
@@ -49,6 +48,7 @@ import com.skyflow.vault.data.BulkTokenizeResponse;
 import com.skyflow.vault.data.ErrorRecord;
 import com.skyflow.vault.data.InsertRequest;
 import com.skyflow.vault.data.InsertRequestRecord;
+import com.skyflow.vault.data.Token;
 import com.skyflow.vault.data.TokenGroupRedactions;
 import com.skyflow.vault.data.UpsertOptions;
 
@@ -351,7 +351,7 @@ public final class Utils extends BaseUtils {
             String skyflowID = readString(recordMap, "skyflowID");
             String tableName = readString(recordMap, "tableName");
             String message = readErrorMessage(recordMap);
-            err = new BulkInsertResponseRecord(indexNumber, tableName, skyflowID, null, null, code, message, requestId);
+            err = new BulkInsertResponseRecord(indexNumber, tableName, skyflowID, null, null, null, code, message, requestId);
         }
         return err;
     }
@@ -421,7 +421,7 @@ public final class Utils extends BaseUtils {
                             } else {
                                 errorMessage = apiException.getMessage();
                             }
-                            err = new BulkInsertResponseRecord(indexNumber, null, null, null, null, apiException.statusCode(), errorMessage, requestId);
+                            err = new BulkInsertResponseRecord(indexNumber, null, null, null, null, null, apiException.statusCode(), errorMessage, requestId);
 
                         }
                         allRecords.add(err);
@@ -432,7 +432,7 @@ public final class Utils extends BaseUtils {
 
             if (allRecords.isEmpty()) {
                 for (int j = 0; j < batch.size(); j++) {
-                    allRecords.add(new BulkInsertResponseRecord(indexNumber, null, null, null, null, apiException.statusCode(), apiException.getMessage(), requestId));
+                    allRecords.add(new BulkInsertResponseRecord(indexNumber, null, null, null, null, null, apiException.statusCode(), apiException.getMessage(), requestId));
                     indexNumber++;
                 }
             }
@@ -452,7 +452,7 @@ public final class Utils extends BaseUtils {
                 if (message == null || message.isEmpty() || message.trim().isEmpty()){
                     message = ex.getMessage();
                 }
-                BulkInsertResponseRecord err = new BulkInsertResponseRecord(indexNumber, null, null, null, null, 500, message, null);
+                BulkInsertResponseRecord err = new BulkInsertResponseRecord(indexNumber, null, null, null, null, null, 500, message, null);
                 allRecords.add(err);
                 indexNumber++;
             }
@@ -676,17 +676,17 @@ public final class Utils extends BaseUtils {
         if (batchRecords == null) return errorRecords;
         for (int position = 0; position < batchRecords.size(); position++) {
             BulkTokenizeRequestRecord requested = batchRecords.get(position);
-            List<TokenizeResponseToken> tokens = new ArrayList<>();
+            int index = startIndex + position;
             List<String> groupNames = requested.getTokenGroupNames();
             if (groupNames == null || groupNames.isEmpty()) {
-                tokens.add(new TokenizeResponseToken(null, null, httpCode, message, requestId));
+                errorRecords.add(new BulkTokenizeResponseRecord(
+                        index, requested.getValue(), null, null, httpCode, message, requestId));
             } else {
                 for (String groupName : groupNames) {
-                    tokens.add(new TokenizeResponseToken(groupName, null, httpCode, message, requestId));
+                    errorRecords.add(new BulkTokenizeResponseRecord(
+                            index, requested.getValue(), groupName, null, httpCode, message, requestId));
                 }
             }
-            errorRecords.add(new BulkTokenizeResponseRecord(
-                    startIndex + position, requested.getValue(), tokens));
         }
         return errorRecords;
     }
@@ -760,7 +760,8 @@ public final class Utils extends BaseUtils {
                         indexNumber,
                         current.getTableName().orElse(null),
                         current.getSkyflowId().orElse(null),
-                        current.getTokens().orElse(null),
+                        Token.parseTokens(current.getTokens().orElse(null)),
+                        current.getData().orElse(null),
                         current.getHashedData().orElse(null),
                         current.getHttpCode().orElse(current.getError().isPresent() ? 500 : 200),
                         current.getError().orElse(null),
@@ -780,14 +781,7 @@ public final class Utils extends BaseUtils {
             int recordsSize = record.size();
             for (int index = 0; index < recordsSize; index++) {
                 V1FlowDetokenizeResponseObject current = record.get(index);
-                Map<String, Object> data = null;
-                if(current.getMetadata().isPresent()){
-                    data = current.getMetadata().get();
-                    if (data.containsKey("skyflowID")) {
-                        Object value = data.remove("skyflowID");
-                        data.put("skyflowId", value);
-                    }
-                }
+                DetokenizeMetadata metadata = DetokenizeMetadata.parseMetadata(current.getMetadata().orElse(null));
                 String reqID = null;
                 if(current.getError().isPresent()){
                     reqID = extractRequestId(headers);
@@ -797,7 +791,7 @@ public final class Utils extends BaseUtils {
                         current.getToken().orElse(null),
                         current.getValue().orElse(null),
                         current.getTokenGroupName().orElse(null),
-                        data,
+                        metadata,
                         current.getHttpCode().orElse(current.getError().isPresent() ? 500 : 200),
                         current.getError().orElse(null),
                         reqID));
@@ -854,57 +848,20 @@ public final class Utils extends BaseUtils {
         return builder.build();
     }
 
-    private static List<TokenizeResponseToken> buildTokenizeResponseTokens(
-            V1FlowTokenizeResponseObject record, String requestId) {
-        List<TokenizeResponseToken> tokens = new ArrayList<>();
-        if (record.getTokens().isPresent()) {
-            for (FlowTokenizeResponseObjectToken tokenObj : record.getTokens().get()) {
-                boolean failed = tokenObj.getError().isPresent()
-                        && tokenObj.getError().get() != null
-                        && !tokenObj.getError().get().isEmpty();
-                tokens.add(new TokenizeResponseToken(
-                        tokenObj.getTokenGroupName().orElse(null),
-                        tokenObj.getToken().orElse(null),
-                        tokenObj.getHttpCode().orElse(failed ? 500 : 200),
-                        failed ? tokenObj.getError().get() : null,
-                        requestId
-                ));
-            }
-        } else {
-            // the API reports one flat row per (value, token group) instead of a nested tokens
-            // array; the generated type has no fields for those, so they land in additionalProperties
-            TokenizeResponseToken flat = flatToken(record, requestId);
-            if (flat != null) {
-                tokens.add(flat);
-            }
-        }
-        return tokens;
-    }
-
-    /**
-     * Reads a flat {@code tokenGroupName}/{@code token}/{@code error}/{@code httpCode} row out of
-     * the wire object's unmodelled properties. Returns null when the row carries none of them, so a
-     * genuinely token-less record still reports an empty list rather than a phantom entry.
-     */
-    private static TokenizeResponseToken flatToken(V1FlowTokenizeResponseObject record, String requestId) {
-        Map<String, Object> extras = record.getAdditionalProperties();
-        if (extras == null || extras.isEmpty()) {
-            return null;
-        }
-        boolean carriesTokenFields = extras.containsKey("token")
-                || extras.containsKey("tokenGroupName")
-                || extras.containsKey("error")
-                || extras.containsKey("httpCode");
-        if (!carriesTokenFields) {
-            return null;
-        }
-        String error = asNonEmptyString(extras.get("error"));
-        String token = asNonEmptyString(extras.get("token"));
-        Integer httpCode = extras.get("httpCode") instanceof Number
-                ? ((Number) extras.get("httpCode")).intValue()
-                : (error != null ? 500 : 200);
-        return new TokenizeResponseToken(
-                asNonEmptyString(extras.get("tokenGroupName")), token, httpCode, error, requestId);
+    private static BulkTokenizeResponseRecord buildTokenizeResponseRecord(
+            int index, V1FlowTokenizeResponseObject record, String requestId) {
+        boolean failed = record.getError().isPresent()
+                && record.getError().get() != null
+                && !record.getError().get().isEmpty();
+        return new BulkTokenizeResponseRecord(
+                index,
+                record.getValue().orElse(null),
+                asNonEmptyString(record.getTokenGroupName().orElse(null)),
+                asNonEmptyString(record.getToken().orElse(null)),
+                record.getHttpCode().orElse(failed ? 500 : 200),
+                failed ? record.getError().get() : null,
+                requestId
+        );
     }
 
     /** The API sends "" for a token or error that does not apply; normalise both to null. */
@@ -942,18 +899,15 @@ public final class Utils extends BaseUtils {
     }
 
     /**
-     * Folds the response rows back onto the records that produced them.
+     * Assigns each response row the index of the record that produced it.
      *
      * <p>The API emits one row per (value, token group) rather than one per record, and a record
      * rejected outright yields a single row instead of one per group — so row count is not a
      * function of the request. Rows do arrive in request order, though, and each carries its value,
-     * which is enough: a row belongs to the record being filled while it matches that record's value
+     * which is enough: a row belongs to the record in flight while it matches that record's value
      * and the record has not yet taken as many rows as it asked for token groups. Anything else
      * starts the next record. Batching keeps values distinct within a request (see
      * {@link #createBulkTokenizeBatches}), so the value comparison never straddles two records.
-     *
-     * <p>A response already grouped one-row-per-record folds through this unchanged, since each row
-     * then matches exactly one record before the value moves on.
      */
     private static List<BulkTokenizeResponseRecord> groupTokenizeRows(
             List<V1FlowTokenizeResponseObject> rows,
@@ -964,42 +918,28 @@ public final class Utils extends BaseUtils {
         if (batchRecords == null || batchRecords.isEmpty()) {
             // nothing to correlate against; fall back to one record per row
             for (int position = 0; position < rows.size(); position++) {
-                responseRecords.add(new BulkTokenizeResponseRecord(startIndex + position,
-                        rows.get(position).getValue().orElse(null),
-                        buildTokenizeResponseTokens(rows.get(position), requestId)));
+                responseRecords.add(buildTokenizeResponseRecord(startIndex + position, rows.get(position), requestId));
             }
             return responseRecords;
         }
 
         int recordPosition = 0;
         int rowsTakenByRecord = 0;
-        List<TokenizeResponseToken> tokens = new ArrayList<>();
         for (V1FlowTokenizeResponseObject row : rows) {
             Object rowValue = row.getValue().orElse(null);
             while (recordPosition < batchRecords.size()
                     && !acceptsRow(batchRecords.get(recordPosition), rowValue, rowsTakenByRecord)) {
-                responseRecords.add(new BulkTokenizeResponseRecord(startIndex + recordPosition,
-                        batchRecords.get(recordPosition).getValue(), tokens));
-                tokens = new ArrayList<>();
                 rowsTakenByRecord = 0;
                 recordPosition++;
             }
             if (recordPosition >= batchRecords.size()) {
                 // more rows than the request can account for; keep them rather than drop them
-                responseRecords.add(new BulkTokenizeResponseRecord(startIndex + recordPosition,
-                        rowValue, buildTokenizeResponseTokens(row, requestId)));
+                responseRecords.add(buildTokenizeResponseRecord(startIndex + recordPosition, row, requestId));
                 recordPosition++;
                 continue;
             }
-            tokens.addAll(buildTokenizeResponseTokens(row, requestId));
+            responseRecords.add(buildTokenizeResponseRecord(startIndex + recordPosition, row, requestId));
             rowsTakenByRecord++;
-        }
-        // close the record in flight, then any records the response never mentioned
-        while (recordPosition < batchRecords.size()) {
-            responseRecords.add(new BulkTokenizeResponseRecord(startIndex + recordPosition,
-                    batchRecords.get(recordPosition).getValue(), tokens));
-            tokens = new ArrayList<>();
-            recordPosition++;
         }
         return responseRecords;
     }

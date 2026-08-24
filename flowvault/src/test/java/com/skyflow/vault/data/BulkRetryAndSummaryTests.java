@@ -17,12 +17,8 @@ import java.util.List;
  */
 public class BulkRetryAndSummaryTests {
 
-    private static TokenizeResponseToken token(String group, String value, Integer httpCode, String error) {
-        return new TokenizeResponseToken(group, value, httpCode, error);
-    }
-
-    private static BulkTokenizeResponseRecord tokenizeRecord(int index, TokenizeResponseToken... tokens) {
-        return new BulkTokenizeResponseRecord(index, "value" + index, Arrays.asList(tokens));
+    private static BulkTokenizeResponseRecord row(int index, String group, String token, Integer httpCode, String error) {
+        return new BulkTokenizeResponseRecord(index, "value" + index, group, token, httpCode, error, null);
     }
 
     private static BulkTokenizeRequestRecord requestRecord(String value) {
@@ -33,8 +29,9 @@ public class BulkRetryAndSummaryTests {
 
     @Test
     public void testTokenizeSummary_allGroupsSucceededCountsAsTokenized() {
-        List<BulkTokenizeResponseRecord> records = Collections.singletonList(
-                tokenizeRecord(0, token("g1", "t1", 200, null), token("g2", "t2", 200, null)));
+        List<BulkTokenizeResponseRecord> records = Arrays.asList(
+                row(0, "g1", "t1", 200, null),
+                row(0, "g2", "t2", 200, null));
 
         TokenizeSummary summary = new BulkTokenizeResponse(records, Collections.singletonList(requestRecord("a")))
                 .getSummary();
@@ -47,8 +44,9 @@ public class BulkRetryAndSummaryTests {
 
     @Test
     public void testTokenizeSummary_someGroupsFailedCountsAsPartial() {
-        List<BulkTokenizeResponseRecord> records = Collections.singletonList(
-                tokenizeRecord(0, token("g1", "t1", 200, null), token("g2", null, 400, "bad group")));
+        List<BulkTokenizeResponseRecord> records = Arrays.asList(
+                row(0, "g1", "t1", 200, null),
+                row(0, "g2", null, 400, "bad group"));
 
         TokenizeSummary summary = new BulkTokenizeResponse(records, Collections.singletonList(requestRecord("a")))
                 .getSummary();
@@ -60,8 +58,9 @@ public class BulkRetryAndSummaryTests {
 
     @Test
     public void testTokenizeSummary_everyGroupFailedCountsAsFailed() {
-        List<BulkTokenizeResponseRecord> records = Collections.singletonList(
-                tokenizeRecord(0, token("g1", null, 500, "boom"), token("g2", null, 500, "boom")));
+        List<BulkTokenizeResponseRecord> records = Arrays.asList(
+                row(0, "g1", null, 500, "boom"),
+                row(0, "g2", null, 500, "boom"));
 
         TokenizeSummary summary = new BulkTokenizeResponse(records, Collections.singletonList(requestRecord("a")))
                 .getSummary();
@@ -72,31 +71,19 @@ public class BulkRetryAndSummaryTests {
     }
 
     @Test
-    public void testTokenizeSummary_noTokensAtAllCountsAsFailed() {
-        // A record that came back with no token groups is a failure, not a success.
-        List<BulkTokenizeResponseRecord> records = Collections.singletonList(
-                new BulkTokenizeResponseRecord(0, "value0", null));
-
-        TokenizeSummary summary = new BulkTokenizeResponse(records, Collections.singletonList(requestRecord("a")))
+    public void testTokenizeSummary_noRowsAtAllCountsAsFailed() {
+        // A value with no rows in the response at all is a failure, not a success.
+        TokenizeSummary summary = new BulkTokenizeResponse(new ArrayList<>(), Collections.singletonList(requestRecord("a")))
                 .getSummary();
 
         Assert.assertEquals(1, summary.getTotalFailed());
     }
 
     @Test
-    public void testTokenizeSummary_emptyTokenListCountsAsFailed() {
-        List<BulkTokenizeResponseRecord> records = Collections.singletonList(
-                new BulkTokenizeResponseRecord(0, "value0", new ArrayList<>()));
-
-        Assert.assertEquals(1, new BulkTokenizeResponse(records, Collections.singletonList(requestRecord("a")))
-                .getSummary().getTotalFailed());
-    }
-
-    @Test
     public void testTokenizeSummary_totalTokensComesFromTheSubmittedPayload() {
         // Two values submitted, only one came back — totalTokens must reflect what was sent.
         List<BulkTokenizeResponseRecord> records = Collections.singletonList(
-                tokenizeRecord(0, token("g1", "t1", 200, null)));
+                row(0, "g1", "t1", 200, null));
 
         TokenizeSummary summary = new BulkTokenizeResponse(
                 records, Arrays.asList(requestRecord("a"), requestRecord("b"))).getSummary();
@@ -121,14 +108,49 @@ public class BulkRetryAndSummaryTests {
         Assert.assertNull(new BulkTokenizeResponse(new ArrayList<>()).getSummary());
     }
 
+    @Test
+    public void testTokenizeSummary_classifiesByRowsWhenNoPayloadIsGiven() {
+        // The two-arg constructor can still be called with a null payload; classification then
+        // falls back to the indexes actually present in records instead of the submitted list.
+        List<BulkTokenizeResponseRecord> records = Arrays.asList(
+                row(0, "g1", "t1", 200, null),
+                row(1, "g1", null, 400, "bad group"),
+                row(2, "g1", "t2", 200, null),
+                row(2, "g2", null, 400, "bad group"));
+
+        TokenizeSummary summary = new BulkTokenizeResponse(records, null).getSummary();
+
+        // without a submitted payload to count values from, totalTokens falls back to the row count
+        Assert.assertEquals(4, summary.getTotalTokens());
+        Assert.assertEquals(1, summary.getTotalTokenized());
+        Assert.assertEquals(1, summary.getTotalPartial());
+        Assert.assertEquals(1, summary.getTotalFailed());
+    }
+
+    @Test
+    public void testTokenizeSummary_nullRecordsAndNullPayloadYieldsZeroes() {
+        TokenizeSummary summary = new BulkTokenizeResponse(null, null).getSummary();
+
+        Assert.assertEquals(0, summary.getTotalTokens());
+        Assert.assertEquals(0, summary.getTotalTokenized());
+        Assert.assertEquals(0, summary.getTotalPartial());
+        Assert.assertEquals(0, summary.getTotalFailed());
+    }
+
     // ── BulkTokenizeResponse.getRecordsToRetry ────────────────────────────────
+
+    @Test
+    public void testTokenizeRetry_withNullRecordsReturnsEmpty() {
+        Assert.assertTrue(new BulkTokenizeResponse(null, Collections.singletonList(requestRecord("a")))
+                .getRecordsToRetry().isEmpty());
+    }
 
     @Test
     public void testTokenizeRetry_only5xxFailuresAreReturned() {
         List<BulkTokenizeResponseRecord> records = Arrays.asList(
-                tokenizeRecord(0, token("g", null, 500, "server")),
-                tokenizeRecord(1, token("g", null, 400, "client")),
-                tokenizeRecord(2, token("g", "t", 200, null)));
+                row(0, "g", null, 500, "server"),
+                row(1, "g", null, 400, "client"),
+                row(2, "g", "t", 200, null));
         List<BulkTokenizeRequestRecord> payload =
                 Arrays.asList(requestRecord("a"), requestRecord("b"), requestRecord("c"));
 
@@ -141,7 +163,7 @@ public class BulkRetryAndSummaryTests {
     @Test
     public void testTokenizeRetry_529IsNotRetried() {
         List<BulkTokenizeResponseRecord> records = Collections.singletonList(
-                tokenizeRecord(0, token("g", null, 529, "site frozen")));
+                row(0, "g", null, 529, "site frozen"));
 
         Assert.assertTrue(new BulkTokenizeResponse(records, Collections.singletonList(requestRecord("a")))
                 .getRecordsToRetry().isEmpty());
@@ -150,17 +172,17 @@ public class BulkRetryAndSummaryTests {
     @Test
     public void testTokenizeRetry_599IsRetriedAnd600IsNot() {
         Assert.assertEquals(1, new BulkTokenizeResponse(
-                Collections.singletonList(tokenizeRecord(0, token("g", null, 599, "edge"))),
+                Collections.singletonList(row(0, "g", null, 599, "edge")),
                 Collections.singletonList(requestRecord("a"))).getRecordsToRetry().size());
         Assert.assertEquals(0, new BulkTokenizeResponse(
-                Collections.singletonList(tokenizeRecord(0, token("g", null, 600, "edge"))),
+                Collections.singletonList(row(0, "g", null, 600, "edge")),
                 Collections.singletonList(requestRecord("a"))).getRecordsToRetry().size());
     }
 
     @Test
     public void testTokenizeRetry_5xxWithoutAnErrorIsNotRetried() {
         List<BulkTokenizeResponseRecord> records = Collections.singletonList(
-                tokenizeRecord(0, token("g", "t", 500, null)));
+                row(0, "g", "t", 500, null));
 
         Assert.assertTrue(new BulkTokenizeResponse(records, Collections.singletonList(requestRecord("a")))
                 .getRecordsToRetry().isEmpty());
@@ -169,7 +191,7 @@ public class BulkRetryAndSummaryTests {
     @Test
     public void testTokenizeRetry_nullHttpCodeIsNotRetried() {
         List<BulkTokenizeResponseRecord> records = Collections.singletonList(
-                tokenizeRecord(0, token("g", null, null, "no status")));
+                row(0, "g", null, null, "no status"));
 
         Assert.assertTrue(new BulkTokenizeResponse(records, Collections.singletonList(requestRecord("a")))
                 .getRecordsToRetry().isEmpty());
@@ -178,27 +200,25 @@ public class BulkRetryAndSummaryTests {
     @Test
     public void testTokenizeRetry_partialFailureRetriesTheWholeRecord() {
         // One group failed retryably, another succeeded — the value still needs resubmitting.
-        List<BulkTokenizeResponseRecord> records = Collections.singletonList(
-                tokenizeRecord(0, token("g1", "t1", 200, null), token("g2", null, 503, "down")));
+        List<BulkTokenizeResponseRecord> records = Arrays.asList(
+                row(0, "g1", "t1", 200, null),
+                row(0, "g2", null, 503, "down"));
 
         Assert.assertEquals(1, new BulkTokenizeResponse(records, Collections.singletonList(requestRecord("a")))
                 .getRecordsToRetry().size());
     }
 
     @Test
-    public void testTokenizeRetry_recordWithNullTokensIsNotRetried() {
-        List<BulkTokenizeResponseRecord> records = Collections.singletonList(
-                new BulkTokenizeResponseRecord(0, "value0", null));
-
-        Assert.assertTrue(new BulkTokenizeResponse(records, Collections.singletonList(requestRecord("a")))
+    public void testTokenizeRetry_recordWithNoRowsIsNotRetried() {
+        Assert.assertTrue(new BulkTokenizeResponse(new ArrayList<>(), Collections.singletonList(requestRecord("a")))
                 .getRecordsToRetry().isEmpty());
     }
 
     @Test
     public void testTokenizeRetry_outOfRangeIndexIsSkippedRatherThanThrowing() {
         List<BulkTokenizeResponseRecord> records = Arrays.asList(
-                tokenizeRecord(5, token("g", null, 500, "server")),
-                tokenizeRecord(-1, token("g", null, 500, "server")));
+                row(5, "g", null, 500, "server"),
+                row(-1, "g", null, 500, "server"));
 
         Assert.assertTrue(new BulkTokenizeResponse(records, Collections.singletonList(requestRecord("a")))
                 .getRecordsToRetry().isEmpty());
@@ -207,7 +227,7 @@ public class BulkRetryAndSummaryTests {
     @Test
     public void testTokenizeRetry_withoutOriginalPayloadReturnsEmpty() {
         List<BulkTokenizeResponseRecord> records = Collections.singletonList(
-                tokenizeRecord(0, token("g", null, 500, "server")));
+                row(0, "g", null, 500, "server"));
 
         Assert.assertTrue(new BulkTokenizeResponse(records).getRecordsToRetry().isEmpty());
     }
@@ -215,7 +235,7 @@ public class BulkRetryAndSummaryTests {
     @Test
     public void testTokenizeRetry_isMemoisedAcrossCalls() {
         List<BulkTokenizeResponseRecord> records = Collections.singletonList(
-                tokenizeRecord(0, token("g", null, 500, "server")));
+                row(0, "g", null, 500, "server"));
         BulkTokenizeResponse response =
                 new BulkTokenizeResponse(records, Collections.singletonList(requestRecord("a")));
 
