@@ -17,17 +17,32 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 @JsonInclude(JsonInclude.Include.NON_ABSENT)
 @JsonDeserialize(builder = Upsert.Builder.class)
 public final class Upsert {
+    private final Optional<UpsertUpdateType> updateType;
+
     private final List<String> uniqueColumns;
 
     private final Map<String, Object> additionalProperties;
 
-    private Upsert(List<String> uniqueColumns, Map<String, Object> additionalProperties) {
+    private Upsert(
+            Optional<UpsertUpdateType> updateType,
+            List<String> uniqueColumns,
+            Map<String, Object> additionalProperties) {
+        this.updateType = updateType;
         this.uniqueColumns = uniqueColumns;
         this.additionalProperties = additionalProperties;
+    }
+
+    /**
+     * @return Type of update operation to perform.
+     */
+    @JsonProperty("updateType")
+    public Optional<UpsertUpdateType> getUpdateType() {
+        return updateType;
     }
 
     /**
@@ -50,12 +65,12 @@ public final class Upsert {
     }
 
     private boolean equalTo(Upsert other) {
-        return uniqueColumns.equals(other.uniqueColumns);
+        return updateType.equals(other.updateType) && uniqueColumns.equals(other.uniqueColumns);
     }
 
     @java.lang.Override
     public int hashCode() {
-        return Objects.hash(this.uniqueColumns);
+        return Objects.hash(this.updateType, this.uniqueColumns);
     }
 
     @java.lang.Override
@@ -69,6 +84,8 @@ public final class Upsert {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static final class Builder {
+        private Optional<UpsertUpdateType> updateType = Optional.empty();
+
         private List<String> uniqueColumns = new ArrayList<>();
 
         @JsonAnySetter
@@ -77,7 +94,22 @@ public final class Upsert {
         private Builder() {}
 
         public Builder from(Upsert other) {
+            updateType(other.getUpdateType());
             uniqueColumns(other.getUniqueColumns());
+            return this;
+        }
+
+        /**
+         * <p>Type of update operation to perform.</p>
+         */
+        @JsonSetter(value = "updateType", nulls = Nulls.SKIP)
+        public Builder updateType(Optional<UpsertUpdateType> updateType) {
+            this.updateType = updateType;
+            return this;
+        }
+
+        public Builder updateType(UpsertUpdateType updateType) {
+            this.updateType = Optional.ofNullable(updateType);
             return this;
         }
 
@@ -106,7 +138,7 @@ public final class Upsert {
         }
 
         public Upsert build() {
-            return new Upsert(uniqueColumns, additionalProperties);
+            return new Upsert(updateType, uniqueColumns, additionalProperties);
         }
 
         public Builder additionalProperty(String key, Object value) {

@@ -23,6 +23,8 @@ import java.util.Optional;
 public final class InsertRecordData {
     private final Map<String, Object> data;
 
+    private final Optional<Map<String, Object>> tokens;
+
     private final Optional<String> tableName;
 
     private final Optional<Upsert> upsert;
@@ -31,10 +33,12 @@ public final class InsertRecordData {
 
     private InsertRecordData(
             Map<String, Object> data,
+            Optional<Map<String, Object>> tokens,
             Optional<String> tableName,
             Optional<Upsert> upsert,
             Map<String, Object> additionalProperties) {
         this.data = data;
+        this.tokens = tokens;
         this.tableName = tableName;
         this.upsert = upsert;
         this.additionalProperties = additionalProperties;
@@ -46,6 +50,14 @@ public final class InsertRecordData {
     @JsonProperty("data")
     public Map<String, Object> getData() {
         return data;
+    }
+
+    /**
+     * @return Columns and tokens for the record.
+     */
+    @JsonProperty("tokens")
+    public Optional<Map<String, Object>> getTokens() {
+        return tokens;
     }
 
     /**
@@ -73,12 +85,15 @@ public final class InsertRecordData {
     }
 
     private boolean equalTo(InsertRecordData other) {
-        return data.equals(other.data) && tableName.equals(other.tableName) && upsert.equals(other.upsert);
+        return data.equals(other.data)
+                && tokens.equals(other.tokens)
+                && tableName.equals(other.tableName)
+                && upsert.equals(other.upsert);
     }
 
     @java.lang.Override
     public int hashCode() {
-        return Objects.hash(this.data, this.tableName, this.upsert);
+        return Objects.hash(this.data, this.tokens, this.tableName, this.upsert);
     }
 
     @java.lang.Override
@@ -94,6 +109,8 @@ public final class InsertRecordData {
     public static final class Builder {
         private Map<String, Object> data = new LinkedHashMap<>();
 
+        private Optional<Map<String, Object>> tokens = Optional.empty();
+
         private Optional<String> tableName = Optional.empty();
 
         private Optional<Upsert> upsert = Optional.empty();
@@ -105,6 +122,7 @@ public final class InsertRecordData {
 
         public Builder from(InsertRecordData other) {
             data(other.getData());
+            tokens(other.getTokens());
             tableName(other.getTableName());
             upsert(other.getUpsert());
             return this;
@@ -135,6 +153,20 @@ public final class InsertRecordData {
         }
 
         /**
+         * <p>Columns and tokens for the record.</p>
+         */
+        @JsonSetter(value = "tokens", nulls = Nulls.SKIP)
+        public Builder tokens(Optional<Map<String, Object>> tokens) {
+            this.tokens = tokens;
+            return this;
+        }
+
+        public Builder tokens(Map<String, Object> tokens) {
+            this.tokens = Optional.ofNullable(tokens);
+            return this;
+        }
+
+        /**
          * <p>Name of the table to insert data into.</p>
          */
         @JsonSetter(value = "tableName", nulls = Nulls.SKIP)
@@ -160,7 +192,7 @@ public final class InsertRecordData {
         }
 
         public InsertRecordData build() {
-            return new InsertRecordData(data, tableName, upsert, additionalProperties);
+            return new InsertRecordData(data, tokens, tableName, upsert, additionalProperties);
         }
 
         public Builder additionalProperty(String key, Object value) {

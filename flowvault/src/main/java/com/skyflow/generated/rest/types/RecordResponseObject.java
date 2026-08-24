@@ -73,7 +73,7 @@ public final class RecordResponseObject {
     }
 
     /**
-     * @return Columns and values for the record.
+     * @return Columns and values for the record. For file columns, the value is an object containing file metadata: fileName, mimeType, sizeBytes, fileStatus (PENDING | READY | FAILED | SCAN_ERROR), fileFailureReason (populated only when fileStatus is FAILED), url (pre-signed download URL, populated only when fileStatus is READY), and urlExpiresAt (UTC expiry of the URL).
      */
     @JsonProperty("data")
     public Optional<Map<String, Object>> getData() {
@@ -179,7 +179,7 @@ public final class RecordResponseObject {
         _FinalStage tokens(Map<String, Object> tokens);
 
         /**
-         * <p>Columns and values for the record.</p>
+         * <p>Columns and values for the record. For file columns, the value is an object containing file metadata: fileName, mimeType, sizeBytes, fileStatus (PENDING | READY | FAILED | SCAN_ERROR), fileFailureReason (populated only when fileStatus is FAILED), url (pre-signed download URL, populated only when fileStatus is READY), and urlExpiresAt (UTC expiry of the URL).</p>
          */
         _FinalStage data(Optional<Map<String, Object>> data);
 
@@ -323,7 +323,7 @@ public final class RecordResponseObject {
         }
 
         /**
-         * <p>Columns and values for the record.</p>
+         * <p>Columns and values for the record. For file columns, the value is an object containing file metadata: fileName, mimeType, sizeBytes, fileStatus (PENDING | READY | FAILED | SCAN_ERROR), fileFailureReason (populated only when fileStatus is FAILED), url (pre-signed download URL, populated only when fileStatus is READY), and urlExpiresAt (UTC expiry of the URL).</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
         @java.lang.Override
@@ -333,7 +333,7 @@ public final class RecordResponseObject {
         }
 
         /**
-         * <p>Columns and values for the record.</p>
+         * <p>Columns and values for the record. For file columns, the value is an object containing file metadata: fileName, mimeType, sizeBytes, fileStatus (PENDING | READY | FAILED | SCAN_ERROR), fileFailureReason (populated only when fileStatus is FAILED), url (pre-signed download URL, populated only when fileStatus is READY), and urlExpiresAt (UTC expiry of the URL).</p>
          */
         @java.lang.Override
         @JsonSetter(value = "data", nulls = Nulls.SKIP)
