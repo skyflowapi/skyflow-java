@@ -215,9 +215,12 @@ public class SignedDataTokensTests {
 
     @Test
     public void testInvalidKeySpecInCredentials() {
-        String credentialsString = "{\"privateKey\": \"-----BEGIN PRIVATE KEY-----\\ncHJpdmF0ZV9rZXlfdmFsdWU=\\n-----END PRIVATE KEY-----\", \"clientID\": \"client_id_value\", \"keyID\": \"key_id_value\", \"tokenURI\": \"invalid_token_uri\"}";
+        // Dummy credentials (with a fake, invalid privateKey) live outside the source tree, in a
+        // resource file under dummy-non-secrets/ (excluded from Gitleaks scans).
+        String filePath = "./src/test/resources/dummy-non-secrets/invalidKeySpecCredentials.json";
+        File file = new File(filePath);
         try {
-            SignedDataTokens signedTokens = SignedDataTokens.builder().setCredentials(credentialsString).build();
+            SignedDataTokens signedTokens = SignedDataTokens.builder().setCredentials(file).build();
             signedTokens.getSignedDataTokens();
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {

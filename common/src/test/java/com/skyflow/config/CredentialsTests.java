@@ -9,6 +9,10 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -25,12 +29,15 @@ public class CredentialsTests {
     private static String role = null;
     private static String context = null;
 
+    // Dummy API key lives outside the source tree, in a resource file under dummy-non-secrets/
+    // (excluded from Gitleaks scans), rather than as a string literal here.
     @BeforeClass
-    public static void setup() {
+    public static void setup() throws IOException {
         path = "valid-path-to-credentials-file";
         credentialsString = "valid-credentials-string";
         token = "valid-token";
-        validApiKey = "sky-ab123-abcd1234cdef1234abcd4321cdef4321";
+        validApiKey = new String(Files.readAllBytes(
+                Paths.get("./src/test/resources/dummy-non-secrets/dummy-api-key.txt")), StandardCharsets.UTF_8).trim();
         invalidApiKey = "invalid-api-key";
         roles = new ArrayList<>();
         role = "test_credentials_role";

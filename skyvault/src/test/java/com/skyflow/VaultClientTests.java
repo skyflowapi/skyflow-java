@@ -45,6 +45,10 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.Arrays;
 import java.util.Collections;
@@ -58,7 +62,7 @@ public class VaultClientTests {
     private static String table = null;
     private static String value = null;
     private static String columnGroup = null;
-    private static String apiKey = "sky-ab123-abcd1234cdef1234abcd4321cdef4321";
+    private static String apiKey = null;
     private static ArrayList<DetokenizeData> detokenizeData = null;
     private static ArrayList<HashMap<String, Object>> insertValues = null;
     private static ArrayList<HashMap<String, Object>> insertTokens = null;
@@ -66,8 +70,10 @@ public class VaultClientTests {
     private static HashMap<String, Object> tokenMap = null;
     private static VaultConfig vaultConfig;
 
+    // Dummy API key lives outside the source tree, in a resource file under dummy-non-secrets/
+    // (excluded from Gitleaks scans), rather than as a string literal here.
     @BeforeClass
-    public static void setup() throws SkyflowException {
+    public static void setup() throws SkyflowException, IOException {
         vaultID = "vault123";
         clusterID = "cluster123";
         token = "test_token";
@@ -86,8 +92,10 @@ public class VaultClientTests {
         vaultConfig.setClusterId(clusterID);
         vaultConfig.setEnv(Env.PROD);
 
+        String dummyApiKey = new String(Files.readAllBytes(
+                Paths.get("./src/test/resources/dummy-non-secrets/dummy-api-key.txt")), StandardCharsets.UTF_8).trim();
         Credentials credentials = new Credentials();
-        credentials.setApiKey("sky-ab123-abcd1234cdef1234abcd4321cdef4321");
+        credentials.setApiKey(dummyApiKey);
         vaultConfig.setCredentials(credentials);
         vaultClient = new VaultClient(vaultConfig, credentials);
         vaultClient.setBearerToken();
