@@ -34,6 +34,11 @@ public class VaultClient extends BaseVaultClient<VaultConfig> {
     private static final int DEFAULT_MAX_RETRIES = 0;
     private static final long DEFAULT_INITIAL_RETRY_DELAY_MILLIS = 500L;
     private static final long DEFAULT_MAX_RETRY_DELAY_MILLIS = 2000L;
+    // Not yet exposed as a VaultConfig/builder setting, so hardcoded here rather than left as
+    // Optional.empty() - passing it explicitly keeps the choice visible in our own code instead of
+    // depending on RetryInterceptor's internal default, which is free to change on a future
+    // regeneration since it is generated code we do not maintain.
+    private static final double RETRY_JITTER_FACTOR = 0.2;
 
     protected VaultClient(VaultConfig vaultConfig, Credentials credentials) throws SkyflowException {
         super(vaultConfig, credentials);
@@ -175,10 +180,8 @@ public class VaultClient extends BaseVaultClient<VaultConfig> {
                         .callTimeout(timeoutSeconds, TimeUnit.SECONDS)
                         // OUTER: retries. Must wrap the auth interceptor so each attempt re-reads the
                         // (possibly refreshed) bearer token rather than replaying a stale one.
-                        // Jitter is left at the generated interceptor's own default (0.2) - not yet
-                        // exposed as a VaultConfig/builder setting.
                         .addInterceptor(new RetryInterceptor(maxRetries, Optional.of(initialRetryDelayMillis),
-                                Optional.of(maxRetryDelayMillis), Optional.empty()))
+                                Optional.of(maxRetryDelayMillis), Optional.of(RETRY_JITTER_FACTOR)))
                         .addInterceptor(chain -> {  // INNER: auth
                             Request requestWithAuth = chain.request().newBuilder()
                                     .header("Authorization", "Bearer " + this.token)
