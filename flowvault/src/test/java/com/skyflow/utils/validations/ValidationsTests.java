@@ -11,12 +11,19 @@ import com.skyflow.vault.data.BulkInsertRequest;
 import com.skyflow.vault.data.BulkDetokenizeRequest;
 import com.skyflow.vault.data.BulkTokenizeRequestRecord;
 import com.skyflow.vault.data.BulkTokenizeRequest;
+import com.skyflow.vault.data.ColumnRedactions;
+import com.skyflow.vault.data.DeleteRequest;
 import com.skyflow.vault.data.DetokenizeRequest;
+import com.skyflow.vault.data.GetRequest;
+import com.skyflow.vault.data.GetRequestRecord;
 import com.skyflow.vault.data.InsertRequestRecord;
 import com.skyflow.vault.data.InsertRequest;
+import com.skyflow.vault.data.QueryRequest;
 import com.skyflow.vault.data.TokenGroupRedactions;
 import com.skyflow.vault.data.TokenizeRequestRecord;
 import com.skyflow.vault.data.TokenizeRequest;
+import com.skyflow.vault.data.UpdateRequest;
+import com.skyflow.vault.data.UpdateRequestRecord;
 import com.skyflow.vault.data.UpsertOptions;
 import org.junit.Assert;
 import org.junit.Test;
@@ -1607,7 +1614,628 @@ public class ValidationsTests {
         }
     }
 
-    // Tests for validateQueryRequest / validateGetRequest were removed:
-    // those unary validators no longer exist (bulk-only module).
+    // ── validateQueryRequest ──────────────────────────────────────────────────
 
+    @Test
+    public void testValidateQueryRequest_nullRequestThrows() {
+        try {
+            Validations.validateQueryRequest(null);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.QueryRequestNull.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateQueryRequest_nullQueryThrows() {
+        QueryRequest request = QueryRequest.builder().build();
+        try {
+            Validations.validateQueryRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.QueryKeyError.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateQueryRequest_blankQueryThrows() {
+        QueryRequest request = QueryRequest.builder().query("   ").build();
+        try {
+            Validations.validateQueryRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.EmptyQuery.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateQueryRequest_validRequestDoesNotThrow() {
+        QueryRequest request = QueryRequest.builder().query("SELECT * FROM table1").build();
+        try {
+            Validations.validateQueryRequest(request);
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    // ── validateDeleteRequest ─────────────────────────────────────────────────
+
+    @Test
+    public void testValidateDeleteRequest_nullRequestThrows() {
+        try {
+            Validations.validateDeleteRequest(null);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.DeleteRequestNull.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateDeleteRequest_nullTableThrows() {
+        DeleteRequest request = DeleteRequest.builder().ids(Collections.singletonList("id1")).build();
+        try {
+            Validations.validateDeleteRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.TableKeyError.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateDeleteRequest_blankTableThrows() {
+        DeleteRequest request = DeleteRequest.builder().table("   ").ids(Collections.singletonList("id1")).build();
+        try {
+            Validations.validateDeleteRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.EmptyTable.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateDeleteRequest_neitherIdsNorUniqueValuesThrows() {
+        DeleteRequest request = DeleteRequest.builder().table("table1").build();
+        try {
+            Validations.validateDeleteRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.IdsOrUniqueValuesKeyError.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateDeleteRequest_bothIdsAndUniqueValuesThrows() {
+        Map<String, Object> uniqueValue = new HashMap<>();
+        uniqueValue.put("email", "john@example.com");
+        DeleteRequest request = DeleteRequest.builder()
+                .table("table1")
+                .ids(Collections.singletonList("id1"))
+                .uniqueValues(Collections.singletonList(uniqueValue))
+                .build();
+        try {
+            Validations.validateDeleteRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.BothIdsAndUniqueValuesSpecified.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateDeleteRequest_blankIdInIdsThrows() {
+        DeleteRequest request = DeleteRequest.builder().table("table1").ids(Arrays.asList("id1", "  ")).build();
+        try {
+            Validations.validateDeleteRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.EmptyIdInIds.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateDeleteRequest_emptyUniqueValueInUniqueValuesThrows() {
+        DeleteRequest request = DeleteRequest.builder()
+                .table("table1")
+                .uniqueValues(Collections.singletonList(new HashMap<>()))
+                .build();
+        try {
+            Validations.validateDeleteRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.EmptyUniqueValueInUniqueValues.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateDeleteRequest_validWithIdsDoesNotThrow() {
+        DeleteRequest request = DeleteRequest.builder().table("table1").ids(Collections.singletonList("id1")).build();
+        try {
+            Validations.validateDeleteRequest(request);
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testValidateDeleteRequest_validWithUniqueValuesDoesNotThrow() {
+        Map<String, Object> uniqueValue = new HashMap<>();
+        uniqueValue.put("email", "john@example.com");
+        DeleteRequest request = DeleteRequest.builder()
+                .table("table1")
+                .uniqueValues(Collections.singletonList(uniqueValue))
+                .build();
+        try {
+            Validations.validateDeleteRequest(request);
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    // ── validateUpdateRequest ─────────────────────────────────────────────────
+
+    @Test
+    public void testValidateUpdateRequest_nullRequestThrows() {
+        try {
+            Validations.validateUpdateRequest(null);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.UpdateRequestNull.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateUpdateRequest_nullTableNameThrows() {
+        UpdateRequestRecord record = UpdateRequestRecord.builder().skyflowId("sky1").build();
+        UpdateRequest request = UpdateRequest.builder().records(Collections.singletonList(record)).build();
+        try {
+            Validations.validateUpdateRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.TableKeyError.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateUpdateRequest_blankTableNameThrows() {
+        UpdateRequestRecord record = UpdateRequestRecord.builder().skyflowId("sky1").build();
+        UpdateRequest request = UpdateRequest.builder().tableName("  ").records(Collections.singletonList(record)).build();
+        try {
+            Validations.validateUpdateRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.EmptyTable.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateUpdateRequest_nullRecordsThrows() {
+        UpdateRequest request = UpdateRequest.builder().tableName("table1").build();
+        try {
+            Validations.validateUpdateRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.RecordsKeyError.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateUpdateRequest_emptyRecordsThrows() {
+        UpdateRequest request = UpdateRequest.builder().tableName("table1").records(new ArrayList<>()).build();
+        try {
+            Validations.validateUpdateRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.EmptyRecords.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateUpdateRequest_nullRecordInListThrows() {
+        List<UpdateRequestRecord> records = new ArrayList<>();
+        records.add(null);
+        UpdateRequest request = UpdateRequest.builder().tableName("table1").records(records).build();
+        try {
+            Validations.validateUpdateRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.UpdateRecordNull.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateUpdateRequest_nullSkyflowIdThrows() {
+        UpdateRequestRecord record = UpdateRequestRecord.builder().build();
+        UpdateRequest request = UpdateRequest.builder().tableName("table1").records(Collections.singletonList(record)).build();
+        try {
+            Validations.validateUpdateRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.RecordSkyflowIdKeyError.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateUpdateRequest_blankSkyflowIdThrows() {
+        UpdateRequestRecord record = UpdateRequestRecord.builder().skyflowId("  ").build();
+        UpdateRequest request = UpdateRequest.builder().tableName("table1").records(Collections.singletonList(record)).build();
+        try {
+            Validations.validateUpdateRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.EmptySkyflowIdInRecord.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateUpdateRequest_blankKeyInDataThrows() {
+        Map<String, Object> data = new HashMap<>();
+        data.put("  ", "value1");
+        UpdateRequestRecord record = UpdateRequestRecord.builder().skyflowId("sky1").data(data).build();
+        UpdateRequest request = UpdateRequest.builder().tableName("table1").records(Collections.singletonList(record)).build();
+        try {
+            Validations.validateUpdateRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.EmptyKeyInRecords.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateUpdateRequest_blankValueInDataThrows() {
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", "  ");
+        UpdateRequestRecord record = UpdateRequestRecord.builder().skyflowId("sky1").data(data).build();
+        UpdateRequest request = UpdateRequest.builder().tableName("table1").records(Collections.singletonList(record)).build();
+        try {
+            Validations.validateUpdateRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.EmptyValueInValues.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateUpdateRequest_emptyTokensMapThrows() {
+        UpdateRequestRecord record = UpdateRequestRecord.builder().skyflowId("sky1").tokens(new HashMap<>()).build();
+        UpdateRequest request = UpdateRequest.builder().tableName("table1").records(Collections.singletonList(record)).build();
+        try {
+            Validations.validateUpdateRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.EmptyTokens.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateUpdateRequest_blankKeyInTokensThrows() {
+        Map<String, Object> tokens = new HashMap<>();
+        tokens.put("  ", "tok-abc");
+        UpdateRequestRecord record = UpdateRequestRecord.builder().skyflowId("sky1").tokens(tokens).build();
+        UpdateRequest request = UpdateRequest.builder().tableName("table1").records(Collections.singletonList(record)).build();
+        try {
+            Validations.validateUpdateRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.EmptyKeyInTokens.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateUpdateRequest_blankValueInTokensThrows() {
+        Map<String, Object> tokens = new HashMap<>();
+        tokens.put("name", "  ");
+        UpdateRequestRecord record = UpdateRequestRecord.builder().skyflowId("sky1").tokens(tokens).build();
+        UpdateRequest request = UpdateRequest.builder().tableName("table1").records(Collections.singletonList(record)).build();
+        try {
+            Validations.validateUpdateRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.EmptyValueInTokens.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateUpdateRequest_invalidUpdateTypeThrows() {
+        UpdateRequestRecord record = UpdateRequestRecord.builder().skyflowId("sky1").build();
+        UpdateRequest request = UpdateRequest.builder()
+                .tableName("table1")
+                .records(Collections.singletonList(record))
+                .updateType("NOT_A_REAL_TYPE")
+                .build();
+        try {
+            Validations.validateUpdateRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.InvalidUpsertUpdateType.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateUpdateRequest_validMinimalRequestDoesNotThrow() {
+        UpdateRequestRecord record = UpdateRequestRecord.builder().skyflowId("sky1").build();
+        UpdateRequest request = UpdateRequest.builder().tableName("table1").records(Collections.singletonList(record)).build();
+        try {
+            Validations.validateUpdateRequest(request);
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testValidateUpdateRequest_validWithReplaceUpdateTypeAndRecordTableNameDoesNotThrow() {
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", "jane");
+        UpdateRequestRecord record = UpdateRequestRecord.builder()
+                .skyflowId("sky1")
+                .data(data)
+                .tableName("table2")
+                .build();
+        UpdateRequest request = UpdateRequest.builder()
+                .tableName("table1")
+                .records(Collections.singletonList(record))
+                .updateType("REPLACE")
+                .build();
+        try {
+            Validations.validateUpdateRequest(request);
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    // ── validateGetRequest ────────────────────────────────────────────────────
+
+    @Test
+    public void testValidateGetRequest_nullRequestThrows() {
+        try {
+            Validations.validateGetRequest(null);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.GetRequestNull.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateGetRequest_bothSingleTableFieldsAndRecordsThrows() {
+        GetRequestRecord nestedRecord = GetRequestRecord.builder().table("table2").ids(Collections.singletonList("id1")).build();
+        GetRequest request = GetRequest.builder()
+                .table("table1")
+                .ids(new ArrayList<>(Collections.singletonList("id1")))
+                .records(Collections.singletonList(nestedRecord))
+                .build();
+        try {
+            Validations.validateGetRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.BothSingleTableFieldsAndRecordsSpecified.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateGetRequest_nullRecordInRecordsListThrows() {
+        List<GetRequestRecord> records = new ArrayList<>();
+        records.add(null);
+        GetRequest request = GetRequest.builder().records(records).build();
+        try {
+            Validations.validateGetRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.NullGetRecordRequest.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateGetRequest_nullTableThrows() {
+        GetRequest request = GetRequest.builder().ids(new ArrayList<>(Collections.singletonList("id1"))).build();
+        try {
+            Validations.validateGetRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.TableKeyError.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateGetRequest_blankTableThrows() {
+        GetRequest request = GetRequest.builder().table("  ").ids(new ArrayList<>(Collections.singletonList("id1"))).build();
+        try {
+            Validations.validateGetRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.EmptyTable.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateGetRequest_neitherIdsNorUniqueValuesThrows() {
+        GetRequest request = GetRequest.builder().table("table1").build();
+        try {
+            Validations.validateGetRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.IdsOrUniqueValuesKeyError.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateGetRequest_bothIdsAndUniqueValuesThrows() {
+        Map<String, Object> uniqueValue = new HashMap<>();
+        uniqueValue.put("email", "john@example.com");
+        GetRequest request = GetRequest.builder()
+                .table("table1")
+                .ids(new ArrayList<>(Collections.singletonList("id1")))
+                .uniqueValues(Collections.singletonList(uniqueValue))
+                .build();
+        try {
+            Validations.validateGetRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.BothIdsAndUniqueValuesSpecified.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateGetRequest_blankIdInIdsThrows() {
+        GetRequest request = GetRequest.builder()
+                .table("table1")
+                .ids(new ArrayList<>(Arrays.asList("id1", "  ")))
+                .build();
+        try {
+            Validations.validateGetRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.EmptyIdInIds.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateGetRequest_emptyUniqueValueInUniqueValuesThrows() {
+        GetRequest request = GetRequest.builder()
+                .table("table1")
+                .uniqueValues(Collections.singletonList(new HashMap<>()))
+                .build();
+        try {
+            Validations.validateGetRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.EmptyUniqueValueInUniqueValues.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateGetRequest_emptyFieldsThrows() {
+        GetRequest request = GetRequest.builder()
+                .table("table1")
+                .ids(new ArrayList<>(Collections.singletonList("id1")))
+                .fields(new ArrayList<>())
+                .build();
+        try {
+            Validations.validateGetRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.EmptyFields.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateGetRequest_blankFieldInFieldsThrows() {
+        GetRequest request = GetRequest.builder()
+                .table("table1")
+                .ids(new ArrayList<>(Collections.singletonList("id1")))
+                .fields(new ArrayList<>(Arrays.asList("name", "  ")))
+                .build();
+        try {
+            Validations.validateGetRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.EmptyFieldInFields.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateGetRequest_nullColumnRedactionInListThrows() {
+        List<ColumnRedactions> columnRedactions = new ArrayList<>();
+        columnRedactions.add(null);
+        GetRequest request = GetRequest.builder()
+                .table("table1")
+                .ids(new ArrayList<>(Collections.singletonList("id1")))
+                .columnRedactions(columnRedactions)
+                .build();
+        try {
+            Validations.validateGetRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.NullColumnRedactions.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateGetRequest_blankColumnNameInColumnRedactionThrows() {
+        ColumnRedactions redaction = ColumnRedactions.builder().redaction("MASKED").build();
+        GetRequest request = GetRequest.builder()
+                .table("table1")
+                .ids(new ArrayList<>(Collections.singletonList("id1")))
+                .columnRedactions(Collections.singletonList(redaction))
+                .build();
+        try {
+            Validations.validateGetRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.NullColumnNameInColumnRedaction.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateGetRequest_blankRedactionInColumnRedactionThrows() {
+        ColumnRedactions redaction = ColumnRedactions.builder().columnName("email").build();
+        GetRequest request = GetRequest.builder()
+                .table("table1")
+                .ids(new ArrayList<>(Collections.singletonList("id1")))
+                .columnRedactions(Collections.singletonList(redaction))
+                .build();
+        try {
+            Validations.validateGetRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.NullRedactionInColumnRedaction.getMessage(), e.getMessage());
+        }
+    }
+
+    @Test
+    public void testValidateGetRequest_validSingleTableWithIdsDoesNotThrow() {
+        GetRequest request = GetRequest.builder()
+                .table("table1")
+                .ids(new ArrayList<>(Collections.singletonList("id1")))
+                .build();
+        try {
+            Validations.validateGetRequest(request);
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testValidateGetRequest_validSingleTableWithUniqueValuesDoesNotThrow() {
+        Map<String, Object> uniqueValue = new HashMap<>();
+        uniqueValue.put("email", "john@example.com");
+        GetRequest request = GetRequest.builder()
+                .table("table1")
+                .uniqueValues(Collections.singletonList(uniqueValue))
+                .build();
+        try {
+            Validations.validateGetRequest(request);
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testValidateGetRequest_validMultiTableRecordsModeDoesNotThrow() {
+        GetRequestRecord nestedRecord1 = GetRequestRecord.builder()
+                .table("table1")
+                .ids(Collections.singletonList("id1"))
+                .build();
+        GetRequestRecord nestedRecord2 = GetRequestRecord.builder()
+                .table("table2")
+                .ids(Collections.singletonList("id2"))
+                .build();
+        GetRequest request = GetRequest.builder()
+                .records(Arrays.asList(nestedRecord1, nestedRecord2))
+                .build();
+        try {
+            Validations.validateGetRequest(request);
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testValidateGetRequest_multiTableRecordMissingTableThrows() {
+        GetRequestRecord nestedRecord = GetRequestRecord.builder().ids(Collections.singletonList("id1")).build();
+        GetRequest request = GetRequest.builder().records(Collections.singletonList(nestedRecord)).build();
+        try {
+            Validations.validateGetRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorMessage.TableKeyError.getMessage(), e.getMessage());
+        }
+    }
 }

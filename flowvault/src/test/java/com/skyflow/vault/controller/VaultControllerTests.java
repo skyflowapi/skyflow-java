@@ -12,14 +12,22 @@ import com.skyflow.generated.rest.core.ApiClientHttpResponse;
 import com.skyflow.generated.rest.core.RequestOptions;
 import com.skyflow.generated.rest.resources.flowservice.FlowserviceClient;
 import com.skyflow.generated.rest.resources.flowservice.RawFlowserviceClient;
+import com.skyflow.generated.rest.resources.records.RawRecordsClient;
+import com.skyflow.generated.rest.resources.records.RecordsClient;
+import com.skyflow.generated.rest.types.V1DeleteResponse;
+import com.skyflow.generated.rest.types.V1DeleteResponseObject;
 import com.skyflow.generated.rest.types.V1DeleteTokenResponseObject;
+import com.skyflow.generated.rest.types.V1ExecuteQueryRecordResponse;
+import com.skyflow.generated.rest.types.V1ExecuteQueryResponse;
 import com.skyflow.generated.rest.types.V1FlowDeleteTokenResponse;
 import com.skyflow.generated.rest.types.V1FlowDetokenizeResponse;
 import com.skyflow.generated.rest.types.V1FlowDetokenizeResponseObject;
 import com.skyflow.generated.rest.types.V1FlowTokenizeResponse;
 import com.skyflow.generated.rest.types.V1FlowTokenizeResponseObject;
+import com.skyflow.generated.rest.types.V1GetResponse;
 import com.skyflow.generated.rest.types.V1InsertResponse;
 import com.skyflow.generated.rest.types.V1RecordResponseObject;
+import com.skyflow.generated.rest.types.V1UpdateResponse;
 import com.skyflow.utils.Constants;
 import com.skyflow.vault.data.BulkDeleteTokensOptions;
 import com.skyflow.vault.data.BulkTokenizeOptions;
@@ -37,8 +45,24 @@ import com.skyflow.vault.data.BulkTokenizeRequest;
 import com.skyflow.vault.data.BulkTokenizeResponse;
 import com.skyflow.vault.data.BulkDetokenizeOptions;
 import com.skyflow.vault.data.BulkInsertOptions;
+import com.skyflow.vault.data.ColumnRedactions;
+import com.skyflow.vault.data.DeleteOptions;
+import com.skyflow.vault.data.DeleteRequest;
+import com.skyflow.vault.data.DeleteResponse;
 import com.skyflow.vault.data.DeleteTokensOptions;
+import com.skyflow.vault.data.DetokenizeOptions;
+import com.skyflow.vault.data.DetokenizeRequest;
+import com.skyflow.vault.data.DetokenizeResponse;
+import com.skyflow.vault.data.GetOptions;
+import com.skyflow.vault.data.GetRequest;
+import com.skyflow.vault.data.GetResponse;
+import com.skyflow.vault.data.InsertOptions;
+import com.skyflow.vault.data.InsertRequest;
 import com.skyflow.vault.data.InsertRequestRecord;
+import com.skyflow.vault.data.InsertResponse;
+import com.skyflow.vault.data.QueryOptions;
+import com.skyflow.vault.data.QueryRequest;
+import com.skyflow.vault.data.QueryResponse;
 import com.skyflow.vault.data.RequestInterceptor;
 import com.skyflow.vault.data.Token;
 import com.skyflow.vault.data.TokenGroupRedactions;
@@ -46,6 +70,10 @@ import com.skyflow.vault.data.TokenizeOptions;
 import com.skyflow.vault.data.TokenizeRequestRecord;
 import com.skyflow.vault.data.TokenizeRequest;
 import com.skyflow.vault.data.TokenizeResponse;
+import com.skyflow.vault.data.UpdateOptions;
+import com.skyflow.vault.data.UpdateRequest;
+import com.skyflow.vault.data.UpdateRequestRecord;
+import com.skyflow.vault.data.UpdateResponse;
 import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -104,8 +132,270 @@ public class VaultControllerTests {
         return mockRaw;
     }
 
-    // Tests for the unary insert / detokenize / tokenize / deleteTokens controller methods
-    // (and their interceptor-header wiring) were removed: VaultController is bulk-only now.
+    private static RawRecordsClient mockRawRecords(ApiClient mockApi) {
+        RecordsClient mockRecords = Mockito.mock(RecordsClient.class);
+        RawRecordsClient mockRaw = Mockito.mock(RawRecordsClient.class);
+        when(mockApi.records()).thenReturn(mockRecords);
+        when(mockRecords.withRawResponse()).thenReturn(mockRaw);
+        return mockRaw;
+    }
+
+    // ── insert (unary) ────────────────────────────────────────────────────────
+
+    @Test
+    public void testInsert_success() throws Exception {
+        ApiClient mockApi = Mockito.mock(ApiClient.class);
+        RawFlowserviceClient mockRaw = mockRawFlowservice(mockApi);
+
+        Map<String, Object> tokens = new HashMap<>();
+        tokens.put("name", "tok-abc");
+        V1RecordResponseObject record = V1RecordResponseObject.builder()
+                .tableName("table1").skyflowId("sky-id-1").tokens(tokens).build();
+        V1InsertResponse body = V1InsertResponse.builder().records(Collections.singletonList(record)).build();
+        ApiClientHttpResponse<V1InsertResponse> httpResp = new ApiClientHttpResponse<>(body, buildOkHttpResponse());
+        when(mockRaw.insert(any(), any())).thenReturn(httpResp);
+
+        VaultController controller = createControllerWithMock(mockApi);
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", "john");
+        InsertRequestRecord insertRecord = InsertRequestRecord.builder().data(data).build();
+        InsertRequest request = InsertRequest.builder()
+                .tableName("table1")
+                .records(Collections.singletonList(insertRecord))
+                .build();
+
+        InsertResponse response = controller.insert(request);
+        Assert.assertNotNull(INVALID_EXCEPTION_THROWN, response);
+        Assert.assertEquals(1, response.getRecords().size());
+        Assert.assertEquals("sky-id-1", response.getRecords().get(0).getSkyflowId());
+        Assert.assertNull(response.getRecords().get(0).getError());
+    }
+
+    @Test
+    public void testInsert_invalidRequestThrowsSkyflowException() throws Exception {
+        ApiClient mockApi = Mockito.mock(ApiClient.class);
+        VaultController controller = createControllerWithMock(mockApi);
+        InsertRequest request = InsertRequest.builder().records(new ArrayList<>()).build();
+        try {
+            controller.insert(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertNotNull(e.getMessage());
+        }
+    }
+
+    @Test
+    public void testInsert_interceptorAddsCustomHeader() throws Exception {
+        ApiClient mockApi = Mockito.mock(ApiClient.class);
+        RawFlowserviceClient mockRaw = mockRawFlowservice(mockApi);
+
+        V1RecordResponseObject record = V1RecordResponseObject.builder().skyflowId("sky-id-1").build();
+        V1InsertResponse body = V1InsertResponse.builder().records(Collections.singletonList(record)).build();
+        ApiClientHttpResponse<V1InsertResponse> httpResp = new ApiClientHttpResponse<>(body, buildOkHttpResponse());
+        when(mockRaw.insert(any(), any())).thenReturn(httpResp);
+
+        VaultController controller = createControllerWithMock(mockApi);
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", "john");
+        InsertRequestRecord insertRecord = InsertRequestRecord.builder().data(data).build();
+        InsertRequest request = InsertRequest.builder()
+                .tableName("table1")
+                .records(Collections.singletonList(insertRecord))
+                .build();
+
+        RequestInterceptor interceptor = ctx -> ctx.addHeader(CustomHeaderKey.SKYFLOW_ACCOUNT_ID, "acct-123");
+        InsertOptions options = InsertOptions.builder().interceptor(interceptor).build();
+
+        controller.insert(request, options);
+
+        ArgumentCaptor<RequestOptions> captor = ArgumentCaptor.forClass(RequestOptions.class);
+        Mockito.verify(mockRaw).insert(any(), captor.capture());
+        Assert.assertEquals("acct-123", captor.getValue().getHeaders().get(CustomHeaderKey.SKYFLOW_ACCOUNT_ID.toString()));
+    }
+
+    // ── detokenize (unary) ────────────────────────────────────────────────────
+
+    @Test
+    public void testDetokenize_success() throws Exception {
+        ApiClient mockApi = Mockito.mock(ApiClient.class);
+        RawFlowserviceClient mockRaw = mockRawFlowservice(mockApi);
+
+        V1FlowDetokenizeResponseObject record = V1FlowDetokenizeResponseObject.builder()
+                .token("tok-1").value("john@example.com").build();
+        V1FlowDetokenizeResponse body = V1FlowDetokenizeResponse.builder()
+                .response(Collections.singletonList(record)).build();
+        ApiClientHttpResponse<V1FlowDetokenizeResponse> httpResp = new ApiClientHttpResponse<>(body, buildOkHttpResponse());
+        when(mockRaw.detokenize(any(), any())).thenReturn(httpResp);
+
+        VaultController controller = createControllerWithMock(mockApi);
+        DetokenizeRequest request = DetokenizeRequest.builder().tokens(Collections.singletonList("tok-1")).build();
+
+        DetokenizeResponse response = controller.detokenize(request);
+        Assert.assertEquals(1, response.getRecords().size());
+        Assert.assertEquals("john@example.com", response.getRecords().get(0).getValue());
+    }
+
+    @Test
+    public void testDetokenize_invalidRequestThrowsSkyflowException() throws Exception {
+        ApiClient mockApi = Mockito.mock(ApiClient.class);
+        VaultController controller = createControllerWithMock(mockApi);
+        DetokenizeRequest request = DetokenizeRequest.builder().tokens(new ArrayList<>()).build();
+        try {
+            controller.detokenize(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertNotNull(e.getMessage());
+        }
+    }
+
+    // ── delete (unary) ────────────────────────────────────────────────────────
+
+    @Test
+    public void testDelete_success() throws Exception {
+        ApiClient mockApi = Mockito.mock(ApiClient.class);
+        RawFlowserviceClient mockRaw = mockRawFlowservice(mockApi);
+
+        V1DeleteResponseObject record = V1DeleteResponseObject.builder().skyflowId("sky-1").httpCode(200).build();
+        V1DeleteResponse body = V1DeleteResponse.builder().records(Collections.singletonList(record)).build();
+        ApiClientHttpResponse<V1DeleteResponse> httpResp = new ApiClientHttpResponse<>(body, buildOkHttpResponse());
+        when(mockRaw.delete(any(), any())).thenReturn(httpResp);
+
+        VaultController controller = createControllerWithMock(mockApi);
+        DeleteRequest request = DeleteRequest.builder().table("table1").ids(Collections.singletonList("sky-1")).build();
+
+        DeleteResponse response = controller.delete(request);
+        Assert.assertEquals(1, response.getRecords().size());
+        Assert.assertEquals("sky-1", response.getRecords().get(0).getSkyflowId());
+        Assert.assertNull(response.getRecords().get(0).getError());
+    }
+
+    @Test
+    public void testDelete_invalidRequestThrowsSkyflowException() throws Exception {
+        ApiClient mockApi = Mockito.mock(ApiClient.class);
+        VaultController controller = createControllerWithMock(mockApi);
+        DeleteRequest request = DeleteRequest.builder().table("table1").build();
+        try {
+            controller.delete(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertNotNull(e.getMessage());
+        }
+    }
+
+    // ── update (unary) ────────────────────────────────────────────────────────
+
+    @Test
+    public void testUpdate_success() throws Exception {
+        ApiClient mockApi = Mockito.mock(ApiClient.class);
+        RawFlowserviceClient mockRaw = mockRawFlowservice(mockApi);
+
+        V1RecordResponseObject record = V1RecordResponseObject.builder()
+                .tableName("table1").skyflowId("sky-1").build();
+        V1UpdateResponse body = V1UpdateResponse.builder().records(Collections.singletonList(record)).build();
+        ApiClientHttpResponse<V1UpdateResponse> httpResp = new ApiClientHttpResponse<>(body, buildOkHttpResponse());
+        when(mockRaw.update(any(), any())).thenReturn(httpResp);
+
+        VaultController controller = createControllerWithMock(mockApi);
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", "jane");
+        UpdateRequestRecord updateRecord = UpdateRequestRecord.builder().skyflowId("sky-1").data(data).build();
+        UpdateRequest request = UpdateRequest.builder()
+                .tableName("table1")
+                .records(Collections.singletonList(updateRecord))
+                .build();
+
+        UpdateResponse response = controller.update(request);
+        Assert.assertEquals(1, response.getRecords().size());
+        Assert.assertEquals("sky-1", response.getRecords().get(0).getSkyflowId());
+    }
+
+    @Test
+    public void testUpdate_invalidRequestThrowsSkyflowException() throws Exception {
+        ApiClient mockApi = Mockito.mock(ApiClient.class);
+        VaultController controller = createControllerWithMock(mockApi);
+        UpdateRequest request = UpdateRequest.builder().tableName("table1").records(new ArrayList<>()).build();
+        try {
+            controller.update(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertNotNull(e.getMessage());
+        }
+    }
+
+    // ── get (unary) ───────────────────────────────────────────────────────────
+
+    @Test
+    public void testGet_success() throws Exception {
+        ApiClient mockApi = Mockito.mock(ApiClient.class);
+        RawFlowserviceClient mockRaw = mockRawFlowservice(mockApi);
+
+        V1RecordResponseObject record = V1RecordResponseObject.builder()
+                .tableName("table1").skyflowId("sky-1").build();
+        V1GetResponse body = V1GetResponse.builder().records(Collections.singletonList(record)).build();
+        ApiClientHttpResponse<V1GetResponse> httpResp = new ApiClientHttpResponse<>(body, buildOkHttpResponse());
+        when(mockRaw.get(any(), any())).thenReturn(httpResp);
+
+        VaultController controller = createControllerWithMock(mockApi);
+        GetRequest request = GetRequest.builder()
+                .table("table1")
+                .ids(new ArrayList<>(Collections.singletonList("sky-1")))
+                .build();
+
+        GetResponse response = controller.get(request);
+        Assert.assertEquals(1, response.getRecords().size());
+        Assert.assertEquals("sky-1", response.getRecords().get(0).getSkyflowId());
+    }
+
+    @Test
+    public void testGet_invalidRequestThrowsSkyflowException() throws Exception {
+        ApiClient mockApi = Mockito.mock(ApiClient.class);
+        VaultController controller = createControllerWithMock(mockApi);
+        GetRequest request = GetRequest.builder().table("table1").build();
+        try {
+            controller.get(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertNotNull(e.getMessage());
+        }
+    }
+
+    // ── query (unary) ─────────────────────────────────────────────────────────
+
+    @Test
+    public void testQuery_success() throws Exception {
+        ApiClient mockApi = Mockito.mock(ApiClient.class);
+        RawRecordsClient mockRaw = mockRawRecords(mockApi);
+
+        Map<String, Object> row = new HashMap<>();
+        row.put("name", "john");
+        V1ExecuteQueryRecordResponse record = V1ExecuteQueryRecordResponse.builder().data(row).build();
+        V1ExecuteQueryResponse body = V1ExecuteQueryResponse.builder().records(Collections.singletonList(record)).build();
+        ApiClientHttpResponse<V1ExecuteQueryResponse> httpResp = new ApiClientHttpResponse<>(body, buildOkHttpResponse());
+        when(mockRaw.flowServiceExecuteQuery(any(), any())).thenReturn(httpResp);
+
+        VaultController controller = createControllerWithMock(mockApi);
+        QueryRequest request = QueryRequest.builder().query("SELECT * FROM table1").build();
+
+        QueryResponse response = controller.query(request);
+        Assert.assertEquals(1, response.getRecords().size());
+        Assert.assertEquals(row, response.getRecords().get(0).getData());
+    }
+
+    @Test
+    public void testQuery_invalidRequestThrowsSkyflowException() throws Exception {
+        ApiClient mockApi = Mockito.mock(ApiClient.class);
+        VaultController controller = createControllerWithMock(mockApi);
+        QueryRequest request = QueryRequest.builder().build();
+        try {
+            controller.query(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertNotNull(e.getMessage());
+        }
+    }
 
     // ── bulkInsert ────────────────────────────────────────────────────────────
 
@@ -775,8 +1065,6 @@ public class VaultControllerTests {
         Assert.assertEquals("tok-xyz", field1Tokens.get(0).getToken());
         Assert.assertEquals("group1", field1Tokens.get(0).getTokenGroupName());
     }
-
-    // Tests for the unary query / get controller methods were removed: VaultController is bulk-only now.
 
     // ─────────────────────────────────────────────────────────────────────────
     // Request fidelity through batch dispatch
