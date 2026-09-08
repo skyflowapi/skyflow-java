@@ -7,6 +7,11 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+
 public class ConnectionClientTests {
     private static final String INVALID_EXCEPTION_THROWN = "Should not have thrown any exception";
     private static final String EXCEPTION_NOT_THROWN = "Should have thrown an exception";
@@ -19,11 +24,15 @@ public class ConnectionClientTests {
     // @Before (not @BeforeClass): several tests below mutate the shared connectionClient/
     // connectionConfig credentials state, so it must reset before every test rather than once
     // per class — otherwise test outcomes depend on JUnit's (unspecified) method execution order.
+    //
+    // Dummy API key lives outside the source tree, in a resource file under dummy-non-secrets/
+    // (excluded from Gitleaks scans), rather than as a string literal here.
     @Before
-    public void setup() {
+    public void setup() throws IOException {
         connectionID = "connection123";
         connectionURL = "https://test.connection.url";
-        apiKey = "sky-ab123-abcd1234cdef1234abcd4321cdef4321";
+        apiKey = new String(Files.readAllBytes(
+                Paths.get("./src/test/resources/dummy-non-secrets/dummy-api-key.txt")), StandardCharsets.UTF_8).trim();
 
         Credentials credentials = new Credentials();
         credentials.setApiKey(apiKey);

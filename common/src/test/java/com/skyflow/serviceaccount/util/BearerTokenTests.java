@@ -249,7 +249,7 @@ public class BearerTokenTests {
 
     @Test
     public void testInvalidTokenURIInCredentialsForCredentials() throws SkyflowException {
-        String filePath = "./src/test/resources/invalidTokenURICredentials.json";
+        String filePath = "./src/test/resources/dummy-non-secrets/invalidTokenURICredentials.json";
         File file = new File(filePath);
         try {
             BearerToken bearerToken = BearerToken.builder().setCredentials(file).build();

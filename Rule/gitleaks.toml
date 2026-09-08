@@ -61,6 +61,7 @@ paths = [
     '''\.gem$''',
     '''verification-metadata\.xml''',
     '''Database.refactorlog''',
+    '''(?:^|/)dummy-non-secrets(?:/.*)?$''',
 ]
 stopwords = [
     "abcdefghijklmnopqrstuvwxyz",
