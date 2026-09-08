@@ -2,7 +2,12 @@ package com.skyflow.utils;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 import com.google.gson.JsonObject;
 import com.skyflow.config.VaultConfig;
@@ -14,6 +19,12 @@ import com.skyflow.generated.rest.core.ApiClientApiException;
 import com.skyflow.generated.rest.core.ObjectMappers;
 import com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest;
 import com.skyflow.generated.rest.resources.flowservice.requests.V1InsertRequest;
+import com.skyflow.generated.rest.resources.flowservice.requests.V1GetRequest;
+import com.skyflow.generated.rest.resources.flowservice.requests.V1DeleteRequest;
+import com.skyflow.generated.rest.resources.flowservice.requests.V1UpdateRequest;
+import com.skyflow.generated.rest.resources.records.requests.V1ExecuteQueryRequest;
+import com.skyflow.generated.rest.types.V1ExecuteQueryRecordResponse;
+import com.skyflow.generated.rest.types.V1ExecuteQueryResponse;
 import com.skyflow.generated.rest.types.FlowEnumUpdateType;
 import com.skyflow.generated.rest.types.V1DeleteTokenResponseObject;
 import com.skyflow.generated.rest.types.V1FlowDeleteTokenResponse;
@@ -25,42 +36,61 @@ import com.skyflow.generated.rest.types.V1FlowTokenizeResponseObject;
 import com.skyflow.generated.rest.types.V1InsertRecordData;
 import com.skyflow.generated.rest.types.V1InsertResponse;
 import com.skyflow.generated.rest.types.V1RecordResponseObject;
+import com.skyflow.generated.rest.types.V1UpdateRecordData;
+import com.skyflow.generated.rest.types.V1ColumnRedactions;
+import com.skyflow.generated.rest.types.V1GetRequestData;
+import com.skyflow.generated.rest.types.V1GetResponse;
+import com.skyflow.generated.rest.types.V1UniqueValue;
+import com.skyflow.generated.rest.types.V1DeleteResponse;
+import com.skyflow.generated.rest.types.V1DeleteResponseObject;
+import com.skyflow.generated.rest.types.V1UpdateResponse;
 import com.skyflow.generated.rest.types.V1TokenGroupRedactions;
 import com.skyflow.generated.rest.types.V1Upsert;
 import com.skyflow.logs.ErrorLogs;
 import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.vault.data.BulkDeleteTokensRequest;
-import com.skyflow.vault.data.BulkDeleteTokensResponseRecord;
-import com.skyflow.vault.data.BulkTokenizeRequestRecord;
-import com.skyflow.vault.data.BulkTokenizeResponseRecord;
-import com.skyflow.vault.data.DeleteTokensRecord;
-import com.skyflow.vault.data.TokenizeRequestRecord;
 import com.skyflow.vault.data.BulkDeleteTokensResponse;
+import com.skyflow.vault.data.BulkDeleteTokensResponseRecord;
 import com.skyflow.vault.data.BulkDetokenizeRequest;
 import com.skyflow.vault.data.BulkDetokenizeResponse;
 import com.skyflow.vault.data.BulkDetokenizeResponseRecord;
-import com.skyflow.vault.data.DetokenizeMetadata;
 import com.skyflow.vault.data.BulkInsertRequest;
 import com.skyflow.vault.data.BulkInsertResponse;
 import com.skyflow.vault.data.BulkInsertResponseRecord;
-import com.skyflow.vault.data.BulkTokenizeRequest;
+import com.skyflow.vault.data.BulkTokenizeRequestRecord;
 import com.skyflow.vault.data.BulkTokenizeResponse;
+import com.skyflow.vault.data.BulkTokenizeResponseRecord;
+import com.skyflow.vault.data.DetokenizeMetadata;
+import com.skyflow.vault.data.DetokenizeRequest;
+import com.skyflow.vault.data.DetokenizeResponse;
+import com.skyflow.vault.data.DetokenizeResponseRecord;
 import com.skyflow.vault.data.ErrorRecord;
 import com.skyflow.vault.data.InsertRequest;
 import com.skyflow.vault.data.InsertRequestRecord;
+import com.skyflow.vault.data.InsertResponse;
+import com.skyflow.vault.data.InsertResponseRecord;
+import com.skyflow.vault.data.UpdateRequest;
+import com.skyflow.vault.data.UpdateRequestRecord;
+import com.skyflow.vault.data.UpdateResponse;
+import com.skyflow.vault.data.UpdateResponseRecord;
+import com.skyflow.vault.data.DeleteRequest;
+import com.skyflow.vault.data.DeleteResponse;
+import com.skyflow.vault.data.DeleteResponseRecord;
+import com.skyflow.vault.data.ColumnRedactions;
+import com.skyflow.vault.data.GetRequest;
+import com.skyflow.vault.data.GetRequestRecord;
+import com.skyflow.vault.data.GetResponse;
+import com.skyflow.vault.data.GetResponseRecord;
+import com.skyflow.vault.data.QueryRequest;
+import com.skyflow.vault.data.QueryResponse;
+import com.skyflow.vault.data.QueryResponseRecord;
 import com.skyflow.vault.data.Token;
 import com.skyflow.vault.data.TokenGroupRedactions;
+import com.skyflow.vault.data.TokenizeRequestRecord;
 import com.skyflow.vault.data.UpsertOptions;
 
 import io.github.cdimascio.dotenv.Dotenv;
 import io.github.cdimascio.dotenv.DotenvException;
-
-import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 public final class Utils extends BaseUtils {
 
@@ -179,6 +209,137 @@ public final class Utils extends BaseUtils {
         return (ids == null || ids.isEmpty()) ? null : ids.get(0);
     }
 
+    public static V1GetRequest getGetRequestBody(GetRequest request, VaultConfig config) {
+        V1GetRequest.Builder builder = V1GetRequest.builder().vaultId(config.getVaultId());
+
+        // Multi-table mode: Validations has already rejected the case where both this and the
+        // single-table fields below are set, so their presence/absence is mutually exclusive.
+        if (request.getRecords() != null && !request.getRecords().isEmpty()) {
+            List<V1GetRequestData> recordDataList = new ArrayList<>();
+            for (GetRequestRecord record : request.getRecords()) {
+                recordDataList.add(toV1GetRequestData(record));
+            }
+            return builder.records(recordDataList).build();
+        }
+
+        if (hasText(request.getTable())) {
+            builder.tableName(request.getTable());
+        }
+        if (request.getIds() != null && !request.getIds().isEmpty()) {
+            builder.skyflowIDs(request.getIds());
+        }
+        if (request.getFields() != null && !request.getFields().isEmpty()) {
+            builder.columns(request.getFields());
+        }
+        if (request.getColumnRedactions() != null && !request.getColumnRedactions().isEmpty()) {
+            builder.columnRedactions(toV1ColumnRedactionsList(request.getColumnRedactions()));
+        }
+        if (request.getUniqueValues() != null && !request.getUniqueValues().isEmpty()) {
+            builder.uniqueValues(toV1UniqueValueList(request.getUniqueValues()));
+        }
+        if (request.getLimit() != null) {
+            builder.limit(request.getLimit());
+        }
+        if (request.getOffset() != null) {
+            builder.offset(request.getOffset());
+        }
+        return builder.build();
+    }
+
+    private static V1GetRequestData toV1GetRequestData(GetRequestRecord record) {
+        V1GetRequestData.Builder data = V1GetRequestData.builder().tableName(record.getTable());
+        if (record.getIds() != null && !record.getIds().isEmpty()) {
+            data.skyflowIDs(record.getIds());
+        }
+        if (record.getFields() != null && !record.getFields().isEmpty()) {
+            data.columns(record.getFields());
+        }
+        if (record.getColumnRedactions() != null && !record.getColumnRedactions().isEmpty()) {
+            data.columnRedactions(toV1ColumnRedactionsList(record.getColumnRedactions()));
+        }
+        if (record.getUniqueValues() != null && !record.getUniqueValues().isEmpty()) {
+            data.uniqueValues(toV1UniqueValueList(record.getUniqueValues()));
+        }
+        return data.build();
+    }
+
+    private static List<V1ColumnRedactions> toV1ColumnRedactionsList(List<ColumnRedactions> columnRedactions) {
+        List<V1ColumnRedactions> list = new ArrayList<>();
+        for (ColumnRedactions columnRedaction : columnRedactions) {
+            list.add(V1ColumnRedactions.builder()
+                    .columnName(columnRedaction.getColumnName())
+                    .redaction(columnRedaction.getRedaction())
+                    .build());
+        }
+        return list;
+    }
+
+    private static List<V1UniqueValue> toV1UniqueValueList(List<Map<String, Object>> uniqueValues) {
+        List<V1UniqueValue> list = new ArrayList<>();
+        for (Map<String, Object> uniqueValue : uniqueValues) {
+            list.add(V1UniqueValue.builder().data(uniqueValue).build());
+        }
+        return list;
+    }
+
+    public static V1DeleteRequest getDeleteRequestBody(DeleteRequest request, VaultConfig config) {
+        V1DeleteRequest.Builder builder = V1DeleteRequest.builder()
+                .vaultId(config.getVaultId())
+                .tableName(request.getTable());
+        if (request.getIds() != null && !request.getIds().isEmpty()) {
+            builder.skyflowIDs(request.getIds());
+        }
+        if (request.getUniqueValues() != null && !request.getUniqueValues().isEmpty()) {
+            builder.uniqueValues(toV1UniqueValueList(request.getUniqueValues()));
+        }
+        return builder.build();
+    }
+
+    public static V1UpdateRequest getUpdateRequestBody(UpdateRequest request, VaultConfig config) {
+        List<V1UpdateRecordData> updateRecordDataList = new ArrayList<>();
+        for (UpdateRequestRecord record : request.getRecords()) {
+            V1UpdateRecordData.Builder data = V1UpdateRecordData.builder()
+                    .skyflowId(record.getSkyflowId())
+                    .data(record.getData());
+            if (record.getTokens() != null && !record.getTokens().isEmpty()) {
+                data.tokens(record.getTokens());
+            }
+            // A blank record-level table name counts as absent, matching validateInsertRequest's
+            // handling of the same table/record split.
+            if (hasText(record.getTableName())) {
+                data.tableName(record.getTableName());
+            }
+            updateRecordDataList.add(data.build());
+        }
+
+        V1UpdateRequest.Builder builder = V1UpdateRequest.builder()
+                .vaultId(config.getVaultId())
+                .tableName(request.getTableName())
+                .records(updateRecordDataList);
+
+        FlowEnumUpdateType requestUpdateType = resolveUpdateType(request.getUpdateType());
+        if (requestUpdateType != null) {
+            builder.updateType(requestUpdateType);
+        }
+        return builder.build();
+    }
+
+    // updateType is a String on the request; the legal values come from the wire enum itself
+    // so there is a single source of truth. Validations rejects anything that does not match.
+    // Record-level updateType isn't wired here: the generated V1UpdateRecordData has no
+    // updateType setter yet even though the proto declares one (needs a client regeneration).
+    private static FlowEnumUpdateType resolveUpdateType(String updateType) {
+        if (updateType == null) {
+            return null;
+        }
+        for (FlowEnumUpdateType type : FlowEnumUpdateType.values()) {
+            if (type.toString().equalsIgnoreCase(updateType)) {
+                return type;
+            }
+        }
+        return null;
+    }
+
     // ── Bulk (batched/concurrent) request-body builders ──────────────────────
 
     // BulkInsertRequest is an InsertRequest, so the bulk body is built exactly the same way.
@@ -186,7 +347,7 @@ public final class Utils extends BaseUtils {
         return getInsertRequestBody(request, config);
     }
 
-    public static V1FlowDetokenizeRequest getBulkDetokenizeRequestBody(BulkDetokenizeRequest request, String vaultId) {
+    public static V1FlowDetokenizeRequest getDetokenizeRequestBody(DetokenizeRequest request, String vaultId) {
         V1FlowDetokenizeRequest.Builder builder = V1FlowDetokenizeRequest.builder()
                 .vaultId(vaultId)
                 .tokens(request.getTokens());
@@ -201,6 +362,17 @@ public final class Utils extends BaseUtils {
             builder.tokenGroupRedactions(tokenGroupRedactionsList);
         }
         return builder.build();
+    }
+
+    public static V1FlowDetokenizeRequest getBulkDetokenizeRequestBody(BulkDetokenizeRequest request, String vaultId) {
+        return getDetokenizeRequestBody(request, vaultId);
+    }
+
+    public static V1ExecuteQueryRequest getQueryRequestBody(QueryRequest request, String vaultId) {
+        return V1ExecuteQueryRequest.builder()
+                .vaultId(vaultId)
+                .query(request.getQuery())
+                .build();
     }
 
     public static com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDeleteTokenRequest getBulkDeleteTokensRequestBody(BulkDeleteTokensRequest request, String vaultId) {
@@ -743,6 +915,80 @@ public final class Utils extends BaseUtils {
         return apiException.getMessage();
     }
 
+    // Unary counterpart of formatBulkInsertResponse: a single, unbatched call has no batch
+    // index or requestId to attach, so each record maps straight across with no offset.
+    public static InsertResponse formatInsertResponse(V1InsertResponse response) {
+        List<InsertResponseRecord> records = new ArrayList<>();
+        if (response != null && response.getRecords().isPresent()) {
+            for (V1RecordResponseObject current : response.getRecords().get()) {
+                records.add(new InsertResponseRecord(
+                        current.getTableName().orElse(null),
+                        current.getSkyflowId().orElse(null),
+                        Token.parseTokens(current.getTokens().orElse(null)),
+                        current.getData().orElse(null),
+                        current.getHashedData().orElse(null),
+                        current.getHttpCode().orElse(current.getError().isPresent() ? 500 : 200),
+                        current.getError().orElse(null)));
+            }
+        }
+        return new InsertResponse(records);
+    }
+
+    // Update has no bulk/batched counterpart, so there is no index or requestId to attach here.
+    // The wire response reuses V1RecordResponseObject (the same shape as insert's), so the
+    // per-record mapping mirrors formatInsertResponse.
+    // Get has no bulk/batched counterpart, so there is no index or requestId to attach here.
+    // The wire response reuses V1RecordResponseObject (the same shape as insert's/update's), so
+    // the per-record mapping mirrors formatInsertResponse.
+    public static GetResponse formatGetResponse(V1GetResponse response) {
+        List<GetResponseRecord> records = new ArrayList<>();
+        if (response != null && response.getRecords().isPresent()) {
+            for (V1RecordResponseObject current : response.getRecords().get()) {
+                records.add(new GetResponseRecord(
+                        current.getTableName().orElse(null),
+                        current.getSkyflowId().orElse(null),
+                        Token.parseTokens(current.getTokens().orElse(null)),
+                        current.getData().orElse(null),
+                        current.getHashedData().orElse(null),
+                        current.getHttpCode().orElse(current.getError().isPresent() ? 500 : 200),
+                        current.getError().orElse(null)));
+            }
+        }
+        return new GetResponse(records);
+    }
+
+    // Delete has no bulk/batched counterpart, so there is no index or requestId to attach here.
+    // Unlike insert/update/get, the wire response (V1DeleteResponseObject) carries no data/tokens.
+    public static DeleteResponse formatDeleteResponse(V1DeleteResponse response) {
+        List<DeleteResponseRecord> records = new ArrayList<>();
+        if (response != null && response.getRecords().isPresent()) {
+            for (V1DeleteResponseObject current : response.getRecords().get()) {
+                records.add(new DeleteResponseRecord(
+                        current.getSkyflowId().orElse(null),
+                        current.getHttpCode().orElse(current.getError().isPresent() ? 500 : 200),
+                        current.getError().orElse(null)));
+            }
+        }
+        return new DeleteResponse(records);
+    }
+
+    public static UpdateResponse formatUpdateResponse(V1UpdateResponse response) {
+        List<UpdateResponseRecord> records = new ArrayList<>();
+        if (response != null && response.getRecords().isPresent()) {
+            for (V1RecordResponseObject current : response.getRecords().get()) {
+                records.add(new UpdateResponseRecord(
+                        current.getTableName().orElse(null),
+                        current.getSkyflowId().orElse(null),
+                        Token.parseTokens(current.getTokens().orElse(null)),
+                        current.getData().orElse(null),
+                        current.getHashedData().orElse(null),
+                        current.getHttpCode().orElse(current.getError().isPresent() ? 500 : 200),
+                        current.getError().orElse(null)));
+            }
+        }
+        return new UpdateResponse(records);
+    }
+
     public static BulkInsertResponse formatBulkInsertResponse(V1InsertResponse response, int batch, int batchSize, Map<String, List<String>> headers) {
         BulkInsertResponse formattedResponse = null;
         List<BulkInsertResponseRecord> records = new ArrayList<>();
@@ -773,6 +1019,25 @@ public final class Utils extends BaseUtils {
         return formattedResponse;
     }
 
+    // Unary counterpart of formatBulkDetokenizeResponse: a single, unbatched call has no batch
+    // index or requestId to attach, so each record maps straight across with no offset.
+    public static DetokenizeResponse formatDetokenizeResponse(V1FlowDetokenizeResponse response) {
+        List<DetokenizeResponseRecord> records = new ArrayList<>();
+        if (response != null && response.getResponse().isPresent()) {
+            for (V1FlowDetokenizeResponseObject current : response.getResponse().get()) {
+                DetokenizeMetadata metadata = DetokenizeMetadata.parseMetadata(current.getMetadata().orElse(null));
+                records.add(new DetokenizeResponseRecord(
+                        current.getToken().orElse(null),
+                        current.getValue().orElse(null),
+                        current.getTokenGroupName().orElse(null),
+                        metadata,
+                        current.getHttpCode().orElse(current.getError().isPresent() ? 500 : 200),
+                        current.getError().orElse(null)));
+            }
+        }
+        return new DetokenizeResponse(records);
+    }
+
     public static BulkDetokenizeResponse formatBulkDetokenizeResponse(V1FlowDetokenizeResponse response, int batch, int batchSize, Map<String, List<String>> headers) {
         if (response != null && response.getResponse().isPresent()) {
             List<V1FlowDetokenizeResponseObject> record = response.getResponse().get();
@@ -800,6 +1065,23 @@ public final class Utils extends BaseUtils {
             return new BulkDetokenizeResponse(records);
         }
         return null;
+    }
+
+    // Query has no batching/bulk counterpart, so there is no index or requestId to attach here.
+    public static QueryResponse formatQueryResponse(V1ExecuteQueryResponse response) {
+        List<QueryResponseRecord> records = new ArrayList<>();
+        List<String> columns = null;
+        if (response != null) {
+            if (response.getRecords().isPresent()) {
+                for (V1ExecuteQueryRecordResponse record : response.getRecords().get()) {
+                    records.add(new QueryResponseRecord(record.getData().orElse(null)));
+                }
+            }
+            if (response.getMetadata().isPresent()) {
+                columns = response.getMetadata().get().getColumns().orElse(null);
+            }
+        }
+        return new QueryResponse(records, columns);
     }
 
     public static BulkDeleteTokensResponse formatBulkDeleteTokensResponse(

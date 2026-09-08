@@ -98,6 +98,9 @@ public enum ErrorMessage {
     EmptyTokenInDetokenizeData("%s0 Validation error. Invalid data tokens. Specify a valid data token."),
     TokensSizeExceedError("%s0 Maximum number of tokens exceeded. The limit is 10000."),
 
+    // Delete
+    DeleteRequestNull("%s0 Validation error. DeleteRequest object is null. Specify a valid DeleteRequest object."),
+
     // Delete Tokens
     DeleteTokensRequestNull("%s0 Validation error. DeleteTokensRequest object is null. Specify a valid DeleteTokensRequest object."),
     EmptyDeleteTokensData("%s0 Validation error. Tokens list is empty. Specify at least one token to delete."),
@@ -105,6 +108,7 @@ public enum ErrorMessage {
     DeleteTokensSizeExceedError("%s0 Maximum number of tokens exceeded. The limit is 10000."),
 
     // Get
+    GetRequestNull("%s0 Validation error. GetRequest object is null. Specify a valid GetRequest object."),
     IdsKeyError("%s0 Validation error. 'ids' key is missing from the payload. Specify an 'ids' key."),
     EmptyIds("%s0 Validation error. 'ids' can't be empty. Specify at least one id."),
     EmptyIdInIds("%s0 Validation error. Invalid id in 'ids'. Specify a valid id."),
@@ -141,8 +145,13 @@ public enum ErrorMessage {
     SkyflowIdKeyError("%s0 Validation error. 'skyflow_id' is missing from the data payload. Specify a 'skyflow_id'."),
     InvalidSkyflowIdType("%s0 Validation error. Invalid type for 'skyflow_id' in data payload. Specify 'skyflow_id' as a string."),
     EmptySkyflowId("%s0 Validation error. 'skyflow_id' can't be empty. Specify a skyflow id."),
+    UpdateRequestNull("%s0 Validation error. UpdateRequest object is null. Specify a valid UpdateRequest object."),
+    UpdateRecordNull("%s0 Validation error. UpdateRequestRecord object in the list is null. Specify a valid UpdateRequestRecord object."),
+    RecordSkyflowIdKeyError("%s0 Validation error. 'skyflowId' key is missing from the record. Specify a 'skyflowId' key."),
+    EmptySkyflowIdInRecord("%s0 Validation error. 'skyflowId' can't be empty in the record. Specify a valid skyflow ID."),
 
     // Query
+    QueryRequestNull("%s0 Validation error. QueryRequest object is null. Specify a valid QueryRequest object."),
     QueryKeyError("%s0 Validation error. 'query' key is missing from the payload. Specify a 'query' key."),
     EmptyQuery("%s0 Validation error. 'query' can't be empty. Specify a query"),
 
