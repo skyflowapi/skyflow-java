@@ -32,7 +32,10 @@ public final class LogUtil {
         consoleHandler.setFormatter(formatter);
         consoleHandler.setLevel(Level.CONFIG);
 
-        LOGGER.addHandler(consoleHandler);
+        // The actual write+flush to the console happens on a background thread, so per-call
+        // logging never blocks (or lock-contends on) the request-serving thread. See
+        // AsyncConsoleHandler's class doc for why this matters under concurrent load.
+        LOGGER.addHandler(new AsyncConsoleHandler(consoleHandler));
         LOGGER.setLevel(logLevelToLoggerLevelMap(logLevel));
         printInfoLog(InfoLogs.LOGGER_SETUP_DONE.getLog());
     }

@@ -52,7 +52,6 @@ import com.skyflow.vault.data.Token;
 import com.skyflow.vault.data.TokenGroupRedactions;
 import com.skyflow.vault.data.UpsertOptions;
 
-import io.github.cdimascio.dotenv.Dotenv;
 import io.github.cdimascio.dotenv.DotenvException;
 
 import java.io.File;
@@ -82,11 +81,7 @@ public final class Utils extends BaseUtils {
 
     public static String getEnvVaultUrl() throws SkyflowException {
         try {
-            String vaultUrl = System.getenv("VAULT_URL");
-            if (vaultUrl == null) {
-                Dotenv dotenv = Dotenv.load();
-                vaultUrl = dotenv.get("VAULT_URL");
-            }
+            String vaultUrl = resolveEnvOrDotenv("VAULT_URL");
             if (vaultUrl != null && vaultUrl.trim().isEmpty()) {
                 LogUtil.printErrorLog(ErrorLogs.EMPTY_VAULT_URL.getLog());
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyVaultUrl.getMessage());
