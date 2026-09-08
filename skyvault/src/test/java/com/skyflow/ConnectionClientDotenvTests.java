@@ -3,6 +3,7 @@ package com.skyflow;
 import com.skyflow.config.ConnectionConfig;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.utils.BaseUtils;
 import com.skyflow.utils.Constants;
 import org.junit.After;
 import org.junit.Assert;
@@ -31,6 +32,10 @@ public class ConnectionClientDotenvTests {
     public void saveEnvFileState() throws IOException {
         File f = new File(ENV_FILE);
         originalEnvContent = f.exists() ? Files.readAllBytes(Paths.get(ENV_FILE)) : null;
+        // BaseUtils.resolveEnvOrDotenv memoizes .env for the life of the JVM (production never
+        // needs to re-read a file whose content doesn't change), so tests that rewrite .env
+        // mid-run must force a reload to see their own content rather than a stale cache.
+        BaseUtils.resetDotenvCacheForTests();
     }
 
     @After

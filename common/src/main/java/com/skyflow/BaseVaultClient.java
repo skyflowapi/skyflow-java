@@ -14,7 +14,6 @@ import com.skyflow.utils.BaseConstants;
 import com.skyflow.utils.BaseUtils;
 import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.utils.validations.BaseValidations;
-import io.github.cdimascio.dotenv.Dotenv;
 import io.github.cdimascio.dotenv.DotenvException;
 import okhttp3.ConnectionPool;
 import okhttp3.OkHttpClient;
@@ -63,11 +62,10 @@ class BaseVaultClient<V extends BaseVaultConfig> {
             } else if (this.commonCredentials != null) {
                 this.finalCredentials = this.commonCredentials;
             } else {
-                String sysCredentials = System.getenv(BaseConstants.ENV_CREDENTIALS_KEY_NAME);
-                if (sysCredentials == null) {
-                    Dotenv dotenv = Dotenv.load();
-                    sysCredentials = dotenv.get(BaseConstants.ENV_CREDENTIALS_KEY_NAME);
-                }
+                // Memoized lookup -- see BaseUtils.resolveEnvOrDotenv's javadoc. This method runs
+                // on every setBearerToken() call (i.e. every SDK request), so an uncached
+                // Dotenv.load() here was a blocking disk read on the hot path.
+                String sysCredentials = BaseUtils.resolveEnvOrDotenv(BaseConstants.ENV_CREDENTIALS_KEY_NAME);
                 if (sysCredentials == null) {
                     throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyCredentials.getMessage());
                 } else {
