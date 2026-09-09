@@ -327,7 +327,7 @@ public class VaultControllerTests {
         failedRecord.put("tokens", null);
         failedRecord.put("data", null);
         failedRecord.put("hashedData", null);
-        failedRecord.put("error", "UPDATE failed. Column card_numbe is invalid. Specify a valid column.");
+        failedRecord.put("error", "UPDATE failed. Column card_number is invalid. Specify a valid column.");
         failedRecord.put("httpCode", 400);
         failedRecord.put("tableName", "");
         Map<String, Object> responseBody = new HashMap<>();
@@ -346,7 +346,7 @@ public class VaultControllerTests {
 
         UpdateResponse response = controller.update(request);
         Assert.assertEquals(1, response.getRecords().size());
-        Assert.assertEquals("UPDATE failed. Column card_numbe is invalid. Specify a valid column.",
+        Assert.assertEquals("UPDATE failed. Column card_number is invalid. Specify a valid column.",
                 response.getRecords().get(0).getError());
         Assert.assertEquals(400, response.getRecords().get(0).getHttpCode());
         Assert.assertNull(response.getRecords().get(0).getSkyflowId());

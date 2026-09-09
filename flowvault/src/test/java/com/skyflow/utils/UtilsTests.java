@@ -48,15 +48,19 @@ import com.skyflow.vault.data.BulkTokenizeResponse;
 import com.skyflow.vault.data.ColumnRedactions;
 import com.skyflow.vault.data.DeleteRequest;
 import com.skyflow.vault.data.DeleteResponse;
+import com.skyflow.vault.data.DeleteResponseRecord;
 import com.skyflow.vault.data.DetokenizeRequest;
 import com.skyflow.vault.data.DetokenizeResponse;
+import com.skyflow.vault.data.DetokenizeResponseRecord;
 import com.skyflow.vault.data.ErrorRecord;
 import com.skyflow.vault.data.GetRequest;
 import com.skyflow.vault.data.GetRequestRecord;
 import com.skyflow.vault.data.GetResponse;
+import com.skyflow.vault.data.GetResponseRecord;
 import com.skyflow.vault.data.InsertRequestRecord;
 import com.skyflow.vault.data.InsertRequest;
 import com.skyflow.vault.data.InsertResponse;
+import com.skyflow.vault.data.InsertResponseRecord;
 import com.skyflow.vault.data.QueryRequest;
 import com.skyflow.vault.data.QueryResponse;
 import com.skyflow.vault.data.TokenGroupRedactions;
@@ -2497,5 +2501,228 @@ public class UtilsTests {
         BulkDeleteTokensResponseRecord record = deleteError(404);
         Assert.assertEquals("Token not found", record.getError());
         Assert.assertEquals("tok-1", record.getToken());
+    }
+
+    // ── handleInsertRequestException / handleUpdateRequestException / handleGetRequestException /
+    // handleDeleteRequestException / handleDetokenizeRequestException ──────────────────────────
+    //
+    // These convert a unary call's ApiClientApiException back into a normal response when the
+    // body still has the familiar per-record shape. extractExceptionRecords is shared by all five,
+    // so its null/malformed-input robustness is exercised thoroughly once here (via insert) and
+    // the remaining handlers each get a focused shape-guard + happy-path check.
+
+    @Test
+    public void testHandleInsertRequestException_nullBodyReturnsNull() {
+        ApiClientApiException ex = new ApiClientApiException("boom", 400, null);
+        Assert.assertNull(Utils.handleInsertRequestException(ex));
+    }
+
+    @Test
+    public void testHandleInsertRequestException_nonMapBodyReturnsNull() {
+        ApiClientApiException ex = new ApiClientApiException("boom", 400, "plain text body");
+        Assert.assertNull(Utils.handleInsertRequestException(ex));
+    }
+
+    @Test
+    public void testHandleInsertRequestException_missingRecordsKeyReturnsNull() {
+        Map<String, Object> body = new HashMap<>();
+        body.put("message", "no records key here");
+        ApiClientApiException ex = new ApiClientApiException("boom", 400, body);
+        Assert.assertNull(Utils.handleInsertRequestException(ex));
+    }
+
+    @Test
+    public void testHandleInsertRequestException_recordsValueNotAListReturnsNull() {
+        Map<String, Object> body = new HashMap<>();
+        body.put("records", "not a list");
+        ApiClientApiException ex = new ApiClientApiException("boom", 400, body);
+        Assert.assertNull(Utils.handleInsertRequestException(ex));
+    }
+
+    @Test
+    public void testHandleInsertRequestException_emptyRecordsListReturnsNull() {
+        Map<String, Object> body = new HashMap<>();
+        body.put("records", new ArrayList<>());
+        ApiClientApiException ex = new ApiClientApiException("boom", 400, body);
+        Assert.assertNull(Utils.handleInsertRequestException(ex));
+    }
+
+    @Test
+    public void testHandleInsertRequestException_recordsWithOnlyNonMapElementsReturnsNull() {
+        Map<String, Object> body = new HashMap<>();
+        body.put("records", Arrays.asList("not-a-map", 123, null));
+        ApiClientApiException ex = new ApiClientApiException("boom", 400, body);
+        Assert.assertNull(Utils.handleInsertRequestException(ex));
+    }
+
+    @Test
+    public void testHandleInsertRequestException_mixedValidAndInvalidElementsKeepsOnlyValidOnes() {
+        Map<String, Object> validRecord = new HashMap<>();
+        validRecord.put("error", "bad column");
+        validRecord.put("httpCode", 400);
+        Map<String, Object> body = new HashMap<>();
+        body.put("records", Arrays.asList("not-a-map", validRecord));
+        ApiClientApiException ex = new ApiClientApiException("boom", 400, body);
+
+        InsertResponse response = Utils.handleInsertRequestException(ex);
+        Assert.assertNotNull(response);
+        Assert.assertEquals(1, response.getRecords().size());
+        Assert.assertEquals("bad column", response.getRecords().get(0).getError());
+    }
+
+    @Test
+    public void testHandleInsertRequestException_missingHttpCodeFallsBackToExceptionStatusCode() {
+        Map<String, Object> record = new HashMap<>();
+        record.put("error", "bad column");
+        Map<String, Object> body = new HashMap<>();
+        body.put("records", Collections.singletonList(record));
+        ApiClientApiException ex = new ApiClientApiException("boom", 422, body);
+
+        InsertResponse response = Utils.handleInsertRequestException(ex);
+        Assert.assertNotNull(response);
+        Assert.assertEquals(422, response.getRecords().get(0).getHttpCode());
+    }
+
+    @Test
+    public void testHandleInsertRequestException_missingErrorFallsBackToUnknownError() {
+        Map<String, Object> record = new HashMap<>();
+        record.put("httpCode", 400);
+        Map<String, Object> body = new HashMap<>();
+        body.put("records", Collections.singletonList(record));
+        ApiClientApiException ex = new ApiClientApiException("boom", 400, body);
+
+        InsertResponse response = Utils.handleInsertRequestException(ex);
+        Assert.assertNotNull(response);
+        Assert.assertEquals("Unknown error", response.getRecords().get(0).getError());
+    }
+
+    @Test
+    public void testHandleInsertRequestException_validRecordsShapePopulatesResponseAndRequestId() {
+        Map<String, Object> record = new HashMap<>();
+        record.put("skyflowID", null);
+        record.put("tableName", "table5");
+        record.put("error", "INSERT failed. Column card_numbe is invalid. Specify a valid column.");
+        record.put("httpCode", 400);
+        Map<String, Object> body = new HashMap<>();
+        body.put("records", Collections.singletonList(record));
+        ApiClientApiException ex = new ApiClientApiException("Error with status code 400", 400, body);
+
+        InsertResponse response = Utils.handleInsertRequestException(ex);
+        Assert.assertNotNull(response);
+        Assert.assertEquals(1, response.getRecords().size());
+        InsertResponseRecord result = response.getRecords().get(0);
+        Assert.assertEquals("table5", result.getTableName());
+        Assert.assertNull(result.getSkyflowId());
+        Assert.assertEquals("INSERT failed. Column card_numbe is invalid. Specify a valid column.", result.getError());
+        Assert.assertEquals(400, result.getHttpCode());
+    }
+
+    @Test
+    public void testHandleUpdateRequestException_nonRecordsShapeReturnsNull() {
+        Map<String, Object> errorBody = new HashMap<>();
+        errorBody.put("message", "whole request failed");
+        Map<String, Object> body = new HashMap<>();
+        body.put("error", errorBody);
+        ApiClientApiException ex = new ApiClientApiException("boom", 404, body);
+        Assert.assertNull(Utils.handleUpdateRequestException(ex));
+    }
+
+    @Test
+    public void testHandleUpdateRequestException_validRecordsShapePopulatesResponse() {
+        Map<String, Object> record = new HashMap<>();
+        record.put("error", "UPDATE failed. Column card_numbe is invalid. Specify a valid column.");
+        record.put("httpCode", 400);
+        record.put("tableName", "");
+        Map<String, Object> body = new HashMap<>();
+        body.put("records", Collections.singletonList(record));
+        ApiClientApiException ex = new ApiClientApiException("boom", 400, body);
+
+        UpdateResponse response = Utils.handleUpdateRequestException(ex);
+        Assert.assertNotNull(response);
+        Assert.assertEquals("UPDATE failed. Column card_numbe is invalid. Specify a valid column.",
+                response.getRecords().get(0).getError());
+        Assert.assertEquals(400, response.getRecords().get(0).getHttpCode());
+    }
+
+    @Test
+    public void testHandleGetRequestException_nonRecordsShapeReturnsNull() {
+        ApiClientApiException ex = new ApiClientApiException("boom", 500, "server error");
+        Assert.assertNull(Utils.handleGetRequestException(ex));
+    }
+
+    @Test
+    public void testHandleGetRequestException_validRecordsShapePopulatesResponse() {
+        Map<String, Object> record = new HashMap<>();
+        record.put("skyflowID", "sky-1");
+        record.put("tableName", "table1");
+        record.put("error", "GET failed. Record not found.");
+        record.put("httpCode", 404);
+        Map<String, Object> body = new HashMap<>();
+        body.put("records", Collections.singletonList(record));
+        ApiClientApiException ex = new ApiClientApiException("boom", 404, body);
+
+        GetResponse response = Utils.handleGetRequestException(ex);
+        Assert.assertNotNull(response);
+        GetResponseRecord result = response.getRecords().get(0);
+        Assert.assertEquals("sky-1", result.getSkyflowId());
+        Assert.assertEquals("table1", result.getTableName());
+        Assert.assertEquals(404, result.getHttpCode());
+    }
+
+    @Test
+    public void testHandleDeleteRequestException_nonRecordsShapeReturnsNull() {
+        Map<String, Object> body = new HashMap<>();
+        body.put("records", "not a list");
+        ApiClientApiException ex = new ApiClientApiException("boom", 400, body);
+        Assert.assertNull(Utils.handleDeleteRequestException(ex));
+    }
+
+    @Test
+    public void testHandleDeleteRequestException_validRecordsShapePopulatesResponse() {
+        Map<String, Object> record = new HashMap<>();
+        record.put("skyflowID", "sky-1");
+        record.put("error", "DELETE failed. Record not found.");
+        record.put("httpCode", 404);
+        Map<String, Object> body = new HashMap<>();
+        body.put("records", Collections.singletonList(record));
+        ApiClientApiException ex = new ApiClientApiException("boom", 404, body);
+
+        DeleteResponse response = Utils.handleDeleteRequestException(ex);
+        Assert.assertNotNull(response);
+        DeleteResponseRecord result = response.getRecords().get(0);
+        Assert.assertEquals("sky-1", result.getSkyflowId());
+        Assert.assertEquals(Integer.valueOf(404), result.getHttpCode());
+    }
+
+    @Test
+    public void testHandleDetokenizeRequestException_recordsKeyIsWrongShapeForDetokenizeReturnsNull() {
+        // Detokenize's own wire key is "response", not "records" - a body shaped for the other
+        // unary ops must not be mistaken for a detokenize failure.
+        Map<String, Object> record = new HashMap<>();
+        record.put("error", "some error");
+        Map<String, Object> body = new HashMap<>();
+        body.put("records", Collections.singletonList(record));
+        ApiClientApiException ex = new ApiClientApiException("boom", 400, body);
+        Assert.assertNull(Utils.handleDetokenizeRequestException(ex));
+    }
+
+    @Test
+    public void testHandleDetokenizeRequestException_validResponseShapePopulatesResponse() {
+        Map<String, Object> record = new HashMap<>();
+        record.put("token", "tok-1");
+        record.put("tokenGroupName", "group1");
+        record.put("error", "DETOKENIZE failed. Token not found.");
+        record.put("httpCode", 404);
+        Map<String, Object> body = new HashMap<>();
+        body.put("response", Collections.singletonList(record));
+        ApiClientApiException ex = new ApiClientApiException("boom", 404, body);
+
+        DetokenizeResponse response = Utils.handleDetokenizeRequestException(ex);
+        Assert.assertNotNull(response);
+        DetokenizeResponseRecord result = response.getRecords().get(0);
+        Assert.assertEquals("tok-1", result.getToken());
+        Assert.assertEquals("group1", result.getTokenGroupName());
+        Assert.assertEquals("DETOKENIZE failed. Token not found.", result.getError());
+        Assert.assertEquals(404, result.getHttpCode());
     }
 }
