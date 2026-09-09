@@ -2601,7 +2601,7 @@ public class UtilsTests {
         Map<String, Object> record = new HashMap<>();
         record.put("skyflowID", null);
         record.put("tableName", "table5");
-        record.put("error", "INSERT failed. Column card_numbe is invalid. Specify a valid column.");
+        record.put("error", "INSERT failed. Column card_number is invalid. Specify a valid column.");
         record.put("httpCode", 400);
         Map<String, Object> body = new HashMap<>();
         body.put("records", Collections.singletonList(record));
@@ -2613,7 +2613,7 @@ public class UtilsTests {
         InsertResponseRecord result = response.getRecords().get(0);
         Assert.assertEquals("table5", result.getTableName());
         Assert.assertNull(result.getSkyflowId());
-        Assert.assertEquals("INSERT failed. Column card_numbe is invalid. Specify a valid column.", result.getError());
+        Assert.assertEquals("INSERT failed. Column card_number is invalid. Specify a valid column.", result.getError());
         Assert.assertEquals(400, result.getHttpCode());
     }
 
@@ -2630,7 +2630,7 @@ public class UtilsTests {
     @Test
     public void testHandleUpdateRequestException_validRecordsShapePopulatesResponse() {
         Map<String, Object> record = new HashMap<>();
-        record.put("error", "UPDATE failed. Column card_numbe is invalid. Specify a valid column.");
+        record.put("error", "UPDATE failed. Column card_number is invalid. Specify a valid column.");
         record.put("httpCode", 400);
         record.put("tableName", "");
         Map<String, Object> body = new HashMap<>();
@@ -2639,7 +2639,7 @@ public class UtilsTests {
 
         UpdateResponse response = Utils.handleUpdateRequestException(ex);
         Assert.assertNotNull(response);
-        Assert.assertEquals("UPDATE failed. Column card_numbe is invalid. Specify a valid column.",
+        Assert.assertEquals("UPDATE failed. Column card_number is invalid. Specify a valid column.",
                 response.getRecords().get(0).getError());
         Assert.assertEquals(400, response.getRecords().get(0).getHttpCode());
     }
