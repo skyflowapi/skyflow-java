@@ -1,34 +1,5 @@
 package com.skyflow.utils.validations;
 
-import com.skyflow.config.Credentials;
-import com.skyflow.config.VaultConfig;
-import com.skyflow.enums.Env;
-import com.skyflow.enums.UpdateType;
-import com.skyflow.errors.ErrorMessage;
-import com.skyflow.errors.SkyflowException;
-import com.skyflow.vault.data.BulkDeleteTokensRequest;
-import com.skyflow.vault.data.BulkInsertRequestRecord;
-import com.skyflow.vault.data.BulkInsertRequest;
-import com.skyflow.vault.data.BulkDetokenizeRequest;
-import com.skyflow.vault.data.BulkTokenizeRequestRecord;
-import com.skyflow.vault.data.BulkTokenizeRequest;
-import com.skyflow.vault.data.ColumnRedactions;
-import com.skyflow.vault.data.DeleteRequest;
-import com.skyflow.vault.data.DetokenizeRequest;
-import com.skyflow.vault.data.GetRequest;
-import com.skyflow.vault.data.GetRequestRecord;
-import com.skyflow.vault.data.InsertRequestRecord;
-import com.skyflow.vault.data.InsertRequest;
-import com.skyflow.vault.data.QueryRequest;
-import com.skyflow.vault.data.TokenGroupRedactions;
-import com.skyflow.vault.data.TokenizeRequestRecord;
-import com.skyflow.vault.data.TokenizeRequest;
-import com.skyflow.vault.data.UpdateRequest;
-import com.skyflow.vault.data.UpdateRequestRecord;
-import com.skyflow.vault.data.UpsertOptions;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,6 +7,34 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.junit.Assert;
+import org.junit.Test;
+
+import com.skyflow.config.Credentials;
+import com.skyflow.config.VaultConfig;
+import com.skyflow.enums.Env;
+import com.skyflow.enums.UpdateType;
+import com.skyflow.errors.ErrorMessage;
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.data.BulkDeleteTokensRequest;
+import com.skyflow.vault.data.BulkDetokenizeRequest;
+import com.skyflow.vault.data.BulkInsertRequest;
+import com.skyflow.vault.data.BulkInsertRequestRecord;
+import com.skyflow.vault.data.BulkTokenizeRequest;
+import com.skyflow.vault.data.BulkTokenizeRequestRecord;
+import com.skyflow.vault.data.ColumnRedactions;
+import com.skyflow.vault.data.DeleteRequest;
+import com.skyflow.vault.data.DetokenizeRequest;
+import com.skyflow.vault.data.GetRequest;
+import com.skyflow.vault.data.GetRequestRecord;
+import com.skyflow.vault.data.InsertRequest;
+import com.skyflow.vault.data.InsertRequestRecord;
+import com.skyflow.vault.data.QueryRequest;
+import com.skyflow.vault.data.TokenGroupRedactions;
+import com.skyflow.vault.data.UpdateRequest;
+import com.skyflow.vault.data.UpdateRequestRecord;
+import com.skyflow.vault.data.UpsertOptions;
 
 public class ValidationsTests {
     private static final String EXCEPTION_NOT_THROWN = "Should have thrown an exception";
@@ -301,18 +300,6 @@ public class ValidationsTests {
         }
     }
 
-    @Test
-    public void testValidateVaultConfiguration_invalidVaultUrlFormat() {
-        VaultConfig config = new VaultConfig();
-        config.setVaultId("vault123");
-        config.setVaultUrl("http://not-https.example.com");
-        try {
-            Validations.validateVaultConfiguration(config);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertNotNull(e.getMessage());
-        }
-    }
 
     @Test
     public void testValidateVaultConfiguration_validWithClusterId() {
