@@ -90,13 +90,13 @@ public enum ErrorMessage {
     InsufficientTokensPassedForTokenModeEnableStrict("%s0 Validation error. 'tokenMode' is set to 'ENABLE_STRICT', but some fields are missing tokens. Specify tokens for all fields."),
     BatchInsertPartialSuccess("%s0 Insert operation completed with partial success."),
     BatchInsertFailure("%s0 Insert operation failed."),
-    RecordSizeExceedError("%s0 Maximum number of records exceeded. The limit is 10000."),
+    RecordSizeExceedError("%s0 Maximum number of records exceeded. The limit is 100000."),
 
     // Detokenize
     InvalidDetokenizeData("%s0 Validation error. Invalid detokenize data. Specify valid detokenize data."),
     EmptyDetokenizeData("%s0 Validation error. Invalid data tokens. Specify at least one data token."),
     EmptyTokenInDetokenizeData("%s0 Validation error. Invalid data tokens. Specify a valid data token."),
-    TokensSizeExceedError("%s0 Maximum number of tokens exceeded. The limit is 10000."),
+    TokensSizeExceedError("%s0 Maximum number of tokens exceeded. The limit is 100000."),
 
     // Delete
     DeleteRequestNull("%s0 Validation error. DeleteRequest object is null. Specify a valid DeleteRequest object."),
@@ -105,7 +105,7 @@ public enum ErrorMessage {
     DeleteTokensRequestNull("%s0 Validation error. DeleteTokensRequest object is null. Specify a valid DeleteTokensRequest object."),
     EmptyDeleteTokensData("%s0 Validation error. Tokens list is empty. Specify at least one token to delete."),
     EmptyTokenInDeleteTokensData("%s0 Validation error. Invalid token in delete tokens request. Specify a valid token."),
-    DeleteTokensSizeExceedError("%s0 Maximum number of tokens exceeded. The limit is 10000."),
+    DeleteTokensSizeExceedError("%s0 Maximum number of tokens exceeded. The limit is 100000."),
 
     // Get
     GetRequestNull("%s0 Validation error. GetRequest object is null. Specify a valid GetRequest object."),
@@ -165,7 +165,7 @@ public enum ErrorMessage {
     EmptyValueInTokenizeRecord("%s0 Validation error. Value in TokenizeRecord is null or empty. Specify a valid value."),
     EmptyTokenGroupNamesInTokenizeRecord("%s0 Validation error. TokenGroupNames in TokenizeRecord is null or empty. Specify at least one token group name."),
     EmptyTokenGroupNameInTokenizeRecord("%s0 Validation error. Token group name in TokenizeRecord is null or empty. Specify a valid token group name."),
-    TokenizeDataSizeExceedError("%s0 Maximum number of tokenize records exceeded. The limit is 10000."),
+    TokenizeDataSizeExceedError("%s0 Maximum number of tokenize records exceeded. The limit is 100000."),
     MissingIndexInBulkTokenizeRecord("%s0 Validation error. Index in BulkTokenizeRequestRecord is null. Specify an index for every record."),
     DuplicateIndexInBulkTokenizeRecord("%s0 Validation error. Duplicate index in BulkTokenizeRequestRecord. Specify a unique index for every record."),
 

@@ -62,8 +62,8 @@ public enum ErrorLogs {
     RECORDS_IS_REQUIRED("Invalid %s1 request. Records are required."),
     EMPTY_RECORDS("Invalid %s1 request. Records can not be empty."),
     INVALID_RECORD("Invalid %s1 request. Invalid record. Specify a valid record."),
-    RECORD_SIZE_EXCEED("Maximum number of records exceeded. The limit is 10000."),
-    TOKENS_SIZE_EXCEED("Maximum number of tokens exceeded. The limit is 10000."),
+    RECORD_SIZE_EXCEED("Maximum number of records exceeded. The limit is 100000."),
+    TOKENS_SIZE_EXCEED("Maximum number of tokens exceeded. The limit is 100000."),
     EMPTY_OR_NULL_VALUE_IN_VALUES("Invalid %s1 request. Value can not be null or empty in values for key \"%s2\"."),
     EMPTY_OR_NULL_KEY_IN_VALUES("Invalid %s1 request. Key can not be null or empty in values"),
     NULL_VALUE_ENTRY_IN_VALUES("Invalid %s1 request. Value entry in 'values' can not be null at index %s2."),
@@ -144,7 +144,7 @@ public enum ErrorLogs {
     EMPTY_VALUE_IN_TOKENIZE_RECORD("Invalid %s1 request. Value in TokenizeRecord can not be null or empty."),
     EMPTY_TOKEN_GROUP_NAMES_IN_TOKENIZE_RECORD("Invalid %s1 request. TokenGroupNames in TokenizeRecord can not be null or empty."),
     EMPTY_TOKEN_GROUP_NAME_IN_TOKENIZE_RECORD("Invalid %s1 request. Token group name in TokenizeRecord can not be null or empty at index %s2."),
-    TOKENIZE_DATA_SIZE_EXCEED("Maximum number of tokenize records exceeded. The limit is 10000."),
+    TOKENIZE_DATA_SIZE_EXCEED("Maximum number of tokenize records exceeded. The limit is 100000."),
     MISSING_INDEX_IN_BULK_TOKENIZE_RECORD("Invalid %s1 request. Index in BulkTokenizeRequestRecord can not be null at position %s2."),
     DUPLICATE_INDEX_IN_BULK_TOKENIZE_RECORD("Invalid %s1 request. Duplicate index %s2 in BulkTokenizeRequestRecord."),
     DELETE_REQUEST_NULL("Invalid %s1 request. Delete request can not be null."),
@@ -152,7 +152,7 @@ public enum ErrorLogs {
     DELETE_TOKENS_REQUEST_NULL("Invalid %s1 request. DeleteTokens request can not be null."),
     EMPTY_DELETE_TOKENS_DATA("Invalid %s1 request. Delete tokens data can not be empty."),
     EMPTY_OR_NULL_TOKEN_IN_DELETE_TOKENS_DATA("Invalid %s1 request. Token can not be null or empty in delete tokens data at index %s2."),
-    DELETE_TOKENS_SIZE_EXCEED("Maximum number of tokens exceeded. The limit is 10000."),
+    DELETE_TOKENS_SIZE_EXCEED("Maximum number of tokens exceeded. The limit is 100000."),
     DELETE_TOKENS_REQUEST_REJECTED("DeleteTokens request resulted in failure."),
 
     // invoke connection interface

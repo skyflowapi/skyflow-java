@@ -17,6 +17,7 @@ import com.skyflow.enums.Env;
 import com.skyflow.enums.UpdateType;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.utils.Constants;
 import com.skyflow.vault.data.BulkDeleteTokensRequest;
 import com.skyflow.vault.data.BulkDetokenizeRequest;
 import com.skyflow.vault.data.BulkInsertRequest;
@@ -988,13 +989,13 @@ public class ValidationsTests {
     }
 
     @Test
-    public void testValidateBulkInsertRequest_over10000RecordsThrows() {
+    public void testValidateBulkInsertRequest_overMaxBulkDataSizeRecordsThrows() {
         // Constants.MAX_BULK_DATA_SIZE is a hard ceiling; batching splits the payload but
         // does not lift it.
         Map<String, Object> data = new HashMap<>();
         data.put("name", "john");
         ArrayList<InsertRequestRecord> records = new ArrayList<>();
-        for (int i = 0; i < 10001; i++) {
+        for (int i = 0; i < Constants.MAX_BULK_DATA_SIZE + 1; i++) {
             records.add(BulkInsertRequestRecord.builder().tableName("table1").data(data).build());
         }
         BulkInsertRequest request = BulkInsertRequest.builder().records(records).build();
@@ -1007,11 +1008,11 @@ public class ValidationsTests {
     }
 
     @Test
-    public void testValidateBulkInsertRequest_exactly10000RecordsIsValid() {
+    public void testValidateBulkInsertRequest_exactlyMaxBulkDataSizeRecordsIsValid() {
         Map<String, Object> data = new HashMap<>();
         data.put("name", "john");
         ArrayList<InsertRequestRecord> records = new ArrayList<>();
-        for (int i = 0; i < 10000; i++) {
+        for (int i = 0; i < Constants.MAX_BULK_DATA_SIZE; i++) {
             records.add(BulkInsertRequestRecord.builder().tableName("table1").data(data).build());
         }
         BulkInsertRequest request = BulkInsertRequest.builder().records(records).build();
@@ -1023,9 +1024,9 @@ public class ValidationsTests {
     }
 
     @Test
-    public void testValidateBulkDetokenizeRequest_over10000TokensThrows() {
+    public void testValidateBulkDetokenizeRequest_overMaxBulkDataSizeTokensThrows() {
         List<String> tokens = new ArrayList<>();
-        for (int i = 0; i < 10001; i++) {
+        for (int i = 0; i < Constants.MAX_BULK_DATA_SIZE + 1; i++) {
             tokens.add("token-" + i);
         }
         BulkDetokenizeRequest request = BulkDetokenizeRequest.builder().tokens(tokens).build();
@@ -1038,9 +1039,9 @@ public class ValidationsTests {
     }
 
     @Test
-    public void testValidateBulkDeleteTokensRequest_over10000TokensThrows() {
+    public void testValidateBulkDeleteTokensRequest_overMaxBulkDataSizeTokensThrows() {
         List<String> tokens = new ArrayList<>();
-        for (int i = 0; i < 10001; i++) {
+        for (int i = 0; i < Constants.MAX_BULK_DATA_SIZE + 1; i++) {
             tokens.add("token-" + i);
         }
         BulkDeleteTokensRequest request = BulkDeleteTokensRequest.builder().tokens(tokens).build();
@@ -1053,9 +1054,9 @@ public class ValidationsTests {
     }
 
     @Test
-    public void testValidateBulkTokenizeRequest_over10000RecordsThrows() {
+    public void testValidateBulkTokenizeRequest_overMaxBulkDataSizeRecordsThrows() {
         ArrayList<BulkTokenizeRequestRecord> records = new ArrayList<>();
-        for (int i = 0; i < 10001; i++) {
+        for (int i = 0; i < Constants.MAX_BULK_DATA_SIZE + 1; i++) {
             records.add(BulkTokenizeRequestRecord.builder()
                     .value("value-" + i)
                     .tokenGroupNames(Collections.singletonList("group"))

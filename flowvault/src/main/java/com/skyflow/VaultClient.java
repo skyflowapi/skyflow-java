@@ -165,7 +165,7 @@ public class VaultClient extends BaseVaultClient<VaultConfig> {
             // mode from this SDK is a SkyflowException, never a raw one.
             try {
                 OkHttpClient.Builder httpBuilder = new OkHttpClient.Builder()
-                        .connectionPool(new ConnectionPool(10, 1, TimeUnit.MINUTES))
+                        .connectionPool(new ConnectionPool(100, 1, TimeUnit.MINUTES))
                         // Overall ceiling; bounds the whole call including retries.
                         .callTimeout(timeoutSeconds, TimeUnit.SECONDS)
                         // OUTER: retries. Must wrap the auth interceptor so each attempt re-reads the
