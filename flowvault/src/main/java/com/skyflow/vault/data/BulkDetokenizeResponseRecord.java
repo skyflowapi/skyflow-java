@@ -6,22 +6,19 @@ import com.google.gson.Gson;
 // in the submitted payload; all other fields are inherited.
 public class BulkDetokenizeResponseRecord extends DetokenizeResponseRecord {
     private final int index;
-    private final String requestId;
 
     public BulkDetokenizeResponseRecord(int index, String token, Object value, String tokenGroupName,
                                         DetokenizeMetadata metadata, int httpCode, String error,
                                         String requestId) {
-        super(token, value, tokenGroupName, metadata, httpCode, error);
+        // requestId is stored on DetokenizeResponseRecord (shared with the unary response), not
+        // redeclared here — a same-named field on both this class and its parent breaks Gson's
+        // reflective field walk (see ReflectiveTypeAdapterFactory.getBoundFields).
+        super(token, value, tokenGroupName, metadata, httpCode, error, requestId);
         this.index = index;
-        this.requestId = requestId;
     }
 
     public int getIndex() {
         return index;
-    }
-
-    public String getRequestId() {
-        return requestId;
     }
 
     @Override

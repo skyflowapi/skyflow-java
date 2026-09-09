@@ -9,7 +9,7 @@ import java.util.Map;
 public class GetResponseRecord extends InsertResponseRecord {
     public GetResponseRecord(String tableName, String skyflowId, Map<String, List<Token>> tokens,
                               Map<String, Object> data, Map<String, Object> hashedData,
-                              int httpCode, String error) {
-        super(tableName, skyflowId, tokens, data, hashedData, httpCode, error);
+                              int httpCode, String error, String requestId) {
+        super(tableName, skyflowId, tokens, data, hashedData, httpCode, error, requestId);
     }
 }

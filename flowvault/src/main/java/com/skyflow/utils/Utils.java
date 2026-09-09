@@ -17,34 +17,34 @@ import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.generated.rest.core.ApiClientApiException;
 import com.skyflow.generated.rest.core.ObjectMappers;
-import com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest;
-import com.skyflow.generated.rest.resources.flowservice.requests.V1InsertRequest;
-import com.skyflow.generated.rest.resources.flowservice.requests.V1GetRequest;
 import com.skyflow.generated.rest.resources.flowservice.requests.V1DeleteRequest;
+import com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest;
+import com.skyflow.generated.rest.resources.flowservice.requests.V1GetRequest;
+import com.skyflow.generated.rest.resources.flowservice.requests.V1InsertRequest;
 import com.skyflow.generated.rest.resources.flowservice.requests.V1UpdateRequest;
 import com.skyflow.generated.rest.resources.records.requests.V1ExecuteQueryRequest;
+import com.skyflow.generated.rest.types.FlowEnumUpdateType;
+import com.skyflow.generated.rest.types.V1ColumnRedactions;
+import com.skyflow.generated.rest.types.V1DeleteResponse;
+import com.skyflow.generated.rest.types.V1DeleteResponseObject;
+import com.skyflow.generated.rest.types.V1DeleteTokenResponseObject;
 import com.skyflow.generated.rest.types.V1ExecuteQueryRecordResponse;
 import com.skyflow.generated.rest.types.V1ExecuteQueryResponse;
-import com.skyflow.generated.rest.types.FlowEnumUpdateType;
-import com.skyflow.generated.rest.types.V1DeleteTokenResponseObject;
 import com.skyflow.generated.rest.types.V1FlowDeleteTokenResponse;
 import com.skyflow.generated.rest.types.V1FlowDetokenizeResponse;
 import com.skyflow.generated.rest.types.V1FlowDetokenizeResponseObject;
 import com.skyflow.generated.rest.types.V1FlowTokenizeRequestObject;
 import com.skyflow.generated.rest.types.V1FlowTokenizeResponse;
 import com.skyflow.generated.rest.types.V1FlowTokenizeResponseObject;
+import com.skyflow.generated.rest.types.V1GetRequestData;
+import com.skyflow.generated.rest.types.V1GetResponse;
 import com.skyflow.generated.rest.types.V1InsertRecordData;
 import com.skyflow.generated.rest.types.V1InsertResponse;
 import com.skyflow.generated.rest.types.V1RecordResponseObject;
-import com.skyflow.generated.rest.types.V1UpdateRecordData;
-import com.skyflow.generated.rest.types.V1ColumnRedactions;
-import com.skyflow.generated.rest.types.V1GetRequestData;
-import com.skyflow.generated.rest.types.V1GetResponse;
-import com.skyflow.generated.rest.types.V1UniqueValue;
-import com.skyflow.generated.rest.types.V1DeleteResponse;
-import com.skyflow.generated.rest.types.V1DeleteResponseObject;
-import com.skyflow.generated.rest.types.V1UpdateResponse;
 import com.skyflow.generated.rest.types.V1TokenGroupRedactions;
+import com.skyflow.generated.rest.types.V1UniqueValue;
+import com.skyflow.generated.rest.types.V1UpdateRecordData;
+import com.skyflow.generated.rest.types.V1UpdateResponse;
 import com.skyflow.generated.rest.types.V1Upsert;
 import com.skyflow.logs.ErrorLogs;
 import com.skyflow.utils.logger.LogUtil;
@@ -60,33 +60,33 @@ import com.skyflow.vault.data.BulkInsertResponseRecord;
 import com.skyflow.vault.data.BulkTokenizeRequestRecord;
 import com.skyflow.vault.data.BulkTokenizeResponse;
 import com.skyflow.vault.data.BulkTokenizeResponseRecord;
+import com.skyflow.vault.data.ColumnRedactions;
+import com.skyflow.vault.data.DeleteRequest;
+import com.skyflow.vault.data.DeleteResponse;
+import com.skyflow.vault.data.DeleteResponseRecord;
 import com.skyflow.vault.data.DetokenizeMetadata;
 import com.skyflow.vault.data.DetokenizeRequest;
 import com.skyflow.vault.data.DetokenizeResponse;
 import com.skyflow.vault.data.DetokenizeResponseRecord;
 import com.skyflow.vault.data.ErrorRecord;
-import com.skyflow.vault.data.InsertRequest;
-import com.skyflow.vault.data.InsertRequestRecord;
-import com.skyflow.vault.data.InsertResponse;
-import com.skyflow.vault.data.InsertResponseRecord;
-import com.skyflow.vault.data.UpdateRequest;
-import com.skyflow.vault.data.UpdateRequestRecord;
-import com.skyflow.vault.data.UpdateResponse;
-import com.skyflow.vault.data.UpdateResponseRecord;
-import com.skyflow.vault.data.DeleteRequest;
-import com.skyflow.vault.data.DeleteResponse;
-import com.skyflow.vault.data.DeleteResponseRecord;
-import com.skyflow.vault.data.ColumnRedactions;
 import com.skyflow.vault.data.GetRequest;
 import com.skyflow.vault.data.GetRequestRecord;
 import com.skyflow.vault.data.GetResponse;
 import com.skyflow.vault.data.GetResponseRecord;
+import com.skyflow.vault.data.InsertRequest;
+import com.skyflow.vault.data.InsertRequestRecord;
+import com.skyflow.vault.data.InsertResponse;
+import com.skyflow.vault.data.InsertResponseRecord;
 import com.skyflow.vault.data.QueryRequest;
 import com.skyflow.vault.data.QueryResponse;
 import com.skyflow.vault.data.QueryResponseRecord;
 import com.skyflow.vault.data.Token;
 import com.skyflow.vault.data.TokenGroupRedactions;
 import com.skyflow.vault.data.TokenizeRequestRecord;
+import com.skyflow.vault.data.UpdateRequest;
+import com.skyflow.vault.data.UpdateRequestRecord;
+import com.skyflow.vault.data.UpdateResponse;
+import com.skyflow.vault.data.UpdateResponseRecord;
 import com.skyflow.vault.data.UpsertOptions;
 
 import io.github.cdimascio.dotenv.Dotenv;
@@ -916,11 +916,13 @@ public final class Utils extends BaseUtils {
     }
 
     // Unary counterpart of formatBulkInsertResponse: a single, unbatched call has no batch
-    // index or requestId to attach, so each record maps straight across with no offset.
-    public static InsertResponse formatInsertResponse(V1InsertResponse response) {
+    // index to attach, but the call's own requestId is still populated on error records,
+    // matching bulk's error != null ? requestId : null convention.
+    public static InsertResponse formatInsertResponse(V1InsertResponse response, Map<String, List<String>> headers) {
         List<InsertResponseRecord> records = new ArrayList<>();
         if (response != null && response.getRecords().isPresent()) {
             for (V1RecordResponseObject current : response.getRecords().get()) {
+                String reqID = current.getError().isPresent() ? extractRequestId(headers) : null;
                 records.add(new InsertResponseRecord(
                         current.getTableName().orElse(null),
                         current.getSkyflowId().orElse(null),
@@ -928,22 +930,26 @@ public final class Utils extends BaseUtils {
                         current.getData().orElse(null),
                         current.getHashedData().orElse(null),
                         current.getHttpCode().orElse(current.getError().isPresent() ? 500 : 200),
-                        current.getError().orElse(null)));
+                        current.getError().orElse(null),
+                        reqID));
             }
         }
         return new InsertResponse(records);
     }
 
-    // Update has no bulk/batched counterpart, so there is no index or requestId to attach here.
-    // The wire response reuses V1RecordResponseObject (the same shape as insert's), so the
-    // per-record mapping mirrors formatInsertResponse.
-    // Get has no bulk/batched counterpart, so there is no index or requestId to attach here.
-    // The wire response reuses V1RecordResponseObject (the same shape as insert's/update's), so
-    // the per-record mapping mirrors formatInsertResponse.
-    public static GetResponse formatGetResponse(V1GetResponse response) {
+    // Update has no bulk/batched counterpart, so there is no index to attach here, but the call's
+    // own requestId is still populated on error records. The wire response reuses
+    // V1RecordResponseObject (the same shape as insert's), so the per-record mapping mirrors
+    // formatInsertResponse.
+    // Get has no bulk/batched counterpart, so there is no index to attach here, but the call's own
+    // requestId is still populated on error records. The wire response reuses
+    // V1RecordResponseObject (the same shape as insert's/update's), so the per-record mapping
+    // mirrors formatInsertResponse.
+    public static GetResponse formatGetResponse(V1GetResponse response, Map<String, List<String>> headers) {
         List<GetResponseRecord> records = new ArrayList<>();
         if (response != null && response.getRecords().isPresent()) {
             for (V1RecordResponseObject current : response.getRecords().get()) {
+                String reqID = current.getError().isPresent() ? extractRequestId(headers) : null;
                 records.add(new GetResponseRecord(
                         current.getTableName().orElse(null),
                         current.getSkyflowId().orElse(null),
@@ -951,31 +957,36 @@ public final class Utils extends BaseUtils {
                         current.getData().orElse(null),
                         current.getHashedData().orElse(null),
                         current.getHttpCode().orElse(current.getError().isPresent() ? 500 : 200),
-                        current.getError().orElse(null)));
+                        current.getError().orElse(null),
+                        reqID));
             }
         }
         return new GetResponse(records);
     }
 
-    // Delete has no bulk/batched counterpart, so there is no index or requestId to attach here.
-    // Unlike insert/update/get, the wire response (V1DeleteResponseObject) carries no data/tokens.
-    public static DeleteResponse formatDeleteResponse(V1DeleteResponse response) {
+    // Delete has no bulk/batched counterpart, so there is no index to attach here, but the call's
+    // own requestId is still populated on error records. Unlike insert/update/get, the wire
+    // response (V1DeleteResponseObject) carries no data/tokens.
+    public static DeleteResponse formatDeleteResponse(V1DeleteResponse response, Map<String, List<String>> headers) {
         List<DeleteResponseRecord> records = new ArrayList<>();
         if (response != null && response.getRecords().isPresent()) {
             for (V1DeleteResponseObject current : response.getRecords().get()) {
+                String reqID = current.getError().isPresent() ? extractRequestId(headers) : null;
                 records.add(new DeleteResponseRecord(
                         current.getSkyflowId().orElse(null),
                         current.getHttpCode().orElse(current.getError().isPresent() ? 500 : 200),
-                        current.getError().orElse(null)));
+                        current.getError().orElse(null),
+                        reqID));
             }
         }
         return new DeleteResponse(records);
     }
 
-    public static UpdateResponse formatUpdateResponse(V1UpdateResponse response) {
+    public static UpdateResponse formatUpdateResponse(V1UpdateResponse response, Map<String, List<String>> headers) {
         List<UpdateResponseRecord> records = new ArrayList<>();
         if (response != null && response.getRecords().isPresent()) {
             for (V1RecordResponseObject current : response.getRecords().get()) {
+                String reqID = current.getError().isPresent() ? extractRequestId(headers) : null;
                 records.add(new UpdateResponseRecord(
                         current.getTableName().orElse(null),
                         current.getSkyflowId().orElse(null),
@@ -983,7 +994,8 @@ public final class Utils extends BaseUtils {
                         current.getData().orElse(null),
                         current.getHashedData().orElse(null),
                         current.getHttpCode().orElse(current.getError().isPresent() ? 500 : 200),
-                        current.getError().orElse(null)));
+                        current.getError().orElse(null),
+                        reqID));
             }
         }
         return new UpdateResponse(records);
@@ -1020,19 +1032,22 @@ public final class Utils extends BaseUtils {
     }
 
     // Unary counterpart of formatBulkDetokenizeResponse: a single, unbatched call has no batch
-    // index or requestId to attach, so each record maps straight across with no offset.
-    public static DetokenizeResponse formatDetokenizeResponse(V1FlowDetokenizeResponse response) {
+    // index to attach, but the call's own requestId is still populated on error records,
+    // matching bulk's error != null ? requestId : null convention.
+    public static DetokenizeResponse formatDetokenizeResponse(V1FlowDetokenizeResponse response, Map<String, List<String>> headers) {
         List<DetokenizeResponseRecord> records = new ArrayList<>();
         if (response != null && response.getResponse().isPresent()) {
             for (V1FlowDetokenizeResponseObject current : response.getResponse().get()) {
                 DetokenizeMetadata metadata = DetokenizeMetadata.parseMetadata(current.getMetadata().orElse(null));
+                String reqID = current.getError().isPresent() ? extractRequestId(headers) : null;
                 records.add(new DetokenizeResponseRecord(
                         current.getToken().orElse(null),
                         current.getValue().orElse(null),
                         current.getTokenGroupName().orElse(null),
                         metadata,
                         current.getHttpCode().orElse(current.getError().isPresent() ? 500 : 200),
-                        current.getError().orElse(null)));
+                        current.getError().orElse(null),
+                        reqID));
             }
         }
         return new DetokenizeResponse(records);
@@ -1067,8 +1082,10 @@ public final class Utils extends BaseUtils {
         return null;
     }
 
-    // Query has no batching/bulk counterpart, so there is no index or requestId to attach here.
-    public static QueryResponse formatQueryResponse(V1ExecuteQueryResponse response) {
+    // Query has no batching/bulk counterpart, so there is no index to attach here. Query rows
+    // carry no per-record error, so unlike insert/update/get/delete/detokenize the requestId is
+    // not error-gated - it is always populated from the call's own headers.
+    public static QueryResponse formatQueryResponse(V1ExecuteQueryResponse response, Map<String, List<String>> headers) {
         List<QueryResponseRecord> records = new ArrayList<>();
         List<String> columns = null;
         if (response != null) {
@@ -1081,7 +1098,7 @@ public final class Utils extends BaseUtils {
                 columns = response.getMetadata().get().getColumns().orElse(null);
             }
         }
-        return new QueryResponse(records, columns);
+        return new QueryResponse(records, columns, extractRequestId(headers));
     }
 
     public static BulkDeleteTokensResponse formatBulkDeleteTokensResponse(

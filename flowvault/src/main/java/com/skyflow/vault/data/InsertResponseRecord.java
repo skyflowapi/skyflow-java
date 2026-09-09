@@ -14,6 +14,7 @@ public class InsertResponseRecord {
     private final Map<String, Object> hashedData;
     private final int httpCode;
     private final String error;
+    private final String requestId;
 
     /**
      * @deprecated Use {@link #InsertResponseRecord(String, String, Map, Map, Map, int, String)} instead,
@@ -27,6 +28,12 @@ public class InsertResponseRecord {
 
     public InsertResponseRecord(String tableName, String skyflowId, Map<String, List<Token>> tokens,
                                  Map<String, Object> data, Map<String, Object> hashedData, int httpCode, String error) {
+        this(tableName, skyflowId, tokens, data, hashedData, httpCode, error, null);
+    }
+
+    public InsertResponseRecord(String tableName, String skyflowId, Map<String, List<Token>> tokens,
+                                 Map<String, Object> data, Map<String, Object> hashedData, int httpCode, String error,
+                                 String requestId) {
         this.tableName = tableName;
         this.skyflowId = skyflowId;
         this.tokens = tokens;
@@ -34,6 +41,7 @@ public class InsertResponseRecord {
         this.hashedData = hashedData;
         this.httpCode = httpCode;
         this.error = error;
+        this.requestId = requestId;
     }
 
     public String getTableName() {
@@ -80,5 +88,10 @@ public class InsertResponseRecord {
 
     public String getError() {
         return error;
+    }
+
+    /** The API call this outcome came from; null unless this is an error. */
+    public String getRequestId() {
+        return requestId;
     }
 }

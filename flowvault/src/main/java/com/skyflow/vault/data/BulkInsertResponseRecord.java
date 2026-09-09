@@ -9,7 +9,6 @@ import java.util.Map;
 // in the submitted payload; all other fields are inherited.
 public class BulkInsertResponseRecord extends InsertResponseRecord {
     private final int index;
-    private final String requestId;
 
     /**
      * @deprecated Use {@link #BulkInsertResponseRecord(int, String, String, Map, Map, Map, int, String, String)}
@@ -25,17 +24,15 @@ public class BulkInsertResponseRecord extends InsertResponseRecord {
     public BulkInsertResponseRecord(int index, String tableName, String skyflowId,
                                     Map<String, List<Token>> tokens, Map<String, Object> data, Map<String, Object> hashedData,
                                     int httpCode, String error, String requestId) {
-        super(tableName, skyflowId, tokens, data, hashedData, httpCode, error);
+        // requestId is stored on InsertResponseRecord (shared with the unary response), not
+        // redeclared here — a same-named field on both this class and its parent breaks Gson's
+        // reflective field walk (see ReflectiveTypeAdapterFactory.getBoundFields).
+        super(tableName, skyflowId, tokens, data, hashedData, httpCode, error, requestId);
         this.index = index;
-        this.requestId = requestId;
     }
 
     public int getIndex() {
         return index;
-    }
-
-    public String getRequestId(){
-        return requestId;
     }
 
     @Override
