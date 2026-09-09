@@ -573,16 +573,6 @@ public class Validations extends BaseValidations {
                 }
             }
         }
-
-        // updateType is a free-form String on the request, but only the wire enum's values reach
-        // the wire. Reject anything else here rather than silently dropping it during mapping.
-        String updateType = updateRequest.getUpdateType();
-        if (updateType != null && !isKnownUpdateType(updateType)) {
-            LogUtil.printErrorLog(Utils.parameterizedString(
-                    ErrorLogs.INVALID_UPSERT_UPDATE_TYPE.getLog(), InterfaceName.UPDATE.getName()
-            ));
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidUpsertUpdateType.getMessage());
-        }
     }
 
     public static void validateGetRequest(GetRequest getRequest) throws SkyflowException {

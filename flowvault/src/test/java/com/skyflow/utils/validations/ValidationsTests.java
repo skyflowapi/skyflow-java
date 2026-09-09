@@ -3,6 +3,7 @@ package com.skyflow.utils.validations;
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.Env;
+import com.skyflow.enums.UpdateType;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.vault.data.BulkDeleteTokensRequest;
@@ -1934,22 +1935,6 @@ public class ValidationsTests {
     }
 
     @Test
-    public void testValidateUpdateRequest_invalidUpdateTypeThrows() {
-        UpdateRequestRecord record = UpdateRequestRecord.builder().skyflowId("sky1").build();
-        UpdateRequest request = UpdateRequest.builder()
-                .tableName("table1")
-                .records(Collections.singletonList(record))
-                .updateType("NOT_A_REAL_TYPE")
-                .build();
-        try {
-            Validations.validateUpdateRequest(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorMessage.InvalidUpsertUpdateType.getMessage(), e.getMessage());
-        }
-    }
-
-    @Test
     public void testValidateUpdateRequest_validMinimalRequestDoesNotThrow() {
         UpdateRequestRecord record = UpdateRequestRecord.builder().skyflowId("sky1").build();
         UpdateRequest request = UpdateRequest.builder().tableName("table1").records(Collections.singletonList(record)).build();
@@ -1972,7 +1957,7 @@ public class ValidationsTests {
         UpdateRequest request = UpdateRequest.builder()
                 .tableName("table1")
                 .records(Collections.singletonList(record))
-                .updateType("REPLACE")
+                .updateType(UpdateType.REPLACE)
                 .build();
         try {
             Validations.validateUpdateRequest(request);

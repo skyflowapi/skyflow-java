@@ -571,7 +571,7 @@ public final class VaultController extends VaultClient {
             ApiClientHttpResponse<V1ExecuteQueryResponse> response =
                     this.getQueryApi().withRawResponse().flowServiceExecuteQuery(request, buildRequestOptions(ctx));
 
-            QueryResponse formattedResponse = Utils.formatQueryResponse(response.body(), response.headers());
+            QueryResponse formattedResponse = Utils.formatQueryResponse(response.body());
             LogUtil.printInfoLog(InfoLogs.QUERY_REQUEST_RESOLVED.getLog());
             return formattedResponse;
         } catch (ApiClientApiException e) {

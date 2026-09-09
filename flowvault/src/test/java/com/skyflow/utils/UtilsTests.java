@@ -4,6 +4,7 @@ import com.google.gson.JsonObject;
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.Env;
+import com.skyflow.enums.UpdateType;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.generated.rest.core.ApiClientApiException;
 import com.skyflow.generated.rest.resources.flowservice.requests.V1DeleteRequest;
@@ -497,7 +498,7 @@ public class UtilsTests {
         UpdateRequestRecord record = UpdateRequestRecord.builder()
                 .skyflowId("sky-1").data(new HashMap<>()).tableName("table2").build();
         UpdateRequest request = UpdateRequest.builder()
-                .tableName("table1").records(Collections.singletonList(record)).updateType("REPLACE").build();
+                .tableName("table1").records(Collections.singletonList(record)).updateType(UpdateType.REPLACE).build();
         VaultConfig config = new VaultConfig();
         config.setVaultId("vault123");
 
@@ -725,7 +726,7 @@ public class UtilsTests {
         V1ExecuteQueryResponse response = V1ExecuteQueryResponse.builder()
                 .records(Collections.singletonList(record)).metadata(metadata).build();
 
-        QueryResponse formatted = Utils.formatQueryResponse(response, new HashMap<>());
+        QueryResponse formatted = Utils.formatQueryResponse(response);
 
         Assert.assertEquals(1, formatted.getRecords().size());
         Assert.assertEquals(row, formatted.getRecords().get(0).getData());
@@ -734,21 +735,9 @@ public class UtilsTests {
 
     @Test
     public void testFormatQueryResponse_nullResponseReturnsEmptyRecordsAndNullMetadata() {
-        QueryResponse formatted = Utils.formatQueryResponse(null, new HashMap<>());
+        QueryResponse formatted = Utils.formatQueryResponse(null);
         Assert.assertTrue(formatted.getRecords().isEmpty());
         Assert.assertNull(formatted.getMetadata());
-    }
-
-    @Test
-    public void testFormatQueryResponse_requestIdAlwaysPopulated() {
-        Map<String, List<String>> headers = new HashMap<>();
-        headers.put(Constants.REQUEST_ID_HEADER_KEY, Collections.singletonList("req-query-1"));
-        V1ExecuteQueryResponse response = V1ExecuteQueryResponse.builder()
-                .records(Collections.singletonList(V1ExecuteQueryRecordResponse.builder().build())).build();
-
-        QueryResponse formatted = Utils.formatQueryResponse(response, headers);
-
-        Assert.assertEquals("req-query-1", formatted.getRequestId());
     }
 
     // ── getBulkInsertRequestBody (bulk overload) ──────────────────────────────

@@ -14,7 +14,7 @@ import java.util.Map;
  * constructor logic or toString() serialization: {@link Token},
  * {@link TokenizeResponseRecord}, {@link BulkTokenizeResponseRecord}, {@link TokenizeSummary},
  * {@link DeleteTokensRecord}, {@link BulkDeleteTokensResponseRecord},
- * {@link DeleteTokensSummary}, {@link DetokenizeSummary}, {@link DetokenizeMetadata},
+ * {@link DeleteTokensSummary}, {@link DetokenizeSummary}, {@link DetokenizeResponseRecordMetadata},
  * {@link ErrorRecord} and {@link DetokenizeResponseObject}.
  */
 public class ResponseComponentTests {
@@ -571,7 +571,7 @@ public class ResponseComponentTests {
 
     @Test
     public void testBulkDetokenizeResponseRecord_gettersReturnConstructorValues() {
-        DetokenizeMetadata metadata = new DetokenizeMetadata("skyflow-id-1", "table1");
+        DetokenizeResponseRecordMetadata metadata = new DetokenizeResponseRecordMetadata("skyflow-id-1", "table1");
 
         BulkDetokenizeResponseRecord record = new BulkDetokenizeResponseRecord(
                 4, "tok-1", "secret-value", "group1", metadata, 200, null, null);
@@ -615,11 +615,11 @@ public class ResponseComponentTests {
         Assert.assertTrue(json.contains("\"error\":null"));
     }
 
-    // ── DetokenizeMetadata ────────────────────────────────────────────────────
+    // ── DetokenizeResponseRecordMetadata ────────────────────────────────────────────────────
 
     @Test
     public void testDetokenizeMetadata_gettersReturnConstructorValues() {
-        DetokenizeMetadata metadata = new DetokenizeMetadata("skyflow-id-1", "table1");
+        DetokenizeResponseRecordMetadata metadata = new DetokenizeResponseRecordMetadata("skyflow-id-1", "table1");
 
         Assert.assertEquals("skyflow-id-1", metadata.getSkyflowId());
         Assert.assertEquals("table1", metadata.getTableName());
@@ -627,7 +627,7 @@ public class ResponseComponentTests {
 
     @Test
     public void testDetokenizeMetadata_toStringSerializesFields() {
-        String json = new DetokenizeMetadata("skyflow-id-1", "table1").toString();
+        String json = new DetokenizeResponseRecordMetadata("skyflow-id-1", "table1").toString();
 
         Assert.assertTrue(json.contains("\"skyflowId\":\"skyflow-id-1\""));
         Assert.assertTrue(json.contains("\"tableName\":\"table1\""));
@@ -635,7 +635,7 @@ public class ResponseComponentTests {
 
     @Test
     public void testParseMetadata_returnsNullWhenRawMetadataIsNull() {
-        Assert.assertNull(DetokenizeMetadata.parseMetadata(null));
+        Assert.assertNull(DetokenizeResponseRecordMetadata.parseMetadata(null));
     }
 
     @Test
@@ -646,7 +646,7 @@ public class ResponseComponentTests {
         raw.put("skyflowId", "skyflow-id-1");
         raw.put("table", "table1");
 
-        DetokenizeMetadata metadata = DetokenizeMetadata.parseMetadata(raw);
+        DetokenizeResponseRecordMetadata metadata = DetokenizeResponseRecordMetadata.parseMetadata(raw);
 
         Assert.assertEquals("skyflow-id-1", metadata.getSkyflowId());
         Assert.assertEquals("table1", metadata.getTableName());
@@ -661,7 +661,7 @@ public class ResponseComponentTests {
         raw.put("tableName", "table1");
         raw.put("table", "should-be-ignored");
 
-        DetokenizeMetadata metadata = DetokenizeMetadata.parseMetadata(raw);
+        DetokenizeResponseRecordMetadata metadata = DetokenizeResponseRecordMetadata.parseMetadata(raw);
 
         Assert.assertEquals("table1", metadata.getTableName());
     }
@@ -674,7 +674,7 @@ public class ResponseComponentTests {
         raw.put("skyflowID", "skyflow-id-1");
         raw.put("table", "table1");
 
-        DetokenizeMetadata metadata = DetokenizeMetadata.parseMetadata(raw);
+        DetokenizeResponseRecordMetadata metadata = DetokenizeResponseRecordMetadata.parseMetadata(raw);
 
         Assert.assertEquals("skyflow-id-1", metadata.getSkyflowId());
         Assert.assertEquals("table1", metadata.getTableName());
@@ -682,7 +682,7 @@ public class ResponseComponentTests {
 
     @Test
     public void testParseMetadata_missingKeysParseAsNull() {
-        DetokenizeMetadata metadata = DetokenizeMetadata.parseMetadata(new HashMap<>());
+        DetokenizeResponseRecordMetadata metadata = DetokenizeResponseRecordMetadata.parseMetadata(new HashMap<>());
 
         Assert.assertNull(metadata.getSkyflowId());
         Assert.assertNull(metadata.getTableName());

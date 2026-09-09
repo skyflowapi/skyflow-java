@@ -11,13 +11,13 @@ import java.util.Map;
  * (see {@code flowdb_dp_apis.proto}) — {@link #parseMetadata(Map)} normalizes both into the
  * camelCase, {@code tableName}-shaped accessors below.
  */
-public class DetokenizeMetadata {
+public class DetokenizeResponseRecordMetadata {
     @Expose(serialize = true)
     private final String skyflowId;
     @Expose(serialize = true)
     private final String tableName;
 
-    public DetokenizeMetadata(String skyflowId, String tableName) {
+    public DetokenizeResponseRecordMetadata(String skyflowId, String tableName) {
         this.skyflowId = skyflowId;
         this.tableName = tableName;
     }
@@ -39,16 +39,16 @@ public class DetokenizeMetadata {
     /**
      * Parses the raw wire-shaped metadata map (keys {@code skyflowID}/{@code skyflowId} and
      * {@code table}/{@code tableName} — the API has been observed to send either casing) into a
-     * {@link DetokenizeMetadata}. Returns {@code null} for {@code null} input, matching the
+     * {@link DetokenizeResponseRecordMetadata}. Returns {@code null} for {@code null} input, matching the
      * record-level metadata field being absent entirely on error records.
      */
-    public static DetokenizeMetadata parseMetadata(Map<String, Object> rawMetadata) {
+    public static DetokenizeResponseRecordMetadata parseMetadata(Map<String, Object> rawMetadata) {
         if (rawMetadata == null) {
             return null;
         }
         Object skyflowId = rawMetadata.containsKey("skyflowId") ? rawMetadata.get("skyflowId") : rawMetadata.get("skyflowID");
         Object tableName = rawMetadata.containsKey("tableName") ? rawMetadata.get("tableName") : rawMetadata.get("table");
-        return new DetokenizeMetadata(
+        return new DetokenizeResponseRecordMetadata(
                 skyflowId != null ? skyflowId.toString() : null,
                 tableName != null ? tableName.toString() : null);
     }

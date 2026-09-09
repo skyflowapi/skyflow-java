@@ -30,10 +30,19 @@ The `flowvault` module is a Skyflow Java SDK built for high-throughput vault ope
 - [VaultController — Bulk operations](#vaultcontroller--bulk-operations)
   - [Schema vs. schemaless vaults](#schema-vs-schemaless-vaults)
   - [Batching and concurrency](#batching-and-concurrency)
+- [VaultController — Unary operations](#vaultcontroller--unary-operations)
+  - [Unary vs. bulk](#unary-vs-bulk)
+  - [Vault type support](#vault-type-support)
 - [Bulk Insert](#bulk-insert)
 - [Bulk Tokenize](#bulk-tokenize)
 - [Bulk Detokenize](#bulk-detokenize)
 - [Bulk Delete Tokens](#bulk-delete-tokens)
+- [Insert](#insert)
+- [Detokenize](#detokenize)
+- [Get](#get)
+- [Update](#update)
+- [Delete](#delete)
+- [Query](#query)
 - [Custom Request Headers](#custom-request-headers)
 - [Error Handling](#error-handling)
   - [Two layers of errors](#two-layers-of-errors)
@@ -46,6 +55,7 @@ The `flowvault` module is a Skyflow Java SDK built for high-throughput vault ope
 
 - Authenticate using a Skyflow service account, an API key, or a bearer token — see [Authenticate](#authenticate).
 - Perform bulk Vault API operations — insert, tokenize, detokenize, and delete tokens — each with a synchronous and an async variant, built for high-throughput Flow DB workloads.
+- Perform unary Vault API operations — insert, detokenize, get, update, delete, and query — a single API call each, for when you want a plain request and response rather than the bulk batching machinery. See [VaultController — Unary operations](#vaultcontroller--unary-operations).
 - **Per-record reporting, not all-or-nothing.** A bulk call succeeds as a call even when individual records fail; every response reports a summary plus the outcome of each individual record or token. See [Error Handling](#error-handling).
 
 # Install
@@ -354,6 +364,50 @@ INSERT_CONCURRENCY_LIMIT=5
 
 The 10,000-item ceiling per bulk call is a separate, fixed limit and is not configurable.
 
+# VaultController — Unary operations
+
+Alongside the bulk methods, `VaultController` exposes six **unary** operations. Each sends exactly one API call and hands the result straight back:
+
+| Method | Parameters | Returns | Description |
+|--------|-----------|---------|-------------|
+| `insert(InsertRequest)` | `InsertRequest`, optional `InsertOptions` | `InsertResponse` | Insert records, optionally across multiple tables, in one call |
+| `detokenize(DetokenizeRequest)` | `DetokenizeRequest`, optional `DetokenizeOptions` | `DetokenizeResponse` | Detokenize tokens, optionally with a redaction override per token group |
+| `get(GetRequest)` | `GetRequest`, optional `GetOptions` | `GetResponse` | Read records by skyflow ID or unique value, optionally with a redaction override per column |
+| `update(UpdateRequest)` | `UpdateRequest`, optional `UpdateOptions` | `UpdateResponse` | Update records by skyflow ID |
+| `delete(DeleteRequest)` | `DeleteRequest`, optional `DeleteOptions` | `DeleteResponse` | Delete records by skyflow ID or unique value |
+| `query(QueryRequest)` | `QueryRequest`, optional `QueryOptions` | `QueryResponse` | Run a SQL-style query against the vault |
+
+`insert` and `detokenize` are the unary counterparts of `bulkInsert` and `bulkDetokenize` — the same request builders, sent as one call instead of many batches. `get`, `update`, `delete`, and `query` have no bulk counterpart at all; they exist only in this unary form.
+
+Each method also accepts an optional options object (`InsertOptions`, `DetokenizeOptions`, `GetOptions`, `UpdateOptions`, `DeleteOptions`, `QueryOptions`) — see [Custom Request Headers](#custom-request-headers).
+
+## Unary vs. bulk
+
+Everything the bulk machinery adds — batching, concurrency, the payload ceiling, the summary, the per-item index — is absent here. What survives is the per-record reporting:
+
+| | Bulk operations | Unary operations |
+|---|---|---|
+| Async variant | Yes — `bulkInsertAsync`, and so on | **No.** Wrap the call yourself if you need one |
+| Batching and concurrency | Configured per operation — see [Batching and concurrency](#batching-and-concurrency) | Not applicable — one payload, one call |
+| Payload ceiling | 10,000 records or tokens per call | Not enforced by the SDK; the vault's own request limits still apply |
+| Response summary | `getSummary()` | None — read the records list |
+| Per-item `getIndex()` / `getRequestId()` | Yes | No. Records come back in submitted order, and the `x-request-id` of the single call reaches you only through a thrown `SkyflowException` |
+| Retry helper | `getRecordsToRetry()` / `getTokensToRetry()` | None — filter the records yourself, see [Retrying the failed records](#retrying-the-failed-records) |
+| Per-item `getHttpCode()` / `getError()` | Yes | Yes, on every unary operation except `query` |
+
+## Vault type support
+
+The same distinction as [Schema vs. schemaless vaults](#schema-vs-schemaless-vaults) applies. Five of the six unary operations address records inside a table, so they only make sense against a structured vault:
+
+| Operation | Supported on |
+|---|---|
+| `insert` | Structured (schema) vaults — inserts into a table's columns. |
+| `get` | Structured vaults — reads a table's records by skyflow ID or unique value. |
+| `update` | Structured vaults — updates a table's records by skyflow ID. |
+| `delete` | Structured vaults — deletes a table's records. Distinct from `bulkDeleteTokens`, which removes tokens only and leaves the record in place. |
+| `query` | Structured vaults — the query itself addresses tables and columns. |
+| `detokenize` | Both — detokenizing only needs the token itself, not a table, so it works regardless of which kind of vault the token came from. |
+
 # Bulk Insert
 
 Insert many records — even across different tables — in a single call. Each record is a `BulkInsertRequestRecord` with its own `data` and, optionally, its own `tableName` and `upsert`.
@@ -659,7 +713,7 @@ Sample response:
 }
 ```
 
-`record.getMetadata()` is typed as a `DetokenizeMetadata` with `getSkyflowId()`/`getTableName()` — no casting into the raw map required (`null` on records that errored, same as above):
+`record.getMetadata()` is typed as a `DetokenizeResponseRecordMetadata` with `getSkyflowId()`/`getTableName()` — no casting into the raw map required (`null` on records that errored, same as above):
 
 ```java
 for (BulkDetokenizeResponseRecord record : detokenizeResponse.getRecords()) {
@@ -735,9 +789,541 @@ for (BulkDeleteTokensResponseRecord record : deleteTokensResponse.getRecords()) 
 
 Use `deleteTokensResponse.getTokensToRetry()` to get back only the tokens worth resubmitting.
 
+# Insert
+
+Insert records in a single API call — the unary counterpart of [Bulk Insert](#bulk-insert), with no batching or concurrency involved. Each record is an `InsertRequestRecord` with its own `data` and, optionally, its own `tableName`, `tokens`, and `upsert`.
+
+> **Vault type supported:** structured (schema) vaults. See [Vault type support](#vault-type-support).
+
+**Note:**
+
+- `tableName` must be specified at exactly one level: either on the request (`InsertRequest.builder().tableName(...)`) or on **every** record (`InsertRequestRecord.builder().tableName(...)`) — not both, and not neither. Same rule as bulk insert.
+- `upsert` is optional, but wherever you supply it, it must sit at the same level as `tableName`.
+- `tokens` is optional; when supplied, the map must not be empty and no key or value may be blank.
+
+### Construct an insert request
+
+```java
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.data.InsertRequest;
+import com.skyflow.vault.data.InsertRequestRecord;
+import com.skyflow.vault.data.InsertResponse;
+import com.skyflow.vault.data.InsertResponseRecord;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+public class InsertExample {
+    public static void main(String[] args) throws SkyflowException {
+        // Step 1: Build each record. Here tableName lives on the request, so no record carries it.
+        Map<String, Object> recordData = new HashMap<>();
+        recordData.put("card_number", "4111111111111111");
+        recordData.put("cardholder_name", "john doe");
+
+        InsertRequestRecord record = InsertRequestRecord.builder()
+                .data(recordData)
+                .build();
+
+        List<InsertRequestRecord> records = new ArrayList<>();
+        records.add(record);
+
+        // Step 2: Build the InsertRequest
+        InsertRequest insertRequest = InsertRequest.builder()
+                .tableName("table1")
+                .records(records)
+                .build();
+
+        // Step 3: Perform the insert
+        InsertResponse insertResponse = vault.insert(insertRequest);
+        System.out.println(insertResponse);
+    }
+}
+```
+
+To put the table name on the records instead, drop `tableName` from the request and set it — along with any `upsert` — on every `InsertRequestRecord`, exactly as [Bulk Insert](#bulk-insert) shows.
+
+There is no async variant: `insert` returns its `InsertResponse` directly.
+
+Sample response:
+
+```json
+{
+  "records": [
+    {
+      "tableName": "table1",
+      "skyflowId": "9fac9201-7b8a-4446-93f8-5244e1213bd1",
+      "tokens": {
+        "card_number": [
+          { "token": "5484-7829-1702-9110", "tokenGroupName": "card_number_cg" }
+        ],
+        "cardholder_name": [
+          { "token": "b2308e2a-c1f5-469b-97b7-1f193159399b", "tokenGroupName": "deterministic_string" }
+        ]
+      },
+      "data": { "card_number": "4111-1111-1111-1111", "cardholder_name": "John Doe" },
+      "hashedData": { "card_number": "b6e6d...c3f9" },
+      "httpCode": 200,
+      "error": null,
+      "requestId": null
+    }
+  ]
+}
+```
+
+There is no `summary` and no per-record `index` — the records come back in the order you submitted them. `requestId` behaves exactly as it does on a bulk record: `null` on success, the failing call's `x-request-id` on error. `getTokens()` returns the same parsed `Map<String, List<Token>>` described under [Bulk Insert](#bulk-insert), so `Token.getToken()`, `Token.getTokenGroupName()`, and `Token.getPath()` are available with no casting.
+
+Accessors: `insertResponse.getRecords()`, and on each record `getTableName()`, `getSkyflowId()`, `getTokens()`, `getData()`, `getHashedData()`, `getHttpCode()`, `getError()`, `getRequestId()`.
+
+> **Deprecation notice:** `InsertResponseRecord.getFields()` is deprecated in favor of `getTokens()` here too — it is kept only for backward compatibility and will be removed in a future release.
+
+```java
+for (InsertResponseRecord record : insertResponse.getRecords()) {
+    if (record.getError() == null) {
+        System.out.println(record.getTableName() + " -> " + record.getSkyflowId());
+    } else {
+        System.err.println("insert failed [" + record.getHttpCode() + "] " + record.getError());
+    }
+}
+```
+
+# Detokenize
+
+Detokenize tokens in a single API call — the unary counterpart of [Bulk Detokenize](#bulk-detokenize), optionally overriding the redaction applied per token group via `tokenGroupRedactions`.
+
+> **Vault type supported:** both. See [Vault type support](#vault-type-support).
+
+**Note:**
+
+- `tokens` is required and must not be empty, and no entry may be blank.
+- `tokenGroupRedactions` is optional; when supplied, each entry needs a non-blank `tokenGroupName` and `redaction`.
+
+### Construct a detokenize request
+
+```java
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.data.DetokenizeRequest;
+import com.skyflow.vault.data.DetokenizeResponse;
+import com.skyflow.vault.data.DetokenizeResponseRecord;
+import com.skyflow.vault.data.TokenGroupRedactions;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+public class DetokenizeExample {
+    public static void main(String[] args) throws SkyflowException {
+        List<String> tokens = new ArrayList<>(Arrays.asList(
+                "5479-4229-4622-1393",
+                "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        ));
+
+        // redaction is a free-form string understood by the vault (e.g. "PLAIN_TEXT",
+        // "MASKED", "REDACTED", "DEFAULT")
+        TokenGroupRedactions redaction = TokenGroupRedactions.builder()
+                .tokenGroupName("card_number_cg")
+                .redaction("MASKED")
+                .build();
+
+        DetokenizeRequest detokenizeRequest = DetokenizeRequest.builder()
+                .tokens(tokens)
+                .tokenGroupRedactions(Arrays.asList(redaction))
+                .build();
+
+        DetokenizeResponse detokenizeResponse = vault.detokenize(detokenizeRequest);
+        System.out.println(detokenizeResponse);
+    }
+}
+```
+
+There is no async variant: `detokenize` returns its `DetokenizeResponse` directly.
+
+Sample response:
+
+```json
+{
+  "records": [
+    {
+      "token": "5479-4229-4622-1393",
+      "value": "4111111111111111",
+      "tokenGroupName": "card_number_cg",
+      "metadata": { "skyflowId": "9fac9201-7b8a-4446-93f8-5244e1213bd1", "tableName": "table1" },
+      "httpCode": 200,
+      "error": null,
+      "requestId": null
+    },
+    {
+      "token": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "value": null,
+      "tokenGroupName": null,
+      "metadata": null,
+      "httpCode": 404,
+      "error": "Token Not Found",
+      "requestId": "a1b2c3d4-..."
+    }
+  ]
+}
+```
+
+Same per-record shape as bulk detokenize, minus `index` — `requestId` behaves the same on both: `null` on success, the failing call's `x-request-id` on error. `record.getMetadata()` is a typed `DetokenizeResponseRecordMetadata` with `getSkyflowId()`/`getTableName()` — `null` on records that errored:
+
+```java
+for (DetokenizeResponseRecord record : detokenizeResponse.getRecords()) {
+    if (record.getError() == null) {
+        System.out.println(record.getToken() + " -> " + record.getValue()
+                + " (" + record.getTokenGroupName() + ")");
+    } else {
+        System.err.println(record.getToken() + " failed ["
+                + record.getHttpCode() + "] " + record.getError());
+    }
+}
+```
+
+Accessors: `detokenizeResponse.getRecords()`, and on each record `getToken()`, `getValue()`, `getTokenGroupName()`, `getMetadata()`, `getHttpCode()`, `getError()`, `getRequestId()`. `getValue()` is typed `Object`, passed straight through from the API.
+
+# Get
+
+Read records back from a table, by skyflow ID or by unique value, optionally overriding the redaction applied per column via `columnRedactions`.
+
+> **Vault type supported:** structured (schema) vaults. See [Vault type support](#vault-type-support).
+
+**Note:**
+
+- A `GetRequest` works in one of two modes, and they are mutually exclusive: **single-table** (`table`, `ids`/`uniqueValues`, `fields`, `columnRedactions`, `limit`, `offset`) or **multi-table** (`records`, a list of `GetRequestRecord`). Setting fields from both modes fails validation.
+- `table` is required, and exactly one of `ids` or `uniqueValues` must be supplied — both, or neither, fails validation. This holds per record in multi-table mode.
+- `uniqueValues` is a `List<Map<String, Object>>`: one map per record, each holding the unique column-name/value pairs that identify it.
+- `fields` selects the columns to return; omit it for all of them. When supplied, it must be non-empty with no blank entries.
+- `limit` and `offset` apply to the call as a whole and are **only sent in single-table mode** — a `GetRequestRecord` has no `limit`/`offset` of its own, and values set on a multi-table request are not sent.
+
+### Construct a get request
+
+```java
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.data.ColumnRedactions;
+import com.skyflow.vault.data.GetRequest;
+import com.skyflow.vault.data.GetResponse;
+import com.skyflow.vault.data.GetResponseRecord;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+
+public class GetExample {
+    public static void main(String[] args) throws SkyflowException {
+        // Step 1: Optionally override how individual columns come back. Anything not listed
+        // uses the redaction configured on the vault's policy.
+        ColumnRedactions redaction = ColumnRedactions.builder()
+                .columnName("card_number")
+                .redaction("MASKED")
+                .build();
+
+        // Step 2: Build the GetRequest — single-table mode, selecting records by skyflow ID
+        GetRequest getRequest = GetRequest.builder()
+                .table("table1")
+                .ids(new ArrayList<>(Arrays.asList(
+                        "9fac9201-7b8a-4446-93f8-5244e1213bd1",
+                        "b2308e2a-c1f5-469b-97b7-1f193159399b")))
+                .fields(new ArrayList<>(Arrays.asList("card_number", "cardholder_name")))
+                .columnRedactions(Collections.singletonList(redaction))
+                .limit(10)
+                .offset(0)
+                .build();
+
+        // Step 3: Perform the get
+        GetResponse getResponse = vault.get(getRequest);
+        System.out.println(getResponse);
+    }
+}
+```
+
+To select records by unique value instead of skyflow ID, swap `ids(...)` for `uniqueValues(...)`:
+
+```java
+Map<String, Object> uniqueValue = new HashMap<>();
+uniqueValue.put("email", "jane.doe@example.com");
+
+GetRequest getRequest = GetRequest.builder()
+        .table("table2")
+        .uniqueValues(Collections.singletonList(uniqueValue))
+        .build();
+```
+
+To read from more than one table in a single call, use multi-table mode — each `GetRequestRecord` carries its own table and lookup fields, and none of the single-table fields may be set on the request itself:
+
+```java
+GetRequestRecord fromTable1 = GetRequestRecord.builder()
+        .table("table1")
+        .ids(Arrays.asList("9fac9201-7b8a-4446-93f8-5244e1213bd1"))
+        .fields(Arrays.asList("card_number"))
+        .build();
+
+GetRequestRecord fromTable2 = GetRequestRecord.builder()
+        .table("table2")
+        .uniqueValues(Collections.singletonList(uniqueValue))
+        .build();
+
+GetRequest getRequest = GetRequest.builder()
+        .records(Arrays.asList(fromTable1, fromTable2))
+        .build();
+```
+
+There is no async variant: `get` returns its `GetResponse` directly.
+
+Sample response:
+
+```json
+{
+  "records": [
+    {
+      "tableName": "table1",
+      "skyflowId": "9fac9201-7b8a-4446-93f8-5244e1213bd1",
+      "tokens": {
+        "card_number": [
+          { "token": "5484-7829-1702-9110", "tokenGroupName": "card_number_cg" }
+        ]
+      },
+      "data": { "card_number": "4111-XXXX-XXXX-1111", "cardholder_name": "John Doe" },
+      "hashedData": null,
+      "httpCode": 200,
+      "error": null,
+      "requestId": null
+    }
+  ]
+}
+```
+
+`GetResponseRecord` carries the same fields as an insert record — the vault returns the same object shape for both — so the accessors are identical: `getTableName()`, `getSkyflowId()`, `getTokens()`, `getData()`, `getHashedData()`, `getHttpCode()`, `getError()`, `getRequestId()`.
+
+```java
+for (GetResponseRecord record : getResponse.getRecords()) {
+    if (record.getError() == null) {
+        System.out.println(record.getSkyflowId() + " -> " + record.getData());
+    } else {
+        System.err.println(record.getSkyflowId() + " failed ["
+                + record.getHttpCode() + "] " + record.getError());
+    }
+}
+```
+
+# Update
+
+Update records in a table by skyflow ID, in a single API call.
+
+> **Vault type supported:** structured (schema) vaults. See [Vault type support](#vault-type-support).
+
+**Note:**
+
+- `tableName` is required on the request. A record may override it with its own `tableName`, which applies to that record only.
+- Every `UpdateRequestRecord` needs a non-blank `skyflowId`.
+- `data` holds the columns to change; no key or value may be blank. `tokens` is optional, and when supplied must be non-empty with no blank keys or values.
+- `updateType` accepts `"UPDATE"` (merge the supplied columns) or `"REPLACE"` (overwrite the whole record). Any other value fails validation; omitting it sends no `updateType`, which the vault treats the same as `"UPDATE"`. It is a request-level setting — records have no `updateType` of their own.
+
+### Construct an update request
+
+```java
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.data.UpdateRequest;
+import com.skyflow.vault.data.UpdateRequestRecord;
+import com.skyflow.vault.data.UpdateResponse;
+import com.skyflow.vault.data.UpdateResponseRecord;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
+public class UpdateExample {
+    public static void main(String[] args) throws SkyflowException {
+        // Step 1: Build the record — the columns to change, keyed by the record's skyflow ID
+        Map<String, Object> data = new HashMap<>();
+        data.put("cardholder_name", "jane doe");
+
+        UpdateRequestRecord record = UpdateRequestRecord.builder()
+                .skyflowId("9fac9201-7b8a-4446-93f8-5244e1213bd1")
+                .data(data)
+                .build();
+
+        // Step 2: Build the UpdateRequest
+        UpdateRequest updateRequest = UpdateRequest.builder()
+                .tableName("table1")
+                .records(Collections.singletonList(record))
+                .updateType("UPDATE")
+                .build();
+
+        // Step 3: Perform the update
+        UpdateResponse updateResponse = vault.update(updateRequest);
+        System.out.println(updateResponse);
+    }
+}
+```
+
+There is no async variant: `update` returns its `UpdateResponse` directly.
+
+Sample response:
+
+```json
+{
+  "records": [
+    {
+      "tableName": "table1",
+      "skyflowId": "9fac9201-7b8a-4446-93f8-5244e1213bd1",
+      "tokens": {
+        "cardholder_name": [
+          { "token": "f1a2b3c4-d5e6-7890-abcd-ef1234567890", "tokenGroupName": "deterministic_string" }
+        ]
+      },
+      "data": { "cardholder_name": "Jane Doe" },
+      "hashedData": null,
+      "httpCode": 200,
+      "error": null,
+      "requestId": null
+    }
+  ]
+}
+```
+
+Like `GetResponseRecord`, `UpdateResponseRecord` carries the insert record's fields — the vault returns the same object shape — so the accessors are `getTableName()`, `getSkyflowId()`, `getTokens()`, `getData()`, `getHashedData()`, `getHttpCode()`, `getError()`, `getRequestId()`.
+
+```java
+for (UpdateResponseRecord record : updateResponse.getRecords()) {
+    if (record.getError() == null) {
+        System.out.println(record.getSkyflowId() + " updated");
+    } else {
+        System.err.println(record.getSkyflowId() + " failed ["
+                + record.getHttpCode() + "] " + record.getError());
+    }
+}
+```
+
+# Delete
+
+Delete records from a table by skyflow ID or unique value, in a single API call.
+
+> **Vault type supported:** structured (schema) vaults. See [Vault type support](#vault-type-support).
+
+**Note:**
+
+- This deletes the records themselves. [Bulk Delete Tokens](#bulk-delete-tokens) is a different operation — it removes tokens and leaves the underlying record in place.
+- `table` is required, and exactly one of `ids` or `uniqueValues` must be supplied — both, or neither, fails validation.
+- `uniqueValues` takes the same shape as in [Get](#get): one `Map<String, Object>` per record, holding the unique column-name/value pairs that identify it.
+
+### Construct a delete request
+
+```java
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.data.DeleteRequest;
+import com.skyflow.vault.data.DeleteResponse;
+import com.skyflow.vault.data.DeleteResponseRecord;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+public class DeleteExample {
+    public static void main(String[] args) throws SkyflowException {
+        List<String> ids = new ArrayList<>(Arrays.asList(
+                "9fac9201-7b8a-4446-93f8-5244e1213bd1",
+                "b2308e2a-c1f5-469b-97b7-1f193159399b"
+        ));
+
+        DeleteRequest deleteRequest = DeleteRequest.builder()
+                .table("table1")
+                .ids(ids)
+                .build();
+
+        DeleteResponse deleteResponse = vault.delete(deleteRequest);
+        System.out.println(deleteResponse);
+    }
+}
+```
+
+There is no async variant: `delete` returns its `DeleteResponse` directly.
+
+Sample response:
+
+```json
+{
+  "records": [
+    { "skyflowId": "9fac9201-7b8a-4446-93f8-5244e1213bd1", "httpCode": 200, "error": null, "requestId": null },
+    { "skyflowId": "b2308e2a-c1f5-469b-97b7-1f193159399b", "httpCode": 404, "error": "Record Not Found", "requestId": "a1b2c3d4-..." }
+  ]
+}
+```
+
+`DeleteResponseRecord` is flatter than the insert-shaped records above — the vault returns no data, tokens, or hashed data for a delete. Accessors: `deleteResponse.getRecords()`, and on each record `getSkyflowId()`, `getHttpCode()`, `getError()`, `getRequestId()`.
+
+```java
+for (DeleteResponseRecord record : deleteResponse.getRecords()) {
+    if (record.getError() == null) {
+        System.out.println(record.getSkyflowId() + " deleted");
+    } else {
+        System.err.println(record.getSkyflowId() + " failed ["
+                + record.getHttpCode() + "] " + record.getError());
+    }
+}
+```
+
+# Query
+
+Run a SQL-style query against the vault in a single API call.
+
+> **Vault type supported:** structured (schema) vaults. See [Vault type support](#vault-type-support).
+
+**Note:**
+
+- `query` is required and must not be blank. That is the whole request — there are no other fields.
+- This is the one unary operation with **no per-record status**: rows either come back or the call throws. There is no `httpCode` or `error` on a `QueryResponseRecord`.
+
+### Construct a query request
+
+```java
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.data.QueryRequest;
+import com.skyflow.vault.data.QueryResponse;
+import com.skyflow.vault.data.QueryResponseRecord;
+
+public class QueryExample {
+    public static void main(String[] args) throws SkyflowException {
+        QueryRequest queryRequest = QueryRequest.builder()
+                .query("SELECT card_number, cardholder_name FROM table1 LIMIT 10")
+                .build();
+
+        QueryResponse queryResponse = vault.query(queryRequest);
+        System.out.println(queryResponse);
+    }
+}
+```
+
+There is no async variant: `query` returns its `QueryResponse` directly.
+
+Sample response:
+
+```json
+{
+  "records": [
+    { "data": { "card_number": "4111-1111-1111-1111", "cardholder_name": "John Doe" } },
+    { "data": { "card_number": "5484-7829-1702-9110", "cardholder_name": "Jane Doe" } }
+  ],
+  "metadata": {
+    "columns": ["card_number", "cardholder_name"]
+  }
+}
+```
+
+Each row is a free-form column/value map — the query API has no notion of tokens, so unlike insert or detokenize there is no typed `Token` data here. `getMetadata()` returns a `QueryResponseMetadata` wrapping the query's return columns via `getColumns()`; both `getMetadata()` and `getColumns()` are `null` when the vault doesn't report columns.
+
+Accessors: `queryResponse.getRecords()` and `queryResponse.getMetadata()`, and on each record `getData()`.
+
+```java
+System.out.println("columns: " + (queryResponse.getMetadata() != null ? queryResponse.getMetadata().getColumns() : null));
+for (QueryResponseRecord row : queryResponse.getRecords()) {
+    System.out.println(row.getData());
+}
+```
+
 # Custom Request Headers
 
-To include custom HTTP headers on an outgoing bulk request, pass a `RequestInterceptor` via that operation's options object. The headers available are defined by the `CustomHeaderKey` enum:
+To include custom HTTP headers on an outgoing request — bulk or unary — pass a `RequestInterceptor` via that operation's options object. The headers available are defined by the `CustomHeaderKey` enum:
 
 | `CustomHeaderKey` | HTTP header name |
 |---|---|
@@ -756,9 +1342,9 @@ BulkInsertOptions options = BulkInsertOptions.builder()
 BulkInsertResponse insertResponse = vault.bulkInsert(insertRequest, options);
 ```
 
-The interceptor runs **once per batch**, not once per bulk call — so a value generated inside it (a fresh request id, say) differs between the batches a single bulk call is split into.
+The interceptor runs **once per batch**, not once per bulk call — so a value generated inside it (a fresh request id, say) differs between the batches a single bulk call is split into. On a unary operation there is only ever one call, so it runs exactly once.
 
-The same pattern applies to every bulk operation, via its corresponding options class:
+The same pattern applies to every operation, via its corresponding options class:
 
 | Operation | Options class |
 |---|---|
@@ -766,19 +1352,27 @@ The same pattern applies to every bulk operation, via its corresponding options 
 | `bulkTokenize` / `bulkTokenizeAsync` | `BulkTokenizeOptions` |
 | `bulkDetokenize` / `bulkDetokenizeAsync` | `BulkDetokenizeOptions` |
 | `bulkDeleteTokens` / `bulkDeleteTokensAsync` | `BulkDeleteTokensOptions` |
+| `insert` | `InsertOptions` |
+| `detokenize` | `DetokenizeOptions` |
+| `get` | `GetOptions` |
+| `update` | `UpdateOptions` |
+| `delete` | `DeleteOptions` |
+| `query` | `QueryOptions` |
 
 # Error Handling
 
 ## Two layers of errors
 
-This is the mental model to hold for every bulk operation:
+This is the mental model to hold for every operation, bulk or unary:
 
 | Layer | What it covers | How you see it |
 |---|---|---|
 | **Request-level** | The call could not be made or the whole call failed: invalid request shape, missing credentials, auth failure, payload over the 10,000-item limit. | A thrown `SkyflowException`. No results at all. |
 | **Record-level** | The call succeeded, but individual records or tokens inside it did not. | A returned response. **Nothing is thrown.** Each entry in `getRecords()` reports its own `httpCode` and `error`. |
 
-The second layer is what distinguishes `flowvault` from an all-or-nothing API: **a bulk call that returns normally can still contain failures, and a call where every single record failed also returns normally rather than throwing.** Checking only for a thrown exception will silently miss failed records — always read the summary and the per-record results.
+The second layer is what distinguishes `flowvault` from an all-or-nothing API: **a call that returns normally can still contain failures, and a call where every single record failed also returns normally rather than throwing.** Checking only for a thrown exception will silently miss failed records — always read the summary and the per-record results.
+
+Unary operations follow the same two layers. Their records carry the same `requestId` behavior as bulk records — `null` on success, the failing call's `x-request-id` on error — the only structural differences are that unary records have no `getIndex()` (there is no batch position to report), and `query` has no record-level layer at all — rows either come back or the call throws, so `QueryResponse` carries no per-record `requestId` either.
 
 ## Per-record success and failure
 
@@ -786,10 +1380,10 @@ Every bulk response exposes `getSummary()` and `getRecords()`. The records list 
 
 | Field | Present on | Meaning |
 |---|---|---|
-| `getIndex()` | always | Position of this item in the payload you submitted — use it to line results back up with your input. |
+| `getIndex()` | bulk only | Position of this item in the payload you submitted — use it to line results back up with your input. |
 | `getHttpCode()` | always | Per-item status. `2xx` for success; `4xx`/`5xx` for failure. |
 | `getError()` | failures only | Error message for this item. `null` means this item succeeded. |
-| `getRequestId()` | failures only | The `x-request-id` of the batch this item was in — quote it in support escalations. Items from the same batch share one id. |
+| `getRequestId()` | failures only | The `x-request-id` of the call this item was part of — quote it in support escalations. In bulk responses, items from the same batch share one id. Present on both bulk and unary per-record types; `QueryResponse` is the one exception (see below). |
 
 The success payload sits alongside those fields on the same object: `getSkyflowId()`/`getTokens()`/`getData()` for insert (`getFields()` is deprecated — it returns the same data in its original, pre-typed `Map<String, Object>` shape, not `getTokens()`'s `Token` objects), `getValue()`/`getTokenGroupName()`/`getMetadata()` for detokenize, `getValue()`/`getTokenGroupName()`/`getToken()` for tokenize, `getToken()` for delete.
 
@@ -801,6 +1395,8 @@ Summaries per operation:
 | `BulkTokenizeResponse` | `TokenizeSummary` | `totalTokens`, `totalTokenized`, `totalPartial`, `totalFailed` |
 | `BulkDetokenizeResponse` | `DetokenizeSummary` | `totalTokens`, `totalDetokenized`, `totalFailed` |
 | `BulkDeleteTokensResponse` | `DeleteTokensSummary` | `totalTokens`, `totalDeleted`, `totalFailed` |
+
+A unary response has no summary and no `getIndex()` — just `getRecords()`, in submitted order, with `getHttpCode()`, `getError()`, and `getRequestId()` on each entry alongside that operation's payload: `getSkyflowId()`/`getTokens()`/`getData()`/`getHashedData()` for `insert`, `get`, and `update`; `getSkyflowId()` alone for `delete`; `getToken()`/`getValue()`/`getTokenGroupName()`/`getMetadata()` for `detokenize`. `QueryResponse` is the exception — its records carry only `getData()`, with no `getRequestId()` anywhere on the response, and the call's return columns on `getMetadata().getColumns()`.
 
 The idiomatic way to consume a bulk response:
 

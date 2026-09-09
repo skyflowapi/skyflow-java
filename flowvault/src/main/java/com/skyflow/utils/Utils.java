@@ -12,6 +12,7 @@ import java.util.Set;
 import com.google.gson.JsonObject;
 import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.Env;
+import com.skyflow.enums.UpdateType;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
@@ -64,7 +65,7 @@ import com.skyflow.vault.data.ColumnRedactions;
 import com.skyflow.vault.data.DeleteRequest;
 import com.skyflow.vault.data.DeleteResponse;
 import com.skyflow.vault.data.DeleteResponseRecord;
-import com.skyflow.vault.data.DetokenizeMetadata;
+import com.skyflow.vault.data.DetokenizeResponseRecordMetadata;
 import com.skyflow.vault.data.DetokenizeRequest;
 import com.skyflow.vault.data.DetokenizeResponse;
 import com.skyflow.vault.data.DetokenizeResponseRecord;
@@ -318,27 +319,13 @@ public final class Utils extends BaseUtils {
                 .tableName(request.getTableName())
                 .records(updateRecordDataList);
 
-        FlowEnumUpdateType requestUpdateType = resolveUpdateType(request.getUpdateType());
+        // Record-level updateType isn't wired here: the generated V1UpdateRecordData has no
+        // updateType setter yet even though the proto declares one (needs a client regeneration).
+        UpdateType requestUpdateType = request.getUpdateType();
         if (requestUpdateType != null) {
-            builder.updateType(requestUpdateType);
+            builder.updateType(FlowEnumUpdateType.valueOf(requestUpdateType.name()));
         }
         return builder.build();
-    }
-
-    // updateType is a String on the request; the legal values come from the wire enum itself
-    // so there is a single source of truth. Validations rejects anything that does not match.
-    // Record-level updateType isn't wired here: the generated V1UpdateRecordData has no
-    // updateType setter yet even though the proto declares one (needs a client regeneration).
-    private static FlowEnumUpdateType resolveUpdateType(String updateType) {
-        if (updateType == null) {
-            return null;
-        }
-        for (FlowEnumUpdateType type : FlowEnumUpdateType.values()) {
-            if (type.toString().equalsIgnoreCase(updateType)) {
-                return type;
-            }
-        }
-        return null;
     }
 
     // ── Bulk (batched/concurrent) request-body builders ──────────────────────
@@ -1039,7 +1026,7 @@ public final class Utils extends BaseUtils {
         List<DetokenizeResponseRecord> records = new ArrayList<>();
         if (response != null && response.getResponse().isPresent()) {
             for (V1FlowDetokenizeResponseObject current : response.getResponse().get()) {
-                DetokenizeMetadata metadata = DetokenizeMetadata.parseMetadata(current.getMetadata().orElse(null));
+                DetokenizeResponseRecordMetadata metadata = DetokenizeResponseRecordMetadata.parseMetadata(current.getMetadata().orElse(null));
                 String reqID = current.getError().isPresent() ? extractRequestId(headers) : null;
                 records.add(new DetokenizeResponseRecord(
                         current.getToken().orElse(null),
@@ -1062,7 +1049,7 @@ public final class Utils extends BaseUtils {
             int recordsSize = record.size();
             for (int index = 0; index < recordsSize; index++) {
                 V1FlowDetokenizeResponseObject current = record.get(index);
-                DetokenizeMetadata metadata = DetokenizeMetadata.parseMetadata(current.getMetadata().orElse(null));
+                DetokenizeResponseRecordMetadata metadata = DetokenizeResponseRecordMetadata.parseMetadata(current.getMetadata().orElse(null));
                 String reqID = null;
                 if(current.getError().isPresent()){
                     reqID = extractRequestId(headers);
@@ -1083,10 +1070,8 @@ public final class Utils extends BaseUtils {
         return null;
     }
 
-    // Query has no batching/bulk counterpart, so there is no index to attach here. Query rows
-    // carry no per-record error, so unlike insert/update/get/delete/detokenize the requestId is
-    // not error-gated - it is always populated from the call's own headers.
-    public static QueryResponse formatQueryResponse(V1ExecuteQueryResponse response, Map<String, List<String>> headers) {
+    // Query has no batching/bulk counterpart, so there is no index or requestId to attach here.
+    public static QueryResponse formatQueryResponse(V1ExecuteQueryResponse response) {
         List<QueryResponseRecord> records = new ArrayList<>();
         QueryResponseMetadata metadata = null;
         if (response != null) {
@@ -1099,7 +1084,7 @@ public final class Utils extends BaseUtils {
                 metadata = new QueryResponseMetadata(response.getMetadata().get().getColumns().orElse(null));
             }
         }
-        return new QueryResponse(records, metadata, extractRequestId(headers));
+        return new QueryResponse(records, metadata);
     }
 
     public static BulkDeleteTokensResponse formatBulkDeleteTokensResponse(

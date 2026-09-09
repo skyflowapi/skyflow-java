@@ -4,17 +4,17 @@ public class DetokenizeResponseRecord extends BaseDetokenizeRecordResponse {
     // Passed straight through from V1FlowDetokenizeResponseObject.getValue() (Optional<Object>).
     private final Object value;
     private final String tokenGroupName;
-    private final DetokenizeMetadata metadata;
+    private final DetokenizeResponseRecordMetadata metadata;
     private final int httpCode;
     private final String requestId;
 
     public DetokenizeResponseRecord(String token, Object value, String tokenGroupName,
-                                     DetokenizeMetadata metadata, int httpCode, String error) {
+                                     DetokenizeResponseRecordMetadata metadata, int httpCode, String error) {
         this(token, value, tokenGroupName, metadata, httpCode, error, null);
     }
 
     public DetokenizeResponseRecord(String token, Object value, String tokenGroupName,
-                                     DetokenizeMetadata metadata, int httpCode, String error, String requestId) {
+                                     DetokenizeResponseRecordMetadata metadata, int httpCode, String error, String requestId) {
         super(token, error);
         this.value = value;
         this.tokenGroupName = tokenGroupName;
@@ -33,11 +33,11 @@ public class DetokenizeResponseRecord extends BaseDetokenizeRecordResponse {
 
     /**
      * The record's skyflowId/tableName, typed. The API models this generically (see
-     * {@link DetokenizeMetadata#parseMetadata(java.util.Map)}), but the SDK parses it here so
-     * callers get {@link DetokenizeMetadata#getSkyflowId()}/{@link DetokenizeMetadata#getTableName()}
+     * {@link DetokenizeResponseRecordMetadata#parseMetadata(java.util.Map)}), but the SDK parses it here so
+     * callers get {@link DetokenizeResponseRecordMetadata#getSkyflowId()}/{@link DetokenizeResponseRecordMetadata#getTableName()}
      * directly, with no casting required.
      */
-    public DetokenizeMetadata getMetadata() {
+    public DetokenizeResponseRecordMetadata getMetadata() {
         return metadata;
     }
 
