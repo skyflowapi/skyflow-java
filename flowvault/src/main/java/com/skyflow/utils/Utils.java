@@ -60,7 +60,7 @@ import com.skyflow.vault.data.BulkInsertResponseRecord;
 import com.skyflow.vault.data.BulkTokenizeRequestRecord;
 import com.skyflow.vault.data.BulkTokenizeResponse;
 import com.skyflow.vault.data.BulkTokenizeResponseRecord;
-import com.skyflow.vault.data.ColumnRedactions;
+import com.skyflow.vault.data.ColumnRedaction;
 import com.skyflow.vault.data.DeleteRequest;
 import com.skyflow.vault.data.DeleteResponse;
 import com.skyflow.vault.data.DeleteResponseRecord;
@@ -79,6 +79,7 @@ import com.skyflow.vault.data.InsertResponse;
 import com.skyflow.vault.data.InsertResponseRecord;
 import com.skyflow.vault.data.QueryRequest;
 import com.skyflow.vault.data.QueryResponse;
+import com.skyflow.vault.data.QueryResponseMetadata;
 import com.skyflow.vault.data.QueryResponseRecord;
 import com.skyflow.vault.data.Token;
 import com.skyflow.vault.data.TokenGroupRedactions;
@@ -263,9 +264,9 @@ public final class Utils extends BaseUtils {
         return data.build();
     }
 
-    private static List<V1ColumnRedactions> toV1ColumnRedactionsList(List<ColumnRedactions> columnRedactions) {
+    private static List<V1ColumnRedactions> toV1ColumnRedactionsList(List<ColumnRedaction> columnRedactions) {
         List<V1ColumnRedactions> list = new ArrayList<>();
-        for (ColumnRedactions columnRedaction : columnRedactions) {
+        for (ColumnRedaction columnRedaction : columnRedactions) {
             list.add(V1ColumnRedactions.builder()
                     .columnName(columnRedaction.getColumnName())
                     .redaction(columnRedaction.getRedaction())
@@ -1087,7 +1088,7 @@ public final class Utils extends BaseUtils {
     // not error-gated - it is always populated from the call's own headers.
     public static QueryResponse formatQueryResponse(V1ExecuteQueryResponse response, Map<String, List<String>> headers) {
         List<QueryResponseRecord> records = new ArrayList<>();
-        List<String> columns = null;
+        QueryResponseMetadata metadata = null;
         if (response != null) {
             if (response.getRecords().isPresent()) {
                 for (V1ExecuteQueryRecordResponse record : response.getRecords().get()) {
@@ -1095,10 +1096,10 @@ public final class Utils extends BaseUtils {
                 }
             }
             if (response.getMetadata().isPresent()) {
-                columns = response.getMetadata().get().getColumns().orElse(null);
+                metadata = new QueryResponseMetadata(response.getMetadata().get().getColumns().orElse(null));
             }
         }
-        return new QueryResponse(records, columns, extractRequestId(headers));
+        return new QueryResponse(records, metadata, extractRequestId(headers));
     }
 
     public static BulkDeleteTokensResponse formatBulkDeleteTokensResponse(

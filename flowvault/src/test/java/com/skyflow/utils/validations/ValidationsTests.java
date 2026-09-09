@@ -11,7 +11,7 @@ import com.skyflow.vault.data.BulkInsertRequest;
 import com.skyflow.vault.data.BulkDetokenizeRequest;
 import com.skyflow.vault.data.BulkTokenizeRequestRecord;
 import com.skyflow.vault.data.BulkTokenizeRequest;
-import com.skyflow.vault.data.ColumnRedactions;
+import com.skyflow.vault.data.ColumnRedaction;
 import com.skyflow.vault.data.DeleteRequest;
 import com.skyflow.vault.data.DetokenizeRequest;
 import com.skyflow.vault.data.GetRequest;
@@ -2132,7 +2132,7 @@ public class ValidationsTests {
 
     @Test
     public void testValidateGetRequest_nullColumnRedactionInListThrows() {
-        List<ColumnRedactions> columnRedactions = new ArrayList<>();
+        List<ColumnRedaction> columnRedactions = new ArrayList<>();
         columnRedactions.add(null);
         GetRequest request = GetRequest.builder()
                 .table("table1")
@@ -2149,7 +2149,7 @@ public class ValidationsTests {
 
     @Test
     public void testValidateGetRequest_blankColumnNameInColumnRedactionThrows() {
-        ColumnRedactions redaction = ColumnRedactions.builder().redaction("MASKED").build();
+        ColumnRedaction redaction = ColumnRedaction.builder().redaction("MASKED").build();
         GetRequest request = GetRequest.builder()
                 .table("table1")
                 .ids(new ArrayList<>(Collections.singletonList("id1")))
@@ -2165,7 +2165,7 @@ public class ValidationsTests {
 
     @Test
     public void testValidateGetRequest_blankRedactionInColumnRedactionThrows() {
-        ColumnRedactions redaction = ColumnRedactions.builder().columnName("email").build();
+        ColumnRedaction redaction = ColumnRedaction.builder().columnName("email").build();
         GetRequest request = GetRequest.builder()
                 .table("table1")
                 .ids(new ArrayList<>(Collections.singletonList("id1")))

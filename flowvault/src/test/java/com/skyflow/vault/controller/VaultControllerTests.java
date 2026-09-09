@@ -45,7 +45,7 @@ import com.skyflow.vault.data.BulkTokenizeRequest;
 import com.skyflow.vault.data.BulkTokenizeResponse;
 import com.skyflow.vault.data.BulkDetokenizeOptions;
 import com.skyflow.vault.data.BulkInsertOptions;
-import com.skyflow.vault.data.ColumnRedactions;
+import com.skyflow.vault.data.ColumnRedaction;
 import com.skyflow.vault.data.DeleteOptions;
 import com.skyflow.vault.data.DeleteRequest;
 import com.skyflow.vault.data.DeleteResponse;

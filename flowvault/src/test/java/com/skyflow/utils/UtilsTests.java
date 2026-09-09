@@ -44,7 +44,7 @@ import com.skyflow.vault.data.BulkTokenizeRequestRecord;
 import com.skyflow.vault.data.BulkInsertResponseRecord;
 import com.skyflow.vault.data.BulkTokenizeRequest;
 import com.skyflow.vault.data.BulkTokenizeResponse;
-import com.skyflow.vault.data.ColumnRedactions;
+import com.skyflow.vault.data.ColumnRedaction;
 import com.skyflow.vault.data.DeleteRequest;
 import com.skyflow.vault.data.DeleteResponse;
 import com.skyflow.vault.data.DetokenizeRequest;
@@ -567,7 +567,7 @@ public class UtilsTests {
                 .ids(new ArrayList<>(Collections.singletonList("id1")))
                 .fields(new ArrayList<>(Collections.singletonList("name")))
                 .columnRedactions(Collections.singletonList(
-                        ColumnRedactions.builder().columnName("email").redaction("MASKED").build()))
+                        ColumnRedaction.builder().columnName("email").redaction("MASKED").build()))
                 .limit(10)
                 .offset(5)
                 .build();
@@ -729,14 +729,14 @@ public class UtilsTests {
 
         Assert.assertEquals(1, formatted.getRecords().size());
         Assert.assertEquals(row, formatted.getRecords().get(0).getData());
-        Assert.assertEquals(Collections.singletonList("name"), formatted.getColumns());
+        Assert.assertEquals(Collections.singletonList("name"), formatted.getMetadata().getColumns());
     }
 
     @Test
-    public void testFormatQueryResponse_nullResponseReturnsEmptyRecordsAndNullColumns() {
+    public void testFormatQueryResponse_nullResponseReturnsEmptyRecordsAndNullMetadata() {
         QueryResponse formatted = Utils.formatQueryResponse(null, new HashMap<>());
         Assert.assertTrue(formatted.getRecords().isEmpty());
-        Assert.assertNull(formatted.getColumns());
+        Assert.assertNull(formatted.getMetadata());
     }
 
     @Test

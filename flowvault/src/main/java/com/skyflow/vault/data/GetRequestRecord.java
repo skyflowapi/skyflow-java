@@ -25,7 +25,7 @@ public class GetRequestRecord {
         return this.builder.fields;
     }
 
-    public List<ColumnRedactions> getColumnRedactions() {
+    public List<ColumnRedaction> getColumnRedactions() {
         return this.builder.columnRedactions;
     }
 
@@ -41,7 +41,7 @@ public class GetRequestRecord {
         private String table;
         private List<String> ids;
         private List<String> fields;
-        private List<ColumnRedactions> columnRedactions;
+        private List<ColumnRedaction> columnRedactions;
         private List<Map<String, Object>> uniqueValues;
 
         protected GetRequestRecordBuilder() {
@@ -62,7 +62,7 @@ public class GetRequestRecord {
             return this;
         }
 
-        public GetRequestRecordBuilder columnRedactions(List<ColumnRedactions> columnRedactions) {
+        public GetRequestRecordBuilder columnRedactions(List<ColumnRedaction> columnRedactions) {
             this.columnRedactions = columnRedactions;
             return this;
         }

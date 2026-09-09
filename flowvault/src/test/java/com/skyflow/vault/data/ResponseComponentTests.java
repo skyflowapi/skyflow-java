@@ -34,7 +34,7 @@ public class ResponseComponentTests {
     // Tests for Success and Summary were removed: the bulk insert response contract replaced
     // those classes with BulkInsertResponseRecord / BulkSummary, covered below. Token was removed
     // in the same rework, then reintroduced (with the same shape it had before) as the type
-    // InsertResponseRecord.getTokens() now returns - see the InsertResponseRecord section below.
+    // InsertResponseRecord.getTokens()/BulkInsertResponseRecord.getTokens() now return.
 
     // ── BulkInsertResponseRecord ─────────────────────────────────────────────
 
@@ -61,8 +61,6 @@ public class ResponseComponentTests {
         Assert.assertEquals(hashedData, record.getHashedData());
         Assert.assertEquals(200, record.getHttpCode());
         Assert.assertNull(record.getError());
-        // getTokens() is inherited unchanged from InsertResponseRecord - confirm it works on the
-        // subclass callers actually receive, not just the base class.
         Assert.assertEquals("tok-1", record.getTokens().get("name").get(0).getToken());
     }
 
@@ -86,27 +84,27 @@ public class ResponseComponentTests {
     }
 
     @Test
-    @SuppressWarnings("deprecation")
-    public void testInsertResponseRecord_deprecatedConstructorDefaultsDataToNull() {
-        // BulkInsertResponseRecord's deprecated constructor delegates straight to the new
-        // 7-arg super constructor, so it never exercises InsertResponseRecord's own deprecated
-        // 6-arg constructor. Cover that one directly.
+    public void testInsertResponseRecord_gettersReturnConstructorValues() {
+        // InsertResponseRecord (unary) carries no deprecated back-compat surface - it is a
+        // brand-new type with no pre-1.0.2 callers, unlike BulkInsertResponseRecord above.
         Map<String, List<Token>> tokens = new HashMap<>();
         tokens.put("name", Collections.singletonList(new Token("tok-1", "group1")));
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", "john");
         Map<String, Object> hashedData = new HashMap<>();
         hashedData.put("name", "hashed-1");
 
         InsertResponseRecord record = new InsertResponseRecord(
-                "persons", "skyflow-id-1", tokens, hashedData, 200, null);
+                "persons", "skyflow-id-1", tokens, data, hashedData, 200, null, "req-1");
 
         Assert.assertEquals("persons", record.getTableName());
         Assert.assertEquals("skyflow-id-1", record.getSkyflowId());
         Assert.assertEquals(tokens, record.getTokens());
-        Assert.assertEquals(singleColumnRawFields(), record.getFields());
-        Assert.assertNull(record.getData());
+        Assert.assertEquals(data, record.getData());
         Assert.assertEquals(hashedData, record.getHashedData());
         Assert.assertEquals(200, record.getHttpCode());
         Assert.assertNull(record.getError());
+        Assert.assertEquals("req-1", record.getRequestId());
     }
 
     @Test

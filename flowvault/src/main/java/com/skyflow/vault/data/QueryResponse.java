@@ -7,12 +7,12 @@ import java.util.List;
 
 public class QueryResponse {
     private final List<QueryResponseRecord> records;
-    private final List<String> columns;
+    private final QueryResponseMetadata metadata;
     private final String requestId;
 
-    public QueryResponse(List<QueryResponseRecord> records, List<String> columns, String requestId) {
+    public QueryResponse(List<QueryResponseRecord> records, QueryResponseMetadata metadata, String requestId) {
         this.records = records;
-        this.columns = columns;
+        this.metadata = metadata;
         this.requestId = requestId;
     }
 
@@ -20,9 +20,9 @@ public class QueryResponse {
         return records;
     }
 
-    /** The return columns for the query, when the vault reports them. */
-    public List<String> getColumns() {
-        return columns;
+    /** Wraps the query's return columns, mirroring the wire shape (metadata.columns) directly. */
+    public QueryResponseMetadata getMetadata() {
+        return metadata;
     }
 
     // Query rows carry no per-record error, so unlike insert/update/get/delete/detokenize
