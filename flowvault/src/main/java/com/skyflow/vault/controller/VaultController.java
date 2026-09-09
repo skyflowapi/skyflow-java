@@ -142,6 +142,13 @@ public final class VaultController extends VaultClient {
             LogUtil.printInfoLog(InfoLogs.INSERT_REQUEST_RESOLVED.getLog());
             return formattedResponse;
         } catch (ApiClientApiException e) {
+            // The lone record in a unary request can fail outright, which the vault reflects as
+            // the overall HTTP status. If the body still carries the usual per-record shape,
+            // surface it on the response like a 200 partial success would, not as an exception.
+            InsertResponse fallback = Utils.handleInsertRequestException(e);
+            if (fallback != null) {
+                return fallback;
+            }
             String bodyString = gson.toJson(e.body());
             LogUtil.printErrorLog(ErrorLogs.INSERT_RECORDS_REJECTED.getLog());
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
@@ -256,6 +263,13 @@ public final class VaultController extends VaultClient {
             LogUtil.printInfoLog(InfoLogs.DETOKENIZE_REQUEST_RESOLVED.getLog());
             return formattedResponse;
         } catch (ApiClientApiException e) {
+            // The lone record in a unary request can fail outright, which the vault reflects as
+            // the overall HTTP status. If the body still carries the usual per-record shape,
+            // surface it on the response like a 200 partial success would, not as an exception.
+            DetokenizeResponse fallback = Utils.handleDetokenizeRequestException(e);
+            if (fallback != null) {
+                return fallback;
+            }
             String bodyString = gson.toJson(e.body());
             LogUtil.printErrorLog(ErrorLogs.DETOKENIZE_REQUEST_REJECTED.getLog());
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
@@ -375,6 +389,13 @@ public final class VaultController extends VaultClient {
             LogUtil.printInfoLog(InfoLogs.DELETE_REQUEST_RESOLVED.getLog());
             return formattedResponse;
         } catch (ApiClientApiException e) {
+            // The lone record in a unary request can fail outright, which the vault reflects as
+            // the overall HTTP status. If the body still carries the usual per-record shape,
+            // surface it on the response like a 200 partial success would, not as an exception.
+            DeleteResponse fallback = Utils.handleDeleteRequestException(e);
+            if (fallback != null) {
+                return fallback;
+            }
             String bodyString = gson.toJson(e.body());
             LogUtil.printErrorLog(ErrorLogs.DELETE_REQUEST_REJECTED.getLog());
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
@@ -610,6 +631,13 @@ public final class VaultController extends VaultClient {
             LogUtil.printInfoLog(InfoLogs.UPDATE_REQUEST_RESOLVED.getLog());
             return formattedResponse;
         } catch (ApiClientApiException e) {
+            // The lone record in a unary request can fail outright, which the vault reflects as
+            // the overall HTTP status. If the body still carries the usual per-record shape,
+            // surface it on the response like a 200 partial success would, not as an exception.
+            UpdateResponse fallback = Utils.handleUpdateRequestException(e);
+            if (fallback != null) {
+                return fallback;
+            }
             String bodyString = gson.toJson(e.body());
             LogUtil.printErrorLog(ErrorLogs.UPDATE_REQUEST_REJECTED.getLog());
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
@@ -645,6 +673,13 @@ public final class VaultController extends VaultClient {
             LogUtil.printInfoLog(InfoLogs.GET_REQUEST_RESOLVED.getLog());
             return formattedResponse;
         } catch (ApiClientApiException e) {
+            // The lone record in a unary request can fail outright, which the vault reflects as
+            // the overall HTTP status. If the body still carries the usual per-record shape,
+            // surface it on the response like a 200 partial success would, not as an exception.
+            GetResponse fallback = Utils.handleGetRequestException(e);
+            if (fallback != null) {
+                return fallback;
+            }
             String bodyString = gson.toJson(e.body());
             LogUtil.printErrorLog(ErrorLogs.GET_REQUEST_REJECTED.getLog());
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
