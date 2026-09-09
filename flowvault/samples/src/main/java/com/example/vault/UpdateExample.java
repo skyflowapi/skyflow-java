@@ -5,6 +5,7 @@ import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.Env;
 import com.skyflow.enums.LogLevel;
+import com.skyflow.enums.UpdateType;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.vault.data.UpdateRequest;
 import com.skyflow.vault.data.UpdateRequestRecord;
@@ -55,11 +56,11 @@ public class UpdateExample {
             records.add(updateRecord);
 
             // Step 5: Build and execute the update request.
-            //         updateType accepts "UPDATE" (default) or "REPLACE".
+            //         updateType accepts UpdateType.UPDATE (default) or UpdateType.REPLACE.
             UpdateRequest request = UpdateRequest.builder()
                     .tableName("<YOUR_TABLE_NAME>")
                     .records(records)
-                    .updateType("REPLACE")
+                    .updateType(UpdateType.REPLACE)
                     .build();
 
             UpdateResponse response = skyflowClient.vault().update(request);
@@ -67,6 +68,7 @@ public class UpdateExample {
             // Step 6: Read the outcome. A record succeeded when its error is null.
             for (UpdateResponseRecord record : response.getRecords()) {
                 if (record.getError() == null) {
+                    System.out.println("data" + record.getTokens());
                     System.out.printf("update: %s -> skyflowId=%s%n", record.getTableName(), record.getSkyflowId());
                 } else {
                     System.out.printf("update failed (%d): %s%n", record.getHttpCode(), record.getError());

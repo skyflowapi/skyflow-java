@@ -48,7 +48,7 @@ public class DetokenizeExample {
             List<TokenGroupRedactions> tokenGroupRedactions = new ArrayList<>();
             tokenGroupRedactions.add(TokenGroupRedactions.builder()
                     .tokenGroupName("<YOUR_TOKEN_GROUP_NAME>")
-                    .redaction("PLAIN_TEXT")
+                    .redaction("plain_text")
                     .build());
 
             // Step 5: Build and execute the detokenize request

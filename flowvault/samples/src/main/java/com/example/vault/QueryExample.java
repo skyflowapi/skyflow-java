@@ -47,7 +47,7 @@ public class QueryExample {
             for (QueryResponseRecord record : response.getRecords()) {
                 System.out.println("query row: " + record.getData());
             }
-            System.out.println("columns: " + response.getColumns());
+            System.out.println("columns: " + (response.getMetadata() != null ? response.getMetadata().getColumns() : null));
         } catch (SkyflowException e) {
             // Step 6: Handle any errors that occur during the process
             System.err.println("Error in query operation:\t" + e.getMessage());

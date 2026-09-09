@@ -312,6 +312,84 @@ public class VaultControllerTests {
         Assert.assertEquals("sky-1", response.getRecords().get(0).getSkyflowId());
     }
 
+    // Regression: a single failing record in a unary call can make the vault reflect the failure
+    // as the overall HTTP status (here 400), so the generated client throws ApiClientApiException
+    // instead of returning a normal body. When that exception body still has the familiar
+    // per-record "records" shape, it must land on the UpdateResponse like a 200 partial success
+    // would - not surface as a thrown SkyflowException.
+    @Test
+    public void testUpdate_recordLevelFailureReflectedAsHttpErrorStillReturnsResponse() throws Exception {
+        ApiClient mockApi = Mockito.mock(ApiClient.class);
+        RawFlowserviceClient mockRaw = mockRawFlowservice(mockApi);
+
+        Map<String, Object> failedRecord = new HashMap<>();
+        failedRecord.put("skyflowID", null);
+        failedRecord.put("tokens", null);
+        failedRecord.put("data", null);
+        failedRecord.put("hashedData", null);
+        failedRecord.put("error", "UPDATE failed. Column card_number is invalid. Specify a valid column.");
+        failedRecord.put("httpCode", 400);
+        failedRecord.put("tableName", "");
+        Map<String, Object> responseBody = new HashMap<>();
+        responseBody.put("records", Collections.singletonList(failedRecord));
+
+        when(mockRaw.update(any(), any()))
+                .thenThrow(new ApiClientApiException("Error with status code 400", 400, responseBody));
+
+        VaultController controller = createControllerWithMock(mockApi);
+
+        UpdateRequestRecord updateRecord = UpdateRequestRecord.builder().skyflowId("sky-1").build();
+        UpdateRequest request = UpdateRequest.builder()
+                .tableName("table1")
+                .records(Collections.singletonList(updateRecord))
+                .build();
+
+        UpdateResponse response = controller.update(request);
+        Assert.assertEquals(1, response.getRecords().size());
+        Assert.assertEquals("UPDATE failed. Column card_number is invalid. Specify a valid column.",
+                response.getRecords().get(0).getError());
+        Assert.assertEquals(400, response.getRecords().get(0).getHttpCode());
+        Assert.assertNull(response.getRecords().get(0).getSkyflowId());
+    }
+
+    // Regression: a genuine whole-request API error (e.g. vault not found) has no "records" key
+    // at all, so the fallback added above must not swallow it - it still has to throw.
+    @Test
+    public void testUpdate_wholeRequestApiErrorStillThrows() throws Exception {
+        ApiClient mockApi = Mockito.mock(ApiClient.class);
+        RawFlowserviceClient mockRaw = mockRawFlowservice(mockApi);
+
+        Map<String, Object> errorBody = new HashMap<>();
+        errorBody.put("grpc_code", 5);
+        errorBody.put("http_code", 404);
+        errorBody.put("message", "Invalid request. Vault not found for vaultID: vault123. Specify a valid vaultID.");
+        errorBody.put("http_status", "Not Found");
+        errorBody.put("details", new ArrayList<>());
+        Map<String, Object> responseBody = new HashMap<>();
+        responseBody.put("error", errorBody);
+
+        when(mockRaw.update(any(), any()))
+                .thenThrow(new ApiClientApiException("Error with status code 404", 404, responseBody));
+
+        VaultController controller = createControllerWithMock(mockApi);
+
+        UpdateRequestRecord updateRecord = UpdateRequestRecord.builder().skyflowId("sky-1").build();
+        UpdateRequest request = UpdateRequest.builder()
+                .tableName("table1")
+                .records(Collections.singletonList(updateRecord))
+                .build();
+
+        try {
+            controller.update(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(
+                    "Invalid request. Vault not found for vaultID: vault123. Specify a valid vaultID.",
+                    e.getMessage());
+            Assert.assertEquals(404, e.getHttpCode());
+        }
+    }
+
     @Test
     public void testUpdate_invalidRequestThrowsSkyflowException() throws Exception {
         ApiClient mockApi = Mockito.mock(ApiClient.class);

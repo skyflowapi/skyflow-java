@@ -539,6 +539,131 @@ public final class Utils extends BaseUtils {
         return err;
     }
 
+    // ── Unary "records"-shaped exception fallback ─────────────────────────────
+    //
+    // A unary call's own (only) record can fail outright — e.g. an invalid column on the sole
+    // record in an update/insert/get/delete request — and the vault reflects that as the overall
+    // HTTP status, so the generated client throws ApiClientApiException instead of returning a
+    // normal response body. When the exception body still has the familiar per-record shape
+    // ({"records": [...]} for insert/update/get/delete, {"response": [...]} for detokenize), the
+    // failure belongs on the response the same way a 200 partial-success does — not as a thrown
+    // exception. Each handler below returns null when the body doesn't match that shape, so the
+    // caller falls back to throwing a SkyflowException as before.
+
+    /** Record maps under {@code key} in an exception body, or null if the shape doesn't match. */
+    private static List<Map<String, Object>> extractExceptionRecords(ApiClientApiException apiException, String key) {
+        Object rawBody = apiException.body();
+        if (!(rawBody instanceof Map)) {
+            return null;
+        }
+        Object recordsField = ((Map<?, ?>) rawBody).get(key);
+        if (!(recordsField instanceof List)) {
+            return null;
+        }
+        List<Map<String, Object>> records = new ArrayList<>();
+        for (Object recordObj : (List<?>) recordsField) {
+            if (recordObj instanceof Map) {
+                //noinspection unchecked
+                records.add((Map<String, Object>) recordObj);
+            }
+        }
+        return records.isEmpty() ? null : records;
+    }
+
+    public static InsertResponse handleInsertRequestException(ApiClientApiException apiException) {
+        List<Map<String, Object>> recordMaps = extractExceptionRecords(apiException, "records");
+        if (recordMaps == null) {
+            return null;
+        }
+        String requestId = extractRequestId(apiException.headers());
+        List<InsertResponseRecord> records = new ArrayList<>();
+        for (Map<String, Object> recordMap : recordMaps) {
+            records.add(new InsertResponseRecord(
+                    readString(recordMap, "tableName"),
+                    readString(recordMap, "skyflowID"),
+                    null, null, null,
+                    readHttpCode(recordMap, apiException.statusCode()),
+                    readErrorMessage(recordMap),
+                    requestId));
+        }
+        return new InsertResponse(records);
+    }
+
+    public static UpdateResponse handleUpdateRequestException(ApiClientApiException apiException) {
+        List<Map<String, Object>> recordMaps = extractExceptionRecords(apiException, "records");
+        if (recordMaps == null) {
+            return null;
+        }
+        String requestId = extractRequestId(apiException.headers());
+        List<UpdateResponseRecord> records = new ArrayList<>();
+        for (Map<String, Object> recordMap : recordMaps) {
+            records.add(new UpdateResponseRecord(
+                    readString(recordMap, "tableName"),
+                    readString(recordMap, "skyflowID"),
+                    null, null, null,
+                    readHttpCode(recordMap, apiException.statusCode()),
+                    readErrorMessage(recordMap),
+                    requestId));
+        }
+        return new UpdateResponse(records);
+    }
+
+    public static GetResponse handleGetRequestException(ApiClientApiException apiException) {
+        List<Map<String, Object>> recordMaps = extractExceptionRecords(apiException, "records");
+        if (recordMaps == null) {
+            return null;
+        }
+        String requestId = extractRequestId(apiException.headers());
+        List<GetResponseRecord> records = new ArrayList<>();
+        for (Map<String, Object> recordMap : recordMaps) {
+            records.add(new GetResponseRecord(
+                    readString(recordMap, "tableName"),
+                    readString(recordMap, "skyflowID"),
+                    null, null, null,
+                    readHttpCode(recordMap, apiException.statusCode()),
+                    readErrorMessage(recordMap),
+                    requestId));
+        }
+        return new GetResponse(records);
+    }
+
+    public static DeleteResponse handleDeleteRequestException(ApiClientApiException apiException) {
+        List<Map<String, Object>> recordMaps = extractExceptionRecords(apiException, "records");
+        if (recordMaps == null) {
+            return null;
+        }
+        String requestId = extractRequestId(apiException.headers());
+        List<DeleteResponseRecord> records = new ArrayList<>();
+        for (Map<String, Object> recordMap : recordMaps) {
+            records.add(new DeleteResponseRecord(
+                    readString(recordMap, "skyflowID"),
+                    readHttpCode(recordMap, apiException.statusCode()),
+                    readErrorMessage(recordMap),
+                    requestId));
+        }
+        return new DeleteResponse(records);
+    }
+
+    public static DetokenizeResponse handleDetokenizeRequestException(ApiClientApiException apiException) {
+        List<Map<String, Object>> recordMaps = extractExceptionRecords(apiException, "response");
+        if (recordMaps == null) {
+            return null;
+        }
+        String requestId = extractRequestId(apiException.headers());
+        List<DetokenizeResponseRecord> records = new ArrayList<>();
+        for (Map<String, Object> recordMap : recordMaps) {
+            records.add(new DetokenizeResponseRecord(
+                    readString(recordMap, "token"),
+                    null,
+                    readString(recordMap, "tokenGroupName"),
+                    null,
+                    readHttpCode(recordMap, apiException.statusCode()),
+                    readErrorMessage(recordMap),
+                    requestId));
+        }
+        return new DetokenizeResponse(records);
+    }
+
     // Errors are parsed into ErrorRecord (shared with the other bulk ops), then projected onto
     // the unified BulkInsertResponseRecord shape that bulk insert now returns.
     public static List<BulkInsertResponseRecord> handleBulkInsertBatchException(

@@ -3,14 +3,11 @@ package com.example.vault;
 import com.skyflow.Skyflow;
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
+import com.skyflow.enums.CustomHeaderKey;
 import com.skyflow.enums.Env;
 import com.skyflow.enums.LogLevel;
 import com.skyflow.errors.SkyflowException;
-import com.skyflow.vault.data.InsertRequest;
-import com.skyflow.vault.data.InsertRequestRecord;
-import com.skyflow.vault.data.InsertResponse;
-import com.skyflow.vault.data.InsertResponseRecord;
-import com.skyflow.vault.data.Token;
+import com.skyflow.vault.data.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -50,6 +47,7 @@ public class InsertExample {
 
             InsertRequestRecord record = InsertRequestRecord.builder()
                     .data(data)
+                    .tableName("<YOUR_TABLE_NAME>")
                     .build();
 
             List<InsertRequestRecord> records = new ArrayList<>();
@@ -57,30 +55,30 @@ public class InsertExample {
 
             // Step 5: Build and execute the insert request
             InsertRequest request = InsertRequest.builder()
-                    .tableName("<YOUR_TABLE_NAME>")
+//                    .tableName("<YOUR_TABLE_NAME>")
                     .records(records)
                     .build();
+            InsertOptions options = InsertOptions.builder()
+                    .interceptor(ctx -> {
+                        ctx.addHeader(CustomHeaderKey.REQUEST_ID_HEADER, "demo"); // pass the request id here
+                    })
+                    .build();
+            InsertResponse response = skyflowClient.vault().insert(request, options);
 
-            InsertResponse response = skyflowClient.vault().insert(request);
-
-            // Step 6: Read the outcome. A record succeeded when its error is null.
+            // Step 6: Print every field on each response record.
             for (InsertResponseRecord insertedRecord : response.getRecords()) {
-                if (insertedRecord.getError() == null) {
-                    System.out.printf("insert: %s -> skyflowId=%s%n",
-                            insertedRecord.getTableName(), insertedRecord.getSkyflowId());
-                    for (Map.Entry<String, List<Token>> column : insertedRecord.getTokens().entrySet()) {
-                        for (Token token : column.getValue()) {
-                            System.out.printf("    %s[%s] -> %s%n",
-                                    column.getKey(), token.getTokenGroupName(), token.getToken());
-                        }
-                    }
-                } else {
-                    System.out.printf("insert failed (%d): %s%n", insertedRecord.getHttpCode(), insertedRecord.getError());
-                }
+                System.out.println("tableName:\t" + insertedRecord.getTableName());
+                System.out.println("skyflowId:\t" + insertedRecord.getSkyflowId());
+                System.out.println("tokens:\t\t" + insertedRecord.getTokens());
+                System.out.println("data:\t\t" + insertedRecord.getData());
+                System.out.println("hashedData:\t" + insertedRecord.getHashedData());
+                System.out.println("httpCode:\t" + insertedRecord.getHttpCode());
+                System.out.println("error:\t\t" + insertedRecord.getError());
+//                System.out.println("request id " +insertedRecord.ge);
             }
         } catch (SkyflowException e) {
             // Step 7: Handle any errors that occur during the process
-            System.err.println("Error in insert operation:\t" + e.getMessage());
+            System.err.println("Error in insert operation:\t" + e);
         }
     }
 }
