@@ -3,12 +3,11 @@ package com.example.vault;
 import com.skyflow.Skyflow;
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
+import com.skyflow.enums.CustomHeaderKey;
 import com.skyflow.enums.Env;
 import com.skyflow.enums.LogLevel;
 import com.skyflow.errors.SkyflowException;
-import com.skyflow.vault.data.DeleteRequest;
-import com.skyflow.vault.data.DeleteResponse;
-import com.skyflow.vault.data.DeleteResponseRecord;
+import com.skyflow.vault.data.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,6 +44,8 @@ public class DeleteExample {
 
             // Step 4: Prepare the skyflow IDs to delete.
             //         Either ids or uniqueValues is required; specifying both fails validation.
+            //         Running this actually removes the record — rerunning GetExample/UpdateExample
+            //         against the same skyflowId afterward will then fail, since it's gone.
             List<String> ids = new ArrayList<>();
             ids.add("<YOUR_SKYFLOW_ID>");
 
@@ -54,7 +55,12 @@ public class DeleteExample {
                     .ids(ids)
                     .build();
 
-            DeleteResponse response = skyflowClient.vault().delete(request);
+            DeleteOptions options = DeleteOptions.builder()
+                    .interceptor(ctx -> {
+                        ctx.addHeader(CustomHeaderKey.REQUEST_ID_HEADER, "DeleteOptions"); // pass the request id here
+                    })
+                    .build();
+            DeleteResponse response = skyflowClient.vault().delete(request, options);
 
             // Step 6: Read the outcome. A record succeeded when its error is null.
             for (DeleteResponseRecord record : response.getRecords()) {
@@ -66,7 +72,7 @@ public class DeleteExample {
             }
         } catch (SkyflowException e) {
             // Step 7: Handle any errors that occur during the process
-            System.err.println("Error in delete operation:\t" + e.getMessage());
+            System.err.println("Error in delete operation:\t" + e);
         }
     }
 }

@@ -36,7 +36,8 @@ public class GetExample {
             // Step 2: Configure the vault with required parameters
             VaultConfig vaultConfig = new VaultConfig();
             vaultConfig.setVaultId("<YOUR_VAULT_ID>");
-            vaultConfig.setClusterId("<YOUR_CLUSTER_ID>");
+            vaultConfig.setVaultUrl("<YOUR_VAULT_URL>");
+//            vaultConfig.setClusterId("<YOUR_CLUSTER_ID>");
             vaultConfig.setEnv(Env.PROD);
             vaultConfig.setCredentials(credentials);
 
@@ -48,12 +49,12 @@ public class GetExample {
 
             // Step 4: Prepare the skyflow IDs to fetch and any column redactions
             ArrayList<String> ids = new ArrayList<>();
-            ids.add("<YOUR_SKYFLOW_ID>");
-
+            ids.add("<YOUR_SKYFLOW_ID_1>");
+            ids.add("<YOUR_SKYFLOW_ID_2>");
             List<ColumnRedactions> columnRedactions = new ArrayList<>();
             columnRedactions.add(ColumnRedactions.builder()
                     .columnName("<YOUR_COLUMN_NAME_1>")
-                    .redaction("PLAIN_TEXT")
+                    .redaction("plain_text")
                     .build());
 
             // Step 5: Build and execute the get request
@@ -68,16 +69,18 @@ public class GetExample {
             // Step 6: Read the fetched records
             for (GetResponseRecord record : response.getRecords()) {
                 System.out.printf("get: %s -> skyflowId=%s%n", record.getTableName(), record.getSkyflowId());
-                for (Map.Entry<String, List<Token>> column : record.getTokens().entrySet()) {
-                    for (Token token : column.getValue()) {
-                        System.out.printf("    %s[%s] -> %s%n",
-                                column.getKey(), token.getTokenGroupName(), token.getToken());
-                    }
-                }
+                System.out.println("dta"+ record.getData());
+
+//                for (Map.Entry<String, List<Token>> column : record.getTokens().entrySet()) {
+//                    for (Token token : column.getValue()) {
+//                        System.out.printf("    %s[%s] -> %s%n",
+//                                column.getKey(), token.getTokenGroupName(), token.getToken());
+//                    }
+//                }
             }
         } catch (SkyflowException e) {
             // Step 7: Handle any errors that occur during the process
-            System.err.println("Error in get operation:\t" + e.getMessage());
+            System.err.println("Error in get operation:\t" + e);
         }
     }
 }
