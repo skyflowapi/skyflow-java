@@ -1,6 +1,5 @@
 package com.skyflow.vault.data;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -12,11 +11,23 @@ public class GetRequest extends BaseGetRequest {
         this.builder = builder;
     }
 
+    public String getTableName() {
+        return this.builder.tableName;
+    }
+
+    public List<String> getSkyflowIds() {
+        return this.builder.skyflowIds;
+    }
+
+    public List<String> getColumns() {
+        return this.builder.columns;
+    }
+
     public List<ColumnRedactions> getColumnRedactions() {
         return this.builder.columnRedactions;
     }
 
-    /** Either this or {@code ids} is required in single-table mode; specifying both fails validation. */
+    /** Either this or {@code skyflowIds} is required in single-table mode; specifying both fails validation. */
     public List<Map<String, Object>> getUniqueValues() {
         return this.builder.uniqueValues;
     }
@@ -31,7 +42,7 @@ public class GetRequest extends BaseGetRequest {
 
     /**
      * Multi-table lookup: mutually exclusive with the single-table fields above
-     * (table/ids/fields/uniqueValues/columnRedactions) — specify one or the other, not both.
+     * (tableName/skyflowIds/columns/uniqueValues/columnRedactions) — specify one or the other, not both.
      */
     public List<GetRequestRecord> getRecords() {
         return this.builder.records;
@@ -42,6 +53,9 @@ public class GetRequest extends BaseGetRequest {
     }
 
     public static final class GetRequestBuilder extends BaseGetRequestBuilder {
+        private String tableName;
+        private List<String> skyflowIds;
+        private List<String> columns;
         private List<ColumnRedactions> columnRedactions;
         private List<Map<String, Object>> uniqueValues;
         private Integer limit;
@@ -51,21 +65,18 @@ public class GetRequest extends BaseGetRequest {
         private GetRequestBuilder() {
         }
 
-        @Override
-        public GetRequestBuilder table(String table) {
-            super.table(table);
+        public GetRequestBuilder tableName(String tableName) {
+            this.tableName = tableName;
             return this;
         }
 
-        @Override
-        public GetRequestBuilder ids(ArrayList<String> ids) {
-            super.ids(ids);
+        public GetRequestBuilder skyflowIds(List<String> skyflowIds) {
+            this.skyflowIds = skyflowIds;
             return this;
         }
 
-        @Override
-        public GetRequestBuilder fields(ArrayList<String> fields) {
-            super.fields(fields);
+        public GetRequestBuilder columns(List<String> columns) {
+            this.columns = columns;
             return this;
         }
 

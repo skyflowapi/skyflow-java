@@ -12,13 +12,13 @@ public class DeleteRequest {
         this.builder = builder;
     }
 
-    public String getTable() {
-        return this.builder.table;
+    public String getTableName() {
+        return this.builder.tableName;
     }
 
     /** Either this or {@code uniqueValues} is required; specifying both fails validation. */
-    public List<String> getIds() {
-        return this.builder.ids;
+    public List<String> getSkyflowIds() {
+        return this.builder.skyflowIds;
     }
 
     public List<Map<String, Object>> getUniqueValues() {
@@ -30,20 +30,20 @@ public class DeleteRequest {
     }
 
     public static final class DeleteRequestBuilder {
-        private String table;
-        private List<String> ids;
+        private String tableName;
+        private List<String> skyflowIds;
         private List<Map<String, Object>> uniqueValues;
 
         protected DeleteRequestBuilder() {
         }
 
-        public DeleteRequestBuilder table(String table) {
-            this.table = table;
+        public DeleteRequestBuilder tableName(String tableName) {
+            this.tableName = tableName;
             return this;
         }
 
-        public DeleteRequestBuilder ids(List<String> ids) {
-            this.ids = ids;
+        public DeleteRequestBuilder skyflowIds(List<String> skyflowIds) {
+            this.skyflowIds = skyflowIds;
             return this;
         }
 

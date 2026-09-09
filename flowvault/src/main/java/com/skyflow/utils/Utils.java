@@ -224,14 +224,14 @@ public final class Utils extends BaseUtils {
             return builder.records(recordDataList).build();
         }
 
-        if (hasText(request.getTable())) {
-            builder.tableName(request.getTable());
+        if (hasText(request.getTableName())) {
+            builder.tableName(request.getTableName());
         }
-        if (request.getIds() != null && !request.getIds().isEmpty()) {
-            builder.skyflowIDs(request.getIds());
+        if (request.getSkyflowIds() != null && !request.getSkyflowIds().isEmpty()) {
+            builder.skyflowIDs(request.getSkyflowIds());
         }
-        if (request.getFields() != null && !request.getFields().isEmpty()) {
-            builder.columns(request.getFields());
+        if (request.getColumns() != null && !request.getColumns().isEmpty()) {
+            builder.columns(request.getColumns());
         }
         if (request.getColumnRedactions() != null && !request.getColumnRedactions().isEmpty()) {
             builder.columnRedactions(toV1ColumnRedactionsList(request.getColumnRedactions()));
@@ -249,12 +249,12 @@ public final class Utils extends BaseUtils {
     }
 
     private static V1GetRequestData toV1GetRequestData(GetRequestRecord record) {
-        V1GetRequestData.Builder data = V1GetRequestData.builder().tableName(record.getTable());
-        if (record.getIds() != null && !record.getIds().isEmpty()) {
-            data.skyflowIDs(record.getIds());
+        V1GetRequestData.Builder data = V1GetRequestData.builder().tableName(record.getTableName());
+        if (record.getSkyflowIds() != null && !record.getSkyflowIds().isEmpty()) {
+            data.skyflowIDs(record.getSkyflowIds());
         }
-        if (record.getFields() != null && !record.getFields().isEmpty()) {
-            data.columns(record.getFields());
+        if (record.getColumns() != null && !record.getColumns().isEmpty()) {
+            data.columns(record.getColumns());
         }
         if (record.getColumnRedactions() != null && !record.getColumnRedactions().isEmpty()) {
             data.columnRedactions(toV1ColumnRedactionsList(record.getColumnRedactions()));
@@ -287,9 +287,9 @@ public final class Utils extends BaseUtils {
     public static V1DeleteRequest getDeleteRequestBody(DeleteRequest request, VaultConfig config) {
         V1DeleteRequest.Builder builder = V1DeleteRequest.builder()
                 .vaultId(config.getVaultId())
-                .tableName(request.getTable());
-        if (request.getIds() != null && !request.getIds().isEmpty()) {
-            builder.skyflowIDs(request.getIds());
+                .tableName(request.getTableName());
+        if (request.getSkyflowIds() != null && !request.getSkyflowIds().isEmpty()) {
+            builder.skyflowIDs(request.getSkyflowIds());
         }
         if (request.getUniqueValues() != null && !request.getUniqueValues().isEmpty()) {
             builder.uniqueValues(toV1UniqueValueList(request.getUniqueValues()));

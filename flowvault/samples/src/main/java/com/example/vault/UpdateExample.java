@@ -1,5 +1,10 @@
 package com.example.vault;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import com.skyflow.Skyflow;
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
@@ -11,11 +16,6 @@ import com.skyflow.vault.data.UpdateRequest;
 import com.skyflow.vault.data.UpdateRequestRecord;
 import com.skyflow.vault.data.UpdateResponse;
 import com.skyflow.vault.data.UpdateResponseRecord;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * This sample demonstrates the Skyflow Java SDK's unary update operation. This makes exactly one
@@ -34,7 +34,7 @@ public class UpdateExample {
             VaultConfig vaultConfig = new VaultConfig();
             vaultConfig.setVaultId("<YOUR_VAULT_ID>");
             vaultConfig.setClusterId("<YOUR_CLUSTER_ID>");
-            vaultConfig.setEnv(Env.PROD);
+            vaultConfig.setEnv(Env.DEV);
             vaultConfig.setCredentials(credentials);
 
             // Step 3: Create Skyflow client instance with error logging
@@ -45,7 +45,7 @@ public class UpdateExample {
 
             // Step 4: Prepare the record to update, identified by its skyflow ID
             Map<String, Object> data = new HashMap<>();
-            data.put("<YOUR_COLUMN_NAME_1>", "<YOUR_NEW_VALUE_1>");
+            data.put("<YOUR_COLUMN_NAME>", "<YOUR_COLUMN_VALUE>");
 
             UpdateRequestRecord updateRecord = UpdateRequestRecord.builder()
                     .skyflowId("<YOUR_SKYFLOW_ID>")
@@ -58,7 +58,7 @@ public class UpdateExample {
             // Step 5: Build and execute the update request.
             //         updateType accepts UpdateType.UPDATE (default) or UpdateType.REPLACE.
             UpdateRequest request = UpdateRequest.builder()
-                    .tableName("<YOUR_TABLE_NAME>")
+                    .tableName("table5")
                     .records(records)
                     .updateType(UpdateType.REPLACE)
                     .build();

@@ -1661,7 +1661,7 @@ public class ValidationsTests {
 
     @Test
     public void testValidateDeleteRequest_nullTableThrows() {
-        DeleteRequest request = DeleteRequest.builder().ids(Collections.singletonList("id1")).build();
+        DeleteRequest request = DeleteRequest.builder().skyflowIds(Collections.singletonList("id1")).build();
         try {
             Validations.validateDeleteRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
@@ -1672,7 +1672,7 @@ public class ValidationsTests {
 
     @Test
     public void testValidateDeleteRequest_blankTableThrows() {
-        DeleteRequest request = DeleteRequest.builder().table("   ").ids(Collections.singletonList("id1")).build();
+        DeleteRequest request = DeleteRequest.builder().tableName("   ").skyflowIds(Collections.singletonList("id1")).build();
         try {
             Validations.validateDeleteRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
@@ -1683,7 +1683,7 @@ public class ValidationsTests {
 
     @Test
     public void testValidateDeleteRequest_neitherIdsNorUniqueValuesThrows() {
-        DeleteRequest request = DeleteRequest.builder().table("table1").build();
+        DeleteRequest request = DeleteRequest.builder().tableName("table1").build();
         try {
             Validations.validateDeleteRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
@@ -1697,8 +1697,8 @@ public class ValidationsTests {
         Map<String, Object> uniqueValue = new HashMap<>();
         uniqueValue.put("email", "john@example.com");
         DeleteRequest request = DeleteRequest.builder()
-                .table("table1")
-                .ids(Collections.singletonList("id1"))
+                .tableName("table1")
+                .skyflowIds(Collections.singletonList("id1"))
                 .uniqueValues(Collections.singletonList(uniqueValue))
                 .build();
         try {
@@ -1711,7 +1711,7 @@ public class ValidationsTests {
 
     @Test
     public void testValidateDeleteRequest_blankIdInIdsThrows() {
-        DeleteRequest request = DeleteRequest.builder().table("table1").ids(Arrays.asList("id1", "  ")).build();
+        DeleteRequest request = DeleteRequest.builder().tableName("table1").skyflowIds(Arrays.asList("id1", "  ")).build();
         try {
             Validations.validateDeleteRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
@@ -1723,7 +1723,7 @@ public class ValidationsTests {
     @Test
     public void testValidateDeleteRequest_emptyUniqueValueInUniqueValuesThrows() {
         DeleteRequest request = DeleteRequest.builder()
-                .table("table1")
+                .tableName("table1")
                 .uniqueValues(Collections.singletonList(new HashMap<>()))
                 .build();
         try {
@@ -1736,7 +1736,7 @@ public class ValidationsTests {
 
     @Test
     public void testValidateDeleteRequest_validWithIdsDoesNotThrow() {
-        DeleteRequest request = DeleteRequest.builder().table("table1").ids(Collections.singletonList("id1")).build();
+        DeleteRequest request = DeleteRequest.builder().tableName("table1").skyflowIds(Collections.singletonList("id1")).build();
         try {
             Validations.validateDeleteRequest(request);
         } catch (SkyflowException e) {
@@ -1749,7 +1749,7 @@ public class ValidationsTests {
         Map<String, Object> uniqueValue = new HashMap<>();
         uniqueValue.put("email", "john@example.com");
         DeleteRequest request = DeleteRequest.builder()
-                .table("table1")
+                .tableName("table1")
                 .uniqueValues(Collections.singletonList(uniqueValue))
                 .build();
         try {
@@ -1968,10 +1968,10 @@ public class ValidationsTests {
 
     @Test
     public void testValidateGetRequest_bothSingleTableFieldsAndRecordsThrows() {
-        GetRequestRecord nestedRecord = GetRequestRecord.builder().table("table2").ids(Collections.singletonList("id1")).build();
+        GetRequestRecord nestedRecord = GetRequestRecord.builder().tableName("table2").skyflowIds(Collections.singletonList("id1")).build();
         GetRequest request = GetRequest.builder()
-                .table("table1")
-                .ids(new ArrayList<>(Collections.singletonList("id1")))
+                .tableName("table1")
+                .skyflowIds(new ArrayList<>(Collections.singletonList("id1")))
                 .records(Collections.singletonList(nestedRecord))
                 .build();
         try {
@@ -1997,7 +1997,7 @@ public class ValidationsTests {
 
     @Test
     public void testValidateGetRequest_nullTableThrows() {
-        GetRequest request = GetRequest.builder().ids(new ArrayList<>(Collections.singletonList("id1"))).build();
+        GetRequest request = GetRequest.builder().skyflowIds(new ArrayList<>(Collections.singletonList("id1"))).build();
         try {
             Validations.validateGetRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
@@ -2008,7 +2008,7 @@ public class ValidationsTests {
 
     @Test
     public void testValidateGetRequest_blankTableThrows() {
-        GetRequest request = GetRequest.builder().table("  ").ids(new ArrayList<>(Collections.singletonList("id1"))).build();
+        GetRequest request = GetRequest.builder().tableName("  ").skyflowIds(new ArrayList<>(Collections.singletonList("id1"))).build();
         try {
             Validations.validateGetRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
@@ -2019,7 +2019,7 @@ public class ValidationsTests {
 
     @Test
     public void testValidateGetRequest_neitherIdsNorUniqueValuesThrows() {
-        GetRequest request = GetRequest.builder().table("table1").build();
+        GetRequest request = GetRequest.builder().tableName("table1").build();
         try {
             Validations.validateGetRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
@@ -2033,8 +2033,8 @@ public class ValidationsTests {
         Map<String, Object> uniqueValue = new HashMap<>();
         uniqueValue.put("email", "john@example.com");
         GetRequest request = GetRequest.builder()
-                .table("table1")
-                .ids(new ArrayList<>(Collections.singletonList("id1")))
+                .tableName("table1")
+                .skyflowIds(new ArrayList<>(Collections.singletonList("id1")))
                 .uniqueValues(Collections.singletonList(uniqueValue))
                 .build();
         try {
@@ -2048,8 +2048,8 @@ public class ValidationsTests {
     @Test
     public void testValidateGetRequest_blankIdInIdsThrows() {
         GetRequest request = GetRequest.builder()
-                .table("table1")
-                .ids(new ArrayList<>(Arrays.asList("id1", "  ")))
+                .tableName("table1")
+                .skyflowIds(new ArrayList<>(Arrays.asList("id1", "  ")))
                 .build();
         try {
             Validations.validateGetRequest(request);
@@ -2062,7 +2062,7 @@ public class ValidationsTests {
     @Test
     public void testValidateGetRequest_emptyUniqueValueInUniqueValuesThrows() {
         GetRequest request = GetRequest.builder()
-                .table("table1")
+                .tableName("table1")
                 .uniqueValues(Collections.singletonList(new HashMap<>()))
                 .build();
         try {
@@ -2076,9 +2076,9 @@ public class ValidationsTests {
     @Test
     public void testValidateGetRequest_emptyFieldsThrows() {
         GetRequest request = GetRequest.builder()
-                .table("table1")
-                .ids(new ArrayList<>(Collections.singletonList("id1")))
-                .fields(new ArrayList<>())
+                .tableName("table1")
+                .skyflowIds(new ArrayList<>(Collections.singletonList("id1")))
+                .columns(new ArrayList<>())
                 .build();
         try {
             Validations.validateGetRequest(request);
@@ -2091,9 +2091,9 @@ public class ValidationsTests {
     @Test
     public void testValidateGetRequest_blankFieldInFieldsThrows() {
         GetRequest request = GetRequest.builder()
-                .table("table1")
-                .ids(new ArrayList<>(Collections.singletonList("id1")))
-                .fields(new ArrayList<>(Arrays.asList("name", "  ")))
+                .tableName("table1")
+                .skyflowIds(new ArrayList<>(Collections.singletonList("id1")))
+                .columns(new ArrayList<>(Arrays.asList("name", "  ")))
                 .build();
         try {
             Validations.validateGetRequest(request);
@@ -2108,8 +2108,8 @@ public class ValidationsTests {
         List<ColumnRedactions> columnRedactions = new ArrayList<>();
         columnRedactions.add(null);
         GetRequest request = GetRequest.builder()
-                .table("table1")
-                .ids(new ArrayList<>(Collections.singletonList("id1")))
+                .tableName("table1")
+                .skyflowIds(new ArrayList<>(Collections.singletonList("id1")))
                 .columnRedactions(columnRedactions)
                 .build();
         try {
@@ -2124,8 +2124,8 @@ public class ValidationsTests {
     public void testValidateGetRequest_blankColumnNameInColumnRedactionThrows() {
         ColumnRedactions redaction = ColumnRedactions.builder().redaction("MASKED").build();
         GetRequest request = GetRequest.builder()
-                .table("table1")
-                .ids(new ArrayList<>(Collections.singletonList("id1")))
+                .tableName("table1")
+                .skyflowIds(new ArrayList<>(Collections.singletonList("id1")))
                 .columnRedactions(Collections.singletonList(redaction))
                 .build();
         try {
@@ -2140,8 +2140,8 @@ public class ValidationsTests {
     public void testValidateGetRequest_blankRedactionInColumnRedactionThrows() {
         ColumnRedactions redaction = ColumnRedactions.builder().columnName("email").build();
         GetRequest request = GetRequest.builder()
-                .table("table1")
-                .ids(new ArrayList<>(Collections.singletonList("id1")))
+                .tableName("table1")
+                .skyflowIds(new ArrayList<>(Collections.singletonList("id1")))
                 .columnRedactions(Collections.singletonList(redaction))
                 .build();
         try {
@@ -2155,8 +2155,8 @@ public class ValidationsTests {
     @Test
     public void testValidateGetRequest_validSingleTableWithIdsDoesNotThrow() {
         GetRequest request = GetRequest.builder()
-                .table("table1")
-                .ids(new ArrayList<>(Collections.singletonList("id1")))
+                .tableName("table1")
+                .skyflowIds(new ArrayList<>(Collections.singletonList("id1")))
                 .build();
         try {
             Validations.validateGetRequest(request);
@@ -2170,7 +2170,7 @@ public class ValidationsTests {
         Map<String, Object> uniqueValue = new HashMap<>();
         uniqueValue.put("email", "john@example.com");
         GetRequest request = GetRequest.builder()
-                .table("table1")
+                .tableName("table1")
                 .uniqueValues(Collections.singletonList(uniqueValue))
                 .build();
         try {
@@ -2183,12 +2183,12 @@ public class ValidationsTests {
     @Test
     public void testValidateGetRequest_validMultiTableRecordsModeDoesNotThrow() {
         GetRequestRecord nestedRecord1 = GetRequestRecord.builder()
-                .table("table1")
-                .ids(Collections.singletonList("id1"))
+                .tableName("table1")
+                .skyflowIds(Collections.singletonList("id1"))
                 .build();
         GetRequestRecord nestedRecord2 = GetRequestRecord.builder()
-                .table("table2")
-                .ids(Collections.singletonList("id2"))
+                .tableName("table2")
+                .skyflowIds(Collections.singletonList("id2"))
                 .build();
         GetRequest request = GetRequest.builder()
                 .records(Arrays.asList(nestedRecord1, nestedRecord2))
@@ -2202,7 +2202,7 @@ public class ValidationsTests {
 
     @Test
     public void testValidateGetRequest_multiTableRecordMissingTableThrows() {
-        GetRequestRecord nestedRecord = GetRequestRecord.builder().ids(Collections.singletonList("id1")).build();
+        GetRequestRecord nestedRecord = GetRequestRecord.builder().skyflowIds(Collections.singletonList("id1")).build();
         GetRequest request = GetRequest.builder().records(Collections.singletonList(nestedRecord)).build();
         try {
             Validations.validateGetRequest(request);

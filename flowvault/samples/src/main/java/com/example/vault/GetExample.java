@@ -38,7 +38,7 @@ public class GetExample {
             vaultConfig.setVaultId("<YOUR_VAULT_ID>");
             vaultConfig.setVaultUrl("<YOUR_VAULT_URL>");
 //            vaultConfig.setClusterId("<YOUR_CLUSTER_ID>");
-            vaultConfig.setEnv(Env.PROD);
+            vaultConfig.setEnv(Env.DEV);
             vaultConfig.setCredentials(credentials);
 
             // Step 3: Create Skyflow client instance with error logging
@@ -53,14 +53,14 @@ public class GetExample {
             ids.add("<YOUR_SKYFLOW_ID_2>");
             List<ColumnRedactions> columnRedactions = new ArrayList<>();
             columnRedactions.add(ColumnRedactions.builder()
-                    .columnName("<YOUR_COLUMN_NAME_1>")
-                    .redaction("plain_text")
+                    .columnName("<YOUR_COLUMN_NAME>")
+                    .redaction("<YOUR_REDACTION_TYPE>")
                     .build());
 
             // Step 5: Build and execute the get request
             GetRequest request = GetRequest.builder()
-                    .table("<YOUR_TABLE_NAME>")
-                    .ids(ids)
+                    .tableName("<YOUR_TABLE_NAME>")
+                    .skyflowIds(ids)
                     .columnRedactions(columnRedactions)
                     .build();
 

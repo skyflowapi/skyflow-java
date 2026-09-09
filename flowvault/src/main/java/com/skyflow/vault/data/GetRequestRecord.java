@@ -13,16 +13,16 @@ public class GetRequestRecord {
         this.builder = builder;
     }
 
-    public String getTable() {
-        return this.builder.table;
+    public String getTableName() {
+        return this.builder.tableName;
     }
 
-    public List<String> getIds() {
-        return this.builder.ids;
+    public List<String> getSkyflowIds() {
+        return this.builder.skyflowIds;
     }
 
-    public List<String> getFields() {
-        return this.builder.fields;
+    public List<String> getColumns() {
+        return this.builder.columns;
     }
 
     public List<ColumnRedactions> getColumnRedactions() {
@@ -38,27 +38,27 @@ public class GetRequestRecord {
     }
 
     public static final class GetRequestRecordBuilder {
-        private String table;
-        private List<String> ids;
-        private List<String> fields;
+        private String tableName;
+        private List<String> skyflowIds;
+        private List<String> columns;
         private List<ColumnRedactions> columnRedactions;
         private List<Map<String, Object>> uniqueValues;
 
         protected GetRequestRecordBuilder() {
         }
 
-        public GetRequestRecordBuilder table(String table) {
-            this.table = table;
+        public GetRequestRecordBuilder tableName(String tableName) {
+            this.tableName = tableName;
             return this;
         }
 
-        public GetRequestRecordBuilder ids(List<String> ids) {
-            this.ids = ids;
+        public GetRequestRecordBuilder skyflowIds(List<String> skyflowIds) {
+            this.skyflowIds = skyflowIds;
             return this;
         }
 
-        public GetRequestRecordBuilder fields(List<String> fields) {
-            this.fields = fields;
+        public GetRequestRecordBuilder columns(List<String> columns) {
+            this.columns = columns;
             return this;
         }
 

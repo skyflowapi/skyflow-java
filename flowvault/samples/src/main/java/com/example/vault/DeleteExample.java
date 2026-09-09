@@ -33,7 +33,7 @@ public class DeleteExample {
             VaultConfig vaultConfig = new VaultConfig();
             vaultConfig.setVaultId("<YOUR_VAULT_ID>");
             vaultConfig.setClusterId("<YOUR_CLUSTER_ID>");
-            vaultConfig.setEnv(Env.PROD);
+            vaultConfig.setEnv(Env.DEV);
             vaultConfig.setCredentials(credentials);
 
             // Step 3: Create Skyflow client instance with error logging
@@ -44,15 +44,13 @@ public class DeleteExample {
 
             // Step 4: Prepare the skyflow IDs to delete.
             //         Either ids or uniqueValues is required; specifying both fails validation.
-            //         Running this actually removes the record — rerunning GetExample/UpdateExample
-            //         against the same skyflowId afterward will then fail, since it's gone.
             List<String> ids = new ArrayList<>();
             ids.add("<YOUR_SKYFLOW_ID>");
 
             // Step 5: Build and execute the delete request
             DeleteRequest request = DeleteRequest.builder()
-                    .table("<YOUR_TABLE_NAME>")
-                    .ids(ids)
+                    .tableName("<YOUR_TABLE_NAME>")
+                    .skyflowIds(ids)
                     .build();
 
             DeleteOptions options = DeleteOptions.builder()

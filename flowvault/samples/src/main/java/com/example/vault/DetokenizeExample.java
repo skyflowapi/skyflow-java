@@ -32,7 +32,7 @@ public class DetokenizeExample {
             VaultConfig vaultConfig = new VaultConfig();
             vaultConfig.setVaultId("<YOUR_VAULT_ID>");
             vaultConfig.setClusterId("<YOUR_CLUSTER_ID>");
-            vaultConfig.setEnv(Env.PROD);
+            vaultConfig.setEnv(Env.DEV);
             vaultConfig.setCredentials(credentials);
 
             // Step 3: Create Skyflow client instance with error logging
@@ -43,11 +43,11 @@ public class DetokenizeExample {
 
             // Step 4: Prepare the tokens to detokenize and any per-group redactions
             List<String> tokens = new ArrayList<>();
-            tokens.add("<YOUR_TOKEN>");
+            tokens.add("98579059870301");
 
             List<TokenGroupRedactions> tokenGroupRedactions = new ArrayList<>();
             tokenGroupRedactions.add(TokenGroupRedactions.builder()
-                    .tokenGroupName("<YOUR_TOKEN_GROUP_NAME>")
+                    .tokenGroupName("nondeterministic")
                     .redaction("plain_text")
                     .build());
 

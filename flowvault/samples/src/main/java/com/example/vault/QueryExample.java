@@ -27,7 +27,7 @@ public class QueryExample {
             VaultConfig vaultConfig = new VaultConfig();
             vaultConfig.setVaultId("<YOUR_VAULT_ID>");
             vaultConfig.setClusterId("<YOUR_CLUSTER_ID>");
-            vaultConfig.setEnv(Env.PROD);
+            vaultConfig.setEnv(Env.DEV);
             vaultConfig.setCredentials(credentials);
 
             // Step 3: Create Skyflow client instance with error logging
@@ -38,7 +38,7 @@ public class QueryExample {
 
             // Step 4: Build and execute the query request
             QueryRequest request = QueryRequest.builder()
-                    .query("SELECT * FROM <YOUR_TABLE_NAME> LIMIT 1")
+                    .query("SELECT * FROM table1")
                     .build();
 
             QueryResponse response = skyflowClient.vault().query(request);

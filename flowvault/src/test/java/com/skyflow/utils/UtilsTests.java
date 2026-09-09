@@ -568,9 +568,9 @@ public class UtilsTests {
         Map<String, Object> uniqueValue = new HashMap<>();
         uniqueValue.put("email", "john@example.com");
         GetRequest request = GetRequest.builder()
-                .table("table1")
-                .ids(new ArrayList<>(Collections.singletonList("id1")))
-                .fields(new ArrayList<>(Collections.singletonList("name")))
+                .tableName("table1")
+                .skyflowIds(new ArrayList<>(Collections.singletonList("id1")))
+                .columns(new ArrayList<>(Collections.singletonList("name")))
                 .columnRedactions(Collections.singletonList(
                         ColumnRedactions.builder().columnName("email").redaction("MASKED").build()))
                 .limit(10)
@@ -594,7 +594,7 @@ public class UtilsTests {
     @Test
     public void testGetGetRequestBody_multiTableModeIgnoresSingleTableFields() {
         GetRequestRecord nested = GetRequestRecord.builder()
-                .table("table2").ids(Collections.singletonList("id2")).build();
+                .tableName("table2").skyflowIds(Collections.singletonList("id2")).build();
         GetRequest request = GetRequest.builder().records(Collections.singletonList(nested)).build();
         VaultConfig config = new VaultConfig();
         config.setVaultId("vault123");
@@ -645,7 +645,7 @@ public class UtilsTests {
 
     @Test
     public void testGetDeleteRequestBody_withIds() {
-        DeleteRequest request = DeleteRequest.builder().table("table1").ids(Collections.singletonList("id1")).build();
+        DeleteRequest request = DeleteRequest.builder().tableName("table1").skyflowIds(Collections.singletonList("id1")).build();
         VaultConfig config = new VaultConfig();
         config.setVaultId("vault123");
 
@@ -662,7 +662,7 @@ public class UtilsTests {
         Map<String, Object> uniqueValue = new HashMap<>();
         uniqueValue.put("email", "john@example.com");
         DeleteRequest request = DeleteRequest.builder()
-                .table("table1").uniqueValues(Collections.singletonList(uniqueValue)).build();
+                .tableName("table1").uniqueValues(Collections.singletonList(uniqueValue)).build();
         VaultConfig config = new VaultConfig();
         config.setVaultId("vault123");
 

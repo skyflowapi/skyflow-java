@@ -25,14 +25,25 @@ public class InsertExample {
         try {
             // Step 1: Initialize credentials with the path to your service account key file
 //            String filePath = "<YOUR_CREDENTIALS_FILE_PATH>";
+//            Credentials credentials = new Credentials();
+//            credentials.setToken("<YOUR_BEARER_TOKEN>");
+//
+//            // Step 2: Configure the vault with required parameters
+//            VaultConfig vaultConfig = new VaultConfig();
+//            vaultConfig.setVaultId("<YOUR_VAULT_ID>");
+//            vaultConfig.setClusterId("<YOUR_CLUSTER_ID>");
+//            vaultConfig.setEnv(Env.DEV);
+//            vaultConfig.setCredentials(credentials);
             Credentials credentials = new Credentials();
             credentials.setToken("<YOUR_BEARER_TOKEN>");
 
             // Step 2: Configure the vault with required parameters
             VaultConfig vaultConfig = new VaultConfig();
             vaultConfig.setVaultId("<YOUR_VAULT_ID>");
+//            vaultConfig.setVaultId("<YOUR_VAULT_ID>");
+//            vaultConfig.setVaultUrl("<YOUR_VAULT_URL>");
             vaultConfig.setClusterId("<YOUR_CLUSTER_ID>");
-            vaultConfig.setEnv(Env.PROD);
+            vaultConfig.setEnv(Env.DEV);
             vaultConfig.setCredentials(credentials);
 
             // Step 3: Create Skyflow client instance with error logging
@@ -43,19 +54,40 @@ public class InsertExample {
 
             // Step 4: Prepare the record to insert
             Map<String, Object> data = new HashMap<>();
-            data.put("<YOUR_COLUMN_NAME_1>", "<YOUR_VALUE_1>");
+            data.put("card_number", "41111111111111");
+//            data.put("name", "name");
+//            data.put("passport", "name");
+//            data.put("email", "name@gm.com");
 
+
+
+//            data.put("name", "name");
+            Map<String, Object> data2 = new HashMap<>();
+            data2.put("card_number", "412323232323"); // cspell:disable-line -- deliberately misspelled to demonstrate an invalid-column error
+            data2.put("name", "name");
+
+            List<String> columns = new ArrayList<>();
+            columns.add("name");
+            UpsertOptions upsertOptions = UpsertOptions.builder().uniqueColumns(columns).updateType("REPLACE").build();
             InsertRequestRecord record = InsertRequestRecord.builder()
+                    .data(data2)
+                    .tableName("uniqTable")
+                    .upsert(upsertOptions)
+                    .build();
+            InsertRequestRecord record2 = InsertRequestRecord.builder()
                     .data(data)
-                    .tableName("<YOUR_TABLE_NAME>")
+                    .tableName("table5")
+//                    .upsert(upsertOptions)
                     .build();
 
             List<InsertRequestRecord> records = new ArrayList<>();
             records.add(record);
+            records.add(record2);
 
             // Step 5: Build and execute the insert request
             InsertRequest request = InsertRequest.builder()
-//                    .tableName("<YOUR_TABLE_NAME>")
+//                    .tableName("uniqTable")
+//                    .upsert(upsertOptions)
                     .records(records)
                     .build();
             InsertOptions options = InsertOptions.builder()
@@ -64,7 +96,7 @@ public class InsertExample {
                     })
                     .build();
             InsertResponse response = skyflowClient.vault().insert(request, options);
-
+            System.out.println("response"+ response.getRecords().size());
             // Step 6: Print every field on each response record.
             for (InsertResponseRecord insertedRecord : response.getRecords()) {
                 System.out.println("tableName:\t" + insertedRecord.getTableName());
