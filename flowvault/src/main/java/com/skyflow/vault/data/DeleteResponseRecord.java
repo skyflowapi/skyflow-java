@@ -10,11 +10,17 @@ public class DeleteResponseRecord {
     private final String skyflowId;
     private final Integer httpCode;
     private final String error;
+    private final String requestId;
 
     public DeleteResponseRecord(String skyflowId, Integer httpCode, String error) {
+        this(skyflowId, httpCode, error, null);
+    }
+
+    public DeleteResponseRecord(String skyflowId, Integer httpCode, String error, String requestId) {
         this.skyflowId = skyflowId;
         this.httpCode = httpCode;
         this.error = error;
+        this.requestId = requestId;
     }
 
     public String getSkyflowId() {
@@ -27,6 +33,11 @@ public class DeleteResponseRecord {
 
     public String getError() {
         return error;
+    }
+
+    /** The API call this outcome came from; null unless this is an error. */
+    public String getRequestId() {
+        return requestId;
     }
 
     @Override

@@ -1,5 +1,7 @@
 package com.skyflow.vault.data;
 
+import com.skyflow.enums.UpdateType;
+
 import java.util.List;
 
 public class UpdateRequest {
@@ -17,8 +19,8 @@ public class UpdateRequest {
         return this.builder.records;
     }
 
-    /** "UPDATE" or "REPLACE" — if omitted, the vault treats it the same as "UPDATE". */
-    public String getUpdateType() {
+    /** If omitted, the vault treats it the same as {@link UpdateType#UPDATE}. */
+    public UpdateType getUpdateType() {
         return this.builder.updateType;
     }
 
@@ -29,7 +31,7 @@ public class UpdateRequest {
     public static class UpdateRequestBuilder {
         private String tableName;
         private List<UpdateRequestRecord> records;
-        private String updateType;
+        private UpdateType updateType;
 
         protected UpdateRequestBuilder() {
         }
@@ -44,7 +46,7 @@ public class UpdateRequest {
             return this;
         }
 
-        public UpdateRequestBuilder updateType(String updateType) {
+        public UpdateRequestBuilder updateType(UpdateType updateType) {
             this.updateType = updateType;
             return this;
         }

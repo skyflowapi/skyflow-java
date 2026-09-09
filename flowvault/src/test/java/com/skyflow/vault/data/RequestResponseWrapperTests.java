@@ -188,7 +188,7 @@ public class RequestResponseWrapperTests {
 
     @Test
     public void testDetokenizeResponseRecord_gettersReturnConstructorValues() {
-        DetokenizeMetadata metadata = new DetokenizeMetadata("skyflow-id-1", "table1");
+        DetokenizeResponseRecordMetadata metadata = new DetokenizeResponseRecordMetadata("skyflow-id-1", "table1");
 
         DetokenizeResponseRecord response = new DetokenizeResponseRecord(
                 "tok-1", "secret-value", "group1", metadata, 200, null);

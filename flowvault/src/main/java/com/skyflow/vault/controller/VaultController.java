@@ -138,7 +138,7 @@ public final class VaultController extends VaultClient {
             ApiClientHttpResponse<V1InsertResponse> response =
                     this.getRecordsApi().withRawResponse().insert(request, buildRequestOptions(ctx));
 
-            InsertResponse formattedResponse = Utils.formatInsertResponse(response.body());
+            InsertResponse formattedResponse = Utils.formatInsertResponse(response.body(), response.headers());
             LogUtil.printInfoLog(InfoLogs.INSERT_REQUEST_RESOLVED.getLog());
             return formattedResponse;
         } catch (ApiClientApiException e) {
@@ -252,7 +252,7 @@ public final class VaultController extends VaultClient {
             ApiClientHttpResponse<com.skyflow.generated.rest.types.V1FlowDetokenizeResponse> response =
                     this.getRecordsApi().withRawResponse().detokenize(request, buildRequestOptions(ctx));
 
-            DetokenizeResponse formattedResponse = Utils.formatDetokenizeResponse(response.body());
+            DetokenizeResponse formattedResponse = Utils.formatDetokenizeResponse(response.body(), response.headers());
             LogUtil.printInfoLog(InfoLogs.DETOKENIZE_REQUEST_RESOLVED.getLog());
             return formattedResponse;
         } catch (ApiClientApiException e) {
@@ -371,7 +371,7 @@ public final class VaultController extends VaultClient {
             ApiClientHttpResponse<V1DeleteResponse> response =
                     this.getRecordsApi().withRawResponse().delete(request, buildRequestOptions(ctx));
 
-            DeleteResponse formattedResponse = Utils.formatDeleteResponse(response.body());
+            DeleteResponse formattedResponse = Utils.formatDeleteResponse(response.body(), response.headers());
             LogUtil.printInfoLog(InfoLogs.DELETE_REQUEST_RESOLVED.getLog());
             return formattedResponse;
         } catch (ApiClientApiException e) {
@@ -606,7 +606,7 @@ public final class VaultController extends VaultClient {
             ApiClientHttpResponse<V1UpdateResponse> response =
                     this.getRecordsApi().withRawResponse().update(request, buildRequestOptions(ctx));
 
-            UpdateResponse formattedResponse = Utils.formatUpdateResponse(response.body());
+            UpdateResponse formattedResponse = Utils.formatUpdateResponse(response.body(), response.headers());
             LogUtil.printInfoLog(InfoLogs.UPDATE_REQUEST_RESOLVED.getLog());
             return formattedResponse;
         } catch (ApiClientApiException e) {
@@ -641,7 +641,7 @@ public final class VaultController extends VaultClient {
             ApiClientHttpResponse<V1GetResponse> response =
                     this.getRecordsApi().withRawResponse().get(request, buildRequestOptions(ctx));
 
-            GetResponse formattedResponse = Utils.formatGetResponse(response.body());
+            GetResponse formattedResponse = Utils.formatGetResponse(response.body(), response.headers());
             LogUtil.printInfoLog(InfoLogs.GET_REQUEST_RESOLVED.getLog());
             return formattedResponse;
         } catch (ApiClientApiException e) {

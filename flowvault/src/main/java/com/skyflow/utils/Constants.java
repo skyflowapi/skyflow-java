@@ -10,23 +10,23 @@ public final class Constants extends BaseConstants {
     public static final String VAULT_DOMAIN = ".skyvault.";
     public static final String SDK_PREFIX;
     public static final String SDK_METRIC_NAME_VERSION_PREFIX = "skyflow-flowvault-java@";
-    public static final Integer MAX_BULK_DATA_SIZE = 10000;
+    public static final Integer MAX_BULK_DATA_SIZE = 100000;
     public static final Integer INSERT_BATCH_SIZE = 50;
     public static final Integer MAX_INSERT_BATCH_SIZE = 1000;
     public static final Integer INSERT_CONCURRENCY_LIMIT = 1;
-    public static final Integer MAX_INSERT_CONCURRENCY_LIMIT = 10;
+    public static final Integer MAX_INSERT_CONCURRENCY_LIMIT = 100;
     public static final Integer DETOKENIZE_BATCH_SIZE = 50;
     public static final Integer DETOKENIZE_CONCURRENCY_LIMIT = 1;
     public static final Integer MAX_DETOKENIZE_BATCH_SIZE = 1000;
-    public static final Integer MAX_DETOKENIZE_CONCURRENCY_LIMIT = 10;
+    public static final Integer MAX_DETOKENIZE_CONCURRENCY_LIMIT = 100;
     public static final Integer DELETE_TOKENS_BATCH_SIZE = 50;
     public static final Integer DELETE_TOKENS_CONCURRENCY_LIMIT = 1;
     public static final Integer MAX_DELETE_TOKENS_BATCH_SIZE = 1000;
-    public static final Integer MAX_DELETE_TOKENS_CONCURRENCY_LIMIT = 10;
+    public static final Integer MAX_DELETE_TOKENS_CONCURRENCY_LIMIT = 100;
     public static final Integer TOKENIZE_BATCH_SIZE = 50;
     public static final Integer TOKENIZE_CONCURRENCY_LIMIT = 1;
     public static final Integer MAX_TOKENIZE_BATCH_SIZE = 1000;
-    public static final Integer MAX_TOKENIZE_CONCURRENCY_LIMIT = 10;
+    public static final Integer MAX_TOKENIZE_CONCURRENCY_LIMIT = 100;
     public static final String DEFAULT_SDK_VERSION = "1.0.0";
     public static final String CONTEXT_KEY_REGEX = "^[a-zA-Z0-9_]+$";
 

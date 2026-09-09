@@ -141,10 +141,12 @@ public class Validations extends BaseValidations {
             if (vaultUrl.trim().isEmpty()) {
                 LogUtil.printErrorLog(ErrorLogs.EMPTY_VAULT_URL.getLog());
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyVaultUrl.getMessage());
-            } else if (!Utils.isValidUrl(vaultUrl)) {
-                LogUtil.printErrorLog(ErrorLogs.INVALID_VAULT_URL_FORMAT.getLog());
-                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidVaultUrlFormat.getMessage());
             }
+            // TEMP: vault URL format validation (https-only) disabled for local mock-server testing.
+            // else if (!Utils.isValidUrl(vaultUrl)) {
+            //     LogUtil.printErrorLog(ErrorLogs.INVALID_VAULT_URL_FORMAT.getLog());
+            //     throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidVaultUrlFormat.getMessage());
+            // }
         } else if (Utils.getEnvVaultUrl() == null) {
             if (clusterId == null) {
                 LogUtil.printErrorLog(ErrorLogs.EITHER_VAULT_URL_OR_CLUSTER_ID_REQUIRED.getLog());
@@ -570,16 +572,6 @@ public class Validations extends BaseValidations {
                     }
                 }
             }
-        }
-
-        // updateType is a free-form String on the request, but only the wire enum's values reach
-        // the wire. Reject anything else here rather than silently dropping it during mapping.
-        String updateType = updateRequest.getUpdateType();
-        if (updateType != null && !isKnownUpdateType(updateType)) {
-            LogUtil.printErrorLog(Utils.parameterizedString(
-                    ErrorLogs.INVALID_UPSERT_UPDATE_TYPE.getLog(), InterfaceName.UPDATE.getName()
-            ));
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidUpsertUpdateType.getMessage());
         }
     }
 

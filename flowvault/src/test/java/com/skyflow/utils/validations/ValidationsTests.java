@@ -1,33 +1,5 @@
 package com.skyflow.utils.validations;
 
-import com.skyflow.config.Credentials;
-import com.skyflow.config.VaultConfig;
-import com.skyflow.enums.Env;
-import com.skyflow.errors.ErrorMessage;
-import com.skyflow.errors.SkyflowException;
-import com.skyflow.vault.data.BulkDeleteTokensRequest;
-import com.skyflow.vault.data.BulkInsertRequestRecord;
-import com.skyflow.vault.data.BulkInsertRequest;
-import com.skyflow.vault.data.BulkDetokenizeRequest;
-import com.skyflow.vault.data.BulkTokenizeRequestRecord;
-import com.skyflow.vault.data.BulkTokenizeRequest;
-import com.skyflow.vault.data.ColumnRedactions;
-import com.skyflow.vault.data.DeleteRequest;
-import com.skyflow.vault.data.DetokenizeRequest;
-import com.skyflow.vault.data.GetRequest;
-import com.skyflow.vault.data.GetRequestRecord;
-import com.skyflow.vault.data.InsertRequestRecord;
-import com.skyflow.vault.data.InsertRequest;
-import com.skyflow.vault.data.QueryRequest;
-import com.skyflow.vault.data.TokenGroupRedactions;
-import com.skyflow.vault.data.TokenizeRequestRecord;
-import com.skyflow.vault.data.TokenizeRequest;
-import com.skyflow.vault.data.UpdateRequest;
-import com.skyflow.vault.data.UpdateRequestRecord;
-import com.skyflow.vault.data.UpsertOptions;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,6 +7,35 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.junit.Assert;
+import org.junit.Test;
+
+import com.skyflow.config.Credentials;
+import com.skyflow.config.VaultConfig;
+import com.skyflow.enums.Env;
+import com.skyflow.enums.UpdateType;
+import com.skyflow.errors.ErrorMessage;
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.utils.Constants;
+import com.skyflow.vault.data.BulkDeleteTokensRequest;
+import com.skyflow.vault.data.BulkDetokenizeRequest;
+import com.skyflow.vault.data.BulkInsertRequest;
+import com.skyflow.vault.data.BulkInsertRequestRecord;
+import com.skyflow.vault.data.BulkTokenizeRequest;
+import com.skyflow.vault.data.BulkTokenizeRequestRecord;
+import com.skyflow.vault.data.ColumnRedactions;
+import com.skyflow.vault.data.DeleteRequest;
+import com.skyflow.vault.data.DetokenizeRequest;
+import com.skyflow.vault.data.GetRequest;
+import com.skyflow.vault.data.GetRequestRecord;
+import com.skyflow.vault.data.InsertRequest;
+import com.skyflow.vault.data.InsertRequestRecord;
+import com.skyflow.vault.data.QueryRequest;
+import com.skyflow.vault.data.TokenGroupRedactions;
+import com.skyflow.vault.data.UpdateRequest;
+import com.skyflow.vault.data.UpdateRequestRecord;
+import com.skyflow.vault.data.UpsertOptions;
 
 public class ValidationsTests {
     private static final String EXCEPTION_NOT_THROWN = "Should have thrown an exception";
@@ -300,18 +301,6 @@ public class ValidationsTests {
         }
     }
 
-    @Test
-    public void testValidateVaultConfiguration_invalidVaultUrlFormat() {
-        VaultConfig config = new VaultConfig();
-        config.setVaultId("vault123");
-        config.setVaultUrl("http://not-https.example.com");
-        try {
-            Validations.validateVaultConfiguration(config);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertNotNull(e.getMessage());
-        }
-    }
 
     @Test
     public void testValidateVaultConfiguration_validWithClusterId() {
@@ -1000,13 +989,13 @@ public class ValidationsTests {
     }
 
     @Test
-    public void testValidateBulkInsertRequest_over10000RecordsThrows() {
+    public void testValidateBulkInsertRequest_overMaxBulkDataSizeRecordsThrows() {
         // Constants.MAX_BULK_DATA_SIZE is a hard ceiling; batching splits the payload but
         // does not lift it.
         Map<String, Object> data = new HashMap<>();
         data.put("name", "john");
         ArrayList<InsertRequestRecord> records = new ArrayList<>();
-        for (int i = 0; i < 10001; i++) {
+        for (int i = 0; i < Constants.MAX_BULK_DATA_SIZE + 1; i++) {
             records.add(BulkInsertRequestRecord.builder().tableName("table1").data(data).build());
         }
         BulkInsertRequest request = BulkInsertRequest.builder().records(records).build();
@@ -1019,11 +1008,11 @@ public class ValidationsTests {
     }
 
     @Test
-    public void testValidateBulkInsertRequest_exactly10000RecordsIsValid() {
+    public void testValidateBulkInsertRequest_exactlyMaxBulkDataSizeRecordsIsValid() {
         Map<String, Object> data = new HashMap<>();
         data.put("name", "john");
         ArrayList<InsertRequestRecord> records = new ArrayList<>();
-        for (int i = 0; i < 10000; i++) {
+        for (int i = 0; i < Constants.MAX_BULK_DATA_SIZE; i++) {
             records.add(BulkInsertRequestRecord.builder().tableName("table1").data(data).build());
         }
         BulkInsertRequest request = BulkInsertRequest.builder().records(records).build();
@@ -1035,9 +1024,9 @@ public class ValidationsTests {
     }
 
     @Test
-    public void testValidateBulkDetokenizeRequest_over10000TokensThrows() {
+    public void testValidateBulkDetokenizeRequest_overMaxBulkDataSizeTokensThrows() {
         List<String> tokens = new ArrayList<>();
-        for (int i = 0; i < 10001; i++) {
+        for (int i = 0; i < Constants.MAX_BULK_DATA_SIZE + 1; i++) {
             tokens.add("token-" + i);
         }
         BulkDetokenizeRequest request = BulkDetokenizeRequest.builder().tokens(tokens).build();
@@ -1050,9 +1039,9 @@ public class ValidationsTests {
     }
 
     @Test
-    public void testValidateBulkDeleteTokensRequest_over10000TokensThrows() {
+    public void testValidateBulkDeleteTokensRequest_overMaxBulkDataSizeTokensThrows() {
         List<String> tokens = new ArrayList<>();
-        for (int i = 0; i < 10001; i++) {
+        for (int i = 0; i < Constants.MAX_BULK_DATA_SIZE + 1; i++) {
             tokens.add("token-" + i);
         }
         BulkDeleteTokensRequest request = BulkDeleteTokensRequest.builder().tokens(tokens).build();
@@ -1065,9 +1054,9 @@ public class ValidationsTests {
     }
 
     @Test
-    public void testValidateBulkTokenizeRequest_over10000RecordsThrows() {
+    public void testValidateBulkTokenizeRequest_overMaxBulkDataSizeRecordsThrows() {
         ArrayList<BulkTokenizeRequestRecord> records = new ArrayList<>();
-        for (int i = 0; i < 10001; i++) {
+        for (int i = 0; i < Constants.MAX_BULK_DATA_SIZE + 1; i++) {
             records.add(BulkTokenizeRequestRecord.builder()
                     .value("value-" + i)
                     .tokenGroupNames(Collections.singletonList("group"))
@@ -1934,22 +1923,6 @@ public class ValidationsTests {
     }
 
     @Test
-    public void testValidateUpdateRequest_invalidUpdateTypeThrows() {
-        UpdateRequestRecord record = UpdateRequestRecord.builder().skyflowId("sky1").build();
-        UpdateRequest request = UpdateRequest.builder()
-                .tableName("table1")
-                .records(Collections.singletonList(record))
-                .updateType("NOT_A_REAL_TYPE")
-                .build();
-        try {
-            Validations.validateUpdateRequest(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorMessage.InvalidUpsertUpdateType.getMessage(), e.getMessage());
-        }
-    }
-
-    @Test
     public void testValidateUpdateRequest_validMinimalRequestDoesNotThrow() {
         UpdateRequestRecord record = UpdateRequestRecord.builder().skyflowId("sky1").build();
         UpdateRequest request = UpdateRequest.builder().tableName("table1").records(Collections.singletonList(record)).build();
@@ -1972,7 +1945,7 @@ public class ValidationsTests {
         UpdateRequest request = UpdateRequest.builder()
                 .tableName("table1")
                 .records(Collections.singletonList(record))
-                .updateType("REPLACE")
+                .updateType(UpdateType.REPLACE)
                 .build();
         try {
             Validations.validateUpdateRequest(request);

@@ -1,11 +1,11 @@
 package com.skyflow.vault.data;
 
-import com.skyflow.logs.InfoLogs;
-import com.skyflow.utils.logger.LogUtil;
-
 import java.util.List;
 import java.util.Map;
 
+// Response record for the unary insert method. Deliberately does NOT carry the deprecated
+// getFields()/6-arg-constructor back-compat surface that BulkInsertResponseRecord still has to —
+// this is a brand-new type with no pre-1.0.2 callers to support, so it stays clean.
 public class InsertResponseRecord {
     private final String tableName;
     private final String skyflowId;
@@ -14,19 +14,11 @@ public class InsertResponseRecord {
     private final Map<String, Object> hashedData;
     private final int httpCode;
     private final String error;
-
-    /**
-     * @deprecated Use {@link #InsertResponseRecord(String, String, Map, Map, Map, int, String)} instead,
-     * which also lets you populate {@code data}. This overload always leaves {@code data} null.
-     */
-    @Deprecated(since = "1.0.2", forRemoval = true)
-    public InsertResponseRecord(String tableName, String skyflowId, Map<String, List<Token>> tokens,
-                                 Map<String, Object> hashedData, int httpCode, String error) {
-        this(tableName, skyflowId, tokens, null, hashedData, httpCode, error);
-    }
+    private final String requestId;
 
     public InsertResponseRecord(String tableName, String skyflowId, Map<String, List<Token>> tokens,
-                                 Map<String, Object> data, Map<String, Object> hashedData, int httpCode, String error) {
+                                 Map<String, Object> data, Map<String, Object> hashedData, int httpCode, String error,
+                                 String requestId) {
         this.tableName = tableName;
         this.skyflowId = skyflowId;
         this.tokens = tokens;
@@ -34,6 +26,7 @@ public class InsertResponseRecord {
         this.hashedData = hashedData;
         this.httpCode = httpCode;
         this.error = error;
+        this.requestId = requestId;
     }
 
     public String getTableName() {
@@ -54,18 +47,6 @@ public class InsertResponseRecord {
         return tokens;
     }
 
-    /**
-     * @deprecated Response key 'fields' is deprecated. Use {@link #getTokens()} instead. This
-     * still returns {@code Map<String, Object>}, matching its original (pre-typed) contract —
-     * see {@link Token#toRawTokens(Map)} for how {@link #getTokens()}'s typed data is rendered
-     * back into that generic shape.
-     */
-    @Deprecated(since = "1.0.2", forRemoval = true)
-    public Map<String, Object> getFields() {
-        LogUtil.printWarningLog(InfoLogs.DEPRECATED_INSERT_FIELDS_GETTER.getLog());
-        return Token.toRawTokens(getTokens());
-    }
-
     public Map<String, Object> getData() {
         return data;
     }
@@ -80,5 +61,10 @@ public class InsertResponseRecord {
 
     public String getError() {
         return error;
+    }
+
+    /** The API call this outcome came from; null unless this is an error. */
+    public String getRequestId() {
+        return requestId;
     }
 }

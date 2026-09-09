@@ -14,7 +14,7 @@ import java.util.Map;
  * constructor logic or toString() serialization: {@link Token},
  * {@link TokenizeResponseRecord}, {@link BulkTokenizeResponseRecord}, {@link TokenizeSummary},
  * {@link DeleteTokensRecord}, {@link BulkDeleteTokensResponseRecord},
- * {@link DeleteTokensSummary}, {@link DetokenizeSummary}, {@link DetokenizeMetadata},
+ * {@link DeleteTokensSummary}, {@link DetokenizeSummary}, {@link DetokenizeResponseRecordMetadata},
  * {@link ErrorRecord} and {@link DetokenizeResponseObject}.
  */
 public class ResponseComponentTests {
@@ -34,7 +34,7 @@ public class ResponseComponentTests {
     // Tests for Success and Summary were removed: the bulk insert response contract replaced
     // those classes with BulkInsertResponseRecord / BulkSummary, covered below. Token was removed
     // in the same rework, then reintroduced (with the same shape it had before) as the type
-    // InsertResponseRecord.getTokens() now returns - see the InsertResponseRecord section below.
+    // InsertResponseRecord.getTokens()/BulkInsertResponseRecord.getTokens() now return.
 
     // ── BulkInsertResponseRecord ─────────────────────────────────────────────
 
@@ -61,8 +61,6 @@ public class ResponseComponentTests {
         Assert.assertEquals(hashedData, record.getHashedData());
         Assert.assertEquals(200, record.getHttpCode());
         Assert.assertNull(record.getError());
-        // getTokens() is inherited unchanged from InsertResponseRecord - confirm it works on the
-        // subclass callers actually receive, not just the base class.
         Assert.assertEquals("tok-1", record.getTokens().get("name").get(0).getToken());
     }
 
@@ -86,27 +84,27 @@ public class ResponseComponentTests {
     }
 
     @Test
-    @SuppressWarnings("deprecation")
-    public void testInsertResponseRecord_deprecatedConstructorDefaultsDataToNull() {
-        // BulkInsertResponseRecord's deprecated constructor delegates straight to the new
-        // 7-arg super constructor, so it never exercises InsertResponseRecord's own deprecated
-        // 6-arg constructor. Cover that one directly.
+    public void testInsertResponseRecord_gettersReturnConstructorValues() {
+        // InsertResponseRecord (unary) carries no deprecated back-compat surface - it is a
+        // brand-new type with no pre-1.0.2 callers, unlike BulkInsertResponseRecord above.
         Map<String, List<Token>> tokens = new HashMap<>();
         tokens.put("name", Collections.singletonList(new Token("tok-1", "group1")));
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", "john");
         Map<String, Object> hashedData = new HashMap<>();
         hashedData.put("name", "hashed-1");
 
         InsertResponseRecord record = new InsertResponseRecord(
-                "persons", "skyflow-id-1", tokens, hashedData, 200, null);
+                "persons", "skyflow-id-1", tokens, data, hashedData, 200, null, "req-1");
 
         Assert.assertEquals("persons", record.getTableName());
         Assert.assertEquals("skyflow-id-1", record.getSkyflowId());
         Assert.assertEquals(tokens, record.getTokens());
-        Assert.assertEquals(singleColumnRawFields(), record.getFields());
-        Assert.assertNull(record.getData());
+        Assert.assertEquals(data, record.getData());
         Assert.assertEquals(hashedData, record.getHashedData());
         Assert.assertEquals(200, record.getHttpCode());
         Assert.assertNull(record.getError());
+        Assert.assertEquals("req-1", record.getRequestId());
     }
 
     @Test
@@ -573,7 +571,7 @@ public class ResponseComponentTests {
 
     @Test
     public void testBulkDetokenizeResponseRecord_gettersReturnConstructorValues() {
-        DetokenizeMetadata metadata = new DetokenizeMetadata("skyflow-id-1", "table1");
+        DetokenizeResponseRecordMetadata metadata = new DetokenizeResponseRecordMetadata("skyflow-id-1", "table1");
 
         BulkDetokenizeResponseRecord record = new BulkDetokenizeResponseRecord(
                 4, "tok-1", "secret-value", "group1", metadata, 200, null, null);
@@ -617,11 +615,11 @@ public class ResponseComponentTests {
         Assert.assertTrue(json.contains("\"error\":null"));
     }
 
-    // ── DetokenizeMetadata ────────────────────────────────────────────────────
+    // ── DetokenizeResponseRecordMetadata ────────────────────────────────────────────────────
 
     @Test
     public void testDetokenizeMetadata_gettersReturnConstructorValues() {
-        DetokenizeMetadata metadata = new DetokenizeMetadata("skyflow-id-1", "table1");
+        DetokenizeResponseRecordMetadata metadata = new DetokenizeResponseRecordMetadata("skyflow-id-1", "table1");
 
         Assert.assertEquals("skyflow-id-1", metadata.getSkyflowId());
         Assert.assertEquals("table1", metadata.getTableName());
@@ -629,7 +627,7 @@ public class ResponseComponentTests {
 
     @Test
     public void testDetokenizeMetadata_toStringSerializesFields() {
-        String json = new DetokenizeMetadata("skyflow-id-1", "table1").toString();
+        String json = new DetokenizeResponseRecordMetadata("skyflow-id-1", "table1").toString();
 
         Assert.assertTrue(json.contains("\"skyflowId\":\"skyflow-id-1\""));
         Assert.assertTrue(json.contains("\"tableName\":\"table1\""));
@@ -637,7 +635,7 @@ public class ResponseComponentTests {
 
     @Test
     public void testParseMetadata_returnsNullWhenRawMetadataIsNull() {
-        Assert.assertNull(DetokenizeMetadata.parseMetadata(null));
+        Assert.assertNull(DetokenizeResponseRecordMetadata.parseMetadata(null));
     }
 
     @Test
@@ -648,7 +646,7 @@ public class ResponseComponentTests {
         raw.put("skyflowId", "skyflow-id-1");
         raw.put("table", "table1");
 
-        DetokenizeMetadata metadata = DetokenizeMetadata.parseMetadata(raw);
+        DetokenizeResponseRecordMetadata metadata = DetokenizeResponseRecordMetadata.parseMetadata(raw);
 
         Assert.assertEquals("skyflow-id-1", metadata.getSkyflowId());
         Assert.assertEquals("table1", metadata.getTableName());
@@ -663,7 +661,7 @@ public class ResponseComponentTests {
         raw.put("tableName", "table1");
         raw.put("table", "should-be-ignored");
 
-        DetokenizeMetadata metadata = DetokenizeMetadata.parseMetadata(raw);
+        DetokenizeResponseRecordMetadata metadata = DetokenizeResponseRecordMetadata.parseMetadata(raw);
 
         Assert.assertEquals("table1", metadata.getTableName());
     }
@@ -676,7 +674,7 @@ public class ResponseComponentTests {
         raw.put("skyflowID", "skyflow-id-1");
         raw.put("table", "table1");
 
-        DetokenizeMetadata metadata = DetokenizeMetadata.parseMetadata(raw);
+        DetokenizeResponseRecordMetadata metadata = DetokenizeResponseRecordMetadata.parseMetadata(raw);
 
         Assert.assertEquals("skyflow-id-1", metadata.getSkyflowId());
         Assert.assertEquals("table1", metadata.getTableName());
@@ -684,7 +682,7 @@ public class ResponseComponentTests {
 
     @Test
     public void testParseMetadata_missingKeysParseAsNull() {
-        DetokenizeMetadata metadata = DetokenizeMetadata.parseMetadata(new HashMap<>());
+        DetokenizeResponseRecordMetadata metadata = DetokenizeResponseRecordMetadata.parseMetadata(new HashMap<>());
 
         Assert.assertNull(metadata.getSkyflowId());
         Assert.assertNull(metadata.getTableName());

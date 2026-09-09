@@ -7,20 +7,20 @@ import java.util.List;
 
 public class QueryResponse {
     private final List<QueryResponseRecord> records;
-    private final List<String> columns;
+    private final QueryResponseMetadata metadata;
 
-    public QueryResponse(List<QueryResponseRecord> records, List<String> columns) {
+    public QueryResponse(List<QueryResponseRecord> records, QueryResponseMetadata metadata) {
         this.records = records;
-        this.columns = columns;
+        this.metadata = metadata;
     }
 
     public List<QueryResponseRecord> getRecords() {
         return records;
     }
 
-    /** The return columns for the query, when the vault reports them. */
-    public List<String> getColumns() {
-        return columns;
+    /** Wraps the query's return columns, mirroring the wire shape (metadata.columns) directly. */
+    public QueryResponseMetadata getMetadata() {
+        return metadata;
     }
 
     @Override
