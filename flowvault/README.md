@@ -325,7 +325,7 @@ This reflects supported use cases, not something the SDK validates or blocks —
 
 Each method also accepts an optional options object (`BulkInsertOptions`, `BulkTokenizeOptions`, `BulkDetokenizeOptions`, `BulkDeleteTokensOptions`) — see [Custom Request Headers](#custom-request-headers).
 
-A single bulk call accepts at most **10,000** records or tokens; anything larger is rejected up front with a `SkyflowException`. Under that ceiling the SDK splits the payload into batches and sends them concurrently, which is why errors from one call can carry different `requestId` values.
+A single bulk call accepts at most **100,000** records or tokens; anything larger is rejected up front with a `SkyflowException`. Under that ceiling the SDK splits the payload into batches and sends them concurrently, which is why errors from one call can carry different `requestId` values.
 
 Every bulk response has the same two-part shape:
 
@@ -340,10 +340,10 @@ Batch size and concurrency are configured **per operation** through environment 
 
 | Operation | Batch size variable | Default | Max | Concurrency variable | Default | Max |
 |-----------|--------------------|---------|-----|---------------------|---------|-----|
-| Bulk insert | `INSERT_BATCH_SIZE` | 50 | 1000 | `INSERT_CONCURRENCY_LIMIT` | 1 | 10 |
-| Bulk tokenize | `TOKENIZE_BATCH_SIZE` | 50 | 1000 | `TOKENIZE_CONCURRENCY_LIMIT` | 1 | 10 |
-| Bulk detokenize | `DETOKENIZE_BATCH_SIZE` | 50 | 1000 | `DETOKENIZE_CONCURRENCY_LIMIT` | 1 | 10 |
-| Bulk delete tokens | `DELETE_TOKENS_BATCH_SIZE` | 50 | 1000 | `DELETE_TOKENS_CONCURRENCY_LIMIT` | 1 | 10 |
+| Bulk insert | `INSERT_BATCH_SIZE` | 50 | 1000 | `INSERT_CONCURRENCY_LIMIT` | 1 | 100 |
+| Bulk tokenize | `TOKENIZE_BATCH_SIZE` | 50 | 1000 | `TOKENIZE_CONCURRENCY_LIMIT` | 1 | 100 |
+| Bulk detokenize | `DETOKENIZE_BATCH_SIZE` | 50 | 1000 | `DETOKENIZE_CONCURRENCY_LIMIT` | 1 | 100 |
+| Bulk delete tokens | `DELETE_TOKENS_BATCH_SIZE` | 50 | 1000 | `DELETE_TOKENS_CONCURRENCY_LIMIT` | 1 | 100 |
 
 Concurrency defaults to **1**, so batches are sent one after another unless you raise the limit.
 
@@ -362,7 +362,7 @@ INSERT_BATCH_SIZE=100
 INSERT_CONCURRENCY_LIMIT=5
 ```
 
-The 10,000-item ceiling per bulk call is a separate, fixed limit and is not configurable.
+The 100,000-item ceiling per bulk call is a separate, fixed limit and is not configurable.
 
 # VaultController — Unary operations
 
@@ -389,7 +389,7 @@ Everything the bulk machinery adds — batching, concurrency, the payload ceilin
 |---|---|---|
 | Async variant | Yes — `bulkInsertAsync`, and so on | **No.** Wrap the call yourself if you need one |
 | Batching and concurrency | Configured per operation — see [Batching and concurrency](#batching-and-concurrency) | Not applicable — one payload, one call |
-| Payload ceiling | 10,000 records or tokens per call | Not enforced by the SDK; the vault's own request limits still apply |
+| Payload ceiling | 100,000 records or tokens per call | Not enforced by the SDK; the vault's own request limits still apply |
 | Response summary | `getSummary()` | None — read the records list |
 | Per-item `getIndex()` / `getRequestId()` | Yes | No. Records come back in submitted order, and the `x-request-id` of the single call reaches you only through a thrown `SkyflowException` |
 | Retry helper | `getRecordsToRetry()` / `getTokensToRetry()` | None — filter the records yourself, see [Retrying the failed records](#retrying-the-failed-records) |
@@ -990,10 +990,10 @@ Read records back from a table, by skyflow ID or by unique value, optionally ove
 
 **Note:**
 
-- A `GetRequest` works in one of two modes, and they are mutually exclusive: **single-table** (`table`, `ids`/`uniqueValues`, `fields`, `columnRedactions`, `limit`, `offset`) or **multi-table** (`records`, a list of `GetRequestRecord`). Setting fields from both modes fails validation.
-- `table` is required, and exactly one of `ids` or `uniqueValues` must be supplied — both, or neither, fails validation. This holds per record in multi-table mode.
+- A `GetRequest` works in one of two modes, and they are mutually exclusive: **single-table** (`tableName`, `skyflowIds`/`uniqueValues`, `columns`, `columnRedactions`, `limit`, `offset`) or **multi-table** (`records`, a list of `GetRequestRecord`). Setting fields from both modes fails validation.
+- `tableName` is required, and exactly one of `skyflowIds` or `uniqueValues` must be supplied — both, or neither, fails validation. This holds per record in multi-table mode.
 - `uniqueValues` is a `List<Map<String, Object>>`: one map per record, each holding the unique column-name/value pairs that identify it.
-- `fields` selects the columns to return; omit it for all of them. When supplied, it must be non-empty with no blank entries.
+- `columns` selects the columns to return; omit it for all of them. When supplied, it must be non-empty with no blank entries.
 - `limit` and `offset` apply to the call as a whole and are **only sent in single-table mode** — a `GetRequestRecord` has no `limit`/`offset` of its own, and values set on a multi-table request are not sent.
 
 ### Construct a get request
@@ -1020,11 +1020,11 @@ public class GetExample {
 
         // Step 2: Build the GetRequest — single-table mode, selecting records by skyflow ID
         GetRequest getRequest = GetRequest.builder()
-                .table("table1")
-                .ids(new ArrayList<>(Arrays.asList(
+                .tableName("table1")
+                .skyflowIds(new ArrayList<>(Arrays.asList(
                         "9fac9201-7b8a-4446-93f8-5244e1213bd1",
                         "b2308e2a-c1f5-469b-97b7-1f193159399b")))
-                .fields(new ArrayList<>(Arrays.asList("card_number", "cardholder_name")))
+                .columns(new ArrayList<>(Arrays.asList("card_number", "cardholder_name")))
                 .columnRedactions(Collections.singletonList(redaction))
                 .limit(10)
                 .offset(0)
@@ -1037,14 +1037,14 @@ public class GetExample {
 }
 ```
 
-To select records by unique value instead of skyflow ID, swap `ids(...)` for `uniqueValues(...)`:
+To select records by unique value instead of skyflow ID, swap `skyflowIds(...)` for `uniqueValues(...)`:
 
 ```java
 Map<String, Object> uniqueValue = new HashMap<>();
 uniqueValue.put("email", "jane.doe@example.com");
 
 GetRequest getRequest = GetRequest.builder()
-        .table("table2")
+        .tableName("table2")
         .uniqueValues(Collections.singletonList(uniqueValue))
         .build();
 ```
@@ -1053,13 +1053,13 @@ To read from more than one table in a single call, use multi-table mode — each
 
 ```java
 GetRequestRecord fromTable1 = GetRequestRecord.builder()
-        .table("table1")
-        .ids(Arrays.asList("9fac9201-7b8a-4446-93f8-5244e1213bd1"))
-        .fields(Arrays.asList("card_number"))
+        .tableName("table1")
+        .skyflowIds(Arrays.asList("9fac9201-7b8a-4446-93f8-5244e1213bd1"))
+        .columns(Arrays.asList("card_number"))
         .build();
 
 GetRequestRecord fromTable2 = GetRequestRecord.builder()
-        .table("table2")
+        .tableName("table2")
         .uniqueValues(Collections.singletonList(uniqueValue))
         .build();
 
@@ -1204,7 +1204,7 @@ Delete records from a table by skyflow ID or unique value, in a single API call.
 **Note:**
 
 - This deletes the records themselves. [Bulk Delete Tokens](#bulk-delete-tokens) is a different operation — it removes tokens and leaves the underlying record in place.
-- `table` is required, and exactly one of `ids` or `uniqueValues` must be supplied — both, or neither, fails validation.
+- `tableName` is required, and exactly one of `skyflowIds` or `uniqueValues` must be supplied — both, or neither, fails validation.
 - `uniqueValues` takes the same shape as in [Get](#get): one `Map<String, Object>` per record, holding the unique column-name/value pairs that identify it.
 
 ### Construct a delete request
@@ -1227,8 +1227,8 @@ public class DeleteExample {
         ));
 
         DeleteRequest deleteRequest = DeleteRequest.builder()
-                .table("table1")
-                .ids(ids)
+                .tableName("table1")
+                .skyflowIds(ids)
                 .build();
 
         DeleteResponse deleteResponse = vault.delete(deleteRequest);
@@ -1367,7 +1367,7 @@ This is the mental model to hold for every operation, bulk or unary:
 
 | Layer | What it covers | How you see it |
 |---|---|---|
-| **Request-level** | The call could not be made or the whole call failed: invalid request shape, missing credentials, auth failure, payload over the 10,000-item limit. | A thrown `SkyflowException`. No results at all. |
+| **Request-level** | The call could not be made or the whole call failed: invalid request shape, missing credentials, auth failure, payload over the 100,000-item limit. | A thrown `SkyflowException`. No results at all. |
 | **Record-level** | The call succeeded, but individual records or tokens inside it did not. | A returned response. **Nothing is thrown.** Each entry in `getRecords()` reports its own `httpCode` and `error`. |
 
 The second layer is what distinguishes `flowvault` from an all-or-nothing API: **a call that returns normally can still contain failures, and a call where every single record failed also returns normally rather than throwing.** Checking only for a thrown exception will silently miss failed records — always read the summary and the per-record results.
@@ -1474,7 +1474,7 @@ vault.bulkInsertAsync(insertRequest)
 | Request ID | `getRequestId()` | The `x-request-id` header — useful for support escalations. |
 | Details | `getDetails()` | `JsonArray` of additional error context from the server. Empty array for validation errors, `null` if the server response omitted the field. |
 
-**Validation errors** (table name at the wrong level, empty token list, payload over 10,000 items, and similar) are thrown before any network call:
+**Validation errors** (table name at the wrong level, empty token list, payload over 100,000 items, and similar) are thrown before any network call:
 
 - `httpCode` is always `400`
 - `requestId` and `grpcCode` are `null`

@@ -420,8 +420,8 @@ public class Validations extends BaseValidations {
             ));
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.DeleteRequestNull.getMessage());
         }
-        validateTableRequired(deleteRequest.getTable(), InterfaceName.DELETE_RECORDS);
-        validateIdsOrUniqueValues(deleteRequest.getIds(), deleteRequest.getUniqueValues(), InterfaceName.DELETE_RECORDS);
+        validateTableRequired(deleteRequest.getTableName(), InterfaceName.DELETE_RECORDS);
+        validateIdsOrUniqueValues(deleteRequest.getSkyflowIds(), deleteRequest.getUniqueValues(), InterfaceName.DELETE_RECORDS);
     }
 
     public static void validateBulkDeleteTokensRequest(BulkDeleteTokensRequest request) throws SkyflowException {
@@ -583,9 +583,9 @@ public class Validations extends BaseValidations {
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.GetRequestNull.getMessage());
         }
 
-        boolean hasSingleTableFields = hasText(getRequest.getTable())
-                || (getRequest.getIds() != null && !getRequest.getIds().isEmpty())
-                || (getRequest.getFields() != null && !getRequest.getFields().isEmpty())
+        boolean hasSingleTableFields = hasText(getRequest.getTableName())
+                || (getRequest.getSkyflowIds() != null && !getRequest.getSkyflowIds().isEmpty())
+                || (getRequest.getColumns() != null && !getRequest.getColumns().isEmpty())
                 || (getRequest.getUniqueValues() != null && !getRequest.getUniqueValues().isEmpty())
                 || (getRequest.getColumnRedactions() != null && !getRequest.getColumnRedactions().isEmpty());
         boolean hasRecords = getRequest.getRecords() != null && !getRequest.getRecords().isEmpty();
@@ -605,17 +605,17 @@ public class Validations extends BaseValidations {
                     ));
                     throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.NullGetRecordRequest.getMessage());
                 }
-                validateTableRequired(record.getTable(), InterfaceName.GET);
-                validateIdsOrUniqueValues(record.getIds(), record.getUniqueValues(), InterfaceName.GET);
-                validateFields(record.getFields());
+                validateTableRequired(record.getTableName(), InterfaceName.GET);
+                validateIdsOrUniqueValues(record.getSkyflowIds(), record.getUniqueValues(), InterfaceName.GET);
+                validateFields(record.getColumns());
                 validateColumnRedactions(record.getColumnRedactions());
             }
             return;
         }
 
-        validateTableRequired(getRequest.getTable(), InterfaceName.GET);
-        validateIdsOrUniqueValues(getRequest.getIds(), getRequest.getUniqueValues(), InterfaceName.GET);
-        validateFields(getRequest.getFields());
+        validateTableRequired(getRequest.getTableName(), InterfaceName.GET);
+        validateIdsOrUniqueValues(getRequest.getSkyflowIds(), getRequest.getUniqueValues(), InterfaceName.GET);
+        validateFields(getRequest.getColumns());
         validateColumnRedactions(getRequest.getColumnRedactions());
     }
 

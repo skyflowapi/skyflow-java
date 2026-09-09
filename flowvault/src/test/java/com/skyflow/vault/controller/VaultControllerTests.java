@@ -263,7 +263,7 @@ public class VaultControllerTests {
         when(mockRaw.delete(any(), any())).thenReturn(httpResp);
 
         VaultController controller = createControllerWithMock(mockApi);
-        DeleteRequest request = DeleteRequest.builder().table("table1").ids(Collections.singletonList("sky-1")).build();
+        DeleteRequest request = DeleteRequest.builder().tableName("table1").skyflowIds(Collections.singletonList("sky-1")).build();
 
         DeleteResponse response = controller.delete(request);
         Assert.assertEquals(1, response.getRecords().size());
@@ -275,7 +275,7 @@ public class VaultControllerTests {
     public void testDelete_invalidRequestThrowsSkyflowException() throws Exception {
         ApiClient mockApi = Mockito.mock(ApiClient.class);
         VaultController controller = createControllerWithMock(mockApi);
-        DeleteRequest request = DeleteRequest.builder().table("table1").build();
+        DeleteRequest request = DeleteRequest.builder().tableName("table1").build();
         try {
             controller.delete(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
@@ -418,8 +418,8 @@ public class VaultControllerTests {
 
         VaultController controller = createControllerWithMock(mockApi);
         GetRequest request = GetRequest.builder()
-                .table("table1")
-                .ids(new ArrayList<>(Collections.singletonList("sky-1")))
+                .tableName("table1")
+                .skyflowIds(new ArrayList<>(Collections.singletonList("sky-1")))
                 .build();
 
         GetResponse response = controller.get(request);
@@ -431,7 +431,7 @@ public class VaultControllerTests {
     public void testGet_invalidRequestThrowsSkyflowException() throws Exception {
         ApiClient mockApi = Mockito.mock(ApiClient.class);
         VaultController controller = createControllerWithMock(mockApi);
-        GetRequest request = GetRequest.builder().table("table1").build();
+        GetRequest request = GetRequest.builder().tableName("table1").build();
         try {
             controller.get(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
