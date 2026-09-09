@@ -60,7 +60,7 @@ import com.skyflow.vault.data.BulkInsertResponseRecord;
 import com.skyflow.vault.data.BulkTokenizeRequestRecord;
 import com.skyflow.vault.data.BulkTokenizeResponse;
 import com.skyflow.vault.data.BulkTokenizeResponseRecord;
-import com.skyflow.vault.data.ColumnRedaction;
+import com.skyflow.vault.data.ColumnRedactions;
 import com.skyflow.vault.data.DeleteRequest;
 import com.skyflow.vault.data.DeleteResponse;
 import com.skyflow.vault.data.DeleteResponseRecord;
@@ -264,9 +264,9 @@ public final class Utils extends BaseUtils {
         return data.build();
     }
 
-    private static List<V1ColumnRedactions> toV1ColumnRedactionsList(List<ColumnRedaction> columnRedactions) {
+    private static List<V1ColumnRedactions> toV1ColumnRedactionsList(List<ColumnRedactions> columnRedactions) {
         List<V1ColumnRedactions> list = new ArrayList<>();
-        for (ColumnRedaction columnRedaction : columnRedactions) {
+        for (ColumnRedactions columnRedaction : columnRedactions) {
             list.add(V1ColumnRedactions.builder()
                     .columnName(columnRedaction.getColumnName())
                     .redaction(columnRedaction.getRedaction())

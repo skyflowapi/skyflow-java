@@ -12,7 +12,7 @@ public class GetRequest extends BaseGetRequest {
         this.builder = builder;
     }
 
-    public List<ColumnRedaction> getColumnRedactions() {
+    public List<ColumnRedactions> getColumnRedactions() {
         return this.builder.columnRedactions;
     }
 
@@ -42,7 +42,7 @@ public class GetRequest extends BaseGetRequest {
     }
 
     public static final class GetRequestBuilder extends BaseGetRequestBuilder {
-        private List<ColumnRedaction> columnRedactions;
+        private List<ColumnRedactions> columnRedactions;
         private List<Map<String, Object>> uniqueValues;
         private Integer limit;
         private Integer offset;
@@ -69,7 +69,7 @@ public class GetRequest extends BaseGetRequest {
             return this;
         }
 
-        public GetRequestBuilder columnRedactions(List<ColumnRedaction> columnRedactions) {
+        public GetRequestBuilder columnRedactions(List<ColumnRedactions> columnRedactions) {
             this.columnRedactions = columnRedactions;
             return this;
         }

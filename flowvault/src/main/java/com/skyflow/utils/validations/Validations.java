@@ -709,11 +709,11 @@ public class Validations extends BaseValidations {
 
     // columnRedactions is optional; when supplied, no entry may be null and each must carry a
     // non-blank columnName and redaction.
-    private static void validateColumnRedactions(List<ColumnRedaction> columnRedactions) throws SkyflowException {
+    private static void validateColumnRedactions(List<ColumnRedactions> columnRedactions) throws SkyflowException {
         if (columnRedactions == null) {
             return;
         }
-        for (ColumnRedaction columnRedaction : columnRedactions) {
+        for (ColumnRedactions columnRedaction : columnRedactions) {
             if (columnRedaction == null) {
                 LogUtil.printErrorLog(Utils.parameterizedString(
                         ErrorLogs.NULL_COLUMN_REDACTION_OBJECT.getLog(), InterfaceName.GET.getName()

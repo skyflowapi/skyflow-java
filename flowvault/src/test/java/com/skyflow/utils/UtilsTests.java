@@ -44,7 +44,7 @@ import com.skyflow.vault.data.BulkTokenizeRequestRecord;
 import com.skyflow.vault.data.BulkInsertResponseRecord;
 import com.skyflow.vault.data.BulkTokenizeRequest;
 import com.skyflow.vault.data.BulkTokenizeResponse;
-import com.skyflow.vault.data.ColumnRedaction;
+import com.skyflow.vault.data.ColumnRedactions;
 import com.skyflow.vault.data.DeleteRequest;
 import com.skyflow.vault.data.DeleteResponse;
 import com.skyflow.vault.data.DetokenizeRequest;
@@ -567,7 +567,7 @@ public class UtilsTests {
                 .ids(new ArrayList<>(Collections.singletonList("id1")))
                 .fields(new ArrayList<>(Collections.singletonList("name")))
                 .columnRedactions(Collections.singletonList(
-                        ColumnRedaction.builder().columnName("email").redaction("MASKED").build()))
+                        ColumnRedactions.builder().columnName("email").redaction("MASKED").build()))
                 .limit(10)
                 .offset(5)
                 .build();
