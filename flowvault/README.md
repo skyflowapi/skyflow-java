@@ -2,9 +2,9 @@
 
 The `flowvault` module is a Skyflow Java SDK built for high-throughput vault operations. It shares its client, credentials, and configuration classes with the [skyvault SDK](../skyvault/README.md) (both depend on the `common` module) but exposes a different, narrower surface: **bulk** vault operations only.
 
-> Meant for **Flow DB** vaults.
+> Meant for **Flow Vault**.
 
-> **`flowvault` is a new SDK, versioned independently of `skyvault`.** It started at `1.0.0` while `skyvault` (`com.skyflow:skyflow-java`) is at `2.x`. The two artifacts have separate version lines, so a lower `flowvault` version number does not mean it is older or behind — it is a first release, not a downgrade. Upgrade each artifact on its own.
+> **`flowvault` is versioned independently of `skyvault`.** `flowvault` is on a `1.x` line while `skyvault` (`com.skyflow:skyflow-java`) is on `2.x`. The two artifacts have separate version lines, so a lower `flowvault` version number does not mean it is older or behind. Upgrade each artifact on its own; the current release is listed on [Maven Central](https://central.sonatype.com/artifact/com.skyflow/skyflow-flowvault-java).
 
 [![CI](https://img.shields.io/static/v1?label=CI&message=passing&color=green?style=plastic&logo=github)](https://github.com/skyflowapi/skyflow-java/actions)
 [![License](https://img.shields.io/github/license/skyflowapi/skyflow-java)](https://github.com/skyflowapi/skyflow-java/blob/main/LICENSE)
@@ -21,12 +21,15 @@ The `flowvault` module is a Skyflow Java SDK built for high-throughput vault ope
   - [Credential types](#credential-types)
   - [Where credentials can be set](#where-credentials-can-be-set)
   - [Generate a bearer token](#generate-a-bearer-token)
-  - [Context-aware and scoped tokens](#context-aware-and-scoped-tokens)
+  - [Generate bearer tokens with context](#generate-bearer-tokens-with-context)
+  - [Generate scoped bearer tokens](#generate-scoped-bearer-tokens)
+  - [Generate signed data tokens](#generate-signed-data-tokens)
 - [Initialize the client](#initialize-the-client)
   - [VaultConfig reference](#vaultconfig-reference)
   - [Skyflow.builder() reference](#skyflowbuilder-reference)
   - [Timeouts and retries](#timeouts-and-retries)
   - [Logging](#logging)
+  - [Concurrency, thread safety, and resource lifecycle](#concurrency-thread-safety-and-resource-lifecycle)
 - [VaultController — Bulk operations](#vaultcontroller--bulk-operations)
   - [Schema vs. schemaless vaults](#schema-vs-schemaless-vaults)
   - [Batching and concurrency](#batching-and-concurrency)
@@ -53,7 +56,7 @@ The `flowvault` module is a Skyflow Java SDK built for high-throughput vault ope
 # Overview
 
 - Authenticate using a Skyflow service account, an API key, or a bearer token — see [Authenticate](#authenticate).
-- Perform bulk Vault API operations — insert, tokenize, detokenize, and delete tokens — each with a synchronous and an async variant, built for high-throughput Flow DB workloads.
+- Perform bulk Vault API operations — insert, tokenize, detokenize, and delete tokens — each with a synchronous and an async variant, built for high-throughput Flow Vault workloads.
 - Perform unary Vault API operations — insert, detokenize, get, update, and delete — a single API call each, for when you want a plain request and response rather than the bulk batching machinery. See [VaultController — Unary operations](#vaultcontroller--unary-operations).
 - **Per-record reporting, not all-or-nothing.** A bulk call succeeds as a call even when individual records fail; every response reports a summary plus the outcome of each individual record or token. See [Error Handling](#error-handling).
 
@@ -68,7 +71,7 @@ The `flowvault` module is a Skyflow Java SDK built for high-throughput vault ope
 ### Gradle users
 
 ```
-implementation 'com.skyflow:skyflow-flowvault-java:1.0.1'
+implementation 'com.skyflow:skyflow-flowvault-java:1.2.0'
 ```
 
 ### Maven users
@@ -77,9 +80,11 @@ implementation 'com.skyflow:skyflow-flowvault-java:1.0.1'
 <dependency>
     <groupId>com.skyflow</groupId>
     <artifactId>skyflow-flowvault-java</artifactId>
-    <version>1.0.1</version>
+    <version>1.2.0</version>
 </dependency>
 ```
+
+The snippets above pin the latest release at the time of writing. Check [Maven Central](https://central.sonatype.com/artifact/com.skyflow/skyflow-flowvault-java) for the current version and [GitHub releases](https://github.com/skyflowapi/skyflow-java/releases) for what changed in each one.
 
 # Quickstart
 
@@ -161,29 +166,269 @@ If none of the three yields credentials, the call fails with a `SkyflowException
 
 ## Generate a bearer token
 
-If you would rather manage tokens yourself, `common` ships the same `BearerToken` utility as `skyvault`:
+If you would rather manage tokens yourself, the service-account utilities ship inside `skyflow-flowvault-java`. This section covers each of them:
+
+- **Generate a bearer token** — mint a token from service account credentials. Tokens are valid for 60 minutes and carry the service account's permissions. Use this when you only need basic authentication.
+- **Generate a bearer token with context** — embed context values into the token so vault policies can evaluate them and end-user identity can be tracked. Use this when policies depend on contextual attributes.
+- **Generate a scoped bearer token** — restrict the token to specific roles of a service account that has several. Use this to enforce role-based access per token.
+- **Generate signed data tokens** — sign existing data tokens with the service account's private key so they can only be detokenized by a caller holding the matching context and permissions.
+
+`BearerToken` generates a bearer token from a credentials JSON file, or from the same JSON passed as a string. `getBearerToken()` caches the token and only mints a new one once the current one has expired, so it is safe to call per request.
+
+[Example](https://github.com/skyflowapi/skyflow-java/blob/main/flowvault/samples/src/main/java/com/example/serviceaccount/BearerTokenGenerationExample.java):
+
+```java
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.serviceaccount.util.BearerToken;
+import com.skyflow.serviceaccount.util.Token;
+
+import java.io.File;
+
+/**
+ * Example program to generate a Bearer Token using Skyflow's BearerToken utility.
+ * The token can be generated in two ways:
+ * 1. Using the file path to a credentials.json file.
+ * 2. Using the JSON content of the credentials file as a string.
+ */
+public class BearerTokenGenerationExample {
+    public static void main(String[] args) {
+        // Variable to store the generated token
+        String token = null;
+
+        // Example 1: Generate Bearer Token using a credentials.json file
+        try {
+            // Specify the full file path to the credentials.json file
+            String filePath = "<YOUR_CREDENTIALS_FILE_PATH>";
+
+            // Check if the token is either not initialized or has expired
+            if (Token.isExpired(token)) {
+                // Create a BearerToken object using the credentials file
+                BearerToken bearerToken = BearerToken.builder()
+                        .setCredentials(new File(filePath)) // Set credentials from the file path
+                        .build();
+
+                // Generate a new Bearer Token
+                token = bearerToken.getBearerToken();
+            }
+
+            // Print the generated Bearer Token to the console
+            System.out.println("Generated Bearer Token (from file): " + token);
+        } catch (SkyflowException e) {
+            // Handle any exceptions encountered during the token generation process
+            e.printStackTrace();
+        }
+
+        // Example 2: Generate Bearer Token using the credentials JSON as a string
+        try {
+            // Provide the credentials JSON content as a string
+            String fileContents = "<YOUR_CREDENTIALS_FILE_CONTENTS_AS_STRING>";
+
+            // Check if the token is either not initialized or has expired
+            if (Token.isExpired(token)) {
+                // Create a BearerToken object using the credentials string
+                BearerToken bearerToken = BearerToken.builder()
+                        .setCredentials(fileContents) // Set credentials from the string
+                        .build();
+
+                // Generate a new Bearer Token
+                token = bearerToken.getBearerToken();
+            }
+
+            // Print the generated Bearer Token to the console
+            System.out.println("Generated Bearer Token (from string): " + token);
+        } catch (SkyflowException e) {
+            // Handle any exceptions encountered during the token generation process
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+To use the token with the SDK, attach it to `Credentials`:
+
+```java
+Credentials credentials = new Credentials();
+credentials.setToken(token);
+```
+
+## Generate bearer tokens with context
+
+**Context-aware authorization** embeds context values into a bearer token during its generation so you can reference those values in your policies. This enables more flexible access controls, such as tracking end-user identity when making API calls through a service account, and is required for detokenizing signed data tokens.
+
+A service account with the `context_id` identifier generates bearer tokens that carry a `context_identifier` JWT claim. Those tokens are valid for 60 minutes and can call the Data and Management APIs, subject to the service account's permissions.
+
+`setCtx()` accepts either a **String** or a **`Map<String, Object>`**.
+
+**String context** — use when your policy references a single context value:
+
+```java
+BearerToken token = BearerToken.builder()
+        .setCredentials(new File(filePath))
+        .setCtx("user_12345")
+        .build();
+```
+
+**JSON object context** — use when your policy needs multiple context values for conditional data access. Each key in the `Map` maps to a Skyflow CEL policy variable under `request.context.*`:
+
+```java
+Map<String, Object> ctx = new HashMap<>();
+ctx.put("role", "admin");
+ctx.put("department", "finance");
+ctx.put("user_id", "user_12345");
+
+BearerToken token = BearerToken.builder()
+        .setCredentials(new File(filePath))
+        .setCtx(ctx)
+        .build();
+```
+
+With the map above, your Skyflow policies can reference `request.context.role`, `request.context.department`, and `request.context.user_id` to make conditional access decisions.
+
+Context map keys must contain only alphanumeric characters and underscores (`[a-zA-Z0-9_]`). An invalid key throws a `SkyflowException` when the builder runs.
+
+[Full example](https://github.com/skyflowapi/skyflow-java/blob/main/flowvault/samples/src/main/java/com/example/serviceaccount/BearerTokenGenerationWithContextExample.java)
+
+## Generate scoped bearer tokens
+
+A service account with multiple roles can generate bearer tokens limited to specific roles by passing their role IDs. This is useful for services with several responsibilities, such as separating billing access from analytics access. The generated tokens are valid for 60 minutes and can only execute operations permitted by the designated roles.
+
+[Example](https://github.com/skyflowapi/skyflow-java/blob/main/flowvault/samples/src/main/java/com/example/serviceaccount/ScopedTokenGenerationExample.java):
 
 ```java
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.serviceaccount.util.BearerToken;
 
 import java.io.File;
+import java.util.ArrayList;
 
-BearerToken token = BearerToken.builder()
-        .setCredentials(new File("<PATH_TO_CREDENTIALS_JSON>")) // or setCredentials(credentialsJsonString)
-        .build();
+/**
+ * This example demonstrates how to generate a Scoped Bearer Token in two ways:
+ * 1. Using a credentials file specified by its file path.
+ * 2. Using the credentials as a string.
+ * <p>
+ * Scoped tokens are generated by assigning specific roles for access control.
+ */
+public class ScopedTokenGenerationExample {
+    public static void main(String[] args) {
+        String scopedToken = null; // Variable to store the generated Scoped Bearer Token
 
-String bearerToken = token.getBearerToken(); // cached and regenerated only when expired
+        // Example 1: Generate Scoped Token using a credentials file path
+        try {
+            // Step 1: Specify the roles required for the scoped token
+            ArrayList<String> roles = new ArrayList<>();
+            roles.add("YOUR_ROLE_ID"); // Replace with your actual role ID
 
-Credentials credentials = new Credentials();
-credentials.setToken(bearerToken);
+            // Step 2: Specify the path to the credentials file
+            String filePath = "<YOUR_CREDENTIALS_FILE_PATH>"; // Replace with the actual file path
+
+            // Step 3: Create a BearerToken object using the file path and roles
+            BearerToken bearerToken = BearerToken.builder()
+                    .setCredentials(new File(filePath)) // Provide the credentials file
+                    .setRoles(roles)                   // Set the roles for the scoped token
+                    .build();
+
+            // Step 4: Generate and print the Scoped Bearer Token
+            scopedToken = bearerToken.getBearerToken();
+            System.out.println("Scoped Token (using file path): " + scopedToken);
+        } catch (SkyflowException e) { // Handle exceptions during token generation
+            System.out.println("Error occurred while generating Scoped Token using file path:");
+            e.printStackTrace();
+        }
+
+        // Example 2: Generate Scoped Token using credentials as a string
+        try {
+            // Step 1: Specify the roles required for the scoped token
+            ArrayList<String> roles = new ArrayList<>();
+            roles.add("YOUR_ROLE_ID"); // Replace with your actual role ID
+
+            // Step 2: Specify the credentials as a string (file contents)
+            String fileContents = "<YOUR_CREDENTIALS_FILE_CONTENTS_AS_STRING>"; // Replace with actual file contents
+
+            // Step 3: Create a BearerToken object using the credentials string and roles
+            BearerToken bearerToken = BearerToken.builder()
+                    .setCredentials(fileContents) // Provide the credentials as a string
+                    .setRoles(roles)             // Set the roles for the scoped token
+                    .build();
+
+            // Step 4: Generate and print the Scoped Bearer Token
+            scopedToken = bearerToken.getBearerToken();
+            System.out.println("Scoped Token (using credentials string): " + scopedToken);
+        } catch (SkyflowException e) { // Handle exceptions during token generation
+            System.out.println("Error occurred while generating Scoped Token using credentials string:");
+            e.printStackTrace();
+        }
+    }
+}
 ```
 
-`getBearerToken()` caches the token and only mints a new one once the current one has expired, so it is safe to call per request.
+Notes:
 
-## Context-aware and scoped tokens
+- `setCredentials` accepts either the path to a service account credentials file or the credentials JSON as a string.
+- If both a file and a string are provided, the last call wins.
+- To generate bearer tokens concurrently from several threads, see [BearerTokenGenerationUsingThreadsExample](https://github.com/skyflowapi/skyflow-java/blob/main/flowvault/samples/src/main/java/com/example/serviceaccount/BearerTokenGenerationUsingThreadsExample.java).
 
-`BearerToken.builder()` also accepts `setCtx(String | Map<String, Object>)` for context-aware authorization and `setRoles(ArrayList<String>)` for scoped tokens. Signed data tokens are available through `com.skyflow.serviceaccount.util.SignedDataTokens`. These utilities are identical to skyvault's — see [Authenticate with bearer tokens](../skyvault/README.md#authenticate-with-bearer-tokens) for worked examples of every variant.
+## Generate signed data tokens
+
+Skyflow generates data tokens when sensitive data is inserted into the vault. Those data tokens can be digitally signed with the private key of the service account credentials, which adds a further layer of protection. A signed token can only be detokenized by passing it together with a bearer token generated from service account credentials that hold the matching context and permissions.
+
+`setCtx()` on `SignedDataTokens.builder()` accepts either a **String** or a **`Map<String, Object>`**, in the same format as bearer tokens:
+
+```java
+import com.skyflow.serviceaccount.util.SignedDataTokenResponse;
+import com.skyflow.serviceaccount.util.SignedDataTokens;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+ArrayList<String> dataTokens = new ArrayList<>();
+dataTokens.add("<YOUR_DATA_TOKEN_1>");
+
+// String context
+SignedDataTokens signedToken = SignedDataTokens.builder()
+        .setCredentials(new File(filePath))
+        .setCtx("user_12345")
+        .setTimeToLive(30) // seconds
+        .setDataTokens(dataTokens)
+        .build();
+
+// JSON object context
+Map<String, Object> ctx = new HashMap<>();
+ctx.put("role", "analyst");
+ctx.put("department", "research");
+
+SignedDataTokens signedTokenWithMap = SignedDataTokens.builder()
+        .setCredentials(new File(filePath))
+        .setCtx(ctx)
+        .setTimeToLive(30)
+        .setDataTokens(dataTokens)
+        .build();
+
+List<SignedDataTokenResponse> signed = signedToken.getSignedDataTokens();
+for (SignedDataTokenResponse entry : signed) {
+    System.out.println(entry.getToken() + " -> " + entry.getSignedToken());
+}
+```
+
+[Full example](https://github.com/skyflowapi/skyflow-java/blob/main/flowvault/samples/src/main/java/com/example/serviceaccount/SignedTokenGenerationExample.java)
+
+Response:
+
+```json
+[
+  {
+    "dataToken": "5530-4316-0674-5748",
+    "signedDataToken": "signed_token_eyJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJzLCpZjA"
+  }
+]
+```
+
+Notes:
+
+- `setCredentials` accepts either the path to a service account credentials file or the credentials JSON as a string. If both are provided, the last call wins.
+- `setTimeToLive` is in seconds and defaults to 60.
 
 # Initialize the client
 
@@ -293,6 +538,11 @@ Skyflow skyflowClient = Skyflow.builder()
 ## Logging
 
 The SDK logs through `java.util.logging` at `LogLevel.ERROR` by default. Levels rank `DEBUG` < `INFO` < `WARN` < `ERROR` < `OFF`; setting a level prints that level and everything above it. Change it with `Skyflow.builder().setLogLevel(LogLevel.DEBUG)`.
+
+## Concurrency, thread safety, and resource lifecycle
+
+- **Thread safety** — `Skyflow` and every `VaultController` it hands out are safe to share and call concurrently across threads, which is exactly how [Initialize the client](#initialize-the-client) expects them to be used: build once, reuse for the app's lifetime.
+- **Async execution** — each `*Async` call runs its batches on a small dedicated thread pool sized to that call's concurrency limit (see [Batching and concurrency](#batching-and-concurrency)), scoped to the call rather than shared globally.
 
 # VaultController — Bulk operations
 
@@ -419,8 +669,11 @@ Insert many records — even across different tables — in a single call. Each 
 
 ### Construct a bulk insert request
 
+Continuing from [Quickstart](#quickstart) — `skyflowClient` below is the `Skyflow` client built there.
+
 ```java
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.controller.VaultController;
 import com.skyflow.vault.data.BulkInsertRequest;
 import com.skyflow.vault.data.BulkInsertRequestRecord;
 import com.skyflow.vault.data.BulkInsertResponse;
@@ -435,6 +688,9 @@ import java.util.Map;
 
 public class BulkInsertExample {
     public static void main(String[] args) throws SkyflowException {
+        // skyflowClient is the Skyflow client built in Quickstart
+        VaultController vault = skyflowClient.vault();
+
         // Step 1: Build each record. Here tableName lives on the records, so each one carries it.
         Map<String, Object> record1Data = new HashMap<>();
         record1Data.put("card_number", "4111111111111111");
@@ -488,6 +744,8 @@ BulkInsertRequest insertRequest = BulkInsertRequest.builder()
 
 ```java
 import java.util.concurrent.CompletableFuture;
+
+VaultController vault = skyflowClient.vault(); // skyflowClient from Quickstart
 
 CompletableFuture<BulkInsertResponse> future = vault.bulkInsertAsync(insertRequest);
 future.thenAccept(response -> System.out.println(response));
@@ -563,8 +821,11 @@ Tokenize many values in one call. Each value can be tokenized against one or mor
 
 ### Construct a bulk tokenize request
 
+Continuing from [Quickstart](#quickstart) — `skyflowClient` below is the `Skyflow` client built there.
+
 ```java
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.controller.VaultController;
 import com.skyflow.vault.data.BulkTokenizeRequest;
 import com.skyflow.vault.data.BulkTokenizeRequestRecord;
 import com.skyflow.vault.data.BulkTokenizeResponse;
@@ -575,6 +836,9 @@ import java.util.List;
 
 public class BulkTokenizeExample {
     public static void main(String[] args) throws SkyflowException {
+        // skyflowClient is the Skyflow client built in Quickstart
+        VaultController vault = skyflowClient.vault();
+
         BulkTokenizeRequestRecord record1 = BulkTokenizeRequestRecord.builder()
                 .value("4111111111111111")
                 .tokenGroupNames(Arrays.asList("card_number_cg"))
@@ -604,6 +868,8 @@ public class BulkTokenizeExample {
 ### Async bulk tokenize
 
 ```java
+VaultController vault = skyflowClient.vault(); // skyflowClient from Quickstart
+
 CompletableFuture<BulkTokenizeResponse> future = vault.bulkTokenizeAsync(tokenizeRequest);
 ```
 
@@ -639,8 +905,11 @@ Detokenize many tokens in one call, optionally overriding the redaction applied 
 
 ### Construct a bulk detokenize request
 
+Continuing from [Quickstart](#quickstart) — `skyflowClient` below is the `Skyflow` client built there.
+
 ```java
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.controller.VaultController;
 import com.skyflow.vault.data.BulkDetokenizeRequest;
 import com.skyflow.vault.data.BulkDetokenizeResponse;
 import com.skyflow.vault.data.TokenGroupRedactions;
@@ -651,13 +920,14 @@ import java.util.List;
 
 public class BulkDetokenizeExample {
     public static void main(String[] args) throws SkyflowException {
+        // skyflowClient is the Skyflow client built in Quickstart
+        VaultController vault = skyflowClient.vault();
+
         List<String> tokens = new ArrayList<>(Arrays.asList(
                 "5479-4229-4622-1393",
                 "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
         ));
 
-        // redaction is a free-form string understood by the vault (e.g. "PLAIN_TEXT",
-        // "MASKED", "REDACTED", "DEFAULT" — the same redaction types as skyvault's RedactionType enum)
         TokenGroupRedactions redaction = TokenGroupRedactions.builder()
                 .tokenGroupName("card_number_cg")
                 .redaction("MASKED")
@@ -677,6 +947,8 @@ public class BulkDetokenizeExample {
 ### Async bulk detokenize
 
 ```java
+VaultController vault = skyflowClient.vault(); // skyflowClient from Quickstart
+
 CompletableFuture<BulkDetokenizeResponse> future = vault.bulkDetokenizeAsync(detokenizeRequest);
 ```
 
@@ -730,8 +1002,11 @@ Delete many tokens in one call.
 
 ### Construct a bulk delete tokens request
 
+Continuing from [Quickstart](#quickstart) — `skyflowClient` below is the `Skyflow` client built there.
+
 ```java
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.controller.VaultController;
 import com.skyflow.vault.data.BulkDeleteTokensRequest;
 import com.skyflow.vault.data.BulkDeleteTokensResponse;
 
@@ -741,6 +1016,9 @@ import java.util.List;
 
 public class BulkDeleteTokensExample {
     public static void main(String[] args) throws SkyflowException {
+        // skyflowClient is the Skyflow client built in Quickstart
+        VaultController vault = skyflowClient.vault();
+
         List<String> tokens = new ArrayList<>(Arrays.asList(
                 "5479-4229-4622-1393",
                 "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
@@ -759,6 +1037,8 @@ public class BulkDeleteTokensExample {
 ### Async bulk delete tokens
 
 ```java
+VaultController vault = skyflowClient.vault(); // skyflowClient from Quickstart
+
 CompletableFuture<BulkDeleteTokensResponse> future = vault.bulkDeleteTokensAsync(deleteTokensRequest);
 ```
 
@@ -800,8 +1080,11 @@ Insert records in a single API call — the unary counterpart of [Bulk Insert](#
 
 ### Construct an insert request
 
+Continuing from [Quickstart](#quickstart) — `skyflowClient` below is the `Skyflow` client built there.
+
 ```java
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.controller.VaultController;
 import com.skyflow.vault.data.InsertRequest;
 import com.skyflow.vault.data.InsertRequestRecord;
 import com.skyflow.vault.data.InsertResponse;
@@ -814,6 +1097,9 @@ import java.util.Map;
 
 public class InsertExample {
     public static void main(String[] args) throws SkyflowException {
+        // skyflowClient is the Skyflow client built in Quickstart
+        VaultController vault = skyflowClient.vault();
+
         // Step 1: Build each record. Here tableName lives on the request, so no record carries it.
         Map<String, Object> recordData = new HashMap<>();
         recordData.put("card_number", "4111111111111111");
@@ -898,8 +1184,11 @@ Detokenize tokens in a single API call — the unary counterpart of [Bulk Detoke
 
 ### Construct a detokenize request
 
+Continuing from [Quickstart](#quickstart) — `skyflowClient` below is the `Skyflow` client built there.
+
 ```java
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.controller.VaultController;
 import com.skyflow.vault.data.DetokenizeRequest;
 import com.skyflow.vault.data.DetokenizeResponse;
 import com.skyflow.vault.data.DetokenizeResponseRecord;
@@ -911,13 +1200,14 @@ import java.util.List;
 
 public class DetokenizeExample {
     public static void main(String[] args) throws SkyflowException {
+        // skyflowClient is the Skyflow client built in Quickstart
+        VaultController vault = skyflowClient.vault();
+
         List<String> tokens = new ArrayList<>(Arrays.asList(
                 "5479-4229-4622-1393",
                 "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
         ));
 
-        // redaction is a free-form string understood by the vault (e.g. "PLAIN_TEXT",
-        // "MASKED", "REDACTED", "DEFAULT")
         TokenGroupRedactions redaction = TokenGroupRedactions.builder()
                 .tokenGroupName("card_number_cg")
                 .redaction("MASKED")
@@ -995,8 +1285,11 @@ Read records back from a table, by skyflow ID or by unique value, optionally ove
 
 ### Construct a get request
 
+Continuing from [Quickstart](#quickstart) — `skyflowClient` below is the `Skyflow` client built there.
+
 ```java
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.controller.VaultController;
 import com.skyflow.vault.data.ColumnRedactions;
 import com.skyflow.vault.data.GetRequest;
 import com.skyflow.vault.data.GetResponse;
@@ -1008,6 +1301,9 @@ import java.util.Collections;
 
 public class GetExample {
     public static void main(String[] args) throws SkyflowException {
+        // skyflowClient is the Skyflow client built in Quickstart
+        VaultController vault = skyflowClient.vault();
+
         // Step 1: Optionally override how individual columns come back. Anything not listed
         // uses the redaction configured on the vault's policy.
         ColumnRedactions redaction = ColumnRedactions.builder()
@@ -1118,8 +1414,11 @@ Update records in a table by skyflow ID, in a single API call.
 
 ### Construct an update request
 
+Continuing from [Quickstart](#quickstart) — `skyflowClient` below is the `Skyflow` client built there.
+
 ```java
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.controller.VaultController;
 import com.skyflow.vault.data.UpdateRequest;
 import com.skyflow.vault.data.UpdateRequestRecord;
 import com.skyflow.vault.data.UpdateResponse;
@@ -1131,6 +1430,9 @@ import java.util.Map;
 
 public class UpdateExample {
     public static void main(String[] args) throws SkyflowException {
+        // skyflowClient is the Skyflow client built in Quickstart
+        VaultController vault = skyflowClient.vault();
+
         // Step 1: Build the record — the columns to change, keyed by the record's skyflow ID
         Map<String, Object> data = new HashMap<>();
         data.put("cardholder_name", "jane doe");
@@ -1206,8 +1508,11 @@ Delete records from a table by skyflow ID or unique value, in a single API call.
 
 ### Construct a delete request
 
+Continuing from [Quickstart](#quickstart) — `skyflowClient` below is the `Skyflow` client built there.
+
 ```java
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.controller.VaultController;
 import com.skyflow.vault.data.DeleteRequest;
 import com.skyflow.vault.data.DeleteResponse;
 import com.skyflow.vault.data.DeleteResponseRecord;
@@ -1218,6 +1523,9 @@ import java.util.List;
 
 public class DeleteExample {
     public static void main(String[] args) throws SkyflowException {
+        // skyflowClient is the Skyflow client built in Quickstart
+        VaultController vault = skyflowClient.vault();
+
         List<String> ids = new ArrayList<>(Arrays.asList(
                 "9fac9201-7b8a-4446-93f8-5244e1213bd1",
                 "b2308e2a-c1f5-469b-97b7-1f193159399b"
@@ -1273,6 +1581,8 @@ To include custom HTTP headers on an outgoing request — bulk or unary — pass
 ```java
 import com.skyflow.enums.CustomHeaderKey;
 import com.skyflow.vault.data.BulkInsertOptions;
+
+VaultController vault = skyflowClient.vault(); // skyflowClient from Quickstart
 
 BulkInsertOptions options = BulkInsertOptions.builder()
         .interceptor(context -> context.addHeader(CustomHeaderKey.REQUEST_ID_HEADER, "<YOUR_REQUEST_ID>"))
@@ -1339,6 +1649,8 @@ A unary response has no summary and no `getIndex()` — just `getRecords()`, in 
 The idiomatic way to consume a bulk response:
 
 ```java
+VaultController vault = skyflowClient.vault(); // skyflowClient from Quickstart
+
 BulkInsertResponse response = vault.bulkInsert(insertRequest);
 
 System.out.println("inserted " + response.getSummary().getTotalInserted()
@@ -1375,6 +1687,8 @@ for (BulkTokenizeResponseRecord record : tokenizeResponse.getRecords()) {
 
 ```java
 import com.skyflow.errors.SkyflowException;
+
+VaultController vault = skyflowClient.vault(); // skyflowClient from Quickstart
 
 try {
     BulkInsertResponse response = vault.bulkInsert(insertRequest);
@@ -1432,6 +1746,8 @@ Because failures are reported per record, a partial failure can be retried witho
 | `BulkDeleteTokensResponse` | `getTokensToRetry()` | `List<String>` — the tokens to resubmit |
 
 ```java
+VaultController vault = skyflowClient.vault(); // skyflowClient from Quickstart
+
 BulkInsertResponse response = vault.bulkInsert(insertRequest);
 
 List<BulkInsertRequestRecord> retryable = response.getRecordsToRetry();
@@ -1439,6 +1755,7 @@ if (!retryable.isEmpty()) {
     BulkInsertResponse retryResponse = vault.bulkInsert(
             BulkInsertRequest.builder()
                     .tableName("table1")
+                    .upsert(UpsertOptions.builder().uniqueColumns(Arrays.asList("email")).build())
                     .records(new ArrayList<>(retryable))
                     .build());
 }
