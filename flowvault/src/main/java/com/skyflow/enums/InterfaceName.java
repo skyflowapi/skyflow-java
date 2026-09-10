@@ -7,7 +7,6 @@ public enum InterfaceName {
     DELETE("delete tokens"),
     DELETE_RECORDS("delete"),
     TOKENIZE("tokenize"),
-    QUERY("query"),
     GET("get");
 
 

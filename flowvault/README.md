@@ -42,7 +42,6 @@ The `flowvault` module is a Skyflow Java SDK built for high-throughput vault ope
 - [Get](#get)
 - [Update](#update)
 - [Delete](#delete)
-- [Query](#query)
 - [Custom Request Headers](#custom-request-headers)
 - [Error Handling](#error-handling)
   - [Two layers of errors](#two-layers-of-errors)
@@ -55,7 +54,7 @@ The `flowvault` module is a Skyflow Java SDK built for high-throughput vault ope
 
 - Authenticate using a Skyflow service account, an API key, or a bearer token — see [Authenticate](#authenticate).
 - Perform bulk Vault API operations — insert, tokenize, detokenize, and delete tokens — each with a synchronous and an async variant, built for high-throughput Flow DB workloads.
-- Perform unary Vault API operations — insert, detokenize, get, update, delete, and query — a single API call each, for when you want a plain request and response rather than the bulk batching machinery. See [VaultController — Unary operations](#vaultcontroller--unary-operations).
+- Perform unary Vault API operations — insert, detokenize, get, update, and delete — a single API call each, for when you want a plain request and response rather than the bulk batching machinery. See [VaultController — Unary operations](#vaultcontroller--unary-operations).
 - **Per-record reporting, not all-or-nothing.** A bulk call succeeds as a call even when individual records fail; every response reports a summary plus the outcome of each individual record or token. See [Error Handling](#error-handling).
 
 # Install
@@ -366,7 +365,7 @@ The 100,000-item ceiling per bulk call is a separate, fixed limit and is not con
 
 # VaultController — Unary operations
 
-Alongside the bulk methods, `VaultController` exposes six **unary** operations. Each sends exactly one API call and hands the result straight back:
+Alongside the bulk methods, `VaultController` exposes five **unary** operations. Each sends exactly one API call and hands the result straight back:
 
 | Method | Parameters | Returns | Description |
 |--------|-----------|---------|-------------|
@@ -375,11 +374,10 @@ Alongside the bulk methods, `VaultController` exposes six **unary** operations. 
 | `get(GetRequest)` | `GetRequest`, optional `GetOptions` | `GetResponse` | Read records by skyflow ID or unique value, optionally with a redaction override per column |
 | `update(UpdateRequest)` | `UpdateRequest`, optional `UpdateOptions` | `UpdateResponse` | Update records by skyflow ID |
 | `delete(DeleteRequest)` | `DeleteRequest`, optional `DeleteOptions` | `DeleteResponse` | Delete records by skyflow ID or unique value |
-| `query(QueryRequest)` | `QueryRequest`, optional `QueryOptions` | `QueryResponse` | Run a SQL-style query against the vault |
 
-`insert` and `detokenize` are the unary counterparts of `bulkInsert` and `bulkDetokenize` — the same request builders, sent as one call instead of many batches. `get`, `update`, `delete`, and `query` have no bulk counterpart at all; they exist only in this unary form.
+`insert` and `detokenize` are the unary counterparts of `bulkInsert` and `bulkDetokenize` — the same request builders, sent as one call instead of many batches. `get`, `update`, and `delete` have no bulk counterpart at all; they exist only in this unary form.
 
-Each method also accepts an optional options object (`InsertOptions`, `DetokenizeOptions`, `GetOptions`, `UpdateOptions`, `DeleteOptions`, `QueryOptions`) — see [Custom Request Headers](#custom-request-headers).
+Each method also accepts an optional options object (`InsertOptions`, `DetokenizeOptions`, `GetOptions`, `UpdateOptions`, `DeleteOptions`) — see [Custom Request Headers](#custom-request-headers).
 
 ## Unary vs. bulk
 
@@ -393,11 +391,11 @@ Everything the bulk machinery adds — batching, concurrency, the payload ceilin
 | Response summary | `getSummary()` | None — read the records list |
 | Per-item `getIndex()` / `getRequestId()` | Yes | No. Records come back in submitted order, and the `x-request-id` of the single call reaches you only through a thrown `SkyflowException` |
 | Retry helper | `getRecordsToRetry()` / `getTokensToRetry()` | None — filter the records yourself, see [Retrying the failed records](#retrying-the-failed-records) |
-| Per-item `getHttpCode()` / `getError()` | Yes | Yes, on every unary operation except `query` |
+| Per-item `getHttpCode()` / `getError()` | Yes | Yes, on every unary operation |
 
 ## Vault type support
 
-The same distinction as [Schema vs. schemaless vaults](#schema-vs-schemaless-vaults) applies. Five of the six unary operations address records inside a table, so they only make sense against a structured vault:
+The same distinction as [Schema vs. schemaless vaults](#schema-vs-schemaless-vaults) applies. Four of the five unary operations address records inside a table, so they only make sense against a structured vault:
 
 | Operation | Supported on |
 |---|---|
@@ -405,7 +403,6 @@ The same distinction as [Schema vs. schemaless vaults](#schema-vs-schemaless-vau
 | `get` | Structured vaults — reads a table's records by skyflow ID or unique value. |
 | `update` | Structured vaults — updates a table's records by skyflow ID. |
 | `delete` | Structured vaults — deletes a table's records. Distinct from `bulkDeleteTokens`, which removes tokens only and leaves the record in place. |
-| `query` | Structured vaults — the query itself addresses tables and columns. |
 | `detokenize` | Both — detokenizing only needs the token itself, not a table, so it works regardless of which kind of vault the token came from. |
 
 # Bulk Insert
@@ -1263,64 +1260,6 @@ for (DeleteResponseRecord record : deleteResponse.getRecords()) {
 }
 ```
 
-# Query
-
-Run a SQL-style query against the vault in a single API call.
-
-> **Vault type supported:** structured (schema) vaults. See [Vault type support](#vault-type-support).
-
-**Note:**
-
-- `query` is required and must not be blank. That is the whole request — there are no other fields.
-- This is the one unary operation with **no per-record status**: rows either come back or the call throws. There is no `httpCode` or `error` on a `QueryResponseRecord`.
-
-### Construct a query request
-
-```java
-import com.skyflow.errors.SkyflowException;
-import com.skyflow.vault.data.QueryRequest;
-import com.skyflow.vault.data.QueryResponse;
-import com.skyflow.vault.data.QueryResponseRecord;
-
-public class QueryExample {
-    public static void main(String[] args) throws SkyflowException {
-        QueryRequest queryRequest = QueryRequest.builder()
-                .query("SELECT card_number, cardholder_name FROM table1 LIMIT 10")
-                .build();
-
-        QueryResponse queryResponse = vault.query(queryRequest);
-        System.out.println(queryResponse);
-    }
-}
-```
-
-There is no async variant: `query` returns its `QueryResponse` directly.
-
-Sample response:
-
-```json
-{
-  "records": [
-    { "data": { "card_number": "4111-1111-1111-1111", "cardholder_name": "John Doe" } },
-    { "data": { "card_number": "5484-7829-1702-9110", "cardholder_name": "Jane Doe" } }
-  ],
-  "metadata": {
-    "columns": ["card_number", "cardholder_name"]
-  }
-}
-```
-
-Each row is a free-form column/value map — the query API has no notion of tokens, so unlike insert or detokenize there is no typed `Token` data here. `getMetadata()` returns a `QueryResponseMetadata` wrapping the query's return columns via `getColumns()`; both `getMetadata()` and `getColumns()` are `null` when the vault doesn't report columns.
-
-Accessors: `queryResponse.getRecords()` and `queryResponse.getMetadata()`, and on each record `getData()`.
-
-```java
-System.out.println("columns: " + (queryResponse.getMetadata() != null ? queryResponse.getMetadata().getColumns() : null));
-for (QueryResponseRecord row : queryResponse.getRecords()) {
-    System.out.println(row.getData());
-}
-```
-
 # Custom Request Headers
 
 To include custom HTTP headers on an outgoing request — bulk or unary — pass a `RequestInterceptor` via that operation's options object. The headers available are defined by the `CustomHeaderKey` enum:
@@ -1357,7 +1296,6 @@ The same pattern applies to every operation, via its corresponding options class
 | `get` | `GetOptions` |
 | `update` | `UpdateOptions` |
 | `delete` | `DeleteOptions` |
-| `query` | `QueryOptions` |
 
 # Error Handling
 
@@ -1372,7 +1310,7 @@ This is the mental model to hold for every operation, bulk or unary:
 
 The second layer is what distinguishes `flowvault` from an all-or-nothing API: **a call that returns normally can still contain failures, and a call where every single record failed also returns normally rather than throwing.** Checking only for a thrown exception will silently miss failed records — always read the summary and the per-record results.
 
-Unary operations follow the same two layers. Their records carry the same `requestId` behavior as bulk records — `null` on success, the failing call's `x-request-id` on error — the only structural differences are that unary records have no `getIndex()` (there is no batch position to report), and `query` has no record-level layer at all — rows either come back or the call throws, so `QueryResponse` carries no per-record `requestId` either.
+Unary operations follow the same two layers. Their records carry the same `requestId` behavior as bulk records — `null` on success, the failing call's `x-request-id` on error — the only structural difference is that unary records have no `getIndex()` (there is no batch position to report).
 
 ## Per-record success and failure
 
@@ -1383,7 +1321,7 @@ Every bulk response exposes `getSummary()` and `getRecords()`. The records list 
 | `getIndex()` | bulk only | Position of this item in the payload you submitted — use it to line results back up with your input. |
 | `getHttpCode()` | always | Per-item status. `2xx` for success; `4xx`/`5xx` for failure. |
 | `getError()` | failures only | Error message for this item. `null` means this item succeeded. |
-| `getRequestId()` | failures only | The `x-request-id` of the call this item was part of — quote it in support escalations. In bulk responses, items from the same batch share one id. Present on both bulk and unary per-record types; `QueryResponse` is the one exception (see below). |
+| `getRequestId()` | failures only | The `x-request-id` of the call this item was part of — quote it in support escalations. In bulk responses, items from the same batch share one id. Present on both bulk and unary per-record types. |
 
 The success payload sits alongside those fields on the same object: `getSkyflowId()`/`getTokens()`/`getData()` for insert (`getFields()` is deprecated — it returns the same data in its original, pre-typed `Map<String, Object>` shape, not `getTokens()`'s `Token` objects), `getValue()`/`getTokenGroupName()`/`getMetadata()` for detokenize, `getValue()`/`getTokenGroupName()`/`getToken()` for tokenize, `getToken()` for delete.
 
@@ -1396,7 +1334,7 @@ Summaries per operation:
 | `BulkDetokenizeResponse` | `DetokenizeSummary` | `totalTokens`, `totalDetokenized`, `totalFailed` |
 | `BulkDeleteTokensResponse` | `DeleteTokensSummary` | `totalTokens`, `totalDeleted`, `totalFailed` |
 
-A unary response has no summary and no `getIndex()` — just `getRecords()`, in submitted order, with `getHttpCode()`, `getError()`, and `getRequestId()` on each entry alongside that operation's payload: `getSkyflowId()`/`getTokens()`/`getData()`/`getHashedData()` for `insert`, `get`, and `update`; `getSkyflowId()` alone for `delete`; `getToken()`/`getValue()`/`getTokenGroupName()`/`getMetadata()` for `detokenize`. `QueryResponse` is the exception — its records carry only `getData()`, with no `getRequestId()` anywhere on the response, and the call's return columns on `getMetadata().getColumns()`.
+A unary response has no summary and no `getIndex()` — just `getRecords()`, in submitted order, with `getHttpCode()`, `getError()`, and `getRequestId()` on each entry alongside that operation's payload: `getSkyflowId()`/`getTokens()`/`getData()`/`getHashedData()` for `insert`, `get`, and `update`; `getSkyflowId()` alone for `delete`; `getToken()`/`getValue()`/`getTokenGroupName()`/`getMetadata()` for `detokenize`.
 
 The idiomatic way to consume a bulk response:
 

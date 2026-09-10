@@ -31,7 +31,6 @@ import com.skyflow.vault.data.GetRequest;
 import com.skyflow.vault.data.GetRequestRecord;
 import com.skyflow.vault.data.InsertRequest;
 import com.skyflow.vault.data.InsertRequestRecord;
-import com.skyflow.vault.data.QueryRequest;
 import com.skyflow.vault.data.TokenGroupRedactions;
 import com.skyflow.vault.data.UpdateRequest;
 import com.skyflow.vault.data.UpdateRequestRecord;
@@ -1598,50 +1597,6 @@ public class ValidationsTests {
         BulkTokenizeRequest request = BulkTokenizeRequest.builder().records(data).build();
         try {
             Validations.validateBulkTokenizeRequest(request);
-        } catch (SkyflowException e) {
-            Assert.fail(INVALID_EXCEPTION_THROWN);
-        }
-    }
-
-    // ── validateQueryRequest ──────────────────────────────────────────────────
-
-    @Test
-    public void testValidateQueryRequest_nullRequestThrows() {
-        try {
-            Validations.validateQueryRequest(null);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorMessage.QueryRequestNull.getMessage(), e.getMessage());
-        }
-    }
-
-    @Test
-    public void testValidateQueryRequest_nullQueryThrows() {
-        QueryRequest request = QueryRequest.builder().build();
-        try {
-            Validations.validateQueryRequest(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorMessage.QueryKeyError.getMessage(), e.getMessage());
-        }
-    }
-
-    @Test
-    public void testValidateQueryRequest_blankQueryThrows() {
-        QueryRequest request = QueryRequest.builder().query("   ").build();
-        try {
-            Validations.validateQueryRequest(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorMessage.EmptyQuery.getMessage(), e.getMessage());
-        }
-    }
-
-    @Test
-    public void testValidateQueryRequest_validRequestDoesNotThrow() {
-        QueryRequest request = QueryRequest.builder().query("SELECT * FROM table1").build();
-        try {
-            Validations.validateQueryRequest(request);
         } catch (SkyflowException e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
         }

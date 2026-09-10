@@ -25,8 +25,6 @@ import com.skyflow.generated.rest.resources.flowservice.requests.V1InsertRequest
 import com.skyflow.generated.rest.resources.flowservice.requests.V1DeleteRequest;
 import com.skyflow.generated.rest.resources.flowservice.requests.V1GetRequest;
 import com.skyflow.generated.rest.resources.flowservice.requests.V1UpdateRequest;
-import com.skyflow.generated.rest.resources.records.requests.V1ExecuteQueryRequest;
-import com.skyflow.generated.rest.types.V1ExecuteQueryResponse;
 import com.skyflow.generated.rest.types.V1FlowDeleteTokenResponse;
 import com.skyflow.generated.rest.types.V1FlowTokenizeResponse;
 import com.skyflow.generated.rest.types.V1InsertRecordData;
@@ -66,9 +64,6 @@ import com.skyflow.vault.data.InsertOptions;
 import com.skyflow.vault.data.InsertRequest;
 import com.skyflow.vault.data.InsertRequestRecord;
 import com.skyflow.vault.data.InsertResponse;
-import com.skyflow.vault.data.QueryOptions;
-import com.skyflow.vault.data.QueryRequest;
-import com.skyflow.vault.data.QueryResponse;
 import com.skyflow.vault.data.RequestContext;
 import com.skyflow.vault.data.UpdateOptions;
 import com.skyflow.vault.data.UpdateRequest;
@@ -567,41 +562,6 @@ public final class VaultController extends VaultClient {
             throw new SkyflowException(e.getMessage());
         } finally {
             if (executor != null) executor.shutdown();
-        }
-    }
-
-    // ── Query ─────────────────────────────────────────────────────────────────
-    // Runs a query in a single API call. There is no bulk/batched counterpart of this operation.
-
-    public QueryResponse query(QueryRequest queryRequest) throws SkyflowException {
-        return query(queryRequest, null);
-    }
-
-    public QueryResponse query(QueryRequest queryRequest, QueryOptions options) throws SkyflowException {
-        LogUtil.printInfoLog(InfoLogs.QUERY_TRIGGERED.getLog());
-        try {
-            LogUtil.printInfoLog(InfoLogs.VALIDATING_QUERY_REQUEST.getLog());
-            Validations.validateQueryRequest(queryRequest);
-
-            setBearerToken();
-            V1ExecuteQueryRequest request = Utils.getQueryRequestBody(queryRequest, this.getVaultConfig().getVaultId());
-            RequestInterceptor interceptor = options != null ? options.getInterceptor() : null;
-            RequestContext ctx = new RequestContext("QUERY", 0, 1);
-            if (interceptor != null) interceptor.intercept(ctx);
-
-            ApiClientHttpResponse<V1ExecuteQueryResponse> response =
-                    this.getQueryApi().withRawResponse().flowServiceExecuteQuery(request, buildRequestOptions(ctx));
-
-            QueryResponse formattedResponse = Utils.formatQueryResponse(response.body());
-            LogUtil.printInfoLog(InfoLogs.QUERY_REQUEST_RESOLVED.getLog());
-            return formattedResponse;
-        } catch (ApiClientApiException e) {
-            String bodyString = gson.toJson(e.body());
-            LogUtil.printErrorLog(ErrorLogs.QUERY_REQUEST_REJECTED.getLog());
-            throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
-        } catch (ApiClientException e) {
-            LogUtil.printErrorLog(ErrorLogs.QUERY_REQUEST_REJECTED.getLog());
-            throw new SkyflowException(e);
         }
     }
 
