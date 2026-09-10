@@ -4,22 +4,30 @@ import com.google.gson.JsonObject;
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.Env;
+import com.skyflow.enums.UpdateType;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.generated.rest.core.ApiClientApiException;
+import com.skyflow.generated.rest.resources.flowservice.requests.V1DeleteRequest;
 import com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDeleteTokenRequest;
 import com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest;
 import com.skyflow.generated.rest.resources.flowservice.requests.V1FlowTokenizeRequest;
+import com.skyflow.generated.rest.resources.flowservice.requests.V1GetRequest;
 import com.skyflow.generated.rest.resources.flowservice.requests.V1InsertRequest;
+import com.skyflow.generated.rest.resources.flowservice.requests.V1UpdateRequest;
 import com.skyflow.generated.rest.types.FlowEnumUpdateType;
+import com.skyflow.generated.rest.types.V1DeleteResponse;
+import com.skyflow.generated.rest.types.V1DeleteResponseObject;
 import com.skyflow.generated.rest.types.V1DeleteTokenResponseObject;
 import com.skyflow.generated.rest.types.V1FlowDeleteTokenResponse;
 import com.skyflow.generated.rest.types.V1FlowDetokenizeResponse;
 import com.skyflow.generated.rest.types.V1FlowDetokenizeResponseObject;
 import com.skyflow.generated.rest.types.V1FlowTokenizeResponse;
 import com.skyflow.generated.rest.types.V1FlowTokenizeResponseObject;
+import com.skyflow.generated.rest.types.V1GetResponse;
 import com.skyflow.generated.rest.types.V1InsertRecordData;
 import com.skyflow.generated.rest.types.V1InsertResponse;
 import com.skyflow.generated.rest.types.V1RecordResponseObject;
+import com.skyflow.generated.rest.types.V1UpdateResponse;
 import com.skyflow.vault.data.BulkDeleteTokensRequest;
 import com.skyflow.vault.data.BulkDeleteTokensResponse;
 import com.skyflow.vault.data.BulkDeleteTokensResponseRecord;
@@ -33,14 +41,30 @@ import com.skyflow.vault.data.BulkTokenizeRequestRecord;
 import com.skyflow.vault.data.BulkInsertResponseRecord;
 import com.skyflow.vault.data.BulkTokenizeRequest;
 import com.skyflow.vault.data.BulkTokenizeResponse;
+import com.skyflow.vault.data.ColumnRedactions;
+import com.skyflow.vault.data.DeleteRequest;
+import com.skyflow.vault.data.DeleteResponse;
+import com.skyflow.vault.data.DeleteResponseRecord;
+import com.skyflow.vault.data.DetokenizeRequest;
+import com.skyflow.vault.data.DetokenizeResponse;
+import com.skyflow.vault.data.DetokenizeResponseRecord;
 import com.skyflow.vault.data.ErrorRecord;
+import com.skyflow.vault.data.GetRequest;
+import com.skyflow.vault.data.GetRequestRecord;
+import com.skyflow.vault.data.GetResponse;
+import com.skyflow.vault.data.GetResponseRecord;
 import com.skyflow.vault.data.InsertRequestRecord;
 import com.skyflow.vault.data.InsertRequest;
+import com.skyflow.vault.data.InsertResponse;
+import com.skyflow.vault.data.InsertResponseRecord;
 import com.skyflow.vault.data.TokenGroupRedactions;
 import com.skyflow.vault.data.BulkTokenizeResponseRecord;
 import com.skyflow.vault.data.TokenizeRequestRecord;
 import com.skyflow.vault.data.TokenizeRequest;
 import com.skyflow.vault.data.TokenizeResponse;
+import com.skyflow.vault.data.UpdateRequest;
+import com.skyflow.vault.data.UpdateRequestRecord;
+import com.skyflow.vault.data.UpdateResponse;
 import com.skyflow.vault.data.UpsertOptions;
 import org.junit.After;
 import org.junit.Assert;
@@ -326,9 +350,357 @@ public class UtilsTests {
         Assert.assertEquals(FlowEnumUpdateType.REPLACE, body.getRecords().get().get(0).getUpsert().get().getUpdateType().get());
     }
 
-    // Tests for buildInsertResponse / getDetokenizeRequestBody / buildDetokenizeResponse /
-    // getTokenizeRequestBody / buildTokenizeResponse / getDeleteTokensRequestBody /
-    // buildDeleteTokensResponse were removed: those unary Utils helpers no longer exist (bulk-only module).
+    // ── formatInsertResponse (unary) ──────────────────────────────────────────
+
+    @Test
+    public void testFormatInsertResponse_successRecord() {
+        Map<String, Object> tokens = new HashMap<>();
+        tokens.put("name", "tok-abc");
+        V1RecordResponseObject record = V1RecordResponseObject.builder()
+                .tableName("table1").skyflowId("sky-id-1").tokens(tokens).build();
+        V1InsertResponse response = V1InsertResponse.builder().records(Collections.singletonList(record)).build();
+
+        InsertResponse formatted = Utils.formatInsertResponse(response, new HashMap<>());
+
+        Assert.assertEquals(1, formatted.getRecords().size());
+        Assert.assertEquals("table1", formatted.getRecords().get(0).getTableName());
+        Assert.assertEquals("sky-id-1", formatted.getRecords().get(0).getSkyflowId());
+        Assert.assertEquals(200, formatted.getRecords().get(0).getHttpCode());
+        Assert.assertNull(formatted.getRecords().get(0).getError());
+    }
+
+    @Test
+    public void testFormatInsertResponse_errorRecordDefaultsHttpCode500() {
+        V1RecordResponseObject record = V1RecordResponseObject.builder().error("failed").build();
+        V1InsertResponse response = V1InsertResponse.builder().records(Collections.singletonList(record)).build();
+
+        InsertResponse formatted = Utils.formatInsertResponse(response, new HashMap<>());
+
+        Assert.assertEquals("failed", formatted.getRecords().get(0).getError());
+        Assert.assertEquals(500, formatted.getRecords().get(0).getHttpCode());
+    }
+
+    @Test
+    public void testFormatInsertResponse_nullResponseReturnsEmptyRecords() {
+        InsertResponse formatted = Utils.formatInsertResponse(null, new HashMap<>());
+        Assert.assertTrue(formatted.getRecords().isEmpty());
+    }
+
+    @Test
+    public void testFormatInsertResponse_requestIdOnlyPopulatedOnError() {
+        Map<String, List<String>> headers = new HashMap<>();
+        headers.put(Constants.REQUEST_ID_HEADER_KEY, Collections.singletonList("req-insert-1"));
+        V1RecordResponseObject success = V1RecordResponseObject.builder().skyflowId("sky-id-1").build();
+        V1RecordResponseObject failure = V1RecordResponseObject.builder().error("failed").build();
+        V1InsertResponse response = V1InsertResponse.builder().records(Arrays.asList(success, failure)).build();
+
+        InsertResponse formatted = Utils.formatInsertResponse(response, headers);
+
+        Assert.assertNull(formatted.getRecords().get(0).getRequestId());
+        Assert.assertEquals("req-insert-1", formatted.getRecords().get(1).getRequestId());
+    }
+
+    // ── getDetokenizeRequestBody / formatDetokenizeResponse (unary) ───────────
+
+    @Test
+    public void testGetDetokenizeRequestBody_buildsCorrectRequest() {
+        List<String> tokens = Collections.singletonList("tok-1");
+        DetokenizeRequest request = DetokenizeRequest.builder().tokens(tokens).build();
+
+        V1FlowDetokenizeRequest body = Utils.getDetokenizeRequestBody(request, "vault123");
+
+        Assert.assertEquals("vault123", body.getVaultId().get());
+        Assert.assertEquals(tokens, body.getTokens().get());
+        Assert.assertFalse(body.getTokenGroupRedactions().isPresent());
+    }
+
+    @Test
+    public void testGetDetokenizeRequestBody_withTokenGroupRedactions() {
+        DetokenizeRequest request = DetokenizeRequest.builder()
+                .tokens(Collections.singletonList("tok-1"))
+                .tokenGroupRedactions(Collections.singletonList(
+                        TokenGroupRedactions.builder().tokenGroupName("group1").redaction("MASKED").build()))
+                .build();
+
+        V1FlowDetokenizeRequest body = Utils.getDetokenizeRequestBody(request, "vault123");
+
+        Assert.assertEquals(1, body.getTokenGroupRedactions().get().size());
+        Assert.assertEquals("group1", body.getTokenGroupRedactions().get().get(0).getTokenGroupName().get());
+        Assert.assertEquals("MASKED", body.getTokenGroupRedactions().get().get(0).getRedaction().get());
+    }
+
+    @Test
+    public void testFormatDetokenizeResponse_successRecord() {
+        Map<String, Object> metadata = new HashMap<>();
+        metadata.put("skyflowId", "sky-1");
+        metadata.put("tableName", "table1");
+        V1FlowDetokenizeResponseObject record = V1FlowDetokenizeResponseObject.builder()
+                .token("tok-1").value("john@example.com").tokenGroupName("group1").metadata(metadata).build();
+        V1FlowDetokenizeResponse response = V1FlowDetokenizeResponse.builder()
+                .response(Collections.singletonList(record)).build();
+
+        DetokenizeResponse formatted = Utils.formatDetokenizeResponse(response, new HashMap<>());
+
+        Assert.assertEquals(1, formatted.getRecords().size());
+        Assert.assertEquals("tok-1", formatted.getRecords().get(0).getToken());
+        Assert.assertEquals("john@example.com", formatted.getRecords().get(0).getValue());
+        Assert.assertEquals("sky-1", formatted.getRecords().get(0).getMetadata().getSkyflowId());
+        Assert.assertEquals("table1", formatted.getRecords().get(0).getMetadata().getTableName());
+        Assert.assertEquals(200, formatted.getRecords().get(0).getHttpCode());
+    }
+
+    @Test
+    public void testFormatDetokenizeResponse_nullResponseReturnsEmptyRecords() {
+        DetokenizeResponse formatted = Utils.formatDetokenizeResponse(null, new HashMap<>());
+        Assert.assertTrue(formatted.getRecords().isEmpty());
+    }
+
+    @Test
+    public void testFormatDetokenizeResponse_requestIdOnlyPopulatedOnError() {
+        Map<String, List<String>> headers = new HashMap<>();
+        headers.put(Constants.REQUEST_ID_HEADER_KEY, Collections.singletonList("req-detok-1"));
+        V1FlowDetokenizeResponseObject success = V1FlowDetokenizeResponseObject.builder().token("tok-1").build();
+        V1FlowDetokenizeResponseObject failure = V1FlowDetokenizeResponseObject.builder()
+                .token("tok-2").error("failed").build();
+        V1FlowDetokenizeResponse response = V1FlowDetokenizeResponse.builder()
+                .response(Arrays.asList(success, failure)).build();
+
+        DetokenizeResponse formatted = Utils.formatDetokenizeResponse(response, headers);
+
+        Assert.assertNull(formatted.getRecords().get(0).getRequestId());
+        Assert.assertEquals("req-detok-1", formatted.getRecords().get(1).getRequestId());
+    }
+
+    // ── getUpdateRequestBody / formatUpdateResponse ───────────────────────────
+
+    @Test
+    public void testGetUpdateRequestBody_buildsCorrectRequest() {
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", "jane");
+        UpdateRequestRecord record = UpdateRequestRecord.builder().skyflowId("sky-1").data(data).build();
+        UpdateRequest request = UpdateRequest.builder().tableName("table1").records(Collections.singletonList(record)).build();
+        VaultConfig config = new VaultConfig();
+        config.setVaultId("vault123");
+
+        V1UpdateRequest body = Utils.getUpdateRequestBody(request, config);
+
+        Assert.assertEquals("vault123", body.getVaultId().get());
+        Assert.assertEquals("table1", body.getTableName().get());
+        Assert.assertEquals("sky-1", body.getRecords().get().get(0).getSkyflowId().get());
+        Assert.assertEquals(data, body.getRecords().get().get(0).getData().get());
+        Assert.assertFalse(body.getUpdateType().isPresent());
+    }
+
+    @Test
+    public void testGetUpdateRequestBody_withRequestLevelUpdateTypeAndRecordTableName() {
+        UpdateRequestRecord record = UpdateRequestRecord.builder()
+                .skyflowId("sky-1").data(new HashMap<>()).tableName("table2").build();
+        UpdateRequest request = UpdateRequest.builder()
+                .tableName("table1").records(Collections.singletonList(record)).updateType(UpdateType.REPLACE).build();
+        VaultConfig config = new VaultConfig();
+        config.setVaultId("vault123");
+
+        V1UpdateRequest body = Utils.getUpdateRequestBody(request, config);
+
+        Assert.assertEquals(FlowEnumUpdateType.REPLACE, body.getUpdateType().get());
+        Assert.assertEquals("table2", body.getRecords().get().get(0).getTableName().get());
+    }
+
+    @Test
+    public void testGetUpdateRequestBody_withTokens() {
+        Map<String, Object> tokens = new HashMap<>();
+        tokens.put("name", "tok-abc");
+        UpdateRequestRecord record = UpdateRequestRecord.builder()
+                .skyflowId("sky-1").data(new HashMap<>()).tokens(tokens).build();
+        UpdateRequest request = UpdateRequest.builder().tableName("table1").records(Collections.singletonList(record)).build();
+        VaultConfig config = new VaultConfig();
+        config.setVaultId("vault123");
+
+        V1UpdateRequest body = Utils.getUpdateRequestBody(request, config);
+
+        Assert.assertEquals(tokens, body.getRecords().get().get(0).getTokens().get());
+    }
+
+    @Test
+    public void testFormatUpdateResponse_successRecord() {
+        V1RecordResponseObject record = V1RecordResponseObject.builder()
+                .tableName("table1").skyflowId("sky-1").build();
+        V1UpdateResponse response = V1UpdateResponse.builder().records(Collections.singletonList(record)).build();
+
+        UpdateResponse formatted = Utils.formatUpdateResponse(response, new HashMap<>());
+
+        Assert.assertEquals(1, formatted.getRecords().size());
+        Assert.assertEquals("table1", formatted.getRecords().get(0).getTableName());
+        Assert.assertEquals("sky-1", formatted.getRecords().get(0).getSkyflowId());
+        Assert.assertEquals(200, formatted.getRecords().get(0).getHttpCode());
+    }
+
+    @Test
+    public void testFormatUpdateResponse_nullResponseReturnsEmptyRecords() {
+        UpdateResponse formatted = Utils.formatUpdateResponse(null, new HashMap<>());
+        Assert.assertTrue(formatted.getRecords().isEmpty());
+    }
+
+    @Test
+    public void testFormatUpdateResponse_requestIdOnlyPopulatedOnError() {
+        Map<String, List<String>> headers = new HashMap<>();
+        headers.put(Constants.REQUEST_ID_HEADER_KEY, Collections.singletonList("req-update-1"));
+        V1RecordResponseObject success = V1RecordResponseObject.builder().skyflowId("sky-id-1").build();
+        V1RecordResponseObject failure = V1RecordResponseObject.builder().error("failed").build();
+        V1UpdateResponse response = V1UpdateResponse.builder().records(Arrays.asList(success, failure)).build();
+
+        UpdateResponse formatted = Utils.formatUpdateResponse(response, headers);
+
+        Assert.assertNull(formatted.getRecords().get(0).getRequestId());
+        Assert.assertEquals("req-update-1", formatted.getRecords().get(1).getRequestId());
+    }
+
+    // ── getGetRequestBody / formatGetResponse ─────────────────────────────────
+
+    @Test
+    public void testGetGetRequestBody_singleTableMode() {
+        Map<String, Object> uniqueValue = new HashMap<>();
+        uniqueValue.put("email", "john@example.com");
+        GetRequest request = GetRequest.builder()
+                .tableName("table1")
+                .skyflowIds(new ArrayList<>(Collections.singletonList("id1")))
+                .columns(new ArrayList<>(Collections.singletonList("name")))
+                .columnRedactions(Collections.singletonList(
+                        ColumnRedactions.builder().columnName("email").redaction("MASKED").build()))
+                .limit(10)
+                .offset(5)
+                .build();
+        VaultConfig config = new VaultConfig();
+        config.setVaultId("vault123");
+
+        V1GetRequest body = Utils.getGetRequestBody(request, config);
+
+        Assert.assertEquals("vault123", body.getVaultId().get());
+        Assert.assertEquals("table1", body.getTableName().get());
+        Assert.assertEquals(Collections.singletonList("id1"), body.getSkyflowIDs().get());
+        Assert.assertEquals(Collections.singletonList("name"), body.getColumns().get());
+        Assert.assertEquals("email", body.getColumnRedactions().get().get(0).getColumnName().get());
+        Assert.assertEquals(Integer.valueOf(10), body.getLimit().get());
+        Assert.assertEquals(Integer.valueOf(5), body.getOffset().get());
+        Assert.assertFalse(body.getRecords().isPresent());
+    }
+
+    @Test
+    public void testGetGetRequestBody_multiTableModeIgnoresSingleTableFields() {
+        GetRequestRecord nested = GetRequestRecord.builder()
+                .tableName("table2").skyflowIds(Collections.singletonList("id2")).build();
+        GetRequest request = GetRequest.builder().records(Collections.singletonList(nested)).build();
+        VaultConfig config = new VaultConfig();
+        config.setVaultId("vault123");
+
+        V1GetRequest body = Utils.getGetRequestBody(request, config);
+
+        Assert.assertTrue(body.getRecords().isPresent());
+        Assert.assertEquals(1, body.getRecords().get().size());
+        Assert.assertEquals("table2", body.getRecords().get().get(0).getTableName().get());
+        Assert.assertEquals(Collections.singletonList("id2"), body.getRecords().get().get(0).getSkyflowIDs().get());
+        Assert.assertFalse(body.getTableName().isPresent());
+    }
+
+    @Test
+    public void testFormatGetResponse_successRecord() {
+        V1RecordResponseObject record = V1RecordResponseObject.builder()
+                .tableName("table1").skyflowId("sky-1").build();
+        V1GetResponse response = V1GetResponse.builder().records(Collections.singletonList(record)).build();
+
+        GetResponse formatted = Utils.formatGetResponse(response, new HashMap<>());
+
+        Assert.assertEquals(1, formatted.getRecords().size());
+        Assert.assertEquals("table1", formatted.getRecords().get(0).getTableName());
+        Assert.assertEquals("sky-1", formatted.getRecords().get(0).getSkyflowId());
+    }
+
+    @Test
+    public void testFormatGetResponse_nullResponseReturnsEmptyRecords() {
+        GetResponse formatted = Utils.formatGetResponse(null, new HashMap<>());
+        Assert.assertTrue(formatted.getRecords().isEmpty());
+    }
+
+    @Test
+    public void testFormatGetResponse_requestIdOnlyPopulatedOnError() {
+        Map<String, List<String>> headers = new HashMap<>();
+        headers.put(Constants.REQUEST_ID_HEADER_KEY, Collections.singletonList("req-get-1"));
+        V1RecordResponseObject success = V1RecordResponseObject.builder().skyflowId("sky-id-1").build();
+        V1RecordResponseObject failure = V1RecordResponseObject.builder().error("failed").build();
+        V1GetResponse response = V1GetResponse.builder().records(Arrays.asList(success, failure)).build();
+
+        GetResponse formatted = Utils.formatGetResponse(response, headers);
+
+        Assert.assertNull(formatted.getRecords().get(0).getRequestId());
+        Assert.assertEquals("req-get-1", formatted.getRecords().get(1).getRequestId());
+    }
+
+    // ── getDeleteRequestBody / formatDeleteResponse ───────────────────────────
+
+    @Test
+    public void testGetDeleteRequestBody_withIds() {
+        DeleteRequest request = DeleteRequest.builder().tableName("table1").skyflowIds(Collections.singletonList("id1")).build();
+        VaultConfig config = new VaultConfig();
+        config.setVaultId("vault123");
+
+        V1DeleteRequest body = Utils.getDeleteRequestBody(request, config);
+
+        Assert.assertEquals("vault123", body.getVaultId().get());
+        Assert.assertEquals("table1", body.getTableName().get());
+        Assert.assertEquals(Collections.singletonList("id1"), body.getSkyflowIDs().get());
+        Assert.assertFalse(body.getUniqueValues().isPresent());
+    }
+
+    @Test
+    public void testGetDeleteRequestBody_withUniqueValues() {
+        Map<String, Object> uniqueValue = new HashMap<>();
+        uniqueValue.put("email", "john@example.com");
+        DeleteRequest request = DeleteRequest.builder()
+                .tableName("table1").uniqueValues(Collections.singletonList(uniqueValue)).build();
+        VaultConfig config = new VaultConfig();
+        config.setVaultId("vault123");
+
+        V1DeleteRequest body = Utils.getDeleteRequestBody(request, config);
+
+        Assert.assertEquals(uniqueValue, body.getUniqueValues().get().get(0).getData().get());
+        Assert.assertFalse(body.getSkyflowIDs().isPresent());
+    }
+
+    @Test
+    public void testFormatDeleteResponse_successAndErrorRecords() {
+        V1DeleteResponseObject success = V1DeleteResponseObject.builder().skyflowId("sky-1").httpCode(200).build();
+        V1DeleteResponseObject failure = V1DeleteResponseObject.builder().error("not found").httpCode(404).build();
+        V1DeleteResponse response = V1DeleteResponse.builder().records(Arrays.asList(success, failure)).build();
+
+        DeleteResponse formatted = Utils.formatDeleteResponse(response, new HashMap<>());
+
+        Assert.assertEquals(2, formatted.getRecords().size());
+        Assert.assertEquals("sky-1", formatted.getRecords().get(0).getSkyflowId());
+        Assert.assertEquals(Integer.valueOf(200), formatted.getRecords().get(0).getHttpCode());
+        Assert.assertNull(formatted.getRecords().get(0).getError());
+        Assert.assertEquals("not found", formatted.getRecords().get(1).getError());
+        Assert.assertEquals(Integer.valueOf(404), formatted.getRecords().get(1).getHttpCode());
+    }
+
+    @Test
+    public void testFormatDeleteResponse_nullResponseReturnsEmptyRecords() {
+        DeleteResponse formatted = Utils.formatDeleteResponse(null, new HashMap<>());
+        Assert.assertTrue(formatted.getRecords().isEmpty());
+    }
+
+    @Test
+    public void testFormatDeleteResponse_requestIdOnlyPopulatedOnError() {
+        Map<String, List<String>> headers = new HashMap<>();
+        headers.put(Constants.REQUEST_ID_HEADER_KEY, Collections.singletonList("req-delete-1"));
+        V1DeleteResponseObject success = V1DeleteResponseObject.builder().skyflowId("sky-1").httpCode(200).build();
+        V1DeleteResponseObject failure = V1DeleteResponseObject.builder().error("not found").httpCode(404).build();
+        V1DeleteResponse response = V1DeleteResponse.builder().records(Arrays.asList(success, failure)).build();
+
+        DeleteResponse formatted = Utils.formatDeleteResponse(response, headers);
+
+        Assert.assertNull(formatted.getRecords().get(0).getRequestId());
+        Assert.assertEquals("req-delete-1", formatted.getRecords().get(1).getRequestId());
+    }
 
     // ── getBulkInsertRequestBody (bulk overload) ──────────────────────────────
 
@@ -2031,9 +2403,6 @@ public class UtilsTests {
                 null, tokenizeBatch("value1", "group1"), 0, new HashMap<>()));
     }
 
-    // Tests for getQueryRequestBody / buildQueryResponse / getGetRequestBody / buildGetResponse
-    // were removed: get and query Utils helpers no longer exist (bulk-only module).
-
     // ── deleteTokens error records must survive any JSON number type ──────────
     // recordMap holds deserialised JSON: Gson gives Double for numbers bound to Object, Jackson
     // gives Integer or Long by magnitude. A blind (Integer) cast turned a real API error into a
@@ -2090,5 +2459,228 @@ public class UtilsTests {
         BulkDeleteTokensResponseRecord record = deleteError(404);
         Assert.assertEquals("Token not found", record.getError());
         Assert.assertEquals("tok-1", record.getToken());
+    }
+
+    // ── handleInsertRequestException / handleUpdateRequestException / handleGetRequestException /
+    // handleDeleteRequestException / handleDetokenizeRequestException ──────────────────────────
+    //
+    // These convert a unary call's ApiClientApiException back into a normal response when the
+    // body still has the familiar per-record shape. extractExceptionRecords is shared by all five,
+    // so its null/malformed-input robustness is exercised thoroughly once here (via insert) and
+    // the remaining handlers each get a focused shape-guard + happy-path check.
+
+    @Test
+    public void testHandleInsertRequestException_nullBodyReturnsNull() {
+        ApiClientApiException ex = new ApiClientApiException("boom", 400, null);
+        Assert.assertNull(Utils.handleInsertRequestException(ex));
+    }
+
+    @Test
+    public void testHandleInsertRequestException_nonMapBodyReturnsNull() {
+        ApiClientApiException ex = new ApiClientApiException("boom", 400, "plain text body");
+        Assert.assertNull(Utils.handleInsertRequestException(ex));
+    }
+
+    @Test
+    public void testHandleInsertRequestException_missingRecordsKeyReturnsNull() {
+        Map<String, Object> body = new HashMap<>();
+        body.put("message", "no records key here");
+        ApiClientApiException ex = new ApiClientApiException("boom", 400, body);
+        Assert.assertNull(Utils.handleInsertRequestException(ex));
+    }
+
+    @Test
+    public void testHandleInsertRequestException_recordsValueNotAListReturnsNull() {
+        Map<String, Object> body = new HashMap<>();
+        body.put("records", "not a list");
+        ApiClientApiException ex = new ApiClientApiException("boom", 400, body);
+        Assert.assertNull(Utils.handleInsertRequestException(ex));
+    }
+
+    @Test
+    public void testHandleInsertRequestException_emptyRecordsListReturnsNull() {
+        Map<String, Object> body = new HashMap<>();
+        body.put("records", new ArrayList<>());
+        ApiClientApiException ex = new ApiClientApiException("boom", 400, body);
+        Assert.assertNull(Utils.handleInsertRequestException(ex));
+    }
+
+    @Test
+    public void testHandleInsertRequestException_recordsWithOnlyNonMapElementsReturnsNull() {
+        Map<String, Object> body = new HashMap<>();
+        body.put("records", Arrays.asList("not-a-map", 123, null));
+        ApiClientApiException ex = new ApiClientApiException("boom", 400, body);
+        Assert.assertNull(Utils.handleInsertRequestException(ex));
+    }
+
+    @Test
+    public void testHandleInsertRequestException_mixedValidAndInvalidElementsKeepsOnlyValidOnes() {
+        Map<String, Object> validRecord = new HashMap<>();
+        validRecord.put("error", "bad column");
+        validRecord.put("httpCode", 400);
+        Map<String, Object> body = new HashMap<>();
+        body.put("records", Arrays.asList("not-a-map", validRecord));
+        ApiClientApiException ex = new ApiClientApiException("boom", 400, body);
+
+        InsertResponse response = Utils.handleInsertRequestException(ex);
+        Assert.assertNotNull(response);
+        Assert.assertEquals(1, response.getRecords().size());
+        Assert.assertEquals("bad column", response.getRecords().get(0).getError());
+    }
+
+    @Test
+    public void testHandleInsertRequestException_missingHttpCodeFallsBackToExceptionStatusCode() {
+        Map<String, Object> record = new HashMap<>();
+        record.put("error", "bad column");
+        Map<String, Object> body = new HashMap<>();
+        body.put("records", Collections.singletonList(record));
+        ApiClientApiException ex = new ApiClientApiException("boom", 422, body);
+
+        InsertResponse response = Utils.handleInsertRequestException(ex);
+        Assert.assertNotNull(response);
+        Assert.assertEquals(422, response.getRecords().get(0).getHttpCode());
+    }
+
+    @Test
+    public void testHandleInsertRequestException_missingErrorFallsBackToUnknownError() {
+        Map<String, Object> record = new HashMap<>();
+        record.put("httpCode", 400);
+        Map<String, Object> body = new HashMap<>();
+        body.put("records", Collections.singletonList(record));
+        ApiClientApiException ex = new ApiClientApiException("boom", 400, body);
+
+        InsertResponse response = Utils.handleInsertRequestException(ex);
+        Assert.assertNotNull(response);
+        Assert.assertEquals("Unknown error", response.getRecords().get(0).getError());
+    }
+
+    @Test
+    public void testHandleInsertRequestException_validRecordsShapePopulatesResponseAndRequestId() {
+        Map<String, Object> record = new HashMap<>();
+        record.put("skyflowID", null);
+        record.put("tableName", "table5");
+        record.put("error", "INSERT failed. Column card_number is invalid. Specify a valid column.");
+        record.put("httpCode", 400);
+        Map<String, Object> body = new HashMap<>();
+        body.put("records", Collections.singletonList(record));
+        ApiClientApiException ex = new ApiClientApiException("Error with status code 400", 400, body);
+
+        InsertResponse response = Utils.handleInsertRequestException(ex);
+        Assert.assertNotNull(response);
+        Assert.assertEquals(1, response.getRecords().size());
+        InsertResponseRecord result = response.getRecords().get(0);
+        Assert.assertEquals("table5", result.getTableName());
+        Assert.assertNull(result.getSkyflowId());
+        Assert.assertEquals("INSERT failed. Column card_number is invalid. Specify a valid column.", result.getError());
+        Assert.assertEquals(400, result.getHttpCode());
+    }
+
+    @Test
+    public void testHandleUpdateRequestException_nonRecordsShapeReturnsNull() {
+        Map<String, Object> errorBody = new HashMap<>();
+        errorBody.put("message", "whole request failed");
+        Map<String, Object> body = new HashMap<>();
+        body.put("error", errorBody);
+        ApiClientApiException ex = new ApiClientApiException("boom", 404, body);
+        Assert.assertNull(Utils.handleUpdateRequestException(ex));
+    }
+
+    @Test
+    public void testHandleUpdateRequestException_validRecordsShapePopulatesResponse() {
+        Map<String, Object> record = new HashMap<>();
+        record.put("error", "UPDATE failed. Column card_number is invalid. Specify a valid column.");
+        record.put("httpCode", 400);
+        record.put("tableName", "");
+        Map<String, Object> body = new HashMap<>();
+        body.put("records", Collections.singletonList(record));
+        ApiClientApiException ex = new ApiClientApiException("boom", 400, body);
+
+        UpdateResponse response = Utils.handleUpdateRequestException(ex);
+        Assert.assertNotNull(response);
+        Assert.assertEquals("UPDATE failed. Column card_number is invalid. Specify a valid column.",
+                response.getRecords().get(0).getError());
+        Assert.assertEquals(400, response.getRecords().get(0).getHttpCode());
+    }
+
+    @Test
+    public void testHandleGetRequestException_nonRecordsShapeReturnsNull() {
+        ApiClientApiException ex = new ApiClientApiException("boom", 500, "server error");
+        Assert.assertNull(Utils.handleGetRequestException(ex));
+    }
+
+    @Test
+    public void testHandleGetRequestException_validRecordsShapePopulatesResponse() {
+        Map<String, Object> record = new HashMap<>();
+        record.put("skyflowID", "sky-1");
+        record.put("tableName", "table1");
+        record.put("error", "GET failed. Record not found.");
+        record.put("httpCode", 404);
+        Map<String, Object> body = new HashMap<>();
+        body.put("records", Collections.singletonList(record));
+        ApiClientApiException ex = new ApiClientApiException("boom", 404, body);
+
+        GetResponse response = Utils.handleGetRequestException(ex);
+        Assert.assertNotNull(response);
+        GetResponseRecord result = response.getRecords().get(0);
+        Assert.assertEquals("sky-1", result.getSkyflowId());
+        Assert.assertEquals("table1", result.getTableName());
+        Assert.assertEquals(404, result.getHttpCode());
+    }
+
+    @Test
+    public void testHandleDeleteRequestException_nonRecordsShapeReturnsNull() {
+        Map<String, Object> body = new HashMap<>();
+        body.put("records", "not a list");
+        ApiClientApiException ex = new ApiClientApiException("boom", 400, body);
+        Assert.assertNull(Utils.handleDeleteRequestException(ex));
+    }
+
+    @Test
+    public void testHandleDeleteRequestException_validRecordsShapePopulatesResponse() {
+        Map<String, Object> record = new HashMap<>();
+        record.put("skyflowID", "sky-1");
+        record.put("error", "DELETE failed. Record not found.");
+        record.put("httpCode", 404);
+        Map<String, Object> body = new HashMap<>();
+        body.put("records", Collections.singletonList(record));
+        ApiClientApiException ex = new ApiClientApiException("boom", 404, body);
+
+        DeleteResponse response = Utils.handleDeleteRequestException(ex);
+        Assert.assertNotNull(response);
+        DeleteResponseRecord result = response.getRecords().get(0);
+        Assert.assertEquals("sky-1", result.getSkyflowId());
+        Assert.assertEquals(Integer.valueOf(404), result.getHttpCode());
+    }
+
+    @Test
+    public void testHandleDetokenizeRequestException_recordsKeyIsWrongShapeForDetokenizeReturnsNull() {
+        // Detokenize's own wire key is "response", not "records" - a body shaped for the other
+        // unary ops must not be mistaken for a detokenize failure.
+        Map<String, Object> record = new HashMap<>();
+        record.put("error", "some error");
+        Map<String, Object> body = new HashMap<>();
+        body.put("records", Collections.singletonList(record));
+        ApiClientApiException ex = new ApiClientApiException("boom", 400, body);
+        Assert.assertNull(Utils.handleDetokenizeRequestException(ex));
+    }
+
+    @Test
+    public void testHandleDetokenizeRequestException_validResponseShapePopulatesResponse() {
+        Map<String, Object> record = new HashMap<>();
+        record.put("token", "tok-1");
+        record.put("tokenGroupName", "group1");
+        record.put("error", "DETOKENIZE failed. Token not found.");
+        record.put("httpCode", 404);
+        Map<String, Object> body = new HashMap<>();
+        body.put("response", Collections.singletonList(record));
+        ApiClientApiException ex = new ApiClientApiException("boom", 404, body);
+
+        DetokenizeResponse response = Utils.handleDetokenizeRequestException(ex);
+        Assert.assertNotNull(response);
+        DetokenizeResponseRecord result = response.getRecords().get(0);
+        Assert.assertEquals("tok-1", result.getToken());
+        Assert.assertEquals("group1", result.getTokenGroupName());
+        Assert.assertEquals("DETOKENIZE failed. Token not found.", result.getError());
+        Assert.assertEquals(404, result.getHttpCode());
     }
 }
