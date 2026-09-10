@@ -193,6 +193,22 @@ public class SkyflowExceptionTest {
     }
 
     @Test
+    public void testJsonBodyWithGenericApiErrorEnvelopeStillWorks() {
+        Map<String, List<String>> headers = new HashMap<>();
+        String json = "{\"error\":{\"grpc_code\":5,\"http_code\":404,"
+                + "\"message\":\"Invalid request. Vault not found for vaultID: vault123. "
+                + "Specify a valid vaultID.\",\"http_status\":\"Not Found\",\"details\":[]}}";
+        SkyflowException ex = new SkyflowException(404, new RuntimeException("fail"), headers, json);
+        Assert.assertEquals("Invalid request. Vault not found for vaultID: vault123. "
+                + "Specify a valid vaultID.", ex.getMessage());
+        Assert.assertEquals(Integer.valueOf(5), ex.getGrpcCode());
+        Assert.assertEquals("Not Found", ex.getHttpStatus());
+        Assert.assertEquals(404, ex.getHttpCode());
+        Assert.assertNotNull(ex.getDetails());
+        Assert.assertEquals(0, ex.getDetails().size());
+    }
+
+    @Test
     public void testNullBodyNullCauseMessageFallsBackToErrorOccurred() {
         Map<String, List<String>> headers = new HashMap<>();
         SkyflowException ex = new SkyflowException(500, new RuntimeException((String) null), headers, null);

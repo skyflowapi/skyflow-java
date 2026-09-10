@@ -7,7 +7,6 @@ import com.skyflow.generated.rest.ApiClient;
 import com.skyflow.generated.rest.ApiClientBuilder;
 import com.skyflow.generated.rest.core.RetryInterceptor;
 import com.skyflow.generated.rest.resources.flowservice.FlowserviceClient;
-import com.skyflow.generated.rest.resources.records.RecordsClient;
 import com.skyflow.utils.Utils;
 
 import java.util.Optional;
@@ -93,10 +92,6 @@ public class VaultClient extends BaseVaultClient<VaultConfig> {
         return this.apiClient.flowservice();
     }
 
-    protected RecordsClient getQueryApi() {
-        return this.apiClient.records();
-    }
-
     protected void setCommonCredentials(Credentials commonCredentials) throws SkyflowException {
         this.commonCredentials = commonCredentials;
         super.prioritiseCredentials(this.vaultConfig.getCredentials());
@@ -175,7 +170,7 @@ public class VaultClient extends BaseVaultClient<VaultConfig> {
                     throw new IllegalArgumentException("maxRetries must be non-negative");
                 }
                 OkHttpClient.Builder httpBuilder = new OkHttpClient.Builder()
-                        .connectionPool(new ConnectionPool(10, 1, TimeUnit.MINUTES))
+                        .connectionPool(new ConnectionPool(100, 1, TimeUnit.MINUTES))
                         // Overall ceiling; bounds the whole call including retries.
                         .callTimeout(timeoutSeconds, TimeUnit.SECONDS)
                         // OUTER: retries. Must wrap the auth interceptor so each attempt re-reads the

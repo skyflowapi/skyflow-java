@@ -3,10 +3,12 @@ package com.skyflow.vault.data;
 import java.util.List;
 import java.util.Map;
 
-// Response record for the unary insert method. Deliberately does NOT carry the deprecated
-// getFields()/6-arg-constructor back-compat surface that BulkInsertResponseRecord still has to —
-// this is a brand-new type with no pre-1.0.2 callers to support, so it stays clean.
-public class InsertResponseRecord {
+// The wire shape is identical to InsertResponseRecord (the vault returns the same
+// V1RecordResponseObject for both insert and update), but this does NOT extend
+// InsertResponseRecord: doing so would also inherit its deprecated getFields() getter (kept
+// there only for insert's pre-1.0.2 back-compat), which a brand-new response type has no
+// business exposing. Kept as its own type, matching DeleteResponseRecord's convention.
+public class UpdateResponseRecord {
     private final String tableName;
     private final String skyflowId;
     private final Map<String, List<Token>> tokens;
@@ -16,9 +18,9 @@ public class InsertResponseRecord {
     private final String error;
     private final String requestId;
 
-    public InsertResponseRecord(String tableName, String skyflowId, Map<String, List<Token>> tokens,
-                                 Map<String, Object> data, Map<String, Object> hashedData, int httpCode, String error,
-                                 String requestId) {
+    public UpdateResponseRecord(String tableName, String skyflowId, Map<String, List<Token>> tokens,
+                                 Map<String, Object> data, Map<String, Object> hashedData,
+                                 int httpCode, String error, String requestId) {
         this.tableName = tableName;
         this.skyflowId = skyflowId;
         this.tokens = tokens;

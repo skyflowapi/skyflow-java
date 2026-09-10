@@ -19,6 +19,18 @@ public class GetRequest extends BaseGetRequest {
         return new GetRequestBuilder();
     }
 
+    public String getTable() {
+        return this.builder.table;
+    }
+
+    public ArrayList<String> getIds() {
+        return this.builder.ids;
+    }
+
+    public ArrayList<String> getFields() {
+        return this.builder.fields;
+    }
+
     public RedactionType getRedactionType() {
         return this.builder.redactionType;
     }
@@ -61,6 +73,9 @@ public class GetRequest extends BaseGetRequest {
     }
 
     public static final class GetRequestBuilder extends BaseGetRequestBuilder {
+        private String table;
+        private ArrayList<String> ids;
+        private ArrayList<String> fields;
         private RedactionType redactionType;
         private Boolean returnTokens;
         private String offset;
@@ -75,21 +90,18 @@ public class GetRequest extends BaseGetRequest {
             this.downloadUrl = true;
         }
 
-        @Override
         public GetRequestBuilder table(String table) {
-            super.table(table);
+            this.table = table;
             return this;
         }
 
-        @Override
         public GetRequestBuilder ids(ArrayList<String> ids) {
-            super.ids(ids);
+            this.ids = ids;
             return this;
         }
 
-        @Override
         public GetRequestBuilder fields(ArrayList<String> fields) {
-            super.fields(fields);
+            this.fields = fields;
             return this;
         }
 

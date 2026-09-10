@@ -98,17 +98,4 @@ public class AuthInterceptorTests {
         Assert.assertEquals(503, authInterceptorOf(client).intercept(chain).code());
         Assert.assertEquals("auth must not retry - that is the outer interceptor's job", 1, chain.calls());
     }
-
-    @Test
-    public void testGetQueryApi_availableAfterSetBearerToken() throws SkyflowException {
-        Credentials credentials = new Credentials();
-        credentials.setApiKey(API_KEY);
-        VaultConfig config = config();
-        config.setCredentials(credentials);
-
-        VaultClient client = new VaultClient(config, null);
-        client.setBearerToken();
-
-        Assert.assertNotNull(client.getQueryApi());
-    }
 }

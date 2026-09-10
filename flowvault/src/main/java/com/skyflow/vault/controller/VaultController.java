@@ -4,11 +4,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.function.Function;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Function;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -22,11 +22,17 @@ import com.skyflow.generated.rest.core.ApiClientException;
 import com.skyflow.generated.rest.core.ApiClientHttpResponse;
 import com.skyflow.generated.rest.core.RequestOptions;
 import com.skyflow.generated.rest.resources.flowservice.requests.V1InsertRequest;
+import com.skyflow.generated.rest.resources.flowservice.requests.V1DeleteRequest;
+import com.skyflow.generated.rest.resources.flowservice.requests.V1GetRequest;
+import com.skyflow.generated.rest.resources.flowservice.requests.V1UpdateRequest;
 import com.skyflow.generated.rest.types.V1FlowDeleteTokenResponse;
 import com.skyflow.generated.rest.types.V1FlowTokenizeResponse;
 import com.skyflow.generated.rest.types.V1InsertRecordData;
-import com.skyflow.generated.rest.types.V1Upsert;
 import com.skyflow.generated.rest.types.V1InsertResponse;
+import com.skyflow.generated.rest.types.V1DeleteResponse;
+import com.skyflow.generated.rest.types.V1GetResponse;
+import com.skyflow.generated.rest.types.V1UpdateResponse;
+import com.skyflow.generated.rest.types.V1Upsert;
 import com.skyflow.logs.ErrorLogs;
 import com.skyflow.logs.InfoLogs;
 import com.skyflow.logs.WarningLogs;
@@ -35,28 +41,40 @@ import com.skyflow.utils.Utils;
 import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.utils.validations.Validations;
 import com.skyflow.vault.data.BulkDeleteTokensOptions;
-import com.skyflow.vault.data.BulkTokenizeOptions;
 import com.skyflow.vault.data.BulkDeleteTokensRequest;
-import com.skyflow.vault.data.BulkDeleteTokensResponseRecord;
-import com.skyflow.vault.data.BulkTokenizeRequestRecord;
-import com.skyflow.vault.data.BulkTokenizeResponseRecord;
 import com.skyflow.vault.data.BulkDeleteTokensResponse;
+import com.skyflow.vault.data.BulkDeleteTokensResponseRecord;
+import com.skyflow.vault.data.BulkDetokenizeOptions;
 import com.skyflow.vault.data.BulkDetokenizeRequest;
 import com.skyflow.vault.data.BulkDetokenizeResponse;
 import com.skyflow.vault.data.BulkDetokenizeResponseRecord;
+import com.skyflow.vault.data.BulkInsertOptions;
 import com.skyflow.vault.data.BulkInsertRequest;
 import com.skyflow.vault.data.BulkInsertResponse;
 import com.skyflow.vault.data.BulkInsertResponseRecord;
+import com.skyflow.vault.data.BulkTokenizeOptions;
 import com.skyflow.vault.data.BulkTokenizeRequest;
+import com.skyflow.vault.data.BulkTokenizeRequestRecord;
 import com.skyflow.vault.data.BulkTokenizeResponse;
-import com.skyflow.vault.data.BulkDetokenizeOptions;
-import com.skyflow.vault.data.BulkInsertOptions;
-import com.skyflow.vault.data.DeleteTokensOptions;
-import com.skyflow.vault.data.ErrorRecord;
+import com.skyflow.vault.data.BulkTokenizeResponseRecord;
+import com.skyflow.vault.data.DetokenizeOptions;
+import com.skyflow.vault.data.DetokenizeRequest;
+import com.skyflow.vault.data.DetokenizeResponse;
+import com.skyflow.vault.data.InsertOptions;
+import com.skyflow.vault.data.InsertRequest;
 import com.skyflow.vault.data.InsertRequestRecord;
+import com.skyflow.vault.data.InsertResponse;
 import com.skyflow.vault.data.RequestContext;
+import com.skyflow.vault.data.UpdateOptions;
+import com.skyflow.vault.data.UpdateRequest;
+import com.skyflow.vault.data.UpdateResponse;
+import com.skyflow.vault.data.DeleteOptions;
+import com.skyflow.vault.data.DeleteRequest;
+import com.skyflow.vault.data.DeleteResponse;
+import com.skyflow.vault.data.GetOptions;
+import com.skyflow.vault.data.GetRequest;
+import com.skyflow.vault.data.GetResponse;
 import com.skyflow.vault.data.RequestInterceptor;
-import com.skyflow.vault.data.TokenizeOptions;
 
 public final class VaultController extends VaultClient {
     private static final Gson gson = new GsonBuilder().serializeNulls().create();
@@ -88,6 +106,50 @@ public final class VaultController extends VaultClient {
         context.getHeaders().forEach((k, v) -> builder.addHeader(k.toString(), v));
         return builder.build();
     }
+
+    // ── Insert ────────────────────────────────────────────────────────────────
+    // Unary counterpart of bulkInsert: sends every record in a single API call, with no
+    // batching or concurrency involved.
+
+    public InsertResponse insert(InsertRequest insertRequest) throws SkyflowException {
+        return insert(insertRequest, null);
+    }
+
+    public InsertResponse insert(InsertRequest insertRequest, InsertOptions options) throws SkyflowException {
+        LogUtil.printInfoLog(InfoLogs.INSERT_TRIGGERED.getLog());
+        try {
+            LogUtil.printInfoLog(InfoLogs.VALIDATE_INSERT_REQUEST.getLog());
+            Validations.validateInsertRequest(insertRequest);
+
+            setBearerToken();
+            V1InsertRequest request = Utils.getInsertRequestBody(insertRequest, this.getVaultConfig());
+            RequestInterceptor interceptor = options != null ? options.getInterceptor() : null;
+            RequestContext ctx = new RequestContext("INSERT", 0, 1);
+            if (interceptor != null) interceptor.intercept(ctx);
+
+            ApiClientHttpResponse<V1InsertResponse> response =
+                    this.getRecordsApi().withRawResponse().insert(request, buildRequestOptions(ctx));
+
+            InsertResponse formattedResponse = Utils.formatInsertResponse(response.body(), response.headers());
+            LogUtil.printInfoLog(InfoLogs.INSERT_REQUEST_RESOLVED.getLog());
+            return formattedResponse;
+        } catch (ApiClientApiException e) {
+            // The lone record in a unary request can fail outright, which the vault reflects as
+            // the overall HTTP status. If the body still carries the usual per-record shape,
+            // surface it on the response like a 200 partial success would, not as an exception.
+            InsertResponse fallback = Utils.handleInsertRequestException(e);
+            if (fallback != null) {
+                return fallback;
+            }
+            String bodyString = gson.toJson(e.body());
+            LogUtil.printErrorLog(ErrorLogs.INSERT_RECORDS_REJECTED.getLog());
+            throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
+        } catch (ApiClientException e) {
+            LogUtil.printErrorLog(ErrorLogs.INSERT_RECORDS_REJECTED.getLog());
+            throw new SkyflowException(e);
+        }
+    }
+
 
     // ── Bulk Insert ───────────────────────────────────────────────────────────
 
@@ -162,6 +224,50 @@ public final class VaultController extends VaultClient {
         } catch (Exception e) {
             LogUtil.printErrorLog(ErrorLogs.INSERT_RECORDS_REJECTED.getLog());
             throw new SkyflowException(e.getMessage());
+        }
+    }
+
+    // ── Detokenize ────────────────────────────────────────────────────────────
+    // Unary counterpart of bulkDetokenize: sends every token in a single API call, with no
+    // batching or concurrency involved.
+
+    public DetokenizeResponse detokenize(DetokenizeRequest detokenizeRequest) throws SkyflowException {
+        return detokenize(detokenizeRequest, null);
+    }
+
+    public DetokenizeResponse detokenize(DetokenizeRequest detokenizeRequest, DetokenizeOptions options) throws SkyflowException {
+        LogUtil.printInfoLog(InfoLogs.DETOKENIZE_TRIGGERED.getLog());
+        try {
+            LogUtil.printInfoLog(InfoLogs.VALIDATE_DETOKENIZE_REQUEST.getLog());
+            Validations.validateDetokenizeRequest(detokenizeRequest);
+
+            setBearerToken();
+            com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest request =
+                    Utils.getDetokenizeRequestBody(detokenizeRequest, this.getVaultConfig().getVaultId());
+            RequestInterceptor interceptor = options != null ? options.getInterceptor() : null;
+            RequestContext ctx = new RequestContext("DETOKENIZE", 0, 1);
+            if (interceptor != null) interceptor.intercept(ctx);
+
+            ApiClientHttpResponse<com.skyflow.generated.rest.types.V1FlowDetokenizeResponse> response =
+                    this.getRecordsApi().withRawResponse().detokenize(request, buildRequestOptions(ctx));
+
+            DetokenizeResponse formattedResponse = Utils.formatDetokenizeResponse(response.body(), response.headers());
+            LogUtil.printInfoLog(InfoLogs.DETOKENIZE_REQUEST_RESOLVED.getLog());
+            return formattedResponse;
+        } catch (ApiClientApiException e) {
+            // The lone record in a unary request can fail outright, which the vault reflects as
+            // the overall HTTP status. If the body still carries the usual per-record shape,
+            // surface it on the response like a 200 partial success would, not as an exception.
+            DetokenizeResponse fallback = Utils.handleDetokenizeRequestException(e);
+            if (fallback != null) {
+                return fallback;
+            }
+            String bodyString = gson.toJson(e.body());
+            LogUtil.printErrorLog(ErrorLogs.DETOKENIZE_REQUEST_REJECTED.getLog());
+            throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
+        } catch (ApiClientException e) {
+            LogUtil.printErrorLog(ErrorLogs.DETOKENIZE_REQUEST_REJECTED.getLog());
+            throw new SkyflowException(e);
         }
     }
 
@@ -244,6 +350,50 @@ public final class VaultController extends VaultClient {
             throw new SkyflowException(e.getMessage());
         } finally {
             if (executor != null) executor.shutdown();
+        }
+    }
+
+    // ── Delete ────────────────────────────────────────────────────────────────
+    // Deletes records by skyflowId or unique value, in a single API call. There is no
+    // bulk/batched counterpart of this operation. Distinct from deleteTokens/bulkDeleteTokens,
+    // which remove tokens only and leave the underlying record in place.
+
+    public DeleteResponse delete(DeleteRequest deleteRequest) throws SkyflowException {
+        return delete(deleteRequest, null);
+    }
+
+    public DeleteResponse delete(DeleteRequest deleteRequest, DeleteOptions options) throws SkyflowException {
+        LogUtil.printInfoLog(InfoLogs.DELETE_TRIGGERED.getLog());
+        try {
+            LogUtil.printInfoLog(InfoLogs.VALIDATING_DELETE_REQUEST.getLog());
+            Validations.validateDeleteRequest(deleteRequest);
+
+            setBearerToken();
+            V1DeleteRequest request = Utils.getDeleteRequestBody(deleteRequest, this.getVaultConfig());
+            RequestInterceptor interceptor = options != null ? options.getInterceptor() : null;
+            RequestContext ctx = new RequestContext("DELETE", 0, 1);
+            if (interceptor != null) interceptor.intercept(ctx);
+
+            ApiClientHttpResponse<V1DeleteResponse> response =
+                    this.getRecordsApi().withRawResponse().delete(request, buildRequestOptions(ctx));
+
+            DeleteResponse formattedResponse = Utils.formatDeleteResponse(response.body(), response.headers());
+            LogUtil.printInfoLog(InfoLogs.DELETE_REQUEST_RESOLVED.getLog());
+            return formattedResponse;
+        } catch (ApiClientApiException e) {
+            // The lone record in a unary request can fail outright, which the vault reflects as
+            // the overall HTTP status. If the body still carries the usual per-record shape,
+            // surface it on the response like a 200 partial success would, not as an exception.
+            DeleteResponse fallback = Utils.handleDeleteRequestException(e);
+            if (fallback != null) {
+                return fallback;
+            }
+            String bodyString = gson.toJson(e.body());
+            LogUtil.printErrorLog(ErrorLogs.DELETE_REQUEST_REJECTED.getLog());
+            throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
+        } catch (ApiClientException e) {
+            LogUtil.printErrorLog(ErrorLogs.DELETE_REQUEST_REJECTED.getLog());
+            throw new SkyflowException(e);
         }
     }
 
@@ -409,6 +559,90 @@ public final class VaultController extends VaultClient {
             throw new SkyflowException(e.getMessage());
         } finally {
             if (executor != null) executor.shutdown();
+        }
+    }
+
+    // ── Update ────────────────────────────────────────────────────────────────
+    // Runs an update in a single API call. There is no bulk/batched counterpart of this operation.
+
+    public UpdateResponse update(UpdateRequest updateRequest) throws SkyflowException {
+        return update(updateRequest, null);
+    }
+
+    public UpdateResponse update(UpdateRequest updateRequest, UpdateOptions options) throws SkyflowException {
+        LogUtil.printInfoLog(InfoLogs.UPDATE_TRIGGERED.getLog());
+        try {
+            LogUtil.printInfoLog(InfoLogs.VALIDATE_UPDATE_REQUEST.getLog());
+            Validations.validateUpdateRequest(updateRequest);
+
+            setBearerToken();
+            V1UpdateRequest request = Utils.getUpdateRequestBody(updateRequest, this.getVaultConfig());
+            RequestInterceptor interceptor = options != null ? options.getInterceptor() : null;
+            RequestContext ctx = new RequestContext("UPDATE", 0, 1);
+            if (interceptor != null) interceptor.intercept(ctx);
+
+            ApiClientHttpResponse<V1UpdateResponse> response =
+                    this.getRecordsApi().withRawResponse().update(request, buildRequestOptions(ctx));
+
+            UpdateResponse formattedResponse = Utils.formatUpdateResponse(response.body(), response.headers());
+            LogUtil.printInfoLog(InfoLogs.UPDATE_REQUEST_RESOLVED.getLog());
+            return formattedResponse;
+        } catch (ApiClientApiException e) {
+            // The lone record in a unary request can fail outright, which the vault reflects as
+            // the overall HTTP status. If the body still carries the usual per-record shape,
+            // surface it on the response like a 200 partial success would, not as an exception.
+            UpdateResponse fallback = Utils.handleUpdateRequestException(e);
+            if (fallback != null) {
+                return fallback;
+            }
+            String bodyString = gson.toJson(e.body());
+            LogUtil.printErrorLog(ErrorLogs.UPDATE_REQUEST_REJECTED.getLog());
+            throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
+        } catch (ApiClientException e) {
+            LogUtil.printErrorLog(ErrorLogs.UPDATE_REQUEST_REJECTED.getLog());
+            throw new SkyflowException(e);
+        }
+    }
+
+    // ── Get ───────────────────────────────────────────────────────────────────
+    // Runs a get in a single API call. There is no bulk/batched counterpart of this operation.
+
+    public GetResponse get(GetRequest getRequest) throws SkyflowException {
+        return get(getRequest, null);
+    }
+
+    public GetResponse get(GetRequest getRequest, GetOptions options) throws SkyflowException {
+        LogUtil.printInfoLog(InfoLogs.GET_TRIGGERED.getLog());
+        try {
+            LogUtil.printInfoLog(InfoLogs.VALIDATE_GET_REQUEST.getLog());
+            Validations.validateGetRequest(getRequest);
+
+            setBearerToken();
+            V1GetRequest request = Utils.getGetRequestBody(getRequest, this.getVaultConfig());
+            RequestInterceptor interceptor = options != null ? options.getInterceptor() : null;
+            RequestContext ctx = new RequestContext("GET", 0, 1);
+            if (interceptor != null) interceptor.intercept(ctx);
+
+            ApiClientHttpResponse<V1GetResponse> response =
+                    this.getRecordsApi().withRawResponse().get(request, buildRequestOptions(ctx));
+
+            GetResponse formattedResponse = Utils.formatGetResponse(response.body(), response.headers());
+            LogUtil.printInfoLog(InfoLogs.GET_REQUEST_RESOLVED.getLog());
+            return formattedResponse;
+        } catch (ApiClientApiException e) {
+            // The lone record in a unary request can fail outright, which the vault reflects as
+            // the overall HTTP status. If the body still carries the usual per-record shape,
+            // surface it on the response like a 200 partial success would, not as an exception.
+            GetResponse fallback = Utils.handleGetRequestException(e);
+            if (fallback != null) {
+                return fallback;
+            }
+            String bodyString = gson.toJson(e.body());
+            LogUtil.printErrorLog(ErrorLogs.GET_REQUEST_REJECTED.getLog());
+            throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
+        } catch (ApiClientException e) {
+            LogUtil.printErrorLog(ErrorLogs.GET_REQUEST_REJECTED.getLog());
+            throw new SkyflowException(e);
         }
     }
 
