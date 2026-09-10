@@ -1,7 +1,7 @@
 # FlowVault Java SDK samples
 
 Runnable samples for the `flowvault` module (`com.skyflow:skyflow-flowvault-java`) — bulk vault
-operations against a Flow DB vault, plus the shared service-account/bearer-token utilities.
+operations against Flow Vault, plus the shared service-account/bearer-token utilities.
 
 See the [flowvault README](../README.md) for the full API reference these samples exercise.
 
