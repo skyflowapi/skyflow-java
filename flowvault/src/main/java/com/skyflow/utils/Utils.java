@@ -23,14 +23,11 @@ import com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokeniz
 import com.skyflow.generated.rest.resources.flowservice.requests.V1GetRequest;
 import com.skyflow.generated.rest.resources.flowservice.requests.V1InsertRequest;
 import com.skyflow.generated.rest.resources.flowservice.requests.V1UpdateRequest;
-import com.skyflow.generated.rest.resources.records.requests.V1ExecuteQueryRequest;
 import com.skyflow.generated.rest.types.FlowEnumUpdateType;
 import com.skyflow.generated.rest.types.V1ColumnRedactions;
 import com.skyflow.generated.rest.types.V1DeleteResponse;
 import com.skyflow.generated.rest.types.V1DeleteResponseObject;
 import com.skyflow.generated.rest.types.V1DeleteTokenResponseObject;
-import com.skyflow.generated.rest.types.V1ExecuteQueryRecordResponse;
-import com.skyflow.generated.rest.types.V1ExecuteQueryResponse;
 import com.skyflow.generated.rest.types.V1FlowDeleteTokenResponse;
 import com.skyflow.generated.rest.types.V1FlowDetokenizeResponse;
 import com.skyflow.generated.rest.types.V1FlowDetokenizeResponseObject;
@@ -78,10 +75,6 @@ import com.skyflow.vault.data.InsertRequest;
 import com.skyflow.vault.data.InsertRequestRecord;
 import com.skyflow.vault.data.InsertResponse;
 import com.skyflow.vault.data.InsertResponseRecord;
-import com.skyflow.vault.data.QueryRequest;
-import com.skyflow.vault.data.QueryResponse;
-import com.skyflow.vault.data.QueryResponseMetadata;
-import com.skyflow.vault.data.QueryResponseRecord;
 import com.skyflow.vault.data.Token;
 import com.skyflow.vault.data.TokenGroupRedactions;
 import com.skyflow.vault.data.TokenizeRequestRecord;
@@ -354,13 +347,6 @@ public final class Utils extends BaseUtils {
 
     public static V1FlowDetokenizeRequest getBulkDetokenizeRequestBody(BulkDetokenizeRequest request, String vaultId) {
         return getDetokenizeRequestBody(request, vaultId);
-    }
-
-    public static V1ExecuteQueryRequest getQueryRequestBody(QueryRequest request, String vaultId) {
-        return V1ExecuteQueryRequest.builder()
-                .vaultId(vaultId)
-                .query(request.getQuery())
-                .build();
     }
 
     public static com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDeleteTokenRequest getBulkDeleteTokensRequestBody(BulkDeleteTokensRequest request, String vaultId) {
@@ -1193,23 +1179,6 @@ public final class Utils extends BaseUtils {
             return new BulkDetokenizeResponse(records);
         }
         return null;
-    }
-
-    // Query has no batching/bulk counterpart, so there is no index or requestId to attach here.
-    public static QueryResponse formatQueryResponse(V1ExecuteQueryResponse response) {
-        List<QueryResponseRecord> records = new ArrayList<>();
-        QueryResponseMetadata metadata = null;
-        if (response != null) {
-            if (response.getRecords().isPresent()) {
-                for (V1ExecuteQueryRecordResponse record : response.getRecords().get()) {
-                    records.add(new QueryResponseRecord(record.getData().orElse(null)));
-                }
-            }
-            if (response.getMetadata().isPresent()) {
-                metadata = new QueryResponseMetadata(response.getMetadata().get().getColumns().orElse(null));
-            }
-        }
-        return new QueryResponse(records, metadata);
     }
 
     public static BulkDeleteTokensResponse formatBulkDeleteTokensResponse(

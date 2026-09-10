@@ -12,13 +12,9 @@ import com.skyflow.generated.rest.core.ApiClientHttpResponse;
 import com.skyflow.generated.rest.core.RequestOptions;
 import com.skyflow.generated.rest.resources.flowservice.FlowserviceClient;
 import com.skyflow.generated.rest.resources.flowservice.RawFlowserviceClient;
-import com.skyflow.generated.rest.resources.records.RawRecordsClient;
-import com.skyflow.generated.rest.resources.records.RecordsClient;
 import com.skyflow.generated.rest.types.V1DeleteResponse;
 import com.skyflow.generated.rest.types.V1DeleteResponseObject;
 import com.skyflow.generated.rest.types.V1DeleteTokenResponseObject;
-import com.skyflow.generated.rest.types.V1ExecuteQueryRecordResponse;
-import com.skyflow.generated.rest.types.V1ExecuteQueryResponse;
 import com.skyflow.generated.rest.types.V1FlowDeleteTokenResponse;
 import com.skyflow.generated.rest.types.V1FlowDetokenizeResponse;
 import com.skyflow.generated.rest.types.V1FlowDetokenizeResponseObject;
@@ -60,9 +56,6 @@ import com.skyflow.vault.data.InsertOptions;
 import com.skyflow.vault.data.InsertRequest;
 import com.skyflow.vault.data.InsertRequestRecord;
 import com.skyflow.vault.data.InsertResponse;
-import com.skyflow.vault.data.QueryOptions;
-import com.skyflow.vault.data.QueryRequest;
-import com.skyflow.vault.data.QueryResponse;
 import com.skyflow.vault.data.RequestInterceptor;
 import com.skyflow.vault.data.Token;
 import com.skyflow.vault.data.TokenGroupRedactions;
@@ -129,14 +122,6 @@ public class VaultControllerTests {
         RawFlowserviceClient mockRaw = Mockito.mock(RawFlowserviceClient.class);
         when(mockApi.flowservice()).thenReturn(mockFlowservice);
         when(mockFlowservice.withRawResponse()).thenReturn(mockRaw);
-        return mockRaw;
-    }
-
-    private static RawRecordsClient mockRawRecords(ApiClient mockApi) {
-        RecordsClient mockRecords = Mockito.mock(RecordsClient.class);
-        RawRecordsClient mockRaw = Mockito.mock(RawRecordsClient.class);
-        when(mockApi.records()).thenReturn(mockRecords);
-        when(mockRecords.withRawResponse()).thenReturn(mockRaw);
         return mockRaw;
     }
 
@@ -434,41 +419,6 @@ public class VaultControllerTests {
         GetRequest request = GetRequest.builder().tableName("table1").build();
         try {
             controller.get(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
-        } catch (SkyflowException e) {
-            Assert.assertNotNull(e.getMessage());
-        }
-    }
-
-    // ── query (unary) ─────────────────────────────────────────────────────────
-
-    @Test
-    public void testQuery_success() throws Exception {
-        ApiClient mockApi = Mockito.mock(ApiClient.class);
-        RawRecordsClient mockRaw = mockRawRecords(mockApi);
-
-        Map<String, Object> row = new HashMap<>();
-        row.put("name", "john");
-        V1ExecuteQueryRecordResponse record = V1ExecuteQueryRecordResponse.builder().data(row).build();
-        V1ExecuteQueryResponse body = V1ExecuteQueryResponse.builder().records(Collections.singletonList(record)).build();
-        ApiClientHttpResponse<V1ExecuteQueryResponse> httpResp = new ApiClientHttpResponse<>(body, buildOkHttpResponse());
-        when(mockRaw.flowServiceExecuteQuery(any(), any())).thenReturn(httpResp);
-
-        VaultController controller = createControllerWithMock(mockApi);
-        QueryRequest request = QueryRequest.builder().query("SELECT * FROM table1").build();
-
-        QueryResponse response = controller.query(request);
-        Assert.assertEquals(1, response.getRecords().size());
-        Assert.assertEquals(row, response.getRecords().get(0).getData());
-    }
-
-    @Test
-    public void testQuery_invalidRequestThrowsSkyflowException() throws Exception {
-        ApiClient mockApi = Mockito.mock(ApiClient.class);
-        VaultController controller = createControllerWithMock(mockApi);
-        QueryRequest request = QueryRequest.builder().build();
-        try {
-            controller.query(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertNotNull(e.getMessage());

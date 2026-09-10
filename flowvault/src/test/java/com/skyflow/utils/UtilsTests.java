@@ -14,14 +14,10 @@ import com.skyflow.generated.rest.resources.flowservice.requests.V1FlowTokenizeR
 import com.skyflow.generated.rest.resources.flowservice.requests.V1GetRequest;
 import com.skyflow.generated.rest.resources.flowservice.requests.V1InsertRequest;
 import com.skyflow.generated.rest.resources.flowservice.requests.V1UpdateRequest;
-import com.skyflow.generated.rest.resources.records.requests.V1ExecuteQueryRequest;
 import com.skyflow.generated.rest.types.FlowEnumUpdateType;
 import com.skyflow.generated.rest.types.V1DeleteResponse;
 import com.skyflow.generated.rest.types.V1DeleteResponseObject;
 import com.skyflow.generated.rest.types.V1DeleteTokenResponseObject;
-import com.skyflow.generated.rest.types.V1ExecuteQueryRecordResponse;
-import com.skyflow.generated.rest.types.V1ExecuteQueryResponse;
-import com.skyflow.generated.rest.types.V1ExecuteQueryResponseMetadata;
 import com.skyflow.generated.rest.types.V1FlowDeleteTokenResponse;
 import com.skyflow.generated.rest.types.V1FlowDetokenizeResponse;
 import com.skyflow.generated.rest.types.V1FlowDetokenizeResponseObject;
@@ -61,8 +57,6 @@ import com.skyflow.vault.data.InsertRequestRecord;
 import com.skyflow.vault.data.InsertRequest;
 import com.skyflow.vault.data.InsertResponse;
 import com.skyflow.vault.data.InsertResponseRecord;
-import com.skyflow.vault.data.QueryRequest;
-import com.skyflow.vault.data.QueryResponse;
 import com.skyflow.vault.data.TokenGroupRedactions;
 import com.skyflow.vault.data.BulkTokenizeResponseRecord;
 import com.skyflow.vault.data.TokenizeRequestRecord;
@@ -706,42 +700,6 @@ public class UtilsTests {
 
         Assert.assertNull(formatted.getRecords().get(0).getRequestId());
         Assert.assertEquals("req-delete-1", formatted.getRecords().get(1).getRequestId());
-    }
-
-    // ── getQueryRequestBody / formatQueryResponse ─────────────────────────────
-
-    @Test
-    public void testGetQueryRequestBody_buildsCorrectRequest() {
-        QueryRequest request = QueryRequest.builder().query("SELECT * FROM table1").build();
-
-        V1ExecuteQueryRequest body = Utils.getQueryRequestBody(request, "vault123");
-
-        Assert.assertEquals("vault123", body.getVaultId().get());
-        Assert.assertEquals("SELECT * FROM table1", body.getQuery().get());
-    }
-
-    @Test
-    public void testFormatQueryResponse_withRecordsAndMetadata() {
-        Map<String, Object> row = new HashMap<>();
-        row.put("name", "john");
-        V1ExecuteQueryRecordResponse record = V1ExecuteQueryRecordResponse.builder().data(row).build();
-        V1ExecuteQueryResponseMetadata metadata = V1ExecuteQueryResponseMetadata.builder()
-                .columns(Collections.singletonList("name")).build();
-        V1ExecuteQueryResponse response = V1ExecuteQueryResponse.builder()
-                .records(Collections.singletonList(record)).metadata(metadata).build();
-
-        QueryResponse formatted = Utils.formatQueryResponse(response);
-
-        Assert.assertEquals(1, formatted.getRecords().size());
-        Assert.assertEquals(row, formatted.getRecords().get(0).getData());
-        Assert.assertEquals(Collections.singletonList("name"), formatted.getMetadata().getColumns());
-    }
-
-    @Test
-    public void testFormatQueryResponse_nullResponseReturnsEmptyRecordsAndNullMetadata() {
-        QueryResponse formatted = Utils.formatQueryResponse(null);
-        Assert.assertTrue(formatted.getRecords().isEmpty());
-        Assert.assertNull(formatted.getMetadata());
     }
 
     // ── getBulkInsertRequestBody (bulk overload) ──────────────────────────────
