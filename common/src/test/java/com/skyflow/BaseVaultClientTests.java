@@ -280,7 +280,7 @@ public class BaseVaultClientTests {
 
     /**
      * Covers setBearerToken's "token present but expired -> regenerate" branch. A hand-crafted
-     * always-expired JWT ("x.eyJleHAiOjF9.y", exp=1 => 1970) is seeded directly into the token
+     * always-expired JWT ("<TOKEN_1>", exp=1 => 1970) is seeded directly into the token
      * field, bypassing setBearerToken. The very same credentials instance used to seed
      * finalCredentials is then reused when calling setBearerToken, so prioritiseCredentials does
      * NOT treat this as a credential change (that branch is covered by
@@ -294,11 +294,11 @@ public class BaseVaultClientTests {
         BaseVaultClient<BaseVaultConfig> client = newClient(null);
 
         client.prioritiseCredentials(creds);
-        client.token = "x.eyJleHAiOjF9.y"; // exp=1 (1970) -> always expired, seeded directly
+        client.token = "<TOKEN_1>"; // exp=1 (1970) -> always expired, seeded directly
 
         client.setBearerToken(creds);
 
         Assert.assertEquals("x.eyJleHAiOjk5OTk5OTk5OTl9.y", client.token);
-        Assert.assertNotEquals("x.eyJleHAiOjF9.y", client.token);
+        Assert.assertNotEquals("<TOKEN_1>", client.token);
     }
 }

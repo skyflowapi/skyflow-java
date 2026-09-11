@@ -59,7 +59,7 @@ public class ConnectionClientTests {
         try {
             // Self-contained fake JWT (exp=9999999999, far future) instead of relying on a
             // local .env fixture, which may not exist (e.g. in CI/sandbox environments).
-            String bearerToken = "x.eyJleHAiOjk5OTk5OTk5OTl9.y";
+            String bearerToken = "<BEARER_TOKEN>";
             Credentials credentials = new Credentials();
             credentials.setToken(bearerToken);
             connectionConfig.setCredentials(credentials);
@@ -144,7 +144,7 @@ public class ConnectionClientTests {
         try {
             // far-future JWT: base64({"exp":9999999999}) = eyJleHAiOjk5OTk5OTk5OTl9 — never expires
             Credentials creds = new Credentials();
-            creds.setToken("x.eyJleHAiOjk5OTk5OTk5OTl9.y");
+            creds.setToken("<BEARER_TOKEN>");
             ConnectionConfig config = new ConnectionConfig();
             config.setConnectionId("isolated-token-1");
             config.setConnectionUrl("https://test.isolated.url");
@@ -153,11 +153,11 @@ public class ConnectionClientTests {
 
             // First call: this.token == null → Token.isExpired(null)=true → generates token from creds.getToken()
             client.setBearerToken();
-            Assert.assertEquals("x.eyJleHAiOjk5OTk5OTk5OTl9.y", client.token);
+            Assert.assertEquals("<BEARER_TOKEN>", client.token);
 
             // Second call: token not null, not empty, not expired → REUSE_BEARER_TOKEN else branch (line 52)
             client.setBearerToken();
-            Assert.assertEquals("x.eyJleHAiOjk5OTk5OTk5OTl9.y", client.token);
+            Assert.assertEquals("<BEARER_TOKEN>", client.token);
         } catch (Exception e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
         }
@@ -167,7 +167,7 @@ public class ConnectionClientTests {
     public void testPrioritiseCredentials_credentialChange_resetsToken() {
         try {
             Credentials credentialsA = new Credentials();
-            credentialsA.setToken("x.eyJleHAiOjk5OTk5OTk5OTl9.y");
+            credentialsA.setToken("<BEARER_TOKEN>");
             ConnectionConfig config = new ConnectionConfig();
             config.setConnectionId("isolated-change-1");
             config.setConnectionUrl("https://test.isolated.url");
