@@ -34,8 +34,12 @@ The `flowvault` module is a Skyflow Java SDK built for high-throughput vault ope
   - [Schema vs. schemaless vaults](#schema-vs-schemaless-vaults)
   - [Batching and concurrency](#batching-and-concurrency)
 - [VaultController — Unary operations](#vaultcontroller--unary-operations)
-  - [Unary vs. bulk](#unary-vs-bulk)
+  - [Unary vs. bulk Parity](#unary-vs-bulk-parity)
   - [Vault type support](#vault-type-support)
+- [SDK Guidelines: Unary vs Bulk Operations](#sdk-guidelines-unary-vs-bulk-operations)
+  - [Unary](#unary)
+  - [Bulk](#bulk)
+  - [Concurrency guidelines](#concurrency-guidelines)
 - [Bulk Insert](#bulk-insert)
 - [Bulk Tokenize](#bulk-tokenize)
 - [Bulk Detokenize](#bulk-detokenize)
@@ -629,7 +633,7 @@ Alongside the bulk methods, `VaultController` exposes five **unary** operations.
 
 Each method also accepts an optional options object (`InsertOptions`, `DetokenizeOptions`, `GetOptions`, `UpdateOptions`, `DeleteOptions`) — see [Custom Request Headers](#custom-request-headers).
 
-## Unary vs. bulk
+## Unary vs. bulk Parity
 
 Everything the bulk machinery adds — batching, concurrency, the payload ceiling, the summary, the per-item index — is absent here. What survives is the per-record reporting:
 
@@ -654,6 +658,58 @@ The same distinction as [Schema vs. schemaless vaults](#schema-vs-schemaless-vau
 | `update` | Structured vaults — updates a table's records by skyflow ID. |
 | `delete` | Structured vaults — deletes a table's records. Distinct from `bulkDeleteTokens`, which removes tokens only and leaves the record in place. |
 | `detokenize` | Both — detokenizing only needs the token itself, not a table, so it works regardless of which kind of vault the token came from. |
+
+# SDK Guidelines: Unary vs Bulk Operations
+
+Both **Unary** and **Bulk** operations accept as many records as you pass. The key difference is **how the SDK makes HTTP calls and manages concurrency**.
+
+## Unary
+
+- Makes **exactly one HTTP call per SDK invocation**, regardless of the number of records.
+- The application is responsible for any **chunking, batching, and concurrency**.
+- Best suited for:
+  - Single-event or low-volume ingestion
+  - Interactive or user-facing requests where immediate results are required
+  - Applications that already have their own concurrency or job-management mechanism
+
+**Use Unary when you want the application to control request execution.**
+
+## Bulk
+
+- The SDK automatically splits records into `batchSize`-sized chunks.
+- It dispatches up to `concurrencyLimit` batches in parallel.
+- The SDK therefore owns **batching, parallel dispatch, and request coordination**.
+- Best suited for:
+  - Large datasets
+  - Imports and backfills
+  - ETL and data migration workloads
+  - Bulk/streaming ingestion where you want the SDK to manage batching and concurrency
+
+**Use Bulk when you want the SDK to optimize request execution for high-volume workloads.**
+
+A bulk call sent with fewer records than `batchSize` (default 50) still produces exactly one batch — `concurrency` resolves to 1 regardless of `..._CONCURRENCY_LIMIT` — so there's no batching benefit, only the overhead of the bulk machinery on top. Use unary instead for calls at that size.
+
+## Concurrency guidelines
+
+For Bulk operations, choose `concurrencyLimit` based on the available CPU and the ratio of task wait time to compute time:
+
+```
+concurrency ≈ N_cpu × U_cpu × (1 + W/C)
+```
+
+Where:
+
+- `N_cpu` = number of CPU cores available to the process
+- `U_cpu` = target CPU utilization, between 0 and 1
+- `W` = wait time / API latency per call
+- `C` = compute time per call — approximately **5 ms for the SDK**
+
+### Practical guidance
+
+- **VUs ≤ 20:** a single CPU core is generally sufficient.
+- **VUs > 20:** consider increasing CPU capacity and tune concurrency accordingly.
+- For higher-throughput workloads, **dual- or quad-core** configurations are a good starting point.
+- Start with the formula as a baseline and **benchmark with your actual API latency and workload** before increasing concurrency further.
 
 # Bulk Insert
 
