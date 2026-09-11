@@ -24,7 +24,7 @@ import java.util.List;
  */
 public class AuthInterceptorTests {
 
-    private static final String API_KEY = "sky-ab123-abcd1234cdef1234abcd4321cdef4321";
+    private static final String API_KEY = "<API_KEY>";
 
     private static VaultConfig config() {
         VaultConfig config = new VaultConfig();
