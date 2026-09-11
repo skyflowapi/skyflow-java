@@ -3,13 +3,15 @@ package com.skyflow;
 import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.Env;
 import com.skyflow.errors.SkyflowException;
-import com.skyflow.utils.SkyflowRetryInterceptor;
+import com.skyflow.generated.rest.core.RetryInterceptor;
 import com.skyflow.vault.controller.VaultController;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.lang.reflect.Field;
+import java.time.Duration;
 import java.util.List;
 
 /**
@@ -36,17 +38,39 @@ public class HttpConfigTests {
         return client.sharedHttpClient;
     }
 
-    private static int maxRetriesOf(SkyflowRetryInterceptor interceptor) {
-        return interceptor.getMaxRetries();
+    private static int maxRetriesOf(RetryInterceptor interceptor) {
+        return (int) fieldOf(interceptor, "maxRetries");
     }
 
-    private static SkyflowRetryInterceptor retryInterceptorOf(OkHttpClient http) {
+    // RetryInterceptor is generated code (com.skyflow.generated.*) and exposes no getters for the
+    // fields it was constructed with, so these tests - which exist to verify VaultClient's
+    // precedence/resolution logic actually reached the interceptor - read them back via reflection
+    // rather than adding hand-written accessors to a file meant to stay a faithful Fern output.
+    private static Object fieldOf(RetryInterceptor interceptor, String name) {
+        try {
+            Field field = RetryInterceptor.class.getDeclaredField(name);
+            field.setAccessible(true);
+            return field.get(interceptor);
+        } catch (ReflectiveOperationException e) {
+            throw new AssertionError(e);
+        }
+    }
+
+    private static long initialRetryDelayMillisOf(RetryInterceptor interceptor) {
+        return ((Duration) fieldOf(interceptor, "initialRetryDelay")).toMillis();
+    }
+
+    private static long maxRetryDelayMillisOf(RetryInterceptor interceptor) {
+        return ((Duration) fieldOf(interceptor, "maxRetryDelay")).toMillis();
+    }
+
+    private static RetryInterceptor retryInterceptorOf(OkHttpClient http) {
         for (Interceptor interceptor : http.interceptors()) {
-            if (interceptor instanceof SkyflowRetryInterceptor) {
-                return (SkyflowRetryInterceptor) interceptor;
+            if (interceptor instanceof RetryInterceptor) {
+                return (RetryInterceptor) interceptor;
             }
         }
-        throw new AssertionError("No SkyflowRetryInterceptor installed on the HTTP client");
+        throw new AssertionError("No RetryInterceptor installed on the HTTP client");
     }
 
     // ── SDK defaults (neither level configured) ───────────────────────────────
@@ -198,8 +222,8 @@ public class HttpConfigTests {
         List<Interceptor> interceptors = http.interceptors();
         Assert.assertEquals(2, interceptors.size());
         Assert.assertTrue("Retry must be registered first so it wraps the auth interceptor",
-                interceptors.get(0) instanceof SkyflowRetryInterceptor);
-        Assert.assertFalse(interceptors.get(1) instanceof SkyflowRetryInterceptor);
+                interceptors.get(0) instanceof RetryInterceptor);
+        Assert.assertFalse(interceptors.get(1) instanceof RetryInterceptor);
     }
 
     @Test
@@ -239,10 +263,10 @@ public class HttpConfigTests {
 
     @Test
     public void testDefaults_retryDelaysAre500And2000Millis() throws SkyflowException {
-        SkyflowRetryInterceptor retry = retryInterceptorOf(httpClientOf(new VaultClient(buildConfig(), null)));
+        RetryInterceptor retry = retryInterceptorOf(httpClientOf(new VaultClient(buildConfig(), null)));
 
-        Assert.assertEquals(500L, retry.getInitialRetryDelayMillis());
-        Assert.assertEquals(2000L, retry.getMaxRetryDelayMillis());
+        Assert.assertEquals(500L, initialRetryDelayMillisOf(retry));
+        Assert.assertEquals(2000L, maxRetryDelayMillisOf(retry));
     }
 
     @Test
@@ -250,10 +274,10 @@ public class HttpConfigTests {
         VaultClient client = new VaultClient(buildConfig(), null);
         client.setCommonHttpConfig(null, null, null, null, 3, 100L, 900L);
 
-        SkyflowRetryInterceptor retry = retryInterceptorOf(httpClientOf(client));
+        RetryInterceptor retry = retryInterceptorOf(httpClientOf(client));
 
-        Assert.assertEquals(100L, retry.getInitialRetryDelayMillis());
-        Assert.assertEquals(900L, retry.getMaxRetryDelayMillis());
+        Assert.assertEquals(100L, initialRetryDelayMillisOf(retry));
+        Assert.assertEquals(900L, maxRetryDelayMillisOf(retry));
     }
 
     @Test
@@ -265,10 +289,10 @@ public class HttpConfigTests {
         VaultClient client = new VaultClient(config, null);
         client.setCommonHttpConfig(null, null, null, null, 3, 100L, 900L);
 
-        SkyflowRetryInterceptor retry = retryInterceptorOf(httpClientOf(client));
+        RetryInterceptor retry = retryInterceptorOf(httpClientOf(client));
 
-        Assert.assertEquals(250L, retry.getInitialRetryDelayMillis());
-        Assert.assertEquals(4000L, retry.getMaxRetryDelayMillis());
+        Assert.assertEquals(250L, initialRetryDelayMillisOf(retry));
+        Assert.assertEquals(4000L, maxRetryDelayMillisOf(retry));
     }
 
     @Test
@@ -279,10 +303,10 @@ public class HttpConfigTests {
         VaultClient client = new VaultClient(config, null);
         client.setCommonHttpConfig(null, null, null, null, 3, 100L, 900L);
 
-        SkyflowRetryInterceptor retry = retryInterceptorOf(httpClientOf(client));
+        RetryInterceptor retry = retryInterceptorOf(httpClientOf(client));
 
-        Assert.assertEquals(100L, retry.getInitialRetryDelayMillis());  // client-wide
-        Assert.assertEquals(4000L, retry.getMaxRetryDelayMillis());     // vault
+        Assert.assertEquals(100L, initialRetryDelayMillisOf(retry));  // client-wide
+        Assert.assertEquals(4000L, maxRetryDelayMillisOf(retry));     // vault
     }
 
     @Test
@@ -294,11 +318,11 @@ public class HttpConfigTests {
                 .addVaultConfig(buildConfig())
                 .build();
 
-        SkyflowRetryInterceptor retry = retryInterceptorOf(httpClientOf(client.vault()));
+        RetryInterceptor retry = retryInterceptorOf(httpClientOf(client.vault()));
 
-        Assert.assertEquals(3, retry.getMaxRetries());
-        Assert.assertEquals(100L, retry.getInitialRetryDelayMillis());
-        Assert.assertEquals(900L, retry.getMaxRetryDelayMillis());
+        Assert.assertEquals(3, maxRetriesOf(retry));
+        Assert.assertEquals(100L, initialRetryDelayMillisOf(retry));
+        Assert.assertEquals(900L, maxRetryDelayMillisOf(retry));
     }
 
     @Test
@@ -312,7 +336,7 @@ public class HttpConfigTests {
                 .build();
 
         Assert.assertEquals(250L,
-                retryInterceptorOf(httpClientOf(client.vault())).getInitialRetryDelayMillis());
+                initialRetryDelayMillisOf(retryInterceptorOf(httpClientOf(client.vault()))));
     }
 
     @Test
@@ -323,11 +347,11 @@ public class HttpConfigTests {
         update.setInitialRetryDelayMillis(250L);
         update.setMaxRetryDelayMillis(4000L);
 
-        SkyflowRetryInterceptor retry =
+        RetryInterceptor retry =
                 retryInterceptorOf(httpClientOf(builder.updateVaultConfig(update).build().vault()));
 
-        Assert.assertEquals(250L, retry.getInitialRetryDelayMillis());
-        Assert.assertEquals(4000L, retry.getMaxRetryDelayMillis());
+        Assert.assertEquals(250L, initialRetryDelayMillisOf(retry));
+        Assert.assertEquals(4000L, maxRetryDelayMillisOf(retry));
     }
 
     @Test
@@ -342,7 +366,7 @@ public class HttpConfigTests {
 
     @Test
     public void testInvalidMaxRetries_wrapsInterceptorIllegalArgumentAsSkyflowException() throws SkyflowException {
-        // SkyflowRetryInterceptor rejects negative maxRetries with IllegalArgumentException;
+        // The generated RetryInterceptor rejects negative maxRetries with IllegalArgumentException;
         // updateExecutorInHTTP must translate that (and anything else from client construction)
         // into a SkyflowException rather than letting it escape raw.
         VaultConfig config = buildConfig();

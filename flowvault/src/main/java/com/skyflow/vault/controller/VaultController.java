@@ -76,9 +76,6 @@ import com.skyflow.vault.data.GetRequest;
 import com.skyflow.vault.data.GetResponse;
 import com.skyflow.vault.data.RequestInterceptor;
 
-import io.github.cdimascio.dotenv.Dotenv;
-import io.github.cdimascio.dotenv.DotenvException;
-
 public final class VaultController extends VaultClient {
     private static final Gson gson = new GsonBuilder().serializeNulls().create();
     private JsonObject metrics = Utils.getMetrics();
@@ -741,15 +738,7 @@ public final class VaultController extends VaultClient {
     static Function<String, String> settingResolver = VaultController::resolveSettingFromEnvironment;
 
     private static String resolveSettingFromEnvironment(String key) {
-        String value = System.getenv(key);
-        if (value == null) {
-            try {
-                value = Dotenv.load().get(key);
-            } catch (DotenvException ignored) {
-                // no .env available — environment-only
-            }
-        }
-        return value;
+        return Utils.resolveEnvOrDotenv(key);
     }
 
     private BatchConfig configureDeleteTokensConcurrencyAndBatchSize(int totalRequests) {
