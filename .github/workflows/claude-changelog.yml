@@ -1,0 +1,86 @@
+name: Claude Changelog
+
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
+      - '*.*.*-beta.*'
+
+permissions:
+  contents: write
+
+jobs:
+  generate-changelog:
+    name: Generate Release Notes
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get previous tag
+        id: previoustag
+        uses: WyriHaximus/github-action-get-previous-tag@v1
+        with:
+          fallback: '0.0.0'
+
+      - name: Get commits since previous tag
+        id: commits
+        run: |
+          PREV="${{ steps.previoustag.outputs.tag }}"
+          CURR="${{ github.ref_name }}"
+          COMMITS=$(git log "${PREV}..${CURR}" --oneline \
+            | grep -v '^\S* \[AUTOMATED\]' \
+            | grep -v '^\S* Merge ' \
+            | grep -v '^\S* \[AUTOMATED\]')
+          echo "log<<EOF" >> $GITHUB_OUTPUT
+          echo "$COMMITS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Install Claude CLI
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Generate release notes
+        id: notes
+        continue-on-error: true
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          PREV="${{ steps.previoustag.outputs.tag }}"
+          CURR="${{ github.ref_name }}"
+          COMMITS="${{ steps.commits.outputs.log }}"
+          NOTES=$(claude --print --model claude-sonnet-4-5 -p "
+          Generate GitHub Release notes for the Skyflow Java SDK.
+
+          Release: $CURR (previous: $PREV)
+
+          Commits:
+          $COMMITS
+
+          Rules:
+          - Group into sections: ## Features, ## Bug Fixes, ## Security, ## Breaking Changes
+          - Omit any section with no entries
+          - Each entry: bullet point with a concise one-line description; include the Jira ticket ID if present (e.g. SK-1234)
+          - Strip PR merge numbers like (#323) — keep the substance
+          - Skip [AUTOMATED] commits, version bump commits, and bare merge commits
+          - Breaking Changes section must come first if present
+          - End with: _Full changelog: https://github.com/skyflowapi/skyflow-java/compare/${PREV}...${CURR}_
+
+          Output only the markdown. No preamble or explanation.
+          ")
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          echo "$NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create or update GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ github.ref_name }}"
+          NOTES="${{ steps.notes.outputs.notes }}"
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            gh release edit "$TAG" --notes "$NOTES"
+          else
+            gh release create "$TAG" --notes "$NOTES" --title "Release $TAG"
+          fi
