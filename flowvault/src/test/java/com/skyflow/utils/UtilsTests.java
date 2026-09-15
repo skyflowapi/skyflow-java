@@ -2233,7 +2233,7 @@ public class UtilsTests {
         // the same token sent twice: the API decides each position independently, and has been
         // observed returning both 200,200 and 200,404 for the identical request. Whatever it says
         // must reach the caller unchanged - no deduplication, no normalising one row against the other.
-        String token = "e5874be2-940a-4c74-9c08-dc6c1e8c6f9b";
+        String token = "<TOKEN_1>";
         String message = "DeleteToken failed. Token " + token + " is invalid. Specify a valid token.";
         V1FlowDeleteTokenResponse response = V1FlowDeleteTokenResponse.builder()
                 .tokens(Arrays.asList(
