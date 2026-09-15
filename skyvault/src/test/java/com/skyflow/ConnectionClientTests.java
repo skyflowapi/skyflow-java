@@ -21,6 +21,11 @@ public class ConnectionClientTests {
     private static String apiKey = null;
     private static ConnectionConfig connectionConfig;
 
+    // Token.decoded() rejects anything without 3 dot-separated segments, so a bare placeholder
+    // like "<TOKEN>" makes Token.isExpired() always return true (never reaches the REUSE_BEARER_TOKEN
+    // branch in ConnectionClient#setBearerToken). Loaded from dummy-non-secrets/ (Gitleaks-excluded)
+    // rather than a string literal, since a real JWT shape (eyJ...) would itself trip the scanner.
+
     // @Before (not @BeforeClass): several tests below mutate the shared connectionClient/
     // connectionConfig credentials state, so it must reset before every test rather than once
     // per class — otherwise test outcomes depend on JUnit's (unspecified) method execution order.
@@ -55,21 +60,24 @@ public class ConnectionClientTests {
     }
 
     @Test
-    public void testSetBearerToken() {
+    public void testSetBearerToken() throws IOException {
+        // Loaded from dummy-non-secrets/ (Gitleaks-excluded) rather than a string literal,
+        // since a real JWT shape (eyJ...) would itself trip the scanner.
+        String bearerToken = new String(Files.readAllBytes(
+                Paths.get("./src/test/resources/dummy-non-secrets/dummy-bearer-token.txt")), StandardCharsets.UTF_8).trim();
         try {
-            // Self-contained fake JWT (exp=9999999999, far future) instead of relying on a
-            // local .env fixture, which may not exist (e.g. in CI/sandbox environments).
-            String bearerToken = "<BEARER_TOKEN>";
             Credentials credentials = new Credentials();
             credentials.setToken(bearerToken);
             connectionConfig.setCredentials(credentials);
             connectionClient.updateConnectionConfig(connectionConfig);
 
-            // regular scenario
+            // regular scenario: token == null → BEARER_TOKEN_EXPIRED branch → generates token
             connectionClient.setBearerToken();
+            Assert.assertEquals(bearerToken, connectionClient.token);
 
-            // re-use scenario
+            // re-use scenario: token valid, not expired → REUSE_BEARER_TOKEN branch
             connectionClient.setBearerToken();
+            Assert.assertEquals(bearerToken, connectionClient.token);
         } catch (Exception e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
         }
@@ -140,11 +148,12 @@ public class ConnectionClientTests {
     }
 
     @Test
-    public void testSetBearerToken_withValidNonExpiredToken_reusesBearerToken() {
+    public void testSetBearerToken_withValidNonExpiredToken_reusesBearerToken() throws IOException {
+        String farFutureJwt = new String(Files.readAllBytes(
+                Paths.get("./src/test/resources/dummy-non-secrets/dummy-bearer-token.txt")), StandardCharsets.UTF_8).trim();
         try {
-            // far-future JWT: base64({"exp":9999999999}) = eyJleHAiOjk5OTk5OTk5OTl9 — never expires
             Credentials creds = new Credentials();
-            creds.setToken("<BEARER_TOKEN>");
+            creds.setToken(farFutureJwt);
             ConnectionConfig config = new ConnectionConfig();
             config.setConnectionId("isolated-token-1");
             config.setConnectionUrl("https://test.isolated.url");
@@ -153,11 +162,11 @@ public class ConnectionClientTests {
 
             // First call: this.token == null → Token.isExpired(null)=true → generates token from creds.getToken()
             client.setBearerToken();
-            Assert.assertEquals("<BEARER_TOKEN>", client.token);
+            Assert.assertEquals(farFutureJwt, client.token);
 
-            // Second call: token not null, not empty, not expired → REUSE_BEARER_TOKEN else branch (line 52)
+            // Second call: token not null, not empty, not expired → REUSE_BEARER_TOKEN else branch
             client.setBearerToken();
-            Assert.assertEquals("<BEARER_TOKEN>", client.token);
+            Assert.assertEquals(farFutureJwt, client.token);
         } catch (Exception e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
         }
