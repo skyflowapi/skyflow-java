@@ -12,6 +12,9 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
 
 /**
@@ -23,8 +26,6 @@ import java.util.List;
  * attempt picks up a refreshed token instead of resending an expired one.
  */
 public class AuthInterceptorTests {
-
-    private static final String API_KEY = "sky-ab123-abcd1234cdef1234abcd4321cdef4321"; // gitleaks:allow
 
     private static VaultConfig config() {
         VaultConfig config = new VaultConfig();
@@ -47,8 +48,12 @@ public class AuthInterceptorTests {
 
     @Test
     public void testAuthInterceptor_addsBearerAuthorizationHeader() throws SkyflowException, IOException {
+        // Loaded from dummy-non-secrets/ (Gitleaks-excluded) rather than a string literal,
+        // since an API-key-shaped literal would itself trip the scanner.
+        String apiKey = new String(Files.readAllBytes(
+                Paths.get("./src/test/resources/dummy-non-secrets/dummy-api-key.txt")), StandardCharsets.UTF_8).trim();
         Credentials credentials = new Credentials();
-        credentials.setApiKey(API_KEY);
+        credentials.setApiKey(apiKey);
         VaultConfig config = config();
         config.setCredentials(credentials);
         VaultClient client = new VaultClient(config, null);
@@ -57,7 +62,7 @@ public class AuthInterceptorTests {
         FakeChain chain = new FakeChain(200);
         authInterceptorOf(client).intercept(chain);
 
-        Assert.assertEquals("Bearer " + API_KEY, chain.lastProceeded().header("Authorization"));
+        Assert.assertEquals("Bearer " + apiKey, chain.lastProceeded().header("Authorization"));
     }
 
     @Test
