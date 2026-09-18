@@ -823,8 +823,8 @@ Sample response:
           { "token": "5484-7829-1702-9110", "tokenGroupName": "card_number_cg" }
         ],
         "cardholder_name": [
-          { "token": "b2308e2a-c1f5-469b-97b7-1f193159399b", "tokenGroupName": "deterministic_string" },
-          { "token": "f1a2b3c4-d5e6-7890-abcd-ef1234567890", "tokenGroupName": "vault_token_group" }
+          { "token": "<TOKEN_1>", "tokenGroupName": "deterministic_string" },
+          { "token": "<TOKEN_2>", "tokenGroupName": "vault_token_group" }
         ]
       },
       "data": { "card_number": "4111-1111-1111-1111", "cardholder_name": "John Doe" },
@@ -981,7 +981,7 @@ public class BulkDetokenizeExample {
 
         List<String> tokens = new ArrayList<>(Arrays.asList(
                 "5479-4229-4622-1393",
-                "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                "<TOKEN_3>"
         ));
 
         TokenGroupRedactions redaction = TokenGroupRedactions.builder()
@@ -1031,7 +1031,7 @@ Sample response:
       "tokenGroupName": null,
       "metadata": null,
       "httpCode": 404,
-      "token": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "token": "<TOKEN_3>",
       "error": "Token Not Found"
     }
   ]
@@ -1077,7 +1077,7 @@ public class BulkDeleteTokensExample {
 
         List<String> tokens = new ArrayList<>(Arrays.asList(
                 "5479-4229-4622-1393",
-                "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                "<TOKEN_3>"
         ));
 
         BulkDeleteTokensRequest deleteTokensRequest = BulkDeleteTokensRequest.builder()
@@ -1105,7 +1105,7 @@ Sample response:
   "summary": { "totalTokens": 2, "totalDeleted": 2, "totalFailed": 0 },
   "records": [
     { "index": 0, "token": "5479-4229-4622-1393", "httpCode": 200, "error": null, "requestId": null },
-    { "index": 1, "token": "a1b2c3d4-e5f6-7890-abcd-ef1234567890", "httpCode": 200, "error": null, "requestId": null }
+    { "index": 1, "token": "<TOKEN_3>", "httpCode": 200, "error": null, "requestId": null }
   ]
 }
 ```
@@ -1198,7 +1198,7 @@ Sample response:
           { "token": "5484-7829-1702-9110", "tokenGroupName": "card_number_cg" }
         ],
         "cardholder_name": [
-          { "token": "b2308e2a-c1f5-469b-97b7-1f193159399b", "tokenGroupName": "deterministic_string" }
+          { "token": "<TOKEN_1>", "tokenGroupName": "deterministic_string" }
         ]
       },
       "data": { "card_number": "4111-1111-1111-1111", "cardholder_name": "John Doe" },
@@ -1261,7 +1261,7 @@ public class DetokenizeExample {
 
         List<String> tokens = new ArrayList<>(Arrays.asList(
                 "5479-4229-4622-1393",
-                "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                "<TOKEN_3>"
         ));
 
         TokenGroupRedactions redaction = TokenGroupRedactions.builder()
@@ -1297,7 +1297,7 @@ Sample response:
       "requestId": null
     },
     {
-      "token": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "token": "<TOKEN_3>",
       "value": null,
       "tokenGroupName": null,
       "metadata": null,
@@ -1372,7 +1372,7 @@ public class GetExample {
                 .tableName("table1")
                 .skyflowIds(new ArrayList<>(Arrays.asList(
                         "9fac9201-7b8a-4446-93f8-5244e1213bd1",
-                        "b2308e2a-c1f5-469b-97b7-1f193159399b")))
+                        "<TOKEN_1>")))
                 .columns(new ArrayList<>(Arrays.asList("card_number", "cardholder_name")))
                 .columnRedactions(Collections.singletonList(redaction))
                 .limit(10)
@@ -1524,7 +1524,7 @@ Sample response:
       "skyflowId": "9fac9201-7b8a-4446-93f8-5244e1213bd1",
       "tokens": {
         "cardholder_name": [
-          { "token": "f1a2b3c4-d5e6-7890-abcd-ef1234567890", "tokenGroupName": "deterministic_string" }
+          { "token": "<TOKEN_2>", "tokenGroupName": "deterministic_string" }
         ]
       },
       "data": { "cardholder_name": "Jane Doe" },
@@ -1584,7 +1584,7 @@ public class DeleteExample {
 
         List<String> ids = new ArrayList<>(Arrays.asList(
                 "9fac9201-7b8a-4446-93f8-5244e1213bd1",
-                "b2308e2a-c1f5-469b-97b7-1f193159399b"
+                "<TOKEN_1>"
         ));
 
         DeleteRequest deleteRequest = DeleteRequest.builder()
@@ -1606,7 +1606,7 @@ Sample response:
 {
   "records": [
     { "skyflowId": "9fac9201-7b8a-4446-93f8-5244e1213bd1", "httpCode": 200, "error": null, "requestId": null },
-    { "skyflowId": "b2308e2a-c1f5-469b-97b7-1f193159399b", "httpCode": 404, "error": "Record Not Found", "requestId": "a1b2c3d4-..." }
+    { "skyflowId": "<TOKEN_1>", "httpCode": 404, "error": "Record Not Found", "requestId": "a1b2c3d4-..." }
   ]
 }
 ```
