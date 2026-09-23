@@ -5,10 +5,11 @@ import com.skyflow.config.VaultConfig;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.generated.rest.ApiClient;
 import com.skyflow.generated.rest.ApiClientBuilder;
+import com.skyflow.generated.rest.core.RetryInterceptor;
 import com.skyflow.generated.rest.resources.flowservice.FlowserviceClient;
-import com.skyflow.utils.SkyflowRetryInterceptor;
 import com.skyflow.utils.Utils;
 
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.ConnectionPool;
@@ -32,6 +33,11 @@ public class VaultClient extends BaseVaultClient<VaultConfig> {
     private static final int DEFAULT_MAX_RETRIES = 0;
     private static final long DEFAULT_INITIAL_RETRY_DELAY_MILLIS = 500L;
     private static final long DEFAULT_MAX_RETRY_DELAY_MILLIS = 2000L;
+    // Not yet exposed as a VaultConfig/builder setting, so hardcoded here rather than left as
+    // Optional.empty() - passing it explicitly keeps the choice visible in our own code instead of
+    // depending on RetryInterceptor's internal default, which is free to change on a future
+    // regeneration since it is generated code we do not maintain.
+    private static final double RETRY_JITTER_FACTOR = 0.2;
 
     protected VaultClient(VaultConfig vaultConfig, Credentials credentials) throws SkyflowException {
         super(vaultConfig, credentials);
@@ -154,18 +160,23 @@ public class VaultClient extends BaseVaultClient<VaultConfig> {
             Integer writeTimeout = resolveNullableInt(vaultConfig.getWriteTimeout(), commonWriteTimeout);
 
             // Negative timeout/retry values reach here straight from public config setters with
-            // no validation of their own; our own SkyflowRetryInterceptor throws IllegalArgumentException
-            // and OkHttp's own Builder throws IllegalStateException for those — translate both (and
-            // anything else unexpected from this construction) to SkyflowException so every failure
-            // mode from this SDK is a SkyflowException, never a raw one.
+            // no validation of their own; the generated RetryInterceptor validates initial/max delay
+            // but not maxRetries itself (a negative value would just behave as zero retries), and
+            // OkHttp's own Builder throws IllegalStateException for negative timeouts — translate
+            // all of these (and anything else unexpected from this construction) to SkyflowException
+            // so every failure mode from this SDK is a SkyflowException, never a raw one.
             try {
+                if (maxRetries < 0) {
+                    throw new IllegalArgumentException("maxRetries must be non-negative");
+                }
                 OkHttpClient.Builder httpBuilder = new OkHttpClient.Builder()
                         .connectionPool(new ConnectionPool(100, 1, TimeUnit.MINUTES))
                         // Overall ceiling; bounds the whole call including retries.
                         .callTimeout(timeoutSeconds, TimeUnit.SECONDS)
                         // OUTER: retries. Must wrap the auth interceptor so each attempt re-reads the
                         // (possibly refreshed) bearer token rather than replaying a stale one.
-                        .addInterceptor(new SkyflowRetryInterceptor(maxRetries, initialRetryDelayMillis, maxRetryDelayMillis))
+                        .addInterceptor(new RetryInterceptor(maxRetries, Optional.of(initialRetryDelayMillis),
+                                Optional.of(maxRetryDelayMillis), Optional.of(RETRY_JITTER_FACTOR)))
                         .addInterceptor(chain -> {  // INNER: auth
                             Request requestWithAuth = chain.request().newBuilder()
                                     .header("Authorization", "Bearer " + this.token)

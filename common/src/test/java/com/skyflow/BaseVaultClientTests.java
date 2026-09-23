@@ -6,6 +6,7 @@ import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.logs.ErrorLogs;
 import com.skyflow.utils.BaseConstants;
+import com.skyflow.utils.BaseUtils;
 import okhttp3.Call;
 import okhttp3.Connection;
 import okhttp3.Interceptor;
@@ -38,6 +39,7 @@ public class BaseVaultClientTests {
     public void saveEnvFileState() throws IOException {
         File f = new File(ENV_FILE);
         originalEnvContent = f.exists() ? Files.readAllBytes(Paths.get(ENV_FILE)) : null;
+        BaseUtils.resetDotenvCacheForTests(); // see its javadoc: .env is otherwise memoized JVM-wide
     }
 
     @After

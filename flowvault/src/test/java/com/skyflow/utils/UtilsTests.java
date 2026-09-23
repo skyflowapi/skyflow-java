@@ -92,6 +92,7 @@ public class UtilsTests {
     public void saveEnvFileState() throws IOException {
         File f = new File(ENV_FILE);
         originalEnvContent = f.exists() ? Files.readAllBytes(Paths.get(ENV_FILE)) : null;
+        BaseUtils.resetDotenvCacheForTests(); // see its javadoc: .env is otherwise memoized JVM-wide
     }
 
     @After

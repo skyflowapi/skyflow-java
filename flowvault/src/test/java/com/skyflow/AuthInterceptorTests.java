@@ -6,7 +6,6 @@ import com.skyflow.enums.Env;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.generated.rest.core.RetryInterceptor;
 import com.skyflow.utils.FakeChain;
-import com.skyflow.utils.SkyflowRetryInterceptor;
 import okhttp3.Interceptor;
 import org.junit.Assert;
 import org.junit.Test;
@@ -39,7 +38,7 @@ public class AuthInterceptorTests {
         client.updateExecutorInHTTP();
         List<Interceptor> interceptors = client.sharedHttpClient.interceptors();
         for (Interceptor interceptor : interceptors) {
-            if (!(interceptor instanceof SkyflowRetryInterceptor) && !(interceptor instanceof RetryInterceptor)) {
+            if (!(interceptor instanceof RetryInterceptor)) {
                 return interceptor;
             }
         }

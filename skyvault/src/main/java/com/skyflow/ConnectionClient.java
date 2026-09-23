@@ -7,11 +7,11 @@ import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.logs.InfoLogs;
 import com.skyflow.serviceaccount.util.Token;
+import com.skyflow.utils.BaseUtils;
 import com.skyflow.utils.Constants;
 import com.skyflow.utils.Utils;
 import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.utils.validations.Validations;
-import io.github.cdimascio.dotenv.Dotenv;
 import io.github.cdimascio.dotenv.DotenvException;
 
 public class ConnectionClient {
@@ -69,8 +69,7 @@ public class ConnectionClient {
             } else if (this.commonCredentials != null) {
                 this.finalCredentials = this.commonCredentials;
             } else {
-                Dotenv dotenv = Dotenv.load();
-                String sysCredentials = dotenv.get(Constants.ENV_CREDENTIALS_KEY_NAME);
+                String sysCredentials = BaseUtils.resolveEnvOrDotenv(Constants.ENV_CREDENTIALS_KEY_NAME);
                 if (sysCredentials == null) {
                     throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(),
                             ErrorMessage.EmptyCredentials.getMessage());

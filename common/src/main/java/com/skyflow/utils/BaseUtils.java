@@ -21,8 +21,63 @@ import com.skyflow.logs.ErrorLogs;
 import com.skyflow.logs.InfoLogs;
 import com.skyflow.serviceaccount.util.BearerToken;
 import com.skyflow.utils.logger.LogUtil;
+import io.github.cdimascio.dotenv.Dotenv;
+import io.github.cdimascio.dotenv.DotenvException;
 
 public class BaseUtils {
+
+    // Memoized .env: Dotenv.load() does a filesystem read every time it's called, and several
+    // call sites resolve a setting this way on every single SDK request -- re-reading a file
+    // whose contents never change for the life of the process turned those into repeated,
+    // uncached, blocking disk I/O on the hot path. Loaded at most once per JVM; `dotenvAttempted`
+    // also memoizes the "no .env file present" outcome so a missing file isn't retried either.
+    private static volatile boolean dotenvAttempted = false;
+    private static volatile Dotenv cachedDotenv = null;
+
+    private static Dotenv memoizedDotenv() {
+        if (!dotenvAttempted) {
+            synchronized (BaseUtils.class) {
+                if (!dotenvAttempted) {
+                    try {
+                        cachedDotenv = Dotenv.load();
+                    } catch (DotenvException e) {
+                        cachedDotenv = null; // no .env file in the working directory
+                    }
+                    dotenvAttempted = true;
+                }
+            }
+        }
+        return cachedDotenv;
+    }
+
+    /**
+     * Resolves {@code key} from the process environment first, falling back to the (memoized)
+     * {@code .env} file if present. Returns null if found in neither.
+     */
+    public static String resolveEnvOrDotenv(String key) {
+        String value = System.getenv(key);
+        if (value == null) {
+            Dotenv dotenv = memoizedDotenv();
+            if (dotenv != null) {
+                value = dotenv.get(key);
+            }
+        }
+        return value;
+    }
+
+    /**
+     * Test-only: forces the next {@link #resolveEnvOrDotenv} call to re-read the {@code .env}
+     * file from disk instead of reusing the memoized one. Production code always wants the
+     * memoized behavior (a project's {@code .env} doesn't change while the process is running);
+     * this exists purely so tests that rewrite {@code .env} mid-run can observe the new content
+     * without restarting the JVM.
+     */
+    public static void resetDotenvCacheForTests() {
+        synchronized (BaseUtils.class) {
+            dotenvAttempted = false;
+            cachedDotenv = null;
+        }
+    }
     public static String generateBearerToken(BaseCredentials credentials) throws SkyflowException {
         if (credentials.getPath() != null) {
             BearerToken.BearerTokenBuilder builder = BearerToken.builder()
