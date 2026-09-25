@@ -73,3 +73,26 @@ Every `*Sync`/`*Async` pair above shows the same request-building and response-h
 handling follows the same shape everywhere: read `getSummary()` for totals, then walk `getRecords()`
 checking `getError() == null` per entry — see [Error Handling](../README.md#error-handling) for the
 full model these samples are built on.
+### SDK latency instrumentation (`com.example.otel.tracing`)
+
+Measuring Skyflow SDK latency from application code, with OpenTelemetry and without modifying the
+SDK. This is the package to hand to a customer who wants SDK latency visible in their own tracing
+backend — see its [README](src/main/java/com/example/otel/tracing/README.md).
+
+| File | Purpose |
+| ---- | ------- |
+| [TracedVault.java](src/main/java/com/example/otel/tracing/TracedVault.java) | A drop-in wrapper around `VaultController` that emits a span and a duration histogram per operation, splitting each call into pre-wire work and everything after. |
+| [SkyflowTracing.java](src/main/java/com/example/otel/tracing/SkyflowTracing.java) | OpenTelemetry bootstrap, for services that do not already have one. |
+| [TracedVaultExample.java](src/main/java/com/example/otel/tracing/TracedVaultExample.java) | A complete runnable example. |
+
+### Latency benchmark (`com.example.otel.benchmark`)
+
+| Sample | Demonstrates |
+|---|---|
+| [SdkLatencyBenchmark.java](src/main/java/com/example/otel/benchmark/SdkLatencyBenchmark.java) | Measuring, with OpenTelemetry and from outside the SDK, how much latency the SDK adds over calling the vault API directly — an SDK call and an equivalent bare-OkHttp call, interleaved against the same server with the same payload. |
+| [MockVaultServer.java](src/main/java/com/example/otel/benchmark/MockVaultServer.java) | A local stand-in for the vault, so the measurement is not swamped by network and server time. |
+
+Run it with [`run-otel-benchmark.sh`](run-otel-benchmark.sh); see
+[OTEL_LATENCY_BENCHMARK.md](OTEL_LATENCY_BENCHMARK.md) for the method, the measured results and how
+to read them. Nothing in `flowvault/` is modified or instrumented — the benchmark uses the SDK's
+public API, so its numbers describe the SDK a customer actually runs.

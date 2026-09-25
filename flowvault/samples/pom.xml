@@ -11,14 +11,53 @@
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- Override to pin a published release: mvn compile -Dskyflow.flowvault.version=1.0.1 -->
+        <skyflow.flowvault.version>1.2.0</skyflow.flowvault.version>
+        <!-- Used only by the com.example.otel latency benchmark. 1.35.0 is the last line that
+             still supports the Java 8 target this module compiles to. -->
+        <opentelemetry.version>1.35.0</opentelemetry.version>
+        <okhttp.version>4.12.0</okhttp.version>
     </properties>
 
     <dependencies>
-        <!-- https://mvnrepository.com/artifact/com.skyflow/skyflow-flowvault-java -->
+        <!-- https://mvnrepository.com/artifact/com.skyflow/skyflow-flowvault-java
+
+             Resolved from ~/.m2 first, so a locally built SDK shadows the published
+             artifact of the same version. To test local flowvault changes, run this
+             from the repo root and re-run it after every SDK edit:
+
+               mvn install -pl flowvault -am -DskipTests -Dmaven.javadoc.skip=true -Dgpg.skip=true
+
+             Requires Maven 3.8.1+ (japicmp, bound to the verify phase, rejects older). -->
         <dependency>
             <groupId>com.skyflow</groupId>
             <artifactId>skyflow-flowvault-java</artifactId>
-            <version>1.0.1</version>
+            <version>${skyflow.flowvault.version}</version>
+        </dependency>
+
+        <!-- ── com.example.otel latency benchmark only ──────────────────────────
+             The benchmark measures the SDK from the outside, so its instrumentation is a
+             dependency of the sample application, never of the SDK. Nothing in flowvault/
+             references OpenTelemetry. -->
+        <dependency>
+            <groupId>io.opentelemetry</groupId>
+            <artifactId>opentelemetry-sdk</artifactId>
+            <version>${opentelemetry.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.opentelemetry</groupId>
+            <artifactId>opentelemetry-exporter-logging</artifactId>
+            <version>${opentelemetry.version}</version>
+        </dependency>
+
+        <!-- The SDK's transport, declared explicitly so the benchmark's raw-HTTP baseline can be
+             built on the same client with the same pool settings. Without that, the comparison
+             would partly measure one HTTP client against another. -->
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>okhttp</artifactId>
+            <version>${okhttp.version}</version>
         </dependency>
 
     </dependencies>
