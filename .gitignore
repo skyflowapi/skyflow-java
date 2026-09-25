@@ -8,3 +8,6 @@ docs/superpowers/
 
 # local sample configuration - may hold credentials
 .env
+
+# benchmark output (flowvault/samples/run-otel-benchmark.sh)
+otel-out/
