@@ -19,6 +19,8 @@ This repository hosts Skyflow's Java SDKs for integrating Skyflow into a Java ba
 
 > Migrating from v1? See skyvault's **[Migration Guide](docs/migrate_to_v2.md)**. V1 is in maintenance mode and will reach End of Life on October 31, 2026.
 
+> Using a beta version? `skyvault` and `flowvault` version independently — if the version you've installed contains `-beta.N`, see that package's own README for its beta disclaimer. Beta builds are not GA-ready.
+
 ## Repository layout
 
 The root `pom.xml` (`packaging=pom`) aggregates this Maven reactor:

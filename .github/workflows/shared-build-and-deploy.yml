@@ -171,6 +171,7 @@ jobs:
           fi
 
           git add ${{ inputs.module }}/pom.xml
+          git add ${{ inputs.module }}/README.md
 
           # Nothing staged = pom already at this version (normal if set before
           # tagging). That is success; a bare 'git commit' would exit 1 here.
