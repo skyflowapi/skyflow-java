@@ -20,6 +20,17 @@
             <artifactId>skyflow-java</artifactId>
             <version>1.15.0</version>
         </dependency>
+        <!-- Override vulnerable jackson-databind 2.9.6 (via io.jsonwebtoken:jjwt@0.9.1) and jackson-core 2.13.0 pulled transitively by skyflow-java 1.15.0 -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.18.11</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>2.18.11</version>
+        </dependency>
 
     </dependencies>
 
