@@ -49,6 +49,11 @@ The `flowvault` module is a Skyflow Java SDK built for high-throughput vault ope
 - [Get](#get)
 - [Update](#update)
 - [Delete](#delete)
+- [Detect](#detect)
+  - [Deidentify string](#deidentify-string)
+  - [Reidentify string](#reidentify-string)
+  - [Get run](#get-run)
+  - [Check guardrails](#check-guardrails)
 - [Custom Request Headers](#custom-request-headers)
 - [Error Handling](#error-handling)
   - [Two layers of errors](#two-layers-of-errors)
@@ -1623,6 +1628,212 @@ for (DeleteResponseRecord record : deleteResponse.getRecords()) {
     }
 }
 ```
+
+# Detect
+
+Skyflow Detect finds and de-identifies sensitive data in free text, then re-identifies it on demand. The flowvault SDK exposes the Detect V2 API through `DetectController`, returned by `skyflowClient.detect()` and `skyflowClient.detect(vaultId)`. Every request is scoped to that vault, and the controller honours the same credentials, [timeouts and retries](#timeouts-and-retries) as `vault()`.
+
+Detect configurations are created in Studio or through the management API. The SDK does not create, update or delete them.
+
+| Method | Request | Response | Description |
+|--------|---------|----------|-------------|
+| `deidentifyString(DeidentifyStringRequest)` | `com.skyflow.detect.DeidentifyStringRequest` | `com.skyflow.detect.DeidentifyStringResponse` | Detect and replace sensitive data in a string |
+| `deidentifyFile(DeidentifyFileRequest)` | `com.skyflow.detect.DeidentifyFileRequest` | `com.skyflow.detect.DeidentifyFileResponse` | Submit a file for de-identification, optionally polling the run to completion |
+| `reidentifyString(ReidentifyStringRequest)` | `com.skyflow.detect.ReidentifyStringRequest` | `com.skyflow.detect.ReidentifyStringResponse` | Replace tokens in a string with their original or redacted values |
+| `reidentifyFile(ReidentifyFileRequest)` | `com.skyflow.detect.ReidentifyFileRequest` | `com.skyflow.detect.ReidentifyFileResponse` | Replace tokens in a file with their original or redacted values |
+| `getRun(GetRunRequest)` | `com.skyflow.detect.GetRunRequest` | `com.skyflow.detect.GetRunResponse` | Retrieve the status and outputs of a Detect file run |
+| `checkGuardrails(CheckGuardrailsRequest)` | `com.skyflow.detect.CheckGuardrailsRequest` | `com.skyflow.detect.CheckGuardrailsResponse` | Screen text for toxicity and denied topics |
+
+> Detect V2 is in beta.
+
+## Deidentify string
+
+`DeidentifyStringRequest` takes the text plus, optionally, `configurationId` (a stored Detect configuration) and/or `configuration` (an inline `DetectConfiguration`). Both are optional on the API and are sent exactly as supplied. The SDK fills the vault id from the controller.
+
+```java
+import com.skyflow.detect.*;
+
+// Stored configuration
+DeidentifyStringResponse response = skyflowClient.detect().deidentifyString(
+        DeidentifyStringRequest.builder()
+                .text("My name is John Doe, and my email is johndoe@acme.com.")
+                .configurationId("<CONFIGURATION_ID>")
+                .build());
+
+System.out.println(response.getProcessedText());
+// My name is [NAME_1], and my email is [EMAIL_ADDRESS_1].
+
+// Inline configuration
+DetectConfiguration configuration = DetectConfiguration.builder()
+        .detect(Detect.builder()
+                .entities(Arrays.asList(
+                        Entity.builder()
+                                .entityType(EntityType.NAME)
+                                .deidentificationType(DeidentificationType.VAULT_TOKEN)
+                                .destination("<TOKEN_GROUP_NAME>")   // token group that stores the value
+                                .build(),
+                        Entity.builder()
+                                .entityType(EntityType.ALL)
+                                .deidentificationType(DeidentificationType.ENTITY_UNIQUE_COUNTER)
+                                .build()))
+                .skip(Collections.singletonList("Skyflow"))
+                .returnEntities(ReturnEntitiesType.EXCLUDE_SENSITIVE_DATA)
+                .build())
+        .build();
+
+response = skyflowClient.detect().deidentifyString(
+        DeidentifyStringRequest.builder()
+                .text("My name is John Doe, and my email is johndoe@acme.com.")
+                .configuration(configuration)
+                .build());
+
+for (DetectedEntity entity : response.getEntities()) {
+    System.out.println(entity.getEntityType() + " " + entity.getToken()
+            + " [" + entity.getLocation().getStartIndex() + "," + entity.getLocation().getEndIndex() + "]");
+}
+System.out.println(response.getMetrics().getWordCount());
+```
+
+`DeidentifyStringResponse` carries `getProcessedText()`, `getEntities()` (a `List<DetectedEntity>` with token, entity type, location and confidence scores; never `null`) and `getMetrics()`.
+
+## Deidentify file
+
+File de-identification is asynchronous on the API: the submit call returns a run id and the result is retrieved from the run. `deidentifyFile` exposes both modes.
+
+- **Submit only** (default): one call, returns `getRunId()`. `getStatus()` is `null` and nothing is written to disk. Retrieve the result later with [`getRun`](#get-run).
+- **Submit and poll**: set `pollOptions`. The SDK polls the run with exponential backoff (1, 2, 4, 8, 16, then 32 seconds between lookups) until it is `SUCCESS`, `FAILED` or `UNKNOWN`, or until `waitTime` (default 60 s, max 300) or `maxAttempts` (default 23, max 23) is used up. If the budget runs out the response carries the run id with `IN_PROGRESS` or `QUEUED` so you can resume with `getRun`.
+
+The file is supplied in one of three ways: `dataSource` plus `value` (`BASE64` content, a `SKYFLOW_ID`, or a `PRESIGNED_URL`), or `file(File)` / `filePath(String)`, which read and encode a local file and infer `dataFormat` from its extension. Supply exactly one of `value`, `file` or `filePath`. Either `configurationId` or an inline `configuration` is passed through as given.
+
+```java
+// Submit only
+DeidentifyFileResponse submitted = skyflowClient.detect().deidentifyFile(
+        DeidentifyFileRequest.builder()
+                .filePath("/data/intake/patient-notes.pdf")   // BASE64 + pdf inferred
+                .configurationId("<CONFIGURATION_ID>")
+                .build());
+String runId = submitted.getRunId();
+
+// Submit and poll
+DeidentifyFileResponse response = skyflowClient.detect().deidentifyFile(
+        DeidentifyFileRequest.builder()
+                .filePath("/data/intake/patient-notes.pdf")
+                .configurationId("<CONFIGURATION_ID>")
+                .pollOptions(PollOptions.builder().waitTime(120).build())
+                .outputDirectory("/data/processed")           // optional
+                .build());
+
+switch (response.getStatus()) {
+    case SUCCESS:
+        // For file-based requests the outputs are already on disk:
+        //   /data/processed/processed-patient-notes.pdf    the redacted file
+        //   /data/processed/processed-entities-patient-notes.json   the detected entities
+        // response.getOutput() and getMetrics() carry the same data.
+        break;
+    case FAILED:
+        System.err.println(response.getMessage());
+        break;
+    default:            // IN_PROGRESS or QUEUED: budget ran out, resume with getRun(runId)
+        break;
+}
+```
+
+Outputs are written only when polling reached `SUCCESS`, the request was built from a local file, and the run delivered them as base64. A request built from a `SKYFLOW_ID` or `PRESIGNED_URL` has no local name to derive from, and presigned-URL outputs are not fetched, so in those cases read `getOutput()` and write the files yourself. Files are named `processed-<input name>.<extension>`, with the entities output as `processed-entities-<input name>.json` (and `processed-object-entities-<input name>.json` for object entities); `outputDirectory` is created if missing and defaults to the working directory. Polling blocks the calling thread.
+
+## Reidentify string
+
+`ReidentifyStringRequest` takes the tokenised text and an optional list of `RedactionLevel` rules. For flowvault vaults each rule targets a `tokenGroupName` and applies a named `redactionPattern`. Without rules every token is replaced by its original value.
+
+```java
+ReidentifyStringResponse response = skyflowClient.detect().reidentifyString(
+        ReidentifyStringRequest.builder()
+                .text("My name is [NAME_1].")
+                .redactionLevel(Collections.singletonList(
+                        RedactionLevel.builder()
+                                .tokenGroupName("<TOKEN_GROUP_NAME>")
+                                .redactionPattern("<REDACTION_PATTERN>")
+                                .build()))
+                .build());
+
+System.out.println(response.getProcessedText());
+// My name is J**n D*e.
+```
+
+A `RedactionLevel` is expected to name one source (`tokenGroupName` or `entityName`) and one replacement (`redactionPattern` or `redactionType`). Every field is optional on the API, so the SDK passes the list through as given and the server enforces the combination rules, including which fields apply to flowvault vaults.
+
+## Reidentify file
+
+`reidentifyFile` is synchronous: the re-identified file comes back in the response, not through a run id. `ReidentifyFileRequest` takes a `dataSource` (`BASE64`, `SKYFLOW_ID` or `PRESIGNED_URL`), the matching `value`, an optional `dataFormat` and the same optional `RedactionLevel` rules as `reidentifyString`. Re-identification supports text-based formats such as TXT, CSV, JSON, JSONL, XML, DOCX, XLSX and PPTX.
+
+```java
+byte[] content = Files.readAllBytes(Paths.get("tokenised.txt"));
+
+ReidentifyFileResponse response = skyflowClient.detect().reidentifyFile(
+        ReidentifyFileRequest.builder()
+                .dataSource(DataSourceType.BASE64)
+                .value(Base64.getEncoder().encodeToString(content))
+                .dataFormat(FileDataFormat.TXT)
+                .redactionLevel(Collections.singletonList(
+                        RedactionLevel.builder()
+                                .tokenGroupName("<TOKEN_GROUP_NAME>")
+                                .redactionPattern("<REDACTION_PATTERN>")
+                                .build()))
+                .build());
+
+if (response.getStatus() == DetectRunStatus.SUCCESS) {
+    for (FileOutput output : response.getOutput()) {
+        // output.getProcessedFile() is base64 or a presigned URL, per response.getOutputType()
+        byte[] processed = Base64.getDecoder().decode(output.getProcessedFile());
+    }
+}
+```
+
+`ReidentifyFileResponse` carries `getStatus()`, `getOutputType()`, `getOutput()` (never `null`) and `getMetrics()`. This method is specific to the flowvault SDK.
+
+## Get run
+
+File de-identification is asynchronous: the submit call returns a run id, and `getRun` retrieves the run's status and, once it has succeeded, its outputs. `GetRunResponse.getOutput()` is empty and `getOutputType()` and `getMetrics()` are `null` until the run completes.
+
+```java
+GetRunResponse run = skyflowClient.detect().getRun(
+        GetRunRequest.builder().runId("<RUN_ID>").build());
+
+switch (run.getStatus()) {
+    case SUCCESS:
+        for (FileOutput output : run.getOutput()) {
+            // output.getProcessedFile() is base64 or a presigned URL, per run.getOutputType()
+            // output.getProcessedFileType() is e.g. REDACTED_FILE or ENTITIES
+            // output.getProcessedFileExtension() is a FileDataFormat such as PDF
+        }
+        break;
+    case FAILED:
+        System.err.println(run.getMessage());
+        break;
+    default:            // QUEUED, IN_PROGRESS, UNKNOWN
+        // poll again later
+}
+```
+
+## Check guardrails
+
+`checkGuardrails` screens text for toxicity and for a list of denied topics, which makes it a natural pre-LLM check. Each check runs only when requested: `getToxic()` is `null` unless `checkToxicity(true)` was set, and `getDeniedTopic()` is `null` unless `denyTopics` was supplied. `getValidation()` is `FAILED` if any requested check triggered.
+
+```java
+CheckGuardrailsResponse response = skyflowClient.detect().checkGuardrails(
+        CheckGuardrailsRequest.builder()
+                .text(userPrompt)
+                .checkToxicity(true)
+                .denyTopics(Arrays.asList("politics", "medical advice"))
+                .build());
+
+if (response.getValidation() == GuardrailsValidation.FAILED) {
+    throw new IllegalArgumentException("blocked: toxic=" + response.getToxic() + " deniedTopic=" + response.getDeniedTopic());
+}
+```
+
+All Detect methods throw `SkyflowException` as described in [Error Handling](#error-handling). Client-side validation fails before any network call.
+
+See the samples [DeidentifyStringSample.java](samples/src/main/java/com/example/detect/DeidentifyStringSample.java), [ReidentifyStringSample.java](samples/src/main/java/com/example/detect/ReidentifyStringSample.java) [GetRunSample.java](samples/src/main/java/com/example/detect/GetRunSample.java) and [CheckGuardrailsSample.java](samples/src/main/java/com/example/detect/CheckGuardrailsSample.java).
 
 # Custom Request Headers
 

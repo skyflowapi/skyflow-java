@@ -15,6 +15,7 @@ import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.Env;
 import com.skyflow.enums.UpdateType;
+import com.skyflow.errors.BaseErrorMessage;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.utils.Constants;
@@ -232,7 +233,7 @@ public class ValidationsTests {
             Validations.validateVaultConfiguration(null);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorMessage.NullVaultConfig.getMessage(), e.getMessage());
+            Assert.assertEquals(BaseErrorMessage.NullVaultConfig.getMessage(), e.getMessage());
         }
     }
 
@@ -582,7 +583,7 @@ public class ValidationsTests {
             Validations.validateInsertRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorMessage.EmptyTokens.getMessage(), e.getMessage());
+            Assert.assertEquals(BaseErrorMessage.EmptyTokens.getMessage(), e.getMessage());
         }
     }
 
@@ -597,7 +598,7 @@ public class ValidationsTests {
             Validations.validateInsertRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorMessage.EmptyKeyInTokens.getMessage(), e.getMessage());
+            Assert.assertEquals(BaseErrorMessage.EmptyKeyInTokens.getMessage(), e.getMessage());
         }
     }
 
@@ -612,7 +613,7 @@ public class ValidationsTests {
             Validations.validateInsertRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorMessage.EmptyKeyInTokens.getMessage(), e.getMessage());
+            Assert.assertEquals(BaseErrorMessage.EmptyKeyInTokens.getMessage(), e.getMessage());
         }
     }
 
@@ -1610,7 +1611,7 @@ public class ValidationsTests {
             Validations.validateDeleteRequest(null);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorMessage.DeleteRequestNull.getMessage(), e.getMessage());
+            Assert.assertEquals(BaseErrorMessage.DeleteRequestNull.getMessage(), e.getMessage());
         }
     }
 
@@ -1621,7 +1622,7 @@ public class ValidationsTests {
             Validations.validateDeleteRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorMessage.TableKeyError.getMessage(), e.getMessage());
+            Assert.assertEquals(BaseErrorMessage.TableKeyError.getMessage(), e.getMessage());
         }
     }
 
@@ -1632,7 +1633,7 @@ public class ValidationsTests {
             Validations.validateDeleteRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorMessage.EmptyTable.getMessage(), e.getMessage());
+            Assert.assertEquals(BaseErrorMessage.EmptyTable.getMessage(), e.getMessage());
         }
     }
 
@@ -1671,7 +1672,7 @@ public class ValidationsTests {
             Validations.validateDeleteRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorMessage.EmptyIdInIds.getMessage(), e.getMessage());
+            Assert.assertEquals(BaseErrorMessage.EmptyIdInIds.getMessage(), e.getMessage());
         }
     }
 
@@ -1722,7 +1723,7 @@ public class ValidationsTests {
             Validations.validateUpdateRequest(null);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorMessage.UpdateRequestNull.getMessage(), e.getMessage());
+            Assert.assertEquals(BaseErrorMessage.UpdateRequestNull.getMessage(), e.getMessage());
         }
     }
 
@@ -1734,7 +1735,7 @@ public class ValidationsTests {
             Validations.validateUpdateRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorMessage.TableKeyError.getMessage(), e.getMessage());
+            Assert.assertEquals(BaseErrorMessage.TableKeyError.getMessage(), e.getMessage());
         }
     }
 
@@ -1746,7 +1747,7 @@ public class ValidationsTests {
             Validations.validateUpdateRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorMessage.EmptyTable.getMessage(), e.getMessage());
+            Assert.assertEquals(BaseErrorMessage.EmptyTable.getMessage(), e.getMessage());
         }
     }
 
@@ -1845,7 +1846,7 @@ public class ValidationsTests {
             Validations.validateUpdateRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorMessage.EmptyTokens.getMessage(), e.getMessage());
+            Assert.assertEquals(BaseErrorMessage.EmptyTokens.getMessage(), e.getMessage());
         }
     }
 
@@ -1859,7 +1860,7 @@ public class ValidationsTests {
             Validations.validateUpdateRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorMessage.EmptyKeyInTokens.getMessage(), e.getMessage());
+            Assert.assertEquals(BaseErrorMessage.EmptyKeyInTokens.getMessage(), e.getMessage());
         }
     }
 
@@ -1917,7 +1918,7 @@ public class ValidationsTests {
             Validations.validateGetRequest(null);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorMessage.GetRequestNull.getMessage(), e.getMessage());
+            Assert.assertEquals(BaseErrorMessage.GetRequestNull.getMessage(), e.getMessage());
         }
     }
 
@@ -1957,7 +1958,7 @@ public class ValidationsTests {
             Validations.validateGetRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorMessage.TableKeyError.getMessage(), e.getMessage());
+            Assert.assertEquals(BaseErrorMessage.TableKeyError.getMessage(), e.getMessage());
         }
     }
 
@@ -1968,7 +1969,7 @@ public class ValidationsTests {
             Validations.validateGetRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorMessage.EmptyTable.getMessage(), e.getMessage());
+            Assert.assertEquals(BaseErrorMessage.EmptyTable.getMessage(), e.getMessage());
         }
     }
 
@@ -2010,7 +2011,7 @@ public class ValidationsTests {
             Validations.validateGetRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorMessage.EmptyIdInIds.getMessage(), e.getMessage());
+            Assert.assertEquals(BaseErrorMessage.EmptyIdInIds.getMessage(), e.getMessage());
         }
     }
 
@@ -2039,7 +2040,7 @@ public class ValidationsTests {
             Validations.validateGetRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorMessage.EmptyFields.getMessage(), e.getMessage());
+            Assert.assertEquals(BaseErrorMessage.EmptyFields.getMessage(), e.getMessage());
         }
     }
 
@@ -2054,7 +2055,7 @@ public class ValidationsTests {
             Validations.validateGetRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorMessage.EmptyFieldInFields.getMessage(), e.getMessage());
+            Assert.assertEquals(BaseErrorMessage.EmptyFieldInFields.getMessage(), e.getMessage());
         }
     }
 
@@ -2163,7 +2164,7 @@ public class ValidationsTests {
             Validations.validateGetRequest(request);
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorMessage.TableKeyError.getMessage(), e.getMessage());
+            Assert.assertEquals(BaseErrorMessage.TableKeyError.getMessage(), e.getMessage());
         }
     }
 }
