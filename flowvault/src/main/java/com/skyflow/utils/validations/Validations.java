@@ -3,7 +3,6 @@ package com.skyflow.utils.validations;
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.InterfaceName;
-import com.skyflow.generated.rest.types.FlowEnumUpdateType;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
@@ -13,6 +12,7 @@ import com.skyflow.utils.Utils;
 import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.vault.data.*;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -319,12 +319,7 @@ public class Validations extends BaseValidations {
     }
 
     private static boolean isKnownUpdateType(String updateType) {
-        for (FlowEnumUpdateType type : FlowEnumUpdateType.values()) {
-            if (type.toString().equalsIgnoreCase(updateType)) {
-                return true;
-            }
-        }
-        return false;
+        return Utils.toUpsertUpdateType(updateType) != null;
     }
 
     public static void validateDetokenizeRequest(DetokenizeRequest request) throws SkyflowException {
@@ -765,4 +760,180 @@ public class Validations extends BaseValidations {
         }
     }
 
+    public static void validateQueryRequest(QueryRequest queryRequest) throws SkyflowException {
+        if (queryRequest == null) {
+            LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.QUERY_REQUEST_NULL.getLog(), InterfaceName.QUERY.getName()
+            ));
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.QueryRequestNull.getMessage());
+        }
+        String query = queryRequest.getQuery();
+        if (query == null) {
+            LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.QUERY_IS_REQUIRED.getLog(), InterfaceName.QUERY.getName()
+            ));
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.QueryKeyError.getMessage());
+        } else if (query.trim().isEmpty()) {
+            LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.EMPTY_QUERY.getLog(), InterfaceName.QUERY.getName()
+            ));
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyQuery.getMessage());
+        }
+    }
+
+    public static void validateGetTokensRequest(GetTokensRequest request) throws SkyflowException {
+        if (request == null) {
+            LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.GET_TOKENS_REQUEST_NULL.getLog(), InterfaceName.GET_TOKENS.getName()
+            ));
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.GetTokensRequestNull.getMessage());
+        }
+        List<GetTokensRequestRecord> records = request.getRecords();
+        if (records == null || records.isEmpty()) {
+            LogUtil.printErrorLog(Utils.parameterizedString(
+                    ErrorLogs.EMPTY_GET_TOKENS_RECORDS.getLog(), InterfaceName.GET_TOKENS.getName()
+            ));
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyGetTokensRecords.getMessage());
+        }
+        for (int i = 0; i < records.size(); i++) {
+            GetTokensRequestRecord record = records.get(i);
+            if (record == null) {
+                LogUtil.printErrorLog(Utils.parameterizedString(
+                        ErrorLogs.GET_TOKENS_RECORD_NULL.getLog(), InterfaceName.GET_TOKENS.getName(), String.valueOf(i)
+                ));
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.GetTokensRecordNull.getMessage());
+            }
+            Object value = record.getValue();
+            if (value == null || (value instanceof String && ((String) value).trim().isEmpty())) {
+                LogUtil.printErrorLog(Utils.parameterizedString(
+                        ErrorLogs.EMPTY_VALUE_IN_GET_TOKENS_RECORD.getLog(), InterfaceName.GET_TOKENS.getName(), String.valueOf(i)
+                ));
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyValueInGetTokensRecord.getMessage());
+            }
+            if (!hasText(record.getTokenGroupName())) {
+                LogUtil.printErrorLog(Utils.parameterizedString(
+                        ErrorLogs.EMPTY_TOKEN_GROUP_NAME_IN_GET_TOKENS_RECORD.getLog(), InterfaceName.GET_TOKENS.getName(), String.valueOf(i)
+                ));
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyTokenGroupNameInGetTokensRecord.getMessage());
+            }
+        }
+    }
+
+    public static void validateUploadFilesRequest(UploadFilesRequest request) throws SkyflowException {
+        InterfaceName upload = InterfaceName.UPLOAD_FILES;
+        if (request == null) {
+            throw invalid(ErrorLogs.UPLOAD_FILES_REQUEST_NULL, ErrorMessage.UploadFilesRequestNull, upload, null);
+        }
+        List<UploadFilesRequestRecord> records = request.getRecords();
+        if (records == null || records.isEmpty()) {
+            throw invalid(ErrorLogs.EMPTY_UPLOAD_FILES_RECORDS, ErrorMessage.EmptyUploadFilesRecords, upload, null);
+        }
+        for (int i = 0; i < records.size(); i++) {
+            UploadFilesRequestRecord record = records.get(i);
+            if (record == null) {
+                throw invalid(ErrorLogs.UPLOAD_FILES_RECORD_NULL, ErrorMessage.UploadFilesRecordNull, upload, i);
+            }
+            if (!hasText(record.getTableName())) {
+                throw invalid(ErrorLogs.EMPTY_TABLE_NAME_IN_UPLOAD_FILES_RECORD,
+                        ErrorMessage.EmptyTableNameInUploadFilesRecord, upload, i);
+            }
+            // Omitting skyflowId creates a new record, so a blank one is rejected rather than
+            // silently treated as absent.
+            if (record.getSkyflowId() != null && !hasText(record.getSkyflowId())) {
+                throw invalid(ErrorLogs.EMPTY_SKYFLOW_ID_IN_UPLOAD_FILES_RECORD,
+                        ErrorMessage.EmptySkyflowIdInUploadFilesRecord, upload, i);
+            }
+            List<UploadFilesRequestColumn> columns = record.getColumns();
+            if (columns == null || columns.isEmpty()) {
+                throw invalid(ErrorLogs.EMPTY_UPLOAD_FILES_COLUMNS, ErrorMessage.EmptyUploadFilesColumns, upload, i);
+            }
+            for (UploadFilesRequestColumn column : columns) {
+                validateUploadFilesColumn(column, i);
+            }
+        }
+    }
+
+    // Exactly one file source per column (filePath, base64 or fileObject), and it must be usable.
+    private static void validateUploadFilesColumn(UploadFilesRequestColumn column, int recordIndex)
+            throws SkyflowException {
+        InterfaceName upload = InterfaceName.UPLOAD_FILES;
+        if (column == null) {
+            throw invalid(ErrorLogs.UPLOAD_FILES_COLUMN_NULL, ErrorMessage.UploadFilesColumnNull, upload, recordIndex);
+        }
+        if (!hasText(column.getColumn())) {
+            throw invalid(ErrorLogs.EMPTY_COLUMN_IN_UPLOAD_FILES_COLUMN,
+                    ErrorMessage.EmptyColumnInUploadFilesColumn, upload, recordIndex);
+        }
+        int sources = (hasText(column.getFilePath()) ? 1 : 0) + (hasText(column.getBase64()) ? 1 : 0)
+                + (column.getFileObject() != null ? 1 : 0);
+        if (sources == 0) {
+            throw invalid(ErrorLogs.MISSING_FILE_SOURCE_IN_UPLOAD_FILES_COLUMN,
+                    ErrorMessage.MissingFileSourceInUploadFilesColumn, upload, recordIndex);
+        }
+        if (sources > 1) {
+            throw invalid(ErrorLogs.MULTIPLE_FILE_SOURCES_IN_UPLOAD_FILES_COLUMN,
+                    ErrorMessage.MultipleFileSourcesInUploadFilesColumn, upload, recordIndex);
+        }
+        if (hasText(column.getFilePath())) {
+            File file = new File(column.getFilePath());
+            if (!file.isFile() || !file.canRead()) {
+                throw invalid(ErrorLogs.INVALID_FILE_PATH_IN_UPLOAD_FILES_COLUMN,
+                        ErrorMessage.InvalidFilePathInUploadFilesColumn, upload, recordIndex);
+            }
+        } else if (hasText(column.getBase64())) {
+            if (!hasText(column.getFileName())) {
+                throw invalid(ErrorLogs.FILE_NAME_REQUIRED_WITH_BASE64_IN_UPLOAD_FILES_COLUMN,
+                        ErrorMessage.FileNameRequiredWithBase64InUploadFilesColumn, upload, recordIndex);
+            }
+        } else if (!column.getFileObject().isFile() || !column.getFileObject().canRead()) {
+            throw invalid(ErrorLogs.INVALID_FILE_OBJECT_IN_UPLOAD_FILES_COLUMN,
+                    ErrorMessage.InvalidFileObjectInUploadFilesColumn, upload, recordIndex);
+        }
+    }
+
+    public static void validateDeleteFilesRequest(DeleteFilesRequest request) throws SkyflowException {
+        InterfaceName delete = InterfaceName.DELETE_FILES;
+        if (request == null) {
+            throw invalid(ErrorLogs.DELETE_FILES_REQUEST_NULL, ErrorMessage.DeleteFilesRequestNull, delete, null);
+        }
+        List<DeleteFilesRequestRecord> records = request.getRecords();
+        if (records == null || records.isEmpty()) {
+            throw invalid(ErrorLogs.EMPTY_DELETE_FILES_RECORDS, ErrorMessage.EmptyDeleteFilesRecords, delete, null);
+        }
+        for (int i = 0; i < records.size(); i++) {
+            DeleteFilesRequestRecord record = records.get(i);
+            if (record == null) {
+                throw invalid(ErrorLogs.DELETE_FILES_RECORD_NULL, ErrorMessage.DeleteFilesRecordNull, delete, i);
+            }
+            if (!hasText(record.getTableName())) {
+                throw invalid(ErrorLogs.EMPTY_TABLE_NAME_IN_DELETE_FILES_RECORD,
+                        ErrorMessage.EmptyTableNameInDeleteFilesRecord, delete, i);
+            }
+            List<String> columns = record.getColumns();
+            if (columns == null || columns.isEmpty()) {
+                throw invalid(ErrorLogs.EMPTY_DELETE_FILES_COLUMNS, ErrorMessage.EmptyDeleteFilesColumns, delete, i);
+            }
+            for (String column : columns) {
+                if (!hasText(column)) {
+                    throw invalid(ErrorLogs.EMPTY_COLUMN_IN_DELETE_FILES_COLUMNS,
+                            ErrorMessage.EmptyColumnInDeleteFilesColumns, delete, i);
+                }
+            }
+            boolean hasSkyflowId = hasText(record.getSkyflowId());
+            boolean hasUniqueValues = record.getUniqueValues() != null && !record.getUniqueValues().isEmpty();
+            if (hasSkyflowId == hasUniqueValues) {
+                throw invalid(ErrorLogs.INVALID_ID_OR_UNIQUE_VALUES_IN_DELETE_FILES_RECORD,
+                        ErrorMessage.InvalidIdOrUniqueValuesInDeleteFilesRecord, delete, i);
+            }
+        }
+    }
+
+    /** Logs a validation failure and builds the exception to throw for it. */
+    private static SkyflowException invalid(ErrorLogs log, ErrorMessage message, InterfaceName interfaceName,
+                                            Integer index) {
+        LogUtil.printErrorLog(index == null
+                ? Utils.parameterizedString(log.getLog(), interfaceName.getName())
+                : Utils.parameterizedString(log.getLog(), interfaceName.getName(), String.valueOf(index)));
+        return new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), message.getMessage());
+    }
 }

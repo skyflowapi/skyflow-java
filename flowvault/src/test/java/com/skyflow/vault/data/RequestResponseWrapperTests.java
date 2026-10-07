@@ -17,8 +17,9 @@ import java.util.Map;
 /**
  * Tests for the simple request/response wrapper classes: {@link InsertRequest},
  * {@link InsertResponseRecord}, {@link DetokenizeRequest}, {@link DetokenizeResponseRecord},
- * {@link BulkDeleteTokensRequest}, {@link BulkDetokenizeRequest}, {@link BulkTokenizeRequest}
- * and {@link BulkInsertRequest}.
+ * {@link BulkDeleteTokensRequest}, {@link BulkDetokenizeRequest}, {@link BulkTokenizeRequest},
+ * {@link BulkInsertRequest}, {@link QueryRequest}, {@link QueryResponse}, {@link GetTokensRequest}
+ * and {@link GetTokensResponse}.
  */
 public class RequestResponseWrapperTests {
 
@@ -326,4 +327,104 @@ public class RequestResponseWrapperTests {
 
     // Tests for DeleteTokensResponse were removed: the class no longer exists (bulk-only module).
 
+    // ── QueryRequest ─────────────────────────────────────────────────────────
+
+    @Test
+    public void testQueryRequest_getterReturnsBuilderValue() {
+        QueryRequest request = QueryRequest.builder().query("SELECT * FROM persons").build();
+        Assert.assertEquals("SELECT * FROM persons", request.getQuery());
+    }
+
+    @Test
+    public void testQueryRequest_defaultsAreNull() {
+        QueryRequest request = QueryRequest.builder().build();
+        Assert.assertNull(request.getQuery());
+    }
+
+    @Test
+    public void testQueryRequest_isABaseQueryRequest() {
+        QueryRequest request = QueryRequest.builder().query("SELECT 1").build();
+        Assert.assertTrue(request instanceof BaseQueryRequest);
+    }
+
+    // ── QueryResponse ────────────────────────────────────────────────────────
+
+    @Test
+    public void testQueryResponse_gettersReturnConstructorValues() {
+        HashMap<String, Object> row = new HashMap<>();
+        row.put("name", "john");
+        ArrayList<HashMap<String, Object>> fields = new ArrayList<>(Collections.singletonList(row));
+        QueryResponseMetadata metadata = new QueryResponseMetadata(Collections.singletonList("name"));
+
+        QueryResponse response = new QueryResponse(fields, metadata, "req-1");
+
+        Assert.assertEquals(fields, response.getFields());
+        Assert.assertNull(response.getErrors());
+        Assert.assertSame(metadata, response.getMetadata());
+        Assert.assertEquals("req-1", response.getRequestId());
+        Assert.assertTrue(response instanceof BaseQueryResponse);
+    }
+
+    @Test
+    public void testQueryResponse_toStringSerializesAllFieldsIncludingNulls() {
+        HashMap<String, Object> row = new HashMap<>();
+        row.put("name", "john");
+        QueryResponse response = new QueryResponse(new ArrayList<>(Collections.singletonList(row)),
+                new QueryResponseMetadata(Collections.singletonList("name")), "req-1");
+
+        String json = response.toString();
+
+        Assert.assertTrue(json, json.contains("\"fields\":[{\"name\":\"john\"}]"));
+        Assert.assertTrue(json, json.contains("\"errors\":null"));
+        Assert.assertTrue(json, json.contains("\"metadata\":{\"columns\":[\"name\"]}"));
+        Assert.assertTrue(json, json.contains("\"requestId\":\"req-1\""));
+    }
+
+    // ── GetTokensRequest ─────────────────────────────────────────────────────
+
+    @Test
+    public void testGetTokensRequest_getterReturnsBuilderValue() {
+        List<GetTokensRequestRecord> records = Collections.singletonList(
+                GetTokensRequestRecord.builder().value("john@example.com").tokenGroupName("det_group").build());
+
+        GetTokensRequest request = GetTokensRequest.builder().records(records).build();
+
+        Assert.assertEquals(records, request.getRecords());
+        Assert.assertTrue(request instanceof BaseGetTokensRequest);
+    }
+
+    @Test
+    public void testGetTokensRequest_defaultsAreNull() {
+        GetTokensRequest request = GetTokensRequest.builder().build();
+        Assert.assertNull(request.getRecords());
+    }
+
+    // ── GetTokensResponse ────────────────────────────────────────────────────
+
+    @Test
+    public void testGetTokensResponse_getterReturnsConstructorValue() {
+        HashMap<String, Object> record = new HashMap<>();
+        record.put("token", "tok-1");
+        ArrayList<HashMap<String, Object>> records = new ArrayList<>(Collections.singletonList(record));
+
+        GetTokensResponse response = new GetTokensResponse(records);
+
+        Assert.assertEquals(records, response.getRecords());
+        Assert.assertTrue(response instanceof BaseGetTokensResponse);
+    }
+
+    @Test
+    public void testGetTokensResponse_toStringSerializesNulls() {
+        HashMap<String, Object> record = new HashMap<>();
+        record.put("token", "tok-1");
+        record.put("error", null);
+        record.put("requestId", null);
+        GetTokensResponse response = new GetTokensResponse(new ArrayList<>(Collections.singletonList(record)));
+
+        String json = response.toString();
+
+        Assert.assertTrue(json, json.contains("\"token\":\"tok-1\""));
+        Assert.assertTrue(json, json.contains("\"error\":null"));
+        Assert.assertTrue(json, json.contains("\"requestId\":null"));
+    }
 }

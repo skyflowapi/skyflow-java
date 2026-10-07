@@ -1,9 +1,12 @@
 package com.skyflow.vault.controller;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -21,18 +24,21 @@ import com.skyflow.generated.rest.core.ApiClientApiException;
 import com.skyflow.generated.rest.core.ApiClientException;
 import com.skyflow.generated.rest.core.ApiClientHttpResponse;
 import com.skyflow.generated.rest.core.RequestOptions;
-import com.skyflow.generated.rest.resources.flowservice.requests.V1InsertRequest;
-import com.skyflow.generated.rest.resources.flowservice.requests.V1DeleteRequest;
-import com.skyflow.generated.rest.resources.flowservice.requests.V1GetRequest;
-import com.skyflow.generated.rest.resources.flowservice.requests.V1UpdateRequest;
-import com.skyflow.generated.rest.types.V1FlowDeleteTokenResponse;
-import com.skyflow.generated.rest.types.V1FlowTokenizeResponse;
-import com.skyflow.generated.rest.types.V1InsertRecordData;
-import com.skyflow.generated.rest.types.V1InsertResponse;
-import com.skyflow.generated.rest.types.V1DeleteResponse;
-import com.skyflow.generated.rest.types.V1GetResponse;
-import com.skyflow.generated.rest.types.V1UpdateResponse;
-import com.skyflow.generated.rest.types.V1Upsert;
+import com.skyflow.generated.rest.resources.files.requests.FileDeleteRequest;
+import com.skyflow.generated.rest.resources.files.requests.FileUploadRequest;
+import com.skyflow.generated.rest.resources.query.requests.ExecuteQueryRequest;
+import com.skyflow.generated.rest.resources.tokens.requests.DeleteTokenRequest;
+import com.skyflow.generated.rest.resources.tokens.requests.GetTokensFromValuesRequest;
+import com.skyflow.generated.rest.resources.tokens.requests.TokenizeRequest;
+import com.skyflow.generated.rest.types.DeleteTokenResponse;
+import com.skyflow.generated.rest.types.ExecuteQueryResponse;
+import com.skyflow.generated.rest.types.FileDeleteResponse;
+import com.skyflow.generated.rest.types.FileUploadResponse;
+import com.skyflow.generated.rest.types.FileUploadResponseObject;
+import com.skyflow.generated.rest.types.GetTokensFromValuesResponse;
+import com.skyflow.generated.rest.types.InsertRecordData;
+import com.skyflow.generated.rest.types.TokenizeResponse;
+import com.skyflow.generated.rest.types.Upsert;
 import com.skyflow.logs.ErrorLogs;
 import com.skyflow.logs.InfoLogs;
 import com.skyflow.logs.WarningLogs;
@@ -68,16 +74,33 @@ import com.skyflow.vault.data.RequestContext;
 import com.skyflow.vault.data.UpdateOptions;
 import com.skyflow.vault.data.UpdateRequest;
 import com.skyflow.vault.data.UpdateResponse;
+import com.skyflow.vault.data.DeleteFilesOptions;
+import com.skyflow.vault.data.DeleteFilesRequest;
+import com.skyflow.vault.data.DeleteFilesResponse;
 import com.skyflow.vault.data.DeleteOptions;
 import com.skyflow.vault.data.DeleteRequest;
 import com.skyflow.vault.data.DeleteResponse;
 import com.skyflow.vault.data.GetOptions;
 import com.skyflow.vault.data.GetRequest;
 import com.skyflow.vault.data.GetResponse;
+import com.skyflow.vault.data.GetTokensOptions;
+import com.skyflow.vault.data.GetTokensRequest;
+import com.skyflow.vault.data.GetTokensResponse;
+import com.skyflow.vault.data.QueryOptions;
+import com.skyflow.vault.data.QueryRequest;
+import com.skyflow.vault.data.QueryResponse;
 import com.skyflow.vault.data.RequestInterceptor;
+import com.skyflow.vault.data.UploadFilesOptions;
+import com.skyflow.vault.data.UploadFilesRequest;
+import com.skyflow.vault.data.UploadFilesRequestColumn;
+import com.skyflow.vault.data.UploadFilesRequestRecord;
+import com.skyflow.vault.data.UploadFilesResponse;
 
 import io.github.cdimascio.dotenv.Dotenv;
 import io.github.cdimascio.dotenv.DotenvException;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 public final class VaultController extends VaultClient {
     private static final Gson gson = new GsonBuilder().serializeNulls().create();
@@ -125,13 +148,13 @@ public final class VaultController extends VaultClient {
             Validations.validateInsertRequest(insertRequest);
 
             setBearerToken();
-            V1InsertRequest request = Utils.getInsertRequestBody(insertRequest, this.getVaultConfig());
+            com.skyflow.generated.rest.resources.records.requests.InsertRequest request = Utils.getInsertRequestBody(insertRequest, this.getVaultConfig());
             RequestInterceptor interceptor = options != null ? options.getInterceptor() : null;
             RequestContext ctx = new RequestContext("INSERT", 0, 1);
             if (interceptor != null) interceptor.intercept(ctx);
 
-            ApiClientHttpResponse<V1InsertResponse> response =
-                    this.getRecordsApi().withRawResponse().insert(request, buildRequestOptions(ctx));
+            ApiClientHttpResponse<com.skyflow.generated.rest.types.InsertResponse> response =
+                    this.getRecordsApi().withRawResponse().insertRecords(request, buildRequestOptions(ctx));
 
             InsertResponse formattedResponse = Utils.formatInsertResponse(response.body(), response.headers());
             LogUtil.printInfoLog(InfoLogs.INSERT_REQUEST_RESOLVED.getLog());
@@ -144,7 +167,7 @@ public final class VaultController extends VaultClient {
             if (fallback != null) {
                 return fallback;
             }
-            String bodyString = gson.toJson(e.body());
+            String bodyString = gson.toJson(Utils.errorBody(e));
             LogUtil.printErrorLog(ErrorLogs.INSERT_RECORDS_REJECTED.getLog());
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
         } catch (ApiClientException e) {
@@ -168,11 +191,11 @@ public final class VaultController extends VaultClient {
             BatchConfig cfg = configureInsertConcurrencyAndBatchSize(insertRequest.getRecords().size());
 
             setBearerToken();
-            V1InsertRequest request = Utils.getBulkInsertRequestBody(insertRequest, this.getVaultConfig());
+            com.skyflow.generated.rest.resources.records.requests.InsertRequest request = Utils.getBulkInsertRequestBody(insertRequest, this.getVaultConfig());
             RequestInterceptor interceptor = options != null ? options.getInterceptor() : null;
             return this.processBulkInsertSync(request, insertRequest.getRecords(), interceptor, cfg);
         } catch (ApiClientApiException e) {
-            String bodyString = gson.toJson(e.body());
+            String bodyString = gson.toJson(Utils.errorBody(e));
             LogUtil.printErrorLog(ErrorLogs.INSERT_RECORDS_REJECTED.getLog());
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
         } catch (ApiClientException e) {
@@ -200,7 +223,7 @@ public final class VaultController extends VaultClient {
             BatchConfig cfg = configureInsertConcurrencyAndBatchSize(insertRequest.getRecords().size());
 
             setBearerToken();
-            V1InsertRequest request = Utils.getBulkInsertRequestBody(insertRequest, this.getVaultConfig());
+            com.skyflow.generated.rest.resources.records.requests.InsertRequest request = Utils.getBulkInsertRequestBody(insertRequest, this.getVaultConfig());
             RequestInterceptor interceptor = options != null ? options.getInterceptor() : null;
             List<CompletableFuture<BulkInsertResponse>> futures = this.insertBatchFutures(request, interceptor, cfg);
 
@@ -218,7 +241,7 @@ public final class VaultController extends VaultClient {
                         return new BulkInsertResponse(records, insertRequest.getRecords());
                     });
         } catch (ApiClientApiException e) {
-            String bodyString = gson.toJson(e.body());
+            String bodyString = gson.toJson(Utils.errorBody(e));
             LogUtil.printErrorLog(ErrorLogs.INSERT_RECORDS_REJECTED.getLog());
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
         } catch (SkyflowException e) {
@@ -245,14 +268,14 @@ public final class VaultController extends VaultClient {
             Validations.validateDetokenizeRequest(detokenizeRequest);
 
             setBearerToken();
-            com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest request =
+            com.skyflow.generated.rest.resources.tokens.requests.DetokenizeRequest request =
                     Utils.getDetokenizeRequestBody(detokenizeRequest, this.getVaultConfig().getVaultId());
             RequestInterceptor interceptor = options != null ? options.getInterceptor() : null;
             RequestContext ctx = new RequestContext("DETOKENIZE", 0, 1);
             if (interceptor != null) interceptor.intercept(ctx);
 
-            ApiClientHttpResponse<com.skyflow.generated.rest.types.V1FlowDetokenizeResponse> response =
-                    this.getRecordsApi().withRawResponse().detokenize(request, buildRequestOptions(ctx));
+            ApiClientHttpResponse<com.skyflow.generated.rest.types.DetokenizeResponse> response =
+                    this.getTokensApi().withRawResponse().detokenize(request, buildRequestOptions(ctx));
 
             DetokenizeResponse formattedResponse = Utils.formatDetokenizeResponse(response.body(), response.headers());
             LogUtil.printInfoLog(InfoLogs.DETOKENIZE_REQUEST_RESOLVED.getLog());
@@ -265,7 +288,7 @@ public final class VaultController extends VaultClient {
             if (fallback != null) {
                 return fallback;
             }
-            String bodyString = gson.toJson(e.body());
+            String bodyString = gson.toJson(Utils.errorBody(e));
             LogUtil.printErrorLog(ErrorLogs.DETOKENIZE_REQUEST_REJECTED.getLog());
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
         } catch (ApiClientException e) {
@@ -287,12 +310,12 @@ public final class VaultController extends VaultClient {
             Validations.validateBulkDetokenizeRequest(detokenizeRequest);
             BatchConfig cfg = configureDetokenizeConcurrencyAndBatchSize(detokenizeRequest.getTokens().size());
             setBearerToken();
-            com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest request =
+            com.skyflow.generated.rest.resources.tokens.requests.DetokenizeRequest request =
                     Utils.getBulkDetokenizeRequestBody(detokenizeRequest, this.getVaultConfig().getVaultId());
             RequestInterceptor interceptor = options != null ? options.getInterceptor() : null;
             return this.processBulkDetokenizeSync(request, detokenizeRequest.getTokens(), interceptor, cfg);
         } catch (ApiClientApiException e) {
-            String bodyString = gson.toJson(e.body());
+            String bodyString = gson.toJson(Utils.errorBody(e));
             LogUtil.printErrorLog(ErrorLogs.DETOKENIZE_REQUEST_REJECTED.getLog());
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
         } catch (ApiClientException e) {
@@ -317,7 +340,7 @@ public final class VaultController extends VaultClient {
             Validations.validateBulkDetokenizeRequest(detokenizeRequest);
             BatchConfig cfg = configureDetokenizeConcurrencyAndBatchSize(detokenizeRequest.getTokens().size());
             setBearerToken();
-            com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest request =
+            com.skyflow.generated.rest.resources.tokens.requests.DetokenizeRequest request =
                     Utils.getBulkDetokenizeRequestBody(detokenizeRequest, this.getVaultConfig().getVaultId());
             RequestInterceptor interceptor = options != null ? options.getInterceptor() : null;
 
@@ -325,7 +348,7 @@ public final class VaultController extends VaultClient {
 
             List<BulkDetokenizeResponseRecord> records = new ArrayList<>();
 
-            List<com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest> batches =
+            List<com.skyflow.generated.rest.resources.tokens.requests.DetokenizeRequest> batches =
                     Utils.createBulkDetokenizeBatches(request, cfg.batchSize);
 
             executor = Executors.newFixedThreadPool(cfg.concurrencyLimit);
@@ -342,7 +365,7 @@ public final class VaultController extends VaultClient {
                         return new BulkDetokenizeResponse(records, detokenizeRequest.getTokens());
                     });
         } catch (ApiClientApiException e) {
-            String bodyString = gson.toJson(e.body());
+            String bodyString = gson.toJson(Utils.errorBody(e));
             LogUtil.printErrorLog(ErrorLogs.DETOKENIZE_REQUEST_REJECTED.getLog());
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
         } catch (SkyflowException e) {
@@ -372,13 +395,13 @@ public final class VaultController extends VaultClient {
             Validations.validateDeleteRequest(deleteRequest);
 
             setBearerToken();
-            V1DeleteRequest request = Utils.getDeleteRequestBody(deleteRequest, this.getVaultConfig());
+            com.skyflow.generated.rest.resources.records.requests.DeleteRequest request = Utils.getDeleteRequestBody(deleteRequest, this.getVaultConfig());
             RequestInterceptor interceptor = options != null ? options.getInterceptor() : null;
             RequestContext ctx = new RequestContext("DELETE", 0, 1);
             if (interceptor != null) interceptor.intercept(ctx);
 
-            ApiClientHttpResponse<V1DeleteResponse> response =
-                    this.getRecordsApi().withRawResponse().delete(request, buildRequestOptions(ctx));
+            ApiClientHttpResponse<com.skyflow.generated.rest.types.DeleteResponse> response =
+                    this.getRecordsApi().withRawResponse().deleteRecords(request, buildRequestOptions(ctx));
 
             DeleteResponse formattedResponse = Utils.formatDeleteResponse(response.body(), response.headers());
             LogUtil.printInfoLog(InfoLogs.DELETE_REQUEST_RESOLVED.getLog());
@@ -391,7 +414,7 @@ public final class VaultController extends VaultClient {
             if (fallback != null) {
                 return fallback;
             }
-            String bodyString = gson.toJson(e.body());
+            String bodyString = gson.toJson(Utils.errorBody(e));
             LogUtil.printErrorLog(ErrorLogs.DELETE_REQUEST_REJECTED.getLog());
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
         } catch (ApiClientException e) {
@@ -413,12 +436,12 @@ public final class VaultController extends VaultClient {
             Validations.validateBulkDeleteTokensRequest(deleteTokensRequest);
             BatchConfig cfg = configureDeleteTokensConcurrencyAndBatchSize(deleteTokensRequest.getTokens().size());
             setBearerToken();
-            com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDeleteTokenRequest request =
+            DeleteTokenRequest request =
                     Utils.getBulkDeleteTokensRequestBody(deleteTokensRequest, this.getVaultConfig().getVaultId());
             RequestInterceptor interceptor = options != null ? options.getInterceptor() : null;
             return this.processBulkDeleteTokensSync(request, deleteTokensRequest.getTokens(), interceptor, cfg);
         } catch (ApiClientApiException e) {
-            String bodyString = gson.toJson(e.body());
+            String bodyString = gson.toJson(Utils.errorBody(e));
             LogUtil.printErrorLog(ErrorLogs.DELETE_REQUEST_REJECTED.getLog());
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
         } catch (ApiClientException e) {
@@ -441,7 +464,7 @@ public final class VaultController extends VaultClient {
             Validations.validateBulkDeleteTokensRequest(deleteTokensRequest);
             BatchConfig cfg = configureDeleteTokensConcurrencyAndBatchSize(deleteTokensRequest.getTokens().size());
             setBearerToken();
-            com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDeleteTokenRequest request =
+            DeleteTokenRequest request =
                     Utils.getBulkDeleteTokensRequestBody(deleteTokensRequest, this.getVaultConfig().getVaultId());
             RequestInterceptor interceptor = options != null ? options.getInterceptor() : null;
 
@@ -449,7 +472,7 @@ public final class VaultController extends VaultClient {
 
             List<BulkDeleteTokensResponseRecord> responseRecords = Collections.synchronizedList(new ArrayList<>());
 
-            List<com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDeleteTokenRequest> batches =
+            List<DeleteTokenRequest> batches =
                     Utils.createBulkDeleteTokensBatches(request, cfg.batchSize);
 
             executor = Executors.newFixedThreadPool(cfg.concurrencyLimit);
@@ -469,7 +492,7 @@ public final class VaultController extends VaultClient {
                                 sortByIndex(responseRecords), deleteTokensRequest.getTokens());
                     });
         } catch (ApiClientApiException e) {
-            String bodyString = gson.toJson(e.body());
+            String bodyString = gson.toJson(Utils.errorBody(e));
             LogUtil.printErrorLog(ErrorLogs.DELETE_REQUEST_REJECTED.getLog());
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
         } catch (SkyflowException e) {
@@ -499,7 +522,7 @@ public final class VaultController extends VaultClient {
             RequestInterceptor interceptor = options != null ? options.getInterceptor() : null;
             return this.processBulkTokenizeSync(tokenizeRequest.getRecords(), interceptor, cfg);
         } catch (ApiClientApiException e) {
-            String bodyString = gson.toJson(e.body());
+            String bodyString = gson.toJson(Utils.errorBody(e));
             LogUtil.printErrorLog(ErrorLogs.TOKENIZE_REQUEST_REJECTED.getLog());
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
         } catch (SkyflowException e) {
@@ -551,7 +574,7 @@ public final class VaultController extends VaultClient {
                                 sortTokenizeByIndex(responseRecords), tokenizeRequest.getRecords());
                     });
         } catch (ApiClientApiException e) {
-            String bodyString = gson.toJson(e.body());
+            String bodyString = gson.toJson(Utils.errorBody(e));
             LogUtil.printErrorLog(ErrorLogs.TOKENIZE_REQUEST_REJECTED.getLog());
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
         } catch (SkyflowException e) {
@@ -579,13 +602,13 @@ public final class VaultController extends VaultClient {
             Validations.validateUpdateRequest(updateRequest);
 
             setBearerToken();
-            V1UpdateRequest request = Utils.getUpdateRequestBody(updateRequest, this.getVaultConfig());
+            com.skyflow.generated.rest.resources.records.requests.UpdateRequest request = Utils.getUpdateRequestBody(updateRequest, this.getVaultConfig());
             RequestInterceptor interceptor = options != null ? options.getInterceptor() : null;
             RequestContext ctx = new RequestContext("UPDATE", 0, 1);
             if (interceptor != null) interceptor.intercept(ctx);
 
-            ApiClientHttpResponse<V1UpdateResponse> response =
-                    this.getRecordsApi().withRawResponse().update(request, buildRequestOptions(ctx));
+            ApiClientHttpResponse<com.skyflow.generated.rest.types.UpdateResponse> response =
+                    this.getRecordsApi().withRawResponse().updateRecords(request, buildRequestOptions(ctx));
 
             UpdateResponse formattedResponse = Utils.formatUpdateResponse(response.body(), response.headers());
             LogUtil.printInfoLog(InfoLogs.UPDATE_REQUEST_RESOLVED.getLog());
@@ -598,7 +621,7 @@ public final class VaultController extends VaultClient {
             if (fallback != null) {
                 return fallback;
             }
-            String bodyString = gson.toJson(e.body());
+            String bodyString = gson.toJson(Utils.errorBody(e));
             LogUtil.printErrorLog(ErrorLogs.UPDATE_REQUEST_REJECTED.getLog());
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
         } catch (ApiClientException e) {
@@ -621,13 +644,13 @@ public final class VaultController extends VaultClient {
             Validations.validateGetRequest(getRequest);
 
             setBearerToken();
-            V1GetRequest request = Utils.getGetRequestBody(getRequest, this.getVaultConfig());
+            com.skyflow.generated.rest.resources.records.requests.GetRequest request = Utils.getGetRequestBody(getRequest, this.getVaultConfig());
             RequestInterceptor interceptor = options != null ? options.getInterceptor() : null;
             RequestContext ctx = new RequestContext("GET", 0, 1);
             if (interceptor != null) interceptor.intercept(ctx);
 
-            ApiClientHttpResponse<V1GetResponse> response =
-                    this.getRecordsApi().withRawResponse().get(request, buildRequestOptions(ctx));
+            ApiClientHttpResponse<com.skyflow.generated.rest.types.GetResponse> response =
+                    this.getRecordsApi().withRawResponse().getRecords(request, buildRequestOptions(ctx));
 
             GetResponse formattedResponse = Utils.formatGetResponse(response.body(), response.headers());
             LogUtil.printInfoLog(InfoLogs.GET_REQUEST_RESOLVED.getLog());
@@ -640,7 +663,7 @@ public final class VaultController extends VaultClient {
             if (fallback != null) {
                 return fallback;
             }
-            String bodyString = gson.toJson(e.body());
+            String bodyString = gson.toJson(Utils.errorBody(e));
             LogUtil.printErrorLog(ErrorLogs.GET_REQUEST_REJECTED.getLog());
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
         } catch (ApiClientException e) {
@@ -649,10 +672,249 @@ public final class VaultController extends VaultClient {
         }
     }
 
+    // ── Query ─────────────────────────────────────────────────────────────────
+    // Runs a SQL SELECT in a single API call. There is no per-record status, so any failure is
+    // thrown rather than returned on the response.
+
+    public QueryResponse query(QueryRequest queryRequest) throws SkyflowException {
+        return query(queryRequest, null);
+    }
+
+    public QueryResponse query(QueryRequest queryRequest, QueryOptions options) throws SkyflowException {
+        LogUtil.printInfoLog(InfoLogs.QUERY_TRIGGERED.getLog());
+        try {
+            LogUtil.printInfoLog(InfoLogs.VALIDATING_QUERY_REQUEST.getLog());
+            Validations.validateQueryRequest(queryRequest);
+
+            setBearerToken();
+            ExecuteQueryRequest request = Utils.getQueryRequestBody(queryRequest, this.getVaultConfig().getVaultId());
+            RequestInterceptor interceptor = options != null ? options.getInterceptor() : null;
+            RequestContext ctx = new RequestContext("QUERY", 0, 1);
+            if (interceptor != null) interceptor.intercept(ctx);
+
+            ApiClientHttpResponse<ExecuteQueryResponse> response =
+                    this.getQueryApi().withRawResponse().executeQuery(request, buildRequestOptions(ctx));
+
+            QueryResponse formattedResponse = Utils.formatQueryResponse(response.body(), response.headers());
+            LogUtil.printInfoLog(InfoLogs.QUERY_REQUEST_RESOLVED.getLog());
+            return formattedResponse;
+        } catch (ApiClientApiException e) {
+            String bodyString = gson.toJson(Utils.errorBody(e));
+            LogUtil.printErrorLog(ErrorLogs.QUERY_REQUEST_REJECTED.getLog());
+            throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
+        } catch (ApiClientException e) {
+            LogUtil.printErrorLog(ErrorLogs.QUERY_REQUEST_REJECTED.getLog());
+            throw new SkyflowException(e);
+        }
+    }
+
+    // ── Get Tokens ────────────────────────────────────────────────────────────
+    // Looks up the existing deterministic token for each value in a single API call. Record-level
+    // failures come back on the response (200/207); whole-call failures are thrown.
+
+    public GetTokensResponse getTokens(GetTokensRequest getTokensRequest) throws SkyflowException {
+        return getTokens(getTokensRequest, null);
+    }
+
+    public GetTokensResponse getTokens(GetTokensRequest getTokensRequest, GetTokensOptions options) throws SkyflowException {
+        LogUtil.printInfoLog(InfoLogs.GET_TOKENS_TRIGGERED.getLog());
+        try {
+            LogUtil.printInfoLog(InfoLogs.VALIDATING_GET_TOKENS_REQUEST.getLog());
+            Validations.validateGetTokensRequest(getTokensRequest);
+
+            setBearerToken();
+            GetTokensFromValuesRequest request = Utils.getGetTokensRequestBody(getTokensRequest, this.getVaultConfig().getVaultId());
+            RequestInterceptor interceptor = options != null ? options.getInterceptor() : null;
+            RequestContext ctx = new RequestContext("GET_TOKENS", 0, 1);
+            if (interceptor != null) interceptor.intercept(ctx);
+
+            ApiClientHttpResponse<GetTokensFromValuesResponse> response =
+                    this.getTokensApi().withRawResponse().getTokens(request, buildRequestOptions(ctx));
+
+            GetTokensResponse formattedResponse = Utils.formatGetTokensResponse(response.body(), response.headers());
+            LogUtil.printInfoLog(InfoLogs.GET_TOKENS_REQUEST_RESOLVED.getLog());
+            return formattedResponse;
+        } catch (ApiClientApiException e) {
+            // The lone record in a unary request can fail outright, which the vault reflects as
+            // the overall HTTP status. If the body still carries the usual per-record shape,
+            // surface it on the response like a 200 partial success would, not as an exception.
+            GetTokensResponse fallback = Utils.handleGetTokensRequestException(e);
+            if (fallback != null) {
+                return fallback;
+            }
+            String bodyString = gson.toJson(Utils.errorBody(e));
+            LogUtil.printErrorLog(ErrorLogs.GET_TOKENS_REQUEST_REJECTED.getLog());
+            throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
+        } catch (ApiClientException e) {
+            LogUtil.printErrorLog(ErrorLogs.GET_TOKENS_REQUEST_REJECTED.getLog());
+            throw new SkyflowException(e);
+        }
+    }
+
+    // ── Upload Files ──────────────────────────────────────────────────────────
+    // Two steps inside one unary call. Phase A asks the vault for a signed upload URL per column;
+    // Phase B PUTs each file's bytes to its URL. Any Phase A error is thrown; a record that fails
+    // in Phase A has its columns SKIPPED; a column whose PUT fails is FAILED and leaves every other
+    // column and record unaffected. Signed URLs never reach the caller.
+
+    public UploadFilesResponse uploadFiles(UploadFilesRequest uploadFilesRequest) throws SkyflowException {
+        return uploadFiles(uploadFilesRequest, null);
+    }
+
+    public UploadFilesResponse uploadFiles(UploadFilesRequest uploadFilesRequest, UploadFilesOptions options)
+            throws SkyflowException {
+        LogUtil.printInfoLog(InfoLogs.UPLOAD_FILES_TRIGGERED.getLog());
+        ApiClientHttpResponse<FileUploadResponse> response;
+        Map<UploadFilesRequestColumn, byte[]> decodedBase64;
+        try {
+            LogUtil.printInfoLog(InfoLogs.VALIDATING_UPLOAD_FILES_REQUEST.getLog());
+            Validations.validateUploadFilesRequest(uploadFilesRequest);
+            decodedBase64 = Utils.decodeBase64Columns(uploadFilesRequest);
+
+            setBearerToken();
+            FileUploadRequest request = Utils.getUploadFilesRequestBody(uploadFilesRequest, this.getVaultConfig().getVaultId());
+            RequestInterceptor interceptor = options != null ? options.getInterceptor() : null;
+            RequestContext ctx = new RequestContext("UPLOAD_FILES", 0, 1);
+            if (interceptor != null) interceptor.intercept(ctx);
+
+            response = this.getFilesApi().withRawResponse().uploadFiles(request, buildRequestOptions(ctx));
+        } catch (ApiClientApiException e) {
+            String bodyString = gson.toJson(Utils.errorBody(e));
+            LogUtil.printErrorLog(ErrorLogs.UPLOAD_FILES_REQUEST_REJECTED.getLog());
+            throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
+        } catch (ApiClientException e) {
+            LogUtil.printErrorLog(ErrorLogs.UPLOAD_FILES_REQUEST_REJECTED.getLog());
+            throw new SkyflowException(e);
+        }
+
+        LogUtil.printInfoLog(InfoLogs.UPLOADING_FILES_TO_SIGNED_URLS.getLog());
+        UploadFilesResponse formattedResponse = uploadToSignedUrls(
+                uploadFilesRequest.getRecords(), decodedBase64, response.body(), response.headers());
+        LogUtil.printInfoLog(InfoLogs.UPLOAD_FILES_REQUEST_RESOLVED.getLog());
+        return formattedResponse;
+    }
+
+    private UploadFilesResponse uploadToSignedUrls(List<UploadFilesRequestRecord> requested,
+                                                   Map<UploadFilesRequestColumn, byte[]> decodedBase64,
+                                                   FileUploadResponse body, Map<String, List<String>> headers) {
+        ArrayList<HashMap<String, Object>> records = new ArrayList<>();
+        List<FileUploadResponseObject> returned = body != null && body.getRecords() != null
+                ? body.getRecords() : Collections.emptyList();
+        for (int i = 0; i < returned.size(); i++) {
+            FileUploadResponseObject record = returned.get(i);
+            UploadFilesRequestRecord requestRecord = i < requested.size() ? requested.get(i) : null;
+            String error = record.getError().filter(e -> !e.isEmpty()).orElse(null);
+            int httpCode = record.getHttpCode() != 0 ? record.getHttpCode() : (error != null ? 500 : 200);
+            List<HashMap<String, Object>> columns = error != null
+                    ? Utils.skippedUploadColumns(requestRecord, error)
+                    : uploadColumns(requestRecord, decodedBase64, record.getData().orElse(Collections.emptyMap()));
+            records.add(Utils.uploadFilesRecordRow(record.getSkyflowId(), record.getTableName(), columns,
+                    httpCode, error, error != null ? Utils.extractRequestId(headers) : null));
+        }
+        return new UploadFilesResponse(records);
+    }
+
+    private List<HashMap<String, Object>> uploadColumns(UploadFilesRequestRecord requestRecord,
+                                                        Map<UploadFilesRequestColumn, byte[]> decodedBase64,
+                                                        Map<String, Object> signedUrls) {
+        List<HashMap<String, Object>> columns = new ArrayList<>();
+        if (requestRecord == null) {
+            return columns;
+        }
+        for (UploadFilesRequestColumn column : requestRecord.getColumns()) {
+            String fileName = Utils.resolveUploadFileName(column);
+            Object signedUrl = signedUrls.get(column.getColumn());
+            if (signedUrl == null) {
+                columns.add(Utils.uploadFilesColumnRow(column.getColumn(), fileName, Utils.UPLOAD_STATUS_SKIPPED, null));
+                continue;
+            }
+            String error = null;
+            try {
+                RequestBody fileBody = Utils.buildUploadFileBody(
+                        column, decodedBase64.get(column), Utils.resolveUploadContentType(column, fileName));
+                int status = signedUrlUploader.upload(signedUrl.toString(), fileBody);
+                if (status < 200 || status >= 300) {
+                    error = "PUT failed: " + status;
+                }
+            } catch (IOException | RuntimeException e) {
+                error = "PUT failed: " + (e.getMessage() != null ? e.getMessage() : e.toString());
+            }
+            if (error != null) {
+                LogUtil.printErrorLog(Utils.parameterizedString(
+                        ErrorLogs.SIGNED_URL_UPLOAD_FAILED.getLog(), column.getColumn()));
+            }
+            columns.add(Utils.uploadFilesColumnRow(column.getColumn(), fileName,
+                    error == null ? Utils.UPLOAD_STATUS_UPLOADED : Utils.UPLOAD_STATUS_FAILED, error));
+        }
+        return columns;
+    }
+
+    /** Sends one file to its signed URL and returns the HTTP status. */
+    interface SignedUrlUploader {
+        int upload(String signedUrl, RequestBody fileBody) throws IOException;
+    }
+
+    /**
+     * Package-private and swappable purely so tests can stand in for the storage endpoint, like
+     * {@link #settingResolver}; deliberately not public.
+     */
+    SignedUrlUploader signedUrlUploader = this::putToSignedUrl;
+
+    private int putToSignedUrl(String signedUrl, RequestBody fileBody) throws IOException {
+        Request request = new Request.Builder().url(signedUrl).put(fileBody).build();
+        try (Response response = getSignedUrlHttpClient().newCall(request).execute()) {
+            return response.code();
+        }
+    }
+
+    // ── Delete Files ──────────────────────────────────────────────────────────
+    // Deletes the files in file columns of existing records, in a single API call. Record-level
+    // failures come back on the response; whole-call failures are thrown.
+
+    public DeleteFilesResponse deleteFiles(DeleteFilesRequest deleteFilesRequest) throws SkyflowException {
+        return deleteFiles(deleteFilesRequest, null);
+    }
+
+    public DeleteFilesResponse deleteFiles(DeleteFilesRequest deleteFilesRequest, DeleteFilesOptions options)
+            throws SkyflowException {
+        LogUtil.printInfoLog(InfoLogs.DELETE_FILES_TRIGGERED.getLog());
+        try {
+            LogUtil.printInfoLog(InfoLogs.VALIDATING_DELETE_FILES_REQUEST.getLog());
+            Validations.validateDeleteFilesRequest(deleteFilesRequest);
+
+            setBearerToken();
+            FileDeleteRequest request = Utils.getDeleteFilesRequestBody(deleteFilesRequest, this.getVaultConfig().getVaultId());
+            RequestInterceptor interceptor = options != null ? options.getInterceptor() : null;
+            RequestContext ctx = new RequestContext("DELETE_FILES", 0, 1);
+            if (interceptor != null) interceptor.intercept(ctx);
+
+            ApiClientHttpResponse<FileDeleteResponse> response =
+                    this.getFilesApi().withRawResponse().deleteFiles(request, buildRequestOptions(ctx));
+
+            DeleteFilesResponse formattedResponse = Utils.formatDeleteFilesResponse(response.body(), response.headers());
+            LogUtil.printInfoLog(InfoLogs.DELETE_FILES_REQUEST_RESOLVED.getLog());
+            return formattedResponse;
+        } catch (ApiClientApiException e) {
+            // The lone record in a unary request can fail outright, which the vault reflects as
+            // the overall HTTP status. If the body still carries the usual per-record shape,
+            // surface it on the response like a 200 partial success would, not as an exception.
+            DeleteFilesResponse fallback = Utils.handleDeleteFilesRequestException(e);
+            if (fallback != null) {
+                return fallback;
+            }
+            String bodyString = gson.toJson(Utils.errorBody(e));
+            LogUtil.printErrorLog(ErrorLogs.DELETE_FILES_REQUEST_REJECTED.getLog());
+            throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
+        } catch (ApiClientException e) {
+            LogUtil.printErrorLog(ErrorLogs.DELETE_FILES_REQUEST_REJECTED.getLog());
+            throw new SkyflowException(e);
+        }
+    }
+
     // ── Bulk private helpers ──────────────────────────────────────────────────
 
     private BulkDeleteTokensResponse processBulkDeleteTokensSync(
-            com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDeleteTokenRequest deleteTokensRequest,
+            DeleteTokenRequest deleteTokensRequest,
             List<String> originalTokens,
             RequestInterceptor interceptor,
             BatchConfig cfg
@@ -660,7 +922,7 @@ public final class VaultController extends VaultClient {
         LogUtil.printInfoLog(InfoLogs.PROCESSING_BATCHES.getLog());
         List<BulkDeleteTokensResponseRecord> responseRecords = new ArrayList<>();
         ExecutorService executor = Executors.newFixedThreadPool(cfg.concurrencyLimit);
-        List<com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDeleteTokenRequest> batches =
+        List<DeleteTokenRequest> batches =
                 Utils.createBulkDeleteTokensBatches(deleteTokensRequest, cfg.batchSize);
         try {
             List<CompletableFuture<BulkDeleteTokensResponse>> futures =
@@ -700,14 +962,14 @@ public final class VaultController extends VaultClient {
 
     private List<CompletableFuture<BulkDeleteTokensResponse>> deleteTokensBatchFutures(
             ExecutorService executor,
-            List<com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDeleteTokenRequest> batches,
+            List<DeleteTokenRequest> batches,
             RequestInterceptor interceptor,
             int batchSize) {
         List<CompletableFuture<BulkDeleteTokensResponse>> futures = new ArrayList<>();
         if (batches == null) return futures;
         for (int batchIndex = 0; batchIndex < batches.size(); batchIndex++) {
             final int index = batchIndex;
-            com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDeleteTokenRequest batch = batches.get(index);
+            DeleteTokenRequest batch = batches.get(index);
             RequestContext ctx = new RequestContext("DELETE_TOKENS", batchIndex, batches.size());
             if (interceptor != null) interceptor.intercept(ctx);
             CompletableFuture<BulkDeleteTokensResponse> future = CompletableFuture
@@ -726,10 +988,10 @@ public final class VaultController extends VaultClient {
         return futures;
     }
 
-    private ApiClientHttpResponse<V1FlowDeleteTokenResponse> processDeleteTokensBatch(
-            com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDeleteTokenRequest batch,
+    private ApiClientHttpResponse<DeleteTokenResponse> processDeleteTokensBatch(
+            DeleteTokenRequest batch,
             RequestContext ctx) {
-        return this.getRecordsApi().withRawResponse().deletetoken(batch, buildRequestOptions(ctx));
+        return this.getTokensApi().withRawResponse().deleteToken(batch, buildRequestOptions(ctx));
     }
 
     /**
@@ -865,7 +1127,7 @@ public final class VaultController extends VaultClient {
             final int startIndex = nextStartIndex;
             nextStartIndex += batchRecords.size();
             final int batchIndex = batchPosition++;
-            com.skyflow.generated.rest.resources.flowservice.requests.V1FlowTokenizeRequest batch =
+            TokenizeRequest batch =
                     Utils.getBulkTokenizeRequestBody(batchRecords, this.getVaultConfig().getVaultId());
             RequestContext ctx = new RequestContext("TOKENIZE", batchIndex, batches.size());
             if (interceptor != null) interceptor.intercept(ctx);
@@ -884,10 +1146,10 @@ public final class VaultController extends VaultClient {
         return futures;
     }
 
-    private ApiClientHttpResponse<V1FlowTokenizeResponse> processTokenizeBatch(
-            com.skyflow.generated.rest.resources.flowservice.requests.V1FlowTokenizeRequest batch,
+    private ApiClientHttpResponse<TokenizeResponse> processTokenizeBatch(
+            TokenizeRequest batch,
             RequestContext ctx) {
-        return this.getRecordsApi().withRawResponse().tokenize(batch, buildRequestOptions(ctx));
+        return this.getTokensApi().withRawResponse().tokenize(batch, buildRequestOptions(ctx));
     }
 
     private BatchConfig configureTokenizeConcurrencyAndBatchSize(int totalRequests) {
@@ -1004,7 +1266,7 @@ public final class VaultController extends VaultClient {
     }
 
     private BulkInsertResponse processBulkInsertSync(
-            V1InsertRequest insertRequest,
+            com.skyflow.generated.rest.resources.records.requests.InsertRequest insertRequest,
             List<InsertRequestRecord> originalPayload,
             RequestInterceptor interceptor,
             BatchConfig cfg
@@ -1036,7 +1298,7 @@ public final class VaultController extends VaultClient {
     }
 
     private BulkDetokenizeResponse processBulkDetokenizeSync(
-            com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest detokenizeRequest,
+            com.skyflow.generated.rest.resources.tokens.requests.DetokenizeRequest detokenizeRequest,
             List<String> originalTokens,
             RequestInterceptor interceptor,
             BatchConfig cfg
@@ -1044,7 +1306,7 @@ public final class VaultController extends VaultClient {
         LogUtil.printInfoLog(InfoLogs.PROCESSING_BATCHES.getLog());
         List<BulkDetokenizeResponseRecord> records = new ArrayList<>();
         ExecutorService executor = Executors.newFixedThreadPool(cfg.concurrencyLimit);
-        List<com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest> batches =
+        List<com.skyflow.generated.rest.resources.tokens.requests.DetokenizeRequest> batches =
                 Utils.createBulkDetokenizeBatches(detokenizeRequest, cfg.batchSize);
         try {
             List<CompletableFuture<BulkDetokenizeResponse>> futures = this.detokenizeBatchFutures(executor, batches, interceptor, cfg.batchSize);
@@ -1073,12 +1335,12 @@ public final class VaultController extends VaultClient {
 
     private List<CompletableFuture<BulkDetokenizeResponse>> detokenizeBatchFutures(
             ExecutorService executor,
-            List<com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest> batches,
+            List<com.skyflow.generated.rest.resources.tokens.requests.DetokenizeRequest> batches,
             RequestInterceptor interceptor,
             int batchSize) {
         List<CompletableFuture<BulkDetokenizeResponse>> futures = new ArrayList<>();
         for (int batchIndex = 0; batchIndex < batches.size(); batchIndex++) {
-            com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest batch = batches.get(batchIndex);
+            com.skyflow.generated.rest.resources.tokens.requests.DetokenizeRequest batch = batches.get(batchIndex);
             int batchNumber = batchIndex;
             RequestContext ctx = new RequestContext("DETOKENIZE", batchIndex, batches.size());
             if (interceptor != null) interceptor.intercept(ctx);
@@ -1092,32 +1354,32 @@ public final class VaultController extends VaultClient {
         return futures;
     }
 
-    private ApiClientHttpResponse<com.skyflow.generated.rest.types.V1FlowDetokenizeResponse> processDetokenizeBatch(
-            com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest batch,
+    private ApiClientHttpResponse<com.skyflow.generated.rest.types.DetokenizeResponse> processDetokenizeBatch(
+            com.skyflow.generated.rest.resources.tokens.requests.DetokenizeRequest batch,
             RequestContext ctx) {
-        return this.getRecordsApi().withRawResponse().detokenize(batch, buildRequestOptions(ctx));
+        return this.getTokensApi().withRawResponse().detokenize(batch, buildRequestOptions(ctx));
     }
 
     private List<CompletableFuture<BulkInsertResponse>> insertBatchFutures(
-            V1InsertRequest insertRequest,
+            com.skyflow.generated.rest.resources.records.requests.InsertRequest insertRequest,
             RequestInterceptor interceptor,
             BatchConfig cfg) {
-        List<V1InsertRecordData> records = insertRequest.getRecords().get();
+        List<InsertRecordData> records = insertRequest.getRecords();
 
         ExecutorService executor = Executors.newFixedThreadPool(cfg.concurrencyLimit);
-        List<List<V1InsertRecordData>> batches = Utils.createBulkInsertBatches(records, cfg.batchSize);
+        List<List<InsertRecordData>> batches = Utils.createBulkInsertBatches(records, cfg.batchSize);
         List<CompletableFuture<BulkInsertResponse>> futures = new ArrayList<>();
 
         try {
             for (int batchIndex = 0; batchIndex < batches.size(); batchIndex++) {
-                List<V1InsertRecordData> batch = batches.get(batchIndex);
+                List<InsertRecordData> batch = batches.get(batchIndex);
                 int batchNumber = batchIndex;
                 RequestContext ctx = new RequestContext("INSERT", batchIndex, batches.size());
                 if (interceptor != null) interceptor.intercept(ctx);
                 CompletableFuture<BulkInsertResponse> future = CompletableFuture
                         .supplyAsync(() -> insertBatch(
                                 batch,
-                                insertRequest.getTableName().isPresent() ? insertRequest.getTableName().get() : null,
+                                insertRequest.getTableName(),
                                 insertRequest.getUpsert().isPresent() ? insertRequest.getUpsert().get() : null,
                                 ctx), executor)
                         .thenApply(response -> Utils.formatBulkInsertResponse(response.body(), batchNumber, cfg.batchSize, response.headers()))
@@ -1134,19 +1396,11 @@ public final class VaultController extends VaultClient {
     // tableName and upsert live on the envelope when the caller set them at the request level, and
     // batching rebuilds the envelope per batch — so both have to be re-applied here or they are
     // silently dropped for every batch after the body was built.
-    private ApiClientHttpResponse<V1InsertResponse> insertBatch(List<V1InsertRecordData> batch, String tableName,
-                                                                V1Upsert upsert, RequestContext ctx) {
-        V1InsertRequest.Builder req = V1InsertRequest.builder()
-                .vaultId(this.getVaultConfig().getVaultId())
-                .records(batch);
-        if (tableName != null && !tableName.isEmpty()) {
-            req.tableName(tableName);
-        }
-        if (upsert != null) {
-            req.upsert(upsert);
-        }
-        V1InsertRequest request = req.build();
-        return this.getRecordsApi().withRawResponse().insert(request, buildRequestOptions(ctx));
+    private ApiClientHttpResponse<com.skyflow.generated.rest.types.InsertResponse> insertBatch(List<InsertRecordData> batch, String tableName,
+                                                                Upsert upsert, RequestContext ctx) {
+        com.skyflow.generated.rest.resources.records.requests.InsertRequest request =
+                Utils.buildInsertRequest(this.getVaultConfig().getVaultId(), tableName, batch, upsert);
+        return this.getRecordsApi().withRawResponse().insertRecords(request, buildRequestOptions(ctx));
     }
 
     private BatchConfig configureInsertConcurrencyAndBatchSize(int totalRequests) {

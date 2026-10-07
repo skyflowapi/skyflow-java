@@ -5,7 +5,10 @@ import com.skyflow.config.VaultConfig;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.generated.rest.ApiClient;
 import com.skyflow.generated.rest.ApiClientBuilder;
-import com.skyflow.generated.rest.resources.flowservice.FlowserviceClient;
+import com.skyflow.generated.rest.resources.files.FilesClient;
+import com.skyflow.generated.rest.resources.query.QueryClient;
+import com.skyflow.generated.rest.resources.records.RecordsClient;
+import com.skyflow.generated.rest.resources.tokens.TokensClient;
 import com.skyflow.utils.SkyflowRetryInterceptor;
 import com.skyflow.utils.Utils;
 
@@ -82,8 +85,35 @@ public class VaultClient extends BaseVaultClient<VaultConfig> {
         return vaultLevel != null ? vaultLevel : clientLevel;
     }
 
-    protected FlowserviceClient getRecordsApi() {
-        return this.apiClient.flowservice();
+    protected RecordsClient getRecordsApi() {
+        return this.apiClient.records();
+    }
+
+    protected TokensClient getTokensApi() {
+        return this.apiClient.tokens();
+    }
+
+    protected QueryClient getQueryApi() {
+        return this.apiClient.query();
+    }
+
+    protected FilesClient getFilesApi() {
+        return this.apiClient.files();
+    }
+
+    /**
+     * HTTP client for uploading straight to a signed URL. It shares the vault client's connection
+     * pool and connect/read/write timeouts but none of its interceptors, so no Authorization header
+     * is sent. The overall call timeout is lifted: it bounds a whole vault call, and a large file
+     * can take longer than that to transfer while still making steady progress.
+     */
+    protected OkHttpClient getSignedUrlHttpClient() {
+        OkHttpClient.Builder builder = sharedHttpClient == null
+                ? new OkHttpClient.Builder()
+                : sharedHttpClient.newBuilder();
+        builder.interceptors().clear();
+        builder.networkInterceptors().clear();
+        return builder.callTimeout(0, TimeUnit.SECONDS).build();
     }
 
     protected void setCommonCredentials(Credentials commonCredentials) throws SkyflowException {
