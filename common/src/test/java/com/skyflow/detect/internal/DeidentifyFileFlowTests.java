@@ -17,6 +17,7 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.nio.file.Files;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -29,9 +30,16 @@ public class DeidentifyFileFlowTests {
     private static final RunPoller.Sleeper NO_SLEEP = millis -> { };
 
     private static GetRunResponse success() {
-        return new GetRunResponse("run-1", DetectRunStatus.SUCCESS, DataSourceType.BASE64,
-                Collections.singletonList(new FileOutput(Base64.getEncoder().encodeToString("redacted".getBytes()),
-                        "REDACTED_FILE", FileDataFormat.TXT)),
+        return success(DataSourceType.BASE64);
+    }
+
+    private static GetRunResponse success(DataSourceType outputType) {
+        return new GetRunResponse("run-1", DetectRunStatus.SUCCESS, outputType,
+                Arrays.asList(
+                        new FileOutput(Base64.getEncoder().encodeToString("redacted".getBytes()),
+                                "REDACTED_FILE", FileDataFormat.TXT),
+                        new FileOutput(Base64.getEncoder().encodeToString("[]".getBytes()),
+                                "ENTITIES", FileDataFormat.JSON)),
                 new Metrics(null, 1, 8, null, null, null), null);
     }
 
@@ -66,7 +74,7 @@ public class DeidentifyFileFlowTests {
                         .pollOptions(PollOptions.builder().build()).outputDirectory(folder.getRoot().getPath()).build(),
                 "run-1", id -> success(), NO_SLEEP);
         Assert.assertEquals(DetectRunStatus.SUCCESS, response.getStatus());
-        Assert.assertEquals(1, response.getOutput().size());
+        Assert.assertEquals(2, response.getOutput().size());
         Assert.assertEquals(Integer.valueOf(8), response.getMetrics().getCharacterCount());
         Assert.assertEquals(0, folder.getRoot().list().length);
     }
@@ -86,6 +94,26 @@ public class DeidentifyFileFlowTests {
         File written = new File(outDir, "processed-notes.txt");
         Assert.assertTrue(written.isFile());
         Assert.assertEquals("redacted", new String(Files.readAllBytes(written.toPath())));
+        File entities = new File(outDir, "processed-entities-notes.json");
+        Assert.assertTrue(entities.isFile());
+        Assert.assertEquals("[]", new String(Files.readAllBytes(entities.toPath())));
+        Assert.assertEquals(2, outDir.list().length);
+    }
+
+    @Test
+    public void polledFileRequestWritesNothingForPresignedUrlOutputs() throws Exception {
+        File input = folder.newFile("notes.txt");
+        File outDir = folder.newFolder("out");
+
+        DeidentifyFileResponse response = DeidentifyFileFlow.complete(
+                DeidentifyFileRequest.builder().file(input).pollOptions(PollOptions.builder().build())
+                        .outputDirectory(outDir.getPath()).build(),
+                "run-1", id -> success(DataSourceType.PRESIGNED_URL), NO_SLEEP);
+
+        Assert.assertEquals(DetectRunStatus.SUCCESS, response.getStatus());
+        Assert.assertEquals(DataSourceType.PRESIGNED_URL, response.getOutputType());
+        Assert.assertEquals(2, response.getOutput().size());
+        Assert.assertEquals(0, outDir.list().length);
     }
 
     @Test

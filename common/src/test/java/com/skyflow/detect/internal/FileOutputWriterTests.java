@@ -108,6 +108,161 @@ public class FileOutputWriterTests {
         }
     }
 
+    // ---- naming branches -------------------------------------------------------------------
+
+    @Test
+    public void nullOrEmptyTypeFallsBackToPlainName() throws Exception {
+        List<File> written = FileOutputWriter.write(Arrays.asList(
+                new FileOutput(b64("a"), null, FileDataFormat.PDF),
+                new FileOutput(b64("b"), "", FileDataFormat.TXT)),
+                DataSourceType.BASE64, "invoice.pdf", folder.getRoot().getPath());
+        Assert.assertEquals("processed-invoice.pdf", written.get(0).getName());
+        Assert.assertEquals("processed-invoice.txt", written.get(1).getName());
+    }
+
+    @Test
+    public void nonEntityOutputWithoutExtensionGetsBin() throws Exception {
+        List<File> written = FileOutputWriter.write(
+                Collections.singletonList(new FileOutput(b64("x"), "REDACTED_TRANSCRIPTION", null)),
+                DataSourceType.BASE64, "call.mp3", folder.getRoot().getPath());
+        Assert.assertEquals("processed-call.bin", written.get(0).getName());
+    }
+
+    @Test
+    public void entityOutputHonoursAnExplicitExtension() throws Exception {
+        List<File> written = FileOutputWriter.write(
+                Collections.singletonList(new FileOutput(b64("x"), "ENTITIES", FileDataFormat.TXT)),
+                DataSourceType.BASE64, "notes.txt", folder.getRoot().getPath());
+        Assert.assertEquals("processed-entities-notes.txt", written.get(0).getName());
+    }
+
+    @Test
+    public void entityTypeMatchIsCaseInsensitive() throws Exception {
+        List<File> written = FileOutputWriter.write(
+                Collections.singletonList(new FileOutput(b64("x"), "entities", null)),
+                DataSourceType.BASE64, "notes.txt", folder.getRoot().getPath());
+        Assert.assertEquals("processed-entities-notes.json", written.get(0).getName());
+    }
+
+    @Test
+    public void duplicateEntityOutputsGetTheTypeInsertedOnCollision() throws Exception {
+        List<File> written = FileOutputWriter.write(Arrays.asList(
+                new FileOutput(b64("a"), "ENTITIES", FileDataFormat.JSON),
+                new FileOutput(b64("b"), "ENTITIES", FileDataFormat.JSON)),
+                DataSourceType.BASE64, "scan.png", folder.getRoot().getPath());
+        Assert.assertEquals("processed-entities-scan.json", written.get(0).getName());
+        Assert.assertEquals("processed-entities-scan.entities.json", written.get(1).getName());
+    }
+
+    @Test
+    public void collisionWithoutATypeUsesARunningNumber() throws Exception {
+        List<File> written = FileOutputWriter.write(Arrays.asList(
+                new FileOutput(b64("a"), null, FileDataFormat.TXT),
+                new FileOutput(b64("b"), null, FileDataFormat.TXT),
+                new FileOutput(b64("c"), null, FileDataFormat.TXT)),
+                DataSourceType.BASE64, "notes.txt", folder.getRoot().getPath());
+        Assert.assertEquals("processed-notes.txt", written.get(0).getName());
+        Assert.assertEquals("processed-notes.1.txt", written.get(1).getName());
+        Assert.assertEquals("processed-notes.2.txt", written.get(2).getName());
+    }
+
+    @Test
+    public void inputNamesWithoutAnExtensionOrWithLeadingDotAreKept() throws Exception {
+        List<File> plain = FileOutputWriter.write(
+                Collections.singletonList(new FileOutput(b64("x"), "ENTITIES", null)),
+                DataSourceType.BASE64, "README", folder.getRoot().getPath());
+        Assert.assertEquals("processed-entities-README.json", plain.get(0).getName());
+
+        List<File> dotted = FileOutputWriter.write(
+                Collections.singletonList(new FileOutput(b64("x"), "REDACTED_TEXT", FileDataFormat.TXT)),
+                DataSourceType.BASE64, ".notes", folder.getRoot().getPath());
+        Assert.assertEquals("processed-.notes.txt", dotted.get(0).getName());
+    }
+
+    @Test
+    public void missingInputNameFallsBackToOutput() throws Exception {
+        List<File> written = FileOutputWriter.write(Arrays.asList(
+                new FileOutput(b64("a"), "REDACTED_FILE", FileDataFormat.PDF),
+                new FileOutput(b64("b"), "ENTITIES", null)),
+                DataSourceType.BASE64, null, folder.getRoot().getPath());
+        Assert.assertEquals("processed-output.pdf", written.get(0).getName());
+        Assert.assertEquals("processed-entities-output.json", written.get(1).getName());
+    }
+
+    // ---- directory and output-type branches ---------------------------------------------------
+
+    @Test
+    public void nullOutputTypeWritesNothing() throws Exception {
+        List<File> written = FileOutputWriter.write(
+                Collections.singletonList(new FileOutput(b64("x"), "REDACTED_FILE", FileDataFormat.PDF)),
+                null, "invoice.pdf", folder.getRoot().getPath());
+        Assert.assertTrue(written.isEmpty());
+        Assert.assertEquals(0, folder.getRoot().list().length);
+    }
+
+    @Test
+    public void nullElementsInTheOutputListAreSkipped() throws Exception {
+        List<File> written = FileOutputWriter.write(Arrays.asList(
+                null,
+                new FileOutput(b64("x"), "REDACTED_TEXT", FileDataFormat.TXT)),
+                DataSourceType.BASE64, "notes.txt", folder.getRoot().getPath());
+        Assert.assertEquals(1, written.size());
+        Assert.assertEquals("processed-notes.txt", written.get(0).getName());
+    }
+
+    @Test
+    public void blankOutputDirectoryWritesToTheWorkingDirectory() throws Exception {
+        File expected = new File("processed-writer-cwd-test.txt");
+        try {
+            List<File> written = FileOutputWriter.write(
+                    Collections.singletonList(new FileOutput(b64("x"), "REDACTED_TEXT", FileDataFormat.TXT)),
+                    DataSourceType.BASE64, "writer-cwd-test.txt", "   ");
+            Assert.assertEquals(expected, written.get(0));
+            Assert.assertNull(written.get(0).getParentFile());
+            Assert.assertTrue(expected.isFile());
+        } finally {
+            Files.deleteIfExists(expected.toPath());
+        }
+    }
+
+    @Test
+    public void outputDirectoryThatIsAFileIsReportedAsWriteFailure() throws Exception {
+        File notADirectory = folder.newFile("blocker");
+        try {
+            FileOutputWriter.write(
+                    Collections.singletonList(new FileOutput(b64("x"), "REDACTED_TEXT", FileDataFormat.TXT)),
+                    DataSourceType.BASE64, "notes.txt", notADirectory.getPath());
+            Assert.fail("expected SkyflowException");
+        } catch (SkyflowException e) {
+            Assert.assertTrue(e.getMessage(), e.getMessage().contains(notADirectory.getPath()));
+        }
+    }
+
+    @Test
+    public void existingFilesAreOverwritten() throws Exception {
+        File target = new File(folder.getRoot(), "processed-notes.txt");
+        Files.write(target.toPath(), "old".getBytes());
+        FileOutputWriter.write(
+                Collections.singletonList(new FileOutput(b64("new"), "REDACTED_TEXT", FileDataFormat.TXT)),
+                DataSourceType.BASE64, "notes.txt", folder.getRoot().getPath());
+        Assert.assertEquals("new", new String(Files.readAllBytes(target.toPath())));
+    }
+
+    @Test
+    public void aLaterFailureLeavesEarlierFilesOnDisk() throws Exception {
+        try {
+            FileOutputWriter.write(Arrays.asList(
+                    new FileOutput(b64("ok"), "REDACTED_FILE", FileDataFormat.PDF),
+                    new FileOutput("not base64!", "ENTITIES", null)),
+                    DataSourceType.BASE64, "invoice.pdf", folder.getRoot().getPath());
+            Assert.fail("expected SkyflowException");
+        } catch (SkyflowException e) {
+            Assert.assertTrue(e.getMessage(), e.getMessage().contains("processed-entities-invoice.json"));
+        }
+        Assert.assertTrue(new File(folder.getRoot(), "processed-invoice.pdf").isFile());
+        Assert.assertFalse(new File(folder.getRoot(), "processed-entities-invoice.json").exists());
+    }
+
     @Test
     public void nameHelpers() {
         Assert.assertEquals("notes", FileOutputWriter.stripExtension("notes.txt"));
