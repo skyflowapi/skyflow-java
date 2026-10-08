@@ -14,6 +14,7 @@ import com.skyflow.vault.data.*;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -847,8 +848,15 @@ public class Validations extends BaseValidations {
             if (columns == null || columns.isEmpty()) {
                 throw invalid(ErrorLogs.EMPTY_UPLOAD_FILES_COLUMNS, ErrorMessage.EmptyUploadFilesColumns, upload, i);
             }
+            // Signed URLs come back keyed by column name, so a repeated column would overwrite
+            // the other file under the same URL.
+            Set<String> seen = new HashSet<>();
             for (UploadFilesRequestColumn column : columns) {
                 validateUploadFilesColumn(column, i);
+                if (!seen.add(column.getColumn())) {
+                    throw invalid(ErrorLogs.DUPLICATE_COLUMN_IN_UPLOAD_FILES_RECORD,
+                            ErrorMessage.DuplicateColumnInUploadFilesRecord, upload, i);
+                }
             }
         }
     }
@@ -913,17 +921,33 @@ public class Validations extends BaseValidations {
             if (columns == null || columns.isEmpty()) {
                 throw invalid(ErrorLogs.EMPTY_DELETE_FILES_COLUMNS, ErrorMessage.EmptyDeleteFilesColumns, delete, i);
             }
+            Set<String> seen = new HashSet<>();
             for (String column : columns) {
                 if (!hasText(column)) {
                     throw invalid(ErrorLogs.EMPTY_COLUMN_IN_DELETE_FILES_COLUMNS,
                             ErrorMessage.EmptyColumnInDeleteFilesColumns, delete, i);
                 }
+                if (!seen.add(column)) {
+                    throw invalid(ErrorLogs.DUPLICATE_COLUMN_IN_DELETE_FILES_COLUMNS,
+                            ErrorMessage.DuplicateColumnInDeleteFilesColumns, delete, i);
+                }
             }
+            List<Map<String, Object>> uniqueValues = record.getUniqueValues();
             boolean hasSkyflowId = hasText(record.getSkyflowId());
-            boolean hasUniqueValues = record.getUniqueValues() != null && !record.getUniqueValues().isEmpty();
+            boolean hasUniqueValues = uniqueValues != null && !uniqueValues.isEmpty();
             if (hasSkyflowId == hasUniqueValues) {
                 throw invalid(ErrorLogs.INVALID_ID_OR_UNIQUE_VALUES_IN_DELETE_FILES_RECORD,
                         ErrorMessage.InvalidIdOrUniqueValuesInDeleteFilesRecord, delete, i);
+            }
+            // Same per-entry rule as Get and Delete records.
+            if (hasUniqueValues) {
+                for (int index = 0; index < uniqueValues.size(); index++) {
+                    Map<String, Object> uniqueValue = uniqueValues.get(index);
+                    if (uniqueValue == null || uniqueValue.isEmpty()) {
+                        throw invalid(ErrorLogs.EMPTY_OR_NULL_UNIQUE_VALUE_IN_UNIQUE_VALUES,
+                                ErrorMessage.EmptyUniqueValueInUniqueValues, delete, index);
+                    }
+                }
             }
         }
     }

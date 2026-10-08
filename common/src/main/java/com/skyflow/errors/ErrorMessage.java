@@ -185,6 +185,7 @@ public enum ErrorMessage {
     EmptyUploadFilesColumns("%s0 Validation error. 'columns' in UploadFilesRequestRecord can't be empty. Specify at least one UploadFilesRequestColumn."),
     UploadFilesColumnNull("%s0 Validation error. UploadFilesRequestColumn in the list is null. Specify a valid UploadFilesRequestColumn object."),
     EmptyColumnInUploadFilesColumn("%s0 Validation error. 'column' in UploadFilesRequestColumn is null or empty. Specify a valid column name."),
+    DuplicateColumnInUploadFilesRecord("%s0 Validation error. 'columns' in UploadFilesRequestRecord contains a duplicate column name. Specify each column only once."),
     MissingFileSourceInUploadFilesColumn("%s0 Validation error. UploadFilesRequestColumn has no file. Provide one of filePath, base64, or fileObject."),
     MultipleFileSourcesInUploadFilesColumn("%s0 Validation error. UploadFilesRequestColumn has more than one file. Provide exactly one of filePath, base64, or fileObject."),
     InvalidFilePathInUploadFilesColumn("%s0 Validation error. No readable file at 'filePath' in UploadFilesRequestColumn. Specify the path of an existing file."),
@@ -199,6 +200,7 @@ public enum ErrorMessage {
     EmptyTableNameInDeleteFilesRecord("%s0 Validation error. 'tableName' in DeleteFilesRequestRecord is null or empty. Specify a valid table name."),
     EmptyDeleteFilesColumns("%s0 Validation error. 'columns' in DeleteFilesRequestRecord can't be empty. Specify at least one file column."),
     EmptyColumnInDeleteFilesColumns("%s0 Validation error. 'columns' in DeleteFilesRequestRecord contains a null or empty column name. Specify valid column names."),
+    DuplicateColumnInDeleteFilesColumns("%s0 Validation error. 'columns' in DeleteFilesRequestRecord contains a duplicate column name. Specify each column only once."),
     InvalidIdOrUniqueValuesInDeleteFilesRecord("%s0 Validation error. DeleteFilesRequestRecord must set exactly one of 'skyflowId' or 'uniqueValues'. Specify one of them."),
 
     // Connection

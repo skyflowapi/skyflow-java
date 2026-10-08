@@ -2476,6 +2476,21 @@ public class ValidationsTests {
     }
 
     @Test
+    public void testValidateUploadFilesRequest_duplicateColumnRejected() throws Exception {
+        UploadFilesRequestColumn first = pathColumn();
+        UploadFilesRequestColumn second = UploadFilesRequestColumn.builder().column(first.getColumn())
+                .base64("aGVsbG8=").fileName("other.pdf").build();
+        assertRejected(() -> Validations.validateUploadFilesRequest(uploadRequest(uploadRecord(first, second))),
+                ErrorMessage.DuplicateColumnInUploadFilesRecord);
+        // the same column on different records is fine
+        try {
+            Validations.validateUploadFilesRequest(uploadRequest(uploadRecord(first), uploadRecord(second)));
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
     public void testValidateUploadFilesRequest_leavesBase64DecodingToTheUploadStep() {
         // the content is decoded once, by Utils.decodeBase64Columns, rather than here and again on upload
         try {
@@ -2525,6 +2540,25 @@ public class ValidationsTests {
         assertRejected(() -> Validations.validateDeleteFilesRequest(deleteFilesRequest(DeleteFilesRequestRecord.builder()
                 .tableName("onboarding").skyflowId("sky-1").columns(Arrays.asList("photo", " ")).build())),
                 ErrorMessage.EmptyColumnInDeleteFilesColumns);
+        assertRejected(() -> Validations.validateDeleteFilesRequest(deleteFilesRequest(DeleteFilesRequestRecord.builder()
+                .tableName("onboarding").skyflowId("sky-1").columns(Arrays.asList("photo", "resume", "photo")).build())),
+                ErrorMessage.DuplicateColumnInDeleteFilesColumns);
+    }
+
+    @Test
+    public void testValidateDeleteFilesRequest_rejectsNullOrEmptyUniqueValue() {
+        Map<String, Object> unique = new HashMap<>();
+        unique.put("email", "a@b.com");
+        List<Map<String, Object>> withNull = new ArrayList<>();
+        withNull.add(unique);
+        withNull.add(null);
+        assertRejected(() -> Validations.validateDeleteFilesRequest(deleteFilesRequest(DeleteFilesRequestRecord.builder()
+                .tableName("onboarding").uniqueValues(withNull).columns(Collections.singletonList("photo")).build())),
+                ErrorMessage.EmptyUniqueValueInUniqueValues);
+        assertRejected(() -> Validations.validateDeleteFilesRequest(deleteFilesRequest(DeleteFilesRequestRecord.builder()
+                .tableName("onboarding").uniqueValues(Arrays.asList(unique, new HashMap<>()))
+                .columns(Collections.singletonList("photo")).build())),
+                ErrorMessage.EmptyUniqueValueInUniqueValues);
     }
 
     @Test
