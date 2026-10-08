@@ -2,7 +2,7 @@ package com.skyflow.serviceaccount.util;
 
 import com.google.gson.*;
 import com.skyflow.errors.ErrorCode;
-import com.skyflow.errors.ErrorMessage;
+import com.skyflow.errors.BaseErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.generated.auth.rest.ApiClient;
 import com.skyflow.generated.auth.rest.ApiClientBuilder;
@@ -56,7 +56,7 @@ public class BearerToken {
         try {
             if (credentialsFile == null) {
                 LogUtil.printErrorLog(ErrorLogs.INVALID_CREDENTIALS_FILE.getLog());
-                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidCredentials.getMessage());
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), BaseErrorMessage.InvalidCredentials.getMessage());
             }
             FileReader reader = new FileReader(String.valueOf(credentialsFile));
             try {
@@ -68,11 +68,11 @@ public class BearerToken {
         } catch (JsonSyntaxException | IllegalStateException e) {
             LogUtil.printErrorLog(ErrorLogs.INVALID_CREDENTIALS_FILE_FORMAT.getLog());
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), BaseUtils.parameterizedString(
-                    ErrorMessage.FileInvalidJson.getMessage(), credentialsFile.getPath()));
+                    BaseErrorMessage.FileInvalidJson.getMessage(), credentialsFile.getPath()));
         } catch (FileNotFoundException e) {
             LogUtil.printErrorLog(ErrorLogs.CREDENTIALS_FILE_NOT_FOUND.getLog());
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), BaseUtils.parameterizedString(
-                    ErrorMessage.FileNotFound.getMessage(), credentialsFile.getPath()));
+                    BaseErrorMessage.FileNotFound.getMessage(), credentialsFile.getPath()));
         }
     }
 
@@ -83,14 +83,14 @@ public class BearerToken {
         try {
             if (credentials == null || credentials.isEmpty()) {
                 LogUtil.printErrorLog(ErrorLogs.INVALID_CREDENTIALS_STRING.getLog());
-                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidCredentials.getMessage());
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), BaseErrorMessage.InvalidCredentials.getMessage());
             }
             JsonObject serviceAccountCredentials = JsonParser.parseString(credentials).getAsJsonObject();
             return getBearerTokenFromCredentials(serviceAccountCredentials, context, roles);
         } catch (JsonSyntaxException | IllegalStateException e) {
             LogUtil.printErrorLog(ErrorLogs.INVALID_CREDENTIALS_STRING_FORMAT.getLog());
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(),
-                    ErrorMessage.CredentialsStringInvalidJson.getMessage());
+                    BaseErrorMessage.CredentialsStringInvalidJson.getMessage());
         }
     }
 
@@ -101,7 +101,7 @@ public class BearerToken {
             JsonElement privateKey = credentials.get("privateKey");
             if (privateKey == null) {
                 LogUtil.printErrorLog(ErrorLogs.PRIVATE_KEY_IS_REQUIRED.getLog());
-                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.MissingPrivateKey.getMessage());
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), BaseErrorMessage.MissingPrivateKey.getMessage());
             }
 
             // Accept both new-form keys (clientId/keyId/tokenUri) and legacy all-caps form for migration
@@ -114,7 +114,7 @@ public class BearerToken {
             }
             if (clientId == null) {
                 LogUtil.printErrorLog(ErrorLogs.CLIENT_ID_IS_REQUIRED.getLog());
-                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.MissingClientId.getMessage());
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), BaseErrorMessage.MissingClientId.getMessage());
             }
 
             JsonElement keyId = credentials.get("keyId");
@@ -126,7 +126,7 @@ public class BearerToken {
             }
             if (keyId == null) {
                 LogUtil.printErrorLog(ErrorLogs.KEY_ID_IS_REQUIRED.getLog());
-                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.MissingKeyId.getMessage());
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), BaseErrorMessage.MissingKeyId.getMessage());
             }
 
             JsonElement tokenUri = credentials.get("tokenUri");
@@ -138,7 +138,7 @@ public class BearerToken {
             }
             if (tokenUri == null) {
                 LogUtil.printErrorLog(ErrorLogs.TOKEN_URI_IS_REQUIRED.getLog());
-                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.MissingTokenUri.getMessage());
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), BaseErrorMessage.MissingTokenUri.getMessage());
             }
 
             PrivateKey pvtKey = BaseUtils.getPrivateKeyFromPem(privateKey.getAsString());
@@ -160,7 +160,7 @@ public class BearerToken {
             return authenticationApi.authenticationServiceGetAuthToken(authTokenBuilder.build());
         } catch (MalformedURLException e) {
             LogUtil.printErrorLog(ErrorLogs.INVALID_TOKEN_URI.getLog());
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidTokenUri.getMessage());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), BaseErrorMessage.InvalidTokenUri.getMessage());
         } catch (ApiClientApiException e) {
             String bodyString = GSON.toJson(e.body());
             LogUtil.printErrorLog(ErrorLogs.BEARER_TOKEN_REJECTED.getLog());
@@ -218,7 +218,7 @@ public class BearerToken {
     private static String extractAccessToken(V1GetAuthTokenResponse response) throws SkyflowException {
         if (!response.getAccessToken().isPresent()) {
             LogUtil.printErrorLog(ErrorLogs.MISSING_ACCESS_TOKEN.getLog());
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.MissingAccessToken.getMessage());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), BaseErrorMessage.MissingAccessToken.getMessage());
         }
         return response.getAccessToken().get();
     }
