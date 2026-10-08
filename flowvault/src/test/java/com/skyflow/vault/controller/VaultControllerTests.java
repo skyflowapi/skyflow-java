@@ -759,19 +759,18 @@ public class VaultControllerTests {
     public org.junit.rules.TemporaryFolder filesFolder = new org.junit.rules.TemporaryFolder();
 
     /** Records each Phase B call and answers with the status mapped to a URL fragment (default 200). */
+    // PUTs run concurrently, so uploads are recorded per URL rather than in call order.
     private static final class RecordingUploader implements VaultController.SignedUrlUploader {
-        final List<String> urls = new ArrayList<>();
-        final List<String> bodies = new ArrayList<>();
-        final List<String> contentTypes = new ArrayList<>();
+        final Map<String, String> bodyByUrl = new java.util.concurrent.ConcurrentHashMap<>();
+        final Map<String, String> contentTypeByUrl = new java.util.concurrent.ConcurrentHashMap<>();
         final Map<String, Integer> statusByUrlFragment = new HashMap<>();
 
         @Override
         public int upload(String signedUrl, okhttp3.RequestBody fileBody) throws java.io.IOException {
-            urls.add(signedUrl);
             okio.Buffer buffer = new okio.Buffer();
             fileBody.writeTo(buffer);
-            bodies.add(buffer.readUtf8());
-            contentTypes.add(String.valueOf(fileBody.contentType()));
+            bodyByUrl.put(signedUrl, buffer.readUtf8());
+            contentTypeByUrl.put(signedUrl, String.valueOf(fileBody.contentType()));
             for (Map.Entry<String, Integer> entry : statusByUrlFragment.entrySet()) {
                 if (signedUrl.contains(entry.getKey())) return entry.getValue();
             }
@@ -851,10 +850,13 @@ public class VaultControllerTests {
         Assert.assertEquals("kyc.txt", columnsOf(rejected).get(0).get("fileName"));
 
         // Phase B: one PUT per signed URL with that column's bytes; the rejected record sends nothing
-        Assert.assertEquals(Arrays.asList("https://upload.example.com/resumePDF?signed=t1",
-                "https://upload.example.com/photoID?signed=t2"), uploader.urls);
-        Assert.assertEquals(Arrays.asList("resume bytes", "photo"), uploader.bodies);
-        Assert.assertEquals(Arrays.asList("application/pdf", "image/jpeg"), uploader.contentTypes);
+        Assert.assertEquals(2, uploader.bodyByUrl.size());
+        Assert.assertEquals("resume bytes", uploader.bodyByUrl.get("https://upload.example.com/resumePDF?signed=t1"));
+        Assert.assertEquals("photo", uploader.bodyByUrl.get("https://upload.example.com/photoID?signed=t2"));
+        Assert.assertEquals("application/pdf",
+                uploader.contentTypeByUrl.get("https://upload.example.com/resumePDF?signed=t1"));
+        Assert.assertEquals("image/jpeg",
+                uploader.contentTypeByUrl.get("https://upload.example.com/photoID?signed=t2"));
         // the signed URLs are internal credentials and must not reach the caller
         Assert.assertFalse(response.toString().contains("signed="));
     }
@@ -916,6 +918,50 @@ public class VaultControllerTests {
     }
 
     @Test
+    public void testUploadFiles_putsRunConcurrentlyCappedAtFiveAndKeepRequestOrder() throws Exception {
+        ApiClient mockApi = Mockito.mock(ApiClient.class);
+        MockRaw mockRaw = mockRawFlowservice(mockApi);
+        int fileCount = 12;
+        StringBuilder data = new StringBuilder();
+        List<UploadFilesRequestColumn> requestColumns = new ArrayList<>();
+        for (int i = 0; i < fileCount; i++) {
+            data.append(i == 0 ? "" : ",").append("\"c").append(i).append("\":\"https://upload.example.com/c")
+                    .append(i).append("\"");
+            requestColumns.add(UploadFilesRequestColumn.builder().column("c" + i).base64("YQ==")
+                    .fileName("f" + i + ".txt").build());
+        }
+        when(mockRaw.files.uploadFiles(any(), any())).thenReturn(new ApiClientHttpResponse<>(uploadWire(
+                "{\"records\":[{\"skyflowID\":\"sky-1\",\"tableName\":\"onboarding\",\"httpCode\":200,"
+                        + "\"data\":{" + data + "}}]}"), buildOkHttpResponse()));
+        VaultController controller = createControllerWithMock(mockApi);
+        java.util.concurrent.atomic.AtomicInteger inFlight = new java.util.concurrent.atomic.AtomicInteger();
+        java.util.concurrent.atomic.AtomicInteger maxInFlight = new java.util.concurrent.atomic.AtomicInteger();
+        controller.signedUrlUploader = (url, body) -> {
+            maxInFlight.accumulateAndGet(inFlight.incrementAndGet(), Math::max);
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            inFlight.decrementAndGet();
+            return url.endsWith("/c3") ? 500 : 200;
+        };
+
+        UploadFilesResponse response = controller.uploadFiles(UploadFilesRequest.builder().records(
+                Collections.singletonList(UploadFilesRequestRecord.builder().tableName("onboarding").skyflowId("sky-1")
+                        .columns(requestColumns).build())).build());
+
+        Assert.assertTrue("PUTs should overlap", maxInFlight.get() > 1);
+        Assert.assertTrue("at most 5 PUTs at once", maxInFlight.get() <= 5);
+        List<Map<String, Object>> columns = columnsOf(response.getRecords().get(0));
+        Assert.assertEquals(fileCount, columns.size());
+        for (int i = 0; i < fileCount; i++) {
+            Assert.assertEquals("c" + i, columns.get(i).get("column"));
+            Assert.assertEquals(i == 3 ? "FAILED" : "UPLOADED", columns.get(i).get("uploadStatus"));
+        }
+    }
+
+    @Test
     public void testUploadFiles_wholeCallFailureThrowsAndUploadsNothing() throws Exception {
         ApiClient mockApi = Mockito.mock(ApiClient.class);
         MockRaw mockRaw = mockRawFlowservice(mockApi);
@@ -937,7 +983,7 @@ public class VaultControllerTests {
             Assert.assertEquals(403, e.getHttpCode());
             Assert.assertEquals("Permission denied.", e.getMessage());
         }
-        Assert.assertTrue(uploader.urls.isEmpty());
+        Assert.assertTrue(uploader.bodyByUrl.isEmpty());
     }
 
     @Test
@@ -961,7 +1007,7 @@ public class VaultControllerTests {
         } catch (SkyflowException e) {
             Assert.assertEquals(400, e.getHttpCode());
         }
-        Assert.assertTrue(uploader.urls.isEmpty());
+        Assert.assertTrue(uploader.bodyByUrl.isEmpty());
     }
 
     @Test
