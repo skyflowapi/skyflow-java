@@ -112,15 +112,26 @@ public class DetectControllerTests {
         }
     }
 
+    /**
+     * Null credentials would make the SDK fall back to SKYFLOW_CREDENTIALS from the environment or a
+     * .env file, which CI provides, so the outcome would depend on the machine. An explicitly empty
+     * {@link Credentials} is rejected by validation the same way everywhere, before any network call.
+     */
     @Test
     public void missingCredentialsSurfaceAsSkyflowExceptionWithoutNetworkCall() throws SkyflowException {
-        DetectController controller = new DetectController(vaultConfig("vault-a"), (Credentials) null);
+        DetectController controller = new DetectController(vaultConfig("vault-a"), emptyCredentials());
         try {
             controller.reidentifyString(ReidentifyStringRequest.builder().text("[NAME_1]").build());
             Assert.fail("expected SkyflowException");
         } catch (SkyflowException e) {
-            Assert.assertEquals(BaseErrorMessage.EmptyCredentials.getMessage(), e.getMessage());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(BaseErrorMessage.NoTokenGenerationMeansPassed.getMessage(), e.getMessage());
         }
+    }
+
+    /** Credentials with no path, string, token or API key set. */
+    private static Credentials emptyCredentials() {
+        return new Credentials();
     }
 
     // ─── reidentifyFile (flowvault only) ──────────────────────────────────────
@@ -166,13 +177,14 @@ public class DetectControllerTests {
 
     @Test
     public void reidentifyFileMissingCredentialsSurfaceWithoutNetworkCall() throws SkyflowException {
-        DetectController controller = new DetectController(vaultConfig("vault-a"), (Credentials) null);
+        DetectController controller = new DetectController(vaultConfig("vault-a"), emptyCredentials());
         try {
             controller.reidentifyFile(ReidentifyFileRequest.builder()
                     .dataSource(DataSourceType.BASE64).value("Zm9v").build());
             Assert.fail("expected SkyflowException");
         } catch (SkyflowException e) {
-            Assert.assertEquals(BaseErrorMessage.EmptyCredentials.getMessage(), e.getMessage());
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(BaseErrorMessage.NoTokenGenerationMeansPassed.getMessage(), e.getMessage());
         }
     }
 
