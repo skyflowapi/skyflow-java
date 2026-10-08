@@ -4,7 +4,7 @@ import com.skyflow.config.BaseVaultConfig;
 import com.skyflow.config.Credentials;
 import com.skyflow.enums.LogLevel;
 import com.skyflow.errors.ErrorCode;
-import com.skyflow.errors.ErrorMessage;
+import com.skyflow.errors.BaseErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.logs.ErrorLogs;
 import com.skyflow.logs.InfoLogs;
@@ -66,7 +66,7 @@ abstract class BaseSkyflow<Self extends BaseSkyflow<Self, V>, V extends BaseVaul
     }
 
     protected static <T> T resolveOrThrow(Map<String, T> map, String key,
-                                           ErrorLogs errorLog, ErrorMessage errorMessage) throws SkyflowException {
+                                           ErrorLogs errorLog, BaseErrorMessage errorMessage) throws SkyflowException {
         T value = key != null ? map.get(key) : map.values().stream().findFirst().orElse(null);
         if (value == null) {
             // The log line carries a %s1 placeholder for the id. Callers that resolve the single
@@ -125,7 +125,7 @@ abstract class BaseSkyflow<Self extends BaseSkyflow<Self, V>, V extends BaseVaul
                         ErrorLogs.VAULT_CONFIG_EXISTS.getLog(), vaultId
                 ));
                 throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(),
-                        ErrorMessage.VaultIdAlreadyInConfigList.getMessage());
+                        BaseErrorMessage.VaultIdAlreadyInConfigList.getMessage());
             }
             onVaultConfigAdded(vaultConfigCopy);
             this.vaultConfigMap.put(vaultId, vaultConfigCopy);
@@ -139,7 +139,7 @@ abstract class BaseSkyflow<Self extends BaseSkyflow<Self, V>, V extends BaseVaul
                 LogUtil.printErrorLog(BaseUtils.parameterizedString(
                         ErrorLogs.VAULT_CONFIG_DOES_NOT_EXIST.getLog(), vaultId
                 ));
-                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.VaultIdNotInConfigList.getMessage());
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), BaseErrorMessage.VaultIdNotInConfigList.getMessage());
             }
             V previousConfig = this.vaultConfigMap.get(vaultId);
             V merged = mergeVaultConfig(vaultConfig, cloneVaultConfig(previousConfig));
@@ -150,7 +150,7 @@ abstract class BaseSkyflow<Self extends BaseSkyflow<Self, V>, V extends BaseVaul
         protected final void removeVaultConfigTemplate(String vaultId) throws SkyflowException {
             if (!hasVaultClient(vaultId)) {
                 LogUtil.printErrorLog(BaseUtils.parameterizedString(ErrorLogs.VAULT_CONFIG_DOES_NOT_EXIST.getLog(), vaultId));
-                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.VaultIdNotInConfigList.getMessage());
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), BaseErrorMessage.VaultIdNotInConfigList.getMessage());
             }
             onVaultConfigRemoved(vaultId);
             this.vaultConfigMap.remove(vaultId);
