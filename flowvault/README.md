@@ -1742,7 +1742,7 @@ Outputs are written only when polling reached `SUCCESS`, the request was built f
 
 ## Reidentify string
 
-`ReidentifyStringRequest` takes the tokenised text and an optional list of `RedactionLevel` rules. For flowvault vaults each rule targets a `tokenGroupName` and applies a named `redactionPattern`. Without rules every token is replaced by its original value.
+`ReidentifyStringRequest` takes the tokenized text and an optional list of `RedactionLevel` rules. For flowvault vaults each rule targets a `tokenGroupName` and applies a named `redactionPattern`. Without rules every token is replaced by its original value.
 
 ```java
 ReidentifyStringResponse response = skyflowClient.detect().reidentifyString(
@@ -1766,7 +1766,7 @@ A `RedactionLevel` is expected to name one source (`tokenGroupName` or `entityNa
 `reidentifyFile` is synchronous: the re-identified file comes back in the response, not through a run id. `ReidentifyFileRequest` takes a `dataSource` (`BASE64`, `SKYFLOW_ID` or `PRESIGNED_URL`), the matching `value`, an optional `dataFormat` and the same optional `RedactionLevel` rules as `reidentifyString`. Re-identification supports text-based formats such as TXT, CSV, JSON, JSONL, XML, DOCX, XLSX and PPTX.
 
 ```java
-byte[] content = Files.readAllBytes(Paths.get("tokenised.txt"));
+byte[] content = Files.readAllBytes(Paths.get("tokenized.txt"));
 
 ReidentifyFileResponse response = skyflowClient.detect().reidentifyFile(
         ReidentifyFileRequest.builder()
