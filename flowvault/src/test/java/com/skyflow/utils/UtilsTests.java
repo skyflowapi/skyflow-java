@@ -839,7 +839,7 @@ public class UtilsTests {
         Assert.assertNull(first.get("requestId"));
         Map<String, Object> second = formatted.getRecords().get(1);
         Assert.assertEquals("unknown@example.com", second.get("value"));
-        Assert.assertNull(second.get("token"));
+        Assert.assertEquals("", second.get("token"));
         Assert.assertEquals(404, second.get("httpCode"));
         Assert.assertEquals("Token not found.", second.get("error"));
         Assert.assertEquals("req-gettokens-1", second.get("requestId"));
@@ -859,8 +859,9 @@ public class UtilsTests {
     }
 
     @Test
-    public void testFormatGetTokensResponse_emptyStringsNormalisedToNull() {
-        // the API sends "" for a token or error that does not apply
+    public void testFormatGetTokensResponse_emptyTokenKeptEmptyErrorNormalisedToNull() {
+        // the API sends "" for a token or error that does not apply; the token stays "" (matching
+        // the python SDK) while an empty error still reads as null
         TokenizeResponseObject record = TokenizeResponseObject.builder().token("")
                 .value(com.skyflow.generated.rest.types.GoogleProtobufValue.of("v")).tokenGroupName("g").error("").httpCode(200).build();
         GetTokensFromValuesResponse response = GetTokensFromValuesResponse.builder()
@@ -868,7 +869,7 @@ public class UtilsTests {
 
         GetTokensResponse formatted = Utils.formatGetTokensResponse(response, new HashMap<>());
 
-        Assert.assertNull(formatted.getRecords().get(0).get("token"));
+        Assert.assertEquals("", formatted.getRecords().get(0).get("token"));
         Assert.assertNull(formatted.getRecords().get(0).get("error"));
         Assert.assertNull(formatted.getRecords().get(0).get("requestId"));
     }
@@ -2905,6 +2906,35 @@ public class UtilsTests {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
+    public void testUploadFilesErrorBody_recordsShapedBodyLiftsRecordErrorsIntoMessage() {
+        // uploadFiles can be rejected with {"records":[...]}, which SkyflowException can't read a message from
+        Map<String, Object> first = new HashMap<>();
+        first.put("error", "sky-1 isn't a valid Skyflow ID.");
+        Map<String, Object> second = new HashMap<>();
+        second.put("error", "sky-2 isn't a valid Skyflow ID.");
+        Map<String, Object> noError = new HashMap<>();
+        noError.put("tableName", "table5");
+        Map<String, Object> body = new HashMap<>();
+        body.put("records", Arrays.asList(first, noError, second, first));
+        ApiClientApiException ex = new ApiClientApiException("boom", 404, body);
+
+        Map<String, Object> error = (Map<String, Object>) ((Map<String, Object>) Utils.uploadFilesErrorBody(ex)).get("error");
+        Assert.assertEquals(404, error.get("http_code"));
+        Assert.assertEquals("sky-1 isn't a valid Skyflow ID.; sky-2 isn't a valid Skyflow ID.", error.get("message"));
+    }
+
+    @Test
+    public void testUploadFilesErrorBody_errorShapedBodyPassedThrough() {
+        Map<String, Object> errorBody = new HashMap<>();
+        errorBody.put("message", "Permission denied.");
+        Map<String, Object> body = new HashMap<>();
+        body.put("error", errorBody);
+        ApiClientApiException ex = new ApiClientApiException("boom", 403, body);
+        Assert.assertEquals(body, Utils.uploadFilesErrorBody(ex));
+    }
+
+    @Test
     public void testHandleGetTokensRequestException_responseKeyIsWrongShapeReturnsNull() {
         // getTokens's wire key is "records"; a detokenize-shaped body must not be mistaken for it
         Map<String, Object> record = new HashMap<>();
@@ -2932,7 +2962,7 @@ public class UtilsTests {
         Map<String, Object> result = response.getRecords().get(0);
         Assert.assertEquals("unknown@example.com", result.get("value"));
         Assert.assertEquals("det_group", result.get("tokenGroupName"));
-        Assert.assertNull(result.get("token"));
+        Assert.assertEquals("", result.get("token"));
         Assert.assertEquals("Token not found.", result.get("error"));
         Assert.assertEquals(404, result.get("httpCode"));
     }
@@ -3011,12 +3041,9 @@ public class UtilsTests {
 
     @Test
     public void testResolveUploadContentType() {
-        com.skyflow.vault.data.UploadFilesRequestColumn noType = com.skyflow.vault.data.UploadFilesRequestColumn.builder().build();
-        Assert.assertEquals("image/png", Utils.resolveUploadContentType(noType, "photo.png"));
-        Assert.assertEquals("application/octet-stream", Utils.resolveUploadContentType(noType, "data.unknownext"));
-        Assert.assertEquals("application/octet-stream", Utils.resolveUploadContentType(noType, null));
-        Assert.assertEquals("application/pdf", Utils.resolveUploadContentType(
-                com.skyflow.vault.data.UploadFilesRequestColumn.builder().contentType("application/pdf").build(), "photo.png"));
+        Assert.assertEquals("image/png", Utils.resolveUploadContentType("photo.png"));
+        Assert.assertEquals("application/octet-stream", Utils.resolveUploadContentType("data.unknownext"));
+        Assert.assertEquals("application/octet-stream", Utils.resolveUploadContentType(null));
     }
 
     @Test

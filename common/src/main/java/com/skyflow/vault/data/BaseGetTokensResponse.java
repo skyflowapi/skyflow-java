@@ -14,7 +14,7 @@ public class BaseGetTokensResponse {
 
     /**
      * Returns one record map per input entry, in request order. Each map carries the looked-up
-     * value, its token group, the token (or null), and the per-record status/error.
+     * value, its token group, the token (or "" when there is none), and the per-record status/error.
      */
     public ArrayList<HashMap<String, Object>> getRecords() {
         return records;

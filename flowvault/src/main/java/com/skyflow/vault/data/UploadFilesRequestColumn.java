@@ -12,7 +12,6 @@ public class UploadFilesRequestColumn {
     private final String base64;
     private final File fileObject;
     private final String fileName;
-    private final String contentType;
 
     protected UploadFilesRequestColumn(UploadFilesRequestColumnBuilder builder) {
         this.column = builder.column;
@@ -20,7 +19,6 @@ public class UploadFilesRequestColumn {
         this.base64 = builder.base64;
         this.fileObject = builder.fileObject;
         this.fileName = builder.fileName;
-        this.contentType = builder.contentType;
     }
 
     public static UploadFilesRequestColumnBuilder builder() {
@@ -53,18 +51,12 @@ public class UploadFilesRequestColumn {
         return this.fileName;
     }
 
-    /** MIME type sent with the file. Inferred from the file name when omitted. */
-    public String getContentType() {
-        return this.contentType;
-    }
-
     public static class UploadFilesRequestColumnBuilder {
         protected String column;
         protected String filePath;
         protected String base64;
         protected File fileObject;
         protected String fileName;
-        protected String contentType;
 
         protected UploadFilesRequestColumnBuilder() {}
 
@@ -90,11 +82,6 @@ public class UploadFilesRequestColumn {
 
         public UploadFilesRequestColumnBuilder fileName(String fileName) {
             this.fileName = fileName;
-            return this;
-        }
-
-        public UploadFilesRequestColumnBuilder contentType(String contentType) {
-            this.contentType = contentType;
             return this;
         }
 

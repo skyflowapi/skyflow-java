@@ -646,7 +646,7 @@ public class VaultControllerTests {
         Assert.assertEquals(1, response.getRecords().size());
         Assert.assertEquals(404, response.getRecords().get(0).get("httpCode"));
         Assert.assertEquals("Token not found.", response.getRecords().get(0).get("error"));
-        Assert.assertNull(response.getRecords().get(0).get("token"));
+        Assert.assertEquals("", response.getRecords().get(0).get("token"));
     }
 
     @Test
@@ -698,7 +698,7 @@ public class VaultControllerTests {
         Assert.assertEquals("unknown@example.com", response.getRecords().get(0).get("value"));
         Assert.assertEquals(400, response.getRecords().get(0).get("httpCode"));
         Assert.assertEquals("Token not found.", response.getRecords().get(0).get("error"));
-        Assert.assertNull(response.getRecords().get(0).get("token"));
+        Assert.assertEquals("", response.getRecords().get(0).get("token"));
     }
 
     @Test
@@ -1006,6 +1006,7 @@ public class VaultControllerTests {
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(400, e.getHttpCode());
+            Assert.assertEquals("Invalid request. skyflowID sky-x is invalid.", e.getMessage());
         }
         Assert.assertTrue(uploader.bodyByUrl.isEmpty());
     }
