@@ -116,7 +116,16 @@
     "servname",
     "nodename",
     "flowdb",
-    "unrenamed"
+    "unrenamed",
+    "wordprocessingml",
+    "spreadsheetml",
+    "presentationml",
+    "msvideo",
+    "matroska",
+    "okio",
+    "LOPM",
+    "Ghvd",
+    "résumé"
   ],
   "languageSettings": [
     {

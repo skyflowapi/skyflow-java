@@ -1,20 +1,18 @@
 package com.skyflow.utils;
 
+import com.skyflow.generated.rest.resources.query.requests.ExecuteQueryRequest;
+import com.skyflow.generated.rest.resources.tokens.requests.DeleteTokenRequest;
+import com.skyflow.generated.rest.resources.tokens.requests.GetTokensFromValuesRequest;
+import com.skyflow.generated.rest.types.DeleteTokenResponse;
+import com.skyflow.generated.rest.types.DeleteTokenResponseObject;
+import com.skyflow.generated.rest.types.DetokenizeResponseObject;
+import com.skyflow.generated.rest.types.ExecuteQueryResponse;
+import com.skyflow.generated.rest.types.GetTokensFromValuesResponse;
+import com.skyflow.generated.rest.types.InsertRecordData;
+import com.skyflow.generated.rest.types.RecordResponseObject;
+import com.skyflow.generated.rest.types.TokenizeRequestObject;
 import com.skyflow.config.VaultConfig;
-import com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDeleteTokenRequest;
-import com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDetokenizeRequest;
-import com.skyflow.generated.rest.resources.flowservice.requests.V1FlowTokenizeRequest;
-import com.skyflow.generated.rest.resources.flowservice.requests.V1InsertRequest;
-import com.skyflow.generated.rest.types.FlowEnumUpdateType;
-import com.skyflow.generated.rest.types.V1DeleteTokenResponseObject;
-import com.skyflow.generated.rest.types.V1FlowDeleteTokenResponse;
-import com.skyflow.generated.rest.types.V1FlowDetokenizeResponse;
-import com.skyflow.generated.rest.types.V1FlowDetokenizeResponseObject;
-import com.skyflow.generated.rest.types.V1FlowTokenizeRequestObject;
-import com.skyflow.generated.rest.types.V1InsertRecordData;
-import com.skyflow.generated.rest.types.V1InsertResponse;
-import com.skyflow.generated.rest.types.V1RecordResponseObject;
-import com.skyflow.generated.rest.types.V1TokenGroupRedactions;
+import com.skyflow.generated.rest.core.ObjectMappers;
 import com.skyflow.vault.data.BulkDeleteTokensRequest;
 import com.skyflow.vault.data.BulkDeleteTokensResponse;
 import com.skyflow.vault.data.BulkDetokenizeRequest;
@@ -24,9 +22,15 @@ import com.skyflow.vault.data.BulkInsertRequestRecord;
 import com.skyflow.vault.data.BulkInsertResponse;
 import com.skyflow.vault.data.BulkTokenizeRequestRecord;
 import com.skyflow.vault.data.BulkTokenizeRequest;
+import com.skyflow.vault.data.GetTokensRequest;
+import com.skyflow.vault.data.GetTokensRequestRecord;
+import com.skyflow.vault.data.GetTokensResponse;
 import com.skyflow.vault.data.InsertRequestRecord;
+import com.skyflow.vault.data.QueryRequest;
+import com.skyflow.vault.data.QueryResponse;
 import com.skyflow.vault.data.TokenGroupRedactions;
 import com.skyflow.vault.data.UpsertOptions;
+import com.skyflow.generated.rest.types.UpsertUpdateType;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -45,7 +49,9 @@ import java.util.Map;
  *
  * These tests deliberately assert on the real mapping code in {@link Utils} rather than on any
  * hand-rolled copy of it, and use {@code assertSame} where the SDK should be passing the user's
- * own object through untouched (maps, lists, arbitrary tokenize values).
+ * own object through untouched (arbitrary tokenize values). The generated builders, and the
+ * Jackson binding of the insert/update bodies, copy the maps and lists they are given, so those
+ * are compared by value.
  */
 public class RequestFidelityTests {
 
@@ -92,17 +98,17 @@ public class RequestFidelityTests {
                 .records(recordList(record))
                 .build();
 
-        V1InsertRequest body = Utils.getBulkInsertRequestBody(request, vaultConfig());
+        com.skyflow.generated.rest.resources.records.requests.InsertRequest body = Utils.getBulkInsertRequestBody(request, vaultConfig());
 
-        Assert.assertEquals(VAULT_ID, body.getVaultId().get());
-        Assert.assertEquals("cards", body.getTableName().get());
-        V1InsertRecordData wire = body.getRecords().get().get(0);
+        Assert.assertEquals(VAULT_ID, body.getVaultId());
+        Assert.assertEquals("cards", body.getTableName());
+        InsertRecordData wire = body.getRecords().get(0);
         Assert.assertEquals("cards", wire.getTableName().get());
         // The user's own map instances must be handed to the wire object untouched.
-        Assert.assertSame(data, wire.getData().get());
-        Assert.assertSame(tokens, wire.getTokens().get());
-        Assert.assertEquals(FlowEnumUpdateType.UPDATE, wire.getUpsert().get().getUpdateType().get());
-        Assert.assertEquals(Arrays.asList("email", "phone"), wire.getUpsert().get().getUniqueColumns().get());
+        Assert.assertEquals(data, wire.getData());
+        Assert.assertEquals(tokens, wire.getAdditionalProperties().get("tokens"));
+        Assert.assertEquals(UpsertUpdateType.UPDATE, wire.getUpsert().get().getUpdateType().get());
+        Assert.assertEquals(Arrays.asList("email", "phone"), wire.getUpsert().get().getUniqueColumns());
     }
 
     @Test
@@ -123,14 +129,14 @@ public class RequestFidelityTests {
                 .records(recordList(record))
                 .build();
 
-        V1InsertRequest body = Utils.getBulkInsertRequestBody(request, vaultConfig());
+        com.skyflow.generated.rest.resources.records.requests.InsertRequest body = Utils.getBulkInsertRequestBody(request, vaultConfig());
 
-        Assert.assertEquals(SPACED_TABLE, body.getTableName().get());
-        V1InsertRecordData wire = body.getRecords().get().get(0);
+        Assert.assertEquals(SPACED_TABLE, body.getTableName());
+        InsertRecordData wire = body.getRecords().get(0);
         Assert.assertEquals(NON_ASCII_TABLE, wire.getTableName().get());
-        Assert.assertEquals(NON_ASCII_NAME, wire.getData().get().get("name"));
-        Assert.assertEquals("12 東京都 千代田区", wire.getData().get().get("street address"));
-        Assert.assertEquals("tök-ábc 123", wire.getTokens().get().get("name"));
+        Assert.assertEquals(NON_ASCII_NAME, wire.getData().get("name"));
+        Assert.assertEquals("12 東京都 千代田区", wire.getData().get("street address"));
+        Assert.assertEquals("tök-ábc 123", ((Map<?, ?>) wire.getAdditionalProperties().get("tokens")).get("name"));
     }
 
     @Test
@@ -154,17 +160,17 @@ public class RequestFidelityTests {
                 .build();
         BulkInsertRequest request = BulkInsertRequest.builder().records(recordList(record)).build();
 
-        V1InsertRequest body = Utils.getBulkInsertRequestBody(request, vaultConfig());
-        Map<String, Object> wireData = body.getRecords().get().get(0).getData().get();
+        com.skyflow.generated.rest.resources.records.requests.InsertRequest body = Utils.getBulkInsertRequestBody(request, vaultConfig());
+        Map<String, Object> wireData = body.getRecords().get(0).getData();
 
-        Assert.assertSame(data, wireData);
+        Assert.assertEquals(data, wireData);
         // Object identity/type of every value survives — no toString()-ing, no boxing changes.
         Assert.assertEquals(Integer.valueOf(42), wireData.get("age"));
         Assert.assertEquals(Double.valueOf(1234.56d), wireData.get("balance"));
         Assert.assertEquals(Long.valueOf(9007199254740993L), wireData.get("longValue"));
         Assert.assertSame(Boolean.TRUE, wireData.get("active"));
-        Assert.assertSame(nested, wireData.get("address"));
-        Assert.assertSame(list, wireData.get("tags"));
+        Assert.assertEquals(nested, wireData.get("address"));
+        Assert.assertEquals(list, wireData.get("tags"));
         Assert.assertEquals(Integer.valueOf(75001), ((Map<?, ?>) wireData.get("address")).get("zip"));
     }
 
@@ -178,12 +184,12 @@ public class RequestFidelityTests {
         }
         BulkInsertRequest request = BulkInsertRequest.builder().records(records).build();
 
-        V1InsertRequest body = Utils.getBulkInsertRequestBody(request, vaultConfig());
+        com.skyflow.generated.rest.resources.records.requests.InsertRequest body = Utils.getBulkInsertRequestBody(request, vaultConfig());
 
-        List<V1InsertRecordData> wireRecords = body.getRecords().get();
+        List<InsertRecordData> wireRecords = body.getRecords();
         Assert.assertEquals(7, wireRecords.size());
         for (int i = 0; i < 7; i++) {
-            Assert.assertEquals(Integer.valueOf(i), wireRecords.get(i).getData().get().get("pos"));
+            Assert.assertEquals(Integer.valueOf(i), wireRecords.get(i).getData().get("pos"));
         }
     }
 
@@ -199,14 +205,14 @@ public class RequestFidelityTests {
         }
         BulkInsertRequest request = BulkInsertRequest.builder().tableName("cards").records(records).build();
 
-        V1InsertRequest body = Utils.getBulkInsertRequestBody(request, vaultConfig());
-        List<List<V1InsertRecordData>> batches = Utils.createBulkInsertBatches(body.getRecords().get(), batchSize);
+        com.skyflow.generated.rest.resources.records.requests.InsertRequest body = Utils.getBulkInsertRequestBody(request, vaultConfig());
+        List<List<InsertRecordData>> batches = Utils.createBulkInsertBatches(body.getRecords(), batchSize);
 
         Assert.assertEquals(3, batches.size());
         int expected = 0;
-        for (List<V1InsertRecordData> batch : batches) {
-            for (V1InsertRecordData wire : batch) {
-                Assert.assertEquals(Integer.valueOf(expected), wire.getData().get().get("pos"));
+        for (List<InsertRecordData> batch : batches) {
+            for (InsertRecordData wire : batch) {
+                Assert.assertEquals(Integer.valueOf(expected), wire.getData().get("pos"));
                 // Non-batched per-record fields survive batching on every batch.
                 Assert.assertEquals("cards", wire.getTableName().get());
                 expected++;
@@ -227,21 +233,21 @@ public class RequestFidelityTests {
         }
         BulkInsertRequest request = BulkInsertRequest.builder().tableName("cards").records(records).build();
 
-        V1InsertRequest body = Utils.getBulkInsertRequestBody(request, vaultConfig());
-        List<List<V1InsertRecordData>> batches = Utils.createBulkInsertBatches(body.getRecords().get(), batchSize);
+        com.skyflow.generated.rest.resources.records.requests.InsertRequest body = Utils.getBulkInsertRequestBody(request, vaultConfig());
+        List<List<InsertRecordData>> batches = Utils.createBulkInsertBatches(body.getRecords(), batchSize);
 
         // Simulate the server echoing one response record per request record in each batch, then
         // assert the SDK-assigned index equals the record's position in the ORIGINAL user list.
         List<Integer> indices = new ArrayList<>();
         List<String> skyflowIds = new ArrayList<>();
         for (int batchNumber = 0; batchNumber < batches.size(); batchNumber++) {
-            List<V1RecordResponseObject> responseRecords = new ArrayList<>();
-            for (V1InsertRecordData wire : batches.get(batchNumber)) {
-                responseRecords.add(V1RecordResponseObject.builder()
-                        .skyflowId("sky-" + wire.getData().get().get("pos"))
+            List<RecordResponseObject> responseRecords = new ArrayList<>();
+            for (InsertRecordData wire : batches.get(batchNumber)) {
+                responseRecords.add(RecordResponseObject.builder().httpCode(200)
+                        .skyflowId("sky-" + wire.getData().get("pos"))
                         .build());
             }
-            V1InsertResponse response = V1InsertResponse.builder().records(responseRecords).build();
+            com.skyflow.generated.rest.types.InsertResponse response = com.skyflow.generated.rest.types.InsertResponse.builder().records(responseRecords).build();
             BulkInsertResponse formatted = Utils.formatBulkInsertResponse(response, batchNumber, batchSize, new HashMap<>());
             formatted.getRecords().forEach(r -> {
                 indices.add(r.getIndex());
@@ -273,10 +279,10 @@ public class RequestFidelityTests {
                 .records(recordList(record))
                 .build();
 
-        V1InsertRequest body = Utils.getBulkInsertRequestBody(request, vaultConfig());
+        com.skyflow.generated.rest.resources.records.requests.InsertRequest body = Utils.getBulkInsertRequestBody(request, vaultConfig());
 
-        Assert.assertFalse(body.getRecords().get().get(0).getTableName().isPresent());
-        Assert.assertEquals("cards", body.getTableName().get());
+        Assert.assertFalse(body.getRecords().get(0).getTableName().isPresent());
+        Assert.assertEquals("cards", body.getTableName());
     }
 
     @Test
@@ -289,10 +295,10 @@ public class RequestFidelityTests {
                 .records(recordList(record))
                 .build();
 
-        V1InsertRequest body = Utils.getBulkInsertRequestBody(request, vaultConfig());
+        com.skyflow.generated.rest.resources.records.requests.InsertRequest body = Utils.getBulkInsertRequestBody(request, vaultConfig());
 
-        Assert.assertFalse(body.getRecords().get().get(0).getTableName().isPresent());
-        Assert.assertEquals("cards", body.getTableName().get());
+        Assert.assertFalse(body.getRecords().get(0).getTableName().isPresent());
+        Assert.assertEquals("cards", body.getTableName());
     }
 
     @Test
@@ -305,10 +311,10 @@ public class RequestFidelityTests {
                 .records(recordList(record))
                 .build();
 
-        V1InsertRequest body = Utils.getBulkInsertRequestBody(request, vaultConfig());
+        com.skyflow.generated.rest.resources.records.requests.InsertRequest body = Utils.getBulkInsertRequestBody(request, vaultConfig());
 
-        Assert.assertFalse(body.getRecords().get().get(0).getTableName().isPresent());
-        Assert.assertEquals("cards", body.getTableName().get());
+        Assert.assertFalse(body.getRecords().get(0).getTableName().isPresent());
+        Assert.assertEquals("cards", body.getTableName());
     }
 
     @Test
@@ -324,11 +330,11 @@ public class RequestFidelityTests {
                 .records(recordList(record))
                 .build();
 
-        V1InsertRequest body = Utils.getBulkInsertRequestBody(request, vaultConfig());
+        com.skyflow.generated.rest.resources.records.requests.InsertRequest body = Utils.getBulkInsertRequestBody(request, vaultConfig());
 
-        Assert.assertEquals("record_table", body.getRecords().get().get(0).getTableName().get());
+        Assert.assertEquals("record_table", body.getRecords().get(0).getTableName().get());
         // The request-level name still goes out on the envelope, untouched.
-        Assert.assertEquals("request_table", body.getTableName().get());
+        Assert.assertEquals("request_table", body.getTableName());
     }
 
     @Test
@@ -343,14 +349,14 @@ public class RequestFidelityTests {
                 .records(recordList(withOwn, blank, missing))
                 .build();
 
-        V1InsertRequest body = Utils.getBulkInsertRequestBody(request, vaultConfig());
+        com.skyflow.generated.rest.resources.records.requests.InsertRequest body = Utils.getBulkInsertRequestBody(request, vaultConfig());
 
         // Only a record that names its own table carries one on the wire; the others rely on the
         // envelope. Nothing is copied down, so the name is never duplicated across both levels.
-        Assert.assertEquals("own", body.getRecords().get().get(0).getTableName().get());
-        Assert.assertFalse(body.getRecords().get().get(1).getTableName().isPresent());
-        Assert.assertFalse(body.getRecords().get().get(2).getTableName().isPresent());
-        Assert.assertEquals("fallback", body.getTableName().get());
+        Assert.assertEquals("own", body.getRecords().get(0).getTableName().get());
+        Assert.assertFalse(body.getRecords().get(1).getTableName().isPresent());
+        Assert.assertFalse(body.getRecords().get(2).getTableName().isPresent());
+        Assert.assertEquals("fallback", body.getTableName());
     }
 
     @Test
@@ -363,26 +369,26 @@ public class RequestFidelityTests {
                 .records(recordList(record))
                 .build();
 
-        V1InsertRequest body = Utils.getBulkInsertRequestBody(request, vaultConfig());
+        com.skyflow.generated.rest.resources.records.requests.InsertRequest body = Utils.getBulkInsertRequestBody(request, vaultConfig());
 
-        Assert.assertFalse(body.getTableName().isPresent());
-        Assert.assertEquals("cards", body.getRecords().get().get(0).getTableName().get());
+        Assert.assertNull(body.getTableName());
+        Assert.assertEquals("cards", body.getRecords().get(0).getTableName().get());
     }
 
     // ── insert: upsert mapping ───────────────────────────────────────────────
 
     @Test
     public void testUpsert_updateTypeUpdateAndReplace_userValueReachesWire() {
-        Assert.assertEquals(FlowEnumUpdateType.UPDATE, upsertWire("UPDATE").getUpdateType().get());
-        Assert.assertEquals(FlowEnumUpdateType.REPLACE, upsertWire("REPLACE").getUpdateType().get());
+        Assert.assertEquals(UpsertUpdateType.UPDATE, upsertWire("UPDATE").getUpdateType().get());
+        Assert.assertEquals(UpsertUpdateType.REPLACE, upsertWire("REPLACE").getUpdateType().get());
     }
 
     @Test
     public void testUpsert_updateTypeIsMatchedCaseInsensitively() {
-        Assert.assertEquals(FlowEnumUpdateType.UPDATE, upsertWire("update").getUpdateType().get());
-        Assert.assertEquals(FlowEnumUpdateType.UPDATE, upsertWire("UpDaTe").getUpdateType().get());
-        Assert.assertEquals(FlowEnumUpdateType.REPLACE, upsertWire("replace").getUpdateType().get());
-        Assert.assertEquals(FlowEnumUpdateType.REPLACE, upsertWire("Replace").getUpdateType().get());
+        Assert.assertEquals(UpsertUpdateType.UPDATE, upsertWire("update").getUpdateType().get());
+        Assert.assertEquals(UpsertUpdateType.UPDATE, upsertWire("UpDaTe").getUpdateType().get());
+        Assert.assertEquals(UpsertUpdateType.REPLACE, upsertWire("replace").getUpdateType().get());
+        Assert.assertEquals(UpsertUpdateType.REPLACE, upsertWire("Replace").getUpdateType().get());
     }
 
     @Test
@@ -390,9 +396,9 @@ public class RequestFidelityTests {
         // Validations.validateUpsertOptions now rejects anything that is not UPDATE/REPLACE, so
         // the mapper can no longer be reached with a value it would silently drop. A null
         // updateType stays legal and simply omits the field.
-        com.skyflow.generated.rest.types.V1Upsert nullType = upsertWire(null);
+        com.skyflow.generated.rest.types.Upsert nullType = upsertWire(null);
         Assert.assertFalse(nullType.getUpdateType().isPresent());
-        Assert.assertEquals(Collections.singletonList("email"), nullType.getUniqueColumns().get());
+        Assert.assertEquals(Collections.singletonList("email"), nullType.getUniqueColumns());
     }
 
     @Test
@@ -407,10 +413,10 @@ public class RequestFidelityTests {
                 .build();
         BulkInsertRequest request = BulkInsertRequest.builder().records(recordList(record)).build();
 
-        V1InsertRequest body = Utils.getBulkInsertRequestBody(request, vaultConfig());
+        com.skyflow.generated.rest.resources.records.requests.InsertRequest body = Utils.getBulkInsertRequestBody(request, vaultConfig());
 
-        List<String> wireColumns = body.getRecords().get().get(0).getUpsert().get().getUniqueColumns().get();
-        Assert.assertSame(uniqueColumns, wireColumns);
+        List<String> wireColumns = body.getRecords().get(0).getUpsert().get().getUniqueColumns();
+        Assert.assertEquals(uniqueColumns, wireColumns);
         Assert.assertEquals(Arrays.asList("email", "phone number", NON_ASCII_NAME), wireColumns);
     }
 
@@ -434,11 +440,11 @@ public class RequestFidelityTests {
                         .build())
                 .build();
 
-        V1InsertRequest body = Utils.getBulkInsertRequestBody(request, vaultConfig());
+        com.skyflow.generated.rest.resources.records.requests.InsertRequest body = Utils.getBulkInsertRequestBody(request, vaultConfig());
 
-        com.skyflow.generated.rest.types.V1Upsert wire = body.getRecords().get().get(0).getUpsert().get();
-        Assert.assertEquals(FlowEnumUpdateType.REPLACE, wire.getUpdateType().get());
-        Assert.assertEquals(Collections.singletonList("record_col"), wire.getUniqueColumns().get());
+        com.skyflow.generated.rest.types.Upsert wire = body.getRecords().get(0).getUpsert().get();
+        Assert.assertEquals(UpsertUpdateType.REPLACE, wire.getUpdateType().get());
+        Assert.assertEquals(Collections.singletonList("record_col"), wire.getUniqueColumns());
     }
 
     @Test
@@ -457,21 +463,21 @@ public class RequestFidelityTests {
                         .build())
                 .build();
 
-        V1InsertRequest body = Utils.getBulkInsertRequestBody(request, vaultConfig());
+        com.skyflow.generated.rest.resources.records.requests.InsertRequest body = Utils.getBulkInsertRequestBody(request, vaultConfig());
 
         // upsert must travel at the same single level as the table name — here, the envelope.
-        for (V1InsertRecordData wire : body.getRecords().get()) {
+        for (InsertRecordData wire : body.getRecords()) {
             Assert.assertFalse(wire.getUpsert().isPresent());
         }
         Assert.assertTrue(body.getUpsert().isPresent());
-        Assert.assertEquals(FlowEnumUpdateType.UPDATE, body.getUpsert().get().getUpdateType().get());
-        Assert.assertEquals(Collections.singletonList("email"), body.getUpsert().get().getUniqueColumns().get());
+        Assert.assertEquals(UpsertUpdateType.UPDATE, body.getUpsert().get().getUpdateType().get());
+        Assert.assertEquals(Collections.singletonList("email"), body.getUpsert().get().getUniqueColumns());
     }
 
     @Test
     public void testUpsert_requestLevelUpsertReachesEnvelope() {
         // Regression: the request-level upsert used to be projected onto every record and never set
-        // on the V1InsertRequest envelope, so VaultController#insertBatchFutures — which reads
+        // on the com.skyflow.generated.rest.resources.records.requests.InsertRequest envelope, so VaultController#insertBatchFutures — which reads
         // insertRequest.getUpsert() to re-apply it per batch — always read empty.
         Map<String, Object> data = new HashMap<>();
         data.put("name", "john");
@@ -484,10 +490,10 @@ public class RequestFidelityTests {
                         .build())
                 .build();
 
-        V1InsertRequest body = Utils.getBulkInsertRequestBody(request, vaultConfig());
+        com.skyflow.generated.rest.resources.records.requests.InsertRequest body = Utils.getBulkInsertRequestBody(request, vaultConfig());
 
         Assert.assertTrue(body.getUpsert().isPresent());
-        Assert.assertFalse(body.getRecords().get().get(0).getUpsert().isPresent());
+        Assert.assertFalse(body.getRecords().get(0).getUpsert().isPresent());
     }
 
     @Test
@@ -504,12 +510,12 @@ public class RequestFidelityTests {
                 .build();
         BulkInsertRequest request = BulkInsertRequest.builder().records(recordList(record)).build();
 
-        V1InsertRequest body = Utils.getBulkInsertRequestBody(request, vaultConfig());
+        com.skyflow.generated.rest.resources.records.requests.InsertRequest body = Utils.getBulkInsertRequestBody(request, vaultConfig());
 
-        Assert.assertFalse(body.getRecords().get().get(0).getUpsert().isPresent());
+        Assert.assertFalse(body.getRecords().get(0).getUpsert().isPresent());
     }
 
-    private static com.skyflow.generated.rest.types.V1Upsert upsertWire(String updateType) {
+    private static com.skyflow.generated.rest.types.Upsert upsertWire(String updateType) {
         Map<String, Object> data = new HashMap<>();
         data.put("name", "john");
         BulkInsertRequestRecord record = BulkInsertRequestRecord.builder()
@@ -522,7 +528,7 @@ public class RequestFidelityTests {
                 .build();
         BulkInsertRequest request = BulkInsertRequest.builder().records(recordList(record)).build();
         return Utils.getBulkInsertRequestBody(request, vaultConfig())
-                .getRecords().get().get(0).getUpsert().get();
+                .getRecords().get(0).getUpsert().get();
     }
 
     // ── insert: tokens map ───────────────────────────────────────────────────
@@ -540,9 +546,9 @@ public class RequestFidelityTests {
                 .build();
         BulkInsertRequest request = BulkInsertRequest.builder().records(recordList(record)).build();
 
-        V1InsertRequest body = Utils.getBulkInsertRequestBody(request, vaultConfig());
+        com.skyflow.generated.rest.resources.records.requests.InsertRequest body = Utils.getBulkInsertRequestBody(request, vaultConfig());
 
-        Assert.assertFalse(body.getRecords().get().get(0).getTokens().isPresent());
+        Assert.assertFalse(body.getRecords().get(0).getAdditionalProperties().containsKey("tokens"));
     }
 
     @Test
@@ -555,9 +561,9 @@ public class RequestFidelityTests {
                 .build();
         BulkInsertRequest request = BulkInsertRequest.builder().records(recordList(record)).build();
 
-        V1InsertRequest body = Utils.getBulkInsertRequestBody(request, vaultConfig());
+        com.skyflow.generated.rest.resources.records.requests.InsertRequest body = Utils.getBulkInsertRequestBody(request, vaultConfig());
 
-        Assert.assertFalse(body.getRecords().get().get(0).getTokens().isPresent());
+        Assert.assertFalse(body.getRecords().get(0).getAdditionalProperties().containsKey("tokens"));
     }
 
     @Test
@@ -575,10 +581,11 @@ public class RequestFidelityTests {
                 .build();
         BulkInsertRequest request = BulkInsertRequest.builder().records(recordList(record)).build();
 
-        V1InsertRequest body = Utils.getBulkInsertRequestBody(request, vaultConfig());
+        com.skyflow.generated.rest.resources.records.requests.InsertRequest body = Utils.getBulkInsertRequestBody(request, vaultConfig());
 
-        Map<String, Object> wireTokens = body.getRecords().get().get(0).getTokens().get();
-        Assert.assertSame(tokens, wireTokens);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> wireTokens = (Map<String, Object>) body.getRecords().get(0).getAdditionalProperties().get("tokens");
+        Assert.assertEquals(tokens, wireTokens);
         Assert.assertEquals("tok-1", wireTokens.get("name"));
         Assert.assertEquals("tok-2", wireTokens.get("ssn"));
         Assert.assertEquals(Collections.singletonMap("group", "tok-3"), wireTokens.get("nested"));
@@ -604,13 +611,13 @@ public class RequestFidelityTests {
                 .tokenGroupRedactions(Arrays.asList(groupA, groupB))
                 .build();
 
-        V1FlowDetokenizeRequest body = Utils.getBulkDetokenizeRequestBody(request, VAULT_ID);
+        com.skyflow.generated.rest.resources.tokens.requests.DetokenizeRequest body = Utils.getBulkDetokenizeRequestBody(request, VAULT_ID);
 
-        Assert.assertEquals(VAULT_ID, body.getVaultId().get());
-        Assert.assertSame(tokens, body.getTokens().get());
-        Assert.assertEquals(Arrays.asList("token-1", "token 2", "トークン-3"), body.getTokens().get());
+        Assert.assertEquals(VAULT_ID, body.getVaultId());
+        Assert.assertEquals(tokens, body.getTokens());
+        Assert.assertEquals(Arrays.asList("token-1", "token 2", "トークン-3"), body.getTokens());
 
-        List<V1TokenGroupRedactions> wireGroups = body.getTokenGroupRedactions().get();
+        List<com.skyflow.generated.rest.types.TokenGroupRedactions> wireGroups = body.getTokenGroupRedactions().get();
         Assert.assertEquals(2, wireGroups.size());
         Assert.assertEquals("group one", wireGroups.get(0).getTokenGroupName().get());
         Assert.assertEquals("MASKED", wireGroups.get(0).getRedaction().get());
@@ -625,7 +632,7 @@ public class RequestFidelityTests {
                 .tokenGroupRedactions(new ArrayList<>())
                 .build();
 
-        V1FlowDetokenizeRequest body = Utils.getBulkDetokenizeRequestBody(request, VAULT_ID);
+        com.skyflow.generated.rest.resources.tokens.requests.DetokenizeRequest body = Utils.getBulkDetokenizeRequestBody(request, VAULT_ID);
 
         Assert.assertFalse(body.getTokenGroupRedactions().isPresent());
     }
@@ -640,13 +647,13 @@ public class RequestFidelityTests {
         }
         BulkDetokenizeRequest request = BulkDetokenizeRequest.builder().tokens(tokens).build();
 
-        V1FlowDetokenizeRequest body = Utils.getBulkDetokenizeRequestBody(request, VAULT_ID);
-        List<V1FlowDetokenizeRequest> batches = Utils.createBulkDetokenizeBatches(body, batchSize);
+        com.skyflow.generated.rest.resources.tokens.requests.DetokenizeRequest body = Utils.getBulkDetokenizeRequestBody(request, VAULT_ID);
+        List<com.skyflow.generated.rest.resources.tokens.requests.DetokenizeRequest> batches = Utils.createBulkDetokenizeBatches(body, batchSize);
 
         Assert.assertEquals(3, batches.size());
         List<String> flattened = new ArrayList<>();
-        for (V1FlowDetokenizeRequest batch : batches) {
-            flattened.addAll(batch.getTokens().get());
+        for (com.skyflow.generated.rest.resources.tokens.requests.DetokenizeRequest batch : batches) {
+            flattened.addAll(batch.getTokens());
         }
         Assert.assertEquals(tokens, flattened);
     }
@@ -668,12 +675,12 @@ public class RequestFidelityTests {
                 .tokenGroupRedactions(Collections.singletonList(group))
                 .build();
 
-        V1FlowDetokenizeRequest body = Utils.getBulkDetokenizeRequestBody(request, VAULT_ID);
-        List<V1FlowDetokenizeRequest> batches = Utils.createBulkDetokenizeBatches(body, batchSize);
+        com.skyflow.generated.rest.resources.tokens.requests.DetokenizeRequest body = Utils.getBulkDetokenizeRequestBody(request, VAULT_ID);
+        List<com.skyflow.generated.rest.resources.tokens.requests.DetokenizeRequest> batches = Utils.createBulkDetokenizeBatches(body, batchSize);
 
         Assert.assertEquals(3, batches.size());
-        for (V1FlowDetokenizeRequest batch : batches) {
-            Assert.assertEquals(VAULT_ID, batch.getVaultId().get());
+        for (com.skyflow.generated.rest.resources.tokens.requests.DetokenizeRequest batch : batches) {
+            Assert.assertEquals(VAULT_ID, batch.getVaultId());
             Assert.assertTrue(batch.getTokenGroupRedactions().isPresent());
             Assert.assertEquals(1, batch.getTokenGroupRedactions().get().size());
             Assert.assertEquals("group one", batch.getTokenGroupRedactions().get().get(0).getTokenGroupName().get());
@@ -690,17 +697,17 @@ public class RequestFidelityTests {
             tokens.add("token-" + i);
         }
         BulkDetokenizeRequest request = BulkDetokenizeRequest.builder().tokens(tokens).build();
-        V1FlowDetokenizeRequest body = Utils.getBulkDetokenizeRequestBody(request, VAULT_ID);
-        List<V1FlowDetokenizeRequest> batches = Utils.createBulkDetokenizeBatches(body, batchSize);
+        com.skyflow.generated.rest.resources.tokens.requests.DetokenizeRequest body = Utils.getBulkDetokenizeRequestBody(request, VAULT_ID);
+        List<com.skyflow.generated.rest.resources.tokens.requests.DetokenizeRequest> batches = Utils.createBulkDetokenizeBatches(body, batchSize);
 
         List<Integer> indices = new ArrayList<>();
         List<String> echoedTokens = new ArrayList<>();
         for (int batchNumber = 0; batchNumber < batches.size(); batchNumber++) {
-            List<V1FlowDetokenizeResponseObject> responseRecords = new ArrayList<>();
-            for (String token : batches.get(batchNumber).getTokens().get()) {
-                responseRecords.add(V1FlowDetokenizeResponseObject.builder().token(token).build());
+            List<DetokenizeResponseObject> responseRecords = new ArrayList<>();
+            for (String token : batches.get(batchNumber).getTokens()) {
+                responseRecords.add(DetokenizeResponseObject.builder().token(token).build());
             }
-            V1FlowDetokenizeResponse response = V1FlowDetokenizeResponse.builder().response(responseRecords).build();
+            com.skyflow.generated.rest.types.DetokenizeResponse response = com.skyflow.generated.rest.types.DetokenizeResponse.builder().response(responseRecords).build();
             BulkDetokenizeResponse formatted =
                     Utils.formatBulkDetokenizeResponse(response, batchNumber, batchSize, new HashMap<>());
             formatted.getRecords().forEach(r -> {
@@ -729,14 +736,14 @@ public class RequestFidelityTests {
                 .build();
         List<BulkTokenizeRequestRecord> records = Collections.singletonList(record);
 
-        V1FlowTokenizeRequest body = Utils.getBulkTokenizeRequestBody(records, VAULT_ID);
+        com.skyflow.generated.rest.resources.tokens.requests.TokenizeRequest body = Utils.getBulkTokenizeRequestBody(records, VAULT_ID);
 
-        Assert.assertEquals(VAULT_ID, body.getVaultId().get());
-        Assert.assertEquals(1, body.getData().get().size());
-        V1FlowTokenizeRequestObject wire = body.getData().get().get(0);
+        Assert.assertEquals(VAULT_ID, body.getVaultId());
+        Assert.assertEquals(1, body.getData().size());
+        TokenizeRequestObject wire = body.getData().get(0);
         Assert.assertEquals(NON_ASCII_NAME, wire.getValue().get());
-        Assert.assertSame(groupNames, wire.getTokenGroupNames().get());
-        Assert.assertEquals(Arrays.asList("group one", NON_ASCII_NAME), wire.getTokenGroupNames().get());
+        Assert.assertEquals(groupNames, wire.getTokenGroupNames());
+        Assert.assertEquals(Arrays.asList("group one", NON_ASCII_NAME), wire.getTokenGroupNames());
     }
 
     @Test
@@ -747,10 +754,10 @@ public class RequestFidelityTests {
                 .tokenGroupNames(Collections.singletonList("g1"))
                 .build();
 
-        V1FlowTokenizeRequest body = Utils.getBulkTokenizeRequestBody(
+        com.skyflow.generated.rest.resources.tokens.requests.TokenizeRequest body = Utils.getBulkTokenizeRequestBody(
                 Collections.singletonList(record), VAULT_ID);
 
-        Assert.assertEquals("my-own-token", body.getData().get().get(0).getToken().get());
+        Assert.assertEquals("my-own-token", body.getData().get(0).getToken().get().get());
     }
 
     @Test
@@ -760,11 +767,11 @@ public class RequestFidelityTests {
                 .tokenGroupNames(Collections.singletonList("g1"))
                 .build();
 
-        V1FlowTokenizeRequest body = Utils.getBulkTokenizeRequestBody(
+        com.skyflow.generated.rest.resources.tokens.requests.TokenizeRequest body = Utils.getBulkTokenizeRequestBody(
                 Collections.singletonList(record), VAULT_ID);
 
         // omitted rather than sent as null, so a non-BYOT request is byte-identical to before
-        Assert.assertFalse(body.getData().get().get(0).getToken().isPresent());
+        Assert.assertFalse(body.getData().get(0).getToken().isPresent());
     }
 
     @Test
@@ -781,8 +788,8 @@ public class RequestFidelityTests {
                 BulkTokenizeRequestRecord.builder().value(nested).build(),
                 BulkTokenizeRequestRecord.builder().value(listValue).build());
 
-        V1FlowTokenizeRequest body = Utils.getBulkTokenizeRequestBody(records, VAULT_ID);
-        List<V1FlowTokenizeRequestObject> wire = body.getData().get();
+        com.skyflow.generated.rest.resources.tokens.requests.TokenizeRequest body = Utils.getBulkTokenizeRequestBody(records, VAULT_ID);
+        List<TokenizeRequestObject> wire = body.getData();
 
         Assert.assertEquals(Integer.valueOf(42), wire.get(0).getValue().get());
         Assert.assertEquals(Double.valueOf(3.14d), wire.get(1).getValue().get());
@@ -796,9 +803,9 @@ public class RequestFidelityTests {
         List<BulkTokenizeRequestRecord> records =
                 Collections.singletonList(BulkTokenizeRequestRecord.builder().value("v1").build());
 
-        V1FlowTokenizeRequest body = Utils.getBulkTokenizeRequestBody(records, VAULT_ID);
+        com.skyflow.generated.rest.resources.tokens.requests.TokenizeRequest body = Utils.getBulkTokenizeRequestBody(records, VAULT_ID);
 
-        Assert.assertFalse(body.getData().get().get(0).getTokenGroupNames().isPresent());
+        Assert.assertTrue(body.getData().get(0).getTokenGroupNames().isEmpty());
     }
 
     @Test
@@ -818,10 +825,10 @@ public class RequestFidelityTests {
         Assert.assertEquals(3, batches.size());
         List<Object> flattened = new ArrayList<>();
         for (List<BulkTokenizeRequestRecord> batch : batches) {
-            V1FlowTokenizeRequest body = Utils.getBulkTokenizeRequestBody(batch, VAULT_ID);
+            com.skyflow.generated.rest.resources.tokens.requests.TokenizeRequest body = Utils.getBulkTokenizeRequestBody(batch, VAULT_ID);
             // vaultId is a non-batched field and must be re-applied on every batch.
-            Assert.assertEquals(VAULT_ID, body.getVaultId().get());
-            for (V1FlowTokenizeRequestObject obj : body.getData().get()) {
+            Assert.assertEquals(VAULT_ID, body.getVaultId());
+            for (TokenizeRequestObject obj : body.getData()) {
                 flattened.add(obj.getValue().get());
             }
         }
@@ -840,11 +847,11 @@ public class RequestFidelityTests {
         List<String> tokens = Arrays.asList("token-1", "token 2", "トークン-3");
         BulkDeleteTokensRequest request = BulkDeleteTokensRequest.builder().tokens(tokens).build();
 
-        V1FlowDeleteTokenRequest body = Utils.getBulkDeleteTokensRequestBody(request, VAULT_ID);
+        DeleteTokenRequest body = Utils.getBulkDeleteTokensRequestBody(request, VAULT_ID);
 
-        Assert.assertEquals(VAULT_ID, body.getVaultId().get());
-        Assert.assertSame(tokens, body.getTokens().get());
-        Assert.assertEquals(Arrays.asList("token-1", "token 2", "トークン-3"), body.getTokens().get());
+        Assert.assertEquals(VAULT_ID, body.getVaultId());
+        Assert.assertEquals(tokens, body.getTokens());
+        Assert.assertEquals(Arrays.asList("token-1", "token 2", "トークン-3"), body.getTokens());
     }
 
     @Test
@@ -857,14 +864,14 @@ public class RequestFidelityTests {
         }
         BulkDeleteTokensRequest request = BulkDeleteTokensRequest.builder().tokens(tokens).build();
 
-        V1FlowDeleteTokenRequest body = Utils.getBulkDeleteTokensRequestBody(request, VAULT_ID);
-        List<V1FlowDeleteTokenRequest> batches = Utils.createBulkDeleteTokensBatches(body, batchSize);
+        DeleteTokenRequest body = Utils.getBulkDeleteTokensRequestBody(request, VAULT_ID);
+        List<DeleteTokenRequest> batches = Utils.createBulkDeleteTokensBatches(body, batchSize);
 
         Assert.assertEquals(3, batches.size());
         List<String> flattened = new ArrayList<>();
-        for (V1FlowDeleteTokenRequest batch : batches) {
-            Assert.assertEquals(VAULT_ID, batch.getVaultId().get());
-            flattened.addAll(batch.getTokens().get());
+        for (DeleteTokenRequest batch : batches) {
+            Assert.assertEquals(VAULT_ID, batch.getVaultId());
+            flattened.addAll(batch.getTokens());
         }
         Assert.assertEquals(tokens, flattened);
     }
@@ -878,18 +885,18 @@ public class RequestFidelityTests {
             tokens.add("token-" + i);
         }
         BulkDeleteTokensRequest request = BulkDeleteTokensRequest.builder().tokens(tokens).build();
-        V1FlowDeleteTokenRequest body = Utils.getBulkDeleteTokensRequestBody(request, VAULT_ID);
-        List<V1FlowDeleteTokenRequest> batches = Utils.createBulkDeleteTokensBatches(body, batchSize);
+        DeleteTokenRequest body = Utils.getBulkDeleteTokensRequestBody(request, VAULT_ID);
+        List<DeleteTokenRequest> batches = Utils.createBulkDeleteTokensBatches(body, batchSize);
 
         List<Integer> indices = new ArrayList<>();
         List<String> echoed = new ArrayList<>();
         for (int batchNumber = 0; batchNumber < batches.size(); batchNumber++) {
-            List<V1DeleteTokenResponseObject> responseRecords = new ArrayList<>();
-            for (String token : batches.get(batchNumber).getTokens().get()) {
-                responseRecords.add(V1DeleteTokenResponseObject.builder().value(token).build());
+            List<DeleteTokenResponseObject> responseRecords = new ArrayList<>();
+            for (String token : batches.get(batchNumber).getTokens()) {
+                responseRecords.add(DeleteTokenResponseObject.builder().value(token).build());
             }
-            V1FlowDeleteTokenResponse response =
-                    V1FlowDeleteTokenResponse.builder().tokens(responseRecords).build();
+            DeleteTokenResponse response =
+                    DeleteTokenResponse.builder().tokens(responseRecords).build();
             // successes and errors now share one records list, keyed by index
             BulkDeleteTokensResponse formatted = Utils.formatBulkDeleteTokensResponse(
                     response, batches.get(batchNumber), batchNumber, batchSize, new HashMap<>());
@@ -904,5 +911,112 @@ public class RequestFidelityTests {
             Assert.assertEquals(Integer.valueOf(i), indices.get(i));
             Assert.assertEquals(tokens.get(i), echoed.get(i));
         }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Query
+    // ─────────────────────────────────────────────────────────────────────────
+
+    @Test
+    public void testQuery_queryStringReachesWireUntouched() {
+        String query = "SELECT name, \"street address\" FROM " + NON_ASCII_TABLE
+                + " WHERE name = '" + NON_ASCII_NAME + "' LIMIT 25 OFFSET 50";
+        QueryRequest request = QueryRequest.builder().query(query).build();
+
+        ExecuteQueryRequest body = Utils.getQueryRequestBody(request, VAULT_ID);
+
+        Assert.assertEquals(VAULT_ID, body.getVaultId());
+        Assert.assertEquals(query, body.getQuery());
+    }
+
+    @Test
+    public void testQuery_serializesToDocumentedWireShape() throws Exception {
+        QueryRequest request = QueryRequest.builder().query("SELECT * FROM persons").build();
+
+        String json = ObjectMappers.JSON_MAPPER.writeValueAsString(Utils.getQueryRequestBody(request, VAULT_ID));
+
+        Assert.assertEquals("{\"vaultID\":\"" + VAULT_ID + "\",\"query\":\"SELECT * FROM persons\"}", json);
+    }
+
+    @Test
+    public void testQuery_wireResponseRowsReachCallerInOrder() throws Exception {
+        ExecuteQueryResponse wire = ObjectMappers.JSON_MAPPER.readValue(
+                "{\"records\":["
+                        + "{\"data\":{\"skyflow_id\":\"sky-1\",\"name\":\"" + NON_ASCII_NAME + "\",\"age\":30}},"
+                        + "{\"data\":{\"skyflow_id\":\"sky-2\",\"name\":\"jane\",\"age\":null}}],"
+                        + "\"metadata\":{\"columns\":[\"skyflow_id\",\"name\",\"age\"]}}",
+                ExecuteQueryResponse.class);
+
+        QueryResponse response = Utils.formatQueryResponse(wire, new HashMap<>());
+
+        Assert.assertEquals(2, response.getFields().size());
+        Assert.assertEquals(Arrays.asList("skyflow_id", "name", "age"),
+                new ArrayList<>(response.getFields().get(0).keySet()));
+        Assert.assertEquals(NON_ASCII_NAME, response.getFields().get(0).get("name"));
+        Assert.assertEquals(30, response.getFields().get(0).get("age"));
+        Assert.assertEquals("sky-2", response.getFields().get(1).get("skyflow_id"));
+        Assert.assertTrue(response.getFields().get(1).containsKey("age"));
+        Assert.assertNull(response.getFields().get(1).get("age"));
+        Assert.assertEquals(Arrays.asList("skyflow_id", "name", "age"), response.getMetadata().getColumns());
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Get tokens
+    // ─────────────────────────────────────────────────────────────────────────
+
+    @Test
+    public void testGetTokens_everyRecordReachesWireInOrderWithoutCollapsingDuplicates() {
+        Map<String, Object> structured = new LinkedHashMap<>();
+        structured.put("k", "v");
+        List<GetTokensRequestRecord> records = Arrays.asList(
+                GetTokensRequestRecord.builder().value(NON_ASCII_NAME).tokenGroupName("group one").build(),
+                GetTokensRequestRecord.builder().value(42).tokenGroupName("det_number").build(),
+                GetTokensRequestRecord.builder().value(structured).tokenGroupName("det_json").build(),
+                GetTokensRequestRecord.builder().value(NON_ASCII_NAME).tokenGroupName("group one").build());
+        GetTokensRequest request = GetTokensRequest.builder().records(records).build();
+
+        GetTokensFromValuesRequest body = Utils.getGetTokensRequestBody(request, VAULT_ID);
+
+        Assert.assertEquals(VAULT_ID, body.getVaultId());
+        Assert.assertEquals(4, body.getRecords().size());
+        for (int i = 0; i < records.size(); i++) {
+            // arbitrary values must be handed to the wire object untouched
+            Assert.assertSame(records.get(i).getValue(), body.getRecords().get(i).getValue().get());
+            Assert.assertEquals(records.get(i).getTokenGroupName(),
+                    body.getRecords().get(i).getTokenGroupName());
+        }
+    }
+
+    @Test
+    public void testGetTokens_serializesToDocumentedWireShape() throws Exception {
+        GetTokensRequest request = GetTokensRequest.builder().records(Arrays.asList(
+                GetTokensRequestRecord.builder().value("john@example.com").tokenGroupName("det_email").build(),
+                GetTokensRequestRecord.builder().value(42).tokenGroupName("det_number").build())).build();
+
+        String json = ObjectMappers.JSON_MAPPER.writeValueAsString(Utils.getGetTokensRequestBody(request, VAULT_ID));
+
+        Assert.assertEquals("{\"vaultID\":\"" + VAULT_ID + "\",\"records\":["
+                + "{\"value\":\"john@example.com\",\"tokenGroupName\":\"det_email\"},"
+                + "{\"value\":42,\"tokenGroupName\":\"det_number\"}]}", json);
+    }
+
+    @Test
+    public void testGetTokens_wireResponseRecordsReachCallerInOrder() throws Exception {
+        GetTokensFromValuesResponse wire = ObjectMappers.JSON_MAPPER.readValue(
+                "{\"records\":["
+                        + "{\"token\":\"1R9kNnLOPM\",\"value\":\"john@example.com\",\"tokenGroupName\":\"det_reg_rtf\",\"error\":\"\",\"httpCode\":200},"
+                        + "{\"token\":\"\",\"value\":\"unknown@example.com\",\"tokenGroupName\":\"det_reg_rtf\",\"error\":\"Token not found.\",\"httpCode\":404}]}",
+                GetTokensFromValuesResponse.class);
+
+        GetTokensResponse response = Utils.formatGetTokensResponse(wire, new HashMap<>());
+
+        Assert.assertEquals(2, response.getRecords().size());
+        Assert.assertEquals("john@example.com", response.getRecords().get(0).get("value"));
+        Assert.assertEquals("1R9kNnLOPM", response.getRecords().get(0).get("token"));
+        Assert.assertNull(response.getRecords().get(0).get("error"));
+        Assert.assertEquals("unknown@example.com", response.getRecords().get(1).get("value"));
+        Assert.assertEquals("", response.getRecords().get(1).get("token"));
+        Assert.assertEquals("Token not found.", response.getRecords().get(1).get("error"));
+        Assert.assertEquals(404, response.getRecords().get(1).get("httpCode"));
     }
 }

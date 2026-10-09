@@ -169,6 +169,40 @@ public enum ErrorMessage {
     MissingIndexInBulkTokenizeRecord("%s0 Validation error. Index in BulkTokenizeRequestRecord is null. Specify an index for every record."),
     DuplicateIndexInBulkTokenizeRecord("%s0 Validation error. Duplicate index in BulkTokenizeRequestRecord. Specify a unique index for every record."),
 
+    // Get Tokens
+    GetTokensRequestNull("%s0 Validation error. GetTokensRequest object is null. Specify a valid GetTokensRequest object."),
+    EmptyGetTokensRecords("%s0 Validation error. 'records' can't be empty. Specify at least one GetTokensRequestRecord."),
+    GetTokensRecordNull("%s0 Validation error. GetTokensRequestRecord in the list is null. Specify a valid GetTokensRequestRecord object."),
+    EmptyValueInGetTokensRecord("%s0 Validation error. 'value' in GetTokensRequestRecord is null or empty. Specify a valid value."),
+    EmptyTokenGroupNameInGetTokensRecord("%s0 Validation error. 'tokenGroupName' in GetTokensRequestRecord is null or empty. Specify a valid token group name."),
+
+    // Upload Files
+    UploadFilesRequestNull("%s0 Validation error. UploadFilesRequest object is null. Specify a valid UploadFilesRequest object."),
+    EmptyUploadFilesRecords("%s0 Validation error. 'records' can't be empty. Specify at least one UploadFilesRequestRecord."),
+    UploadFilesRecordNull("%s0 Validation error. UploadFilesRequestRecord in the list is null. Specify a valid UploadFilesRequestRecord object."),
+    EmptyTableNameInUploadFilesRecord("%s0 Validation error. 'tableName' in UploadFilesRequestRecord is null or empty. Specify a valid table name."),
+    EmptySkyflowIdInUploadFilesRecord("%s0 Validation error. 'skyflowId' in UploadFilesRequestRecord is empty. Specify a valid skyflow ID, or omit it to create a new record."),
+    EmptyUploadFilesColumns("%s0 Validation error. 'columns' in UploadFilesRequestRecord can't be empty. Specify at least one UploadFilesRequestColumn."),
+    UploadFilesColumnNull("%s0 Validation error. UploadFilesRequestColumn in the list is null. Specify a valid UploadFilesRequestColumn object."),
+    EmptyColumnInUploadFilesColumn("%s0 Validation error. 'column' in UploadFilesRequestColumn is null or empty. Specify a valid column name."),
+    DuplicateColumnInUploadFilesRecord("%s0 Validation error. 'columns' in UploadFilesRequestRecord contains a duplicate column name. Specify each column only once."),
+    MissingFileSourceInUploadFilesColumn("%s0 Validation error. UploadFilesRequestColumn has no file. Provide one of filePath, base64, or fileObject."),
+    MultipleFileSourcesInUploadFilesColumn("%s0 Validation error. UploadFilesRequestColumn has more than one file. Provide exactly one of filePath, base64, or fileObject."),
+    InvalidFilePathInUploadFilesColumn("%s0 Validation error. No readable file at 'filePath' in UploadFilesRequestColumn. Specify the path of an existing file."),
+    InvalidBase64InUploadFilesColumn("%s0 Validation error. 'base64' in UploadFilesRequestColumn is not a valid base64 string. Specify valid base64-encoded content."),
+    FileNameRequiredWithBase64InUploadFilesColumn("%s0 Validation error. 'fileName' is required in UploadFilesRequestColumn when 'base64' is used. Specify a file name."),
+    InvalidFileObjectInUploadFilesColumn("%s0 Validation error. 'fileObject' in UploadFilesRequestColumn is not an existing file. Specify a valid file object."),
+
+    // Delete Files
+    DeleteFilesRequestNull("%s0 Validation error. DeleteFilesRequest object is null. Specify a valid DeleteFilesRequest object."),
+    EmptyDeleteFilesRecords("%s0 Validation error. 'records' can't be empty. Specify at least one DeleteFilesRequestRecord."),
+    DeleteFilesRecordNull("%s0 Validation error. DeleteFilesRequestRecord in the list is null. Specify a valid DeleteFilesRequestRecord object."),
+    EmptyTableNameInDeleteFilesRecord("%s0 Validation error. 'tableName' in DeleteFilesRequestRecord is null or empty. Specify a valid table name."),
+    EmptyDeleteFilesColumns("%s0 Validation error. 'columns' in DeleteFilesRequestRecord can't be empty. Specify at least one file column."),
+    EmptyColumnInDeleteFilesColumns("%s0 Validation error. 'columns' in DeleteFilesRequestRecord contains a null or empty column name. Specify valid column names."),
+    DuplicateColumnInDeleteFilesColumns("%s0 Validation error. 'columns' in DeleteFilesRequestRecord contains a duplicate column name. Specify each column only once."),
+    InvalidIdOrUniqueValuesInDeleteFilesRecord("%s0 Validation error. DeleteFilesRequestRecord must set exactly one of 'skyflowId' or 'uniqueValues'. Specify one of them."),
+
     // Connection
     InvalidRequestHeaders("%s0 Validation error. Request headers aren't valid. Specify valid request headers."),
     EmptyRequestHeaders("%s0 Validation error. Request headers are empty. Specify valid request headers."),
