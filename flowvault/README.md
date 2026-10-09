@@ -1739,12 +1739,12 @@ Sample response:
 {
   "records": [
     { "value": "john@example.com",    "tokenGroupName": "det_reg_rtf", "token": "1R9kNnLOPM", "httpCode": 200, "error": null, "requestId": null },
-    { "value": "unknown@example.com", "tokenGroupName": "det_reg_rtf", "token": null,         "httpCode": 404, "error": "Token not found.", "requestId": "<id>" }
+    { "value": "unknown@example.com", "tokenGroupName": "det_reg_rtf", "token": "",           "httpCode": 404, "error": "Token not found.", "requestId": "<id>" }
   ]
 }
 ```
 
-`getTokensResponse.getRecords()` returns one `HashMap<String, Object>` per input entry, with the keys `value`, `tokenGroupName`, `token`, `httpCode`, `error` and `requestId` (set only when `error` is non-null).
+`getTokensResponse.getRecords()` returns one `HashMap<String, Object>` per input entry, with the keys `value`, `tokenGroupName`, `token`, `httpCode`, `error` and `requestId` (set only when `error` is non-null). `token` is `""` (never null) on a record that has no token.
 
 ```java
 for (HashMap<String, Object> record : getTokensResponse.getRecords()) {
@@ -1779,7 +1779,7 @@ The signed URL is a credential that expires after about 15 minutes. The SDK uses
 | `base64` | `String` | Base64-encoded content. **Requires** `fileName`. |
 | `fileObject` | `java.io.File` | `fileName` defaults to its `getName()`. |
 
-  A column that sets none, or more than one, fails validation. If `fileName` is still unset, the server generates a random 16-byte UUID name. `contentType` defaults to one inferred from the file name, else `application/octet-stream`.
+  A column that sets none, or more than one, fails validation. If `fileName` is still unset, the server generates a random 16-byte UUID name. The file's content type is inferred from the file name, else `application/octet-stream`.
 - Errors:
   - Any error status from step A (400/401/403/404/500) is thrown as a `SkyflowException`, and nothing is uploaded.
   - A record that fails in step A (inside a 207 response) comes back with its `error` set and every column `SKIPPED`.

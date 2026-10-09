@@ -372,7 +372,7 @@ public class UploadFilesFormatsTests {
     }
 
     @Test
-    public void testExplicitContentTypeAndFileNameOverrideWhatTheFileImplies() throws Exception {
+    public void testExplicitFileNameDecidesStoredNameAndContentType() throws Exception {
         ApiClient apiClient = Mockito.mock(ApiClient.class);
         RawFilesClient raw = mockPhaseA(apiClient);
         VaultController controller = controller(apiClient);
@@ -381,16 +381,15 @@ public class UploadFilesFormatsTests {
 
         UploadFilesResponse response = controller.uploadFiles(UploadFilesRequest.builder().records(
                 Collections.singletonList(UploadFilesRequestRecord.builder().tableName("documents").columns(Arrays.asList(
-                        // a misleading extension corrected by an explicit content type
-                        UploadFilesRequestColumn.builder().column("scan").filePath(scan.getPath())
-                                .contentType("application/pdf").build(),
+                        // no fileName: typed by the file's own extension
+                        UploadFilesRequestColumn.builder().column("scan").filePath(scan.getPath()).build(),
                         // stored under a different name, still typed by that name
                         UploadFilesRequestColumn.builder().column("renamed").fileObject(scan)
                                 .fileName("statement.pdf").build())).build())).build());
 
         List<Map<String, Object>> columns = columnsOf(response.getRecords().get(0));
         Assert.assertEquals("scan.bin", columns.get(0).get("fileName"));
-        Assert.assertEquals("application/pdf", receivedContentTypes.get("/upload/0/scan"));
+        Assert.assertEquals("application/octet-stream", receivedContentTypes.get("/upload/0/scan"));
         Assert.assertEquals("statement.pdf", columns.get(1).get("fileName"));
         Assert.assertEquals("application/pdf", receivedContentTypes.get("/upload/0/renamed"));
         Assert.assertArrayEquals(pdf, receivedBodies.get("/upload/0/renamed"));

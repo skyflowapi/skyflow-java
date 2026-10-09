@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -634,6 +635,35 @@ public final class Utils extends BaseUtils {
         return body != null ? body : apiException.body();
     }
 
+    /**
+     * The uploadFiles error body in the form SkyflowException parses. The vault can reject the call
+     * with a records-shaped body ({@code {"records":[{"error": ...}]}}) instead of
+     * {@code {"error": {...}}}, which left the thrown exception's message null; lift the record
+     * errors into {@code error.message} so callers see why the call failed.
+     */
+    public static Object uploadFilesErrorBody(ApiClientApiException apiException) {
+        List<Map<String, Object>> records = extractExceptionRecords(apiException, "records");
+        if (records == null) {
+            return errorBody(apiException);
+        }
+        Set<String> messages = new LinkedHashSet<>();
+        for (Map<String, Object> record : records) {
+            String error = readString(record, "error");
+            if (error != null && !error.isEmpty()) {
+                messages.add(error);
+            }
+        }
+        if (messages.isEmpty()) {
+            return errorBody(apiException);
+        }
+        Map<String, Object> error = new LinkedHashMap<>();
+        error.put("http_code", apiException.statusCode());
+        error.put("message", String.join("; ", messages));
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("error", error);
+        return body;
+    }
+
     /** Record maps under {@code key} in an exception body, or null if the shape doesn't match. */
     private static List<Map<String, Object>> extractExceptionRecords(ApiClientApiException apiException, String key) {
         Map<String, Object> body = errorBodyAsMap(apiException);
@@ -759,7 +789,7 @@ public final class Utils extends BaseUtils {
             records.add(getTokensRow(
                     recordMap.get("value"),
                     readString(recordMap, "tokenGroupName"),
-                    asNonEmptyString(recordMap.get("token")),
+                    getTokensToken(recordMap.get("token")),
                     readHttpCode(recordMap, apiException.statusCode()),
                     readErrorMessage(recordMap),
                     requestId));
@@ -1363,9 +1393,9 @@ public final class Utils extends BaseUtils {
             for (TokenizeResponseObject current : response.getRecords()) {
                 String error = asNonEmptyString(current.getError().orElse(null));
                 records.add(getTokensRow(
-                        unwrap(current.getValue()),
+                        unwrap(current.getValue().orElse(null)),
                         asNonEmptyString(current.getTokenGroupName().orElse(null)),
-                        asNonEmptyString(current.getToken()),
+                        getTokensToken(current.getToken()),
                         current.getHttpCode().orElse(error != null ? 500 : 200),
                         error,
                         error != null ? extractRequestId(headers) : null));
@@ -1403,7 +1433,7 @@ public final class Utils extends BaseUtils {
                 && !record.getError().get().isEmpty();
         return new BulkTokenizeResponseRecord(
                 index,
-                unwrap(record.getValue()),
+                unwrap(record.getValue().orElse(null)),
                 asNonEmptyString(record.getTokenGroupName().orElse(null)),
                 asNonEmptyString(record.getToken()),
                 record.getHttpCode().orElse(failed ? 500 : 200),
@@ -1423,6 +1453,14 @@ public final class Utils extends BaseUtils {
      */
     private static int recordHttpCode(int httpCode, boolean failed) {
         return httpCode != 0 ? httpCode : (failed ? 500 : 200);
+    }
+
+    /**
+     * A getTokens record's token, passed through as the vault sent it so a value with no token reads
+     * {@code ""} rather than null — matching the python SDK. A missing token also reads {@code ""}.
+     */
+    private static String getTokensToken(Object token) {
+        return token == null ? "" : token.toString();
     }
 
     /** The API sends "" for a token or error that does not apply; normalise both to null. */
@@ -1487,7 +1525,7 @@ public final class Utils extends BaseUtils {
         int recordPosition = 0;
         int rowsTakenByRecord = 0;
         for (TokenizeResponseObject row : rows) {
-            Object rowValue = unwrap(row.getValue());
+            Object rowValue = unwrap(row.getValue().orElse(null));
             while (recordPosition < batchRecords.size()
                     && !acceptsRow(batchRecords.get(recordPosition), rowValue, rowsTakenByRecord)) {
                 rowsTakenByRecord = 0;
@@ -1617,13 +1655,10 @@ public final class Utils extends BaseUtils {
     }
 
     /**
-     * The caller's contentType, else the type for the file name's extension (case-insensitive),
-     * else the JDK's guess, else application/octet-stream.
+     * The type for the file name's extension (case-insensitive), else the JDK's guess, else
+     * application/octet-stream.
      */
-    public static String resolveUploadContentType(UploadFilesRequestColumn column, String fileName) {
-        if (hasText(column.getContentType())) {
-            return column.getContentType();
-        }
+    public static String resolveUploadContentType(String fileName) {
         if (fileName == null) {
             return DEFAULT_UPLOAD_CONTENT_TYPE;
         }

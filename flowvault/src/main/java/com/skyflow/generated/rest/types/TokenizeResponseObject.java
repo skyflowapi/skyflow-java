@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 public final class TokenizeResponseObject {
     private final String token;
 
-    private final GoogleProtobufValue value;
+    private final Optional<GoogleProtobufValue> value;
 
     private final Optional<String> tokenGroupName;
 
@@ -38,7 +38,7 @@ public final class TokenizeResponseObject {
 
     private TokenizeResponseObject(
             String token,
-            GoogleProtobufValue value,
+            Optional<GoogleProtobufValue> value,
             Optional<String> tokenGroupName,
             Optional<String> error,
             Optional<Integer> httpCode,
@@ -60,7 +60,7 @@ public final class TokenizeResponseObject {
     }
 
     @JsonProperty("value")
-    public GoogleProtobufValue getValue() {
+    public Optional<GoogleProtobufValue> getValue() {
         return value;
     }
 
@@ -134,13 +134,9 @@ public final class TokenizeResponseObject {
         /**
          * <p>Token that was generated.</p>
          */
-        ValueStage token(@NotNull String token);
+        _FinalStage token(@NotNull String token);
 
         Builder from(TokenizeResponseObject other);
-    }
-
-    public interface ValueStage {
-        _FinalStage value(@NotNull GoogleProtobufValue value);
     }
 
     public interface _FinalStage {
@@ -149,6 +145,10 @@ public final class TokenizeResponseObject {
         _FinalStage additionalProperty(String key, Object value);
 
         _FinalStage additionalProperties(Map<String, Object> additionalProperties);
+
+        _FinalStage value(Optional<GoogleProtobufValue> value);
+
+        _FinalStage value(GoogleProtobufValue value);
 
         /**
          * <p>Name of the token group.</p>
@@ -175,16 +175,16 @@ public final class TokenizeResponseObject {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static final class Builder implements TokenStage, ValueStage, _FinalStage {
+    public static final class Builder implements TokenStage, _FinalStage {
         private String token;
-
-        private GoogleProtobufValue value;
 
         private Optional<Integer> httpCode = Optional.empty();
 
         private Optional<String> error = Optional.empty();
 
         private Optional<String> tokenGroupName = Optional.empty();
+
+        private Optional<GoogleProtobufValue> value = Optional.empty();
 
         @JsonAnySetter
         private Map<String, Object> additionalProperties = new HashMap<>();
@@ -207,15 +207,8 @@ public final class TokenizeResponseObject {
          */
         @java.lang.Override
         @JsonSetter("token")
-        public ValueStage token(@NotNull String token) {
+        public _FinalStage token(@NotNull String token) {
             this.token = Objects.requireNonNull(token, "token must not be null");
-            return this;
-        }
-
-        @java.lang.Override
-        @JsonSetter("value")
-        public _FinalStage value(@NotNull GoogleProtobufValue value) {
-            this.value = Objects.requireNonNull(value, "value must not be null");
             return this;
         }
 
@@ -292,6 +285,19 @@ public final class TokenizeResponseObject {
         @JsonSetter(value = "tokenGroupName", nulls = Nulls.SKIP)
         public _FinalStage tokenGroupName(Optional<String> tokenGroupName) {
             this.tokenGroupName = tokenGroupName;
+            return this;
+        }
+
+        @java.lang.Override
+        public _FinalStage value(GoogleProtobufValue value) {
+            this.value = Optional.ofNullable(value);
+            return this;
+        }
+
+        @java.lang.Override
+        @JsonSetter(value = "value", nulls = Nulls.SKIP)
+        public _FinalStage value(Optional<GoogleProtobufValue> value) {
+            this.value = value;
             return this;
         }
 

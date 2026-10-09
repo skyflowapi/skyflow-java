@@ -779,7 +779,7 @@ public final class VaultController extends VaultClient {
 
             response = this.getFilesApi().withRawResponse().uploadFiles(request, buildRequestOptions(ctx));
         } catch (ApiClientApiException e) {
-            String bodyString = gson.toJson(Utils.errorBody(e));
+            String bodyString = gson.toJson(Utils.uploadFilesErrorBody(e));
             LogUtil.printErrorLog(ErrorLogs.UPLOAD_FILES_REQUEST_REJECTED.getLog());
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
         } catch (ApiClientException e) {
@@ -798,7 +798,7 @@ public final class VaultController extends VaultClient {
                                                    Map<UploadFilesRequestColumn, byte[]> decodedBase64,
                                                    FileUploadResponse body, Map<String, List<String>> headers) {
         List<FileUploadResponseObject> returned = body != null && body.getRecords() != null
-                ? body.getRecords() : Collections.<FileUploadResponseObject>emptyList();
+                ? body.getRecords() : Collections.emptyList();
         // All signed URLs are issued together and expire together, so the PUTs run on a small pool
         // rather than one after another. Each record keeps its column futures in request order, so
         // the response does not depend on which upload finishes first.
@@ -807,33 +807,34 @@ public final class VaultController extends VaultClient {
             fileCount += requestRecord.getColumns().size();
         }
         ExecutorService executor = Executors.newFixedThreadPool(
-                Math.max(1, Math.min(fileCount, Constants.UPLOAD_FILES_CONCURRENCY_LIMIT)));
+                Math.min(fileCount, Constants.UPLOAD_FILES_CONCURRENCY_LIMIT));
         try {
-            List<List<CompletableFuture<HashMap<String, Object>>>> columnsByRecord = new ArrayList<>();
+            String[] errors = new String[returned.size()];
+            List<List<CompletableFuture<HashMap<String, Object>>>> uploads = new ArrayList<>();
             for (int i = 0; i < returned.size(); i++) {
                 FileUploadResponseObject record = returned.get(i);
-                UploadFilesRequestRecord requestRecord = i < requested.size() ? requested.get(i) : null;
-                String error = record.getError().filter(e -> !e.isEmpty()).orElse(null);
-                List<CompletableFuture<HashMap<String, Object>>> columns = new ArrayList<>();
-                if (error != null) {
-                    for (HashMap<String, Object> row : Utils.skippedUploadColumns(requestRecord, error)) {
-                        columns.add(CompletableFuture.completedFuture(row));
-                    }
+                errors[i] = record.getError().filter(e -> !e.isEmpty()).orElse(null);
+                if (errors[i] == null) {
+                    uploads.add(uploadColumns(i < requested.size() ? requested.get(i) : null, decodedBase64,
+                            record.getData().orElse(Collections.emptyMap()), executor));
                 } else {
-                    columns.addAll(uploadColumns(requestRecord, decodedBase64,
-                            record.getData().orElse(Collections.<String, Object>emptyMap()), executor));
+                    uploads.add(Collections.emptyList());
                 }
-                columnsByRecord.add(columns);
             }
 
             ArrayList<HashMap<String, Object>> records = new ArrayList<>();
             for (int i = 0; i < returned.size(); i++) {
                 FileUploadResponseObject record = returned.get(i);
-                String error = record.getError().filter(e -> !e.isEmpty()).orElse(null);
+                String error = errors[i];
                 int httpCode = record.getHttpCode() != 0 ? record.getHttpCode() : (error != null ? 500 : 200);
-                List<HashMap<String, Object>> columns = new ArrayList<>();
-                for (CompletableFuture<HashMap<String, Object>> column : columnsByRecord.get(i)) {
-                    columns.add(column.join());
+                List<HashMap<String, Object>> columns;
+                if (error != null) {
+                    columns = Utils.skippedUploadColumns(i < requested.size() ? requested.get(i) : null, error);
+                } else {
+                    columns = new ArrayList<>();
+                    for (CompletableFuture<HashMap<String, Object>> column : uploads.get(i)) {
+                        columns.add(column.join());
+                    }
                 }
                 records.add(Utils.uploadFilesRecordRow(record.getSkyflowId(), record.getTableName(), columns,
                         httpCode, error, error != null ? Utils.extractRequestId(headers) : null));
@@ -872,7 +873,7 @@ public final class VaultController extends VaultClient {
         String error = null;
         try {
             RequestBody fileBody = Utils.buildUploadFileBody(
-                    column, decodedBase64, Utils.resolveUploadContentType(column, fileName));
+                    column, decodedBase64, Utils.resolveUploadContentType(fileName));
             int status = signedUrlUploader.upload(signedUrl, fileBody);
             if (status < 200 || status >= 300) {
                 error = "PUT failed: " + status;

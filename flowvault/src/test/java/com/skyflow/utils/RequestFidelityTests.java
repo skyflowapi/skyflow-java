@@ -1015,7 +1015,7 @@ public class RequestFidelityTests {
         Assert.assertEquals("1R9kNnLOPM", response.getRecords().get(0).get("token"));
         Assert.assertNull(response.getRecords().get(0).get("error"));
         Assert.assertEquals("unknown@example.com", response.getRecords().get(1).get("value"));
-        Assert.assertNull(response.getRecords().get(1).get("token"));
+        Assert.assertEquals("", response.getRecords().get(1).get("token"));
         Assert.assertEquals("Token not found.", response.getRecords().get(1).get("error"));
         Assert.assertEquals(404, response.getRecords().get(1).get("httpCode"));
     }
