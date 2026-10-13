@@ -5,7 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.skyflow.config.BaseCredentials;
 import com.skyflow.config.BaseVaultConfig;
 import com.skyflow.errors.ErrorCode;
-import com.skyflow.errors.ErrorMessage;
+import com.skyflow.errors.BaseErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.logs.ErrorLogs;
 import com.skyflow.logs.InfoLogs;
@@ -25,7 +25,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-class BaseVaultClient<V extends BaseVaultConfig> {
+public class BaseVaultClient<V extends BaseVaultConfig> {
     protected V vaultConfig;
     protected OkHttpClient sharedHttpClient;
     protected String currentVaultURL;
@@ -69,7 +69,7 @@ class BaseVaultClient<V extends BaseVaultConfig> {
                     sysCredentials = dotenv.get(BaseConstants.ENV_CREDENTIALS_KEY_NAME);
                 }
                 if (sysCredentials == null) {
-                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyCredentials.getMessage());
+                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), BaseErrorMessage.EmptyCredentials.getMessage());
                 } else {
                     this.finalCredentials = new BaseCredentials();
                     this.finalCredentials.setCredentialsString(sysCredentials);
@@ -80,7 +80,7 @@ class BaseVaultClient<V extends BaseVaultConfig> {
                 apiKey = null;
             }
         } catch (DotenvException e) {
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyCredentials.getMessage());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), BaseErrorMessage.EmptyCredentials.getMessage());
         } catch (SkyflowException e) {
             throw e;
         } catch (Exception e) {

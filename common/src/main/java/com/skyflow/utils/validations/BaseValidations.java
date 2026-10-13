@@ -2,7 +2,7 @@ package com.skyflow.utils.validations;
 
 import com.skyflow.config.BaseCredentials;
 import com.skyflow.errors.ErrorCode;
-import com.skyflow.errors.ErrorMessage;
+import com.skyflow.errors.BaseErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.logs.ErrorLogs;
 import com.skyflow.utils.BaseConstants;
@@ -21,7 +21,7 @@ public class BaseValidations {
     public static void validateCredentials(BaseCredentials credentials) throws SkyflowException {
         if (credentials == null) {
             LogUtil.printErrorLog(ErrorLogs.CREDENTIALS_IS_NULL.getLog());
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.NullCredentials.getMessage());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), BaseErrorMessage.NullCredentials.getMessage());
         }
         int nonNullMembers = 0;
         String path = credentials.getPath();
@@ -39,38 +39,38 @@ public class BaseValidations {
         if (nonNullMembers > 1) {
             LogUtil.printErrorLog(ErrorLogs.MULTIPLE_TOKEN_GENERATION_MEANS_PASSED.getLog());
             throw new SkyflowException(
-                    ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.MultipleTokenGenerationMeansPassed.getMessage()
+                    ErrorCode.INVALID_INPUT.getCode(), BaseErrorMessage.MultipleTokenGenerationMeansPassed.getMessage()
             );
         } else if (nonNullMembers < 1) {
             LogUtil.printErrorLog(ErrorLogs.NO_TOKEN_GENERATION_MEANS_PASSED.getLog());
             throw new SkyflowException(
-                    ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.NoTokenGenerationMeansPassed.getMessage()
+                    ErrorCode.INVALID_INPUT.getCode(), BaseErrorMessage.NoTokenGenerationMeansPassed.getMessage()
             );
         } else if (path != null && path.trim().isEmpty()) {
             LogUtil.printErrorLog(ErrorLogs.EMPTY_CREDENTIALS_PATH.getLog());
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyCredentialFilePath.getMessage());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), BaseErrorMessage.EmptyCredentialFilePath.getMessage());
         } else if (credentialsString != null && credentialsString.trim().isEmpty()) {
             LogUtil.printErrorLog(ErrorLogs.EMPTY_CREDENTIALS_STRING.getLog());
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyCredentialsString.getMessage());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), BaseErrorMessage.EmptyCredentialsString.getMessage());
         } else if (token != null && token.trim().isEmpty()) {
             LogUtil.printErrorLog(ErrorLogs.EMPTY_TOKEN_VALUE.getLog());
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyToken.getMessage());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), BaseErrorMessage.EmptyToken.getMessage());
         } else if (apiKey != null) {
             if (apiKey.trim().isEmpty()) {
                 LogUtil.printErrorLog(ErrorLogs.EMPTY_API_KEY_VALUE.getLog());
-                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyApikey.getMessage());
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), BaseErrorMessage.EmptyApikey.getMessage());
             } else {
                 Pattern pattern = Pattern.compile(BaseConstants.API_KEY_REGEX);
                 Matcher matcher = pattern.matcher(apiKey);
                 if (!matcher.matches()) {
                     LogUtil.printErrorLog(ErrorLogs.INVALID_API_KEY.getLog());
-                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidApikey.getMessage());
+                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), BaseErrorMessage.InvalidApikey.getMessage());
                 }
             }
         } else if (roles != null) {
             if (roles.isEmpty()) {
                 LogUtil.printErrorLog(ErrorLogs.EMPTY_ROLES.getLog());
-                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyRoles.getMessage());
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), BaseErrorMessage.EmptyRoles.getMessage());
             } else {
                 for (int index = 0; index < roles.size(); index++) {
                     String role = roles.get(index);
@@ -78,7 +78,7 @@ public class BaseValidations {
                         LogUtil.printErrorLog(BaseUtils.parameterizedString(
                                 ErrorLogs.EMPTY_OR_NULL_ROLE_IN_ROLES.getLog(), Integer.toString(index)
                         ));
-                        throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyRoleInRoles.getMessage());
+                        throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), BaseErrorMessage.EmptyRoleInRoles.getMessage());
                     }
                 }
             }
@@ -88,13 +88,13 @@ public class BaseValidations {
                 String ctxStr = (String) context;
                 if (ctxStr.trim().isEmpty()) {
                     LogUtil.printErrorLog(ErrorLogs.EMPTY_OR_NULL_CONTEXT.getLog());
-                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyContext.getMessage());
+                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), BaseErrorMessage.EmptyContext.getMessage());
                 }
             } else if (context instanceof Map) {
                 Map<?, ?> ctxMap = (Map<?, ?>) context;
                 if (ctxMap.isEmpty()) {
                     LogUtil.printErrorLog(ErrorLogs.EMPTY_OR_NULL_CONTEXT.getLog());
-                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyContext.getMessage());
+                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), BaseErrorMessage.EmptyContext.getMessage());
                 }
                 Pattern ctxKeyPattern = Pattern.compile(BaseConstants.CONTEXT_KEY_REGEX);
                 for (Object key : ctxMap.keySet()) {
@@ -103,12 +103,12 @@ public class BaseValidations {
                         LogUtil.printErrorLog(BaseUtils.parameterizedString(
                                 ErrorLogs.INVALID_CONTEXT_MAP_KEY.getLog(), keyStr));
                         throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(),
-                                BaseUtils.parameterizedString(ErrorMessage.InvalidContextMapKey.getMessage(), keyStr));
+                                BaseUtils.parameterizedString(BaseErrorMessage.InvalidContextMapKey.getMessage(), keyStr));
                     }
                 }
             } else {
                 LogUtil.printErrorLog(ErrorLogs.INVALID_CONTEXT_TYPE.getLog());
-                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidContextType.getMessage());
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), BaseErrorMessage.InvalidContextType.getMessage());
             }
         }
     }

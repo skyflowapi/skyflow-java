@@ -2,7 +2,12 @@ package com.skyflow.errors;
 
 import com.skyflow.utils.SdkVersion;
 
-public enum ErrorMessage {
+/**
+ * Validation and client-side error messages shared by every SDK. Named {@code BaseErrorMessage}
+ * rather than {@code ErrorMessage} so it can never be shadowed by a module's own
+ * {@code com.skyflow.errors.ErrorMessage}: code in common must reference this enum.
+ */
+public enum BaseErrorMessage {
     // Client initialization
     VaultIdAlreadyInConfigList("%s0 Validation error. VaultId is present in an existing config. Specify a new vaultId in config."),
     VaultIdNotInConfigList("%s0 Validation error. VaultId is missing from the config. Specify the vaultIds from configs."),
@@ -12,18 +17,11 @@ public enum ErrorMessage {
     ConnectionIdNotInConfigList("%s0 Validation error. ConnectionId is missing from the config. Specify the connectionIds from configs."),
     EmptyCredentials("%s0 Validation error. Invalid credentials. Credentials must not be empty."),
     NullCredentials("%s0 Validation error. Credentials object is null. Specify a valid Credentials object."),
-    TableSpecifiedInRequestAndRecordObject("%s0 Validation error. Table name cannot be specified at both the request and record levels. Please specify the table name in only one place."),
-    UpsertTableRequestAtRecordLevel("%s0 Validation error. Table name should be present at each record level when upsert is present at record level."),
-    UpsertTableRequestAtRequestLevel("%s0 Validation error. Upsert should be present at each record level when table name is present at record level."),
-    TableNotSpecifiedInRequestAndRecordObject("%s0 Validation error. Table name is missing. Table name should be specified at one place either at the request level or record level. Please specify the table name at one place."),
     // Vault config
     InvalidVaultId("%s0 Initialization failed. Invalid vault ID. Specify a valid vault ID."),
     EmptyVaultId("%s0 Initialization failed. Invalid vault ID. Vault ID must not be empty."),
     InvalidClusterId("%s0 Initialization failed. Invalid cluster ID. Specify cluster ID."),
     EmptyClusterId("%s0 Initialization failed. Invalid cluster ID. Specify a valid cluster ID."),
-    EmptyVaultUrl("%s0 Initialization failed. Vault URL is empty. Specify a valid vault URL."),
-    InvalidVaultUrlFormat("%s0 Initialization failed. Vault URL must start with 'https://'."),
-    EitherVaultUrlOrClusterIdRequired("%s0 Initialization failed. Specify either 'clusterId' or 'vaultURL'."),
 
     // Connection config
     InvalidConnectionId("%s0 Initialization failed. Invalid connection ID. Specify a valid connection ID."),
@@ -69,20 +67,11 @@ public enum ErrorMessage {
     TableKeyError("%s0 Validation error. 'table' key is missing from the payload. Specify a 'table' key."),
     EmptyTable("%s0 Validation error. 'table' can't be empty. Specify a table."),
     ValuesKeyError("%s0 Validation error. 'values' key is missing from the payload. Specify a 'values' key."),
-    EmptyRecords("%s0 Validation error. 'records' can't be empty. Specify records."),
-    EmptyKeyInRecords("%s0 Validation error. Invalid key in data in records. Specify a valid key."),
-    EmptyValueInRecords("%s0 Validation error. Invalid value in records. Specify a valid value."),
-    RecordsKeyError("%s0 Validation error. 'records' key is missing from the payload. Specify a 'records' key."),
-    EmptyValues("%s0 Validation error. 'values' can't be empty. Specify values."),
     EmptyKeyInValues("%s0 Validation error. Invalid key in values. Specify a valid key."),
-    EmptyValueInValues("%s0 Validation error. Invalid value in values. Specify a valid value."),
     TokensKeyError("%s0 Validation error. 'tokens' key is missing from the payload. Specify a 'tokens' key."),
     EmptyTokens("%s0 Validation error. The 'tokens' field is empty. Specify tokens for one or more fields."),
     EmptyKeyInTokens("%s0 Validation error. Invalid key tokens. Specify a valid key."),
-    EmptyValueInTokens("%s0 Validation error. Invalid value in tokens. Specify a valid value."),
     EmptyUpsert("%s0 Validation error. 'upsert' key can't be empty. Specify an upsert column."),
-    InvalidUpsertUpdateType("%s0 Validation error. Invalid upsert updateType. Specify either 'UPDATE' or 'REPLACE'."),
-    EmptyUpsertValues("%s0 Validation error. Upsert column values can't be empty. Specify at least one upsert column."),
     HomogenousNotSupportedWithUpsert("%s0 Validation error. 'homogenous' is not supported with 'upsert'. Specify either 'homogenous' or 'upsert'."),
     TokensPassedForTokenModeDisable("%s0 Validation error. 'tokenMode' wasn't specified. Set 'tokenMode' to 'ENABLE' to insert tokens."),
     NoTokensWithTokenMode("%s0 Validation error. Tokens weren't specified for records while 'tokenMode' was %s1. Specify tokens."),
@@ -90,22 +79,15 @@ public enum ErrorMessage {
     InsufficientTokensPassedForTokenModeEnableStrict("%s0 Validation error. 'tokenMode' is set to 'ENABLE_STRICT', but some fields are missing tokens. Specify tokens for all fields."),
     BatchInsertPartialSuccess("%s0 Insert operation completed with partial success."),
     BatchInsertFailure("%s0 Insert operation failed."),
-    RecordSizeExceedError("%s0 Maximum number of records exceeded. The limit is 100000."),
 
     // Detokenize
     InvalidDetokenizeData("%s0 Validation error. Invalid detokenize data. Specify valid detokenize data."),
     EmptyDetokenizeData("%s0 Validation error. Invalid data tokens. Specify at least one data token."),
     EmptyTokenInDetokenizeData("%s0 Validation error. Invalid data tokens. Specify a valid data token."),
-    TokensSizeExceedError("%s0 Maximum number of tokens exceeded. The limit is 100000."),
 
     // Delete
     DeleteRequestNull("%s0 Validation error. DeleteRequest object is null. Specify a valid DeleteRequest object."),
 
-    // Delete Tokens
-    DeleteTokensRequestNull("%s0 Validation error. DeleteTokensRequest object is null. Specify a valid DeleteTokensRequest object."),
-    EmptyDeleteTokensData("%s0 Validation error. Tokens list is empty. Specify at least one token to delete."),
-    EmptyTokenInDeleteTokensData("%s0 Validation error. Invalid token in delete tokens request. Specify a valid token."),
-    DeleteTokensSizeExceedError("%s0 Maximum number of tokens exceeded. The limit is 100000."),
 
     // Get
     GetRequestNull("%s0 Validation error. GetRequest object is null. Specify a valid GetRequest object."),
@@ -126,15 +108,6 @@ public enum ErrorMessage {
     ColumnValuesKeyErrorGet("%s0 Validation error. 'columnValues' aren't specified whereas 'columnName' is specified. Either add 'columnValues' or remove 'columnName'."),
     EmptyColumnValues("%s0 Validation error. 'columnValues' can't be empty. Specify at least one column value"),
     EmptyValueInColumnValues("%s0 Validation error. Invalid value in column values. Specify a valid column value."),
-    IdsOrUniqueValuesKeyError("%s0 Validation error. 'ids' or 'uniqueValues' key is missing from the payload. Specify ids or uniqueValues in payload."),
-    BothIdsAndUniqueValuesSpecified("%s0 Validation error. Both Skyflow IDs and unique values can't be specified. Either specify Skyflow IDs or unique values."),
-    EmptyUniqueValues("%s0 Validation error. 'uniqueValues' can't be empty. Specify at least one unique value."),
-    EmptyUniqueValueInUniqueValues("%s0 Validation error. Invalid unique value in 'uniqueValues'. Specify a valid unique value."),
-    NullColumnRedactions("%s0 Validation error. Column redaction object can not be null. Specify a valid column redaction object."),
-    NullColumnNameInColumnRedaction("%s0 Validation error. Column name can not be null or empty in column redaction. Specify a valid column name."),
-    NullRedactionInColumnRedaction("%s0 Validation error. Redaction can not be null or empty in column redaction. Specify a valid redaction."),
-    BothSingleTableFieldsAndRecordsSpecified("%s0 Validation error. Both single-table lookup fields ('table', 'ids', 'fields', 'uniqueValues', 'columnRedactions') and 'records' can't be specified. Either specify single-table fields or 'records'."),
-    NullGetRecordRequest("%s0 Validation error. Record in 'records' is null. Specify a valid record."),
 
     TokenKeyError("%s0 Validation error. 'token' key is missing from the payload. Specify a 'token' key."),
     PartialSuccess("%s0 Validation error. Check 'SkyflowError.data' for details."),
@@ -146,9 +119,6 @@ public enum ErrorMessage {
     InvalidSkyflowIdType("%s0 Validation error. Invalid type for 'skyflow_id' in data payload. Specify 'skyflow_id' as a string."),
     EmptySkyflowId("%s0 Validation error. 'skyflow_id' can't be empty. Specify a skyflow id."),
     UpdateRequestNull("%s0 Validation error. UpdateRequest object is null. Specify a valid UpdateRequest object."),
-    UpdateRecordNull("%s0 Validation error. UpdateRequestRecord object in the list is null. Specify a valid UpdateRequestRecord object."),
-    RecordSkyflowIdKeyError("%s0 Validation error. 'skyflowId' key is missing from the record. Specify a 'skyflowId' key."),
-    EmptySkyflowIdInRecord("%s0 Validation error. 'skyflowId' can't be empty in the record. Specify a valid skyflow ID."),
 
     // Query
     QueryRequestNull("%s0 Validation error. QueryRequest object is null. Specify a valid QueryRequest object."),
@@ -159,15 +129,6 @@ public enum ErrorMessage {
     ColumnValuesKeyErrorTokenize("%s0 Validation error. 'columnValues' key is missing from the payload. Specify a 'columnValues' key."),
     EmptyColumnGroupInColumnValue("%s0 Validation error. Invalid column group in column value. Specify a valid column group."),
     TokenizeRequestNull("%s0 Validation error. TokenizeRequest object is null. Specify a valid TokenizeRequest object."),
-    EmptyTokenizeData("%s0 Validation error. Tokenize data is empty. Specify at least one tokenize record."),
-    TokenizeRecordNull("%s0 Validation error. TokenizeRecord in the list is null. Specify a valid TokenizeRecord object."),
-    InvalidBulkTokenizeRecordType("%s0 Validation error. Record in the list must be of type BulkTokenizeRequestRecord. Specify a valid BulkTokenizeRequestRecord object."),
-    EmptyValueInTokenizeRecord("%s0 Validation error. Value in TokenizeRecord is null or empty. Specify a valid value."),
-    EmptyTokenGroupNamesInTokenizeRecord("%s0 Validation error. TokenGroupNames in TokenizeRecord is null or empty. Specify at least one token group name."),
-    EmptyTokenGroupNameInTokenizeRecord("%s0 Validation error. Token group name in TokenizeRecord is null or empty. Specify a valid token group name."),
-    TokenizeDataSizeExceedError("%s0 Maximum number of tokenize records exceeded. The limit is 100000."),
-    MissingIndexInBulkTokenizeRecord("%s0 Validation error. Index in BulkTokenizeRequestRecord is null. Specify an index for every record."),
-    DuplicateIndexInBulkTokenizeRecord("%s0 Validation error. Duplicate index in BulkTokenizeRequestRecord. Specify a unique index for every record."),
 
     // Connection
     InvalidRequestHeaders("%s0 Validation error. Request headers aren't valid. Specify valid request headers."),
@@ -215,17 +176,30 @@ public enum ErrorMessage {
 
     DetokenizeRequestNull("%s0 Validation error. DetokenizeRequest object is null. Specify a valid DetokenizeRequest object."),
 
-    NullTokenGroupRedactions("%s0 Validation error. TokenGroupRedaction in the list is null. Specify a valid TokenGroupRedactions object."),
 
-    NullRedactionInTokenGroup("%s0 Validation error. Redaction in TokenGroupRedactions is null or empty. Specify a valid redaction."),
 
-    NullTokenGroupNameInTokenGroup("%s0 Validation error. TokenGroupName in TokenGroupRedactions is null or empty. Specify a valid tokenGroupName."),
-    InvalidRecord("%s0 Validation error. InsertRecord object in the list is invalid. Specify a valid InsertRecord object."),
+    // Detect
+    DeidentifyStringRequestNull("%s0 Validation error. DeidentifyString request cannot be null."),
+    InvalidTextInDeidentifyString("%s0 Validation error. Invalid text in deidentify string request. Specify a non-empty text."),
+    ReidentifyStringRequestNull("%s0 Validation error. ReidentifyString request cannot be null."),
+    InvalidTextInReidentifyString("%s0 Validation error. Invalid text in reidentify string request. Specify a non-empty text."),
+    DeidentifyFileRequestNull("%s0 Validation error. DeidentifyFile request cannot be null."),
+    InvalidDataSourceInDeidentifyFile("%s0 Validation error. Invalid dataSource in deidentify file request. Specify BASE64, SKYFLOW_ID or PRESIGNED_URL, or supply a file."),
+    InvalidValueInDeidentifyFile("%s0 Validation error. Invalid value in deidentify file request. Specify the non-empty base64 content, skyflow id or presigned URL of the file, or supply a file."),
+    MultipleFileSourcesInDeidentifyFile("%s0 Validation error. Specify either value or file in deidentify file request, not both."),
+    InvalidWaitTimeInPollOptions("%s0 Validation error. waitTime in pollOptions must be between 1 and 300 seconds."),
+    InvalidMaxAttemptsInPollOptions("%s0 Validation error. maxAttempts in pollOptions must be between 1 and 23."),
+    OutputDirectoryWithoutPollOptions("%s0 Validation error. outputDirectory in deidentify file request requires pollOptions."),
+    FailedToWriteOutputFile("%s0 Failed to write the processed output to %s1."),
+    GetRunRequestNull("%s0 Validation error. GetRun request cannot be null."),
+    InvalidRunIdInGetRun("%s0 Validation error. Invalid runId in get run request. Specify a non-empty run id."),
+    CheckGuardrailsRequestNull("%s0 Validation error. CheckGuardrails request cannot be null."),
+    InvalidTextInCheckGuardrails("%s0 Validation error. Invalid text in check guardrails request. Specify a non-empty text."),
     ;
 
     private final String message;
 
-    ErrorMessage(String message) {
+    BaseErrorMessage(String message) {
         this.message = message;
     }
 

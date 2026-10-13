@@ -2,7 +2,7 @@ package com.skyflow;
 
 import com.skyflow.config.BaseCredentials;
 import com.skyflow.config.BaseVaultConfig;
-import com.skyflow.errors.ErrorMessage;
+import com.skyflow.errors.BaseErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.logs.ErrorLogs;
 import com.skyflow.utils.BaseConstants;
@@ -173,7 +173,7 @@ public class BaseVaultClientTests {
             client.prioritiseCredentials(null);
             Assert.fail("Should have thrown SkyflowException");
         } catch (SkyflowException e) {
-            Assert.assertTrue(e.getMessage().contains(ErrorMessage.EmptyCredentials.getMessage()));
+            Assert.assertTrue(e.getMessage().contains(BaseErrorMessage.EmptyCredentials.getMessage()));
         }
     }
 
