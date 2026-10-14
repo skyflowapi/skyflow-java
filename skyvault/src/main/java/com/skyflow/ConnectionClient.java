@@ -11,6 +11,7 @@ import com.skyflow.utils.Constants;
 import com.skyflow.utils.Utils;
 import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.utils.validations.Validations;
+
 import io.github.cdimascio.dotenv.Dotenv;
 import io.github.cdimascio.dotenv.DotenvException;
 
@@ -42,6 +43,7 @@ public class ConnectionClient {
 
     protected void setBearerToken() throws SkyflowException {
         prioritiseCredentials();
+        
         Validations.validateCredentials(this.finalCredentials);
         if (this.finalCredentials.getApiKey() != null) {
             setApiKey();
