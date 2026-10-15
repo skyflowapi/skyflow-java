@@ -57,6 +57,7 @@
                             </artifactSet>
                         </configuration>
                     </execution>
+                    <execution>
                     <!-- Produces an additional, comparison-only jar that merges in
                          com.skyflow:common, same pattern flowvault already uses. It exists only so
                          japicmp can compare an apples-to-apples "everything a v2 consumer gets" surface
@@ -69,7 +70,6 @@
                          it a secondary artifact, and attached artifacts are deployed, so a jar
                          documented here as comparison-only was being published. outputFile keeps it
                          on disk without attaching. Path unchanged, so japicmp still resolves it. -->
-                    <execution>
                         <id>shade-for-japicmp</id>
                         <phase>package</phase>
                         <goals>
@@ -163,7 +163,7 @@
             <id>jfrog</id>
             <distributionManagement>
                 <repository>
-                    <id>central</id>
+                    <id>skyflow-jfrog</id>
                     <name>prekarilabs.jfrog.io-releases</name>
                     <url>https://prekarilabs.jfrog.io/artifactory/skyflow-java</url>
                 </repository>
