@@ -163,7 +163,7 @@
             <id>jfrog</id>
             <distributionManagement>
                 <repository>
-                    <id>central</id>
+                    <id>skyflow-jfrog</id>
                     <name>prekarilabs.jfrog.io-releases</name>
                     <url>https://prekarilabs.jfrog.io/artifactory/skyflow-java</url>
                 </repository>
