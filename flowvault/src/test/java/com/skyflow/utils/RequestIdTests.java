@@ -1,17 +1,20 @@
 package com.skyflow.utils;
 
+import com.skyflow.generated.rest.resources.tokens.requests.DeleteTokenRequest;
+import com.skyflow.generated.rest.types.DeleteTokenResponse;
+import com.skyflow.generated.rest.types.DeleteTokenResponseObject;
+import com.skyflow.generated.rest.types.ExecuteQueryResponse;
+import com.skyflow.generated.rest.types.GetTokensFromValuesResponse;
 import com.skyflow.generated.rest.core.ApiClientApiException;
 import com.skyflow.generated.rest.core.ObjectMappers;
-import com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDeleteTokenRequest;
-import com.skyflow.generated.rest.types.V1DeleteTokenResponseObject;
-import com.skyflow.generated.rest.types.V1FlowDeleteTokenResponse;
-import com.skyflow.generated.rest.types.V1FlowTokenizeResponse;
 import com.skyflow.utils.BaseConstants;
 import com.skyflow.vault.data.BulkDeleteTokensResponse;
 import com.skyflow.vault.data.BulkDeleteTokensResponseRecord;
 import com.skyflow.vault.data.BulkTokenizeRequestRecord;
 import com.skyflow.vault.data.BulkTokenizeResponse;
 import com.skyflow.vault.data.BulkTokenizeResponseRecord;
+import com.skyflow.vault.data.GetTokensResponse;
+import com.skyflow.vault.data.QueryResponse;
 import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -67,9 +70,9 @@ public class RequestIdTests {
         return new ApiClientApiException(message, status, body, raw.build());
     }
 
-    private static V1FlowTokenizeResponse tokenizeWire(String json) {
+    private static com.skyflow.generated.rest.types.TokenizeResponse tokenizeWire(String json) {
         try {
-            return ObjectMappers.JSON_MAPPER.readValue(json, V1FlowTokenizeResponse.class);
+            return ObjectMappers.JSON_MAPPER.readValue(json, com.skyflow.generated.rest.types.TokenizeResponse.class);
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }
@@ -265,20 +268,20 @@ public class RequestIdTests {
 
     // ── delete: success carries no id, errors carry the batch's ────────────────
 
-    private static V1FlowDeleteTokenResponse deleteWire(V1DeleteTokenResponseObject... rows) {
-        return V1FlowDeleteTokenResponse.builder().tokens(Arrays.asList(rows)).build();
+    private static DeleteTokenResponse deleteWire(DeleteTokenResponseObject... rows) {
+        return DeleteTokenResponse.builder().tokens(Arrays.asList(rows)).build();
     }
 
-    private static V1DeleteTokenResponseObject deleted(String token) {
-        return V1DeleteTokenResponseObject.builder().value(token).httpCode(200).build();
+    private static DeleteTokenResponseObject deleted(String token) {
+        return DeleteTokenResponseObject.builder().value(token).httpCode(200).build();
     }
 
-    private static V1DeleteTokenResponseObject failed(String token, String error) {
-        return V1DeleteTokenResponseObject.builder().value(token).error(error).httpCode(404).build();
+    private static DeleteTokenResponseObject failed(String token, String error) {
+        return DeleteTokenResponseObject.builder().value(token).error(error).httpCode(404).build();
     }
 
-    private static V1FlowDeleteTokenRequest deleteBatch(String... tokens) {
-        return V1FlowDeleteTokenRequest.builder()
+    private static DeleteTokenRequest deleteBatch(String... tokens) {
+        return DeleteTokenRequest.builder()
                 .vaultId("vault123").tokens(Arrays.asList(tokens)).build();
     }
 
@@ -405,6 +408,72 @@ public class RequestIdTests {
 
         Assert.assertNull(records.get(0).getRequestId());
         Assert.assertEquals("connection reset", records.get(0).getError());
+    }
+
+    // ── getTokens: success carries no id, errors carry the call's ─────────────
+
+    @Test
+    public void testGetTokens_onlyErrorRecordsCarryTheCallsRequestId() throws Exception {
+        GetTokensFromValuesResponse wire = ObjectMappers.JSON_MAPPER.readValue(
+                "{\"records\":["
+                        + "{\"token\":\"tok-0\",\"value\":\"v0\",\"tokenGroupName\":\"g\",\"httpCode\":200},"
+                        + "{\"token\":\"\",\"value\":\"v1\",\"tokenGroupName\":\"g\",\"error\":\"Token not found.\",\"httpCode\":404},"
+                        + "{\"token\":\"\",\"value\":\"v2\",\"tokenGroupName\":\"g\",\"error\":\"Token not found.\",\"httpCode\":404}]}",
+                GetTokensFromValuesResponse.class);
+
+        GetTokensResponse result = Utils.formatGetTokensResponse(wire, headers(REQ_ID_A));
+
+        Assert.assertNull(result.getRecords().get(0).get("requestId"));
+        Assert.assertEquals(REQ_ID_A, result.getRecords().get(1).get("requestId"));
+        Assert.assertEquals(REQ_ID_A, result.getRecords().get(2).get("requestId"));
+    }
+
+    @Test
+    public void testGetTokens_errorRecordWithoutHeaderHasNullRequestId() throws Exception {
+        GetTokensFromValuesResponse wire = ObjectMappers.JSON_MAPPER.readValue(
+                "{\"records\":[{\"value\":\"v0\",\"error\":\"boom\",\"httpCode\":500}]}",
+                GetTokensFromValuesResponse.class);
+
+        GetTokensResponse result = Utils.formatGetTokensResponse(wire, headers(null));
+
+        Assert.assertNull(result.getRecords().get(0).get("requestId"));
+    }
+
+    @Test
+    public void testGetTokens_rejectedRequestWithPerRecordBodyStampsEveryRecord() {
+        Map<String, Object> row0 = new LinkedHashMap<>();
+        row0.put("value", "v0");
+        row0.put("error", "Token not found.");
+        row0.put("httpCode", 404);
+        Map<String, Object> row1 = new LinkedHashMap<>();
+        row1.put("value", "v1");
+        row1.put("error", "Token not found.");
+        row1.put("httpCode", 404);
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("records", Arrays.asList(row0, row1));
+
+        GetTokensResponse result = Utils.handleGetTokensRequestException(
+                apiException("Error with status code 404", 404, body, REQ_ID_B));
+
+        Assert.assertNotNull(result);
+        Assert.assertEquals(REQ_ID_B, result.getRecords().get(0).get("requestId"));
+        Assert.assertEquals(REQ_ID_B, result.getRecords().get(1).get("requestId"));
+    }
+
+    // ── query: the id is call-level, set on success too ───────────────────────
+
+    @Test
+    public void testQuery_successCarriesTheCallsRequestId() {
+        QueryResponse result = Utils.formatQueryResponse(ExecuteQueryResponse.builder().build(), headers(REQ_ID_A));
+
+        Assert.assertEquals(REQ_ID_A, result.getRequestId());
+    }
+
+    @Test
+    public void testQuery_missingHeaderLeavesRequestIdNull() {
+        QueryResponse result = Utils.formatQueryResponse(ExecuteQueryResponse.builder().build(), headers(null));
+
+        Assert.assertNull(result.getRequestId());
     }
 
     // ── JSON output ───────────────────────────────────────────────────────────

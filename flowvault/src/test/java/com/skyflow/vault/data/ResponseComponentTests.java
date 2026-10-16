@@ -15,7 +15,7 @@ import java.util.Map;
  * {@link TokenizeResponseRecord}, {@link BulkTokenizeResponseRecord}, {@link TokenizeSummary},
  * {@link DeleteTokensRecord}, {@link BulkDeleteTokensResponseRecord},
  * {@link DeleteTokensSummary}, {@link DetokenizeSummary}, {@link DetokenizeResponseRecordMetadata},
- * {@link ErrorRecord} and {@link DetokenizeResponseObject}.
+ * {@link ErrorRecord}, {@link DetokenizeResponseObject} and {@link QueryResponseMetadata}.
  */
 public class ResponseComponentTests {
 
@@ -686,5 +686,20 @@ public class ResponseComponentTests {
 
         Assert.assertNull(metadata.getSkyflowId());
         Assert.assertNull(metadata.getTableName());
+    }
+
+    // ── QueryResponseMetadata ────────────────────────────────────────────────
+
+    @Test
+    public void testQueryResponseMetadata_getterReturnsConstructorValue() {
+        List<String> columns = Arrays.asList("skyflow_id", "name", "email");
+        QueryResponseMetadata metadata = new QueryResponseMetadata(columns);
+        Assert.assertEquals(columns, metadata.getColumns());
+    }
+
+    @Test
+    public void testQueryResponseMetadata_nullColumns() {
+        QueryResponseMetadata metadata = new QueryResponseMetadata(null);
+        Assert.assertNull(metadata.getColumns());
     }
 }
