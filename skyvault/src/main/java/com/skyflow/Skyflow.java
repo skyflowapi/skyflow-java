@@ -5,10 +5,13 @@ import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.LogLevel;
 import com.skyflow.errors.ErrorCode;
+import com.skyflow.errors.BaseErrorMessage;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.logs.ErrorLogs;
 import com.skyflow.logs.InfoLogs;
+import com.skyflow.utils.Constants;
+import com.skyflow.utils.SdkVersion;
 import com.skyflow.utils.Utils;
 import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.utils.validations.Validations;
@@ -32,6 +35,8 @@ public final class Skyflow extends BaseSkyflow<Skyflow, VaultConfig> {
     }
 
     public static SkyflowClientBuilder builder() {
+        // Keep common's BaseErrorMessage prefix in step with this SDK's own ErrorMessage prefix.
+        SdkVersion.setSdkPrefix(Constants.SDK_PREFIX);
         return new SkyflowClientBuilder();
     }
 
@@ -99,27 +104,27 @@ public final class Skyflow extends BaseSkyflow<Skyflow, VaultConfig> {
     }
 
     public VaultController vault() throws SkyflowException {
-        return resolveOrThrow(this.builder.vaultClientsMap, null, ErrorLogs.VAULT_CONFIG_DOES_NOT_EXIST, ErrorMessage.VaultIdNotInConfigList);
+        return resolveOrThrow(this.builder.vaultClientsMap, null, ErrorLogs.VAULT_CONFIG_DOES_NOT_EXIST, BaseErrorMessage.VaultIdNotInConfigList);
     }
 
     public VaultController vault(String vaultId) throws SkyflowException {
-        return resolveOrThrow(this.builder.vaultClientsMap, vaultId, ErrorLogs.VAULT_CONFIG_DOES_NOT_EXIST, ErrorMessage.VaultIdNotInConfigList);
+        return resolveOrThrow(this.builder.vaultClientsMap, vaultId, ErrorLogs.VAULT_CONFIG_DOES_NOT_EXIST, BaseErrorMessage.VaultIdNotInConfigList);
     }
 
     public ConnectionController connection() throws SkyflowException {
-        return resolveOrThrow(this.builder.connectionsMap, null, ErrorLogs.CONNECTION_CONFIG_DOES_NOT_EXIST, ErrorMessage.ConnectionIdNotInConfigList);
+        return resolveOrThrow(this.builder.connectionsMap, null, ErrorLogs.CONNECTION_CONFIG_DOES_NOT_EXIST, BaseErrorMessage.ConnectionIdNotInConfigList);
     }
 
     public ConnectionController connection(String connectionId) throws SkyflowException {
-        return resolveOrThrow(this.builder.connectionsMap, connectionId, ErrorLogs.CONNECTION_CONFIG_DOES_NOT_EXIST, ErrorMessage.ConnectionIdNotInConfigList);
+        return resolveOrThrow(this.builder.connectionsMap, connectionId, ErrorLogs.CONNECTION_CONFIG_DOES_NOT_EXIST, BaseErrorMessage.ConnectionIdNotInConfigList);
     }
 
     public DetectController detect() throws SkyflowException {
-        return resolveOrThrow(this.builder.detectClientsMap, null, ErrorLogs.VAULT_CONFIG_DOES_NOT_EXIST, ErrorMessage.VaultIdNotInConfigList);
+        return resolveOrThrow(this.builder.detectClientsMap, null, ErrorLogs.VAULT_CONFIG_DOES_NOT_EXIST, BaseErrorMessage.VaultIdNotInConfigList);
     }
 
     public DetectController detect(String vaultId) throws SkyflowException {
-        return resolveOrThrow(this.builder.detectClientsMap, vaultId, ErrorLogs.VAULT_CONFIG_DOES_NOT_EXIST, ErrorMessage.VaultIdNotInConfigList);
+        return resolveOrThrow(this.builder.detectClientsMap, vaultId, ErrorLogs.VAULT_CONFIG_DOES_NOT_EXIST, BaseErrorMessage.VaultIdNotInConfigList);
     }
 
     public static final class SkyflowClientBuilder extends BaseSkyflowClientBuilder<VaultConfig> {
