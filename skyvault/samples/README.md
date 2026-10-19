@@ -87,7 +87,7 @@ for when you'd do which.
 | Sample | Demonstrates |
 |---|---|
 | [BearerTokenGenerationExample.java](src/main/java/com/example/serviceaccount/BearerTokenGenerationExample.java) | Basic token generation from a credentials file or credentials string. |
-| [BearerTokenExpiryExample.java](src/main/java/com/example/serviceaccount/BearerTokenExpiryExample.java) | Using `Token.isExpired()` to avoid re-minting a still-valid token before a detokenize call. |
+| [BearerTokenExpiryExample.java](src/main/java/com/example/serviceaccount/BearerTokenExpiryExample.java) | Retrying a detokenize call after a 401, letting the SDK's internal `Token.isExpired()` check mint a fresh bearer token on the retry. |
 | [BearerTokenGenerationUsingThreadsExample.java](src/main/java/com/example/serviceaccount/BearerTokenGenerationUsingThreadsExample.java) | Sharing one `BearerToken` instance safely across multiple threads. |
 | [BearerTokenGenerationWithContextExample.java](src/main/java/com/example/serviceaccount/BearerTokenGenerationWithContextExample.java) | Context-aware tokens via `setCtx(String)` and `setCtx(Map<String, Object>)`. |
 | [ScopedTokenGenerationExample.java](src/main/java/com/example/serviceaccount/ScopedTokenGenerationExample.java) | Scoped tokens via `setRoles(...)`, restricting the token to specific role IDs. |
