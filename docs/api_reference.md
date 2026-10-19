@@ -1,6 +1,6 @@
 # API Reference
 
-A reference for the public Skyflow Java SDK surface: client-management methods, config classes, request and response objects, helper classes, enums, and service-account utilities. For task-oriented usage and examples, see the [README](../README.md).
+A reference for the public Skyflow Java SDK surface: client-management methods, config classes, request and response objects, helper classes, enums, and service-account utilities. For task-oriented usage and examples, see the [skyvault README](../skyvault/README.md).
 
 All attributes, parameters, and enum values below are taken directly from the SDK source.
 
