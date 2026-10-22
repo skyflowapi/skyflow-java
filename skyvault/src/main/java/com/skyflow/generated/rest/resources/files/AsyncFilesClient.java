@@ -5,11 +5,8 @@ package com.skyflow.generated.rest.resources.files;
 
 import com.skyflow.generated.rest.core.ClientOptions;
 import com.skyflow.generated.rest.core.RequestOptions;
-import com.skyflow.generated.rest.resources.files.requests.*;
-import com.skyflow.generated.rest.types.DeidentifyFileResponse;
-import com.skyflow.generated.rest.types.DetectRunsResponse;
-import com.skyflow.generated.rest.types.ReidentifyFileResponse;
-
+import com.skyflow.generated.rest.resources.files.requests.UploadFileRequestV2;
+import com.skyflow.generated.rest.types.UploadFileResponseV2;
 import java.util.concurrent.CompletableFuture;
 
 public class AsyncFilesClient {
@@ -30,181 +27,17 @@ public class AsyncFilesClient {
     }
 
     /**
-     * De-identifies sensitive data from a file. This operation includes options applicable to all supported file types.&lt;br/&gt;&lt;br/&gt;For more specific options, see the category-specific operations (like &lt;a href='#deidentify_document'&gt;De-identify Document&lt;/a&gt;) and the file type-specific opertions (like &lt;a href='#deidentify_pdf'&gt;De-identify PDF&lt;/a&gt;).
+     * Uploads a file to a new or specified record.
      */
-    public CompletableFuture<DeidentifyFileResponse> deidentifyFile(DeidentifyFileRequest request) {
-        return this.rawClient.deidentifyFile(request).thenApply(response -> response.body());
+    public CompletableFuture<UploadFileResponseV2> uploadFileV2(String vaultId, UploadFileRequestV2 request) {
+        return this.rawClient.uploadFileV2(vaultId, request).thenApply(response -> response.body());
     }
 
     /**
-     * De-identifies sensitive data from a file. This operation includes options applicable to all supported file types.&lt;br/&gt;&lt;br/&gt;For more specific options, see the category-specific operations (like &lt;a href='#deidentify_document'&gt;De-identify Document&lt;/a&gt;) and the file type-specific opertions (like &lt;a href='#deidentify_pdf'&gt;De-identify PDF&lt;/a&gt;).
+     * Uploads a file to a new or specified record.
      */
-    public CompletableFuture<DeidentifyFileResponse> deidentifyFile(
-            DeidentifyFileRequest request, RequestOptions requestOptions) {
-        return this.rawClient.deidentifyFile(request, requestOptions).thenApply(response -> response.body());
-    }
-
-    /**
-     * De-identifies sensitive data from an audio file. This operation includes options applicable to all supported audio file types.&lt;br/&gt;&lt;br/&gt;For broader file type support, see &lt;a href='#deidentify_file'&gt;De-identify File&lt;/a&gt;.
-     */
-    public CompletableFuture<DeidentifyFileResponse> deidentifyAudio(
-            DeidentifyFileAudioRequestDeidentifyAudio request) {
-        return this.rawClient.deidentifyAudio(request).thenApply(response -> response.body());
-    }
-
-    /**
-     * De-identifies sensitive data from an audio file. This operation includes options applicable to all supported audio file types.&lt;br/&gt;&lt;br/&gt;For broader file type support, see &lt;a href='#deidentify_file'&gt;De-identify File&lt;/a&gt;.
-     */
-    public CompletableFuture<DeidentifyFileResponse> deidentifyAudio(
-            DeidentifyFileAudioRequestDeidentifyAudio request, RequestOptions requestOptions) {
-        return this.rawClient.deidentifyAudio(request, requestOptions).thenApply(response -> response.body());
-    }
-
-    /**
-     * De-identifies sensitive data from a document file. This operation includes options applicable to all supported document file types.&lt;br/&gt;&lt;br/&gt;For more specific options, see the file type-specific opertions (like &lt;a href='#deidentify_pdf'&gt;De-identify PDF&lt;/a&gt;) where they're available. For broader file type support, see &lt;a href='#deidentify_file'&gt;De-identify File&lt;/a&gt;.
-     */
-    public CompletableFuture<DeidentifyFileResponse> deidentifyDocument(
-            DeidentifyFileRequestDeidentifyDocument request) {
-        return this.rawClient.deidentifyDocument(request).thenApply(response -> response.body());
-    }
-
-    /**
-     * De-identifies sensitive data from a document file. This operation includes options applicable to all supported document file types.&lt;br/&gt;&lt;br/&gt;For more specific options, see the file type-specific opertions (like &lt;a href='#deidentify_pdf'&gt;De-identify PDF&lt;/a&gt;) where they're available. For broader file type support, see &lt;a href='#deidentify_file'&gt;De-identify File&lt;/a&gt;.
-     */
-    public CompletableFuture<DeidentifyFileResponse> deidentifyDocument(
-            DeidentifyFileRequestDeidentifyDocument request, RequestOptions requestOptions) {
-        return this.rawClient.deidentifyDocument(request, requestOptions).thenApply(response -> response.body());
-    }
-
-    /**
-     * De-identifies sensitive data from a PDF file. This operation includes options specific to PDF files.&lt;br/&gt;&lt;br/&gt;For broader file type support, see &lt;a href='#deidentify_document'&gt;De-identify Document&lt;/a&gt; and &lt;a href='#deidentify_file'&gt;De-identify File&lt;/a&gt;.
-     */
-    public CompletableFuture<DeidentifyFileResponse> deidentifyPdf(
-            DeidentifyFileDocumentPdfRequestDeidentifyPdf request) {
-        return this.rawClient.deidentifyPdf(request).thenApply(response -> response.body());
-    }
-
-    /**
-     * De-identifies sensitive data from a PDF file. This operation includes options specific to PDF files.&lt;br/&gt;&lt;br/&gt;For broader file type support, see &lt;a href='#deidentify_document'&gt;De-identify Document&lt;/a&gt; and &lt;a href='#deidentify_file'&gt;De-identify File&lt;/a&gt;.
-     */
-    public CompletableFuture<DeidentifyFileResponse> deidentifyPdf(
-            DeidentifyFileDocumentPdfRequestDeidentifyPdf request, RequestOptions requestOptions) {
-        return this.rawClient.deidentifyPdf(request, requestOptions).thenApply(response -> response.body());
-    }
-
-    /**
-     * De-identifies sensitive data from an image file. This operation includes options applicable to all supported image file types.&lt;br/&gt;&lt;br/&gt;For broader file type support, see &lt;a href='#deidentify_file'&gt;De-identify File&lt;/a&gt;.
-     */
-    public CompletableFuture<DeidentifyFileResponse> deidentifyImage(
-            DeidentifyFileImageRequestDeidentifyImage request) {
-        return this.rawClient.deidentifyImage(request).thenApply(response -> response.body());
-    }
-
-    /**
-     * De-identifies sensitive data from an image file. This operation includes options applicable to all supported image file types.&lt;br/&gt;&lt;br/&gt;For broader file type support, see &lt;a href='#deidentify_file'&gt;De-identify File&lt;/a&gt;.
-     */
-    public CompletableFuture<DeidentifyFileResponse> deidentifyImage(
-            DeidentifyFileImageRequestDeidentifyImage request, RequestOptions requestOptions) {
-        return this.rawClient.deidentifyImage(request, requestOptions).thenApply(response -> response.body());
-    }
-
-    /**
-     * De-identifies sensitive data from a presentation file. This operation includes options applicable to all supported presentation file types.&lt;br/&gt;&lt;br/&gt;For broader file type support, see &lt;a href='#deidentify_file'&gt;De-identify File&lt;/a&gt;.
-     */
-    public CompletableFuture<DeidentifyFileResponse> deidentifyPresentation(
-            DeidentifyFileRequestDeidentifyPresentation request) {
-        return this.rawClient.deidentifyPresentation(request).thenApply(response -> response.body());
-    }
-
-    /**
-     * De-identifies sensitive data from a presentation file. This operation includes options applicable to all supported presentation file types.&lt;br/&gt;&lt;br/&gt;For broader file type support, see &lt;a href='#deidentify_file'&gt;De-identify File&lt;/a&gt;.
-     */
-    public CompletableFuture<DeidentifyFileResponse> deidentifyPresentation(
-            DeidentifyFileRequestDeidentifyPresentation request, RequestOptions requestOptions) {
-        return this.rawClient.deidentifyPresentation(request, requestOptions).thenApply(response -> response.body());
-    }
-
-    /**
-     * De-identifies sensitive data from a spreadsheet file. This operation includes options applicable to all supported spreadsheet file types.&lt;br/&gt;&lt;br/&gt;For broader file type support, see &lt;a href='#deidentify_file'&gt;De-identify File&lt;/a&gt;.
-     */
-    public CompletableFuture<DeidentifyFileResponse> deidentifySpreadsheet(
-            DeidentifyFileRequestDeidentifySpreadsheet request) {
-        return this.rawClient.deidentifySpreadsheet(request).thenApply(response -> response.body());
-    }
-
-    /**
-     * De-identifies sensitive data from a spreadsheet file. This operation includes options applicable to all supported spreadsheet file types.&lt;br/&gt;&lt;br/&gt;For broader file type support, see &lt;a href='#deidentify_file'&gt;De-identify File&lt;/a&gt;.
-     */
-    public CompletableFuture<DeidentifyFileResponse> deidentifySpreadsheet(
-            DeidentifyFileRequestDeidentifySpreadsheet request, RequestOptions requestOptions) {
-        return this.rawClient.deidentifySpreadsheet(request, requestOptions).thenApply(response -> response.body());
-    }
-
-    /**
-     * De-identifies sensitive data from a structured text file. This operation includes options applicable to all supported structured text file types.&lt;br/&gt;&lt;br/&gt;For broader file type support, see &lt;a href='#deidentify_file'&gt;De-identify File&lt;/a&gt;.
-     */
-    public CompletableFuture<DeidentifyFileResponse> deidentifyStructuredText(
-            DeidentifyFileRequestDeidentifyStructuredText request) {
-        return this.rawClient.deidentifyStructuredText(request).thenApply(response -> response.body());
-    }
-
-    /**
-     * De-identifies sensitive data from a structured text file. This operation includes options applicable to all supported structured text file types.&lt;br/&gt;&lt;br/&gt;For broader file type support, see &lt;a href='#deidentify_file'&gt;De-identify File&lt;/a&gt;.
-     */
-    public CompletableFuture<DeidentifyFileResponse> deidentifyStructuredText(
-            DeidentifyFileRequestDeidentifyStructuredText request, RequestOptions requestOptions) {
-        return this.rawClient.deidentifyStructuredText(request, requestOptions).thenApply(response -> response.body());
-    }
-
-    /**
-     * De-identifies sensitive data from a text file. This operation includes options applicable to all supported image text types.&lt;br/&gt;&lt;br/&gt;For broader file type support, see &lt;a href='#deidentify_file'&gt;De-identify File&lt;/a&gt;.
-     */
-    public CompletableFuture<DeidentifyFileResponse> deidentifyText(DeidentifyFileRequestDeidentifyText request) {
-        return this.rawClient.deidentifyText(request).thenApply(response -> response.body());
-    }
-
-    /**
-     * De-identifies sensitive data from a text file. This operation includes options applicable to all supported image text types.&lt;br/&gt;&lt;br/&gt;For broader file type support, see &lt;a href='#deidentify_file'&gt;De-identify File&lt;/a&gt;.
-     */
-    public CompletableFuture<DeidentifyFileResponse> deidentifyText(
-            DeidentifyFileRequestDeidentifyText request, RequestOptions requestOptions) {
-        return this.rawClient.deidentifyText(request, requestOptions).thenApply(response -> response.body());
-    }
-
-    /**
-     * Re-identifies tokens in a file.
-     */
-    public CompletableFuture<ReidentifyFileResponse> reidentifyFile(ReidentifyFileRequestReidentifyFile request) {
-        return this.rawClient.reidentifyFile(request).thenApply(response -> response.body());
-    }
-
-    /**
-     * Re-identifies tokens in a file.
-     */
-    public CompletableFuture<ReidentifyFileResponse> reidentifyFile(
-            ReidentifyFileRequestReidentifyFile request, RequestOptions requestOptions) {
-        return this.rawClient.reidentifyFile(request, requestOptions).thenApply(response -> response.body());
-    }
-
-    /**
-     * Returns the status of a detect run.
-     */
-    public CompletableFuture<DetectRunsResponse> getRun(String runId) {
-        return this.rawClient.getRun(runId).thenApply(response -> response.body());
-    }
-
-    /**
-     * Returns the status of a detect run.
-     */
-    public CompletableFuture<DetectRunsResponse> getRun(String runId, GetRunRequest request) {
-        return this.rawClient.getRun(runId, request).thenApply(response -> response.body());
-    }
-
-    /**
-     * Returns the status of a detect run.
-     */
-    public CompletableFuture<DetectRunsResponse> getRun(
-            String runId, GetRunRequest request, RequestOptions requestOptions) {
-        return this.rawClient.getRun(runId, request, requestOptions).thenApply(response -> response.body());
+    public CompletableFuture<UploadFileResponseV2> uploadFileV2(
+            String vaultId, UploadFileRequestV2 request, RequestOptions requestOptions) {
+        return this.rawClient.uploadFileV2(vaultId, request, requestOptions).thenApply(response -> response.body());
     }
 }

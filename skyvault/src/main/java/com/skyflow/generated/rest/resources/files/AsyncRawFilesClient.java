@@ -4,20 +4,33 @@
 package com.skyflow.generated.rest.resources.files;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.skyflow.generated.rest.core.*;
+import com.skyflow.generated.rest.core.ApiClientApiException;
+import com.skyflow.generated.rest.core.ApiClientException;
+import com.skyflow.generated.rest.core.ApiClientHttpResponse;
+import com.skyflow.generated.rest.core.ClientOptions;
+import com.skyflow.generated.rest.core.ObjectMappers;
+import com.skyflow.generated.rest.core.QueryStringMapper;
+import com.skyflow.generated.rest.core.RequestOptions;
+import com.skyflow.generated.rest.core.RetryInterceptor;
 import com.skyflow.generated.rest.errors.BadRequestError;
 import com.skyflow.generated.rest.errors.InternalServerError;
+import com.skyflow.generated.rest.errors.NotFoundError;
 import com.skyflow.generated.rest.errors.UnauthorizedError;
-import com.skyflow.generated.rest.resources.files.requests.*;
-import com.skyflow.generated.rest.types.DeidentifyFileResponse;
-import com.skyflow.generated.rest.types.DetectRunsResponse;
+import com.skyflow.generated.rest.resources.files.requests.UploadFileRequestV2;
 import com.skyflow.generated.rest.types.ErrorResponse;
-import com.skyflow.generated.rest.types.ReidentifyFileResponse;
-import okhttp3.*;
-import org.jetbrains.annotations.NotNull;
-
+import com.skyflow.generated.rest.types.UploadFileResponseV2;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.Headers;
+import okhttp3.HttpUrl;
+import okhttp3.MultipartBody;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
+import org.jetbrains.annotations.NotNull;
 
 public class AsyncRawFilesClient {
     protected final ClientOptions clientOptions;
@@ -27,915 +40,54 @@ public class AsyncRawFilesClient {
     }
 
     /**
-     * De-identifies sensitive data from a file. This operation includes options applicable to all supported file types.&lt;br/&gt;&lt;br/&gt;For more specific options, see the category-specific operations (like &lt;a href='#deidentify_document'&gt;De-identify Document&lt;/a&gt;) and the file type-specific opertions (like &lt;a href='#deidentify_pdf'&gt;De-identify PDF&lt;/a&gt;).
+     * Uploads a file to a new or specified record.
      */
-    public CompletableFuture<ApiClientHttpResponse<DeidentifyFileResponse>> deidentifyFile(
-            DeidentifyFileRequest request) {
-        return deidentifyFile(request, null);
+    public CompletableFuture<ApiClientHttpResponse<UploadFileResponseV2>> uploadFileV2(
+            String vaultId, UploadFileRequestV2 request) {
+        return uploadFileV2(vaultId, request, null);
     }
 
     /**
-     * De-identifies sensitive data from a file. This operation includes options applicable to all supported file types.&lt;br/&gt;&lt;br/&gt;For more specific options, see the category-specific operations (like &lt;a href='#deidentify_document'&gt;De-identify Document&lt;/a&gt;) and the file type-specific opertions (like &lt;a href='#deidentify_pdf'&gt;De-identify PDF&lt;/a&gt;).
+     * Uploads a file to a new or specified record.
      */
-    public CompletableFuture<ApiClientHttpResponse<DeidentifyFileResponse>> deidentifyFile(
-            DeidentifyFileRequest request, RequestOptions requestOptions) {
-        HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
-                .newBuilder()
-                .addPathSegments("v1/detect/deidentify/file")
-                .build();
-        RequestBody body;
-        try {
-            body = RequestBody.create(
-                    ObjectMappers.JSON_MAPPER.writeValueAsBytes(request), MediaTypes.APPLICATION_JSON);
-        } catch (JsonProcessingException e) {
-            throw new ApiClientException("Failed to serialize request", e);
-        }
-        Request okhttpRequest = new Request.Builder()
-                .url(httpUrl)
-                .method("POST", body)
-                .headers(Headers.of(clientOptions.headers(requestOptions)))
-                .addHeader("Content-Type", "application/json")
-                .addHeader("Accept", "application/json")
-                .build();
-        OkHttpClient client = clientOptions.httpClient();
-        if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
-            client = clientOptions.httpClientWithTimeout(requestOptions);
-        }
-        CompletableFuture<ApiClientHttpResponse<DeidentifyFileResponse>> future = new CompletableFuture<>();
-        client.newCall(okhttpRequest).enqueue(new Callback() {
-            @Override
-            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                try (ResponseBody responseBody = response.body()) {
-                    if (response.isSuccessful()) {
-                        future.complete(new ApiClientHttpResponse<>(
-                                ObjectMappers.JSON_MAPPER.readValue(
-                                        responseBody.string(), DeidentifyFileResponse.class),
-                                response));
-                        return;
-                    }
-                    String responseBodyString = responseBody != null ? responseBody.string() : "{}";
-                    try {
-                        switch (response.code()) {
-                            case 400:
-                                future.completeExceptionally(new BadRequestError(
-                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                                        response));
-                                return;
-                            case 401:
-                                future.completeExceptionally(new UnauthorizedError(
-                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                                        response));
-                                return;
-                            case 500:
-                                future.completeExceptionally(new InternalServerError(
-                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class),
-                                        response));
-                                return;
-                        }
-                    } catch (JsonProcessingException ignored) {
-                        // unable to map error response, throwing generic error
-                    }
-                    future.completeExceptionally(new ApiClientApiException(
-                            "Error with status code " + response.code(),
-                            response.code(),
-                            ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                            response));
-                    return;
-                } catch (IOException e) {
-                    future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
-                }
-            }
-
-            @Override
-            public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
-            }
-        });
-        return future;
-    }
-
-    /**
-     * De-identifies sensitive data from an audio file. This operation includes options applicable to all supported audio file types.&lt;br/&gt;&lt;br/&gt;For broader file type support, see &lt;a href='#deidentify_file'&gt;De-identify File&lt;/a&gt;.
-     */
-    public CompletableFuture<ApiClientHttpResponse<DeidentifyFileResponse>> deidentifyAudio(
-            DeidentifyFileAudioRequestDeidentifyAudio request) {
-        return deidentifyAudio(request, null);
-    }
-
-    /**
-     * De-identifies sensitive data from an audio file. This operation includes options applicable to all supported audio file types.&lt;br/&gt;&lt;br/&gt;For broader file type support, see &lt;a href='#deidentify_file'&gt;De-identify File&lt;/a&gt;.
-     */
-    public CompletableFuture<ApiClientHttpResponse<DeidentifyFileResponse>> deidentifyAudio(
-            DeidentifyFileAudioRequestDeidentifyAudio request, RequestOptions requestOptions) {
-        HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
-                .newBuilder()
-                .addPathSegments("v1/detect/deidentify/file/audio")
-                .build();
-        RequestBody body;
-        try {
-            body = RequestBody.create(
-                    ObjectMappers.JSON_MAPPER.writeValueAsBytes(request), MediaTypes.APPLICATION_JSON);
-        } catch (JsonProcessingException e) {
-            throw new ApiClientException("Failed to serialize request", e);
-        }
-        Request okhttpRequest = new Request.Builder()
-                .url(httpUrl)
-                .method("POST", body)
-                .headers(Headers.of(clientOptions.headers(requestOptions)))
-                .addHeader("Content-Type", "application/json")
-                .addHeader("Accept", "application/json")
-                .build();
-        OkHttpClient client = clientOptions.httpClient();
-        if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
-            client = clientOptions.httpClientWithTimeout(requestOptions);
-        }
-        CompletableFuture<ApiClientHttpResponse<DeidentifyFileResponse>> future = new CompletableFuture<>();
-        client.newCall(okhttpRequest).enqueue(new Callback() {
-            @Override
-            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                try (ResponseBody responseBody = response.body()) {
-                    if (response.isSuccessful()) {
-                        future.complete(new ApiClientHttpResponse<>(
-                                ObjectMappers.JSON_MAPPER.readValue(
-                                        responseBody.string(), DeidentifyFileResponse.class),
-                                response));
-                        return;
-                    }
-                    String responseBodyString = responseBody != null ? responseBody.string() : "{}";
-                    try {
-                        switch (response.code()) {
-                            case 400:
-                                future.completeExceptionally(new BadRequestError(
-                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                                        response));
-                                return;
-                            case 401:
-                                future.completeExceptionally(new UnauthorizedError(
-                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                                        response));
-                                return;
-                            case 500:
-                                future.completeExceptionally(new InternalServerError(
-                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class),
-                                        response));
-                                return;
-                        }
-                    } catch (JsonProcessingException ignored) {
-                        // unable to map error response, throwing generic error
-                    }
-                    future.completeExceptionally(new ApiClientApiException(
-                            "Error with status code " + response.code(),
-                            response.code(),
-                            ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                            response));
-                    return;
-                } catch (IOException e) {
-                    future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
-                }
-            }
-
-            @Override
-            public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
-            }
-        });
-        return future;
-    }
-
-    /**
-     * De-identifies sensitive data from a document file. This operation includes options applicable to all supported document file types.&lt;br/&gt;&lt;br/&gt;For more specific options, see the file type-specific opertions (like &lt;a href='#deidentify_pdf'&gt;De-identify PDF&lt;/a&gt;) where they're available. For broader file type support, see &lt;a href='#deidentify_file'&gt;De-identify File&lt;/a&gt;.
-     */
-    public CompletableFuture<ApiClientHttpResponse<DeidentifyFileResponse>> deidentifyDocument(
-            DeidentifyFileRequestDeidentifyDocument request) {
-        return deidentifyDocument(request, null);
-    }
-
-    /**
-     * De-identifies sensitive data from a document file. This operation includes options applicable to all supported document file types.&lt;br/&gt;&lt;br/&gt;For more specific options, see the file type-specific opertions (like &lt;a href='#deidentify_pdf'&gt;De-identify PDF&lt;/a&gt;) where they're available. For broader file type support, see &lt;a href='#deidentify_file'&gt;De-identify File&lt;/a&gt;.
-     */
-    public CompletableFuture<ApiClientHttpResponse<DeidentifyFileResponse>> deidentifyDocument(
-            DeidentifyFileRequestDeidentifyDocument request, RequestOptions requestOptions) {
-        HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
-                .newBuilder()
-                .addPathSegments("v1/detect/deidentify/file/document")
-                .build();
-        RequestBody body;
-        try {
-            body = RequestBody.create(
-                    ObjectMappers.JSON_MAPPER.writeValueAsBytes(request), MediaTypes.APPLICATION_JSON);
-        } catch (JsonProcessingException e) {
-            throw new ApiClientException("Failed to serialize request", e);
-        }
-        Request okhttpRequest = new Request.Builder()
-                .url(httpUrl)
-                .method("POST", body)
-                .headers(Headers.of(clientOptions.headers(requestOptions)))
-                .addHeader("Content-Type", "application/json")
-                .addHeader("Accept", "application/json")
-                .build();
-        OkHttpClient client = clientOptions.httpClient();
-        if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
-            client = clientOptions.httpClientWithTimeout(requestOptions);
-        }
-        CompletableFuture<ApiClientHttpResponse<DeidentifyFileResponse>> future = new CompletableFuture<>();
-        client.newCall(okhttpRequest).enqueue(new Callback() {
-            @Override
-            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                try (ResponseBody responseBody = response.body()) {
-                    if (response.isSuccessful()) {
-                        future.complete(new ApiClientHttpResponse<>(
-                                ObjectMappers.JSON_MAPPER.readValue(
-                                        responseBody.string(), DeidentifyFileResponse.class),
-                                response));
-                        return;
-                    }
-                    String responseBodyString = responseBody != null ? responseBody.string() : "{}";
-                    try {
-                        switch (response.code()) {
-                            case 400:
-                                future.completeExceptionally(new BadRequestError(
-                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                                        response));
-                                return;
-                            case 401:
-                                future.completeExceptionally(new UnauthorizedError(
-                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                                        response));
-                                return;
-                            case 500:
-                                future.completeExceptionally(new InternalServerError(
-                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class),
-                                        response));
-                                return;
-                        }
-                    } catch (JsonProcessingException ignored) {
-                        // unable to map error response, throwing generic error
-                    }
-                    future.completeExceptionally(new ApiClientApiException(
-                            "Error with status code " + response.code(),
-                            response.code(),
-                            ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                            response));
-                    return;
-                } catch (IOException e) {
-                    future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
-                }
-            }
-
-            @Override
-            public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
-            }
-        });
-        return future;
-    }
-
-    /**
-     * De-identifies sensitive data from a PDF file. This operation includes options specific to PDF files.&lt;br/&gt;&lt;br/&gt;For broader file type support, see &lt;a href='#deidentify_document'&gt;De-identify Document&lt;/a&gt; and &lt;a href='#deidentify_file'&gt;De-identify File&lt;/a&gt;.
-     */
-    public CompletableFuture<ApiClientHttpResponse<DeidentifyFileResponse>> deidentifyPdf(
-            DeidentifyFileDocumentPdfRequestDeidentifyPdf request) {
-        return deidentifyPdf(request, null);
-    }
-
-    /**
-     * De-identifies sensitive data from a PDF file. This operation includes options specific to PDF files.&lt;br/&gt;&lt;br/&gt;For broader file type support, see &lt;a href='#deidentify_document'&gt;De-identify Document&lt;/a&gt; and &lt;a href='#deidentify_file'&gt;De-identify File&lt;/a&gt;.
-     */
-    public CompletableFuture<ApiClientHttpResponse<DeidentifyFileResponse>> deidentifyPdf(
-            DeidentifyFileDocumentPdfRequestDeidentifyPdf request, RequestOptions requestOptions) {
-        HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
-                .newBuilder()
-                .addPathSegments("v1/detect/deidentify/file/document/pdf")
-                .build();
-        RequestBody body;
-        try {
-            body = RequestBody.create(
-                    ObjectMappers.JSON_MAPPER.writeValueAsBytes(request), MediaTypes.APPLICATION_JSON);
-        } catch (JsonProcessingException e) {
-            throw new ApiClientException("Failed to serialize request", e);
-        }
-        Request okhttpRequest = new Request.Builder()
-                .url(httpUrl)
-                .method("POST", body)
-                .headers(Headers.of(clientOptions.headers(requestOptions)))
-                .addHeader("Content-Type", "application/json")
-                .addHeader("Accept", "application/json")
-                .build();
-        OkHttpClient client = clientOptions.httpClient();
-        if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
-            client = clientOptions.httpClientWithTimeout(requestOptions);
-        }
-        CompletableFuture<ApiClientHttpResponse<DeidentifyFileResponse>> future = new CompletableFuture<>();
-        client.newCall(okhttpRequest).enqueue(new Callback() {
-            @Override
-            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                try (ResponseBody responseBody = response.body()) {
-                    if (response.isSuccessful()) {
-                        future.complete(new ApiClientHttpResponse<>(
-                                ObjectMappers.JSON_MAPPER.readValue(
-                                        responseBody.string(), DeidentifyFileResponse.class),
-                                response));
-                        return;
-                    }
-                    String responseBodyString = responseBody != null ? responseBody.string() : "{}";
-                    try {
-                        switch (response.code()) {
-                            case 400:
-                                future.completeExceptionally(new BadRequestError(
-                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                                        response));
-                                return;
-                            case 401:
-                                future.completeExceptionally(new UnauthorizedError(
-                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                                        response));
-                                return;
-                            case 500:
-                                future.completeExceptionally(new InternalServerError(
-                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class),
-                                        response));
-                                return;
-                        }
-                    } catch (JsonProcessingException ignored) {
-                        // unable to map error response, throwing generic error
-                    }
-                    future.completeExceptionally(new ApiClientApiException(
-                            "Error with status code " + response.code(),
-                            response.code(),
-                            ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                            response));
-                    return;
-                } catch (IOException e) {
-                    future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
-                }
-            }
-
-            @Override
-            public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
-            }
-        });
-        return future;
-    }
-
-    /**
-     * De-identifies sensitive data from an image file. This operation includes options applicable to all supported image file types.&lt;br/&gt;&lt;br/&gt;For broader file type support, see &lt;a href='#deidentify_file'&gt;De-identify File&lt;/a&gt;.
-     */
-    public CompletableFuture<ApiClientHttpResponse<DeidentifyFileResponse>> deidentifyImage(
-            DeidentifyFileImageRequestDeidentifyImage request) {
-        return deidentifyImage(request, null);
-    }
-
-    /**
-     * De-identifies sensitive data from an image file. This operation includes options applicable to all supported image file types.&lt;br/&gt;&lt;br/&gt;For broader file type support, see &lt;a href='#deidentify_file'&gt;De-identify File&lt;/a&gt;.
-     */
-    public CompletableFuture<ApiClientHttpResponse<DeidentifyFileResponse>> deidentifyImage(
-            DeidentifyFileImageRequestDeidentifyImage request, RequestOptions requestOptions) {
-        HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
-                .newBuilder()
-                .addPathSegments("v1/detect/deidentify/file/image")
-                .build();
-        RequestBody body;
-        try {
-            body = RequestBody.create(
-                    ObjectMappers.JSON_MAPPER.writeValueAsBytes(request), MediaTypes.APPLICATION_JSON);
-        } catch (JsonProcessingException e) {
-            throw new ApiClientException("Failed to serialize request", e);
-        }
-        Request okhttpRequest = new Request.Builder()
-                .url(httpUrl)
-                .method("POST", body)
-                .headers(Headers.of(clientOptions.headers(requestOptions)))
-                .addHeader("Content-Type", "application/json")
-                .addHeader("Accept", "application/json")
-                .build();
-        OkHttpClient client = clientOptions.httpClient();
-        if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
-            client = clientOptions.httpClientWithTimeout(requestOptions);
-        }
-        CompletableFuture<ApiClientHttpResponse<DeidentifyFileResponse>> future = new CompletableFuture<>();
-        client.newCall(okhttpRequest).enqueue(new Callback() {
-            @Override
-            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                try (ResponseBody responseBody = response.body()) {
-                    if (response.isSuccessful()) {
-                        future.complete(new ApiClientHttpResponse<>(
-                                ObjectMappers.JSON_MAPPER.readValue(
-                                        responseBody.string(), DeidentifyFileResponse.class),
-                                response));
-                        return;
-                    }
-                    String responseBodyString = responseBody != null ? responseBody.string() : "{}";
-                    try {
-                        switch (response.code()) {
-                            case 400:
-                                future.completeExceptionally(new BadRequestError(
-                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                                        response));
-                                return;
-                            case 401:
-                                future.completeExceptionally(new UnauthorizedError(
-                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                                        response));
-                                return;
-                            case 500:
-                                future.completeExceptionally(new InternalServerError(
-                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class),
-                                        response));
-                                return;
-                        }
-                    } catch (JsonProcessingException ignored) {
-                        // unable to map error response, throwing generic error
-                    }
-                    future.completeExceptionally(new ApiClientApiException(
-                            "Error with status code " + response.code(),
-                            response.code(),
-                            ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                            response));
-                    return;
-                } catch (IOException e) {
-                    future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
-                }
-            }
-
-            @Override
-            public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
-            }
-        });
-        return future;
-    }
-
-    /**
-     * De-identifies sensitive data from a presentation file. This operation includes options applicable to all supported presentation file types.&lt;br/&gt;&lt;br/&gt;For broader file type support, see &lt;a href='#deidentify_file'&gt;De-identify File&lt;/a&gt;.
-     */
-    public CompletableFuture<ApiClientHttpResponse<DeidentifyFileResponse>> deidentifyPresentation(
-            DeidentifyFileRequestDeidentifyPresentation request) {
-        return deidentifyPresentation(request, null);
-    }
-
-    /**
-     * De-identifies sensitive data from a presentation file. This operation includes options applicable to all supported presentation file types.&lt;br/&gt;&lt;br/&gt;For broader file type support, see &lt;a href='#deidentify_file'&gt;De-identify File&lt;/a&gt;.
-     */
-    public CompletableFuture<ApiClientHttpResponse<DeidentifyFileResponse>> deidentifyPresentation(
-            DeidentifyFileRequestDeidentifyPresentation request, RequestOptions requestOptions) {
-        HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
-                .newBuilder()
-                .addPathSegments("v1/detect/deidentify/file/presentation")
-                .build();
-        RequestBody body;
-        try {
-            body = RequestBody.create(
-                    ObjectMappers.JSON_MAPPER.writeValueAsBytes(request), MediaTypes.APPLICATION_JSON);
-        } catch (JsonProcessingException e) {
-            throw new ApiClientException("Failed to serialize request", e);
-        }
-        Request okhttpRequest = new Request.Builder()
-                .url(httpUrl)
-                .method("POST", body)
-                .headers(Headers.of(clientOptions.headers(requestOptions)))
-                .addHeader("Content-Type", "application/json")
-                .addHeader("Accept", "application/json")
-                .build();
-        OkHttpClient client = clientOptions.httpClient();
-        if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
-            client = clientOptions.httpClientWithTimeout(requestOptions);
-        }
-        CompletableFuture<ApiClientHttpResponse<DeidentifyFileResponse>> future = new CompletableFuture<>();
-        client.newCall(okhttpRequest).enqueue(new Callback() {
-            @Override
-            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                try (ResponseBody responseBody = response.body()) {
-                    if (response.isSuccessful()) {
-                        future.complete(new ApiClientHttpResponse<>(
-                                ObjectMappers.JSON_MAPPER.readValue(
-                                        responseBody.string(), DeidentifyFileResponse.class),
-                                response));
-                        return;
-                    }
-                    String responseBodyString = responseBody != null ? responseBody.string() : "{}";
-                    try {
-                        switch (response.code()) {
-                            case 400:
-                                future.completeExceptionally(new BadRequestError(
-                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                                        response));
-                                return;
-                            case 401:
-                                future.completeExceptionally(new UnauthorizedError(
-                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                                        response));
-                                return;
-                            case 500:
-                                future.completeExceptionally(new InternalServerError(
-                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class),
-                                        response));
-                                return;
-                        }
-                    } catch (JsonProcessingException ignored) {
-                        // unable to map error response, throwing generic error
-                    }
-                    future.completeExceptionally(new ApiClientApiException(
-                            "Error with status code " + response.code(),
-                            response.code(),
-                            ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                            response));
-                    return;
-                } catch (IOException e) {
-                    future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
-                }
-            }
-
-            @Override
-            public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
-            }
-        });
-        return future;
-    }
-
-    /**
-     * De-identifies sensitive data from a spreadsheet file. This operation includes options applicable to all supported spreadsheet file types.&lt;br/&gt;&lt;br/&gt;For broader file type support, see &lt;a href='#deidentify_file'&gt;De-identify File&lt;/a&gt;.
-     */
-    public CompletableFuture<ApiClientHttpResponse<DeidentifyFileResponse>> deidentifySpreadsheet(
-            DeidentifyFileRequestDeidentifySpreadsheet request) {
-        return deidentifySpreadsheet(request, null);
-    }
-
-    /**
-     * De-identifies sensitive data from a spreadsheet file. This operation includes options applicable to all supported spreadsheet file types.&lt;br/&gt;&lt;br/&gt;For broader file type support, see &lt;a href='#deidentify_file'&gt;De-identify File&lt;/a&gt;.
-     */
-    public CompletableFuture<ApiClientHttpResponse<DeidentifyFileResponse>> deidentifySpreadsheet(
-            DeidentifyFileRequestDeidentifySpreadsheet request, RequestOptions requestOptions) {
-        HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
-                .newBuilder()
-                .addPathSegments("v1/detect/deidentify/file/spreadsheet")
-                .build();
-        RequestBody body;
-        try {
-            body = RequestBody.create(
-                    ObjectMappers.JSON_MAPPER.writeValueAsBytes(request), MediaTypes.APPLICATION_JSON);
-        } catch (JsonProcessingException e) {
-            throw new ApiClientException("Failed to serialize request", e);
-        }
-        Request okhttpRequest = new Request.Builder()
-                .url(httpUrl)
-                .method("POST", body)
-                .headers(Headers.of(clientOptions.headers(requestOptions)))
-                .addHeader("Content-Type", "application/json")
-                .addHeader("Accept", "application/json")
-                .build();
-        OkHttpClient client = clientOptions.httpClient();
-        if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
-            client = clientOptions.httpClientWithTimeout(requestOptions);
-        }
-        CompletableFuture<ApiClientHttpResponse<DeidentifyFileResponse>> future = new CompletableFuture<>();
-        client.newCall(okhttpRequest).enqueue(new Callback() {
-            @Override
-            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                try (ResponseBody responseBody = response.body()) {
-                    if (response.isSuccessful()) {
-                        future.complete(new ApiClientHttpResponse<>(
-                                ObjectMappers.JSON_MAPPER.readValue(
-                                        responseBody.string(), DeidentifyFileResponse.class),
-                                response));
-                        return;
-                    }
-                    String responseBodyString = responseBody != null ? responseBody.string() : "{}";
-                    try {
-                        switch (response.code()) {
-                            case 400:
-                                future.completeExceptionally(new BadRequestError(
-                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                                        response));
-                                return;
-                            case 401:
-                                future.completeExceptionally(new UnauthorizedError(
-                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                                        response));
-                                return;
-                            case 500:
-                                future.completeExceptionally(new InternalServerError(
-                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class),
-                                        response));
-                                return;
-                        }
-                    } catch (JsonProcessingException ignored) {
-                        // unable to map error response, throwing generic error
-                    }
-                    future.completeExceptionally(new ApiClientApiException(
-                            "Error with status code " + response.code(),
-                            response.code(),
-                            ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                            response));
-                    return;
-                } catch (IOException e) {
-                    future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
-                }
-            }
-
-            @Override
-            public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
-            }
-        });
-        return future;
-    }
-
-    /**
-     * De-identifies sensitive data from a structured text file. This operation includes options applicable to all supported structured text file types.&lt;br/&gt;&lt;br/&gt;For broader file type support, see &lt;a href='#deidentify_file'&gt;De-identify File&lt;/a&gt;.
-     */
-    public CompletableFuture<ApiClientHttpResponse<DeidentifyFileResponse>> deidentifyStructuredText(
-            DeidentifyFileRequestDeidentifyStructuredText request) {
-        return deidentifyStructuredText(request, null);
-    }
-
-    /**
-     * De-identifies sensitive data from a structured text file. This operation includes options applicable to all supported structured text file types.&lt;br/&gt;&lt;br/&gt;For broader file type support, see &lt;a href='#deidentify_file'&gt;De-identify File&lt;/a&gt;.
-     */
-    public CompletableFuture<ApiClientHttpResponse<DeidentifyFileResponse>> deidentifyStructuredText(
-            DeidentifyFileRequestDeidentifyStructuredText request, RequestOptions requestOptions) {
-        HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
-                .newBuilder()
-                .addPathSegments("v1/detect/deidentify/file/structured_text")
-                .build();
-        RequestBody body;
-        try {
-            body = RequestBody.create(
-                    ObjectMappers.JSON_MAPPER.writeValueAsBytes(request), MediaTypes.APPLICATION_JSON);
-        } catch (JsonProcessingException e) {
-            throw new ApiClientException("Failed to serialize request", e);
-        }
-        Request okhttpRequest = new Request.Builder()
-                .url(httpUrl)
-                .method("POST", body)
-                .headers(Headers.of(clientOptions.headers(requestOptions)))
-                .addHeader("Content-Type", "application/json")
-                .addHeader("Accept", "application/json")
-                .build();
-        OkHttpClient client = clientOptions.httpClient();
-        if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
-            client = clientOptions.httpClientWithTimeout(requestOptions);
-        }
-        CompletableFuture<ApiClientHttpResponse<DeidentifyFileResponse>> future = new CompletableFuture<>();
-        client.newCall(okhttpRequest).enqueue(new Callback() {
-            @Override
-            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                try (ResponseBody responseBody = response.body()) {
-                    if (response.isSuccessful()) {
-                        future.complete(new ApiClientHttpResponse<>(
-                                ObjectMappers.JSON_MAPPER.readValue(
-                                        responseBody.string(), DeidentifyFileResponse.class),
-                                response));
-                        return;
-                    }
-                    String responseBodyString = responseBody != null ? responseBody.string() : "{}";
-                    try {
-                        switch (response.code()) {
-                            case 400:
-                                future.completeExceptionally(new BadRequestError(
-                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                                        response));
-                                return;
-                            case 401:
-                                future.completeExceptionally(new UnauthorizedError(
-                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                                        response));
-                                return;
-                            case 500:
-                                future.completeExceptionally(new InternalServerError(
-                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class),
-                                        response));
-                                return;
-                        }
-                    } catch (JsonProcessingException ignored) {
-                        // unable to map error response, throwing generic error
-                    }
-                    future.completeExceptionally(new ApiClientApiException(
-                            "Error with status code " + response.code(),
-                            response.code(),
-                            ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                            response));
-                    return;
-                } catch (IOException e) {
-                    future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
-                }
-            }
-
-            @Override
-            public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
-            }
-        });
-        return future;
-    }
-
-    /**
-     * De-identifies sensitive data from a text file. This operation includes options applicable to all supported image text types.&lt;br/&gt;&lt;br/&gt;For broader file type support, see &lt;a href='#deidentify_file'&gt;De-identify File&lt;/a&gt;.
-     */
-    public CompletableFuture<ApiClientHttpResponse<DeidentifyFileResponse>> deidentifyText(
-            DeidentifyFileRequestDeidentifyText request) {
-        return deidentifyText(request, null);
-    }
-
-    /**
-     * De-identifies sensitive data from a text file. This operation includes options applicable to all supported image text types.&lt;br/&gt;&lt;br/&gt;For broader file type support, see &lt;a href='#deidentify_file'&gt;De-identify File&lt;/a&gt;.
-     */
-    public CompletableFuture<ApiClientHttpResponse<DeidentifyFileResponse>> deidentifyText(
-            DeidentifyFileRequestDeidentifyText request, RequestOptions requestOptions) {
-        HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
-                .newBuilder()
-                .addPathSegments("v1/detect/deidentify/file/text")
-                .build();
-        RequestBody body;
-        try {
-            body = RequestBody.create(
-                    ObjectMappers.JSON_MAPPER.writeValueAsBytes(request), MediaTypes.APPLICATION_JSON);
-        } catch (JsonProcessingException e) {
-            throw new ApiClientException("Failed to serialize request", e);
-        }
-        Request okhttpRequest = new Request.Builder()
-                .url(httpUrl)
-                .method("POST", body)
-                .headers(Headers.of(clientOptions.headers(requestOptions)))
-                .addHeader("Content-Type", "application/json")
-                .addHeader("Accept", "application/json")
-                .build();
-        OkHttpClient client = clientOptions.httpClient();
-        if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
-            client = clientOptions.httpClientWithTimeout(requestOptions);
-        }
-        CompletableFuture<ApiClientHttpResponse<DeidentifyFileResponse>> future = new CompletableFuture<>();
-        client.newCall(okhttpRequest).enqueue(new Callback() {
-            @Override
-            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                try (ResponseBody responseBody = response.body()) {
-                    if (response.isSuccessful()) {
-                        future.complete(new ApiClientHttpResponse<>(
-                                ObjectMappers.JSON_MAPPER.readValue(
-                                        responseBody.string(), DeidentifyFileResponse.class),
-                                response));
-                        return;
-                    }
-                    String responseBodyString = responseBody != null ? responseBody.string() : "{}";
-                    try {
-                        switch (response.code()) {
-                            case 400:
-                                future.completeExceptionally(new BadRequestError(
-                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                                        response));
-                                return;
-                            case 401:
-                                future.completeExceptionally(new UnauthorizedError(
-                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                                        response));
-                                return;
-                            case 500:
-                                future.completeExceptionally(new InternalServerError(
-                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class),
-                                        response));
-                                return;
-                        }
-                    } catch (JsonProcessingException ignored) {
-                        // unable to map error response, throwing generic error
-                    }
-                    future.completeExceptionally(new ApiClientApiException(
-                            "Error with status code " + response.code(),
-                            response.code(),
-                            ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                            response));
-                    return;
-                } catch (IOException e) {
-                    future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
-                }
-            }
-
-            @Override
-            public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
-            }
-        });
-        return future;
-    }
-
-    /**
-     * Re-identifies tokens in a file.
-     */
-    public CompletableFuture<ApiClientHttpResponse<ReidentifyFileResponse>> reidentifyFile(
-            ReidentifyFileRequestReidentifyFile request) {
-        return reidentifyFile(request, null);
-    }
-
-    /**
-     * Re-identifies tokens in a file.
-     */
-    public CompletableFuture<ApiClientHttpResponse<ReidentifyFileResponse>> reidentifyFile(
-            ReidentifyFileRequestReidentifyFile request, RequestOptions requestOptions) {
-        HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
-                .newBuilder()
-                .addPathSegments("v1/detect/reidentify/file")
-                .build();
-        RequestBody body;
-        try {
-            body = RequestBody.create(
-                    ObjectMappers.JSON_MAPPER.writeValueAsBytes(request), MediaTypes.APPLICATION_JSON);
-        } catch (JsonProcessingException e) {
-            throw new ApiClientException("Failed to serialize request", e);
-        }
-        Request okhttpRequest = new Request.Builder()
-                .url(httpUrl)
-                .method("POST", body)
-                .headers(Headers.of(clientOptions.headers(requestOptions)))
-                .addHeader("Content-Type", "application/json")
-                .addHeader("Accept", "application/json")
-                .build();
-        OkHttpClient client = clientOptions.httpClient();
-        if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
-            client = clientOptions.httpClientWithTimeout(requestOptions);
-        }
-        CompletableFuture<ApiClientHttpResponse<ReidentifyFileResponse>> future = new CompletableFuture<>();
-        client.newCall(okhttpRequest).enqueue(new Callback() {
-            @Override
-            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                try (ResponseBody responseBody = response.body()) {
-                    if (response.isSuccessful()) {
-                        future.complete(new ApiClientHttpResponse<>(
-                                ObjectMappers.JSON_MAPPER.readValue(
-                                        responseBody.string(), ReidentifyFileResponse.class),
-                                response));
-                        return;
-                    }
-                    String responseBodyString = responseBody != null ? responseBody.string() : "{}";
-                    try {
-                        switch (response.code()) {
-                            case 400:
-                                future.completeExceptionally(new BadRequestError(
-                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                                        response));
-                                return;
-                            case 401:
-                                future.completeExceptionally(new UnauthorizedError(
-                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                                        response));
-                                return;
-                            case 500:
-                                future.completeExceptionally(new InternalServerError(
-                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class),
-                                        response));
-                                return;
-                        }
-                    } catch (JsonProcessingException ignored) {
-                        // unable to map error response, throwing generic error
-                    }
-                    future.completeExceptionally(new ApiClientApiException(
-                            "Error with status code " + response.code(),
-                            response.code(),
-                            ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                            response));
-                    return;
-                } catch (IOException e) {
-                    future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
-                }
-            }
-
-            @Override
-            public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
-            }
-        });
-        return future;
-    }
-
-    /**
-     * Returns the status of a detect run.
-     */
-    public CompletableFuture<ApiClientHttpResponse<DetectRunsResponse>> getRun(String runId) {
-        return getRun(runId, GetRunRequest.builder().build());
-    }
-
-    /**
-     * Returns the status of a detect run.
-     */
-    public CompletableFuture<ApiClientHttpResponse<DetectRunsResponse>> getRun(String runId, GetRunRequest request) {
-        return getRun(runId, request, null);
-    }
-
-    /**
-     * Returns the status of a detect run.
-     */
-    public CompletableFuture<ApiClientHttpResponse<DetectRunsResponse>> getRun(
-            String runId, GetRunRequest request, RequestOptions requestOptions) {
+    public CompletableFuture<ApiClientHttpResponse<UploadFileResponseV2>> uploadFileV2(
+            String vaultId, UploadFileRequestV2 request, RequestOptions requestOptions) {
         HttpUrl.Builder httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
                 .newBuilder()
-                .addPathSegments("v1/detect/runs")
-                .addPathSegment(runId);
-        if (request.getVaultId().isPresent()) {
-            QueryStringMapper.addQueryParameter(
-                    httpUrl, "vault_id", request.getVaultId().get(), false);
+                .addPathSegments("v2/vaults")
+                .addPathSegment(vaultId)
+                .addPathSegments("files")
+                .addPathSegments("upload");
+        if (requestOptions != null) {
+            requestOptions.getQueryParameters().forEach((_key, _value) -> {
+                httpUrl.addQueryParameter(_key, _value);
+            });
+        }
+        MultipartBody.Builder multipartBodyBuilder = new MultipartBody.Builder().setType(MultipartBody.FORM);
+        try {
+            QueryStringMapper.addFormDataPart(multipartBodyBuilder, "tableName", request.getTableName(), false);
+            QueryStringMapper.addFormDataPart(multipartBodyBuilder, "columnName", request.getColumnName(), false);
+            if (request.getSkyflowId().isPresent()) {
+                QueryStringMapper.addFormDataPart(
+                        multipartBodyBuilder,
+                        "skyflowID",
+                        request.getSkyflowId().get(),
+                        false);
+            }
+            QueryStringMapper.addFormDataPart(multipartBodyBuilder, "file", request.getFile(), false);
+            if (request.getReturnFileMetadata().isPresent()) {
+                QueryStringMapper.addFormDataPart(
+                        multipartBodyBuilder,
+                        "returnFileMetadata",
+                        request.getReturnFileMetadata().get(),
+                        false);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
         Request.Builder _requestBuilder = new Request.Builder()
                 .url(httpUrl.build())
-                .method("GET", null)
+                .method("POST", multipartBodyBuilder.build())
                 .headers(Headers.of(clientOptions.headers(requestOptions)))
                 .addHeader("Accept", "application/json");
         Request okhttpRequest = _requestBuilder.build();
@@ -943,28 +95,42 @@ public class AsyncRawFilesClient {
         if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
             client = clientOptions.httpClientWithTimeout(requestOptions);
         }
-        CompletableFuture<ApiClientHttpResponse<DetectRunsResponse>> future = new CompletableFuture<>();
+        if (requestOptions != null && requestOptions.getMaxRetries().isPresent()) {
+            okhttpRequest = okhttpRequest
+                    .newBuilder()
+                    .tag(
+                            RetryInterceptor.MaxRetriesOverride.class,
+                            new RetryInterceptor.MaxRetriesOverride(
+                                    requestOptions.getMaxRetries().get()))
+                    .build();
+        }
+        CompletableFuture<ApiClientHttpResponse<UploadFileResponseV2>> future = new CompletableFuture<>();
         client.newCall(okhttpRequest).enqueue(new Callback() {
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
                 try (ResponseBody responseBody = response.body()) {
+                    String responseBodyString = responseBody != null ? responseBody.string() : "{}";
                     if (response.isSuccessful()) {
                         future.complete(new ApiClientHttpResponse<>(
-                                ObjectMappers.JSON_MAPPER.readValue(responseBody.string(), DetectRunsResponse.class),
+                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, UploadFileResponseV2.class),
                                 response));
                         return;
                     }
-                    String responseBodyString = responseBody != null ? responseBody.string() : "{}";
                     try {
                         switch (response.code()) {
                             case 400:
                                 future.completeExceptionally(new BadRequestError(
-                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
+                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class),
                                         response));
                                 return;
                             case 401:
                                 future.completeExceptionally(new UnauthorizedError(
-                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
+                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class),
+                                        response));
+                                return;
+                            case 404:
+                                future.completeExceptionally(new NotFoundError(
+                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class),
                                         response));
                                 return;
                             case 500:
@@ -976,12 +142,13 @@ public class AsyncRawFilesClient {
                     } catch (JsonProcessingException ignored) {
                         // unable to map error response, throwing generic error
                     }
+                    Object errorBody = ObjectMappers.parseErrorBody(responseBodyString);
                     future.completeExceptionally(new ApiClientApiException(
-                            "Error with status code " + response.code(),
-                            response.code(),
-                            ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                            response));
+                            "Error with status code " + response.code(), response.code(), errorBody, response));
                     return;
+                } catch (JsonProcessingException e) {
+                    future.completeExceptionally(
+                            new ApiClientException("Failed to deserialize response: " + e.getMessage(), e));
                 } catch (IOException e) {
                     future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
                 }
