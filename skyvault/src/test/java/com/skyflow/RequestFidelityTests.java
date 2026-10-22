@@ -15,34 +15,9 @@ import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.generated.rest.ApiClient;
 import com.skyflow.generated.rest.resources.query.QueryClient;
-import com.skyflow.generated.rest.resources.query.requests.QueryServiceExecuteQueryBody;
 import com.skyflow.generated.rest.resources.records.RawRecordsClient;
 import com.skyflow.generated.rest.resources.records.RecordsClient;
-import com.skyflow.generated.rest.resources.records.requests.RecordServiceBatchOperationBody;
-import com.skyflow.generated.rest.resources.records.requests.RecordServiceBulkDeleteRecordBody;
-import com.skyflow.generated.rest.resources.records.requests.RecordServiceBulkGetRecordRequest;
-import com.skyflow.generated.rest.resources.records.requests.RecordServiceInsertRecordBody;
-import com.skyflow.generated.rest.resources.records.requests.RecordServiceUpdateRecordBody;
-import com.skyflow.generated.rest.resources.records.requests.UploadFileV2Request;
-import com.skyflow.generated.rest.resources.records.types.RecordServiceBulkGetRecordRequestOrderBy;
-import com.skyflow.generated.rest.resources.records.types.RecordServiceBulkGetRecordRequestRedaction;
-import com.skyflow.generated.rest.resources.tokens.requests.V1DetokenizePayload;
-import com.skyflow.generated.rest.resources.tokens.requests.V1TokenizePayload;
 import com.skyflow.generated.rest.types.BatchRecordMethod;
-import com.skyflow.generated.rest.types.RedactionEnumRedaction;
-import com.skyflow.generated.rest.types.UploadFileV2Response;
-import com.skyflow.generated.rest.types.V1BatchOperationResponse;
-import com.skyflow.generated.rest.types.V1BatchRecord;
-import com.skyflow.generated.rest.types.V1BulkDeleteRecordResponse;
-import com.skyflow.generated.rest.types.V1BulkGetRecordResponse;
-import com.skyflow.generated.rest.types.V1Byot;
-import com.skyflow.generated.rest.types.V1DetokenizeRecordRequest;
-import com.skyflow.generated.rest.types.V1FieldRecords;
-import com.skyflow.generated.rest.types.V1GetQueryResponse;
-import com.skyflow.generated.rest.types.V1InsertRecordResponse;
-import com.skyflow.generated.rest.types.V1TokenizeRecordRequest;
-import com.skyflow.generated.rest.types.V1TokenizeResponse;
-import com.skyflow.generated.rest.types.V1UpdateRecordResponse;
 import com.skyflow.utils.HttpUtility;
 import com.skyflow.utils.Utils;
 import com.skyflow.vault.connection.InvokeConnectionRequest;
@@ -85,6 +60,33 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+import com.skyflow.generated.rest.types.UploadFileResponseV2;
+import com.skyflow.generated.rest.types.UpdateRecordResponse;
+import com.skyflow.generated.rest.types.TokenizeRecordRequest;
+import com.skyflow.generated.rest.types.InsertRecordResponse;
+import com.skyflow.generated.rest.types.GetQueryResponse;
+import com.skyflow.generated.rest.types.GetFieldRecords;
+import com.skyflow.generated.rest.types.FieldRecords;
+import com.skyflow.generated.rest.types.DetokenizeRecordRequestRedaction;
+import com.skyflow.generated.rest.types.DetokenizeRecordRequest;
+import com.skyflow.generated.rest.types.BulkGetRecordResponse;
+import com.skyflow.generated.rest.types.BulkDeleteRecordResponse;
+import com.skyflow.generated.rest.types.BatchRecord;
+import com.skyflow.generated.rest.types.BatchOperationResponse;
+import com.skyflow.generated.rest.resources.tokens.requests.TokenizePayload;
+import com.skyflow.generated.rest.resources.tokens.requests.DetokenizePayload;
+import com.skyflow.generated.rest.resources.records.types.UpdateRecordRequestByot;
+import com.skyflow.generated.rest.resources.records.types.InsertRecordRequestByot;
+import com.skyflow.generated.rest.resources.records.types.GetRecordsRequestRedaction;
+import com.skyflow.generated.rest.resources.records.types.GetRecordsRequestOrderBy;
+import com.skyflow.generated.rest.resources.records.requests.UpdateRecordRequest;
+import com.skyflow.generated.rest.resources.records.requests.InsertRecordRequest;
+import com.skyflow.generated.rest.resources.records.requests.GetRecordsRequest;
+import com.skyflow.generated.rest.resources.records.requests.BulkDeleteRecordRequest;
+import com.skyflow.generated.rest.resources.records.requests.BatchOperationRequest;
+import com.skyflow.generated.rest.resources.query.requests.GetQueryRequest;
+import com.skyflow.generated.rest.resources.files.requests.UploadFileRequestV2;
+import com.skyflow.generated.rest.resources.files.FilesClient;
 
 /**
  * Request-fidelity tests for the v2 SDK.
@@ -197,14 +199,14 @@ public class RequestFidelityTests {
                 .continueOnError(false)
                 .build();
 
-        RecordServiceInsertRecordBody body = client.getBulkInsertRequestBody(request);
+        InsertRecordRequest body = client.getBulkInsertRequestBody(request);
 
         Assert.assertTrue("tokenization must carry returnTokens", body.getTokenization().isPresent());
         Assert.assertTrue(body.getTokenization().get());
         Assert.assertEquals("email", body.getUpsert().get());
-        Assert.assertEquals(V1Byot.ENABLE_STRICT, body.getByot().get());
+        Assert.assertEquals(InsertRecordRequestByot.ENABLE_STRICT, body.getByot().get());
 
-        List<V1FieldRecords> records = body.getRecords().get();
+        List<FieldRecords> records = body.getRecords();
         Assert.assertEquals(2, records.size());
 
         Map<String, Object> fields0 = records.get(0).getFields().get();
@@ -232,7 +234,7 @@ public class RequestFidelityTests {
                 .homogeneous(true)
                 .build();
 
-        RecordServiceInsertRecordBody body = client.getBulkInsertRequestBody(request);
+        InsertRecordRequest body = client.getBulkInsertRequestBody(request);
         Assert.assertTrue(body.getHomogeneous().isPresent());
         Assert.assertTrue(body.getHomogeneous().get());
     }
@@ -245,9 +247,9 @@ public class RequestFidelityTests {
                 .values(rows(richRow()))
                 .build();
 
-        RecordServiceInsertRecordBody body = client.getBulkInsertRequestBody(request);
+        InsertRecordRequest body = client.getBulkInsertRequestBody(request);
         Assert.assertFalse("returnTokens defaults to false", body.getTokenization().get());
-        Assert.assertEquals("tokenMode defaults to DISABLE -> byot DISABLE", V1Byot.DISABLE, body.getByot().get());
+        Assert.assertEquals("tokenMode defaults to DISABLE -> byot DISABLE", InsertRecordRequestByot.DISABLE, body.getByot().get());
         Assert.assertFalse("upsert not set -> absent", body.getUpsert().isPresent());
         Assert.assertFalse("homogeneous not set -> absent", body.getHomogeneous().isPresent());
     }
@@ -273,7 +275,7 @@ public class RequestFidelityTests {
                 .tokenMode(TokenMode.ENABLE_STRICT)
                 .build();
 
-        List<V1FieldRecords> records = client.getBulkInsertRequestBody(request).getRecords().get();
+        List<FieldRecords> records = client.getBulkInsertRequestBody(request).getRecords();
 
         Assert.assertEquals("4111111111111111", records.get(0).getFields().get().get("card_number"));
         Assert.assertEquals("token-for-row-0", records.get(0).getTokens().get().get("card_number"));
@@ -292,7 +294,7 @@ public class RequestFidelityTests {
         }
 
         InsertRequest request = InsertRequest.builder().table("cards").values(values).build();
-        List<V1FieldRecords> records = client.getBulkInsertRequestBody(request).getRecords().get();
+        List<FieldRecords> records = client.getBulkInsertRequestBody(request).getRecords();
 
         Assert.assertEquals(5, records.size());
         for (int i = 0; i < 5; i++) {
@@ -318,7 +320,7 @@ public class RequestFidelityTests {
                 .tokenMode(TokenMode.ENABLE)
                 .build();
 
-        List<V1FieldRecords> records = client.getBulkInsertRequestBody(request).getRecords().get();
+        List<FieldRecords> records = client.getBulkInsertRequestBody(request).getRecords();
         Assert.assertEquals(2, records.size());
         Assert.assertEquals("token-0", records.get(0).getTokens().get().get("card_number"));
         Assert.assertFalse("record without a matching token entry gets no tokens",
@@ -346,24 +348,25 @@ public class RequestFidelityTests {
                 .continueOnError(true)
                 .build();
 
-        RecordServiceBatchOperationBody body = client.getBatchInsertRequestBody(request);
+        BatchOperationRequest body = client.getBatchInsertRequestBody(request);
 
         Assert.assertTrue("batch body always sends continueOnError=true", body.getContinueOnError().get());
-        Assert.assertEquals(V1Byot.ENABLE, body.getByot().get());
+        Assert.assertEquals("byot is carried as an extra property on the batch body", "ENABLE",
+                body.getAdditionalProperties().get("byot"));
 
-        List<V1BatchRecord> records = body.getRecords().get();
+        List<BatchRecord> records = body.getRecords();
         Assert.assertEquals(2, records.size());
 
-        V1BatchRecord first = records.get(0);
-        Assert.assertEquals("table maps to per-record tableName", "cards", first.getTableName().get());
-        Assert.assertEquals(BatchRecordMethod.POST, first.getMethod().get());
+        BatchRecord first = records.get(0);
+        Assert.assertEquals("table maps to per-record tableName", "cards", first.getTableName());
+        Assert.assertEquals(BatchRecordMethod.POST, first.getMethod());
         Assert.assertEquals("email", first.getUpsert().get());
         Assert.assertTrue(first.getTokenization().get());
-        Assert.assertEquals("whole values map must be carried verbatim", row1, first.getFields().get());
-        Assert.assertEquals(NON_ASCII_NAME, first.getFields().get().get("name"));
+        Assert.assertEquals("whole values map must be carried verbatim", row1, first.getFields());
+        Assert.assertEquals(NON_ASCII_NAME, first.getFields().get("name"));
 
-        Assert.assertEquals("cards", records.get(1).getTableName().get());
-        Assert.assertEquals("second record", records.get(1).getFields().get().get("name"));
+        Assert.assertEquals("cards", records.get(1).getTableName());
+        Assert.assertEquals("second record", records.get(1).getFields().get("name"));
     }
 
     @Test
@@ -390,10 +393,10 @@ public class RequestFidelityTests {
                 .continueOnError(true)
                 .build();
 
-        List<V1BatchRecord> records = client.getBatchInsertRequestBody(request).getRecords().get();
+        List<BatchRecord> records = client.getBatchInsertRequestBody(request).getRecords();
         Assert.assertEquals(4, records.size());
         for (int i = 0; i < 4; i++) {
-            Assert.assertEquals(i, records.get(i).getFields().get().get("position"));
+            Assert.assertEquals(i, records.get(i).getFields().get("position"));
             Assert.assertEquals("token-" + i, records.get(i).getTokens().get().get("position"));
         }
     }
@@ -408,23 +411,24 @@ public class RequestFidelityTests {
 
         InsertRequest bulkRequest = InsertRequest.builder()
                 .table("cards").values(rows(richRow())).homogeneous(true).continueOnError(false).build();
-        RecordServiceInsertRecordBody bulkBody = client.getBulkInsertRequestBody(bulkRequest);
+        InsertRecordRequest bulkBody = client.getBulkInsertRequestBody(bulkRequest);
         Assert.assertTrue("bulk branch DOES send homogeneous", bulkBody.getHomogeneous().get());
         Assert.assertTrue(bulkBody.toString().contains("homogeneous"));
 
         InsertRequest batchRequest = InsertRequest.builder()
                 .table("cards").values(rows(richRow())).homogeneous(true).continueOnError(true).build();
-        RecordServiceBatchOperationBody batchBody = client.getBatchInsertRequestBody(batchRequest);
+        BatchOperationRequest batchBody = client.getBatchInsertRequestBody(batchRequest);
 
-        for (Method method : RecordServiceBatchOperationBody.class.getMethods()) {
+        for (Method method : BatchOperationRequest.class.getMethods()) {
             Assert.assertFalse("batch body has no homogeneous accessor",
                     method.getName().toLowerCase(Locale.ROOT).contains("homogeneous"));
         }
-        for (Method method : V1BatchRecord.class.getMethods()) {
+        for (Method method : BatchRecord.class.getMethods()) {
             Assert.assertFalse("batch record has no homogeneous accessor",
                     method.getName().toLowerCase(Locale.ROOT).contains("homogeneous"));
         }
-        Assert.assertTrue(batchBody.getAdditionalProperties().isEmpty());
+        Assert.assertEquals("only byot rides along as an extra property",
+                Collections.singleton("byot"), batchBody.getAdditionalProperties().keySet());
         Assert.assertFalse("homogeneous never reaches the wire on the batch branch",
                 batchBody.toString().contains("homogeneous"));
     }
@@ -434,17 +438,17 @@ public class RequestFidelityTests {
         ApiClient mockApi = Mockito.mock(ApiClient.class);
         RecordsClient mockRecords = Mockito.mock(RecordsClient.class);
         when(mockApi.records()).thenReturn(mockRecords);
-        when(mockRecords.recordServiceInsertRecord(anyString(), anyString(), any()))
-                .thenReturn(V1InsertRecordResponse.builder().build());
+        when(mockRecords.insertRecords(anyString(), anyString(), any()))
+                .thenReturn(InsertRecordResponse.builder().build());
 
         VaultController controller = newControllerWithMockApi(mockApi);
         InsertRequest request = InsertRequest.builder()
                 .table("cards").values(rows(richRow())).returnTokens(true).continueOnError(false).build();
         controller.insert(request);
 
-        ArgumentCaptor<RecordServiceInsertRecordBody> bodyCaptor =
-                ArgumentCaptor.forClass(RecordServiceInsertRecordBody.class);
-        Mockito.verify(mockRecords).recordServiceInsertRecord(eq(VAULT_ID), eq("cards"), bodyCaptor.capture());
+        ArgumentCaptor<InsertRecordRequest> bodyCaptor =
+                ArgumentCaptor.forClass(InsertRecordRequest.class);
+        Mockito.verify(mockRecords).insertRecords(eq(VAULT_ID), eq("cards"), bodyCaptor.capture());
         Assert.assertTrue(bodyCaptor.getValue().getTokenization().get());
         Mockito.verify(mockRecords, Mockito.never()).withRawResponse();
     }
@@ -456,21 +460,21 @@ public class RequestFidelityTests {
         RawRecordsClient mockRawRecords = Mockito.mock(RawRecordsClient.class);
         when(mockApi.records()).thenReturn(mockRecords);
         when(mockRecords.withRawResponse()).thenReturn(mockRawRecords);
-        when(mockRawRecords.recordServiceBatchOperation(anyString(), any(), any()))
+        when(mockRawRecords.batchOperation(anyString(), any(), any()))
                 .thenReturn(new com.skyflow.generated.rest.core.ApiClientHttpResponse<>(
-                        V1BatchOperationResponse.builder().build(), buildOkHttpResponse()));
+                        BatchOperationResponse.builder().build(), buildOkHttpResponse()));
 
         VaultController controller = newControllerWithMockApi(mockApi);
         InsertRequest request = InsertRequest.builder()
                 .table("cards").values(rows(richRow())).continueOnError(true).build();
         controller.insert(request);
 
-        ArgumentCaptor<RecordServiceBatchOperationBody> bodyCaptor =
-                ArgumentCaptor.forClass(RecordServiceBatchOperationBody.class);
-        Mockito.verify(mockRawRecords).recordServiceBatchOperation(eq(VAULT_ID), bodyCaptor.capture(), any());
+        ArgumentCaptor<BatchOperationRequest> bodyCaptor =
+                ArgumentCaptor.forClass(BatchOperationRequest.class);
+        Mockito.verify(mockRawRecords).batchOperation(eq(VAULT_ID), bodyCaptor.capture(), any());
         Assert.assertTrue(bodyCaptor.getValue().getContinueOnError().get());
-        Assert.assertEquals("cards", bodyCaptor.getValue().getRecords().get().get(0).getTableName().get());
-        Mockito.verify(mockRecords, Mockito.never()).recordServiceInsertRecord(anyString(), anyString(), any());
+        Assert.assertEquals("cards", bodyCaptor.getValue().getRecords().get(0).getTableName());
+        Mockito.verify(mockRecords, Mockito.never()).insertRecords(anyString(), anyString(), any());
     }
 
     // ==================================================================
@@ -482,8 +486,8 @@ public class RequestFidelityTests {
         ApiClient mockApi = Mockito.mock(ApiClient.class);
         RecordsClient mockRecords = Mockito.mock(RecordsClient.class);
         when(mockApi.records()).thenReturn(mockRecords);
-        when(mockRecords.recordServiceUpdateRecord(anyString(), anyString(), anyString(), any(), any()))
-                .thenReturn(V1UpdateRecordResponse.builder().skyflowId("sky-id-1").build());
+        when(mockRecords.updateRecord(anyString(), anyString(), anyString(), any(), any()))
+                .thenReturn(UpdateRecordResponse.builder().skyflowId("sky-id-1").build());
 
         VaultController controller = newControllerWithMockApi(mockApi);
 
@@ -508,17 +512,17 @@ public class RequestFidelityTests {
 
         ArgumentCaptor<String> tableCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<String> idCaptor = ArgumentCaptor.forClass(String.class);
-        ArgumentCaptor<RecordServiceUpdateRecordBody> bodyCaptor =
-                ArgumentCaptor.forClass(RecordServiceUpdateRecordBody.class);
-        Mockito.verify(mockRecords).recordServiceUpdateRecord(
+        ArgumentCaptor<UpdateRecordRequest> bodyCaptor =
+                ArgumentCaptor.forClass(UpdateRecordRequest.class);
+        Mockito.verify(mockRecords).updateRecord(
                 eq(VAULT_ID), tableCaptor.capture(), idCaptor.capture(), bodyCaptor.capture(), any());
 
         Assert.assertEquals("cards", tableCaptor.getValue());
         Assert.assertEquals("skyflowId becomes the path id", "sky-id-1", idCaptor.getValue());
 
-        RecordServiceUpdateRecordBody body = bodyCaptor.getValue();
+        UpdateRecordRequest body = bodyCaptor.getValue();
         Assert.assertTrue(body.getTokenization().get());
-        Assert.assertEquals(V1Byot.ENABLE, body.getByot().get());
+        Assert.assertEquals(UpdateRecordRequestByot.ENABLE, body.getByot().get());
 
         Map<String, Object> fields = body.getRecord().get().getFields().get();
         Assert.assertFalse("skyflowId must be stripped from fields", fields.containsKey("skyflowId"));
@@ -535,8 +539,8 @@ public class RequestFidelityTests {
         ApiClient mockApi = Mockito.mock(ApiClient.class);
         RecordsClient mockRecords = Mockito.mock(RecordsClient.class);
         when(mockApi.records()).thenReturn(mockRecords);
-        when(mockRecords.recordServiceUpdateRecord(anyString(), anyString(), anyString(), any(), any()))
-                .thenReturn(V1UpdateRecordResponse.builder().skyflowId("snake-id").build());
+        when(mockRecords.updateRecord(anyString(), anyString(), anyString(), any(), any()))
+                .thenReturn(UpdateRecordResponse.builder().skyflowId("snake-id").build());
 
         VaultController controller = newControllerWithMockApi(mockApi);
 
@@ -547,9 +551,9 @@ public class RequestFidelityTests {
         controller.update(UpdateRequest.builder().table("cards").data(data).build());
 
         ArgumentCaptor<String> idCaptor = ArgumentCaptor.forClass(String.class);
-        ArgumentCaptor<RecordServiceUpdateRecordBody> bodyCaptor =
-                ArgumentCaptor.forClass(RecordServiceUpdateRecordBody.class);
-        Mockito.verify(mockRecords).recordServiceUpdateRecord(
+        ArgumentCaptor<UpdateRecordRequest> bodyCaptor =
+                ArgumentCaptor.forClass(UpdateRecordRequest.class);
+        Mockito.verify(mockRecords).updateRecord(
                 anyString(), anyString(), idCaptor.capture(), bodyCaptor.capture(), any());
 
         Assert.assertEquals("snake-id", idCaptor.getValue());
@@ -563,8 +567,8 @@ public class RequestFidelityTests {
         ApiClient mockApi = Mockito.mock(ApiClient.class);
         RecordsClient mockRecords = Mockito.mock(RecordsClient.class);
         when(mockApi.records()).thenReturn(mockRecords);
-        when(mockRecords.recordServiceUpdateRecord(anyString(), anyString(), anyString(), any(), any()))
-                .thenReturn(V1UpdateRecordResponse.builder().skyflowId("sky-id-1").build());
+        when(mockRecords.updateRecord(anyString(), anyString(), anyString(), any(), any()))
+                .thenReturn(UpdateRecordResponse.builder().skyflowId("sky-id-1").build());
 
         VaultController controller = newControllerWithMockApi(mockApi);
 
@@ -574,13 +578,13 @@ public class RequestFidelityTests {
 
         controller.update(UpdateRequest.builder().table("cards").data(data).build());
 
-        ArgumentCaptor<RecordServiceUpdateRecordBody> bodyCaptor =
-                ArgumentCaptor.forClass(RecordServiceUpdateRecordBody.class);
-        Mockito.verify(mockRecords).recordServiceUpdateRecord(
+        ArgumentCaptor<UpdateRecordRequest> bodyCaptor =
+                ArgumentCaptor.forClass(UpdateRecordRequest.class);
+        Mockito.verify(mockRecords).updateRecord(
                 anyString(), anyString(), anyString(), bodyCaptor.capture(), any());
 
         Assert.assertFalse("returnTokens defaults to false", bodyCaptor.getValue().getTokenization().get());
-        Assert.assertEquals(V1Byot.DISABLE, bodyCaptor.getValue().getByot().get());
+        Assert.assertEquals(UpdateRecordRequestByot.DISABLE, bodyCaptor.getValue().getByot().get());
         Assert.assertFalse("no tokens supplied -> tokens absent",
                 bodyCaptor.getValue().getRecord().get().getTokens().isPresent());
     }
@@ -594,8 +598,8 @@ public class RequestFidelityTests {
         ApiClient mockApi = Mockito.mock(ApiClient.class);
         RecordsClient mockRecords = Mockito.mock(RecordsClient.class);
         when(mockApi.records()).thenReturn(mockRecords);
-        when(mockRecords.recordServiceUpdateRecord(anyString(), anyString(), anyString(), any(), any()))
-                .thenReturn(V1UpdateRecordResponse.builder().skyflowId("sky-id-1").build());
+        when(mockRecords.updateRecord(anyString(), anyString(), anyString(), any(), any()))
+                .thenReturn(UpdateRecordResponse.builder().skyflowId("sky-id-1").build());
 
         VaultController controller = newControllerWithMockApi(mockApi);
 
@@ -625,9 +629,9 @@ public class RequestFidelityTests {
     private static VaultController mockGetController(RecordsClient mockRecords) throws Exception {
         ApiClient mockApi = Mockito.mock(ApiClient.class);
         when(mockApi.records()).thenReturn(mockRecords);
-        when(mockRecords.recordServiceBulkGetRecord(anyString(), anyString(), any(), any()))
-                .thenReturn(V1BulkGetRecordResponse.builder()
-                        .records(Collections.<V1FieldRecords>emptyList())
+        when(mockRecords.getRecords(anyString(), anyString(), any(), any()))
+                .thenReturn(BulkGetRecordResponse.builder()
+                        .records(Collections.<GetFieldRecords>emptyList())
                         .build());
         return newControllerWithMockApi(mockApi);
     }
@@ -651,21 +655,21 @@ public class RequestFidelityTests {
         controller.get(request);
 
         ArgumentCaptor<String> tableCaptor = ArgumentCaptor.forClass(String.class);
-        ArgumentCaptor<RecordServiceBulkGetRecordRequest> requestCaptor =
-                ArgumentCaptor.forClass(RecordServiceBulkGetRecordRequest.class);
-        Mockito.verify(mockRecords).recordServiceBulkGetRecord(
+        ArgumentCaptor<GetRecordsRequest> requestCaptor =
+                ArgumentCaptor.forClass(GetRecordsRequest.class);
+        Mockito.verify(mockRecords).getRecords(
                 eq(VAULT_ID), tableCaptor.capture(), requestCaptor.capture(), any());
 
         Assert.assertEquals("cards", tableCaptor.getValue());
-        RecordServiceBulkGetRecordRequest generated = requestCaptor.getValue();
+        GetRecordsRequest generated = requestCaptor.getValue();
         Assert.assertEquals("ids map to skyflowIds, order preserved",
                 Arrays.asList("id-1", "id-2", "id-3"), generated.getSkyflowIds().get());
         Assert.assertEquals(Arrays.asList("name", "card_number"), generated.getFields().get());
-        Assert.assertEquals(RecordServiceBulkGetRecordRequestRedaction.PLAIN_TEXT, generated.getRedaction().get());
+        Assert.assertEquals(GetRecordsRequestRedaction.PLAIN_TEXT, generated.getRedaction().get());
         Assert.assertEquals("10", generated.getOffset().get());
         Assert.assertEquals("25", generated.getLimit().get());
         Assert.assertFalse("downloadUrl(false) must reach downloadURL", generated.getDownloadUrl().get());
-        Assert.assertEquals(RecordServiceBulkGetRecordRequestOrderBy.DESCENDING, generated.getOrderBy().get());
+        Assert.assertEquals(GetRecordsRequestOrderBy.DESCENDING, generated.getOrderBy().get());
         Assert.assertFalse(generated.getColumnName().isPresent());
         Assert.assertFalse(generated.getColumnValues().isPresent());
     }
@@ -684,16 +688,16 @@ public class RequestFidelityTests {
 
         controller.get(request);
 
-        ArgumentCaptor<RecordServiceBulkGetRecordRequest> requestCaptor =
-                ArgumentCaptor.forClass(RecordServiceBulkGetRecordRequest.class);
-        Mockito.verify(mockRecords).recordServiceBulkGetRecord(
+        ArgumentCaptor<GetRecordsRequest> requestCaptor =
+                ArgumentCaptor.forClass(GetRecordsRequest.class);
+        Mockito.verify(mockRecords).getRecords(
                 anyString(), anyString(), requestCaptor.capture(), any());
 
-        RecordServiceBulkGetRecordRequest generated = requestCaptor.getValue();
+        GetRecordsRequest generated = requestCaptor.getValue();
         Assert.assertEquals("email", generated.getColumnName().get());
         Assert.assertEquals(Arrays.asList("a@example.com", NON_ASCII_NAME, "value with spaces"),
                 generated.getColumnValues().get());
-        Assert.assertEquals(RecordServiceBulkGetRecordRequestRedaction.MASKED, generated.getRedaction().get());
+        Assert.assertEquals(GetRecordsRequestRedaction.MASKED, generated.getRedaction().get());
         Assert.assertFalse(generated.getSkyflowIds().isPresent());
     }
 
@@ -704,9 +708,9 @@ public class RequestFidelityTests {
 
         controller.get(GetRequest.builder().table("cards").ids(list("id-1")).returnTokens(true).build());
 
-        ArgumentCaptor<RecordServiceBulkGetRecordRequest> requestCaptor =
-                ArgumentCaptor.forClass(RecordServiceBulkGetRecordRequest.class);
-        Mockito.verify(mockRecords).recordServiceBulkGetRecord(
+        ArgumentCaptor<GetRecordsRequest> requestCaptor =
+                ArgumentCaptor.forClass(GetRecordsRequest.class);
+        Mockito.verify(mockRecords).getRecords(
                 anyString(), anyString(), requestCaptor.capture(), any());
 
         Assert.assertTrue(requestCaptor.getValue().getTokenization().get());
@@ -720,12 +724,12 @@ public class RequestFidelityTests {
 
         controller.get(GetRequest.builder().table("cards").ids(list("id-1")).build());
 
-        ArgumentCaptor<RecordServiceBulkGetRecordRequest> requestCaptor =
-                ArgumentCaptor.forClass(RecordServiceBulkGetRecordRequest.class);
-        Mockito.verify(mockRecords).recordServiceBulkGetRecord(
+        ArgumentCaptor<GetRecordsRequest> requestCaptor =
+                ArgumentCaptor.forClass(GetRecordsRequest.class);
+        Mockito.verify(mockRecords).getRecords(
                 anyString(), anyString(), requestCaptor.capture(), any());
 
-        Assert.assertEquals(RecordServiceBulkGetRecordRequestOrderBy.ASCENDING,
+        Assert.assertEquals(GetRecordsRequestOrderBy.ASCENDING,
                 requestCaptor.getValue().getOrderBy().get());
         Assert.assertTrue("downloadUrl defaults to true", requestCaptor.getValue().getDownloadUrl().get());
     }
@@ -738,11 +742,11 @@ public class RequestFidelityTests {
 
             controller.get(GetRequest.builder().table("cards").ids(list("id-1")).orderBy(orderBy).build());
 
-            ArgumentCaptor<RecordServiceBulkGetRecordRequest> requestCaptor =
-                    ArgumentCaptor.forClass(RecordServiceBulkGetRecordRequest.class);
-            Mockito.verify(mockRecords).recordServiceBulkGetRecord(
+            ArgumentCaptor<GetRecordsRequest> requestCaptor =
+                    ArgumentCaptor.forClass(GetRecordsRequest.class);
+            Mockito.verify(mockRecords).getRecords(
                     anyString(), anyString(), requestCaptor.capture(), any());
-            Assert.assertEquals(RecordServiceBulkGetRecordRequestOrderBy.valueOf(orderBy),
+            Assert.assertEquals(GetRecordsRequestOrderBy.valueOf(orderBy),
                     requestCaptor.getValue().getOrderBy().get());
         }
     }
@@ -766,7 +770,7 @@ public class RequestFidelityTests {
                 Assert.assertEquals(ErrorMessage.InvalidOrderBy.getMessage(), e.getMessage());
             }
             Mockito.verify(mockRecords, Mockito.never())
-                    .recordServiceBulkGetRecord(anyString(), anyString(), any(), any());
+                    .getRecords(anyString(), anyString(), any(), any());
         }
     }
 
@@ -790,9 +794,9 @@ public class RequestFidelityTests {
         VaultController controller = mockGetController(mockRecords);
         controller.get(request);
 
-        ArgumentCaptor<RecordServiceBulkGetRecordRequest> requestCaptor =
-                ArgumentCaptor.forClass(RecordServiceBulkGetRecordRequest.class);
-        Mockito.verify(mockRecords).recordServiceBulkGetRecord(
+        ArgumentCaptor<GetRecordsRequest> requestCaptor =
+                ArgumentCaptor.forClass(GetRecordsRequest.class);
+        Mockito.verify(mockRecords).getRecords(
                 anyString(), anyString(), requestCaptor.capture(), any());
 
         Assert.assertTrue("downloadURL=true is sent even though the user passed null",
@@ -810,8 +814,8 @@ public class RequestFidelityTests {
         ApiClient mockApi = Mockito.mock(ApiClient.class);
         RecordsClient mockRecords = Mockito.mock(RecordsClient.class);
         when(mockApi.records()).thenReturn(mockRecords);
-        when(mockRecords.recordServiceBulkDeleteRecord(anyString(), anyString(), any(), any()))
-                .thenReturn(V1BulkDeleteRecordResponse.builder().build());
+        when(mockRecords.deleteRecords(anyString(), anyString(), any(), any()))
+                .thenReturn(BulkDeleteRecordResponse.builder().build());
 
         VaultController controller = newControllerWithMockApi(mockApi);
         controller.delete(DeleteRequest.builder()
@@ -820,9 +824,9 @@ public class RequestFidelityTests {
                 .build());
 
         ArgumentCaptor<String> tableCaptor = ArgumentCaptor.forClass(String.class);
-        ArgumentCaptor<RecordServiceBulkDeleteRecordBody> bodyCaptor =
-                ArgumentCaptor.forClass(RecordServiceBulkDeleteRecordBody.class);
-        Mockito.verify(mockRecords).recordServiceBulkDeleteRecord(
+        ArgumentCaptor<BulkDeleteRecordRequest> bodyCaptor =
+                ArgumentCaptor.forClass(BulkDeleteRecordRequest.class);
+        Mockito.verify(mockRecords).deleteRecords(
                 eq(VAULT_ID), tableCaptor.capture(), bodyCaptor.capture(), any());
 
         Assert.assertEquals("cards", tableCaptor.getValue());
@@ -839,8 +843,8 @@ public class RequestFidelityTests {
         ApiClient mockApi = Mockito.mock(ApiClient.class);
         QueryClient mockQuery = Mockito.mock(QueryClient.class);
         when(mockApi.query()).thenReturn(mockQuery);
-        when(mockQuery.queryServiceExecuteQuery(anyString(), any(), any()))
-                .thenReturn(V1GetQueryResponse.builder().build());
+        when(mockQuery.executeQuery(anyString(), any(), any()))
+                .thenReturn(GetQueryResponse.builder().build());
 
         VaultController controller = newControllerWithMockApi(mockApi);
 
@@ -848,12 +852,12 @@ public class RequestFidelityTests {
                 + "WHERE name = 'Smith''s' AND city = '" + NON_ASCII_CITY + "'\nLIMIT 10";
         controller.query(QueryRequest.builder().query(sql).build());
 
-        ArgumentCaptor<QueryServiceExecuteQueryBody> bodyCaptor =
-                ArgumentCaptor.forClass(QueryServiceExecuteQueryBody.class);
-        Mockito.verify(mockQuery).queryServiceExecuteQuery(eq(VAULT_ID), bodyCaptor.capture(), any());
+        ArgumentCaptor<GetQueryRequest> bodyCaptor =
+                ArgumentCaptor.forClass(GetQueryRequest.class);
+        Mockito.verify(mockQuery).executeQuery(eq(VAULT_ID), bodyCaptor.capture(), any());
 
         Assert.assertEquals("query with quotes and newlines must be sent unchanged",
-                sql, bodyCaptor.getValue().getQuery().get());
+                sql, bodyCaptor.getValue().getQuery());
     }
 
     @Test
@@ -861,16 +865,16 @@ public class RequestFidelityTests {
         ApiClient mockApi = Mockito.mock(ApiClient.class);
         QueryClient mockQuery = Mockito.mock(QueryClient.class);
         when(mockApi.query()).thenReturn(mockQuery);
-        when(mockQuery.queryServiceExecuteQuery(anyString(), any(), any()))
-                .thenReturn(V1GetQueryResponse.builder().build());
+        when(mockQuery.executeQuery(anyString(), any(), any()))
+                .thenReturn(GetQueryResponse.builder().build());
 
         VaultController controller = newControllerWithMockApi(mockApi);
         controller.query(QueryRequest.builder().query("SELECT * FROM cards LIMIT 1").build());
 
-        ArgumentCaptor<QueryServiceExecuteQueryBody> bodyCaptor =
-                ArgumentCaptor.forClass(QueryServiceExecuteQueryBody.class);
-        Mockito.verify(mockQuery).queryServiceExecuteQuery(anyString(), bodyCaptor.capture(), any());
-        Assert.assertEquals("SELECT * FROM cards LIMIT 1", bodyCaptor.getValue().getQuery().get());
+        ArgumentCaptor<GetQueryRequest> bodyCaptor =
+                ArgumentCaptor.forClass(GetQueryRequest.class);
+        Mockito.verify(mockQuery).executeQuery(anyString(), bodyCaptor.capture(), any());
+        Assert.assertEquals("SELECT * FROM cards LIMIT 1", bodyCaptor.getValue().getQuery());
     }
 
     // ==================================================================
@@ -886,10 +890,10 @@ public class RequestFidelityTests {
                 ColumnValue.builder().value(NON_ASCII_NAME).columnGroup("cg_names").build(),
                 ColumnValue.builder().value("value with  spaces").columnGroup("cg_misc").build());
 
-        V1TokenizePayload payload = client.getTokenizePayload(
+        TokenizePayload payload = client.getTokenizePayload(
                 TokenizeRequest.builder().values(columnValues).build());
 
-        List<V1TokenizeRecordRequest> parameters = payload.getTokenizationParameters().get();
+        List<TokenizeRecordRequest> parameters = payload.getTokenizationParameters();
         Assert.assertEquals(3, parameters.size());
         Assert.assertEquals("4111111111111111", parameters.get(0).getValue().get());
         Assert.assertEquals("cg_cards", parameters.get(0).getColumnGroup().get());
@@ -905,17 +909,17 @@ public class RequestFidelityTests {
         com.skyflow.generated.rest.resources.tokens.TokensClient mockTokens =
                 Mockito.mock(com.skyflow.generated.rest.resources.tokens.TokensClient.class);
         when(mockApi.tokens()).thenReturn(mockTokens);
-        when(mockTokens.recordServiceTokenize(anyString(), any(), any()))
-                .thenReturn(V1TokenizeResponse.builder().build());
+        when(mockTokens.tokenize(anyString(), any(), any()))
+                .thenReturn(com.skyflow.generated.rest.types.TokenizeResponse.builder().build());
 
         VaultController controller = newControllerWithMockApi(mockApi);
         controller.tokenize(TokenizeRequest.builder().values(Collections.singletonList(
                 ColumnValue.builder().value(NON_ASCII_NAME).columnGroup("cg_names").build())).build());
 
-        ArgumentCaptor<V1TokenizePayload> payloadCaptor = ArgumentCaptor.forClass(V1TokenizePayload.class);
-        Mockito.verify(mockTokens).recordServiceTokenize(eq(VAULT_ID), payloadCaptor.capture(), any());
+        ArgumentCaptor<TokenizePayload> payloadCaptor = ArgumentCaptor.forClass(TokenizePayload.class);
+        Mockito.verify(mockTokens).tokenize(eq(VAULT_ID), payloadCaptor.capture(), any());
 
-        V1TokenizeRecordRequest parameter = payloadCaptor.getValue().getTokenizationParameters().get().get(0);
+        TokenizeRecordRequest parameter = payloadCaptor.getValue().getTokenizationParameters().get(0);
         Assert.assertEquals(NON_ASCII_NAME, parameter.getValue().get());
         Assert.assertEquals("cg_names", parameter.getColumnGroup().get());
     }
@@ -934,20 +938,20 @@ public class RequestFidelityTests {
                 new DetokenizeData("tok-masked", RedactionType.MASKED),
                 new DetokenizeData("tok-redacted", RedactionType.REDACTED)));
 
-        V1DetokenizePayload payload = client.getDetokenizePayload(
+        DetokenizePayload payload = client.getDetokenizePayload(
                 DetokenizeRequest.builder().detokenizeData(detokenizeData).build());
 
-        List<V1DetokenizeRecordRequest> parameters = payload.getDetokenizationParameters().get();
+        List<DetokenizeRecordRequest> parameters = payload.getDetokenizationParameters();
         Assert.assertEquals(4, parameters.size());
 
-        Assert.assertEquals("tok-default", parameters.get(0).getToken().get());
-        Assert.assertEquals(RedactionEnumRedaction.DEFAULT, parameters.get(0).getRedaction().get());
-        Assert.assertEquals("tok-plain", parameters.get(1).getToken().get());
-        Assert.assertEquals(RedactionEnumRedaction.PLAIN_TEXT, parameters.get(1).getRedaction().get());
-        Assert.assertEquals("tok-masked", parameters.get(2).getToken().get());
-        Assert.assertEquals(RedactionEnumRedaction.MASKED, parameters.get(2).getRedaction().get());
-        Assert.assertEquals("tok-redacted", parameters.get(3).getToken().get());
-        Assert.assertEquals(RedactionEnumRedaction.REDACTED, parameters.get(3).getRedaction().get());
+        Assert.assertEquals("tok-default", parameters.get(0).getToken());
+        Assert.assertEquals(DetokenizeRecordRequestRedaction.DEFAULT, parameters.get(0).getRedaction().get());
+        Assert.assertEquals("tok-plain", parameters.get(1).getToken());
+        Assert.assertEquals(DetokenizeRecordRequestRedaction.PLAIN_TEXT, parameters.get(1).getRedaction().get());
+        Assert.assertEquals("tok-masked", parameters.get(2).getToken());
+        Assert.assertEquals(DetokenizeRecordRequestRedaction.MASKED, parameters.get(2).getRedaction().get());
+        Assert.assertEquals("tok-redacted", parameters.get(3).getToken());
+        Assert.assertEquals(DetokenizeRecordRequestRedaction.REDACTED, parameters.get(3).getRedaction().get());
     }
 
     @Test
@@ -957,12 +961,12 @@ public class RequestFidelityTests {
                 new DetokenizeData("tok-a"),
                 new DetokenizeData("tok-b", null)));
 
-        V1DetokenizePayload payload = client.getDetokenizePayload(
+        DetokenizePayload payload = client.getDetokenizePayload(
                 DetokenizeRequest.builder().detokenizeData(detokenizeData).build());
 
-        List<V1DetokenizeRecordRequest> parameters = payload.getDetokenizationParameters().get();
-        Assert.assertEquals(RedactionEnumRedaction.DEFAULT, parameters.get(0).getRedaction().get());
-        Assert.assertEquals(RedactionEnumRedaction.DEFAULT, parameters.get(1).getRedaction().get());
+        List<DetokenizeRecordRequest> parameters = payload.getDetokenizationParameters();
+        Assert.assertEquals(DetokenizeRecordRequestRedaction.DEFAULT, parameters.get(0).getRedaction().get());
+        Assert.assertEquals(DetokenizeRecordRequestRedaction.DEFAULT, parameters.get(1).getRedaction().get());
     }
 
     @Test
@@ -971,7 +975,7 @@ public class RequestFidelityTests {
         ArrayList<DetokenizeData> detokenizeData =
                 new ArrayList<>(Collections.singletonList(new DetokenizeData("tok-a")));
 
-        V1DetokenizePayload payload = client.getDetokenizePayload(DetokenizeRequest.builder()
+        DetokenizePayload payload = client.getDetokenizePayload(DetokenizeRequest.builder()
                 .detokenizeData(detokenizeData)
                 .continueOnError(true)
                 .downloadUrl(true)
@@ -979,7 +983,7 @@ public class RequestFidelityTests {
         Assert.assertTrue(payload.getContinueOnError().get());
         Assert.assertTrue(payload.getDownloadUrl().get());
 
-        V1DetokenizePayload defaults = client.getDetokenizePayload(DetokenizeRequest.builder()
+        DetokenizePayload defaults = client.getDetokenizePayload(DetokenizeRequest.builder()
                 .detokenizeData(detokenizeData)
                 .build());
         Assert.assertFalse("continueOnError defaults to false", defaults.getContinueOnError().get());
@@ -994,12 +998,12 @@ public class RequestFidelityTests {
             detokenizeData.add(new DetokenizeData("tok-" + i, RedactionType.MASKED));
         }
 
-        List<V1DetokenizeRecordRequest> parameters = client.getDetokenizePayload(
+        List<DetokenizeRecordRequest> parameters = client.getDetokenizePayload(
                         DetokenizeRequest.builder().detokenizeData(detokenizeData).build())
-                .getDetokenizationParameters().get();
+                .getDetokenizationParameters();
 
         for (int i = 0; i < 5; i++) {
-            Assert.assertEquals("tok-" + i, parameters.get(i).getToken().get());
+            Assert.assertEquals("tok-" + i, parameters.get(i).getToken());
         }
     }
 
@@ -1007,11 +1011,11 @@ public class RequestFidelityTests {
     // uploadFile
     // ==================================================================
 
-    private static VaultController mockUploadController(RecordsClient mockRecords) throws Exception {
+    private static VaultController mockUploadController(FilesClient mockFiles) throws Exception {
         ApiClient mockApi = Mockito.mock(ApiClient.class);
-        when(mockApi.records()).thenReturn(mockRecords);
-        when(mockRecords.uploadFileV2(anyString(), any(File.class), any(), any()))
-                .thenReturn(UploadFileV2Response.builder().build());
+        when(mockApi.files()).thenReturn(mockFiles);
+        when(mockFiles.uploadFileV2(anyString(), any(File.class), any(), any()))
+                .thenReturn(UploadFileResponseV2.builder().build());
         return newControllerWithMockApi(mockApi);
     }
 
@@ -1021,8 +1025,8 @@ public class RequestFidelityTests {
         tempFile.deleteOnExit();
         Files.write(tempFile.toPath(), "hello".getBytes("UTF-8"));
 
-        RecordsClient mockRecords = Mockito.mock(RecordsClient.class);
-        VaultController controller = mockUploadController(mockRecords);
+        FilesClient mockFiles = Mockito.mock(FilesClient.class);
+        VaultController controller = mockUploadController(mockFiles);
 
         controller.uploadFile(FileUploadRequest.builder()
                 .table("cards")
@@ -1032,11 +1036,11 @@ public class RequestFidelityTests {
                 .build());
 
         ArgumentCaptor<File> fileCaptor = ArgumentCaptor.forClass(File.class);
-        ArgumentCaptor<UploadFileV2Request> requestCaptor = ArgumentCaptor.forClass(UploadFileV2Request.class);
-        Mockito.verify(mockRecords).uploadFileV2(
+        ArgumentCaptor<UploadFileRequestV2> requestCaptor = ArgumentCaptor.forClass(UploadFileRequestV2.class);
+        Mockito.verify(mockFiles).uploadFileV2(
                 eq(VAULT_ID), fileCaptor.capture(), requestCaptor.capture(), any());
 
-        UploadFileV2Request generated = requestCaptor.getValue();
+        UploadFileRequestV2 generated = requestCaptor.getValue();
         Assert.assertEquals("table maps to tableName", "cards", generated.getTableName());
         Assert.assertEquals("file_column", generated.getColumnName());
         Assert.assertEquals("sky-id-9", generated.getSkyflowId().get());
@@ -1054,8 +1058,8 @@ public class RequestFidelityTests {
         byte[] payload = "café ☕".getBytes("UTF-8");
         String base64 = Base64.getEncoder().encodeToString(payload);
 
-        RecordsClient mockRecords = Mockito.mock(RecordsClient.class);
-        VaultController controller = mockUploadController(mockRecords);
+        FilesClient mockFiles = Mockito.mock(FilesClient.class);
+        VaultController controller = mockUploadController(mockFiles);
 
         controller.uploadFile(FileUploadRequest.builder()
                 .table("cards")
@@ -1066,8 +1070,8 @@ public class RequestFidelityTests {
                 .build());
 
         ArgumentCaptor<File> fileCaptor = ArgumentCaptor.forClass(File.class);
-        ArgumentCaptor<UploadFileV2Request> requestCaptor = ArgumentCaptor.forClass(UploadFileV2Request.class);
-        Mockito.verify(mockRecords).uploadFileV2(
+        ArgumentCaptor<UploadFileRequestV2> requestCaptor = ArgumentCaptor.forClass(UploadFileRequestV2.class);
+        Mockito.verify(mockFiles).uploadFileV2(
                 anyString(), fileCaptor.capture(), requestCaptor.capture(), any());
 
         Assert.assertEquals(target.getAbsolutePath(), fileCaptor.getValue().getPath());
@@ -1082,8 +1086,8 @@ public class RequestFidelityTests {
         tempFile.deleteOnExit();
         Files.write(tempFile.toPath(), new byte[]{1, 2, 3});
 
-        RecordsClient mockRecords = Mockito.mock(RecordsClient.class);
-        VaultController controller = mockUploadController(mockRecords);
+        FilesClient mockFiles = Mockito.mock(FilesClient.class);
+        VaultController controller = mockUploadController(mockFiles);
 
         controller.uploadFile(FileUploadRequest.builder()
                 .table("cards")
@@ -1092,8 +1096,8 @@ public class RequestFidelityTests {
                 .build());
 
         ArgumentCaptor<File> fileCaptor = ArgumentCaptor.forClass(File.class);
-        ArgumentCaptor<UploadFileV2Request> requestCaptor = ArgumentCaptor.forClass(UploadFileV2Request.class);
-        Mockito.verify(mockRecords).uploadFileV2(
+        ArgumentCaptor<UploadFileRequestV2> requestCaptor = ArgumentCaptor.forClass(UploadFileRequestV2.class);
+        Mockito.verify(mockFiles).uploadFileV2(
                 anyString(), fileCaptor.capture(), requestCaptor.capture(), any());
 
         Assert.assertSame("the caller's File instance must be forwarded", tempFile, fileCaptor.getValue());
@@ -1110,8 +1114,8 @@ public class RequestFidelityTests {
         objectFile.deleteOnExit();
         Files.write(objectFile.toPath(), "from-object".getBytes("UTF-8"));
 
-        RecordsClient mockRecords = Mockito.mock(RecordsClient.class);
-        VaultController controller = mockUploadController(mockRecords);
+        FilesClient mockFiles = Mockito.mock(FilesClient.class);
+        VaultController controller = mockUploadController(mockFiles);
 
         controller.uploadFile(FileUploadRequest.builder()
                 .table("cards")
@@ -1121,7 +1125,7 @@ public class RequestFidelityTests {
                 .build());
 
         ArgumentCaptor<File> fileCaptor = ArgumentCaptor.forClass(File.class);
-        Mockito.verify(mockRecords).uploadFileV2(anyString(), fileCaptor.capture(), any(), any());
+        Mockito.verify(mockFiles).uploadFileV2(anyString(), fileCaptor.capture(), any(), any());
         Assert.assertEquals(pathFile.getAbsolutePath(), fileCaptor.getValue().getPath());
     }
 

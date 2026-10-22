@@ -24,6 +24,12 @@
 
     <dependencies>
         <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>mockwebserver</artifactId>
+            <version>${okhttp-version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>com.skyflow</groupId>
             <artifactId>common</artifactId>
             <version>1.0.0</version>
@@ -163,7 +169,7 @@
             <id>jfrog</id>
             <distributionManagement>
                 <repository>
-                    <id>central</id>
+                    <id>skyflow-jfrog</id>
                     <name>prekarilabs.jfrog.io-releases</name>
                     <url>https://prekarilabs.jfrog.io/artifactory/skyflow-java</url>
                 </repository>

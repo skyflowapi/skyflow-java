@@ -5,7 +5,6 @@ import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.generated.rest.types.DetokenizeRecordResponseValueType;
-import com.skyflow.generated.rest.types.V1DetokenizeRecordResponse;
 import com.skyflow.utils.Constants;
 import com.skyflow.utils.Utils;
 import com.skyflow.utils.validations.Validations;
@@ -201,7 +200,7 @@ public class DetokenizeTests {
 
     @Test
     public void testDetokenizeRecordResponseNullValue() {
-        V1DetokenizeRecordResponse record = V1DetokenizeRecordResponse.builder()
+        com.skyflow.generated.rest.types.DetokenizeRecordResponse record = com.skyflow.generated.rest.types.DetokenizeRecordResponse.builder()
                 .token("tok-null-val")
                 .build();
         DetokenizeRecordResponse response = new DetokenizeRecordResponse(record);
@@ -211,11 +210,27 @@ public class DetokenizeTests {
     }
 
     @Test
+    public void testLegacyGeneratedRecordConstructorStillWorks() {
+        com.skyflow.generated.rest.types.V1DetokenizeRecordResponse legacy =
+                com.skyflow.generated.rest.types.V1DetokenizeRecordResponse.builder()
+                        .token("tok-legacy")
+                        .value("legacy-value")
+                        .valueType(DetokenizeRecordResponseValueType.STRING)
+                        .build();
+        DetokenizeRecordResponse response = new DetokenizeRecordResponse(legacy, "req-legacy");
+        Assert.assertEquals("tok-legacy", response.getToken());
+        Assert.assertEquals("legacy-value", response.getValue());
+        Assert.assertEquals("STRING", response.getType());
+        Assert.assertEquals("req-legacy", response.getRequestId());
+        Assert.assertNull(new DetokenizeRecordResponse(legacy).getRequestId());
+    }
+
+    @Test
     public void testDetokenizeRecordResponseNoneValueTypeBecomesNull() {
-        V1DetokenizeRecordResponse record = V1DetokenizeRecordResponse.builder()
+        com.skyflow.generated.rest.types.DetokenizeRecordResponse record = com.skyflow.generated.rest.types.DetokenizeRecordResponse.builder()
                 .token("tok-none-type")
                 .value("some-value")
-                .valueType(DetokenizeRecordResponseValueType.NONE)
+                .valueType(DetokenizeRecordResponseValueType.valueOf("NONE"))
                 .build();
         DetokenizeRecordResponse response = new DetokenizeRecordResponse(record);
         Assert.assertNull("NONE valueType should be normalised to null", response.getType());
@@ -255,14 +270,14 @@ public class DetokenizeTests {
     @Test
     public void testDetokenizeResponse() {
         try {
-            V1DetokenizeRecordResponse record1 = V1DetokenizeRecordResponse.builder()
+            com.skyflow.generated.rest.types.DetokenizeRecordResponse record1 = com.skyflow.generated.rest.types.DetokenizeRecordResponse.builder()
                     .token("1234-5678-9012-3456")
                     .value("4111111111111111")
                     .valueType(DetokenizeRecordResponseValueType.STRING)
                     .build();
             DetokenizeRecordResponse field = new DetokenizeRecordResponse(record1);
 
-            V1DetokenizeRecordResponse record2 = V1DetokenizeRecordResponse.builder()
+            com.skyflow.generated.rest.types.DetokenizeRecordResponse record2 = com.skyflow.generated.rest.types.DetokenizeRecordResponse.builder()
                     .token("3456-7890-1234-5678")
                     .value("")
                     .error("Invalid token")

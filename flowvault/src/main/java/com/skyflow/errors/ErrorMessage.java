@@ -60,9 +60,6 @@ public enum ErrorMessage {
     MissingIndexInBulkTokenizeRecord("%s0 Validation error. Index in BulkTokenizeRequestRecord is null. Specify an index for every record."),
     DuplicateIndexInBulkTokenizeRecord("%s0 Validation error. Duplicate index in BulkTokenizeRequestRecord. Specify a unique index for every record."),
     // Detect (flowvault only)
-    ReidentifyFileRequestNull("%s0 Validation error. ReidentifyFile request cannot be null."),
-    InvalidDataSourceInReidentifyFile("%s0 Validation error. Invalid dataSource in reidentify file request. Specify BASE64, SKYFLOW_ID or PRESIGNED_URL."),
-    InvalidValueInReidentifyFile("%s0 Validation error. Invalid value in reidentify file request. Specify the non-empty base64 content, skyflow id or presigned URL of the file."),
     ;
 
     private final String message;

@@ -30,11 +30,6 @@ import com.skyflow.vault.data.GetRequest;
 import com.skyflow.vault.data.InsertRequest;
 import com.skyflow.vault.data.QueryRequest;
 import com.skyflow.vault.data.UpdateRequest;
-import com.skyflow.vault.detect.DeidentifyFileRequest;
-import com.skyflow.vault.detect.DeidentifyTextRequest;
-import com.skyflow.vault.detect.GetDetectRunRequest;
-import com.skyflow.vault.detect.ReidentifyTextRequest;
-import com.skyflow.vault.detect.TokenFormat;
 import com.skyflow.vault.tokens.ColumnValue;
 import com.skyflow.vault.tokens.DetokenizeData;
 import com.skyflow.vault.tokens.DetokenizeRequest;
@@ -754,40 +749,6 @@ public class Validations extends BaseValidations {
         return str == null || str.trim().isEmpty();
     }
 
-    public static void validateDeidentifyTextRequest(DeidentifyTextRequest deidentifyTextRequest) throws SkyflowException {
-        if (deidentifyTextRequest == null) {
-            LogUtil.printErrorLog(Utils.parameterizedString(
-                    ErrorLogs.DEIDENTIFY_TEXT_REQUEST_NULL.getLog(), InterfaceName.DETECT.getName()
-            ));
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.DeidentifyTextRequestNull.getMessage());
-        }
-        // Validate required fields
-        String deidentifyText = deidentifyTextRequest.getText();
-        if (deidentifyText == null || deidentifyText.trim().isEmpty()) {
-            LogUtil.printErrorLog(Utils.parameterizedString(
-                    ErrorLogs.INVALID_TEXT_IN_DEIDENTIFY.getLog(), InterfaceName.DETECT.getName()
-            ));
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidTextInDeIdentify.getMessage());
-        }
-    }
-
-    public static void validateReidentifyTextRequest(ReidentifyTextRequest reidentifyTextRequest) throws SkyflowException {
-        if (reidentifyTextRequest == null) {
-            LogUtil.printErrorLog(Utils.parameterizedString(
-                    ErrorLogs.REIDENTIFY_TEXT_REQUEST_NULL.getLog(), InterfaceName.DETECT.getName()
-            ));
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.ReidentifyTextRequestNull.getMessage());
-        }
-        // Validate required fields
-        String reidentifyText = reidentifyTextRequest.getText();
-        if (reidentifyText == null || reidentifyText.trim().isEmpty()) {
-            LogUtil.printErrorLog(Utils.parameterizedString(
-                    ErrorLogs.INVALID_TEXT_IN_REIDENTIFY.getLog(), InterfaceName.DETECT.getName()
-            ));
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidTextInReIdentify.getMessage());
-        }
-    }
-
     private static boolean isInvalidURL(String configURL) {
         try {
             URL url = new URL(configURL);
@@ -863,129 +824,10 @@ public class Validations extends BaseValidations {
         }
     }
 
-    public static void validateDeidentifyFileRequest(DeidentifyFileRequest request) throws SkyflowException {
-        if (request == null) {
-            LogUtil.printErrorLog(Utils.parameterizedString(
-                    ErrorLogs.EMPTY_REQUEST_BODY.getLog(), InterfaceName.DETECT.getName()
-            ));
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyRequestBody.getMessage());
-        }
-
-        TokenFormat tokenFormat = request.getTokenFormat();
-        if (tokenFormat != null && tokenFormat.getVaultToken() != null && !tokenFormat.getVaultToken().isEmpty()) {
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.VaultTokenFormatIsNotAllowedForFiles.getMessage());
-        }
-
-        if (request.getFileInput() == null) {
-            LogUtil.printErrorLog(Utils.parameterizedString(
-                    ErrorLogs.EMPTY_FILE_AND_FILE_PATH_IN_DEIDENTIFY_FILE.getLog(), InterfaceName.DETECT.getName()
-            ));
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyFileAndFilePathInDeIdentifyFile.getMessage());
-        }
-
-        File file = request.getFileInput().getFile();
-        String filePath = request.getFileInput().getFilePath();
-
-        if (file == null && filePath == null) {
-            LogUtil.printErrorLog(Utils.parameterizedString(
-                    ErrorLogs.EMPTY_FILE_AND_FILE_PATH_IN_DEIDENTIFY_FILE.getLog(), InterfaceName.DETECT.getName()
-            ));
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyFileAndFilePathInDeIdentifyFile.getMessage());
-        }
-
-        if (filePath != null && file != null) {
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.BothFileAndFilePathProvided.getMessage());
-        }
-
-        if (filePath != null && filePath.trim().isEmpty()){
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidFilePath.getMessage());
-        }
-
-        if (file != null && (!file.exists() || !file.isFile())) {
-            LogUtil.printErrorLog(Utils.parameterizedString(
-                    ErrorLogs.FILE_NOT_FOUND_TO_DEIDENTIFY.getLog(), InterfaceName.DETECT.getName()
-            ));
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.FileNotFoundToDeidentify.getMessage());
-        }
-        if (file != null && !file.canRead()) {
-            LogUtil.printErrorLog(Utils.parameterizedString(
-                    ErrorLogs.FILE_NOT_READABLE_TO_DEIDENTIFY.getLog(), InterfaceName.DETECT.getName()
-            ));
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.FileNotReadableToDeidentify.getMessage());
-        }
-
-
-        // Validate pixelDensity and maxResolution
-        if (request.getPixelDensity() != null && request.getPixelDensity().doubleValue() <= 0) {
-            LogUtil.printErrorLog(Utils.parameterizedString(
-                    ErrorLogs.INVALID_PIXEL_DENSITY_TO_DEIDENTIFY_FILE.getLog(), InterfaceName.DETECT.getName()
-            ));
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidPixelDensityToDeidentifyFile.getMessage());
-        }
-        if (request.getMaxResolution() != null && request.getMaxResolution().doubleValue() <= 0) {
-            LogUtil.printErrorLog(Utils.parameterizedString(
-                    ErrorLogs.INVALID_MAX_RESOLUTION.getLog(), InterfaceName.DETECT.getName()
-            ));
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidMaxResolution.getMessage());
-        }
-
-        // Validate AudioBleep
-        if (request.getBleep() != null) {
-            if (request.getBleep().getFrequency() == null || request.getBleep().getFrequency() <= 0) {
-                LogUtil.printErrorLog(Utils.parameterizedString(
-                        ErrorLogs.INVALID_BLEEP_TO_DEIDENTIFY_AUDIO.getLog(), InterfaceName.DETECT.getName()
-                ));
-                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidRequestBody.getMessage());
-            }
-            if (request.getBleep().getStartPadding() == null || request.getBleep().getStartPadding() < 0) {
-                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidRequestBody.getMessage());
-            }
-            if (request.getBleep().getStopPadding() == null || request.getBleep().getStopPadding() < 0) {
-                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidRequestBody.getMessage());
-            }
-        }
-
-        // Validate outputDirectory if provided
-        if (request.getOutputDirectory() != null) {
-            File outDir = new File(request.getOutputDirectory());
-            if (!outDir.exists() || !outDir.isDirectory()) {
-                LogUtil.printErrorLog(Utils.parameterizedString(
-                        ErrorLogs.OUTPUT_DIRECTORY_NOT_FOUND.getLog(), InterfaceName.DETECT.getName()
-                ));
-                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.OutputDirectoryNotFound.getMessage());
-            }
-            if (!outDir.canWrite()) {
-                LogUtil.printErrorLog(Utils.parameterizedString(
-                        ErrorLogs.INVALID_PERMISSIONS_FOR_OUTPUT_DIRECTORY.getLog(), InterfaceName.DETECT.getName()
-                ));
-                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidPermission.getMessage());
-            }
-        }
-
-        // Validate waitTime if provided
-        if (request.getWaitTime() != null && request.getWaitTime() <= 0) {
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidWaitTime.getMessage());
-        }
-        if(request.getWaitTime() != null && request.getWaitTime() > 64) {
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.WaitTimeExceedsLimit.getMessage());
-        }
-    }
-
     static Object resolveUpdateId(HashMap<String, Object> data) {
         if (data.containsKey("skyflowId")) {
             return data.get("skyflowId");
         }
         return data.get("skyflow_id");
-    }
-
-    public static void validateGetDetectRunRequest(GetDetectRunRequest request) throws SkyflowException {
-        if (request == null) {
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyRequestBody.getMessage());
-        }
-
-        String runId = request.getRunId();
-        if (runId == null || runId.trim().isEmpty()) {
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidOrEmptyRunId.getMessage());
-        }
     }
 }

@@ -3,10 +3,9 @@
  */
 package com.skyflow.generated.rest.core;
 
-import okhttp3.Response;
-
 import java.io.FilterInputStream;
 import java.io.IOException;
+import okhttp3.Response;
 
 /**
  * A custom InputStream that wraps the InputStream from the OkHttp Response and ensures that the
