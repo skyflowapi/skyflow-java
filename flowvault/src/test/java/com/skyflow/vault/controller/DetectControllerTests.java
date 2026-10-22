@@ -28,7 +28,6 @@ import com.skyflow.detect.ReidentifyStringRequest;
 import com.skyflow.detect.ReidentifyStringResponse;
 import com.skyflow.enums.Env;
 import com.skyflow.errors.BaseErrorMessage;
-import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.SkyflowException;
 import okhttp3.mockwebserver.MockResponse;
@@ -159,10 +158,10 @@ public class DetectControllerTests {
                 ReidentifyFileRequest.builder().value("Zm9v").build(),
                 ReidentifyFileRequest.builder().dataSource(DataSourceType.BASE64).value(" ").build(),
         };
-        ErrorMessage[] expected = {
-                ErrorMessage.ReidentifyFileRequestNull,
-                ErrorMessage.InvalidDataSourceInReidentifyFile,
-                ErrorMessage.InvalidValueInReidentifyFile,
+        BaseErrorMessage[] expected = {
+                BaseErrorMessage.ReidentifyFileRequestNull,
+                BaseErrorMessage.InvalidDataSourceInReidentifyFile,
+                BaseErrorMessage.InvalidValueInReidentifyFile,
         };
         for (int i = 0; i < bad.length; i++) {
             try {
