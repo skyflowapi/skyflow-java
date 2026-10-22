@@ -5,7 +5,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 import com.skyflow.errors.ErrorCode;
-import com.skyflow.errors.ErrorMessage;
+import com.skyflow.errors.BaseErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.logs.ErrorLogs;
 import com.skyflow.logs.InfoLogs;
@@ -29,7 +29,7 @@ public class Token {
             JsonElement exp = decoded(token).get("exp");
             if (exp == null) {
                 LogUtil.printErrorLog(ErrorLogs.INVALID_BEARER_TOKEN.getLog());
-                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.JwtDecodeError.getMessage());
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), BaseErrorMessage.JwtDecodeError.getMessage());
             }
             expiryTime = exp.getAsLong();
 
@@ -44,14 +44,14 @@ public class Token {
         String[] split = encodedToken.split("\\.");
         if (split.length < 3) {
             LogUtil.printErrorLog(ErrorLogs.INVALID_BEARER_TOKEN.getLog());
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.JwtDecodeError.getMessage());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), BaseErrorMessage.JwtDecodeError.getMessage());
         }
         try {
             byte[] decodedBytes = Base64.getUrlDecoder().decode(split[1]);
             return JsonParser.parseString(new String(decodedBytes, StandardCharsets.UTF_8)).getAsJsonObject();
         } catch (IllegalArgumentException | IllegalStateException e) {
             LogUtil.printErrorLog(ErrorLogs.INVALID_BEARER_TOKEN.getLog());
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.JwtDecodeError.getMessage());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), BaseErrorMessage.JwtDecodeError.getMessage());
         }
     }
 }

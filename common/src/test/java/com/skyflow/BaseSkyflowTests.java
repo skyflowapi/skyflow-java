@@ -5,7 +5,7 @@ import com.skyflow.config.Credentials;
 import com.skyflow.enums.Env;
 import com.skyflow.enums.LogLevel;
 import com.skyflow.errors.ErrorCode;
-import com.skyflow.errors.ErrorMessage;
+import com.skyflow.errors.BaseErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.logs.ErrorLogs;
 import org.junit.Assert;
@@ -45,7 +45,7 @@ public class BaseSkyflowTests {
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(ErrorMessage.VaultIdAlreadyInConfigList.getMessage(), e.getMessage());
+            Assert.assertEquals(BaseErrorMessage.VaultIdAlreadyInConfigList.getMessage(), e.getMessage());
         }
     }
 
@@ -57,7 +57,7 @@ public class BaseSkyflowTests {
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(ErrorMessage.VaultIdNotInConfigList.getMessage(), e.getMessage());
+            Assert.assertEquals(BaseErrorMessage.VaultIdNotInConfigList.getMessage(), e.getMessage());
         }
     }
 
@@ -70,7 +70,7 @@ public class BaseSkyflowTests {
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(ErrorMessage.VaultIdNotInConfigList.getMessage(), e.getMessage());
+            Assert.assertEquals(BaseErrorMessage.VaultIdNotInConfigList.getMessage(), e.getMessage());
         }
     }
 
@@ -81,7 +81,7 @@ public class BaseSkyflowTests {
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(ErrorMessage.VaultIdNotInConfigList.getMessage(), e.getMessage());
+            Assert.assertEquals(BaseErrorMessage.VaultIdNotInConfigList.getMessage(), e.getMessage());
         }
     }
 
@@ -104,7 +104,7 @@ public class BaseSkyflowTests {
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(ErrorMessage.VaultIdNotInConfigList.getMessage(), e.getMessage());
+            Assert.assertEquals(BaseErrorMessage.VaultIdNotInConfigList.getMessage(), e.getMessage());
         }
     }
 
@@ -122,7 +122,7 @@ public class BaseSkyflowTests {
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(ErrorMessage.VaultIdNotInConfigList.getMessage(), e.getMessage());
+            Assert.assertEquals(BaseErrorMessage.VaultIdNotInConfigList.getMessage(), e.getMessage());
         }
     }
 
@@ -137,7 +137,7 @@ public class BaseSkyflowTests {
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(ErrorMessage.VaultIdNotInConfigList.getMessage(), e.getMessage());
+            Assert.assertEquals(BaseErrorMessage.VaultIdNotInConfigList.getMessage(), e.getMessage());
         }
     }
 
@@ -163,7 +163,7 @@ public class BaseSkyflowTests {
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(ErrorMessage.NoTokenGenerationMeansPassed.getMessage(), e.getMessage());
+            Assert.assertEquals(BaseErrorMessage.NoTokenGenerationMeansPassed.getMessage(), e.getMessage());
         }
     }
 
@@ -350,12 +350,12 @@ public class BaseSkyflowTests {
 
         Object vault() throws SkyflowException {
             return resolveOrThrow(this.builder.vaultClientsMap, null,
-                    ErrorLogs.VAULT_CONFIG_DOES_NOT_EXIST, ErrorMessage.VaultIdNotInConfigList);
+                    ErrorLogs.VAULT_CONFIG_DOES_NOT_EXIST, BaseErrorMessage.VaultIdNotInConfigList);
         }
 
         Object vault(String vaultId) throws SkyflowException {
             return resolveOrThrow(this.builder.vaultClientsMap, vaultId,
-                    ErrorLogs.VAULT_CONFIG_DOES_NOT_EXIST, ErrorMessage.VaultIdNotInConfigList);
+                    ErrorLogs.VAULT_CONFIG_DOES_NOT_EXIST, BaseErrorMessage.VaultIdNotInConfigList);
         }
 
         private static class TestSkyflowClientBuilder extends BaseSkyflowClientBuilder<BaseVaultConfig> {
@@ -365,7 +365,7 @@ public class BaseSkyflowTests {
             @Override
             protected void validateVaultConfig(BaseVaultConfig vaultConfig) throws SkyflowException {
                 if (vaultConfig.getVaultId() == null || vaultConfig.getVaultId().trim().isEmpty()) {
-                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyVaultId.getMessage());
+                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), BaseErrorMessage.EmptyVaultId.getMessage());
                 }
             }
 
