@@ -6,7 +6,7 @@ import com.skyflow.detect.RedactionLevel;
 import com.skyflow.detect.RedactionType;
 import com.skyflow.detect.ReidentifyFileRequest;
 import com.skyflow.errors.ErrorCode;
-import com.skyflow.errors.ErrorMessage;
+import com.skyflow.errors.BaseErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import org.junit.Assert;
 import org.junit.Test;
@@ -20,7 +20,7 @@ public class ReidentifyFileValidationsTests {
         return ReidentifyFileRequest.builder().dataSource(DataSourceType.BASE64).value("Zm9v");
     }
 
-    private static void assertRejected(ReidentifyFileRequest request, ErrorMessage expected) {
+    private static void assertRejected(ReidentifyFileRequest request, BaseErrorMessage expected) {
         try {
             ReidentifyFileValidations.validateReidentifyFileRequest(request);
             Assert.fail("expected SkyflowException: " + expected);
@@ -32,25 +32,25 @@ public class ReidentifyFileValidationsTests {
 
     @Test
     public void rejectsNullRequest() {
-        assertRejected(null, ErrorMessage.ReidentifyFileRequestNull);
+        assertRejected(null, BaseErrorMessage.ReidentifyFileRequestNull);
     }
 
     @Test
     public void rejectsMissingDataSource() {
-        assertRejected(ReidentifyFileRequest.builder().value("Zm9v").build(), ErrorMessage.InvalidDataSourceInReidentifyFile);
+        assertRejected(ReidentifyFileRequest.builder().value("Zm9v").build(), BaseErrorMessage.InvalidDataSourceInReidentifyFile);
     }
 
     @Test
     public void rejectsNullOrBlankValue() {
-        assertRejected(ReidentifyFileRequest.builder().dataSource(DataSourceType.BASE64).build(), ErrorMessage.InvalidValueInReidentifyFile);
-        assertRejected(valid().value("").build(), ErrorMessage.InvalidValueInReidentifyFile);
-        assertRejected(valid().value("   \t").build(), ErrorMessage.InvalidValueInReidentifyFile);
+        assertRejected(ReidentifyFileRequest.builder().dataSource(DataSourceType.BASE64).build(), BaseErrorMessage.InvalidValueInReidentifyFile);
+        assertRejected(valid().value("").build(), BaseErrorMessage.InvalidValueInReidentifyFile);
+        assertRejected(valid().value("   \t").build(), BaseErrorMessage.InvalidValueInReidentifyFile);
     }
 
     @Test
     public void checksFieldsInOrderDataSourceBeforeValue() {
         // Both missing: dataSource is reported first.
-        assertRejected(ReidentifyFileRequest.builder().build(), ErrorMessage.InvalidDataSourceInReidentifyFile);
+        assertRejected(ReidentifyFileRequest.builder().build(), BaseErrorMessage.InvalidDataSourceInReidentifyFile);
     }
 
     @Test

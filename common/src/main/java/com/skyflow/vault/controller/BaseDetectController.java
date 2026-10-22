@@ -5,15 +5,22 @@ import com.skyflow.config.BaseCredentials;
 import com.skyflow.config.BaseVaultConfig;
 import com.skyflow.detect.CheckGuardrailsRequest;
 import com.skyflow.detect.CheckGuardrailsResponse;
+import com.skyflow.detect.DeidentifyFileRequest;
+import com.skyflow.detect.DeidentifyFileResponse;
 import com.skyflow.detect.DeidentifyStringRequest;
 import com.skyflow.detect.DeidentifyStringResponse;
 import com.skyflow.detect.GetRunRequest;
 import com.skyflow.detect.GetRunResponse;
+import com.skyflow.detect.ReidentifyFileRequest;
+import com.skyflow.detect.ReidentifyFileResponse;
 import com.skyflow.detect.ReidentifyStringRequest;
 import com.skyflow.detect.ReidentifyStringResponse;
+import com.skyflow.detect.internal.DeidentifyFileFlow;
 import com.skyflow.detect.internal.DetectRequestMapper;
 import com.skyflow.detect.internal.DetectResponseMapper;
 import com.skyflow.detect.internal.DetectValidations;
+import com.skyflow.detect.internal.ReidentifyFileMapper;
+import com.skyflow.detect.internal.ReidentifyFileValidations;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.generated.detect.rest.core.ApiClientApiException;
 import com.skyflow.generated.detect.rest.core.ApiClientException;
@@ -22,15 +29,19 @@ import com.skyflow.generated.detect.rest.core.Environment;
 import com.skyflow.generated.detect.rest.core.ObjectMappers;
 import com.skyflow.generated.detect.rest.core.RequestOptions;
 import com.skyflow.generated.detect.rest.resources.filesv2.FilesV2Client;
+import com.skyflow.generated.detect.rest.resources.filesv2.requests.DeidentifyFileRequestV2;
 import com.skyflow.generated.detect.rest.resources.filesv2.requests.GetRunV2Request;
+import com.skyflow.generated.detect.rest.resources.filesv2.requests.ReidentifyFileRequestV2;
 import com.skyflow.generated.detect.rest.resources.guardrailsv2.GuardrailsV2Client;
 import com.skyflow.generated.detect.rest.resources.guardrailsv2.requests.DetectGuardrailsRequestV2;
 import com.skyflow.generated.detect.rest.resources.stringsv2.StringsV2Client;
 import com.skyflow.generated.detect.rest.resources.stringsv2.requests.DeidentifyStringRequestV2;
 import com.skyflow.generated.detect.rest.resources.stringsv2.requests.ReidentifyStringRequestV2;
+import com.skyflow.generated.detect.rest.types.DeidentifyFileResponseV2;
 import com.skyflow.generated.detect.rest.types.DeidentifyStringResponseV2;
 import com.skyflow.generated.detect.rest.types.DetectGuardrailsResponseV2;
 import com.skyflow.generated.detect.rest.types.DetectRunsResponseV2;
+import com.skyflow.generated.detect.rest.types.ReidentifyFileResponseV2;
 import com.skyflow.generated.detect.rest.types.ReidentifyStringResponseV2;
 import com.skyflow.logs.ErrorLogs;
 import com.skyflow.logs.InfoLogs;
@@ -218,6 +229,68 @@ public abstract class BaseDetectController<V extends BaseVaultConfig> extends Ba
             throw toSkyflowException(e, ErrorLogs.REIDENTIFY_STRING_REQUEST_REJECTED);
         } catch (ApiClientException e) {
             LogUtil.printErrorLog(ErrorLogs.REIDENTIFY_STRING_REQUEST_REJECTED.getLog());
+            throw new SkyflowException(e);
+        }
+    }
+
+    /**
+     * Detects and de-identifies sensitive data in a file. The API is asynchronous: by default this
+     * submits the run and returns its id for use with {@link #getRun}. With
+     * {@link DeidentifyFileRequest#getPollOptions() pollOptions} the SDK polls the run with exponential
+     * backoff and returns the completed run, or the run id with a non-terminal status if the budget
+     * runs out. On success, a request built from a local file has its outputs written to disk.
+     *
+     * @param request the file (base64, skyflow id, presigned URL, or a local file) plus a stored or inline configuration
+     * @return run id, and the run's status, outputs and metrics when polled
+     * @throws SkyflowException on validation failure, credential failure, an API error or an output write failure
+     */
+    public DeidentifyFileResponse deidentifyFile(DeidentifyFileRequest request) throws SkyflowException {
+        LogUtil.printInfoLog(InfoLogs.DEIDENTIFY_FILE_TRIGGERED.getLog());
+        LogUtil.printInfoLog(InfoLogs.VALIDATE_DEIDENTIFY_FILE_REQUEST.getLog());
+        DetectValidations.validateDeidentifyFileRequest(request);
+        String token = resolveToken();
+        DeidentifyFileRequestV2 apiRequest = DetectRequestMapper.toDeidentifyFileRequest(request, this.vaultConfig.getVaultId());
+        String runId;
+        try {
+            DeidentifyFileResponseV2 apiResponse = filesClient().deidentifyFileV2(apiRequest, requestOptions(token));
+            LogUtil.printInfoLog(InfoLogs.DEIDENTIFY_FILE_REQUEST_RESOLVED.getLog());
+            runId = apiResponse.getRunId().orElse(null);
+        } catch (ApiClientApiException e) {
+            throw toSkyflowException(e, ErrorLogs.DEIDENTIFY_FILE_REQUEST_REJECTED);
+        } catch (ApiClientException e) {
+            LogUtil.printErrorLog(ErrorLogs.DEIDENTIFY_FILE_REQUEST_REJECTED.getLog());
+            throw new SkyflowException(e);
+        }
+        DeidentifyFileResponse response = DeidentifyFileFlow.complete(request, runId,
+                id -> getRun(GetRunRequest.builder().runId(id).build()));
+        LogUtil.printInfoLog(InfoLogs.DEIDENTIFY_FILE_SUCCESS.getLog());
+        return response;
+    }
+
+    /**
+     * Replaces tokens in a file with their original values or a redacted rendering. Synchronous:
+     * the re-identified file is returned in the response rather than through a run id.
+     *
+     * @param request the file (base64, skyflow id or presigned URL) plus optional per-group redaction rules
+     * @return status, output files and metrics
+     * @throws SkyflowException on validation failure, credential failure or an API error
+     */
+    public ReidentifyFileResponse reidentifyFile(ReidentifyFileRequest request) throws SkyflowException {
+        LogUtil.printInfoLog(InfoLogs.REIDENTIFY_FILE_TRIGGERED.getLog());
+        LogUtil.printInfoLog(InfoLogs.VALIDATE_REIDENTIFY_FILE_REQUEST.getLog());
+        ReidentifyFileValidations.validateReidentifyFileRequest(request);
+        String token = resolveToken();
+        ReidentifyFileRequestV2 apiRequest = ReidentifyFileMapper.toApiRequest(request, this.vaultConfig.getVaultId());
+        try {
+            ReidentifyFileResponseV2 apiResponse = filesClient().reidentifyFileV2(apiRequest, requestOptions(token));
+            LogUtil.printInfoLog(InfoLogs.REIDENTIFY_FILE_REQUEST_RESOLVED.getLog());
+            ReidentifyFileResponse response = ReidentifyFileMapper.toResponse(apiResponse);
+            LogUtil.printInfoLog(InfoLogs.REIDENTIFY_FILE_SUCCESS.getLog());
+            return response;
+        } catch (ApiClientApiException e) {
+            throw toSkyflowException(e, ErrorLogs.REIDENTIFY_FILE_REQUEST_REJECTED);
+        } catch (ApiClientException e) {
+            LogUtil.printErrorLog(ErrorLogs.REIDENTIFY_FILE_REQUEST_REJECTED.getLog());
             throw new SkyflowException(e);
         }
     }

@@ -1740,6 +1740,69 @@ switch (response.getStatus()) {
 
 Outputs are written only when polling reached `SUCCESS`, the request was built from a local file, and the run delivered them as base64. A request built from a `SKYFLOW_ID` or `PRESIGNED_URL` has no local name to derive from, and presigned-URL outputs are not fetched, so in those cases read `getOutput()` and write the files yourself. Files are named `processed-<input name>.<extension>`, with the entities output as `processed-entities-<input name>.json` (and `processed-object-entities-<input name>.json` for object entities); `outputDirectory` is created if missing and defaults to the working directory. Polling blocks the calling thread.
 
+### Polling from a worker thread
+
+With `pollOptions` set, `deidentifyFile` polls on the thread that called it: each lookup is a synchronous `getRun` followed by a sleep, until the run is terminal or the budget runs out. No other thread, lock or connection is held while it waits, so other SDK calls are unaffected, but the calling thread is. If that thread is your main thread, a request thread or an event loop, run the call elsewhere.
+
+**Run the blocking call on a thread you own.** Simplest when you process a few files at a time. The SDK still enforces the budget and writes outputs to disk; your thread is parked for the whole poll.
+
+```java
+ExecutorService pool = Executors.newFixedThreadPool(4);   // or Executors.newVirtualThreadPerTaskExecutor() on JDK 21+
+
+pool.execute(() -> {
+    try {
+        DeidentifyFileResponse response = skyflowClient.detect().deidentifyFile(
+                DeidentifyFileRequest.builder()
+                        .filePath("/data/intake/patient-notes.pdf")
+                        .configurationId("<CONFIGURATION_ID>")
+                        .pollOptions(PollOptions.builder().waitTime(120).build())
+                        .outputDirectory("/data/processed")
+                        .build());
+        handle(response);                      // SUCCESS, FAILED, UNKNOWN, or IN_PROGRESS/QUEUED if the budget ran out
+    } catch (SkyflowException e) {
+        handleError(e);                        // catch inside the task; an uncaught exception only ends this thread
+    }
+});
+```
+
+Use `pool.submit(...)` instead of `execute` if you want a `Future` to cancel with: interrupting the thread wakes the sleep and the SDK returns the last run it saw. Bound the pool, since every in-flight run parks one thread.
+
+**Submit only, then poll `getRun` on a scheduler.** Best for services and anything concurrent. No thread is held between lookups, so one scheduler thread serves any number of runs. You control the backoff and budget, and you write the outputs yourself since the SDK only writes them when it polls.
+
+```java
+ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+
+String runId = skyflowClient.detect().deidentifyFile(
+        DeidentifyFileRequest.builder()
+                .filePath("/data/intake/patient-notes.pdf")
+                .configurationId("<CONFIGURATION_ID>")
+                .build())                      // no pollOptions: returns the run id immediately
+        .getRunId();
+
+scheduler.schedule(new Runnable() {
+    long delaySeconds = 1;
+
+    @Override
+    public void run() {
+        try {
+            GetRunResponse run = skyflowClient.detect().getRun(GetRunRequest.builder().runId(runId).build());
+            switch (run.getStatus()) {
+                case SUCCESS: case FAILED: case UNKNOWN:
+                    handle(run);
+                    return;
+                default:                       // QUEUED, IN_PROGRESS
+                    scheduler.schedule(this, delaySeconds, TimeUnit.SECONDS);
+                    delaySeconds = Math.min(delaySeconds * 2, 32);
+            }
+        } catch (SkyflowException e) {
+            handleError(e);
+        }
+    }
+}, 0, TimeUnit.SECONDS);
+```
+
+Either way the main thread only pays for the submit round trip. Avoid `new Thread(...)` per file or `CompletableFuture.runAsync` on the common pool for anything that runs at scale: the first has no bound on threads, and the second blocks a shared pool sized for CPU work.
+
 ## Reidentify string
 
 `ReidentifyStringRequest` takes the tokenized text and an optional list of `RedactionLevel` rules. For flowvault vaults each rule targets a `tokenGroupName` and applies a named `redactionPattern`. Without rules every token is replaced by its original value.
@@ -1788,7 +1851,7 @@ if (response.getStatus() == DetectRunStatus.SUCCESS) {
 }
 ```
 
-`ReidentifyFileResponse` carries `getStatus()`, `getOutputType()`, `getOutput()` (never `null`) and `getMetrics()`. This method is specific to the flowvault SDK.
+`ReidentifyFileResponse` carries `getStatus()`, `getOutputType()`, `getOutput()` (never `null`) and `getMetrics()`.
 
 ## Get run
 

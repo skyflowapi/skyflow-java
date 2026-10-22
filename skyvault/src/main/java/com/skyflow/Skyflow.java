@@ -149,11 +149,18 @@ public final class Skyflow extends BaseSkyflow<Skyflow, VaultConfig> {
         @Override
         protected void onVaultConfigUpdated(VaultConfig updatedConfig) throws SkyflowException {
             this.vaultClientsMap.get(updatedConfig.getVaultId()).updateVaultConfig(updatedConfig);
+            DetectController detect = this.detectClientsMap.get(updatedConfig.getVaultId());
+            if (detect == null) {
+                this.detectClientsMap.put(updatedConfig.getVaultId(), new DetectController(updatedConfig, this.skyflowCredentials));
+            } else {
+                detect.setVaultConfig(updatedConfig);
+            }
         }
 
         @Override
         protected void onVaultConfigRemoved(String vaultId) throws SkyflowException {
             this.vaultClientsMap.remove(vaultId);
+            this.detectClientsMap.remove(vaultId);
         }
 
         @Override

@@ -1,7 +1,7 @@
 package com.skyflow.detect.internal;
 
 import com.skyflow.detect.ReidentifyFileRequest;
-import com.skyflow.errors.ErrorMessage;
+import com.skyflow.errors.BaseErrorMessage;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.logs.ErrorLogs;
@@ -20,13 +20,13 @@ public final class ReidentifyFileValidations {
 
     public static void validateReidentifyFileRequest(ReidentifyFileRequest request) throws SkyflowException {
         if (request == null) {
-            throw invalid(ErrorLogs.REIDENTIFY_FILE_REQUEST_NULL, ErrorMessage.ReidentifyFileRequestNull);
+            throw invalid(ErrorLogs.REIDENTIFY_FILE_REQUEST_NULL, BaseErrorMessage.ReidentifyFileRequestNull);
         }
         if (request.getDataSource() == null) {
-            throw invalid(ErrorLogs.INVALID_DATA_SOURCE_IN_REIDENTIFY_FILE, ErrorMessage.InvalidDataSourceInReidentifyFile);
+            throw invalid(ErrorLogs.INVALID_DATA_SOURCE_IN_REIDENTIFY_FILE, BaseErrorMessage.InvalidDataSourceInReidentifyFile);
         }
         if (isBlank(request.getValue())) {
-            throw invalid(ErrorLogs.INVALID_VALUE_IN_REIDENTIFY_FILE, ErrorMessage.InvalidValueInReidentifyFile);
+            throw invalid(ErrorLogs.INVALID_VALUE_IN_REIDENTIFY_FILE, BaseErrorMessage.InvalidValueInReidentifyFile);
         }
         // redactionLevel entries are optional on the API and are passed through as given.
     }
@@ -36,7 +36,7 @@ public final class ReidentifyFileValidations {
         return value == null || value.trim().isEmpty();
     }
 
-    private static SkyflowException invalid(ErrorLogs log, ErrorMessage message) {
+    private static SkyflowException invalid(ErrorLogs log, BaseErrorMessage message) {
         LogUtil.printErrorLog(BaseUtils.parameterizedString(log.getLog(), INTERFACE_NAME));
         return new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), message.getMessage());
     }
