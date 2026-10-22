@@ -27,8 +27,6 @@ public final class UploadFileRequestV2 {
 
     private final Optional<String> skyflowId;
 
-    private final String file;
-
     private final Optional<Boolean> returnFileMetadata;
 
     private final Map<String, Object> additionalProperties;
@@ -37,13 +35,11 @@ public final class UploadFileRequestV2 {
             String tableName,
             String columnName,
             Optional<String> skyflowId,
-            String file,
             Optional<Boolean> returnFileMetadata,
             Map<String, Object> additionalProperties) {
         this.tableName = tableName;
         this.columnName = columnName;
         this.skyflowId = skyflowId;
-        this.file = file;
         this.returnFileMetadata = returnFileMetadata;
         this.additionalProperties = additionalProperties;
     }
@@ -73,14 +69,6 @@ public final class UploadFileRequestV2 {
     }
 
     /**
-     * @return Path of the file to upload. Each request only supports one file.
-     */
-    @JsonProperty("file")
-    public String getFile() {
-        return file;
-    }
-
-    /**
      * @return If <code>true</code>, returns metadata about the uploaded file.
      */
     @JsonProperty("returnFileMetadata")
@@ -103,13 +91,12 @@ public final class UploadFileRequestV2 {
         return tableName.equals(other.tableName)
                 && columnName.equals(other.columnName)
                 && skyflowId.equals(other.skyflowId)
-                && file.equals(other.file)
                 && returnFileMetadata.equals(other.returnFileMetadata);
     }
 
     @java.lang.Override
     public int hashCode() {
-        return Objects.hash(this.tableName, this.columnName, this.skyflowId, this.file, this.returnFileMetadata);
+        return Objects.hash(this.tableName, this.columnName, this.skyflowId, this.returnFileMetadata);
     }
 
     @java.lang.Override
@@ -134,14 +121,7 @@ public final class UploadFileRequestV2 {
         /**
          * <p>Name of the column that contains the file.</p>
          */
-        FileStage columnName(@NotNull String columnName);
-    }
-
-    public interface FileStage {
-        /**
-         * <p>Path of the file to upload. Each request only supports one file.</p>
-         */
-        _FinalStage file(@NotNull String file);
+        _FinalStage columnName(@NotNull String columnName);
     }
 
     public interface _FinalStage {
@@ -167,12 +147,10 @@ public final class UploadFileRequestV2 {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static final class Builder implements TableNameStage, ColumnNameStage, FileStage, _FinalStage {
+    public static final class Builder implements TableNameStage, ColumnNameStage, _FinalStage {
         private String tableName;
 
         private String columnName;
-
-        private String file;
 
         private Optional<Boolean> returnFileMetadata = Optional.empty();
 
@@ -188,7 +166,6 @@ public final class UploadFileRequestV2 {
             tableName(other.getTableName());
             columnName(other.getColumnName());
             skyflowId(other.getSkyflowId());
-            file(other.getFile());
             returnFileMetadata(other.getReturnFileMetadata());
             return this;
         }
@@ -210,19 +187,8 @@ public final class UploadFileRequestV2 {
          */
         @java.lang.Override
         @JsonSetter("columnName")
-        public FileStage columnName(@NotNull String columnName) {
+        public _FinalStage columnName(@NotNull String columnName) {
             this.columnName = Objects.requireNonNull(columnName, "columnName must not be null");
-            return this;
-        }
-
-        /**
-         * <p>Path of the file to upload. Each request only supports one file.</p>
-         * @return Reference to {@code this} so that method calls can be chained together.
-         */
-        @java.lang.Override
-        @JsonSetter("file")
-        public _FinalStage file(@NotNull String file) {
-            this.file = Objects.requireNonNull(file, "file must not be null");
             return this;
         }
 
@@ -269,7 +235,7 @@ public final class UploadFileRequestV2 {
         @java.lang.Override
         public UploadFileRequestV2 build() {
             return new UploadFileRequestV2(
-                    tableName, columnName, skyflowId, file, returnFileMetadata, additionalProperties);
+                    tableName, columnName, skyflowId, returnFileMetadata, additionalProperties);
         }
 
         @java.lang.Override

@@ -7,6 +7,7 @@ import com.skyflow.generated.rest.core.ClientOptions;
 import com.skyflow.generated.rest.core.RequestOptions;
 import com.skyflow.generated.rest.resources.files.requests.UploadFileRequestV2;
 import com.skyflow.generated.rest.types.UploadFileResponseV2;
+import java.io.File;
 import java.util.concurrent.CompletableFuture;
 
 public class AsyncFilesClient {
@@ -29,15 +30,15 @@ public class AsyncFilesClient {
     /**
      * Uploads a file to a new or specified record.
      */
-    public CompletableFuture<UploadFileResponseV2> uploadFileV2(String vaultId, UploadFileRequestV2 request) {
-        return this.rawClient.uploadFileV2(vaultId, request).thenApply(response -> response.body());
+    public CompletableFuture<UploadFileResponseV2> uploadFileV2(String vaultId, File file, UploadFileRequestV2 request) {
+        return this.rawClient.uploadFileV2(vaultId, file, request).thenApply(response -> response.body());
     }
 
     /**
      * Uploads a file to a new or specified record.
      */
     public CompletableFuture<UploadFileResponseV2> uploadFileV2(
-            String vaultId, UploadFileRequestV2 request, RequestOptions requestOptions) {
-        return this.rawClient.uploadFileV2(vaultId, request, requestOptions).thenApply(response -> response.body());
+            String vaultId, File file, UploadFileRequestV2 request, RequestOptions requestOptions) {
+        return this.rawClient.uploadFileV2(vaultId, file, request, requestOptions).thenApply(response -> response.body());
     }
 }

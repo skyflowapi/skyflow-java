@@ -1896,7 +1896,7 @@ if (response.getValidation() == GuardrailsValidation.FAILED) {
 
 All Detect methods throw `SkyflowException` as described in [Error Handling](#error-handling). Client-side validation fails before any network call.
 
-See the samples [DeidentifyStringSample.java](samples/src/main/java/com/example/detect/DeidentifyStringSample.java), [ReidentifyStringSample.java](samples/src/main/java/com/example/detect/ReidentifyStringSample.java) [GetRunSample.java](samples/src/main/java/com/example/detect/GetRunSample.java) and [CheckGuardrailsSample.java](samples/src/main/java/com/example/detect/CheckGuardrailsSample.java).
+See the samples [DeidentifyStringSample.java](samples/src/main/java/com/example/detect/DeidentifyStringSample.java), [DeidentifyFileSample.java](samples/src/main/java/com/example/detect/DeidentifyFileSample.java), [ReidentifyStringSample.java](samples/src/main/java/com/example/detect/ReidentifyStringSample.java), [ReidentifyFileSample.java](samples/src/main/java/com/example/detect/ReidentifyFileSample.java), [GetRunSample.java](samples/src/main/java/com/example/detect/GetRunSample.java) and [CheckGuardrailsSample.java](samples/src/main/java/com/example/detect/CheckGuardrailsSample.java).
 
 # Custom Request Headers
 

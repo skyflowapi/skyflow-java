@@ -8,15 +8,23 @@ import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.generated.rest.ApiClient;
 import com.skyflow.generated.rest.ApiClientBuilder;
+import com.skyflow.generated.rest.resources.files.FilesClient;
 import com.skyflow.generated.rest.resources.query.QueryClient;
 import com.skyflow.generated.rest.resources.records.RecordsClient;
-import com.skyflow.generated.rest.resources.records.requests.RecordServiceBatchOperationBody;
-import com.skyflow.generated.rest.resources.records.requests.RecordServiceInsertRecordBody;
-import com.skyflow.generated.rest.resources.records.requests.RecordServiceUpdateRecordBody;
+import com.skyflow.generated.rest.resources.records.requests.BatchOperationRequest;
+import com.skyflow.generated.rest.resources.records.requests.InsertRecordRequest;
+import com.skyflow.generated.rest.resources.records.requests.UpdateRecordRequest;
+import com.skyflow.generated.rest.resources.records.types.InsertRecordRequestByot;
+import com.skyflow.generated.rest.resources.records.types.UpdateRecordRequestByot;
 import com.skyflow.generated.rest.resources.tokens.TokensClient;
-import com.skyflow.generated.rest.resources.tokens.requests.V1DetokenizePayload;
-import com.skyflow.generated.rest.resources.tokens.requests.V1TokenizePayload;
-import com.skyflow.generated.rest.types.*;
+import com.skyflow.generated.rest.resources.tokens.requests.DetokenizePayload;
+import com.skyflow.generated.rest.resources.tokens.requests.TokenizePayload;
+import com.skyflow.generated.rest.types.BatchRecord;
+import com.skyflow.generated.rest.types.BatchRecordMethod;
+import com.skyflow.generated.rest.types.DetokenizeRecordRequest;
+import com.skyflow.generated.rest.types.DetokenizeRecordRequestRedaction;
+import com.skyflow.generated.rest.types.FieldRecords;
+import com.skyflow.generated.rest.types.TokenizeRecordRequest;
 import com.skyflow.logs.ErrorLogs;
 import com.skyflow.utils.Utils;
 import com.skyflow.utils.logger.LogUtil;
@@ -68,6 +76,10 @@ public class VaultClient extends BaseVaultClient<VaultConfig> {
         return this.apiClient.query();
     }
 
+    protected FilesClient getFilesApi() {
+        return this.apiClient.files();
+    }
+
     protected void setCommonCredentials(Credentials commonCredentials) throws SkyflowException {
         this.commonCredentials = commonCredentials;
         super.prioritiseCredentials(this.vaultConfig.getCredentials());
@@ -83,55 +95,55 @@ public class VaultClient extends BaseVaultClient<VaultConfig> {
         updateVaultConfig();
     }
 
-    protected V1DetokenizePayload getDetokenizePayload(DetokenizeRequest request) {
-        List<V1DetokenizeRecordRequest> recordRequests = new ArrayList<>();
+    protected DetokenizePayload getDetokenizePayload(DetokenizeRequest request) {
+        List<DetokenizeRecordRequest> recordRequests = new ArrayList<>();
 
         for (DetokenizeData detokenizeDataRecord : request.getDetokenizeData()) {
-            V1DetokenizeRecordRequest recordRequest = V1DetokenizeRecordRequest.builder()
+            DetokenizeRecordRequest recordRequest = DetokenizeRecordRequest.builder()
                     .token(detokenizeDataRecord.getToken())
-                    .redaction(detokenizeDataRecord.getRedactionType().getRedaction())
+                    .redaction(DetokenizeRecordRequestRedaction.valueOf(detokenizeDataRecord.getRedactionType().toString()))
                     .build();
             recordRequests.add(recordRequest);
         }
 
-        return V1DetokenizePayload.builder()
+        return DetokenizePayload.builder()
                 .continueOnError(request.getContinueOnError())
                 .downloadUrl(request.getDownloadUrl())
                 .detokenizationParameters(recordRequests)
                 .build();
     }
 
-    protected RecordServiceInsertRecordBody getBulkInsertRequestBody(InsertRequest request) {
+    protected InsertRecordRequest getBulkInsertRequestBody(InsertRequest request) {
         List<HashMap<String, Object>> values = request.getValues();
         List<HashMap<String, Object>> tokens = request.getTokens();
-        List<V1FieldRecords> records = new ArrayList<>();
+        List<FieldRecords> records = new ArrayList<>();
 
         for (int index = 0; index < values.size(); index++) {
-            V1FieldRecords.Builder recordBuilder = V1FieldRecords.builder().fields(values.get(index));
+            FieldRecords.Builder recordBuilder = FieldRecords.builder().fields(values.get(index));
             if (tokens != null && index < tokens.size()) {
                 recordBuilder.tokens(tokens.get(index));
             }
             records.add(recordBuilder.build());
         }
 
-        return RecordServiceInsertRecordBody.builder()
+        return InsertRecordRequest.builder()
                 .tokenization(request.getReturnTokens())
                 .homogeneous(request.getHomogeneous())
                 .upsert(request.getUpsert())
-                .byot(request.getTokenMode().getByot())
+                .byot(InsertRecordRequestByot.valueOf(request.getTokenMode().toString()))
                 .records(records)
                 .build();
     }
 
-    protected RecordServiceBatchOperationBody getBatchInsertRequestBody(InsertRequest request) {
+    protected BatchOperationRequest getBatchInsertRequestBody(InsertRequest request) {
         ArrayList<HashMap<String, Object>> values = request.getValues();
         ArrayList<HashMap<String, Object>> tokens = request.getTokens();
-        List<V1BatchRecord> records = new ArrayList<>();
+        List<BatchRecord> records = new ArrayList<>();
 
         for (int index = 0; index < values.size(); index++) {
-            V1BatchRecord.Builder recordBuilder = V1BatchRecord.builder()
-                    .method(BatchRecordMethod.POST)
+            BatchRecord._FinalStage recordBuilder = BatchRecord.builder()
                     .tableName(request.getTable())
+                    .method(BatchRecordMethod.POST)
                     .upsert(request.getUpsert())
                     .tokenization(request.getReturnTokens())
                     .fields(values.get(index));
@@ -143,18 +155,20 @@ public class VaultClient extends BaseVaultClient<VaultConfig> {
             records.add(recordBuilder.build());
         }
 
-        return RecordServiceBatchOperationBody.builder()
+        // The regenerated batch-operation request has no byot field; keep sending it as before so the
+        // BYOT behaviour of insert(continueOnError=true) is unchanged.
+        return BatchOperationRequest.builder()
                 .continueOnError(true)
-                .byot(request.getTokenMode().getByot())
                 .records(records)
+                .additionalProperty("byot", request.getTokenMode().toString())
                 .build();
     }
 
-    protected RecordServiceUpdateRecordBody getUpdateRequestBody(UpdateRequest request) {
-        RecordServiceUpdateRecordBody.Builder updateRequestBodyBuilder = RecordServiceUpdateRecordBody.builder();
-        updateRequestBodyBuilder.byot(request.getTokenMode().getByot());
+    protected UpdateRecordRequest getUpdateRequestBody(UpdateRequest request) {
+        UpdateRecordRequest.Builder updateRequestBodyBuilder = UpdateRecordRequest.builder();
+        updateRequestBodyBuilder.byot(UpdateRecordRequestByot.valueOf(request.getTokenMode().toString()));
         updateRequestBodyBuilder.tokenization(request.getReturnTokens());
-        V1FieldRecords.Builder recordBuilder = V1FieldRecords.builder();
+        FieldRecords.Builder recordBuilder = FieldRecords.builder();
         HashMap<String, Object> values = request.getData();
 
         if (values != null) {
@@ -171,11 +185,11 @@ public class VaultClient extends BaseVaultClient<VaultConfig> {
         return updateRequestBodyBuilder.build();
     }
 
-    protected V1TokenizePayload getTokenizePayload(TokenizeRequest request) {
-        List<V1TokenizeRecordRequest> tokenizationParameters = new ArrayList<>();
+    protected TokenizePayload getTokenizePayload(TokenizeRequest request) {
+        List<TokenizeRecordRequest> tokenizationParameters = new ArrayList<>();
 
         for (ColumnValue columnValue : request.getColumnValues()) {
-            V1TokenizeRecordRequest.Builder recordBuilder = V1TokenizeRecordRequest.builder();
+            TokenizeRecordRequest.Builder recordBuilder = TokenizeRecordRequest.builder();
             String value = columnValue.getValue();
             recordBuilder.value(value);
             String columnGroup = columnValue.getColumnGroup();
@@ -183,13 +197,9 @@ public class VaultClient extends BaseVaultClient<VaultConfig> {
             tokenizationParameters.add(recordBuilder.build());
         }
 
-        V1TokenizePayload.Builder payloadBuilder = V1TokenizePayload.builder();
-
-        if (!tokenizationParameters.isEmpty()) {
-            payloadBuilder.tokenizationParameters(tokenizationParameters);
-        }
-
-        return payloadBuilder.build();
+        return TokenizePayload.builder()
+                .tokenizationParameters(tokenizationParameters)
+                .build();
     }
 
     protected File getFileForFileUpload(FileUploadRequest fileUploadRequest) throws IOException {

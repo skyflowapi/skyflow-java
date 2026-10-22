@@ -10,12 +10,7 @@ import com.skyflow.errors.SkyflowException;
 import com.skyflow.generated.rest.types.*;
 import com.skyflow.generated.rest.resources.query.QueryClient;
 import com.skyflow.generated.rest.resources.records.RecordsClient;
-import com.skyflow.generated.rest.resources.records.requests.RecordServiceBatchOperationBody;
-import com.skyflow.generated.rest.resources.records.requests.RecordServiceInsertRecordBody;
-import com.skyflow.generated.rest.resources.records.requests.RecordServiceUpdateRecordBody;
 import com.skyflow.generated.rest.resources.tokens.TokensClient;
-import com.skyflow.generated.rest.resources.tokens.requests.V1DetokenizePayload;
-import com.skyflow.generated.rest.resources.tokens.requests.V1TokenizePayload;
 import com.skyflow.vault.data.InsertRequest;
 import com.skyflow.vault.data.UpdateRequest;
 import com.skyflow.vault.tokens.ColumnValue;
@@ -43,6 +38,12 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.Arrays;
 import java.util.Collections;
+import com.skyflow.generated.rest.resources.tokens.requests.TokenizePayload;
+import com.skyflow.generated.rest.resources.tokens.requests.DetokenizePayload;
+import com.skyflow.generated.rest.resources.records.types.InsertRecordRequestByot;
+import com.skyflow.generated.rest.resources.records.requests.UpdateRecordRequest;
+import com.skyflow.generated.rest.resources.records.requests.InsertRecordRequest;
+import com.skyflow.generated.rest.resources.records.requests.BatchOperationRequest;
 
 public class VaultClientTests {
     private static final String INVALID_EXCEPTION_THROWN = "Should not have thrown any exception";
@@ -148,10 +149,10 @@ public class VaultClientTests {
                     .downloadURL(true)
                     .continueOnError(false)
                     .build();
-            V1DetokenizePayload payload = vaultClient.getDetokenizePayload(detokenizeRequest);
+            DetokenizePayload payload = vaultClient.getDetokenizePayload(detokenizeRequest);
             Assert.assertFalse(payload.getContinueOnError().get());
             Assert.assertTrue(payload.getDownloadUrl().get());
-            Assert.assertEquals(2, payload.getDetokenizationParameters().get().size());
+            Assert.assertEquals(2, payload.getDetokenizationParameters().size());
         } catch (Exception e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
         }
@@ -177,17 +178,17 @@ public class VaultClientTests {
                     .tokenMode(TokenMode.ENABLE)
                     .returnTokens(true)
                     .build();
-            RecordServiceInsertRecordBody body1 = vaultClient.getBulkInsertRequestBody(insertRequest1);
+            InsertRecordRequest body1 = vaultClient.getBulkInsertRequestBody(insertRequest1);
             Assert.assertTrue(body1.getTokenization().get());
-            Assert.assertEquals(V1Byot.ENABLE, body1.getByot().get());
-            Assert.assertEquals(2, body1.getRecords().get().size());
+            Assert.assertEquals(InsertRecordRequestByot.ENABLE, body1.getByot().get());
+            Assert.assertEquals(2, body1.getRecords().size());
 
             InsertRequest insertRequest2 = InsertRequest.builder()
                     .table(table)
                     .values(insertValues)
                     .build();
-            RecordServiceInsertRecordBody body2 = vaultClient.getBulkInsertRequestBody(insertRequest2);
-            Assert.assertEquals(2, body2.getRecords().get().size());
+            InsertRecordRequest body2 = vaultClient.getBulkInsertRequestBody(insertRequest2);
+            Assert.assertEquals(2, body2.getRecords().size());
         } catch (Exception e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
         }
@@ -213,13 +214,13 @@ public class VaultClientTests {
                     .tokenMode(TokenMode.ENABLE)
                     .returnTokens(false)
                     .build();
-            RecordServiceBatchOperationBody body1 = vaultClient.getBatchInsertRequestBody(insertRequest1);
+            BatchOperationRequest body1 = vaultClient.getBatchInsertRequestBody(insertRequest1);
             Assert.assertTrue(body1.getContinueOnError().get());
-            Assert.assertEquals(2, body1.getRecords().get().size());
+            Assert.assertEquals(2, body1.getRecords().size());
 
             InsertRequest insertRequest2 = InsertRequest.builder().table(table).values(insertValues).build();
-            RecordServiceBatchOperationBody body2 = vaultClient.getBatchInsertRequestBody(insertRequest2);
-            Assert.assertEquals(2, body2.getRecords().get().size());
+            BatchOperationRequest body2 = vaultClient.getBatchInsertRequestBody(insertRequest2);
+            Assert.assertEquals(2, body2.getRecords().size());
         } catch (Exception e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
         }
@@ -239,7 +240,7 @@ public class VaultClientTests {
                     .tokens(tokenMap)
                     .returnTokens(true)
                     .build();
-            RecordServiceUpdateRecordBody body = vaultClient.getUpdateRequestBody(updateRequest);
+            UpdateRecordRequest body = vaultClient.getUpdateRequestBody(updateRequest);
             Assert.assertTrue(body.getTokenization().get());
         } catch (Exception e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
@@ -259,7 +260,7 @@ public class VaultClientTests {
                     .data(valueMap)
                     .returnTokens(false)
                     .build();
-            RecordServiceUpdateRecordBody body = vaultClient.getUpdateRequestBody(updateRequest);
+            UpdateRecordRequest body = vaultClient.getUpdateRequestBody(updateRequest);
             Assert.assertFalse(body.getTokenization().get());
         } catch (Exception e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
@@ -273,8 +274,8 @@ public class VaultClientTests {
             List<ColumnValue> columnValues = new ArrayList<>();
             columnValues.add(columnValue);
             TokenizeRequest tokenizeRequest = TokenizeRequest.builder().values(columnValues).build();
-            V1TokenizePayload payload = vaultClient.getTokenizePayload(tokenizeRequest);
-            Assert.assertEquals(1, payload.getTokenizationParameters().get().size());
+            TokenizePayload payload = vaultClient.getTokenizePayload(tokenizeRequest);
+            Assert.assertEquals(1, payload.getTokenizationParameters().size());
         } catch (Exception e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
         }

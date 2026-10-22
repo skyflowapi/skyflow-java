@@ -19,15 +19,19 @@ import com.skyflow.generated.rest.errors.UnauthorizedError;
 import com.skyflow.generated.rest.resources.files.requests.UploadFileRequestV2;
 import com.skyflow.generated.rest.types.ErrorResponse;
 import com.skyflow.generated.rest.types.UploadFileResponseV2;
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.concurrent.CompletableFuture;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
+import okhttp3.MediaType;
 import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 import org.jetbrains.annotations.NotNull;
@@ -43,15 +47,15 @@ public class AsyncRawFilesClient {
      * Uploads a file to a new or specified record.
      */
     public CompletableFuture<ApiClientHttpResponse<UploadFileResponseV2>> uploadFileV2(
-            String vaultId, UploadFileRequestV2 request) {
-        return uploadFileV2(vaultId, request, null);
+            String vaultId, File file, UploadFileRequestV2 request) {
+        return uploadFileV2(vaultId, file, request, null);
     }
 
     /**
      * Uploads a file to a new or specified record.
      */
     public CompletableFuture<ApiClientHttpResponse<UploadFileResponseV2>> uploadFileV2(
-            String vaultId, UploadFileRequestV2 request, RequestOptions requestOptions) {
+            String vaultId, File file, UploadFileRequestV2 request, RequestOptions requestOptions) {
         HttpUrl.Builder httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
                 .newBuilder()
                 .addPathSegments("v2/vaults")
@@ -74,7 +78,9 @@ public class AsyncRawFilesClient {
                         request.getSkyflowId().get(),
                         false);
             }
-            QueryStringMapper.addFormDataPart(multipartBodyBuilder, "file", request.getFile(), false);
+            String fileMimeType = Files.probeContentType(file.toPath());
+            MediaType fileMimeTypeMediaType = fileMimeType != null ? MediaType.parse(fileMimeType) : null;
+            multipartBodyBuilder.addFormDataPart("file", file.getName(), RequestBody.create(file, fileMimeTypeMediaType));
             if (request.getReturnFileMetadata().isPresent()) {
                 QueryStringMapper.addFormDataPart(
                         multipartBodyBuilder,
