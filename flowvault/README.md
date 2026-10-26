@@ -20,6 +20,7 @@ The `flowvault` module is a Skyflow Java SDK built for high-throughput vault ope
 - [Authenticate](#authenticate)
   - [Credential types](#credential-types)
   - [Where credentials can be set](#where-credentials-can-be-set)
+  - [Bearer token expiry during a call](#bearer-token-expiry-during-a-call)
   - [Generate a bearer token](#generate-a-bearer-token)
   - [Generate bearer tokens with context](#generate-bearer-tokens-with-context)
   - [Generate scoped bearer tokens](#generate-scoped-bearer-tokens)
@@ -167,6 +168,16 @@ Credentials resolve **most specific first**:
 3. **Environment** — if neither is provided, the SDK reads the `SKYFLOW_CREDENTIALS` environment variable.
 
 If none of the three yields credentials, the call fails with a `SkyflowException`.
+
+## Bearer token expiry during a call
+
+The SDK checks the bearer token once, at the start of each call, and a bulk call can then send many batch requests with that token. If the token expires partway through, Skyflow rejects the requests that follow with HTTP `401`.
+
+The SDK recovers from this on its own when it generates tokens for you. That is the case with `setPath`, `setCredentialsString`, or the `SKYFLOW_CREDENTIALS` environment variable. If a request fails with `401` and its token expires within 60 seconds, the SDK generates a new token. It then sends that request once more. The remaining batches use the new token, so a bulk call that runs past the token's expiry still completes. Concurrent requests that fail on the same token share one new token. The SDK retries each request once and returns the response to that retry. It returns the original `401` instead when it can't generate a new token, or when the token wasn't close to expiry.
+
+This retry is always on and has no settings. It runs inside each transport attempt, so the overall `timeout` and the `maxRetries` policy in [Timeouts and retries](#timeouts-and-retries) still bound the whole call.
+
+A bearer token you provide with `setToken`, or an API key, gets no retry: the SDK returns the `401` as is. To keep long-running calls from failing on an expired token, let the SDK generate tokens, or generate a new token yourself before it expires.
 
 ## Generate a bearer token
 
