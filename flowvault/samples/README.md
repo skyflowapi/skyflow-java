@@ -1,7 +1,7 @@
 # FlowVault Java SDK samples
 
-Runnable samples for the `flowvault` module (`com.skyflow:skyflow-flowvault-java`) — bulk vault
-operations against Flow Vault, plus the shared service-account/bearer-token utilities.
+Runnable samples for the `flowvault` module (`com.skyflow:skyflow-flowvault-java`) — bulk and unary
+vault operations against Flow Vault, plus the shared service-account/bearer-token utilities.
 
 See the [flowvault README](../README.md) for the full API reference these samples exercise.
 
@@ -65,11 +65,20 @@ manage their own bearer tokens rather than passing a credentials file/string str
 | [BulkTokenizeSync.java](src/main/java/com/example/vault/BulkTokenizeSync.java) / [BulkTokenizeAsync.java](src/main/java/com/example/vault/BulkTokenizeAsync.java) | Tokenizing values against one or more token groups, reading the per-group outcome (a value can partially succeed), and retrying. |
 | [BulkDetokenizeSync.java](src/main/java/com/example/vault/BulkDetokenizeSync.java) / [BulkDetokenizeAsync.java](src/main/java/com/example/vault/BulkDetokenizeAsync.java) | Detokenizing tokens with a per-token-group redaction override, reading per-token results, and retrying. |
 | [BulkDeleteTokensSync.java](src/main/java/com/example/vault/BulkDeleteTokensSync.java) / [BulkDeleteTokensAsync.java](src/main/java/com/example/vault/BulkDeleteTokensAsync.java) | Deleting tokens, reading per-token results, and retrying. |
+| [InsertExample.java](src/main/java/com/example/vault/InsertExample.java) | Inserting records in a single API call, the unary counterpart of `bulkInsert`. |
+| [DetokenizeExample.java](src/main/java/com/example/vault/DetokenizeExample.java) | Detokenizing tokens in a single API call, the unary counterpart of `bulkDetokenize`. |
+| [GetExample.java](src/main/java/com/example/vault/GetExample.java) | Reading records from one table by skyflow ID or unique value. |
+| [UpdateExample.java](src/main/java/com/example/vault/UpdateExample.java) | Updating records by skyflow ID. |
+| [DeleteExample.java](src/main/java/com/example/vault/DeleteExample.java) | Deleting records by skyflow ID or unique value. Unlike `bulkDeleteTokens`, this removes the record itself. |
+| [QueryExample.java](src/main/java/com/example/vault/QueryExample.java) | Running a SQL `SELECT` against the vault. A call returns at most 25 records; page with SQL `OFFSET`. |
+| [GetTokensExample.java](src/main/java/com/example/vault/GetTokensExample.java) | Looking up the existing deterministic token for each value, and reading per-record results. |
+| [UploadFilesExample.java](src/main/java/com/example/vault/UploadFilesExample.java) | Uploading files into the file columns of new or existing records, and checking each column's upload status. |
+| [DeleteFilesExample.java](src/main/java/com/example/vault/DeleteFilesExample.java) | Deleting the files in file columns of existing records, by skyflow ID or unique value. |
 | [CustomHeaderExample.java](src/main/java/com/example/vault/CustomHeaderExample.java) | Attaching a custom HTTP header (e.g. a request id) to outgoing requests via a `RequestInterceptor` on the operation's options object. |
 | [TimeoutAndRetryConfigExample.java](src/main/java/com/example/vault/TimeoutAndRetryConfigExample.java) | Configuring HTTP timeouts and transport-level retry behavior, per-vault and client-wide, and how the two levels resolve. |
 
 Every `*Sync`/`*Async` pair above shows the same request-building and response-handling logic; the
-`Async` variant just wraps it in `CompletableFuture` callbacks instead of a direct call. Response
-handling follows the same shape everywhere: read `getSummary()` for totals, then walk `getRecords()`
-checking `getError() == null` per entry — see [Error Handling](../README.md#error-handling) for the
+`Async` variant just wraps it in `CompletableFuture` callbacks instead of a direct call. Every bulk
+sample handles responses the same way. It reads `getSummary()` for totals, then walks `getRecords()`
+checking `getError() == null` per entry. See [Error Handling](../README.md#error-handling) for the
 full model these samples are built on.
