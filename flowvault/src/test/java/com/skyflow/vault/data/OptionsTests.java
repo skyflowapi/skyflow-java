@@ -156,4 +156,32 @@ public class OptionsTests {
         BulkDeleteTokensOptions options = builder.build();
         Assert.assertSame(INTERCEPTOR, options.getInterceptor());
     }
+
+    // ── QueryOptions ─────────────────────────────────────────────────────────
+
+    @Test
+    public void testQueryOptions_withInterceptor() {
+        QueryOptions options = QueryOptions.builder().interceptor(INTERCEPTOR).build();
+        Assert.assertSame(INTERCEPTOR, options.getInterceptor());
+    }
+
+    @Test
+    public void testQueryOptions_withoutInterceptor() {
+        QueryOptions options = QueryOptions.builder().build();
+        Assert.assertNull(options.getInterceptor());
+    }
+
+    // ── GetTokensOptions ─────────────────────────────────────────────────────
+
+    @Test
+    public void testGetTokensOptions_withInterceptor() {
+        GetTokensOptions options = GetTokensOptions.builder().interceptor(INTERCEPTOR).build();
+        Assert.assertSame(INTERCEPTOR, options.getInterceptor());
+    }
+
+    @Test
+    public void testGetTokensOptions_withoutInterceptor() {
+        GetTokensOptions options = GetTokensOptions.builder().build();
+        Assert.assertNull(options.getInterceptor());
+    }
 }

@@ -25,6 +25,8 @@ public final class Constants extends BaseConstants {
     public static final Integer MAX_DELETE_TOKENS_CONCURRENCY_LIMIT = 100;
     public static final Integer TOKENIZE_BATCH_SIZE = 50;
     public static final Integer TOKENIZE_CONCURRENCY_LIMIT = 1;
+    // Fixed, not a caller option: uploads to signed URLs are I/O-bound and must finish before the URLs expire.
+    public static final Integer UPLOAD_FILES_CONCURRENCY_LIMIT = 5;
     public static final Integer MAX_TOKENIZE_BATCH_SIZE = 1000;
     public static final Integer MAX_TOKENIZE_CONCURRENCY_LIMIT = 100;
     public static final String DEFAULT_SDK_VERSION = "1.0.0";

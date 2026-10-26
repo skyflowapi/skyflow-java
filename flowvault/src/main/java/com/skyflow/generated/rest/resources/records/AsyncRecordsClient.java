@@ -5,9 +5,14 @@ package com.skyflow.generated.rest.resources.records;
 
 import com.skyflow.generated.rest.core.ClientOptions;
 import com.skyflow.generated.rest.core.RequestOptions;
-import com.skyflow.generated.rest.resources.records.requests.V1ExecuteQueryRequest;
-import com.skyflow.generated.rest.types.V1ExecuteQueryResponse;
-
+import com.skyflow.generated.rest.resources.records.requests.DeleteRequest;
+import com.skyflow.generated.rest.resources.records.requests.GetRequest;
+import com.skyflow.generated.rest.resources.records.requests.InsertRequest;
+import com.skyflow.generated.rest.resources.records.requests.UpdateRequest;
+import com.skyflow.generated.rest.types.DeleteResponse;
+import com.skyflow.generated.rest.types.GetResponse;
+import com.skyflow.generated.rest.types.InsertResponse;
+import com.skyflow.generated.rest.types.UpdateResponse;
 import java.util.concurrent.CompletableFuture;
 
 public class AsyncRecordsClient {
@@ -28,24 +33,58 @@ public class AsyncRecordsClient {
     }
 
     /**
-     * Executes a query on the specified vault.
+     * Deletes records from a vault.
      */
-    public CompletableFuture<V1ExecuteQueryResponse> flowServiceExecuteQuery() {
-        return this.rawClient.flowServiceExecuteQuery().thenApply(response -> response.body());
+    public CompletableFuture<DeleteResponse> deleteRecords(DeleteRequest request) {
+        return this.rawClient.deleteRecords(request).thenApply(response -> response.body());
     }
 
     /**
-     * Executes a query on the specified vault.
+     * Deletes records from a vault.
      */
-    public CompletableFuture<V1ExecuteQueryResponse> flowServiceExecuteQuery(V1ExecuteQueryRequest request) {
-        return this.rawClient.flowServiceExecuteQuery(request).thenApply(response -> response.body());
+    public CompletableFuture<DeleteResponse> deleteRecords(DeleteRequest request, RequestOptions requestOptions) {
+        return this.rawClient.deleteRecords(request, requestOptions).thenApply(response -> response.body());
     }
 
     /**
-     * Executes a query on the specified vault.
+     * Returns the specified records from a vault.
      */
-    public CompletableFuture<V1ExecuteQueryResponse> flowServiceExecuteQuery(
-            V1ExecuteQueryRequest request, RequestOptions requestOptions) {
-        return this.rawClient.flowServiceExecuteQuery(request, requestOptions).thenApply(response -> response.body());
+    public CompletableFuture<GetResponse> getRecords(GetRequest request) {
+        return this.rawClient.getRecords(request).thenApply(response -> response.body());
+    }
+
+    /**
+     * Returns the specified records from a vault.
+     */
+    public CompletableFuture<GetResponse> getRecords(GetRequest request, RequestOptions requestOptions) {
+        return this.rawClient.getRecords(request, requestOptions).thenApply(response -> response.body());
+    }
+
+    /**
+     * Inserts new records into a vault.
+     */
+    public CompletableFuture<InsertResponse> insertRecords(InsertRequest request) {
+        return this.rawClient.insertRecords(request).thenApply(response -> response.body());
+    }
+
+    /**
+     * Inserts new records into a vault.
+     */
+    public CompletableFuture<InsertResponse> insertRecords(InsertRequest request, RequestOptions requestOptions) {
+        return this.rawClient.insertRecords(request, requestOptions).thenApply(response -> response.body());
+    }
+
+    /**
+     * Updates the specified records in a vault.
+     */
+    public CompletableFuture<UpdateResponse> updateRecords(UpdateRequest request) {
+        return this.rawClient.updateRecords(request).thenApply(response -> response.body());
+    }
+
+    /**
+     * Updates the specified records in a vault.
+     */
+    public CompletableFuture<UpdateResponse> updateRecords(UpdateRequest request, RequestOptions requestOptions) {
+        return this.rawClient.updateRecords(request, requestOptions).thenApply(response -> response.body());
     }
 }

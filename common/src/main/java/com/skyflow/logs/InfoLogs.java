@@ -77,6 +77,22 @@ public enum InfoLogs {
     TOKENIZE_REQUEST_RESOLVED("Tokenize request resolved."),
     TOKENIZE_SUCCESS("Data tokenized."),
 
+    // Get tokens interface
+    GET_TOKENS_TRIGGERED("Get tokens method triggered."),
+    VALIDATING_GET_TOKENS_REQUEST("Validating get tokens request."),
+    GET_TOKENS_REQUEST_RESOLVED("Get tokens request resolved."),
+
+    // Upload files interface
+    UPLOAD_FILES_TRIGGERED("Upload files method triggered."),
+    VALIDATING_UPLOAD_FILES_REQUEST("Validating upload files request."),
+    UPLOADING_FILES_TO_SIGNED_URLS("Signed upload URLs received. Uploading files."),
+    UPLOAD_FILES_REQUEST_RESOLVED("Upload files request resolved."),
+
+    // Delete files interface
+    DELETE_FILES_TRIGGERED("Delete files method triggered."),
+    VALIDATING_DELETE_FILES_REQUEST("Validating delete files request."),
+    DELETE_FILES_REQUEST_RESOLVED("Delete files request resolved."),
+
 
     // Invoke connection interface
     INVOKE_CONNECTION_TRIGGERED("Invoke connection method triggered."),
