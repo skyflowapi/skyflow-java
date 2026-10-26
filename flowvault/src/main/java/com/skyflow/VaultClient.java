@@ -13,7 +13,6 @@ import java.util.concurrent.TimeUnit;
 
 import okhttp3.ConnectionPool;
 import okhttp3.OkHttpClient;
-import okhttp3.Request;
 
 public class VaultClient extends BaseVaultClient<VaultConfig> {
     private final ApiClientBuilder apiClientBuilder;
@@ -166,12 +165,9 @@ public class VaultClient extends BaseVaultClient<VaultConfig> {
                         // OUTER: retries. Must wrap the auth interceptor so each attempt re-reads the
                         // (possibly refreshed) bearer token rather than replaying a stale one.
                         .addInterceptor(new SkyflowRetryInterceptor(maxRetries, initialRetryDelayMillis, maxRetryDelayMillis))
-                        .addInterceptor(chain -> {  // INNER: auth
-                            Request requestWithAuth = chain.request().newBuilder()
-                                    .header("Authorization", "Bearer " + this.token)
-                                    .build();
-                            return chain.proceed(requestWithAuth);
-                        });
+                        // INNER: auth, shared with skyvault. Attaches the token and, on a 401 for an
+                        // expired SDK-generated token, regenerates once and resends once.
+                        .addInterceptor(authInterceptor(this::getToken));
                 if (connectTimeout != null) {
                     httpBuilder.connectTimeout(connectTimeout, TimeUnit.SECONDS);
                 }
