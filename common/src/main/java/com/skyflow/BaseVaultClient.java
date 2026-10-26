@@ -1,12 +1,12 @@
 package com.skyflow;
 
-import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.skyflow.config.BaseCredentials;
 import com.skyflow.config.BaseVaultConfig;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.BaseErrorMessage;
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.generated.detect.rest.core.ObjectMappers;
 import com.skyflow.logs.ErrorLogs;
 import com.skyflow.logs.InfoLogs;
 import com.skyflow.serviceaccount.util.Token;
@@ -108,7 +108,27 @@ public class BaseVaultClient<V extends BaseVaultConfig> {
                                                          Map<String, List<String>> headers,
                                                          Object responseBody, ErrorLogs errorLog) {
         LogUtil.printErrorLog(errorLog.getLog());
-        Gson gson = new GsonBuilder().serializeNulls().create();
-        return new SkyflowException(statusCode, cause, headers, gson.toJson(responseBody));
+        return new SkyflowException(statusCode, cause, headers, errorBodyAsJson(responseBody));
+    }
+
+    /**
+     * Serializes an API error body back to the JSON the server sent. The generated clients hand us either a
+     * plain {@code Map} or a typed {@code ErrorResponse}; the typed form carries Jackson annotations for the wire
+     * names ({@code grpc_code}, {@code http_status}) and {@code Optional} fields, so Jackson must do the
+     * serialization. Gson would emit the Java field names, which {@link SkyflowException} cannot parse, and
+     * fails outright on {@code Optional} under JDK 17+.
+     */
+    static String errorBodyAsJson(Object responseBody) {
+        if (responseBody == null) {
+            return null;
+        }
+        if (responseBody instanceof String) {
+            return (String) responseBody;
+        }
+        try {
+            return ObjectMappers.JSON_MAPPER.writeValueAsString(responseBody);
+        } catch (Exception e) {
+            return new GsonBuilder().serializeNulls().create().toJson(responseBody);
+        }
     }
 }
