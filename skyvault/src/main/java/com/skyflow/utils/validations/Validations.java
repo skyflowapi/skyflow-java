@@ -771,17 +771,13 @@ public class Validations extends BaseValidations {
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyTokens.getMessage());
         }
 
-        // Fewer token maps than records is allowed for ENABLE (the server validates record by record, and
-        // continueOnError inserts the records that have tokens), matching the Node, Go and Python SDKs.
-        // ENABLE_STRICT already requires equal counts in validateInsertRequest. More token maps than records
-        // can never be paired, so it is rejected here instead of failing with IndexOutOfBoundsException.
-        for (int index = 0; index < tokens.size(); index++) {
-            if (index >= values.size()) {
-                LogUtil.printErrorLog(Utils.parameterizedString(
-                        ErrorLogs.TOKENS_VALUES_SIZE_MISMATCH.getLog(), InterfaceName.INSERT.getName()
-                ));
-                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.TokensValuesSizeMismatch.getMessage());
-            }
+        // Only the token maps that pair with a record are validated, as in the Node, Go and Python SDKs.
+        // Fewer token maps than records is allowed for ENABLE: the server validates record by record, and
+        // continueOnError inserts the records that have tokens. ENABLE_STRICT already requires equal
+        // counts in validateInsertRequest. Bounding the loop by both lists is what prevents the
+        // IndexOutOfBoundsException that 2.1.1 threw when tokens outnumbered values.
+        int pairedEntries = Math.min(tokens.size(), values.size());
+        for (int index = 0; index < pairedEntries; index++) {
             HashMap<String, Object> tokensMap = tokens.get(index);
             HashMap<String, Object> valuesMap = values.get(index);
             if (tokensMap == null || valuesMap == null) {
