@@ -1977,6 +1977,8 @@ The same pattern applies to every operation, via its corresponding options class
 | `delete` | `DeleteOptions` |
 | `query` | `QueryOptions` |
 | `getTokens` | `GetTokensOptions` |
+| `uploadFiles` | `UploadFilesOptions` |
+| `deleteFiles` | `DeleteFilesOptions` |
 
 # Error Handling
 
