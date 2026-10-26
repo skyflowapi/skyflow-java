@@ -442,7 +442,9 @@ public class InsertTests {
     }
 
     @Test
-    public void testMoreTokensThanValuesIsRejectedWithTokenModeEnableInInsertRequestValidations() {
+    public void testMoreTokensThanValuesDoesNotThrowWithTokenModeEnableInInsertRequestValidations() {
+        // 2.1.1 threw IndexOutOfBoundsException here; only paired entries are validated now and the
+        // server decides about the surplus, as in the Node and Python SDKs.
         values.add(valueMap);
         tokens.add(tokenMap);
         tokens.add(tokenMap);
@@ -451,13 +453,8 @@ public class InsertTests {
                 .build();
         try {
             Validations.validateInsertRequest(request);
-            Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
-            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(
-                    Utils.parameterizedString(ErrorMessage.TokensValuesSizeMismatch.getMessage(), Constants.SDK_PREFIX),
-                    e.getMessage()
-            );
+            Assert.fail(INVALID_EXCEPTION_THROWN);
         }
     }
 

@@ -95,7 +95,6 @@ public enum ErrorLogs {
     EMPTY_OR_NULL_VALUE_IN_VALUES("Invalid %s1 request. Value can not be null or empty in values for key \"%s2\"."),
     EMPTY_OR_NULL_KEY_IN_VALUES("Invalid %s1 request. Key can not be null or empty in values"),
     NULL_VALUE_ENTRY_IN_VALUES("Invalid %s1 request. Value entry in 'values' can not be null at index %s2."),
-    TOKENS_VALUES_SIZE_MISMATCH("Invalid %s1 request. 'tokens' contains more entries than 'values'."),
     NULL_TOKENS_OR_VALUES_ENTRY("Invalid %s1 request. Entry in 'tokens' or 'values' can not be null at index %s2."),
     EMPTY_UPSERT("Invalid %s1 request. Upsert can not be empty."),
     INVALID_UPSERT_UPDATE_TYPE("Invalid %s1 request. Upsert updateType must be either UPDATE or REPLACE."),
