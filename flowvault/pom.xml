@@ -76,6 +76,7 @@
                             </artifactSet>
                         </configuration>
                     </execution>
+                    <execution>
                     <!-- Comparison-only jar merging com.skyflow:common, mirroring skyvault. This
                          exists so japicmp compares the whole surface a consumer actually gets, since
                          classes a customer imports (Credentials, SkyflowException, BearerToken) live
@@ -87,7 +88,6 @@
                          -with-common classifier. outputFile writes the jar and neither replaces the
                          main artifact nor attaches it. The path is unchanged, so the japicmp
                          newVersion path below still resolves. -->
-                    <execution>
                         <id>shade-for-japicmp</id>
                         <phase>package</phase>
                         <goals>
@@ -173,7 +173,7 @@
             <id>jfrog</id>
             <distributionManagement>
                 <repository>
-                    <id>central</id>
+                    <id>skyflow-jfrog</id>
                     <name>prekarilabs.jfrog.io-releases</name>
                     <url>https://prekarilabs.jfrog.io/artifactory/skyflow-java</url>
                 </repository>
