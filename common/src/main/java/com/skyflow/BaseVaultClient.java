@@ -112,10 +112,10 @@ public class BaseVaultClient<V extends BaseVaultConfig> {
     }
 
     /**
-     * Serialises an API error body back to the JSON the server sent. The generated clients hand us either a
+     * Serializes an API error body back to the JSON the server sent. The generated clients hand us either a
      * plain {@code Map} or a typed {@code ErrorResponse}; the typed form carries Jackson annotations for the wire
      * names ({@code grpc_code}, {@code http_status}) and {@code Optional} fields, so Jackson must do the
-     * serialisation. Gson would emit the Java field names, which {@link SkyflowException} cannot parse, and
+     * serialization. Gson would emit the Java field names, which {@link SkyflowException} cannot parse, and
      * fails outright on {@code Optional} under JDK 17+.
      */
     static String errorBodyAsJson(Object responseBody) {
