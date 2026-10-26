@@ -425,9 +425,26 @@ public class InsertTests {
     }
 
     @Test
-    public void testTokensValuesSizeMismatchWithTokenModeEnableInInsertRequestValidations() {
+    public void testFewerTokensThanValuesIsAllowedWithTokenModeEnableInInsertRequestValidations() {
+        // ENABLE lets the server validate record by record (and continueOnError insert the records that
+        // have tokens), as in the Node, Go and Python SDKs; only ENABLE_STRICT requires equal counts.
         values.add(valueMap);
         values.add(valueMap);
+        tokens.add(tokenMap);
+        InsertRequest request = InsertRequest.builder()
+                .table(table).values(values).tokens(tokens).tokenMode(TokenMode.ENABLE)
+                .build();
+        try {
+            Validations.validateInsertRequest(request);
+        } catch (SkyflowException e) {
+            Assert.fail(INVALID_EXCEPTION_THROWN);
+        }
+    }
+
+    @Test
+    public void testMoreTokensThanValuesIsRejectedWithTokenModeEnableInInsertRequestValidations() {
+        values.add(valueMap);
+        tokens.add(tokenMap);
         tokens.add(tokenMap);
         InsertRequest request = InsertRequest.builder()
                 .table(table).values(values).tokens(tokens).tokenMode(TokenMode.ENABLE)
@@ -439,6 +456,26 @@ public class InsertTests {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
                     Utils.parameterizedString(ErrorMessage.TokensValuesSizeMismatch.getMessage(), Constants.SDK_PREFIX),
+                    e.getMessage()
+            );
+        }
+    }
+
+    @Test
+    public void testFewerTokensThanValuesIsRejectedWithTokenModeEnableStrictInInsertRequestValidations() {
+        values.add(valueMap);
+        values.add(valueMap);
+        tokens.add(tokenMap);
+        InsertRequest request = InsertRequest.builder()
+                .table(table).values(values).tokens(tokens).tokenMode(TokenMode.ENABLE_STRICT)
+                .build();
+        try {
+            Validations.validateInsertRequest(request);
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+            Assert.assertEquals(
+                    Utils.parameterizedString(ErrorMessage.InsufficientTokensPassedForTokenModeEnableStrict.getMessage(), Constants.SDK_PREFIX),
                     e.getMessage()
             );
         }

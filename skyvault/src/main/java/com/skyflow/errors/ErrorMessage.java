@@ -73,7 +73,7 @@ public enum ErrorMessage {
     NoTokensWithTokenMode("%s0 Validation error. Tokens weren't specified for records while 'tokenMode' was %s1. Specify tokens."),
     MismatchOfFieldsAndTokens("%s0 Validation error. 'fields' and 'tokens' have different columns names. Verify that 'fields' and 'tokens' columns match."),
     InsufficientTokensPassedForTokenModeEnableStrict("%s0 Validation error. 'tokenMode' is set to 'ENABLE_STRICT', but some fields are missing tokens. Specify tokens for all fields."),
-    TokensValuesSizeMismatch("%s0 Validation error. 'tokens' and 'values' must contain the same number of entries."),
+    TokensValuesSizeMismatch("%s0 Validation error. 'tokens' contains more entries than 'values'. Specify at most one tokens entry per values entry."),
     NullTokensOrValuesEntry("%s0 Validation error. Entry in 'tokens' or 'values' is null. Specify a valid entry."),
     BatchInsertPartialSuccess("%s0 Insert operation completed with partial success."),
     BatchInsertFailure("%s0 Insert operation failed."),

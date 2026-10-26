@@ -771,14 +771,17 @@ public class Validations extends BaseValidations {
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyTokens.getMessage());
         }
 
-        if (tokens.size() != values.size()) {
-            LogUtil.printErrorLog(Utils.parameterizedString(
-                    ErrorLogs.TOKENS_VALUES_SIZE_MISMATCH.getLog(), InterfaceName.INSERT.getName()
-            ));
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.TokensValuesSizeMismatch.getMessage());
-        }
-
+        // Fewer token maps than records is allowed for ENABLE (the server validates record by record, and
+        // continueOnError inserts the records that have tokens), matching the Node, Go and Python SDKs.
+        // ENABLE_STRICT already requires equal counts in validateInsertRequest. More token maps than records
+        // can never be paired, so it is rejected here instead of failing with IndexOutOfBoundsException.
         for (int index = 0; index < tokens.size(); index++) {
+            if (index >= values.size()) {
+                LogUtil.printErrorLog(Utils.parameterizedString(
+                        ErrorLogs.TOKENS_VALUES_SIZE_MISMATCH.getLog(), InterfaceName.INSERT.getName()
+                ));
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.TokensValuesSizeMismatch.getMessage());
+            }
             HashMap<String, Object> tokensMap = tokens.get(index);
             HashMap<String, Object> valuesMap = values.get(index);
             if (tokensMap == null || valuesMap == null) {
