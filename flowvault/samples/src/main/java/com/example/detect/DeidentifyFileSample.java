@@ -12,11 +12,17 @@ import com.skyflow.enums.LogLevel;
 import com.skyflow.errors.SkyflowException;
 
 /**
- * De-identifies a local file with the Detect V2 API. The first call submits the run and returns its
- * id; the second submits and polls, and writes the outputs next to the input on success.
+ * De-identifies a local file with the Detect V2 API. With {@code waitForResult} false the sample
+ * submits the run and returns its id; with it true the sample submits, polls, and on success the
+ * SDK writes the outputs into {@code outputDirectory} (the working directory when unset). Only one
+ * path runs, so each execution creates a single run.
  */
 public class DeidentifyFileSample {
     public static void main(String[] args) throws SkyflowException {
+        // false: submit only and retrieve the result later with GetRunSample.
+        // true: submit and poll until the run is terminal or the budget runs out.
+        boolean waitForResult = true;
+
         Credentials credentials = new Credentials();
         credentials.setPath("<YOUR_CREDENTIALS_FILE_PATH>"); // Replace with the path to the credentials file
 
@@ -32,16 +38,19 @@ public class DeidentifyFileSample {
                 .build();
 
         try {
-            // Submit only: the API's own behaviour. Keep the run id and retrieve the result with getRun.
-            DeidentifyFileResponse submitted = skyflowClient.detect().deidentifyFile(
-                    DeidentifyFileRequest.builder()
-                            .filePath("<PATH_TO_FILE>")             // BASE64 and the format are derived from the file
-                            .configurationId("<CONFIGURATION_ID>")  // Replace with a Detect configuration id
-                            .build());
-            System.out.println("Submitted run " + submitted.getRunId());
+            if (!waitForResult) {
+                // Submit only: the API's own behaviour. Keep the run id and retrieve the result with getRun.
+                DeidentifyFileResponse submitted = skyflowClient.detect().deidentifyFile(
+                        DeidentifyFileRequest.builder()
+                                .filePath("<PATH_TO_FILE>")             // BASE64 and the format are derived from the file
+                                .configurationId("<CONFIGURATION_ID>")  // Replace with a Detect configuration id
+                                .build());
+                System.out.println("Submitted run " + submitted.getRunId() + "; retrieve it with getRun");
+                return;
+            }
 
             // Submit and poll: waits up to 90 seconds with exponential backoff, then writes
-            // processed-<name>.<ext> and processed-<name>.json into the output directory.
+            // processed-<name>.<ext> and processed-entities-<name>.json into the output directory.
             DeidentifyFileResponse polled = skyflowClient.detect().deidentifyFile(
                     DeidentifyFileRequest.builder()
                             .filePath("<PATH_TO_FILE>")

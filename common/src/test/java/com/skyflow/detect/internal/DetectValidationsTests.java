@@ -6,7 +6,7 @@ import com.skyflow.detect.DetectConfiguration;
 import com.skyflow.detect.EntityType;
 import com.skyflow.detect.GetRunRequest;
 import com.skyflow.detect.RedactionLevel;
-import com.skyflow.detect.RedactionType;
+import com.skyflow.enums.RedactionType;
 import com.skyflow.detect.ReidentifyStringRequest;
 import com.skyflow.errors.BaseErrorMessage;
 import com.skyflow.errors.ErrorCode;

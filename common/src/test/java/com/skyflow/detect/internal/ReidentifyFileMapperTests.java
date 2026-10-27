@@ -6,12 +6,12 @@ import com.skyflow.detect.EntityType;
 import com.skyflow.detect.FileDataFormat;
 import com.skyflow.detect.FileOutput;
 import com.skyflow.detect.RedactionLevel;
-import com.skyflow.detect.RedactionType;
+import com.skyflow.enums.RedactionType;
 import com.skyflow.detect.ReidentifyFileRequest;
 import com.skyflow.detect.ReidentifyFileResponse;
-import com.skyflow.generated.detect.rest.core.ObjectMappers;
-import com.skyflow.generated.detect.rest.resources.filesv2.requests.ReidentifyFileRequestV2;
-import com.skyflow.generated.detect.rest.types.ReidentifyFileResponseV2;
+import com.skyflow.generated.common.rest.core.ObjectMappers;
+import com.skyflow.generated.common.rest.resources.filesv2.requests.ReidentifyFileRequestV2;
+import com.skyflow.generated.common.rest.types.ReidentifyFileResponseV2;
 import org.junit.Assert;
 import org.junit.Test;
 

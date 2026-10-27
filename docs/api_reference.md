@@ -1,11 +1,16 @@
 # API Reference
 
-A reference for the public Skyflow Java SDK surface: client-management methods, config classes, request and response objects, helper classes, enums, and service-account utilities. For task-oriented usage and examples, see the [README](../README.md).
+A reference for the public Skyflow Java SDK surface: client-management methods, config classes, request and response objects, helper classes, enums, and service-account utilities.
+
+The vault, connection and file-upload classes belong to the skyvault SDK (`com.skyflow:skyflow-java`). The Detect classes in `com.skyflow.detect`, together with the credentials, config and service-account classes, live in the shared `common` module and apply to both the skyvault and the flowvault SDK (`com.skyflow:skyflow-flowvault-java`). Where a Detect field is specific to one vault type the table says so. The flowvault vault-operation classes (bulk insert, tokenize, detokenize and delete) are documented in the [flowvault README](../flowvault/README.md).
+
+For task-oriented usage and examples, see the [skyvault README](../skyvault/README.md) and the [flowvault README](../flowvault/README.md).
 
 All attributes, parameters, and enum values below are taken directly from the SDK source.
 
 ## Table of Contents
 
+- [Detect API](#detect-api)
 - [Client management methods](#client-management-methods)
 - [Config classes](#config-classes)
 - [Request objects](#request-objects)
@@ -13,6 +18,23 @@ All attributes, parameters, and enum values below are taken directly from the SD
 - [Helper classes](#helper-classes)
 - [Enums](#enums)
 - [Service account utilities](#service-account-utilities)
+
+---
+
+## Detect API
+
+Shared by the skyvault and flowvault SDKs. `skyflowClient.detect()` and `skyflowClient.detect(vaultId)` return a `DetectController`; every class below is in `com.skyflow.detect`. Usage and examples: [skyvault README](../skyvault/README.md#detect), [flowvault README](../flowvault/README.md#detect).
+
+| Method | Request | Response |
+|--------|---------|----------|
+| `deidentifyString` | [`DeidentifyStringRequest`](#deidentifystringrequest) | [`DeidentifyStringResponse`](#deidentifystringresponse) |
+| `deidentifyFile` | [`DeidentifyFileRequest`](#deidentifyfilerequest) | [`DeidentifyFileResponse`](#deidentifyfileresponse) |
+| `reidentifyString` | [`ReidentifyStringRequest`](#reidentifystringrequest) | [`ReidentifyStringResponse`](#reidentifystringresponse) |
+| `reidentifyFile` | [`ReidentifyFileRequest`](#reidentifyfilerequest) | [`ReidentifyFileResponse`](#reidentifyfileresponse) |
+| `getRun` | [`GetRunRequest`](#getrunrequest) | [`GetRunResponse`](#getrunresponse) |
+| `checkGuardrails` | [`CheckGuardrailsRequest`](#checkguardrailsrequest) | [`CheckGuardrailsResponse`](#checkguardrailsresponse) |
+
+Configuration and helper classes: [`DetectConfiguration`](#detectconfiguration), [`Detect`](#detect), [`Entity`](#entity), [`Transformation` and `ShiftDates`](#transformation-and-shiftdates), [`CustomType`](#customtype), [`ObjectEntity`](#objectentity), [`FileMapping`](#filemapping), [`Media`](#media) (with `Audio`, `Bleep`, `Document`, `Pdf`, `Image`), [`PollOptions`](#polloptions), [`RedactionLevel`](#redactionlevel), [`DetectedEntity`](#detectedentity), [`EntityLocation`](#entitylocation), [`Metrics`](#metrics), [`FileOutput`](#fileoutput). Enums: [Detect enums](#detect-enums).
 
 ---
 
@@ -211,8 +233,8 @@ Parameters listed with their defaults as defined in the builders.
 | Builder method | Default | Description |
 |----------------|---------|-------------|
 | `text(String)` | _(required)_ | Text to de-identify. |
-| `configurationId(String)` | `null` | Id of a Detect configuration created in Studio or through the management API. |
-| `configuration(DetectConfiguration)` | `null` | Inline configuration. See [`DetectConfiguration`](#detectconfiguration). Supply this or `configurationId`. |
+| `configurationId(String)` | `null` | Id of a Detect configuration created through the management API. |
+| `configuration(DetectConfiguration)` | `null` | Inline configuration. See [`DetectConfiguration`](#detectconfiguration).|
 
 ### `DeidentifyFileRequest`
 
@@ -228,7 +250,7 @@ Parameters listed with their defaults as defined in the builders.
 | `configurationId(String)` | `null` | Id of a stored Detect configuration. |
 | `configuration(DetectConfiguration)` | `null` | Inline configuration. See [`DetectConfiguration`](#detectconfiguration). |
 | `pollOptions(PollOptions)` | `null` | Poll the run after submitting. `null` submits only and returns the run id. See [`PollOptions`](#polloptions). |
-| `outputDirectory(String)` | working directory | Where outputs are written on success. Requires `pollOptions` and a local file. |
+| `outputDirectory(String)` | working directory | Where outputs are written on success. Requires `pollOptions` and a local file; setting it without `pollOptions` fails client-side validation. |
 
 ### `ReidentifyStringRequest`
 
@@ -247,8 +269,8 @@ Parameters listed with their defaults as defined in the builders.
 |----------------|---------|-------------|
 | `dataSource(DataSourceType)` | _(required)_ | `BASE64`, `SKYFLOW_ID` or `PRESIGNED_URL`. |
 | `value(String)` | _(required)_ | Base64 content, a skyflow id, or a presigned URL, per `dataSource`. |
-| `dataFormat(FileDataFormat)` | `null` | File format. |
-| `redactionLevel(List<RedactionLevel>)` | `null` | Per-entity redaction rules. See [`RedactionLevel`](#redactionlevel). |
+| `dataFormat(FileDataFormat)` | `null` | File format. Limited to the formats that support `VAULT_TOKEN`: `TXT`, `CSV`, `JSON`, `JSONL`, `XML`, `DOCX`, `XLSX` or `PPTX`. |
+| `redactionLevel(List<RedactionLevel>)` | `null` | Redaction rules. See [`RedactionLevel`](#redactionlevel). |
 
 ### `GetRunRequest`
 
@@ -265,7 +287,7 @@ Parameters listed with their defaults as defined in the builders.
 | Builder method | Default | Description |
 |----------------|---------|-------------|
 | `text(String)` | _(required)_ | Text to screen. |
-| `checkToxicity(Boolean)` | `true` on the server | Whether to check for toxicity. |
+| `checkToxicity(Boolean)` | `null` | Whether to check for toxicity. Sent only when set. |
 | `denyTopics(List<String>)` | `null` | Topics to deny. |
 
 ### `InvokeConnectionRequest`
@@ -501,7 +523,7 @@ Each element returned by `getDetokenizedFields()` and `getErrors()`.
 |----------------|---------|-------------|
 | `entityType(EntityType)` | `ALL` | Entity type. See [`EntityType`](#entitytype). |
 | `deidentificationType(DeidentificationType)` | `ENTITY_UNIQUE_COUNTER` | How the value is replaced. See [`DeidentificationType`](#deidentificationtype). |
-| `destination(String)` | `null` | For `VAULT_TOKEN`: the `table.column` that stores the value. |
+| `destination(String)` | `null` | For `VAULT_TOKEN`: where the value is stored. A `table.column` on skyvault vaults, a token group name on flowvault vaults. Must already exist. |
 | `transformation(Transformation)` | `null` | Date shifting. See [`Transformation`](#transformation). |
 
 ### `Transformation` and `ShiftDates`
@@ -555,14 +577,14 @@ Each element returned by `getDetokenizedFields()` and `getErrors()`.
 
 ### `RedactionLevel`
 
-`com.skyflow.detect` — element of `ReidentifyStringRequest.redactionLevel()`. For skyvault vaults name an entity and a redaction type.
+`com.skyflow.detect` — element of `redactionLevel()` on `ReidentifyStringRequest` and `ReidentifyFileRequest`. Each rule names one source and one replacement: `entityName` plus `redactionType` on skyvault vaults, `tokenGroupName` plus `redactionPattern` on flowvault vaults. Every field is optional on the API; the server rejects invalid combinations.
 
 | Builder method | Description |
 |----------------|-------------|
-| `entityName(EntityType)` | Entity the rule applies to. |
-| `redactionType(RedactionType)` | `PLAIN_TEXT`, `MASKED`, `REDACTED` or `DEFAULT`. See [`RedactionType`](#redactiontype). |
-| `tokenGroupName(String)` | Flowvault vaults only. |
-| `redactionPattern(String)` | Flowvault vaults only. |
+| `entityName(EntityType)` | Skyvault vaults: entity type the rule applies to. |
+| `redactionType(RedactionType)` | Skyvault vaults: `PLAIN_TEXT`, `MASKED`, `REDACTED` or `DEFAULT`, the same `com.skyflow.enums.RedactionType` used by `get` and `detokenize`. See [`RedactionType`](#redactiontype). |
+| `tokenGroupName(String)` | Flowvault vaults: token group the rule applies to. |
+| `redactionPattern(String)` | Flowvault vaults: name of a redaction pattern configured in the vault. |
 
 ### `DetectedEntity`
 
@@ -633,7 +655,7 @@ Each element returned by `getDetokenizedFields()` and `getErrors()`.
 
 ### `RedactionType`
 
-`com.skyflow.enums`
+`com.skyflow.enums` — one enum for every place a redaction is chosen: `GetRequest.redactionType`, `DetokenizeData`, and Detect's `RedactionLevel.redactionType` on skyvault vaults.
 
 | Value | Description |
 |-------|-------------|
@@ -676,7 +698,6 @@ All in `com.skyflow.detect`.
 | `FileDataFormat` | `BMP`, `CSV`, `DCM`, `DOC`, `DOCX`, `GIF`, `JPEG`, `JPG`, `JSON`, `JSONL`, `MP3`, `PDF`, `PNG`, `PPT`, `PPTX`, `TIF`, `TIFF`, `TXT`, `WAV`, `XLS`, `XLSX`, `XML`, `ZIP` |
 | `DetectRunStatus` | `QUEUED`, `IN_PROGRESS`, `SUCCESS`, `FAILED`, `UNKNOWN`. `SUCCESS`, `FAILED` and `UNKNOWN` end polling. |
 | `ReturnEntitiesType` | `EXCLUDE_SENSITIVE_DATA` _(default)_, `ALL`, `NONE` |
-| `RedactionType` | `PLAIN_TEXT`, `MASKED`, `REDACTED`, `DEFAULT` |
 | `MaskingMethod` | `NONE`, `BLUR`, `BLACKBOX` |
 | `OutputTranscriptionType` | `NONE`, `TRANSCRIPTION`, `MEDICAL_TRANSCRIPTION`, `DIARIZED_TRANSCRIPTION`, `MEDICAL_DIARIZED_TRANSCRIPTION` |
 | `PdfProcessingMode` | `NONE`, `OCR`, `TEXT_LAYER` |

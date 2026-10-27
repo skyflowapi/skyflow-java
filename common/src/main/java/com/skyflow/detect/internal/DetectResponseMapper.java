@@ -13,12 +13,12 @@ import com.skyflow.detect.DetectedEntity;
 import com.skyflow.detect.EntityLocation;
 import com.skyflow.detect.Metrics;
 import com.skyflow.detect.ReidentifyStringResponse;
-import com.skyflow.generated.detect.rest.types.DeidentifyStringResponseV2;
-import com.skyflow.generated.detect.rest.types.DeidentifyStringResponseV2DetectedEntity;
-import com.skyflow.generated.detect.rest.types.DeidentifyStringResponseV2EntityLocation;
-import com.skyflow.generated.detect.rest.types.DetectGuardrailsResponseV2;
-import com.skyflow.generated.detect.rest.types.DetectRunsResponseV2;
-import com.skyflow.generated.detect.rest.types.ReidentifyStringResponseV2;
+import com.skyflow.generated.common.rest.types.DeidentifyStringResponseV2;
+import com.skyflow.generated.common.rest.types.DeidentifyStringResponseV2DetectedEntity;
+import com.skyflow.generated.common.rest.types.DeidentifyStringResponseV2EntityLocation;
+import com.skyflow.generated.common.rest.types.DetectGuardrailsResponseV2;
+import com.skyflow.generated.common.rest.types.DetectRunsResponseV2;
+import com.skyflow.generated.common.rest.types.ReidentifyStringResponseV2;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -83,9 +83,9 @@ public final class DetectResponseMapper {
 
     public static GetRunResponse toGetRunResponse(String runId, DetectRunsResponseV2 response) {
         List<FileOutput> outputs = new ArrayList<>();
-        List<com.skyflow.generated.detect.rest.types.FileOutput> apiOutputs = response.getOutput().orElse(null);
+        List<com.skyflow.generated.common.rest.types.FileOutput> apiOutputs = response.getOutput().orElse(null);
         if (apiOutputs != null) {
-            for (com.skyflow.generated.detect.rest.types.FileOutput apiOutput : apiOutputs) {
+            for (com.skyflow.generated.common.rest.types.FileOutput apiOutput : apiOutputs) {
                 if (apiOutput != null) {
                     outputs.add(toFileOutput(apiOutput));
                 }
@@ -112,7 +112,7 @@ public final class DetectResponseMapper {
                 run.getMetrics(), run.getMessage());
     }
 
-    public static FileOutput toFileOutput(com.skyflow.generated.detect.rest.types.FileOutput apiOutput) {
+    public static FileOutput toFileOutput(com.skyflow.generated.common.rest.types.FileOutput apiOutput) {
         return new FileOutput(
                 apiOutput.getProcessedFile().orElse(null),
                 apiOutput.getProcessedFileType().map(Object::toString).orElse(null),
@@ -133,7 +133,7 @@ public final class DetectResponseMapper {
         }
     }
 
-    public static Metrics toMetrics(com.skyflow.generated.detect.rest.types.Metrics metrics) {
+    public static Metrics toMetrics(com.skyflow.generated.common.rest.types.Metrics metrics) {
         return new Metrics(
                 metrics.getSize().orElse(null),
                 metrics.getWordCount().orElse(null),
