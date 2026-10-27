@@ -435,6 +435,81 @@ public class BaseVaultClientTests {
     }
 
     @Test
+    public void testRefreshAfter401_failedGenerationIsNotRepeatedForTheSameToken() {
+        ScriptedClient client = new ScriptedClient(mintableCredentials());
+        String rejected = jwtExpiringIn(-2);
+        client.token = rejected;
+        client.failure = new SkyflowException("auth service down");
+
+        Assert.assertNull(client.refreshBearerTokenAfterUnauthorized(rejected));
+        Assert.assertNull(client.refreshBearerTokenAfterUnauthorized(rejected));
+        Assert.assertNull(client.refreshBearerTokenAfterUnauthorized(rejected));
+        Assert.assertEquals("later 401s on the same token must not generate again", 1, client.generations.get());
+        Assert.assertEquals(rejected, client.token);
+    }
+
+    @Test
+    public void testRefreshAfter401_sameTokenBackIsNotRepeatedForTheSameToken() {
+        ScriptedClient client = new ScriptedClient(mintableCredentials());
+        String rejected = jwtExpiringIn(-2);
+        client.token = rejected;
+        client.script.add(rejected);
+
+        Assert.assertNull(client.refreshBearerTokenAfterUnauthorized(rejected));
+        Assert.assertNull(client.refreshBearerTokenAfterUnauthorized(rejected));
+        Assert.assertEquals(1, client.generations.get());
+    }
+
+    @Test
+    public void testRefreshAfter401_recoversAfterStartOfMethodCheckStoresNewToken() throws Exception {
+        ScriptedClient client = new ScriptedClient(mintableCredentials());
+        String rejected = jwtExpiringIn(-2);
+        client.token = rejected;
+        client.failure = new SkyflowException("auth service down");
+        Assert.assertNull(client.refreshBearerTokenAfterUnauthorized(rejected));
+
+        // Auth comes back; the next method call's start-of-method check mints and stores a token.
+        client.failure = null;
+        String stored = jwtExpiringIn(-3);
+        client.script.add(stored);
+        client.setBearerToken(null);
+        Assert.assertEquals(stored, client.token);
+
+        // That token expires too and is rejected: refresh must generate again, not stay stuck.
+        client.script.add("fresh-after-recovery");
+        Assert.assertEquals("fresh-after-recovery", client.refreshBearerTokenAfterUnauthorized(stored));
+        Assert.assertEquals(3, client.generations.get());
+    }
+
+    @Test
+    public void testRefreshAfter401_concurrentGenerationFailuresShareOneAttempt() throws Exception {
+        ScriptedClient client = new ScriptedClient(mintableCredentials());
+        String rejected = jwtExpiringIn(-2);
+        client.token = rejected;
+        client.failure = new SkyflowException("auth service down");
+        int threads = 8;
+        ExecutorService pool = Executors.newFixedThreadPool(threads);
+        CountDownLatch start = new CountDownLatch(1);
+        java.util.List<Future<String>> results = new ArrayList<>();
+        try {
+            for (int i = 0; i < threads; i++) {
+                results.add(pool.submit(() -> {
+                    start.await();
+                    return client.refreshBearerTokenAfterUnauthorized(rejected);
+                }));
+            }
+            start.countDown();
+            for (Future<String> result : results) {
+                Assert.assertNull(result.get(10, TimeUnit.SECONDS));
+            }
+        } finally {
+            pool.shutdownNow();
+        }
+        Assert.assertEquals("eight 401s during an auth outage must cost one failed mint, not eight", 1, client.generations.get());
+        Assert.assertEquals(rejected, client.token);
+    }
+
+    @Test
     public void testRefreshAfter401_reusesTokenAnotherRequestAlreadyRegenerated() {
         ScriptedClient client = new ScriptedClient(mintableCredentials());
         String rejected = jwtExpiringIn(-2);

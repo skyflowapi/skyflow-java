@@ -37,6 +37,10 @@ class BaseVaultClient<V extends BaseVaultConfig> {
     protected BaseCredentials finalCredentials;
     protected String token;
     protected String apiKey;
+    // The token whose regeneration after a 401 last failed. Guarded by this. Further 401s on that
+    // same token return without generating again, so an auth outage costs one generation per
+    // token instead of one per rejected request. Cleared whenever a token is stored.
+    private String refreshFailedFor;
 
     /**
      * A 401 is treated as token expiry only if the token the SDK sent has an {@code exp} at or
@@ -106,7 +110,10 @@ class BaseVaultClient<V extends BaseVaultConfig> {
      *   <li>the effective credentials are a static token or an API key, which the SDK cannot replace;</li>
      *   <li>the rejected token is not at or past expiry (within {@link #BEARER_TOKEN_EXPIRY_WINDOW_SECONDS}),
      *       so the {@code 401} was not caused by expiry and a new token would not help;</li>
-     *   <li>generating a replacement failed, or produced the very token that was rejected.</li>
+     *   <li>generating a replacement failed, or produced the very token that was rejected;</li>
+     *   <li>a replacement for this same token was already attempted and failed, so the outcome is
+     *       shared with every request still holding it. A later method call recovers through
+     *       {@link #setBearerToken(BaseCredentials)}, which clears that record when it stores a token.</li>
      * </ul>
      * Synchronized with {@link #setBearerToken(BaseCredentials)} and {@link #getToken()} so concurrent
      * {@code 401}s on one token share a single regeneration: a caller that finds the cached token
@@ -126,19 +133,31 @@ class BaseVaultClient<V extends BaseVaultConfig> {
             LogUtil.printInfoLog(InfoLogs.BEARER_TOKEN_REJECTED_REUSING_REGENERATED.getLog());
             return cached;
         }
+        if (rejected != null && rejected.equals(refreshFailedFor)) {
+            LogUtil.printInfoLog(InfoLogs.BEARER_TOKEN_REJECTED_REGENERATION_ALREADY_FAILED.getLog());
+            return null;
+        }
         LogUtil.printInfoLog(InfoLogs.BEARER_TOKEN_REJECTED_REGENERATING.getLog());
         try {
             String fresh = generateBearerToken(credentials);
             if (fresh == null || fresh.equals(rejected)) {
                 LogUtil.printWarningLog(WarningLogs.BEARER_TOKEN_REGENERATION_RETURNED_REJECTED_TOKEN.getLog());
+                refreshFailedFor = rejected;
                 return null;
             }
-            this.token = fresh;
+            storeToken(fresh);
             return fresh;
         } catch (SkyflowException e) {
             LogUtil.printWarningLog(WarningLogs.BEARER_TOKEN_REGENERATION_AFTER_401_FAILED.getLog() + " " + e.getMessage());
+            refreshFailedFor = rejected;
             return null;
         }
+    }
+
+    /** Stores a token the SDK obtained and forgets any failed regeneration, so refresh can run again. */
+    private void storeToken(String fresh) {
+        this.token = fresh;
+        this.refreshFailedFor = null;
     }
 
     /** Single point that turns credentials into a bearer token; tests substitute it. */
@@ -169,6 +188,7 @@ class BaseVaultClient<V extends BaseVaultConfig> {
             if (original != null && !original.equals(this.finalCredentials)) {
                 token = null;
                 apiKey = null;
+                refreshFailedFor = null;
             }
         } catch (DotenvException e) {
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyCredentials.getMessage());
@@ -186,10 +206,10 @@ class BaseVaultClient<V extends BaseVaultConfig> {
             LogUtil.printInfoLog(InfoLogs.USE_API_KEY.getLog());
             token = this.finalCredentials.getApiKey();
         } else if (token == null || token.trim().isEmpty()) {
-            token = generateBearerToken(this.finalCredentials);
+            storeToken(generateBearerToken(this.finalCredentials));
         } else if (Token.isExpired(token)) {
             LogUtil.printInfoLog(InfoLogs.BEARER_TOKEN_EXPIRED.getLog());
-            token = generateBearerToken(this.finalCredentials);
+            storeToken(generateBearerToken(this.finalCredentials));
         } else {
             LogUtil.printInfoLog(InfoLogs.REUSE_BEARER_TOKEN.getLog());
         }

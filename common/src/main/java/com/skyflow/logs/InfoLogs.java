@@ -23,6 +23,7 @@ public enum InfoLogs {
     BEARER_TOKEN_REJECTED_REGENERATING("Bearer token rejected with 401 and is past expiry; regenerating once and resending the request."),
     BEARER_TOKEN_REJECTED_REUSING_REGENERATED("Bearer token rejected with 401; reusing the token another request already regenerated."),
     BEARER_TOKEN_REJECTED_NOT_DUE("Bearer token rejected with 401 but is not near expiry; not retrying."),
+    BEARER_TOKEN_REJECTED_REGENERATION_ALREADY_FAILED("Bearer token rejected with 401; regeneration for this token already failed, not retrying."),
     USE_CLIENT_PROVIDED_BEARER_TOKEN("Using bearer token provided by client."),
     USE_API_KEY("Using api key."),
     REUSE_API_KEY("Reusing api key."),
