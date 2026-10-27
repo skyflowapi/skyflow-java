@@ -5,8 +5,8 @@ import com.google.gson.JsonObject;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.BaseErrorMessage;
 import com.skyflow.errors.SkyflowException;
-import com.skyflow.generated.auth.rest.core.ApiClientException;
-import com.skyflow.generated.auth.rest.types.V1GetAuthTokenResponse;
+import com.skyflow.generated.common.rest.core.ApiClientException;
+import com.skyflow.generated.common.rest.types.GetAuthTokenResponse;
 import com.skyflow.utils.BaseConstants;
 import com.skyflow.utils.BaseUtils;
 import org.junit.Assert;
@@ -361,8 +361,8 @@ public class BearerTokenTests {
 
     @Test
     public void testExtractAccessTokenMissingThrowsSkyflowException() throws Exception {
-        V1GetAuthTokenResponse response = V1GetAuthTokenResponse.builder().build();
-        Method method = BearerToken.class.getDeclaredMethod("extractAccessToken", V1GetAuthTokenResponse.class);
+        GetAuthTokenResponse response = GetAuthTokenResponse.builder().build();
+        Method method = BearerToken.class.getDeclaredMethod("extractAccessToken", GetAuthTokenResponse.class);
         method.setAccessible(true);
         try {
             method.invoke(null, response);
@@ -377,8 +377,8 @@ public class BearerTokenTests {
 
     @Test
     public void testExtractAccessTokenPresentReturnsToken() throws Exception {
-        V1GetAuthTokenResponse response = V1GetAuthTokenResponse.builder().accessToken("test-access-token").build();
-        Method method = BearerToken.class.getDeclaredMethod("extractAccessToken", V1GetAuthTokenResponse.class);
+        GetAuthTokenResponse response = GetAuthTokenResponse.builder().accessToken("test-access-token").build();
+        Method method = BearerToken.class.getDeclaredMethod("extractAccessToken", GetAuthTokenResponse.class);
         method.setAccessible(true);
         Object result = method.invoke(null, response);
         Assert.assertEquals("test-access-token", result);

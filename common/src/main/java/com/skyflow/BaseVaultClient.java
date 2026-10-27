@@ -6,7 +6,7 @@ import com.skyflow.config.BaseVaultConfig;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.BaseErrorMessage;
 import com.skyflow.errors.SkyflowException;
-import com.skyflow.generated.detect.rest.core.ObjectMappers;
+import com.skyflow.generated.common.rest.core.ObjectMappers;
 import com.skyflow.logs.ErrorLogs;
 import com.skyflow.logs.InfoLogs;
 import com.skyflow.serviceaccount.util.Token;

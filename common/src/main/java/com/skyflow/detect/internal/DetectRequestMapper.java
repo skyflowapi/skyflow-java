@@ -31,36 +31,36 @@ import com.skyflow.detect.Transformation;
 import com.skyflow.errors.BaseErrorMessage;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.SkyflowException;
-import com.skyflow.generated.detect.rest.resources.filesv2.requests.DeidentifyFileRequestV2;
-import com.skyflow.generated.detect.rest.resources.filesv2.types.DeidentifyFileRequestV2DataFormat;
-import com.skyflow.generated.detect.rest.resources.filesv2.types.DeidentifyFileRequestV2DataSource;
-import com.skyflow.generated.detect.rest.resources.guardrailsv2.requests.DetectGuardrailsRequestV2;
+import com.skyflow.generated.common.rest.resources.filesv2.requests.DeidentifyFileRequestV2;
+import com.skyflow.generated.common.rest.resources.filesv2.types.DeidentifyFileRequestV2DataFormat;
+import com.skyflow.generated.common.rest.resources.filesv2.types.DeidentifyFileRequestV2DataSource;
+import com.skyflow.generated.common.rest.resources.guardrailsv2.requests.DetectGuardrailsRequestV2;
 import com.skyflow.logs.ErrorLogs;
 import com.skyflow.utils.BaseUtils;
 import com.skyflow.utils.logger.LogUtil;
-import com.skyflow.generated.detect.rest.resources.stringsv2.requests.DeidentifyStringRequestV2;
-import com.skyflow.generated.detect.rest.resources.stringsv2.requests.ReidentifyStringRequestV2;
-import com.skyflow.generated.detect.rest.types.AudioV2;
-import com.skyflow.generated.detect.rest.types.AudioV2Bleep;
-import com.skyflow.generated.detect.rest.types.AudioV2OutputTranscription;
-import com.skyflow.generated.detect.rest.types.DetectConfigV2;
-import com.skyflow.generated.detect.rest.types.DetectCustomTypes;
-import com.skyflow.generated.detect.rest.types.DetectEntity;
-import com.skyflow.generated.detect.rest.types.DetectEntityDeidentificationType;
-import com.skyflow.generated.detect.rest.types.DetectEntityEntityType;
-import com.skyflow.generated.detect.rest.types.DetectObjectEntity;
-import com.skyflow.generated.detect.rest.types.DetectObjectEntityDeidentificationType;
-import com.skyflow.generated.detect.rest.types.DetectObjectEntityEntityType;
-import com.skyflow.generated.detect.rest.types.DetectReturnEntities;
-import com.skyflow.generated.detect.rest.types.DocumentV2;
-import com.skyflow.generated.detect.rest.types.DocumentV2Pdf;
-import com.skyflow.generated.detect.rest.types.DocumentV2PdfProcessingMode;
-import com.skyflow.generated.detect.rest.types.EntityTransformation;
-import com.skyflow.generated.detect.rest.types.ImageV2;
-import com.skyflow.generated.detect.rest.types.ImageV2MaskingMethod;
-import com.skyflow.generated.detect.rest.types.RedactionLevelEntityName;
-import com.skyflow.generated.detect.rest.types.RedactionLevelRedactionType;
-import com.skyflow.generated.detect.rest.types.TransformationShiftDates;
+import com.skyflow.generated.common.rest.resources.stringsv2.requests.DeidentifyStringRequestV2;
+import com.skyflow.generated.common.rest.resources.stringsv2.requests.ReidentifyStringRequestV2;
+import com.skyflow.generated.common.rest.types.AudioV2;
+import com.skyflow.generated.common.rest.types.AudioV2Bleep;
+import com.skyflow.generated.common.rest.types.AudioV2OutputTranscription;
+import com.skyflow.generated.common.rest.types.DetectConfigV2;
+import com.skyflow.generated.common.rest.types.DetectCustomTypes;
+import com.skyflow.generated.common.rest.types.DetectEntity;
+import com.skyflow.generated.common.rest.types.DetectEntityDeidentificationType;
+import com.skyflow.generated.common.rest.types.DetectEntityEntityType;
+import com.skyflow.generated.common.rest.types.DetectObjectEntity;
+import com.skyflow.generated.common.rest.types.DetectObjectEntityDeidentificationType;
+import com.skyflow.generated.common.rest.types.DetectObjectEntityEntityType;
+import com.skyflow.generated.common.rest.types.DetectReturnEntities;
+import com.skyflow.generated.common.rest.types.DocumentV2;
+import com.skyflow.generated.common.rest.types.DocumentV2Pdf;
+import com.skyflow.generated.common.rest.types.DocumentV2PdfProcessingMode;
+import com.skyflow.generated.common.rest.types.EntityTransformation;
+import com.skyflow.generated.common.rest.types.ImageV2;
+import com.skyflow.generated.common.rest.types.ImageV2MaskingMethod;
+import com.skyflow.generated.common.rest.types.RedactionLevelEntityName;
+import com.skyflow.generated.common.rest.types.RedactionLevelRedactionType;
+import com.skyflow.generated.common.rest.types.TransformationShiftDates;
 
 /**
  * Converts public SDK request models into generated V2 API requests. Internal to the SDK.
@@ -178,9 +178,9 @@ public final class DetectRequestMapper {
         return builder.build();
     }
 
-    static com.skyflow.generated.detect.rest.types.Detect toDetect(Detect detect) {
-        com.skyflow.generated.detect.rest.types.Detect.Builder builder =
-                com.skyflow.generated.detect.rest.types.Detect.builder();
+    static com.skyflow.generated.common.rest.types.Detect toDetect(Detect detect) {
+        com.skyflow.generated.common.rest.types.Detect.Builder builder =
+                com.skyflow.generated.common.rest.types.Detect.builder();
         if (detect.getEntities() != null) {
             List<DetectEntity> entities = new ArrayList<>();
             for (Entity entity : detect.getEntities()) {
@@ -276,14 +276,14 @@ public final class DetectRequestMapper {
         return builder.build();
     }
 
-    static List<com.skyflow.generated.detect.rest.types.FileMapping> toFileMappings(List<FileMapping> fileMappings) {
-        List<com.skyflow.generated.detect.rest.types.FileMapping> result = new ArrayList<>();
+    static List<com.skyflow.generated.common.rest.types.FileMapping> toFileMappings(List<FileMapping> fileMappings) {
+        List<com.skyflow.generated.common.rest.types.FileMapping> result = new ArrayList<>();
         for (FileMapping mapping : fileMappings) {
             if (mapping == null) {
                 continue;
             }
-            com.skyflow.generated.detect.rest.types.FileMapping.Builder builder =
-                    com.skyflow.generated.detect.rest.types.FileMapping.builder();
+            com.skyflow.generated.common.rest.types.FileMapping.Builder builder =
+                    com.skyflow.generated.common.rest.types.FileMapping.builder();
             if (mapping.getSource() != null) {
                 builder.source(mapping.getSource());
             }
@@ -304,9 +304,9 @@ public final class DetectRequestMapper {
         return result;
     }
 
-    static com.skyflow.generated.detect.rest.types.Media toMedia(Media media) {
-        com.skyflow.generated.detect.rest.types.Media.Builder builder =
-                com.skyflow.generated.detect.rest.types.Media.builder();
+    static com.skyflow.generated.common.rest.types.Media toMedia(Media media) {
+        com.skyflow.generated.common.rest.types.Media.Builder builder =
+                com.skyflow.generated.common.rest.types.Media.builder();
         if (media.getAudio() != null) {
             builder.audio(toAudio(media.getAudio()));
         }
@@ -380,14 +380,14 @@ public final class DetectRequestMapper {
         return builder.build();
     }
 
-    public static List<com.skyflow.generated.detect.rest.types.RedactionLevel> toRedactionLevels(List<RedactionLevel> levels) {
-        List<com.skyflow.generated.detect.rest.types.RedactionLevel> result = new ArrayList<>();
+    public static List<com.skyflow.generated.common.rest.types.RedactionLevel> toRedactionLevels(List<RedactionLevel> levels) {
+        List<com.skyflow.generated.common.rest.types.RedactionLevel> result = new ArrayList<>();
         for (RedactionLevel level : levels) {
             if (level == null) {
                 continue;
             }
-            com.skyflow.generated.detect.rest.types.RedactionLevel.Builder builder =
-                    com.skyflow.generated.detect.rest.types.RedactionLevel.builder();
+            com.skyflow.generated.common.rest.types.RedactionLevel.Builder builder =
+                    com.skyflow.generated.common.rest.types.RedactionLevel.builder();
             if (level.getEntityName() != null) {
                 builder.entityName(RedactionLevelEntityName.valueOf(level.getEntityName().name()));
             }

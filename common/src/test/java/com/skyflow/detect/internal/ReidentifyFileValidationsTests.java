@@ -3,7 +3,7 @@ package com.skyflow.detect.internal;
 import com.skyflow.detect.DataSourceType;
 import com.skyflow.detect.EntityType;
 import com.skyflow.detect.RedactionLevel;
-import com.skyflow.detect.RedactionType;
+import com.skyflow.enums.RedactionType;
 import com.skyflow.detect.ReidentifyFileRequest;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.BaseErrorMessage;

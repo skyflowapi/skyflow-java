@@ -582,7 +582,7 @@ Each element returned by `getDetokenizedFields()` and `getErrors()`.
 | Builder method | Description |
 |----------------|-------------|
 | `entityName(EntityType)` | Skyvault vaults: entity type the rule applies to. |
-| `redactionType(RedactionType)` | Skyvault vaults: `PLAIN_TEXT`, `MASKED`, `REDACTED` or `DEFAULT`. See [`RedactionType`](#redactiontype). |
+| `redactionType(RedactionType)` | Skyvault vaults: `PLAIN_TEXT`, `MASKED`, `REDACTED` or `DEFAULT`, the same `com.skyflow.enums.RedactionType` used by `get` and `detokenize`. See [`RedactionType`](#redactiontype). |
 | `tokenGroupName(String)` | Flowvault vaults: token group the rule applies to. |
 | `redactionPattern(String)` | Flowvault vaults: name of a redaction pattern configured in the vault. |
 
@@ -655,7 +655,7 @@ Each element returned by `getDetokenizedFields()` and `getErrors()`.
 
 ### `RedactionType`
 
-`com.skyflow.enums`
+`com.skyflow.enums` — one enum for every place a redaction is chosen: `GetRequest.redactionType`, `DetokenizeData`, and Detect's `RedactionLevel.redactionType` on skyvault vaults.
 
 | Value | Description |
 |-------|-------------|
@@ -698,7 +698,6 @@ All in `com.skyflow.detect`.
 | `FileDataFormat` | `BMP`, `CSV`, `DCM`, `DOC`, `DOCX`, `GIF`, `JPEG`, `JPG`, `JSON`, `JSONL`, `MP3`, `PDF`, `PNG`, `PPT`, `PPTX`, `TIF`, `TIFF`, `TXT`, `WAV`, `XLS`, `XLSX`, `XML`, `ZIP` |
 | `DetectRunStatus` | `QUEUED`, `IN_PROGRESS`, `SUCCESS`, `FAILED`, `UNKNOWN`. `SUCCESS`, `FAILED` and `UNKNOWN` end polling. |
 | `ReturnEntitiesType` | `EXCLUDE_SENSITIVE_DATA` _(default)_, `ALL`, `NONE` |
-| `RedactionType` | `PLAIN_TEXT`, `MASKED`, `REDACTED`, `DEFAULT` |
 | `MaskingMethod` | `NONE`, `BLUR`, `BLACKBOX` |
 | `OutputTranscriptionType` | `NONE`, `TRANSCRIPTION`, `MEDICAL_TRANSCRIPTION`, `DIARIZED_TRANSCRIPTION`, `MEDICAL_DIARIZED_TRANSCRIPTION` |
 | `PdfProcessingMode` | `NONE`, `OCR`, `TEXT_LAYER` |

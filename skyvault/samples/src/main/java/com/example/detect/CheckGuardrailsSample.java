@@ -13,17 +13,17 @@ import com.skyflow.errors.SkyflowException;
 import java.util.Arrays;
 
 /**
- * Screens text for toxicity and denied topics before it reaches an LLM.
+ * Screens a prompt for toxicity and denied topics before it is sent to an LLM.
  */
 public class CheckGuardrailsSample {
     public static void main(String[] args) throws SkyflowException {
         Credentials credentials = new Credentials();
-        credentials.setPath("<YOUR_CREDENTIALS_FILE_PATH>");   // Replace with the path to the credentials file
+        credentials.setPath("<YOUR_CREDENTIALS_FILE_PATH>"); // Replace with the path to the credentials file
 
         VaultConfig vaultConfig = new VaultConfig();
-        vaultConfig.setVaultId("<YOUR_VAULT_ID>");              // Replace with the ID of the vault
-        vaultConfig.setClusterId("<YOUR_CLUSTER_ID>");          // Replace with the cluster ID of the vault
-        vaultConfig.setEnv(Env.PROD);                           // Set the environment (e.g., DEV, STAGE, PROD)
+        vaultConfig.setVaultId("<YOUR_VAULT_ID>");         // Replace with the ID of the vault
+        vaultConfig.setClusterId("<YOUR_CLUSTER_ID>");     // Replace with the cluster ID of the vault
+        vaultConfig.setEnv(Env.PROD);                      // Set the environment (e.g., DEV, STAGE, PROD)
 
         Skyflow skyflowClient = Skyflow.builder()
                 .setLogLevel(LogLevel.ERROR)
@@ -31,17 +31,18 @@ public class CheckGuardrailsSample {
                 .addSkyflowCredentials(credentials)
                 .build();
 
+        String userPrompt = "Which party should I vote for?";
         try {
             CheckGuardrailsResponse response = skyflowClient.detect().checkGuardrails(
                     CheckGuardrailsRequest.builder()
-                            .text("Which candidate should I vote for in the upcoming election?")
-                            .checkToxicity(true)                                   // server default is true when omitted
+                            .text(userPrompt)
+                            .checkToxicity(true)
                             .denyTopics(Arrays.asList("politics", "medical advice"))
                             .build());
-            System.out.println("Validation: " + response.getValidation()
-                    + " toxic=" + response.getToxic() + " deniedTopic=" + response.getDeniedTopic());
             if (response.getValidation() == GuardrailsValidation.FAILED) {
-                System.out.println("Blocked by guardrails");
+                System.out.println("Blocked: toxic=" + response.getToxic() + " deniedTopic=" + response.getDeniedTopic());
+            } else {
+                System.out.println("Prompt passed guardrails.");
             }
         } catch (SkyflowException e) {
             System.err.println("Error during checkGuardrails:");

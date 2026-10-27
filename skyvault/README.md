@@ -1924,7 +1924,7 @@ System.out.println(response.getProcessedText());
 // My name is John Doe and my email is j*******@acme.com.
 ```
 
-A `RedactionLevel` names one source and one replacement. On skyvault vaults the source is an `entityName` and the replacement a `redactionType`. The `tokenGroupName` and `redactionPattern` fields are the flowvault equivalents and do not apply to skyvault vaults. Every field is optional on the API, so the SDK passes the list through as given and the server rejects invalid combinations.
+A `RedactionLevel` names one source and one replacement. On skyvault vaults the source is an `entityName` and the replacement a `redactionType`, the same `com.skyflow.enums.RedactionType` that `get` and `detokenize` use. The `tokenGroupName` and `redactionPattern` fields are the flowvault equivalents and do not apply to skyvault vaults. Every field is optional on the API, so the SDK passes the list through as given and the server rejects invalid combinations.
 
 ## Reidentify file
 

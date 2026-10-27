@@ -29,12 +29,12 @@ import java.util.concurrent.TimeUnit;
 public class DeidentifyFileAsyncSample {
     public static void main(String[] args) throws SkyflowException, InterruptedException {
         Credentials credentials = new Credentials();
-        credentials.setPath("<YOUR_CREDENTIALS_FILE_PATH>");   // Replace with the path to the credentials file
+        credentials.setPath("<YOUR_CREDENTIALS_FILE_PATH>"); // Replace with the path to the credentials file
 
         VaultConfig vaultConfig = new VaultConfig();
-        vaultConfig.setVaultId("<YOUR_VAULT_ID>");              // Replace with the ID of the vault
-        vaultConfig.setClusterId("<YOUR_CLUSTER_ID>");          // Replace with the cluster ID of the vault
-        vaultConfig.setEnv(Env.PROD);                           // Set the environment (e.g., DEV, STAGE, PROD)
+        vaultConfig.setVaultId("<YOUR_VAULT_ID>");         // Replace with the ID of the vault
+        vaultConfig.setClusterId("<YOUR_CLUSTER_ID>");     // Replace with the cluster ID of the vault
+        vaultConfig.setEnv(Env.PROD);                      // Set the environment (e.g., DEV, STAGE, PROD)
 
         Skyflow skyflowClient = Skyflow.builder()
                 .setLogLevel(LogLevel.ERROR)
@@ -53,10 +53,10 @@ public class DeidentifyFileAsyncSample {
                 // and future.cancel(true) interrupts the poll, which returns the last run the SDK saw.
                 futures.add(pool.submit(() -> skyflowClient.detect().deidentifyFile(
                         DeidentifyFileRequest.builder()
-                                .filePath(file)                           // BASE64 data source, format inferred from the extension
+                                .filePath(file)                           // BASE64 and the format are derived from the file
                                 .configurationId("<CONFIGURATION_ID>")    // Replace with a Detect configuration id
-                                .pollOptions(PollOptions.builder().waitTime(120).build())   // 1..300 s, default 60
-                                .outputDirectory("<OUTPUT_DIRECTORY>")    // optional, defaults to the working directory
+                                .pollOptions(PollOptions.builder().waitTime(120).build())
+                                .outputDirectory("<OUTPUT_DIRECTORY>")    // optional; defaults to the working directory
                                 .build())));
             }
 
@@ -68,12 +68,12 @@ public class DeidentifyFileAsyncSample {
                     System.out.println(file + ": run " + response.getRunId() + " " + response.getStatus());
                     if (response.getStatus() == DetectRunStatus.SUCCESS) {
                         // Outputs are already on disk as processed-<name>.<ext> and processed-entities-<name>.json
-                        System.out.println("  outputs: " + response.getOutput().size() + ", pages: " + response.getMetrics().getPages());
+                        System.out.println("  outputs: " + response.getOutput().size() + ", metrics: " + response.getMetrics());
                     } else if (response.getStatus() == DetectRunStatus.FAILED) {
                         System.err.println("  run failed: " + response.getMessage());
                     } else {
                         // IN_PROGRESS or QUEUED: the budget ran out; resume with getRun(runId)
-                        System.out.println("  budget ran out, resume with getRun(" + response.getRunId() + ")");
+                        System.out.println("  still running; poll later with getRun(" + response.getRunId() + ")");
                     }
                 } catch (ExecutionException e) {
                     // The task threw: unwrap the SkyflowException raised inside deidentifyFile.

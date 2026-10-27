@@ -5,10 +5,10 @@ import com.skyflow.detect.DetectRunStatus;
 import com.skyflow.detect.FileOutput;
 import com.skyflow.detect.ReidentifyFileRequest;
 import com.skyflow.detect.ReidentifyFileResponse;
-import com.skyflow.generated.detect.rest.resources.filesv2.requests.ReidentifyFileRequestV2;
-import com.skyflow.generated.detect.rest.resources.filesv2.types.ReidentifyFileRequestV2DataFormat;
-import com.skyflow.generated.detect.rest.resources.filesv2.types.ReidentifyFileRequestV2DataSource;
-import com.skyflow.generated.detect.rest.types.ReidentifyFileResponseV2;
+import com.skyflow.generated.common.rest.resources.filesv2.requests.ReidentifyFileRequestV2;
+import com.skyflow.generated.common.rest.resources.filesv2.types.ReidentifyFileRequestV2DataFormat;
+import com.skyflow.generated.common.rest.resources.filesv2.types.ReidentifyFileRequestV2DataSource;
+import com.skyflow.generated.common.rest.types.ReidentifyFileResponseV2;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -39,9 +39,9 @@ public final class ReidentifyFileMapper {
 
     public static ReidentifyFileResponse toResponse(ReidentifyFileResponseV2 response) {
         List<FileOutput> outputs = new ArrayList<>();
-        List<com.skyflow.generated.detect.rest.types.FileOutput> apiOutputs = response.getOutput().orElse(null);
+        List<com.skyflow.generated.common.rest.types.FileOutput> apiOutputs = response.getOutput().orElse(null);
         if (apiOutputs != null) {
-            for (com.skyflow.generated.detect.rest.types.FileOutput apiOutput : apiOutputs) {
+            for (com.skyflow.generated.common.rest.types.FileOutput apiOutput : apiOutputs) {
                 if (apiOutput != null) {
                     outputs.add(DetectResponseMapper.toFileOutput(apiOutput));
                 }

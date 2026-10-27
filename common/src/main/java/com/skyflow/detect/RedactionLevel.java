@@ -1,5 +1,7 @@
 package com.skyflow.detect;
 
+import com.skyflow.enums.RedactionType;
+
 /**
  * Controls how one group of tokens is rendered when re-identifying. Supply exactly one source (entityName or tokenGroupName) and exactly one replacement (redactionType or redactionPattern).
  */

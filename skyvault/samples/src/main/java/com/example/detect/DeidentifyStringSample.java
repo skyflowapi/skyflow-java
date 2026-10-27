@@ -20,19 +20,18 @@ import java.util.Arrays;
 import java.util.Collections;
 
 /**
- * De-identifies sensitive data in a string, first with a stored Detect configuration and then
- * with an inline configuration. For a skyvault vault a VAULT_TOKEN entity's destination is the
- * "table.column" that stores the value.
+ * De-identifies sensitive data in a string with the Detect V2 API, first with a stored
+ * configuration id and then with an inline configuration.
  */
 public class DeidentifyStringSample {
     public static void main(String[] args) throws SkyflowException {
         Credentials credentials = new Credentials();
-        credentials.setPath("<YOUR_CREDENTIALS_FILE_PATH>");   // Replace with the path to the credentials file
+        credentials.setPath("<YOUR_CREDENTIALS_FILE_PATH>"); // Replace with the path to the credentials file
 
         VaultConfig vaultConfig = new VaultConfig();
-        vaultConfig.setVaultId("<YOUR_VAULT_ID>");              // Replace with the ID of the vault
-        vaultConfig.setClusterId("<YOUR_CLUSTER_ID>");          // Replace with the cluster ID of the vault
-        vaultConfig.setEnv(Env.PROD);                           // Set the environment (e.g., DEV, STAGE, PROD)
+        vaultConfig.setVaultId("<YOUR_VAULT_ID>");         // Replace with the ID of the vault
+        vaultConfig.setClusterId("<YOUR_CLUSTER_ID>");     // Replace with the cluster ID of the vault
+        vaultConfig.setEnv(Env.PROD);                      // Set the environment (e.g., DEV, STAGE, PROD)
 
         Skyflow skyflowClient = Skyflow.builder()
                 .setLogLevel(LogLevel.ERROR)
@@ -47,7 +46,7 @@ public class DeidentifyStringSample {
             DeidentifyStringResponse response = skyflowClient.detect().deidentifyString(
                     DeidentifyStringRequest.builder()
                             .text(text)
-                            .configurationId("<CONFIGURATION_ID>")   // Replace with a Detect configuration id
+                            .configurationId("<CONFIGURATION_ID>") // Replace with a Detect configuration id
                             .build());
             System.out.println("Processed text: " + response.getProcessedText());
         } catch (SkyflowException e) {
@@ -62,7 +61,7 @@ public class DeidentifyStringSample {
                                 Entity.builder()
                                         .entityType(EntityType.NAME)
                                         .deidentificationType(DeidentificationType.VAULT_TOKEN)
-                                        .destination("persons.name")        // skyvault: table.column that stores the value
+                                        .destination("<TABLE>.<COLUMN>")   // skyvault: table.column that stores the value
                                         .build(),
                                 Entity.builder()
                                         .entityType(EntityType.ALL)
@@ -81,10 +80,12 @@ public class DeidentifyStringSample {
                             .build());
             System.out.println("Processed text: " + response.getProcessedText());
             for (DetectedEntity entity : response.getEntities()) {
-                System.out.println(entity.getEntityType() + " " + entity.getToken()
-                        + " [" + entity.getLocation().getStartIndex() + "," + entity.getLocation().getEndIndex() + "]");
+                System.out.printf("%-16s %-18s [%d,%d] %s%n",
+                        entity.getEntityType(), entity.getToken(),
+                        entity.getLocation().getStartIndex(), entity.getLocation().getEndIndex(),
+                        entity.getEntityScores());
             }
-            System.out.println("Word count: " + response.getMetrics().getWordCount());
+            System.out.println("Metrics: " + response.getMetrics());
         } catch (SkyflowException e) {
             System.err.println("Error during deidentifyString (inline configuration):");
             e.printStackTrace();

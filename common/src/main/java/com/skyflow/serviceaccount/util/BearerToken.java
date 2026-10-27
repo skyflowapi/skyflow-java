@@ -4,12 +4,12 @@ import com.google.gson.*;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.BaseErrorMessage;
 import com.skyflow.errors.SkyflowException;
-import com.skyflow.generated.auth.rest.ApiClient;
-import com.skyflow.generated.auth.rest.ApiClientBuilder;
-import com.skyflow.generated.auth.rest.core.ApiClientApiException;
-import com.skyflow.generated.auth.rest.resources.authentication.AuthenticationClient;
-import com.skyflow.generated.auth.rest.resources.authentication.requests.V1GetAuthTokenRequest;
-import com.skyflow.generated.auth.rest.types.V1GetAuthTokenResponse;
+import com.skyflow.generated.common.rest.ApiClient;
+import com.skyflow.generated.common.rest.ApiClientBuilder;
+import com.skyflow.generated.common.rest.core.ApiClientApiException;
+import com.skyflow.generated.common.rest.resources.authentication.AuthenticationClient;
+import com.skyflow.generated.common.rest.resources.authentication.requests.GetAuthTokenRequest;
+import com.skyflow.generated.common.rest.types.GetAuthTokenResponse;
 import com.skyflow.logs.ErrorLogs;
 import com.skyflow.logs.InfoLogs;
 import com.skyflow.utils.BaseConstants;
@@ -49,7 +49,7 @@ public class BearerToken {
         return new BearerTokenBuilder();
     }
 
-    private static V1GetAuthTokenResponse generateBearerTokenFromCredentials(
+    private static GetAuthTokenResponse generateBearerTokenFromCredentials(
             File credentialsFile, Object context, ArrayList<String> roles
     ) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.GENERATE_BEARER_TOKEN_FROM_CREDENTIALS_TRIGGERED.getLog());
@@ -76,7 +76,7 @@ public class BearerToken {
         }
     }
 
-    private static V1GetAuthTokenResponse generateBearerTokenFromCredentialString(
+    private static GetAuthTokenResponse generateBearerTokenFromCredentialString(
             String credentials, Object context, ArrayList<String> roles
     ) throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.GENERATE_BEARER_TOKEN_FROM_CREDENTIALS_STRING_TRIGGERED.getLog());
@@ -94,7 +94,7 @@ public class BearerToken {
         }
     }
 
-    private static V1GetAuthTokenResponse getBearerTokenFromCredentials(
+    private static GetAuthTokenResponse getBearerTokenFromCredentials(
             JsonObject credentials, Object context, ArrayList<String> roles
     ) throws SkyflowException {
         try {
@@ -151,13 +151,13 @@ public class BearerToken {
             ApiClient apiClient = API_CLIENT_BUILDER.token("token").build();
             AuthenticationClient authenticationApi = apiClient.authentication();
 
-            V1GetAuthTokenRequest._FinalStage authTokenBuilder = V1GetAuthTokenRequest.builder().grantType(BaseConstants.GRANT_TYPE).assertion(signedUserJWT);
+            GetAuthTokenRequest._FinalStage authTokenBuilder = GetAuthTokenRequest.builder().grantType(BaseConstants.GRANT_TYPE).assertion(signedUserJWT);
 
             if (roles != null) {
                 String scopedRoles = getScopeUsingRoles(roles);
                 authTokenBuilder.scope(scopedRoles);
             }
-            return authenticationApi.authenticationServiceGetAuthToken(authTokenBuilder.build());
+            return authenticationApi.getBearerToken(authTokenBuilder.build());
         } catch (MalformedURLException e) {
             LogUtil.printErrorLog(ErrorLogs.INVALID_TOKEN_URI.getLog());
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), BaseErrorMessage.InvalidTokenUri.getMessage());
@@ -202,7 +202,7 @@ public class BearerToken {
 
     public synchronized String getBearerToken() throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.GET_BEARER_TOKEN_TRIGGERED.getLog());
-        V1GetAuthTokenResponse response;
+        GetAuthTokenResponse response;
         String accessToken = null;
         if (this.credentialsFile != null && Objects.equals(this.credentialsType, "FILE")) {
             response = generateBearerTokenFromCredentials(this.credentialsFile, this.ctx, this.roles);
@@ -215,7 +215,7 @@ public class BearerToken {
         return accessToken;
     }
 
-    private static String extractAccessToken(V1GetAuthTokenResponse response) throws SkyflowException {
+    private static String extractAccessToken(GetAuthTokenResponse response) throws SkyflowException {
         if (!response.getAccessToken().isPresent()) {
             LogUtil.printErrorLog(ErrorLogs.MISSING_ACCESS_TOKEN.getLog());
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), BaseErrorMessage.MissingAccessToken.getMessage());

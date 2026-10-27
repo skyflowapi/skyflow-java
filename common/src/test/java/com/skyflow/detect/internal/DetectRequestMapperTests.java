@@ -12,16 +12,16 @@ import com.skyflow.detect.Image;
 import com.skyflow.detect.MaskingMethod;
 import com.skyflow.detect.Media;
 import com.skyflow.detect.RedactionLevel;
-import com.skyflow.detect.RedactionType;
+import com.skyflow.enums.RedactionType;
 import com.skyflow.detect.ReidentifyStringRequest;
 import com.skyflow.detect.ReturnEntitiesType;
 import com.skyflow.detect.ShiftDates;
 import com.skyflow.detect.Transformation;
-import com.skyflow.generated.detect.rest.core.ObjectMappers;
-import com.skyflow.generated.detect.rest.resources.guardrailsv2.requests.DetectGuardrailsRequestV2;
-import com.skyflow.generated.detect.rest.resources.stringsv2.requests.DeidentifyStringRequestV2;
-import com.skyflow.generated.detect.rest.resources.stringsv2.requests.ReidentifyStringRequestV2;
-import com.skyflow.generated.detect.rest.types.DetectConfigV2;
+import com.skyflow.generated.common.rest.core.ObjectMappers;
+import com.skyflow.generated.common.rest.resources.guardrailsv2.requests.DetectGuardrailsRequestV2;
+import com.skyflow.generated.common.rest.resources.stringsv2.requests.DeidentifyStringRequestV2;
+import com.skyflow.generated.common.rest.resources.stringsv2.requests.ReidentifyStringRequestV2;
+import com.skyflow.generated.common.rest.types.DetectConfigV2;
 import com.skyflow.detect.FileMapping;
 import com.skyflow.detect.ObjectEntity;
 import org.junit.Assert;
@@ -144,7 +144,7 @@ public class DetectRequestMapperTests {
 
     @Test
     public void nullElementsInConfigurationListsAreSkipped() throws Exception {
-        com.skyflow.generated.detect.rest.types.DetectConfigV2 api = DetectRequestMapper.toDetectConfig(
+        com.skyflow.generated.common.rest.types.DetectConfigV2 api = DetectRequestMapper.toDetectConfig(
                 DetectConfiguration.builder()
                         .detect(Detect.builder()
                                 .entities(Arrays.asList(null, Entity.builder().entityType(EntityType.NAME).build()))

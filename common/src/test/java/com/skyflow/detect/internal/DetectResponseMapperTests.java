@@ -9,11 +9,11 @@ import com.skyflow.detect.GetRunResponse;
 import com.skyflow.detect.GuardrailsValidation;
 import com.skyflow.detect.DetectedEntity;
 import com.skyflow.detect.ReidentifyStringResponse;
-import com.skyflow.generated.detect.rest.core.ObjectMappers;
-import com.skyflow.generated.detect.rest.types.DeidentifyStringResponseV2;
-import com.skyflow.generated.detect.rest.types.DetectGuardrailsResponseV2;
-import com.skyflow.generated.detect.rest.types.DetectRunsResponseV2;
-import com.skyflow.generated.detect.rest.types.ReidentifyStringResponseV2;
+import com.skyflow.generated.common.rest.core.ObjectMappers;
+import com.skyflow.generated.common.rest.types.DeidentifyStringResponseV2;
+import com.skyflow.generated.common.rest.types.DetectGuardrailsResponseV2;
+import com.skyflow.generated.common.rest.types.DetectRunsResponseV2;
+import com.skyflow.generated.common.rest.types.ReidentifyStringResponseV2;
 import org.junit.Assert;
 import org.junit.Test;
 
