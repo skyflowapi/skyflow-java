@@ -1678,8 +1678,6 @@ Detect configurations are created in Studio or through the management API. The S
 | `getRun(GetRunRequest)` | `com.skyflow.detect.GetRunRequest` | `com.skyflow.detect.GetRunResponse` | Retrieve the status and outputs of a Detect file run |
 | `checkGuardrails(CheckGuardrailsRequest)` | `com.skyflow.detect.CheckGuardrailsRequest` | `com.skyflow.detect.CheckGuardrailsResponse` | Screen text for toxicity and denied topics |
 
-> Detect V2 is in beta.
-
 ## Before you start
 - **Role.** The service account needs the Detect Invoker, Detect Manager or Vault Owner role on the vault. Detect Invoker can de-identify data and write vault tokens into the vault; Detect Manager adds the ability to create, update and delete Detect configurations. Re-identifying values stored as `VAULT_TOKEN` is governed like detokenization: the caller also needs a policy that grants the Detokenization action on the destination table and columns, unless it is a Vault Owner. Detect Invoker or Detect Manager alone is not enough.
 - **Configuration.** `configurationId` is the id of a Detect configuration created through the management API; the SDK does not create, update or delete them. The alternative is an inline `DetectConfiguration` passed as `configuration` (see [Detect configuration](#detect-configuration)).
