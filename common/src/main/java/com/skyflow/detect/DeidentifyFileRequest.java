@@ -10,6 +10,10 @@ import java.io.File;
  *
  * <p>Without {@code pollOptions} the call submits the run and returns its id. With {@code pollOptions} the
  * SDK polls the run and, on success for a file-based request, writes the outputs to disk.
+ *
+ * <p>{@code configurationId} and {@code configuration} are both optional and are sent exactly as supplied.
+ * With neither set, the SDK sends a configuration that carries only the vault id, so the server applies
+ * the vault's defaults.
  */
 public final class DeidentifyFileRequest {
     private final DataSourceType dataSource;

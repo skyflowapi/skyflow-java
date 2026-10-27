@@ -30,7 +30,8 @@ public final class DetectValidations {
         if (isBlank(request.getText())) {
             throw invalid(ErrorLogs.INVALID_TEXT_IN_DEIDENTIFY_STRING, BaseErrorMessage.InvalidTextInDeidentifyString);
         }
-        // configurationId and configuration are both optional on the API and are passed through as given.
+        // configurationId and configuration are both optional on the API and are passed through as given;
+        // with neither set the mapper sends a configuration carrying only the vault id.
     }
 
     public static void validateDeidentifyFileRequest(DeidentifyFileRequest request) throws SkyflowException {
@@ -52,7 +53,8 @@ public final class DetectValidations {
                 throw invalid(ErrorLogs.INVALID_VALUE_IN_DEIDENTIFY_FILE, BaseErrorMessage.InvalidValueInDeidentifyFile);
             }
         }
-        // configurationId and configuration are both optional on the API and are passed through as given.
+        // configurationId and configuration are both optional on the API and are passed through as given;
+        // with neither set the mapper sends a configuration carrying only the vault id.
         validatePollOptions(request.getPollOptions());
         if (request.getPollOptions() == null && !isBlank(request.getOutputDirectory())) {
             throw invalid(ErrorLogs.OUTPUT_DIRECTORY_WITHOUT_POLL_OPTIONS, BaseErrorMessage.OutputDirectoryWithoutPollOptions);

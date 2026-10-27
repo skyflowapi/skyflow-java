@@ -58,6 +58,25 @@ public class DeidentifyFileMapperTests {
     }
 
     @Test
+    public void noConfigurationSendsVaultIdOnlyConfiguration() throws Exception {
+        DeidentifyFileRequestV2 api = DetectRequestMapper.toDeidentifyFileRequest(DeidentifyFileRequest.builder()
+                .dataSource(DataSourceType.BASE64).value("aGVsbG8=").build(), "vault-1");
+        Assert.assertFalse(api.getConfigurationId().isPresent());
+        Assert.assertEquals("vault-1", api.getConfiguration().get().getVaultId());
+        Assert.assertFalse(api.getConfiguration().get().getDetect().isPresent());
+        String json = ObjectMappers.JSON_MAPPER.writeValueAsString(api);
+        Assert.assertTrue(json, json.contains("\"configuration\":{\"vaultId\":\"vault-1\"}"));
+    }
+
+    @Test
+    public void storedConfigurationIdSendsNoConfiguration() throws Exception {
+        DeidentifyFileRequestV2 api = DetectRequestMapper.toDeidentifyFileRequest(DeidentifyFileRequest.builder()
+                .dataSource(DataSourceType.BASE64).value("aGVsbG8=").configurationId("cfg-1").build(), "vault-1");
+        Assert.assertEquals("cfg-1", api.getConfigurationId().get());
+        Assert.assertFalse(api.getConfiguration().isPresent());
+    }
+
+    @Test
     public void inlineConfigurationGetsVaultId() throws Exception {
         DeidentifyFileRequestV2 api = DetectRequestMapper.toDeidentifyFileRequest(DeidentifyFileRequest.builder()
                 .dataSource(DataSourceType.BASE64).value("Zm9v")

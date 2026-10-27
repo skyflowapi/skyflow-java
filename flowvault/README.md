@@ -1647,13 +1647,13 @@ Detect configurations are created in Studio or through the management API. The S
 ## Before you start
 
 - **Role.** The service account needs the Detect Invoker, Detect Manager or Vault Owner role on the vault. Detect Invoker can de-identify data and write vault tokens into the vault; Detect Manager adds the ability to create, update and delete Detect configurations. Re-identifying values stored as `VAULT_TOKEN` is governed like detokenization: the caller also needs a policy that grants the Detokenization action on the destination, unless it is a Vault Owner. Detect Invoker or Detect Manager alone is not enough.
-- **Configuration.** `configurationId` is the id of a Detect configuration created through the management API; the SDK does not create, update or delete them. The alternative is an inline `DetectConfiguration` passed as `configuration` (see [Detect configuration](#detect-configuration)).
+- **Configuration.** `configurationId` is the id of a Detect configuration created through the management API; the SDK does not create, update or delete them. The alternative is an inline `DetectConfiguration` passed as `configuration` (see [Detect configuration](#detect-configuration)). Both are optional: with neither set the SDK sends only the vault id and the run uses the vault's default Detect settings. Sending both is rejected by the API with HTTP 400.
 - **Destination for vault tokens.** An entity de-identified with `VAULT_TOKEN` stores its value in the token group named by `destination`. That token group must already exist in the vault; Detect writes into it but does not create it.
 - **API reference.** Every Detect request, response and configuration class is listed in the [API reference](../docs/api_reference.md#detect-api).
 
 ## Deidentify string
 
-`DeidentifyStringRequest` takes the text plus exactly one of `configurationId` (a stored Detect configuration) or `configuration` (an inline `DetectConfiguration`). Both fields are sent exactly as supplied and the server rejects a request that has neither or both (see [Before you start](#before-you-start)). For an inline configuration the SDK fills the vault id from the controller.
+`DeidentifyStringRequest` takes the text plus, optionally, `configurationId` (a stored Detect configuration) or `configuration` (an inline `DetectConfiguration`). Both are sent exactly as supplied. With neither set the SDK sends only the vault id and the server applies the vault's defaults; sending both is rejected by the API (see [Before you start](#before-you-start)). The SDK fills the vault id into the configuration from the controller.
 
 ```java
 import com.skyflow.detect.*;
@@ -1762,7 +1762,7 @@ File de-identification is asynchronous on the API: the submit call returns a run
 - **Submit only** (default): one call, returns `getRunId()`. `getStatus()` is `null` and nothing is written to disk. Retrieve the result later with [`getRun`](#get-run).
 - **Submit and poll**: set `pollOptions`. The SDK polls the run with exponential backoff (1, 2, 4, 8, 16, then 32 seconds between lookups) until it is `SUCCESS`, `FAILED` or `UNKNOWN`, or until `waitTime` (default 60 s, max 300) or `maxAttempts` (default 23, max 23) is used up. If the budget runs out the response carries the run id with `IN_PROGRESS` or `QUEUED` so you can resume with `getRun`.
 
-The file is supplied in one of three ways: `dataSource` plus `value` (`BASE64` content, a `SKYFLOW_ID`, or a `PRESIGNED_URL`), or `file(File)` / `filePath(String)`, which read and encode a local file and infer `dataFormat` from its extension. Supply exactly one of `value`, `file` or `filePath`, and exactly one of `configurationId` or an inline `configuration`; the server rejects neither-or-both (see [Before you start](#before-you-start)).
+The file is supplied in one of three ways: `dataSource` plus `value` (`BASE64` content, a `SKYFLOW_ID`, or a `PRESIGNED_URL`), or `file(File)` / `filePath(String)`, which read and encode a local file and infer `dataFormat` from its extension. Supply exactly one of `value`, `file` or `filePath`. `configurationId` and `configuration` follow the same rules as for strings: both optional, sent as supplied, vault defaults when neither is set, and both together rejected by the API (see [Before you start](#before-you-start)).
 
 `dataFormat` accepts every `FileDataFormat`: `BMP`, `CSV`, `DCM`, `DOC`, `DOCX`, `GIF`, `JPEG`, `JPG`, `JSON`, `JSONL`, `MP3`, `PDF`, `PNG`, `PPT`, `PPTX`, `TIF`, `TIFF`, `TXT`, `WAV`, `XLS`, `XLSX`, `XML` and `ZIP`. The `VAULT_TOKEN` de-identification type is supported only for `TXT`, `CSV`, `JSON`, `JSONL`, `XML`, `DOCX`, `XLSX` and `PPTX`.
 

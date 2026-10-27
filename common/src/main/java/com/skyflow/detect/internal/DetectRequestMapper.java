@@ -74,10 +74,20 @@ public final class DetectRequestMapper {
         if (request.getConfigurationId() != null) {
             builder.configurationId(request.getConfigurationId());
         }
-        if (request.getConfiguration() != null) {
+        if (sendsConfiguration(request.getConfigurationId(), request.getConfiguration())) {
             builder.configuration(toDetectConfig(request.getConfiguration(), vaultId));
         }
         return builder.build();
+    }
+
+    /**
+     * The API needs either a configuration id or a configuration, and the vault id travels inside the
+     * configuration. An inline configuration is always sent; with neither field set the SDK still sends a
+     * configuration holding only the vault id, so the server applies the vault's defaults instead of
+     * rejecting the request. When only an id is set nothing else is sent.
+     */
+    static boolean sendsConfiguration(String configurationId, DetectConfiguration configuration) {
+        return configuration != null || configurationId == null;
     }
 
     /**
@@ -107,7 +117,7 @@ public final class DetectRequestMapper {
         if (request.getConfigurationId() != null) {
             builder.configurationId(request.getConfigurationId());
         }
-        if (request.getConfiguration() != null) {
+        if (sendsConfiguration(request.getConfigurationId(), request.getConfiguration())) {
             builder.configuration(toDetectConfig(request.getConfiguration(), vaultId));
         }
         return builder.build();
@@ -158,8 +168,15 @@ public final class DetectRequestMapper {
         return builder.build();
     }
 
+    /**
+     * @param configuration the inline configuration, or {@code null} to send a configuration that carries
+     *                      only the vault id
+     */
     public static DetectConfigV2 toDetectConfig(DetectConfiguration configuration, String vaultId) {
         DetectConfigV2._FinalStage builder = DetectConfigV2.builder().vaultId(vaultId);
+        if (configuration == null) {
+            return builder.build();
+        }
         if (configuration.getName() != null) {
             builder.name(configuration.getName());
         }
