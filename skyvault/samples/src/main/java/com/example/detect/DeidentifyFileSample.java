@@ -13,11 +13,17 @@ import com.skyflow.enums.LogLevel;
 import com.skyflow.errors.SkyflowException;
 
 /**
- * De-identifies a local file. The first call submits the run and returns its id; the second
- * submits and polls until the run completes, writing the outputs to disk on success.
+ * De-identifies a local file. With {@code waitForResult} false the sample submits the run and
+ * returns its id; with it true the sample submits, polls until the run completes, and on success
+ * the SDK writes the outputs into {@code outputDirectory} (the working directory when unset). Only
+ * one path runs, so each execution creates a single run.
  */
 public class DeidentifyFileSample {
     public static void main(String[] args) throws SkyflowException {
+        // false: submit only and retrieve the result later with GetRunSample.
+        // true: submit and poll until the run is terminal or the budget runs out.
+        boolean waitForResult = true;
+
         Credentials credentials = new Credentials();
         credentials.setPath("<YOUR_CREDENTIALS_FILE_PATH>");   // Replace with the path to the credentials file
 
@@ -32,21 +38,19 @@ public class DeidentifyFileSample {
                 .addSkyflowCredentials(credentials)
                 .build();
 
-        // 1. Submit only: returns the run id, retrieve the result later with getRun.
         try {
-            DeidentifyFileResponse submitted = skyflowClient.detect().deidentifyFile(
-                    DeidentifyFileRequest.builder()
-                            .filePath("<PATH_TO_FILE>")                   // BASE64 data source, format inferred from the extension
-                            .configurationId("<CONFIGURATION_ID>")      // Replace with a Detect configuration id
-                            .build());
-            System.out.println("Run id: " + submitted.getRunId());    // getStatus() is null, nothing written to disk
-        } catch (SkyflowException e) {
-            System.err.println("Error during deidentifyFile (submit only):");
-            e.printStackTrace();
-        }
+            if (!waitForResult) {
+                // 1. Submit only: returns the run id, retrieve the result later with getRun.
+                DeidentifyFileResponse submitted = skyflowClient.detect().deidentifyFile(
+                        DeidentifyFileRequest.builder()
+                                .filePath("<PATH_TO_FILE>")                   // BASE64 data source, format inferred from the extension
+                                .configurationId("<CONFIGURATION_ID>")      // Replace with a Detect configuration id
+                                .build());
+                System.out.println("Run id: " + submitted.getRunId());    // getStatus() is null, nothing written to disk
+                return;
+            }
 
-        // 2. Submit and poll: blocks the calling thread until the run is terminal or the budget runs out.
-        try {
+            // 2. Submit and poll: blocks the calling thread until the run is terminal or the budget runs out.
             DeidentifyFileResponse response = skyflowClient.detect().deidentifyFile(
                     DeidentifyFileRequest.builder()
                             .filePath("<PATH_TO_FILE>")
@@ -67,7 +71,7 @@ public class DeidentifyFileSample {
                 System.out.println("Budget ran out, resume with getRun(" + response.getRunId() + ")");
             }
         } catch (SkyflowException e) {
-            System.err.println("Error during deidentifyFile (submit and poll):");
+            System.err.println("Error during deidentifyFile:");
             e.printStackTrace();
         }
     }

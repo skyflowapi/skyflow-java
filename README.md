@@ -30,6 +30,7 @@ The root `pom.xml` (`packaging=pom`) aggregates this Maven reactor:
 ## Documentation
 
 - [skyvault API Reference](docs/api_reference.md) — full list of request builder methods, response getters, enums, and service-account utilities
+- [Detect API Reference](docs/api_reference.md#detect-api) — request, response, configuration and enum classes for Detect, shared by both SDKs
 - [Migrate from v1 to v2](docs/migrate_to_v2.md)
 
 ## Reporting a Vulnerability

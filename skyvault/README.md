@@ -1680,9 +1680,15 @@ Detect configurations are created in Studio or through the management API. The S
 
 > Detect V2 is in beta.
 
+## Before you start
+- **Role.** The service account needs the Detect Invoker, Detect Manager or Vault Owner role on the vault. Detect Invoker can de-identify data and write vault tokens into the vault; Detect Manager adds the ability to create, update and delete Detect configurations. Re-identifying values stored as `VAULT_TOKEN` is governed like detokenization: the caller also needs a policy that grants the Detokenization action on the destination table and columns, unless it is a Vault Owner. Detect Invoker or Detect Manager alone is not enough.
+- **Configuration.** `configurationId` is the id of a Detect configuration created through the management API; the SDK does not create, update or delete them. The alternative is an inline `DetectConfiguration` passed as `configuration` (see [Detect configuration](#detect-configuration)).
+- **Destination for vault tokens.** An entity de-identified with `VAULT_TOKEN` stores its value in the `table.column` named by `destination`. That table and column must already exist in the vault; Detect writes into them but does not create them.
+- **API reference.** Every Detect request, response and configuration class is listed in the [API reference](../docs/api_reference.md#detect-api).
+
 ## Deidentify string
 
-`DeidentifyStringRequest` takes the text plus, optionally, `configurationId` (a stored Detect configuration) and/or `configuration` (an inline `DetectConfiguration`). Both are optional on the API and are sent exactly as supplied. The SDK fills the vault id from the controller.
+`DeidentifyStringRequest` takes the text plus exactly one of `configurationId` (a stored Detect configuration) or `configuration` (an inline `DetectConfiguration`). Both fields are sent exactly as supplied. For an inline configuration the SDK fills the vault id from the controller.
 
 ```java
 import com.skyflow.detect.*;
@@ -1730,6 +1736,60 @@ System.out.println(response.getMetrics().getWordCount());
 
 `DeidentifyStringResponse` carries `getProcessedText()`, `getEntities()` (a `List<DetectedEntity>` with token, entity type, location and confidence scores; never `null`) and `getMetrics()`.
 
+## Detect configuration
+
+`DetectConfiguration` is the inline form of a stored configuration and accepts the same options. `detect` applies to string and file inputs; `fileMapping` and `media` apply to file inputs only.
+
+| Class | Builder methods | Notes |
+|-------|-----------------|-------|
+| `Detect` | `entities`, `objectEntities`, `restrict`, `skip`, `customTypes`, `returnEntities` | `restrict` and `skip` are regexes that are always, respectively never, treated as sensitive. `returnEntities` is `EXCLUDE_SENSITIVE_DATA` (server default), `ALL` or `NONE`. |
+| `Entity` | `entityType`, `deidentificationType`, `destination`, `transformation` | `entityType` defaults to `ALL`. `deidentificationType` is `ENTITY_UNIQUE_COUNTER` (server default), `ENTITY_ONLY`, `MASK` or `VAULT_TOKEN`. `destination` is used only with `VAULT_TOKEN`. |
+| `Transformation` / `ShiftDates` | `shiftDates(ShiftDates)`; `minDays`, `maxDays` | Shifts detected dates by a random number of days within the range. |
+| `CustomType` | `label`, `match` | A regex-defined entity type. `label` is reported as the entity type of its matches. |
+| `ObjectEntity` | `entityType`, `deidentificationType` | Visual objects in images: `FACE`, `LICENSE_PLATE`, `LOGO`, `SIGNATURE` or `ALL`, handled with `REDACT` or `UNREDACT`. File inputs only. |
+| `FileMapping` | `source`, `destination`, `outputFileNameSuffix`, `entitiesDestination`, `objectEntitiesDestination` | Where the processed file and the entity files are written. File inputs only. |
+| `Media` | `audio(Audio)`, `document(Document)`, `image(Image)` | Media-type options. File inputs only. |
+| `Audio` / `Bleep` | `outputProcessedAudio`, `outputTranscription`, `bleep`; `startPadding`, `stopPadding`, `frequency`, `gain` | `outputTranscription` is `NONE`, `TRANSCRIPTION`, `MEDICAL_TRANSCRIPTION`, `DIARIZED_TRANSCRIPTION` or `MEDICAL_DIARIZED_TRANSCRIPTION`. `Bleep` is the tone laid over detected speech; paddings are in seconds, frequency in Hz. |
+| `Document` / `Pdf` | `pdf(Pdf)`; `processingMode`, `density`, `maxResolution` | `processingMode` is `NONE`, `OCR` or `TEXT_LAYER`. `density` is the rendering DPI. |
+| `Image` | `outputProcessedImage`, `outputOcrText`, `maskingMethod` | `maskingMethod` is `NONE`, `BLUR` or `BLACKBOX`. |
+
+```java
+DetectConfiguration configuration = DetectConfiguration.builder()
+        .detect(Detect.builder()
+                .entities(Arrays.asList(
+                        Entity.builder()
+                                .entityType(EntityType.DOB)
+                                .deidentificationType(DeidentificationType.ENTITY_UNIQUE_COUNTER)
+                                .transformation(Transformation.builder()
+                                        .shiftDates(ShiftDates.builder().minDays(10).maxDays(30).build())
+                                        .build())
+                                .build(),
+                        Entity.builder().entityType(EntityType.ALL).build()))
+                .objectEntities(Collections.singletonList(
+                        ObjectEntity.builder()
+                                .entityType(ObjectEntityType.FACE)
+                                .deidentificationType(ObjectDeidentificationType.REDACT)
+                                .build()))
+                .customTypes(Collections.singletonList(
+                        CustomType.builder()
+                                .label("EMPLOYEE_ID")
+                                .match(Collections.singletonList("EMP-[0-9]{6}"))
+                                .build()))
+                .restrict(Collections.singletonList("[0-9]{3}-[0-9]{2}-[0-9]{4}"))
+                .build())
+        .media(Media.builder()
+                .image(Image.builder().maskingMethod(MaskingMethod.BLUR).outputOcrText(true).build())
+                .document(Document.builder()
+                        .pdf(Pdf.builder().processingMode(PdfProcessingMode.OCR).build())
+                        .build())
+                .audio(Audio.builder()
+                        .outputTranscription(OutputTranscriptionType.TRANSCRIPTION)
+                        .bleep(Bleep.builder().startPadding(0.5f).stopPadding(0.5f).build())
+                        .build())
+                .build())
+        .build();
+```
+
 ## Deidentify file
 
 File de-identification is asynchronous on the API: the submit call returns a run id and the result is retrieved from the run. `deidentifyFile` exposes both modes.
@@ -1738,6 +1798,10 @@ File de-identification is asynchronous on the API: the submit call returns a run
 - **Submit and poll**: set `pollOptions`. The SDK polls the run with exponential backoff (1, 2, 4, 8, 16, then 32 seconds between lookups) until it is `SUCCESS`, `FAILED` or `UNKNOWN`, or until `waitTime` (default 60 s, max 300) or `maxAttempts` (default 23, max 23) is used up. If the budget runs out the response carries the run id with `IN_PROGRESS` or `QUEUED` so you can resume with `getRun`.
 
 The file is supplied in one of three ways: `dataSource` plus `value` (`BASE64` content, a `SKYFLOW_ID`, or a `PRESIGNED_URL`), or `file(File)` / `filePath(String)`, which read and encode a local file and infer `dataFormat` from its extension. Supply exactly one of `value`, `file` or `filePath`. Either `configurationId` or an inline `configuration` is passed through as given.
+
+`dataFormat` accepts every `FileDataFormat`: `BMP`, `CSV`, `DCM`, `DOC`, `DOCX`, `GIF`, `JPEG`, `JPG`, `JSON`, `JSONL`, `MP3`, `PDF`, `PNG`, `PPT`, `PPTX`, `TIF`, `TIFF`, `TXT`, `WAV`, `XLS`, `XLSX`, `XML` and `ZIP`. The `VAULT_TOKEN` de-identification type is supported only for `TXT`, `CSV`, `JSON`, `JSONL`, `XML`, `DOCX`, `XLSX` and `PPTX`.
+
+`outputDirectory` is meaningful only when polling. Setting it without `pollOptions` fails client-side validation with a `SkyflowException` before any request is sent.
 
 ```java
 // Submit only
@@ -1778,7 +1842,7 @@ Outputs are written only when polling reached `SUCCESS`, the request was built f
 
 With `pollOptions` set, `deidentifyFile` polls on the thread that called it: each lookup is a synchronous `getRun` followed by a sleep, until the run is terminal or the budget runs out. No other thread, lock or connection is held while it waits, so other SDK calls are unaffected, but the calling thread is. If that thread is your main thread, a request thread or an event loop, run the call elsewhere.
 
-**Run the blocking call on a thread you own.** Simplest when you process a few files at a time. The SDK still enforces the budget and writes outputs to disk; your thread is parked for the whole poll.
+**Run the blocking call on a thread you own.** Simplest when you process a few files at a time. The SDK still enforces the budget and writes outputs to disk; your thread is parked for the whole poll. [DeidentifyFileAsyncSample.java](samples/src/main/java/com/example/detect/DeidentifyFileAsyncSample.java) runs several files this way on a bounded pool.
 
 ```java
 ExecutorService pool = Executors.newFixedThreadPool(4);   // or Executors.newVirtualThreadPerTaskExecutor() on JDK 21+
@@ -1839,6 +1903,8 @@ Either way the main thread only pays for the submit round trip. Avoid `new Threa
 
 ## Reidentify string
 
+Re-identification looks tokens up in the vault, so it applies to values that were de-identified with `VAULT_TOKEN`. Placeholders produced by `ENTITY_UNIQUE_COUNTER`, `ENTITY_ONLY` or `MASK` are not stored anywhere and cannot be re-identified.
+
 `ReidentifyStringRequest` takes the tokenized text and an optional list of `RedactionLevel` rules. For skyvault vaults each rule names an `entityName` and the `redactionType` to apply to it: `PLAIN_TEXT` reveals the original value, `MASKED` masks it, `REDACTED` keeps the token, `DEFAULT` applies the vault's default. Without rules every token is replaced by its original value.
 
 ```java
@@ -1860,11 +1926,11 @@ System.out.println(response.getProcessedText());
 // My name is John Doe and my email is j*******@acme.com.
 ```
 
-A `RedactionLevel` is expected to name one source (`entityName`) and one replacement (`redactionType`). Every field is optional on the API, so the SDK passes the list through as given and the server enforces the combination rules. The `tokenGroupName` and `redactionPattern` fields apply to flowvault vaults only.
+A `RedactionLevel` names one source and one replacement. On skyvault vaults the source is an `entityName` and the replacement a `redactionType`. The `tokenGroupName` and `redactionPattern` fields are the flowvault equivalents and do not apply to skyvault vaults. Every field is optional on the API, so the SDK passes the list through as given and the server rejects invalid combinations.
 
 ## Reidentify file
 
-`reidentifyFile` is synchronous: the re-identified file comes back in the response, not through a run id. `ReidentifyFileRequest` takes a `dataSource` (`BASE64`, `SKYFLOW_ID` or `PRESIGNED_URL`), the matching `value`, an optional `dataFormat` and the same optional `RedactionLevel` rules as `reidentifyString`. Re-identification supports text-based formats such as TXT, CSV, JSON, JSONL, XML, DOCX, XLSX and PPTX.
+`reidentifyFile` is synchronous: the re-identified file comes back in the response, not through a run id. `ReidentifyFileRequest` takes a `dataSource` (`BASE64`, `SKYFLOW_ID` or `PRESIGNED_URL`), the matching `value`, an optional `dataFormat` and the same optional `RedactionLevel` rules as `reidentifyString`. `dataFormat` is limited to the formats that support `VAULT_TOKEN`: `TXT`, `CSV`, `JSON`, `JSONL`, `XML`, `DOCX`, `XLSX` and `PPTX`.
 
 ```java
 byte[] content = Files.readAllBytes(Paths.get("tokenized.txt"));
@@ -1917,7 +1983,7 @@ switch (run.getStatus()) {
 
 ## Check guardrails
 
-`checkGuardrails` screens text for toxicity and for a list of denied topics, which makes it a natural pre-LLM check. Each check runs only when requested: `getToxic()` is `null` unless `checkToxicity(true)` was set, and `getDeniedTopic()` is `null` unless `denyTopics` was supplied. `getValidation()` is `FAILED` if any requested check triggered.
+`checkGuardrails` screens text for toxicity and for a list of denied topics, which makes it a natural pre-LLM check. `checkToxicity` and `denyTopics` are optional: the SDK sends each one only when you set it and does not fill in a default. The response is passed through as returned, so `getToxic()`, `getDeniedTopic()` and `getValidation()` carry exactly what the API sent back.
 
 ```java
 CheckGuardrailsResponse response = skyflowClient.detect().checkGuardrails(
@@ -1934,7 +2000,7 @@ if (response.getValidation() == GuardrailsValidation.FAILED) {
 
 All Detect methods throw `SkyflowException` as described in [Error Handling](#error-handling). Client-side validation fails before any network call.
 
-See the samples [DeidentifyStringSample.java](samples/src/main/java/com/example/detect/DeidentifyStringSample.java), [DeidentifyFileSample.java](samples/src/main/java/com/example/detect/DeidentifyFileSample.java), [ReidentifyStringSample.java](samples/src/main/java/com/example/detect/ReidentifyStringSample.java), [ReidentifyFileSample.java](samples/src/main/java/com/example/detect/ReidentifyFileSample.java), [GetRunSample.java](samples/src/main/java/com/example/detect/GetRunSample.java) and [CheckGuardrailsSample.java](samples/src/main/java/com/example/detect/CheckGuardrailsSample.java).
+See the samples [DeidentifyStringSample.java](samples/src/main/java/com/example/detect/DeidentifyStringSample.java), [DeidentifyFileSample.java](samples/src/main/java/com/example/detect/DeidentifyFileSample.java), [DeidentifyFileAsyncSample.java](samples/src/main/java/com/example/detect/DeidentifyFileAsyncSample.java), [ReidentifyStringSample.java](samples/src/main/java/com/example/detect/ReidentifyStringSample.java), [ReidentifyFileSample.java](samples/src/main/java/com/example/detect/ReidentifyFileSample.java), [GetRunSample.java](samples/src/main/java/com/example/detect/GetRunSample.java) and [CheckGuardrailsSample.java](samples/src/main/java/com/example/detect/CheckGuardrailsSample.java).
 
 # Connections
 

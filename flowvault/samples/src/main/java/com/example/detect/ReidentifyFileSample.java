@@ -58,11 +58,25 @@ public class ReidentifyFileSample {
 
             System.out.println("Status: " + response.getStatus());
             if (response.getStatus() == DetectRunStatus.SUCCESS) {
+                int index = 0;
                 for (FileOutput output : response.getOutput()) {
-                    String name = "reidentified-" + input.getName();
-                    Files.write(new File(input.getParentFile(), name).toPath(),
-                            Base64.getDecoder().decode(output.getProcessedFile()));
-                    System.out.println("Wrote " + name + " (" + output.getProcessedFileType() + ")");
+                    index++;
+                    if (response.getOutputType() != DataSourceType.BASE64) {
+                        // PRESIGNED_URL outputs carry a URL, not base64: download them instead of decoding.
+                        System.out.println(output.getProcessedFileType() + " available at " + output.getProcessedFile());
+                        continue;
+                    }
+                    // One file per output: the output type keeps the names apart, the index guards against
+                    // two outputs of the same type (the SDK's own writer follows the same pattern).
+                    String type = output.getProcessedFileType() == null ? String.valueOf(index) : output.getProcessedFileType();
+                    String name = "reidentified-" + type + "-" + input.getName();
+                    File target = new File(input.getParentFile(), name);
+                    if (target.exists()) {
+                        name = "reidentified-" + type + "-" + index + "-" + input.getName();
+                        target = new File(input.getParentFile(), name);
+                    }
+                    Files.write(target.toPath(), Base64.getDecoder().decode(output.getProcessedFile()));
+                    System.out.println("Wrote " + name);
                 }
                 System.out.println("Metrics: " + response.getMetrics());
             }

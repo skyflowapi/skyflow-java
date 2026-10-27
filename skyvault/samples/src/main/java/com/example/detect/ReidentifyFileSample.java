@@ -58,7 +58,11 @@ public class ReidentifyFileSample {
             System.out.println("Status: " + response.getStatus());
             if (response.getStatus() == DetectRunStatus.SUCCESS) {
                 for (FileOutput output : response.getOutput()) {
-                    // output.getProcessedFile() is base64 or a presigned URL, per response.getOutputType()
+                    if (response.getOutputType() != DataSourceType.BASE64) {
+                        // PRESIGNED_URL outputs carry a URL, not base64: download them instead of decoding.
+                        System.out.println(output.getProcessedFileType() + " available at " + output.getProcessedFile());
+                        continue;
+                    }
                     byte[] processed = Base64.getDecoder().decode(output.getProcessedFile());
                     System.out.println(output.getProcessedFileType() + ": " + processed.length + " bytes");
                 }
