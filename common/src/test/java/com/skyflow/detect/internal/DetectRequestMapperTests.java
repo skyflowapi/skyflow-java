@@ -46,6 +46,28 @@ public class DetectRequestMapperTests {
     }
 
     @Test
+    public void noConfigurationSendsVaultIdOnlyConfiguration() throws Exception {
+        DeidentifyStringRequestV2 mapped = DetectRequestMapper.toDeidentifyStringRequest(
+                DeidentifyStringRequest.builder().text("hello").build(), "vault-1");
+        Assert.assertFalse(mapped.getConfigurationId().isPresent());
+        DetectConfigV2 config = mapped.getConfiguration().get();
+        Assert.assertEquals("vault-1", config.getVaultId());
+        Assert.assertFalse(config.getDetect().isPresent());
+        Assert.assertFalse(config.getName().isPresent());
+        String json = ObjectMappers.JSON_MAPPER.writeValueAsString(mapped);
+        Assert.assertTrue(json, json.contains("\"configuration\":{\"vaultId\":\"vault-1\"}"));
+    }
+
+    @Test
+    public void storedConfigurationIdAlongsideInlineConfigurationSendsBothAsGiven() throws Exception {
+        DeidentifyStringRequestV2 mapped = DetectRequestMapper.toDeidentifyStringRequest(
+                DeidentifyStringRequest.builder().text("hello").configurationId("cfg-1")
+                        .configuration(DetectConfiguration.builder().build()).build(), "vault-1");
+        Assert.assertEquals("cfg-1", mapped.getConfigurationId().get());
+        Assert.assertEquals("vault-1", mapped.getConfiguration().get().getVaultId());
+    }
+
+    @Test
     public void inlineConfigurationIsScopedToVaultAndFullyMapped() throws Exception {
         DetectConfiguration configuration = DetectConfiguration.builder()
                 .name("inline")

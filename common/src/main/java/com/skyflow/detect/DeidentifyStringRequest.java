@@ -2,7 +2,8 @@ package com.skyflow.detect;
 
 /**
  * Request for {@code deidentifyString}. configurationId and configuration are both optional and are sent
- * exactly as supplied; the server applies its own rules for their combination.
+ * exactly as supplied; the server applies its own rules for their combination. With neither set, the SDK
+ * sends a configuration that carries only the vault id, so the server applies the vault's defaults.
  */
 public final class DeidentifyStringRequest {
     private final String text;

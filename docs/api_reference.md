@@ -233,8 +233,8 @@ Parameters listed with their defaults as defined in the builders.
 | Builder method | Default | Description |
 |----------------|---------|-------------|
 | `text(String)` | _(required)_ | Text to de-identify. |
-| `configurationId(String)` | `null` | Id of a Detect configuration created through the management API. |
-| `configuration(DetectConfiguration)` | `null` | Inline configuration. See [`DetectConfiguration`](#detectconfiguration).|
+| `configurationId(String)` | `null` | Id of a Detect configuration created through the management API. Sending it together with `configuration` is rejected by the API. |
+| `configuration(DetectConfiguration)` | `null` | Inline configuration. See [`DetectConfiguration`](#detectconfiguration). With neither this nor `configurationId` set, the SDK sends only the vault id and the server applies the vault's defaults. |
 
 ### `DeidentifyFileRequest`
 
@@ -247,8 +247,8 @@ Parameters listed with their defaults as defined in the builders.
 | `file(File)` | `null` | Local file; read and base64-encoded when sent, `dataSource` set to `BASE64`. |
 | `filePath(String)` | `null` | Same as `file(File)`, from a path. |
 | `dataFormat(FileDataFormat)` | inferred from the extension | File format. See [`FileDataFormat`](#filedataformat). |
-| `configurationId(String)` | `null` | Id of a stored Detect configuration. |
-| `configuration(DetectConfiguration)` | `null` | Inline configuration. See [`DetectConfiguration`](#detectconfiguration). |
+| `configurationId(String)` | `null` | Id of a stored Detect configuration. Sending it together with `configuration` is rejected by the API. |
+| `configuration(DetectConfiguration)` | `null` | Inline configuration. See [`DetectConfiguration`](#detectconfiguration). With neither this nor `configurationId` set, the SDK sends only the vault id and the server applies the vault's defaults. |
 | `pollOptions(PollOptions)` | `null` | Poll the run after submitting. `null` submits only and returns the run id. See [`PollOptions`](#polloptions). |
 | `outputDirectory(String)` | working directory | Where outputs are written on success. Requires `pollOptions` and a local file; setting it without `pollOptions` fails client-side validation. |
 
