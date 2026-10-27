@@ -76,6 +76,11 @@ public class UtilsTests {
 
     @Test
     public void testGetMetricsWithException() {
+        // The JDK reads os.name once, when its socket layer initialises; leaving it cleared breaks
+        // every later test in this JVM that opens a server socket. Restore the properties on exit.
+        String osName = System.getProperty("os.name");
+        String osVersion = System.getProperty("os.version");
+        String javaVersion = System.getProperty("java.version");
         try {
             // Clearing System Properties explicitly to throw exception
             System.clearProperty("os.name");
@@ -89,6 +94,18 @@ public class UtilsTests {
             Assert.assertTrue(metrics.get(Constants.SDK_METRIC_CLIENT_OS_DETAILS).getAsString().isEmpty());
         } catch (Exception e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
+        } finally {
+            restore("os.name", osName);
+            restore("os.version", osVersion);
+            restore("java.version", javaVersion);
+        }
+    }
+
+    private static void restore(String key, String value) {
+        if (value == null) {
+            System.clearProperty(key);
+        } else {
+            System.setProperty(key, value);
         }
     }
 }

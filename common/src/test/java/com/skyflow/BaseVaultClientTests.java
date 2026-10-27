@@ -675,4 +675,72 @@ public class BaseVaultClientTests {
         Assert.assertEquals(1, chain.proceeded.size());
         Assert.assertEquals(0, client.generations.get());
     }
+
+    // ── gaps found by line coverage of the fix ───────────────────────────────
+
+    @Test
+    public void testAuthInterceptor_readsTokenThroughGetTokenOnEveryAttempt() throws IOException {
+        // The SDKs hand the interceptor this::getToken, not a captured value: the resend must see the
+        // token the refresh just stored, and the synchronized getter is what makes that visible.
+        ScriptedClient client = new ScriptedClient(mintableCredentials());
+        String rejected = jwtExpiringIn(-2);
+        client.token = rejected;
+        client.script.add("fresh-token");
+        ScriptedChain chain = new ScriptedChain(401, 200);
+
+        Response response = client.authInterceptor(client::getToken).intercept(chain);
+
+        Assert.assertEquals(200, response.code());
+        Assert.assertEquals("Bearer " + rejected, chain.proceeded.get(0).header("Authorization"));
+        Assert.assertEquals("Bearer fresh-token", chain.proceeded.get(1).header("Authorization"));
+        Assert.assertEquals("fresh-token", client.getToken());
+    }
+
+    @Test
+    public void testRefreshAfter401_nullFromGenerationIsAFailureAndIsRemembered() {
+        // BearerToken.getBearerToken() returns null when the credentials match neither FILE nor STRING.
+        ScriptedClient client = new ScriptedClient(mintableCredentials());
+        String rejected = jwtExpiringIn(-2);
+        client.token = rejected;
+        client.script.add(null);
+
+        Assert.assertNull(client.refreshBearerTokenAfterUnauthorized(rejected));
+        Assert.assertEquals("a null token must never be cached", rejected, client.token);
+        Assert.assertNull(client.refreshBearerTokenAfterUnauthorized(rejected));
+        Assert.assertEquals("the failed attempt is remembered for this token", 1, client.generations.get());
+    }
+
+    @Test
+    public void testRefreshAfter401_cacheClearedWhileRequestInFlightRegenerates() {
+        // prioritiseCredentials nulls the cache on a credential change. A 401 for the token that was
+        // already in flight must regenerate rather than treat the empty cache as "someone else refreshed".
+        ScriptedClient client = new ScriptedClient(mintableCredentials());
+        String rejected = jwtExpiringIn(-2);
+        client.token = null;
+        client.script.add("fresh-token");
+
+        Assert.assertEquals("fresh-token", client.refreshBearerTokenAfterUnauthorized(rejected));
+        Assert.assertEquals("fresh-token", client.token);
+        Assert.assertEquals(1, client.generations.get());
+    }
+
+    @Test
+    public void testRefreshAfter401_credentialChangeForgetsFailedRegeneration() throws SkyflowException {
+        ScriptedClient client = new ScriptedClient(mintableCredentials());
+        String rejected = jwtExpiringIn(-2);
+        client.token = rejected;
+        client.failure = new SkyflowException("auth service down");
+        Assert.assertNull(client.refreshBearerTokenAfterUnauthorized(rejected));
+        Assert.assertEquals(1, client.generations.get());
+
+        // New credentials: the failure recorded under the old ones must not block the first 401 on them.
+        client.prioritiseCredentials(mintableCredentials());
+        client.failure = null;
+        client.token = rejected; // the expired token is still what the in-flight request sent
+        client.script.add("fresh-token");
+
+        Assert.assertEquals("fresh-token", client.refreshBearerTokenAfterUnauthorized(rejected));
+        Assert.assertEquals("fresh-token", client.token);
+        Assert.assertEquals(2, client.generations.get());
+    }
 }
