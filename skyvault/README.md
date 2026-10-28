@@ -2855,101 +2855,91 @@ Notes:
 - By default, the TTL value is set to 60 seconds.
 
 ## Bearer token expiry edge case
-When you use bearer tokens for authentication and API requests in SDKs, there's the potential for a token to expire after the token is verified as valid but before the actual API call is made, causing the request to fail unexpectedly due to the token's expiration. An error from this edge case would look something like this:
+
+A bearer token can expire after the SDK checks it but before a request that uses it reaches Skyflow. The request then fails with HTTP `401` and an error like this one:
 
 ```txt
 message: Authentication failed. Bearer token is expired. Use a valid bearer token. See https://docs.skyflow.com/api-authentication/
 ```
 
-If you encounter this kind of error, retry the request. During the retry, the SDK detects that the previous bearer token has expired and generates a new one for the current and subsequent requests.
+Vault and Detect calls handle this case themselves when the SDK generates tokens for you. That is the case with `setPath`, `setCredentialsString`, or the `SKYFLOW_CREDENTIALS` environment variable. If a request fails with `401` and its token expires within 60 seconds, the SDK generates a new token. It then sends that request once more. Later requests in the same call use the new token. A `401` for any other reason is returned without a retry.
 
-#### [Example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/serviceaccount/BearerTokenExpiryExample.java):
+Handle the `401` yourself in these cases:
+
+- **Connection calls.** `invoke` on a connection returns the `401` without a retry. Retry the call: at the start of the retry, the SDK sees that the token has expired and generates a new one.
+- **Bearer tokens you provide with `setToken`.** The SDK can't replace your token, so it returns the `401`. Generate a new token, update the credentials (see [Credentials and log level management](#credentials-and-log-level-management)), and then retry the call.
+
+#### [Example](https://github.com/skyflowapi/skyflow-java/blob/main/skyvault/samples/src/main/java/com/example/serviceaccount/BearerTokenExpiryExample.java):
 
 ```java
 package com.example.serviceaccount;
 
 import com.skyflow.Skyflow;
+import com.skyflow.config.ConnectionConfig;
 import com.skyflow.config.Credentials;
-import com.skyflow.config.VaultConfig;
-import com.skyflow.enums.Env;
 import com.skyflow.enums.LogLevel;
-import com.skyflow.enums.RedactionType;
+import com.skyflow.enums.RequestMethod;
 import com.skyflow.errors.SkyflowException;
-import com.skyflow.vault.tokens.DetokenizeRequest;
-import com.skyflow.vault.tokens.DetokenizeResponse;
-import io.github.cdimascio.dotenv.Dotenv;
-import java.util.ArrayList;
+import com.skyflow.vault.connection.InvokeConnectionRequest;
+import com.skyflow.vault.connection.InvokeConnectionResponse;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
- * This example demonstrates how to configure and use the Skyflow SDK
- * to detokenize sensitive data stored in a Skyflow vault.
- * It includes setting up credentials, configuring the vault, and
- * making a detokenization request. The code also implements a retry
- * mechanism to handle unauthorized access errors (HTTP 401).
+ * This example demonstrates how to handle a bearer token that expires while a
+ * connection request is in flight. Vault and Detect calls retry once on their own
+ * when this happens, but connection calls return the 401 error, so this example
+ * retries the connection call once when it fails with HTTP 401.
  */
-public class DetokenizeExample {
+public class BearerTokenExpiryExample {
     public static void main(String[] args) {
         try {
-            // Setting up credentials for accessing the Skyflow vault
-            Credentials vaultCredentials = new Credentials();
-            vaultCredentials.setCredentialsString("<YOUR_CREDENTIALS_STRING>");
+            // Let the SDK generate bearer tokens from service account credentials
+            Credentials credentials = new Credentials();
+            credentials.setCredentialsString("<YOUR_CREDENTIALS_STRING>");
 
-            // Configuring the Skyflow vault with necessary details
-            VaultConfig vaultConfig = new VaultConfig();
-            vaultConfig.setVaultId("<YOUR_VAULT_ID>"); // Vault ID
-            vaultConfig.setClusterId("<YOUR_CLUSTER_ID>"); // Cluster ID
-            vaultConfig.setEnv(Env.PROD); // Environment (e.g., DEV, PROD)
-            vaultConfig.setCredentials(vaultCredentials); // Setting credentials
+            ConnectionConfig connectionConfig = new ConnectionConfig();
+            connectionConfig.setConnectionId("<CONNECTION_ID>");
+            connectionConfig.setConnectionUrl("<CONNECTION_URL>");
+            connectionConfig.setCredentials(credentials);
 
-            // Creating a Skyflow client instance with the configured vault
             Skyflow skyflowClient = Skyflow.builder()
-                    .setLogLevel(LogLevel.ERROR) // Setting log level to ERROR
-                    .addVaultConfig(vaultConfig) // Adding vault configuration
+                    .setLogLevel(LogLevel.ERROR)
+                    .addConnectionConfig(connectionConfig)
                     .build();
 
-            // Attempting to detokenize data using the Skyflow client
             try {
-                detokenizeData(skyflowClient);
+                invokeConnection(skyflowClient);
             } catch (SkyflowException e) {
-                // Retry detokenization if the error is due to unauthorized access (HTTP 401)
                 if (e.getHttpCode() == 401) {
-                    detokenizeData(skyflowClient);
+                    // The SDK generates a new bearer token at the start of this call
+                    invokeConnection(skyflowClient);
                 } else {
-                    // Rethrow the exception for other error codes
                     throw e;
                 }
             }
         } catch (SkyflowException e) {
-            // Handling any exceptions that occur during the process
             System.out.println("An error occurred: " + e.getMessage());
         }
     }
 
-    /**
-     * Method to detokenize data using the Skyflow client.
-     * It sends a detokenization request with a list of tokens and prints the response.
-     *
-     * @param skyflowClient The Skyflow client instance used for detokenization.
-     * @throws SkyflowException If an error occurs during the detokenization process.
-     */
-    public static void detokenizeData(Skyflow skyflowClient) throws SkyflowException {
-        // Creating a list of tokens to be detokenized
-        ArrayList<String> tokenList = new ArrayList<>();
-        tokenList.add("<YOUR_TOKEN_VALUE_1>"); // First token
-        tokenList.add("<YOUR_TOKEN_VALUE_2>"); // Second token
+    public static void invokeConnection(Skyflow skyflowClient) throws SkyflowException {
+        Map<String, String> requestBody = new HashMap<>();
+        requestBody.put("<FIELD_NAME>", "<FIELD_VALUE>");
 
-        // Building a detokenization request with the token list and configuration
-        DetokenizeRequest detokenizeRequest = DetokenizeRequest.builder()
-                .tokens(tokenList) // Adding tokens to the request
-                .continueOnError(false) // Stop on error
-                .redactionType(RedactionType.PLAIN_TEXT) // Redaction type (e.g., PLAIN_TEXT)
+        Map<String, String> requestHeaders = new HashMap<>();
+        requestHeaders.put("Content-Type", "application/json");
+
+        InvokeConnectionRequest invokeConnectionRequest = InvokeConnectionRequest.builder()
+                .method(RequestMethod.POST)
+                .requestBody(requestBody)
+                .requestHeaders(requestHeaders)
                 .build();
 
-        // Sending the detokenization request and receiving the response
-        DetokenizeResponse detokenizeResponse = skyflowClient.vault().detokenize(detokenizeRequest);
-
-        // Printing the detokenized response
-        System.out.println(detokenizeResponse);
+        InvokeConnectionResponse invokeConnectionResponse =
+                skyflowClient.connection("<CONNECTION_ID>").invoke(invokeConnectionRequest);
+        System.out.println(invokeConnectionResponse);
     }
 }
 ```
