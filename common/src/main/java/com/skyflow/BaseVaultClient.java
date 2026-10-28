@@ -133,7 +133,8 @@ class BaseVaultClient<V extends BaseVaultConfig> {
             LogUtil.printInfoLog(InfoLogs.BEARER_TOKEN_REJECTED_REUSING_REGENERATED.getLog());
             return cached;
         }
-        if (rejected != null && rejected.equals(refreshFailedFor)) {
+        // rejected is non-null here: a null token fails the expiry gate above.
+        if (rejected.equals(refreshFailedFor)) {
             LogUtil.printInfoLog(InfoLogs.BEARER_TOKEN_REJECTED_REGENERATION_ALREADY_FAILED.getLog());
             return null;
         }

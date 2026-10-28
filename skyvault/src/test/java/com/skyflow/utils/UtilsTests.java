@@ -76,7 +76,7 @@ public class UtilsTests {
 
     @Test
     public void testGetMetricsWithException() {
-        // The JDK reads os.name once, when its socket layer initialises; leaving it cleared breaks
+        // The JDK reads os.name once, when its socket layer initializes; leaving it cleared breaks
         // every later test in this JVM that opens a server socket. Restore the properties on exit.
         String osName = System.getProperty("os.name");
         String osVersion = System.getProperty("os.version");
