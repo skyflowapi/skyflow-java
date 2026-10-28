@@ -8,7 +8,9 @@ public enum WarningLogs {
     EMPTY_DELETE_TOKENS_RESPONSE("DeleteTokens response did not include any token results."),
     INCOMPLETE_DELETE_TOKENS_RESPONSE("DeleteTokens response did not account for all requested tokens."),
     EMPTY_TOKENIZE_RESPONSE("Tokenize response did not include any record results."),
-    INCOMPLETE_TOKENIZE_RESPONSE("Tokenize response did not account for all requested records.")
+    INCOMPLETE_TOKENIZE_RESPONSE("Tokenize response did not account for all requested records."),
+    BEARER_TOKEN_REGENERATION_AFTER_401_FAILED("Bearer token regeneration after 401 failed; returning the 401 response."),
+    BEARER_TOKEN_REGENERATION_RETURNED_REJECTED_TOKEN("Bearer token regeneration after 401 returned the rejected token; not resending.")
     ;
 
     private final String log;

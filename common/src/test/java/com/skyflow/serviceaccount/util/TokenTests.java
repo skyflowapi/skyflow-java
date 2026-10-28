@@ -21,6 +21,48 @@ public class TokenTests {
         LogUtil.setupLogger(LogLevel.DEBUG);
     }
 
+    private static String unsignedJwt(String payloadJson) {
+        Base64.Encoder enc = Base64.getUrlEncoder().withoutPadding();
+        String header = enc.encodeToString("{\"alg\":\"none\"}".getBytes(StandardCharsets.UTF_8));
+        String payload = enc.encodeToString(payloadJson.getBytes(StandardCharsets.UTF_8));
+        return header + "." + payload + ".sig";
+    }
+
+    private static String jwtExpiringIn(long seconds) {
+        return unsignedJwt("{\"exp\":" + (System.currentTimeMillis() / 1000 + seconds) + "}");
+    }
+
+    @Test
+    public void testIsExpiringWithin_expiredTokenIsDue() {
+        Assert.assertTrue(Token.isExpiringWithin(jwtExpiringIn(-5), 60));
+    }
+
+    @Test
+    public void testIsExpiringWithin_tokenInsideWindowIsDue() {
+        Assert.assertTrue(Token.isExpiringWithin(jwtExpiringIn(30), 60));
+    }
+
+    @Test
+    public void testIsExpiringWithin_tokenBeyondWindowIsNotDue() {
+        Assert.assertFalse(Token.isExpiringWithin(jwtExpiringIn(600), 60));
+    }
+
+    @Test
+    public void testIsExpiringWithin_zeroWindowMatchesExpiryOnly() {
+        Assert.assertTrue(Token.isExpiringWithin(jwtExpiringIn(-1), 0));
+        Assert.assertFalse(Token.isExpiringWithin(jwtExpiringIn(5), 0));
+    }
+
+    @Test
+    public void testIsExpiringWithin_nullEmptyMalformedAndNoExpAreNotDue() {
+        Assert.assertFalse(Token.isExpiringWithin(null, 60));
+        Assert.assertFalse(Token.isExpiringWithin("", 60));
+        Assert.assertFalse(Token.isExpiringWithin("not-a-jwt", 60));
+        Assert.assertFalse(Token.isExpiringWithin("a.b", 60));
+        Assert.assertFalse(Token.isExpiringWithin(unsignedJwt("{\"sub\":\"x\"}"), 60));
+        Assert.assertFalse(Token.isExpiringWithin(unsignedJwt("{\"exp\":\"soon\"}"), 60));
+    }
+
     @Test
     public void testNoTokenForIsExpiredToken() {
         try {
