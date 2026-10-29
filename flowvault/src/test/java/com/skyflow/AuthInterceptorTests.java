@@ -15,7 +15,9 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Base64;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * The auth interceptor installed by {@link VaultClient#updateExecutorInHTTP()}.
@@ -103,5 +105,104 @@ public class AuthInterceptorTests {
 
         Assert.assertEquals(503, authInterceptorOf(client).intercept(chain).code());
         Assert.assertEquals("auth must not retry - that is the outer interceptor's job", 1, chain.calls());
+    }
+
+    // ── refresh-and-resend on 401, wired through the flowvault client ────────
+
+    private static String jwtExpiringIn(long seconds) {
+        Base64.Encoder enc = Base64.getUrlEncoder().withoutPadding();
+        String header = enc.encodeToString("{\"alg\":\"none\"}".getBytes(StandardCharsets.UTF_8));
+        String payload = enc.encodeToString(("{\"exp\":" + (System.currentTimeMillis() / 1000 + seconds) + "}")
+                .getBytes(StandardCharsets.UTF_8));
+        return header + "." + payload + ".sig";
+    }
+
+    /** Flowvault client with mintable credentials and a scripted token source. */
+    private static final class MintingClient extends VaultClient {
+        final AtomicInteger generations = new AtomicInteger();
+        final String fresh;
+
+        MintingClient(String fresh) throws SkyflowException {
+            super(configWithCredentialsString(), null);
+            this.fresh = fresh;
+            this.finalCredentials = getVaultConfig().getCredentials();
+        }
+
+        @Override
+        protected String generateBearerToken(com.skyflow.config.BaseCredentials credentials) {
+            generations.incrementAndGet();
+            return fresh;
+        }
+    }
+
+    private static VaultConfig configWithCredentialsString() {
+        Credentials credentials = new Credentials();
+        credentials.setCredentialsString("{\"clientID\":\"c\"}");
+        VaultConfig config = config();
+        config.setCredentials(credentials);
+        return config;
+    }
+
+    @Test
+    public void testAuthInterceptor_regeneratesOnceAndResendsOn401ForExpiredToken() throws SkyflowException, IOException {
+        MintingClient client = new MintingClient("fresh-token");
+        client.token = jwtExpiringIn(-1);
+        FakeChain chain = new FakeChain(401, 200);
+
+        Assert.assertEquals(200, authInterceptorOf(client).intercept(chain).code());
+        Assert.assertEquals(2, chain.calls());
+        Assert.assertEquals("Bearer fresh-token", chain.lastProceeded().header("Authorization"));
+        Assert.assertEquals("the cache must hold the new token for the batches that follow", "fresh-token", client.token);
+        Assert.assertEquals(1, client.generations.get());
+        Assert.assertTrue("the rejected response must be closed before the resend", chain.bodies().get(0).isClosed());
+    }
+
+    @Test
+    public void testAuthInterceptor_401ForTokenWithLifeLeftIsReturnedWithoutRegenerating() throws SkyflowException, IOException {
+        MintingClient client = new MintingClient("fresh-token");
+        String live = jwtExpiringIn(900);
+        client.token = live;
+        FakeChain chain = new FakeChain(401, 200);
+
+        Assert.assertEquals(401, authInterceptorOf(client).intercept(chain).code());
+        Assert.assertEquals(1, chain.calls());
+        Assert.assertEquals(0, client.generations.get());
+        Assert.assertEquals(live, client.token);
+    }
+
+    @Test
+    public void testAuthInterceptor_401WithStaticTokenIsReturnedAsToday() throws SkyflowException, IOException {
+        Credentials credentials = new Credentials();
+        credentials.setToken(jwtExpiringIn(-1));
+        VaultConfig config = config();
+        config.setCredentials(credentials);
+        VaultClient client = new VaultClient(config, null);
+        client.setBearerToken();
+        FakeChain chain = new FakeChain(401, 200);
+
+        Assert.assertEquals(401, authInterceptorOf(client).intercept(chain).code());
+        Assert.assertEquals(1, chain.calls());
+    }
+
+    @Test
+    public void testAuthInterceptor_resendThatAlsoGets401IsNotRetriedAgain() throws SkyflowException, IOException {
+        MintingClient client = new MintingClient("fresh-token");
+        client.token = jwtExpiringIn(-1);
+        FakeChain chain = new FakeChain(401, 401, 200);
+
+        Assert.assertEquals(401, authInterceptorOf(client).intercept(chain).code());
+        Assert.assertEquals(2, chain.calls());
+        Assert.assertEquals(1, client.generations.get());
+    }
+
+    @Test
+    public void testAuthInterceptor_sitsInsideTheTransportRetryInterceptor() throws SkyflowException {
+        VaultClient client = new VaultClient(config(), null);
+        client.updateExecutorInHTTP();
+        List<Interceptor> interceptors = client.sharedHttpClient.interceptors();
+
+        Assert.assertEquals(2, interceptors.size());
+        Assert.assertTrue("transport retries must wrap auth so each attempt re-reads the token",
+                interceptors.get(0) instanceof SkyflowRetryInterceptor);
     }
 }
