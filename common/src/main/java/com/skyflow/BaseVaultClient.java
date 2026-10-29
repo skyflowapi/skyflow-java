@@ -149,7 +149,9 @@ class BaseVaultClient<V extends BaseVaultConfig> {
             storeToken(fresh);
             return fresh;
         } catch (SkyflowException e) {
-            LogUtil.printWarningLog(WarningLogs.BEARER_TOKEN_REGENERATION_AFTER_401_FAILED.getLog() + " " + e.getMessage());
+            LogUtil.printWarningLog(WarningLogs.BEARER_TOKEN_REGENERATION_AFTER_401_FAILED.getLog()
+                    + " httpCode=" + e.getHttpCode()
+                    + (e.getRequestId() != null ? " requestId=" + e.getRequestId() : ""));
             refreshFailedFor = rejected;
             return null;
         }

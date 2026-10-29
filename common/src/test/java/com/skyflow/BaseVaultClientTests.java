@@ -4,8 +4,11 @@ import com.skyflow.config.BaseCredentials;
 import com.skyflow.config.BaseVaultConfig;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.enums.LogLevel;
 import com.skyflow.logs.ErrorLogs;
+import com.skyflow.logs.WarningLogs;
 import com.skyflow.utils.BaseConstants;
+import com.skyflow.utils.logger.LogUtil;
 import okhttp3.Call;
 import okhttp3.Connection;
 import okhttp3.Interceptor;
@@ -36,6 +39,10 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
 
 public class BaseVaultClientTests {
 
@@ -421,6 +428,49 @@ public class BaseVaultClientTests {
 
         Assert.assertNull(client.refreshBearerTokenAfterUnauthorized(rejected));
         Assert.assertEquals(rejected, client.token);
+    }
+
+    @Test
+    public void testRefreshAfter401_generationFailureLogsOnlyHttpCodeAndRequestId() {
+        ScriptedClient client = new ScriptedClient(mintableCredentials());
+        String rejected = jwtExpiringIn(-2);
+        client.token = rejected;
+        Map<String, List<String>> headers = new HashMap<>();
+        headers.put(BaseConstants.REQUEST_ID_HEADER_KEY, java.util.Collections.singletonList("req-123"));
+        String secretMessage = "invalid credentials file /secrets/sa.json";
+        String body = "{\"error\":{\"grpc_code\":16,\"http_code\":401,\"http_status\":\"Unauthorized\","
+                + "\"message\":\"" + secretMessage + "\"}}";
+        client.failure = new SkyflowException(401, new RuntimeException("token endpoint failed"), headers, body);
+
+        LogUtil.setupLogger(LogLevel.WARN);
+        // setupLogger resets every handler, so attach the capture after it.
+        Logger logger = Logger.getLogger(LogUtil.class.getName());
+        java.util.List<LogRecord> records = new ArrayList<>();
+        Handler capture = new Handler() {
+            @Override public void publish(LogRecord record) { records.add(record); }
+            @Override public void flush() {}
+            @Override public void close() {}
+        };
+        capture.setLevel(Level.ALL);
+        logger.addHandler(capture);
+        try {
+            Assert.assertNull(client.refreshBearerTokenAfterUnauthorized(rejected));
+        } finally {
+            logger.removeHandler(capture);
+            LogUtil.setupLogger(LogLevel.ERROR);
+        }
+
+        String warning = records.stream()
+                .filter(r -> Level.WARNING.equals(r.getLevel()))
+                .map(LogRecord::getMessage)
+                .filter(m -> m.contains(WarningLogs.BEARER_TOKEN_REGENERATION_AFTER_401_FAILED.getLog()))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("regeneration-failure warning was not logged"));
+        Assert.assertTrue(warning, warning.contains("httpCode=401"));
+        Assert.assertTrue(warning, warning.contains("requestId=req-123"));
+        Assert.assertFalse("exception message must not be logged: " + warning, warning.contains(secretMessage));
+        Assert.assertFalse("response body must not be logged: " + warning, warning.contains("grpc_code"));
+        Assert.assertFalse("cause must not be logged: " + warning, warning.contains("token endpoint failed"));
     }
 
     @Test
