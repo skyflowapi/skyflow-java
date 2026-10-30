@@ -1,7 +1,7 @@
 package com.skyflow.detect.internal;
 
 import com.skyflow.detect.CheckGuardrailsResponse;
-import com.skyflow.detect.DataSourceType;
+import com.skyflow.detect.DeidentifySourceType;
 import com.skyflow.detect.DeidentifyFileResponse;
 import com.skyflow.detect.DeidentifyStringResponse;
 import com.skyflow.detect.DetectRunStatus;
@@ -95,7 +95,7 @@ public final class DetectResponseMapper {
                 runId,
                 response.getStatus().map(s -> enumOrDefault(DetectRunStatus.class, s.toString(), DetectRunStatus.UNKNOWN))
                         .orElse(DetectRunStatus.UNKNOWN),
-                response.getOutputType().map(t -> enumOrDefault(DataSourceType.class, t.toString(), null)).orElse(null),
+                response.getOutputType().map(t -> enumOrDefault(DeidentifySourceType.class, t.toString(), null)).orElse(null),
                 Collections.unmodifiableList(outputs),
                 response.getMetrics().map(DetectResponseMapper::toMetrics).orElse(null),
                 response.getMessage().orElse(null));

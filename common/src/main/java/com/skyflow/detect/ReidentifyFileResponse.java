@@ -8,11 +8,11 @@ import java.util.List;
  */
 public final class ReidentifyFileResponse {
     private final DetectRunStatus status;
-    private final DataSourceType outputType;
+    private final ReidentifySourceType outputType;
     private final List<FileOutput> output;
     private final Metrics metrics;
 
-    public ReidentifyFileResponse(DetectRunStatus status, DataSourceType outputType, List<FileOutput> output, Metrics metrics) {
+    public ReidentifyFileResponse(DetectRunStatus status, ReidentifySourceType outputType, List<FileOutput> output, Metrics metrics) {
         this.status = status;
         this.outputType = outputType;
         this.output = output;
@@ -29,7 +29,7 @@ public final class ReidentifyFileResponse {
     /**
      * @return How output files are delivered, or null when not reported.
      */
-    public DataSourceType getOutputType() {
+    public ReidentifySourceType getOutputType() {
         return outputType;
     }
 

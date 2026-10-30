@@ -8,12 +8,12 @@ import java.util.List;
 public final class GetRunResponse {
     private final String runId;
     private final DetectRunStatus status;
-    private final DataSourceType outputType;
+    private final DeidentifySourceType outputType;
     private final List<FileOutput> output;
     private final Metrics metrics;
     private final String message;
 
-    public GetRunResponse(String runId, DetectRunStatus status, DataSourceType outputType, List<FileOutput> output, Metrics metrics, String message) {
+    public GetRunResponse(String runId, DetectRunStatus status, DeidentifySourceType outputType, List<FileOutput> output, Metrics metrics, String message) {
         this.runId = runId;
         this.status = status;
         this.outputType = outputType;
@@ -39,7 +39,7 @@ public final class GetRunResponse {
     /**
      * @return How output files are delivered. Null while the run is pending.
      */
-    public DataSourceType getOutputType() {
+    public DeidentifySourceType getOutputType() {
         return outputType;
     }
 

@@ -1,6 +1,7 @@
 package com.skyflow.detect.internal;
 
-import com.skyflow.detect.DataSourceType;
+
+import com.skyflow.detect.ReidentifySourceType;
 import com.skyflow.detect.EntityType;
 import com.skyflow.detect.RedactionLevel;
 import com.skyflow.enums.RedactionType;
@@ -17,7 +18,7 @@ import java.util.Collections;
 public class ReidentifyFileValidationsTests {
 
     private static ReidentifyFileRequest.ReidentifyFileRequestBuilder valid() {
-        return ReidentifyFileRequest.builder().dataSource(DataSourceType.BASE64).value("Zm9v");
+        return ReidentifyFileRequest.builder().dataSource(ReidentifySourceType.BASE64).value("Zm9v");
     }
 
     private static void assertRejected(ReidentifyFileRequest request, BaseErrorMessage expected) {
@@ -42,7 +43,7 @@ public class ReidentifyFileValidationsTests {
 
     @Test
     public void rejectsNullOrBlankValue() {
-        assertRejected(ReidentifyFileRequest.builder().dataSource(DataSourceType.BASE64).build(), BaseErrorMessage.InvalidValueInReidentifyFile);
+        assertRejected(ReidentifyFileRequest.builder().dataSource(ReidentifySourceType.BASE64).build(), BaseErrorMessage.InvalidValueInReidentifyFile);
         assertRejected(valid().value("").build(), BaseErrorMessage.InvalidValueInReidentifyFile);
         assertRejected(valid().value("   \t").build(), BaseErrorMessage.InvalidValueInReidentifyFile);
     }
@@ -57,7 +58,7 @@ public class ReidentifyFileValidationsTests {
     public void acceptsMinimalAndFullValidRequests() throws SkyflowException {
         ReidentifyFileValidations.validateReidentifyFileRequest(valid().build());
         ReidentifyFileValidations.validateReidentifyFileRequest(valid()
-                .dataSource(DataSourceType.PRESIGNED_URL).value("https://example.com/f")
+                .dataSource(ReidentifySourceType.PRESIGNED_URL).value("https://example.com/f")
                 .redactionLevel(Arrays.asList(
                         RedactionLevel.builder().tokenGroupName("g").redactionPattern("p").build(),
                         RedactionLevel.builder().entityName(EntityType.NAME).redactionType(RedactionType.REDACTED).build(),

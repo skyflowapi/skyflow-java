@@ -3,12 +3,12 @@ package com.skyflow.detect;
 import java.util.List;
 
 /**
- * Request for {@code reidentifyFile}. Supply the file through exactly one {@link DataSourceType}:
+ * Request for {@code reidentifyFile}. Supply the file through exactly one {@link ReidentifySourceType}:
  * the base64-encoded content, the skyflow id of a vault record that holds the file, or an S3
  * presigned URL. The vault id is filled in by the controller.
  */
 public final class ReidentifyFileRequest {
-    private final DataSourceType dataSource;
+    private final ReidentifySourceType dataSource;
     private final String value;
     private final FileDataFormat dataFormat;
     private final List<RedactionLevel> redactionLevel;
@@ -30,7 +30,7 @@ public final class ReidentifyFileRequest {
     /**
      * @return How {@code value} supplies the file. Required.
      */
-    public DataSourceType getDataSource() {
+    public ReidentifySourceType getDataSource() {
         return dataSource;
     }
 
@@ -67,7 +67,7 @@ public final class ReidentifyFileRequest {
     }
 
     public static final class ReidentifyFileRequestBuilder {
-        private DataSourceType dataSource;
+        private ReidentifySourceType dataSource;
         private String value;
         private FileDataFormat dataFormat;
         private List<RedactionLevel> redactionLevel;
@@ -79,7 +79,7 @@ public final class ReidentifyFileRequest {
          * @param dataSource How {@code value} supplies the file. Required.
          * @return this builder
          */
-        public ReidentifyFileRequestBuilder dataSource(DataSourceType dataSource) {
+        public ReidentifyFileRequestBuilder dataSource(ReidentifySourceType dataSource) {
             this.dataSource = dataSource;
             return this;
         }

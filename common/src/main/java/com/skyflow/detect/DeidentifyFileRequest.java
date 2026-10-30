@@ -16,7 +16,7 @@ import java.io.File;
  * the vault's defaults.
  */
 public final class DeidentifyFileRequest {
-    private final DataSourceType dataSource;
+    private final DeidentifySourceType dataSource;
     private final String value;
     private final File file;
     private final FileDataFormat dataFormat;
@@ -46,7 +46,7 @@ public final class DeidentifyFileRequest {
     /**
      * @return How {@code value} supplies the file. Required unless {@code file} or {@code filePath} was used.
      */
-    public DataSourceType getDataSource() {
+    public DeidentifySourceType getDataSource() {
         return dataSource;
     }
 
@@ -114,7 +114,7 @@ public final class DeidentifyFileRequest {
     }
 
     public static final class DeidentifyFileRequestBuilder {
-        private DataSourceType dataSource;
+        private DeidentifySourceType dataSource;
         private String value;
         private File file;
         private FileDataFormat dataFormat;
@@ -130,7 +130,7 @@ public final class DeidentifyFileRequest {
          * @param dataSource How {@code value} supplies the file.
          * @return this builder
          */
-        public DeidentifyFileRequestBuilder dataSource(DataSourceType dataSource) {
+        public DeidentifyFileRequestBuilder dataSource(DeidentifySourceType dataSource) {
             this.dataSource = dataSource;
             return this;
         }
@@ -151,7 +151,7 @@ public final class DeidentifyFileRequest {
         public DeidentifyFileRequestBuilder file(File file) {
             this.file = file;
             if (file != null) {
-                this.dataSource = DataSourceType.BASE64;
+                this.dataSource = DeidentifySourceType.BASE64;
             }
             return this;
         }

@@ -11,7 +11,7 @@ import com.skyflow.detect.Audio;
 import com.skyflow.detect.Bleep;
 import com.skyflow.detect.CheckGuardrailsRequest;
 import com.skyflow.detect.CustomType;
-import com.skyflow.detect.DataSourceType;
+import com.skyflow.detect.DeidentifySourceType;
 import com.skyflow.detect.DeidentifyFileRequest;
 import com.skyflow.detect.DeidentifyStringRequest;
 import com.skyflow.detect.FileDataFormat;
@@ -106,7 +106,7 @@ public final class DetectRequestMapper {
             }
         }
         // A local file is always sent as BASE64, whatever dataSource the builder was left with.
-        DataSourceType dataSource = file != null ? DataSourceType.BASE64 : request.getDataSource();
+        DeidentifySourceType dataSource = file != null ? DeidentifySourceType.BASE64 : request.getDataSource();
         DeidentifyFileRequestV2._FinalStage builder = DeidentifyFileRequestV2.builder()
                 .dataSource(DeidentifyFileRequestV2DataSource.valueOf(dataSource.name()))
                 .value(value);

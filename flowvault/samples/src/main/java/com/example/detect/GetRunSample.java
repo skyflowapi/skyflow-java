@@ -3,7 +3,7 @@ package com.example.detect;
 import com.skyflow.Skyflow;
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
-import com.skyflow.detect.DataSourceType;
+import com.skyflow.detect.DeidentifySourceType;
 import com.skyflow.detect.DetectRunStatus;
 import com.skyflow.detect.FileOutput;
 import com.skyflow.detect.GetRunRequest;
@@ -46,7 +46,7 @@ public class GetRunSample {
             System.out.println("Run " + run.getRunId() + " status: " + run.getStatus());
             if (run.getStatus() == DetectRunStatus.SUCCESS) {
                 for (FileOutput output : run.getOutput()) {
-                    if (run.getOutputType() != DataSourceType.BASE64) {
+                    if (run.getOutputType() != DeidentifySourceType.BASE64) {
                         // PRESIGNED_URL outputs carry a URL, not base64: download them instead of decoding.
                         System.out.println(output.getProcessedFileType() + " available at " + output.getProcessedFile());
                         continue;

@@ -242,7 +242,7 @@ Parameters listed with their defaults as defined in the builders.
 
 | Builder method | Default | Description |
 |----------------|---------|-------------|
-| `dataSource(DataSourceType)` | `null` | How `value` supplies the file. See [`DataSourceType`](#datasourcetype). |
+| `dataSource(DeidentifySourceType)` | `null` | How `value` supplies the file: `BASE64`, `SKYFLOW_ID` or `PRESIGNED_URL`. See [Detect enums](#detect-enums). |
 | `value(String)` | `null` | Base64 content, a skyflow id, or a presigned URL, per `dataSource`. |
 | `file(File)` | `null` | Local file; read and base64-encoded when sent, `dataSource` set to `BASE64`. |
 | `filePath(String)` | `null` | Same as `file(File)`, from a path. |
@@ -267,7 +267,7 @@ Parameters listed with their defaults as defined in the builders.
 
 | Builder method | Default | Description |
 |----------------|---------|-------------|
-| `dataSource(DataSourceType)` | _(required)_ | `BASE64`, `SKYFLOW_ID` or `PRESIGNED_URL`. |
+| `dataSource(ReidentifySourceType)` | _(required)_ | `BASE64` or `PRESIGNED_URL`. Re-identification does not accept a skyflow id as the source. |
 | `value(String)` | _(required)_ | Base64 content, a skyflow id, or a presigned URL, per `dataSource`. |
 | `dataFormat(FileDataFormat)` | `null` | File format. Limited to the formats that support `VAULT_TOKEN`: `TXT`, `CSV`, `JSON`, `JSONL`, `XML`, `DOCX`, `XLSX` or `PPTX`. |
 | `redactionLevel(List<RedactionLevel>)` | `null` | Redaction rules. See [`RedactionLevel`](#redactionlevel). |
@@ -421,7 +421,7 @@ Each element returned by `getDetokenizedFields()` and `getErrors()`.
 |--------|-------------|-------------|
 | `getRunId()` | `String` | Run id, always present. |
 | `getStatus()` | `DetectRunStatus` | Run status when polled, `null` when submit only. See [`DetectRunStatus`](#detectrunstatus). |
-| `getOutputType()` | `DataSourceType` | `BASE64` or `PRESIGNED_URL`, `null` until the run completes. |
+| `getOutputType()` | `DeidentifySourceType` | `BASE64` or `PRESIGNED_URL`, `null` until the run completes. |
 | `getOutput()` | `List<FileOutput>` | Every output of the run, empty until complete, never `null`. See [`FileOutput`](#fileoutput). |
 | `getMetrics()` | `Metrics` | Size, counts, pages, slides, duration. `null` until complete. |
 | `getMessage()` | `String` | Failure detail when the status is `FAILED`. |
@@ -433,7 +433,7 @@ Each element returned by `getDetokenizedFields()` and `getErrors()`.
 | Getter | Return type | Description |
 |--------|-------------|-------------|
 | `getStatus()` | `DetectRunStatus` | Status of the re-identification. |
-| `getOutputType()` | `DataSourceType` | `BASE64` or `PRESIGNED_URL`. |
+| `getOutputType()` | `ReidentifySourceType` | `BASE64` or `PRESIGNED_URL`. |
 | `getOutput()` | `List<FileOutput>` | Re-identified file outputs, never `null`. |
 | `getMetrics()` | `Metrics` | Size and counts. |
 
@@ -694,7 +694,8 @@ All in `com.skyflow.detect`.
 |------|--------|
 | `EntityType` | the 70 entity types (`NAME`, `EMAIL_ADDRESS`, `SSN`, `CREDIT_CARD`, `DOB`, ...), plus `ALL` and `NONE` |
 | `DeidentificationType` | `ENTITY_UNIQUE_COUNTER` _(default)_, `ENTITY_ONLY`, `VAULT_TOKEN`, `MASK`, `UNKNOWN` |
-| `DataSourceType` | `BASE64`, `SKYFLOW_ID`, `PRESIGNED_URL` |
+| `DeidentifySourceType` | `BASE64`, `SKYFLOW_ID`, `PRESIGNED_URL`. Input source for `deidentifyFile`, and the `getOutputType()` of `DeidentifyFileResponse` and `GetRunResponse`, where the API returns `BASE64` or `PRESIGNED_URL`. |
+| `ReidentifySourceType` | `BASE64`, `PRESIGNED_URL`. Input source for `reidentifyFile` (the API does not accept a skyflow id there) and the `getOutputType()` of `ReidentifyFileResponse`. |
 | `FileDataFormat` | `BMP`, `CSV`, `DCM`, `DOC`, `DOCX`, `GIF`, `JPEG`, `JPG`, `JSON`, `JSONL`, `MP3`, `PDF`, `PNG`, `PPT`, `PPTX`, `TIF`, `TIFF`, `TXT`, `WAV`, `XLS`, `XLSX`, `XML`, `ZIP` |
 | `DetectRunStatus` | `QUEUED`, `IN_PROGRESS`, `SUCCESS`, `FAILED`, `UNKNOWN`. `SUCCESS`, `FAILED` and `UNKNOWN` end polling. |
 | `ReturnEntitiesType` | `EXCLUDE_SENSITIVE_DATA` _(default)_, `ALL`, `NONE` |

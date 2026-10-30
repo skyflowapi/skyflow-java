@@ -1,6 +1,6 @@
 package com.skyflow.detect.internal;
 
-import com.skyflow.detect.DataSourceType;
+import com.skyflow.detect.ReidentifySourceType;
 import com.skyflow.detect.DetectRunStatus;
 import com.skyflow.detect.FileOutput;
 import com.skyflow.detect.ReidentifyFileRequest;
@@ -50,7 +50,7 @@ public final class ReidentifyFileMapper {
         return new ReidentifyFileResponse(
                 response.getStatus().map(s -> enumOrDefault(DetectRunStatus.class, s.toString(), DetectRunStatus.UNKNOWN))
                         .orElse(DetectRunStatus.UNKNOWN),
-                response.getOutputType().map(t -> enumOrDefault(DataSourceType.class, t.toString(), null)).orElse(null),
+                response.getOutputType().map(t -> enumOrDefault(ReidentifySourceType.class, t.toString(), null)).orElse(null),
                 Collections.unmodifiableList(outputs),
                 response.getMetrics().map(DetectResponseMapper::toMetrics).orElse(null));
     }

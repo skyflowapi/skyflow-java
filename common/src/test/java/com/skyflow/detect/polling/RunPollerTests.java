@@ -1,6 +1,6 @@
 package com.skyflow.detect.polling;
 
-import com.skyflow.detect.DataSourceType;
+import com.skyflow.detect.DeidentifySourceType;
 import com.skyflow.detect.DetectRunStatus;
 import com.skyflow.detect.GetRunResponse;
 import com.skyflow.detect.PollOptions;
@@ -17,7 +17,7 @@ import java.util.List;
 public class RunPollerTests {
 
     private static GetRunResponse run(DetectRunStatus status) {
-        return new GetRunResponse("run-1", status, status == DetectRunStatus.SUCCESS ? DataSourceType.BASE64 : null,
+        return new GetRunResponse("run-1", status, status == DetectRunStatus.SUCCESS ? DeidentifySourceType.BASE64 : null,
                 Collections.emptyList(), null, status == DetectRunStatus.FAILED ? "boom" : null);
     }
 

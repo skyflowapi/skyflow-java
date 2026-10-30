@@ -1,6 +1,6 @@
 package com.skyflow.detect.internal;
 
-import com.skyflow.detect.DataSourceType;
+import com.skyflow.detect.DeidentifySourceType;
 import com.skyflow.detect.DeidentifyFileRequest;
 import com.skyflow.detect.DeidentifyFileResponse;
 import com.skyflow.detect.DetectRunStatus;
@@ -30,10 +30,10 @@ public class DeidentifyFileFlowTests {
     private static final RunPoller.Sleeper NO_SLEEP = millis -> { };
 
     private static GetRunResponse success() {
-        return success(DataSourceType.BASE64);
+        return success(DeidentifySourceType.BASE64);
     }
 
-    private static GetRunResponse success(DataSourceType outputType) {
+    private static GetRunResponse success(DeidentifySourceType outputType) {
         return new GetRunResponse("run-1", DetectRunStatus.SUCCESS, outputType,
                 Arrays.asList(
                         new FileOutput(Base64.getEncoder().encodeToString("redacted".getBytes()),
@@ -47,7 +47,7 @@ public class DeidentifyFileFlowTests {
     public void withoutPollOptionsReturnsRunIdAndNeverFetches() throws Exception {
         AtomicInteger fetches = new AtomicInteger();
         DeidentifyFileResponse response = DeidentifyFileFlow.complete(
-                DeidentifyFileRequest.builder().dataSource(DataSourceType.BASE64).value("x").build(), "run-1",
+                DeidentifyFileRequest.builder().dataSource(DeidentifySourceType.BASE64).value("x").build(), "run-1",
                 id -> { fetches.incrementAndGet(); return success(); }, NO_SLEEP);
         Assert.assertEquals("run-1", response.getRunId());
         Assert.assertNull(response.getStatus());
@@ -59,7 +59,7 @@ public class DeidentifyFileFlowTests {
     public void missingRunIdSkipsPollingEvenWhenRequested() throws Exception {
         AtomicInteger fetches = new AtomicInteger();
         DeidentifyFileResponse response = DeidentifyFileFlow.complete(
-                DeidentifyFileRequest.builder().dataSource(DataSourceType.BASE64).value("x")
+                DeidentifyFileRequest.builder().dataSource(DeidentifySourceType.BASE64).value("x")
                         .pollOptions(PollOptions.builder().build()).build(), null,
                 id -> { fetches.incrementAndGet(); return success(); }, NO_SLEEP);
         Assert.assertNull(response.getRunId());
@@ -70,7 +70,7 @@ public class DeidentifyFileFlowTests {
     @Test
     public void polledRawRequestMergesRunButWritesNothing() throws Exception {
         DeidentifyFileResponse response = DeidentifyFileFlow.complete(
-                DeidentifyFileRequest.builder().dataSource(DataSourceType.SKYFLOW_ID).value("rec")
+                DeidentifyFileRequest.builder().dataSource(DeidentifySourceType.SKYFLOW_ID).value("rec")
                         .pollOptions(PollOptions.builder().build()).outputDirectory(folder.getRoot().getPath()).build(),
                 "run-1", id -> success(), NO_SLEEP);
         Assert.assertEquals(DetectRunStatus.SUCCESS, response.getStatus());
@@ -108,10 +108,10 @@ public class DeidentifyFileFlowTests {
         DeidentifyFileResponse response = DeidentifyFileFlow.complete(
                 DeidentifyFileRequest.builder().file(input).pollOptions(PollOptions.builder().build())
                         .outputDirectory(outDir.getPath()).build(),
-                "run-1", id -> success(DataSourceType.PRESIGNED_URL), NO_SLEEP);
+                "run-1", id -> success(DeidentifySourceType.PRESIGNED_URL), NO_SLEEP);
 
         Assert.assertEquals(DetectRunStatus.SUCCESS, response.getStatus());
-        Assert.assertEquals(DataSourceType.PRESIGNED_URL, response.getOutputType());
+        Assert.assertEquals(DeidentifySourceType.PRESIGNED_URL, response.getOutputType());
         Assert.assertEquals(2, response.getOutput().size());
         Assert.assertEquals(0, outDir.list().length);
     }

@@ -8,7 +8,7 @@ import com.skyflow.detect.DetectConfiguration;
 import com.skyflow.detect.Entity;
 import com.skyflow.detect.CheckGuardrailsRequest;
 import com.skyflow.detect.CheckGuardrailsResponse;
-import com.skyflow.detect.DataSourceType;
+import com.skyflow.detect.DeidentifySourceType;
 import com.skyflow.detect.DetectRunStatus;
 import com.skyflow.detect.EntityType;
 import com.skyflow.detect.FileDataFormat;
@@ -162,7 +162,7 @@ public class BaseDetectControllerTests {
 
         Assert.assertEquals("run-42", response.getRunId());
         Assert.assertEquals(DetectRunStatus.SUCCESS, response.getStatus());
-        Assert.assertEquals(DataSourceType.BASE64, response.getOutputType());
+        Assert.assertEquals(DeidentifySourceType.BASE64, response.getOutputType());
         Assert.assertEquals(2, response.getOutput().size());
         Assert.assertEquals("QUJD", response.getOutput().get(0).getProcessedFile());
         Assert.assertEquals("REDACTED_FILE", response.getOutput().get(0).getProcessedFileType());

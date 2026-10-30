@@ -1,6 +1,7 @@
 package com.skyflow.detect.internal;
 
-import com.skyflow.detect.DataSourceType;
+
+import com.skyflow.detect.DeidentifySourceType;
 import com.skyflow.detect.DeidentifyFileRequest;
 import com.skyflow.detect.PollOptions;
 import com.skyflow.errors.BaseErrorMessage;
@@ -30,7 +31,7 @@ public class DeidentifyFileValidationsTests {
     }
 
     private static DeidentifyFileRequest.DeidentifyFileRequestBuilder raw() {
-        return DeidentifyFileRequest.builder().dataSource(DataSourceType.BASE64).value("Zm9v");
+        return DeidentifyFileRequest.builder().dataSource(DeidentifySourceType.BASE64).value("Zm9v");
     }
 
     @Test
@@ -41,7 +42,7 @@ public class DeidentifyFileValidationsTests {
     @Test
     public void rawValueRequiresDataSourceAndValue() throws SkyflowException {
         assertRejected(DeidentifyFileRequest.builder().value("x").build(), BaseErrorMessage.InvalidDataSourceInDeidentifyFile);
-        assertRejected(DeidentifyFileRequest.builder().dataSource(DataSourceType.SKYFLOW_ID).build(), BaseErrorMessage.InvalidValueInDeidentifyFile);
+        assertRejected(DeidentifyFileRequest.builder().dataSource(DeidentifySourceType.SKYFLOW_ID).build(), BaseErrorMessage.InvalidValueInDeidentifyFile);
         assertRejected(raw().value(" ").build(), BaseErrorMessage.InvalidValueInDeidentifyFile);
         DetectValidations.validateDeidentifyFileRequest(raw().build());
         DetectValidations.validateDeidentifyFileRequest(raw().configurationId("cfg").build());

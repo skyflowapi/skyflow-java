@@ -1,6 +1,7 @@
 package com.skyflow.detect.internal;
 
-import com.skyflow.detect.DataSourceType;
+import com.skyflow.detect.DeidentifySourceType;
+import com.skyflow.detect.ReidentifySourceType;
 import com.skyflow.detect.DetectRunStatus;
 import com.skyflow.detect.EntityType;
 import com.skyflow.detect.FileDataFormat;
@@ -34,7 +35,7 @@ public class ReidentifyFileMapperTests {
     @Test
     public void mapsRequiredFieldsAndInjectsVaultId() throws Exception {
         ReidentifyFileRequestV2 api = ReidentifyFileMapper.toApiRequest(ReidentifyFileRequest.builder()
-                .dataSource(DataSourceType.BASE64).value("W05BTUVfMV0=").build(), "vault-1");
+                .dataSource(ReidentifySourceType.BASE64).value("W05BTUVfMV0=").build(), "vault-1");
 
         Assert.assertEquals("BASE64", api.getDataSource().toString());
         Assert.assertEquals("W05BTUVfMV0=", api.getValue());
@@ -52,7 +53,7 @@ public class ReidentifyFileMapperTests {
 
     @Test
     public void mapsEveryDataSource() throws Exception {
-        for (DataSourceType source : DataSourceType.values()) {
+        for (ReidentifySourceType source : ReidentifySourceType.values()) {
             ReidentifyFileRequestV2 api = ReidentifyFileMapper.toApiRequest(ReidentifyFileRequest.builder()
                     .dataSource(source).value("x").build(), "v");
             Assert.assertEquals(source.name(), api.getDataSource().toString());
@@ -61,11 +62,26 @@ public class ReidentifyFileMapperTests {
     }
 
     @Test
+    public void reidentifySourcesExcludeSkyflowIdWhileDeidentifySourcesKeepIt() {
+        Assert.assertEquals(Arrays.asList("BASE64", "PRESIGNED_URL"),
+                Arrays.asList(ReidentifySourceType.BASE64.name(), ReidentifySourceType.PRESIGNED_URL.name()));
+        Assert.assertEquals(2, ReidentifySourceType.values().length);
+        Assert.assertEquals(3, DeidentifySourceType.values().length);
+        Assert.assertNotNull(DeidentifySourceType.valueOf("SKYFLOW_ID"));
+        try {
+            ReidentifySourceType.valueOf("SKYFLOW_ID");
+            Assert.fail("SKYFLOW_ID must not be a reidentify source");
+        } catch (IllegalArgumentException expected) {
+            // the server rejects SKYFLOW_ID for re-identification, so the SDK does not offer it
+        }
+    }
+
+    @Test
     public void dataFormatIsSentAsLowerCaseWireValue() throws Exception {
         for (FileDataFormat format : new FileDataFormat[]{FileDataFormat.TXT, FileDataFormat.CSV, FileDataFormat.JSON,
                 FileDataFormat.JSONL, FileDataFormat.XML, FileDataFormat.DOCX, FileDataFormat.XLSX, FileDataFormat.PPTX}) {
             ReidentifyFileRequestV2 api = ReidentifyFileMapper.toApiRequest(ReidentifyFileRequest.builder()
-                    .dataSource(DataSourceType.SKYFLOW_ID).value("rec").dataFormat(format).build(), "v");
+                    .dataSource(ReidentifySourceType.BASE64).value("eA==").dataFormat(format).build(), "v");
             Assert.assertEquals(format.name().toLowerCase(), api.getDataFormat().get().toString());
             Assert.assertTrue(wire(api).contains("\"dataFormat\":\"" + format.name().toLowerCase() + "\""));
         }
@@ -74,7 +90,7 @@ public class ReidentifyFileMapperTests {
     @Test
     public void mapsFlowvaultAndSkyvaultStyleRedactionLevels() throws Exception {
         ReidentifyFileRequestV2 api = ReidentifyFileMapper.toApiRequest(ReidentifyFileRequest.builder()
-                .dataSource(DataSourceType.PRESIGNED_URL).value("https://s3/presigned")
+                .dataSource(ReidentifySourceType.PRESIGNED_URL).value("https://s3/presigned")
                 .redactionLevel(Arrays.asList(
                         RedactionLevel.builder().tokenGroupName("names").redactionPattern("mask-middle").build(),
                         RedactionLevel.builder().entityName(EntityType.EMAIL_ADDRESS).redactionType(RedactionType.MASKED).build()))
@@ -93,7 +109,7 @@ public class ReidentifyFileMapperTests {
     @Test
     public void emptyRedactionLevelListIsSentAsEmptyArray() throws Exception {
         ReidentifyFileRequestV2 api = ReidentifyFileMapper.toApiRequest(ReidentifyFileRequest.builder()
-                .dataSource(DataSourceType.BASE64).value("x").redactionLevel(Collections.<RedactionLevel>emptyList()).build(), "v");
+                .dataSource(ReidentifySourceType.BASE64).value("x").redactionLevel(Collections.<RedactionLevel>emptyList()).build(), "v");
         Assert.assertTrue(api.getRedactionLevel().get().isEmpty());
         Assert.assertTrue(wire(api).contains("\"redactionLevel\":[]"));
     }
@@ -108,7 +124,7 @@ public class ReidentifyFileMapperTests {
                 + "\"metrics\":{\"size\":12.5,\"wordCount\":120,\"characterCount\":800,\"pages\":2,\"slides\":0,\"duration\":1.25}}");
 
         Assert.assertEquals(DetectRunStatus.SUCCESS, response.getStatus());
-        Assert.assertEquals(DataSourceType.PRESIGNED_URL, response.getOutputType());
+        Assert.assertEquals(ReidentifySourceType.PRESIGNED_URL, response.getOutputType());
         Assert.assertEquals(2, response.getOutput().size());
         FileOutput first = response.getOutput().get(0);
         Assert.assertEquals("https://s3/out-1", first.getProcessedFile());
@@ -129,7 +145,7 @@ public class ReidentifyFileMapperTests {
         for (DetectRunStatus status : DetectRunStatus.values()) {
             Assert.assertEquals(status, fromJson("{\"status\":\"" + status.name() + "\"}").getStatus());
         }
-        for (DataSourceType type : DataSourceType.values()) {
+        for (ReidentifySourceType type : ReidentifySourceType.values()) {
             Assert.assertEquals(type, fromJson("{\"outputType\":\"" + type.name() + "\"}").getOutputType());
         }
     }

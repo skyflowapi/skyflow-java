@@ -1,6 +1,6 @@
 package com.skyflow.detect.internal;
 
-import com.skyflow.detect.DataSourceType;
+import com.skyflow.detect.DeidentifySourceType;
 import com.skyflow.detect.FileOutput;
 import com.skyflow.errors.BaseErrorMessage;
 import com.skyflow.errors.SkyflowException;
@@ -40,13 +40,13 @@ public final class FileOutputWriter {
      * @return the files written, in output order; empty when the output type is not BASE64
      * @throws SkyflowException if the directory cannot be created or a file cannot be decoded or written
      */
-    public static List<File> write(List<FileOutput> outputs, DataSourceType outputType, String inputFileName,
+    public static List<File> write(List<FileOutput> outputs, DeidentifySourceType outputType, String inputFileName,
                                    String outputDirectory) throws SkyflowException {
         List<File> written = new ArrayList<>();
         if (outputs == null || outputs.isEmpty()) {
             return written;
         }
-        if (outputType != DataSourceType.BASE64) {
+        if (outputType != DeidentifySourceType.BASE64) {
             LogUtil.printInfoLog(BaseUtils.parameterizedString(InfoLogs.OUTPUT_NOT_WRITTEN_FOR_OUTPUT_TYPE.getLog(),
                     String.valueOf(outputType)));
             return written;

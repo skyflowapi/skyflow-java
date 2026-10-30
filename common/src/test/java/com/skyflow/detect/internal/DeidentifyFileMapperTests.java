@@ -1,6 +1,6 @@
 package com.skyflow.detect.internal;
 
-import com.skyflow.detect.DataSourceType;
+import com.skyflow.detect.DeidentifySourceType;
 import com.skyflow.detect.DeidentifyFileRequest;
 import com.skyflow.detect.DeidentifyFileResponse;
 import com.skyflow.detect.Detect;
@@ -37,7 +37,7 @@ public class DeidentifyFileMapperTests {
     @Test
     public void mapsRawValueRequest() throws Exception {
         DeidentifyFileRequestV2 api = DetectRequestMapper.toDeidentifyFileRequest(DeidentifyFileRequest.builder()
-                .dataSource(DataSourceType.SKYFLOW_ID).value("rec-1").configurationId("cfg-1").build(), "vault-1");
+                .dataSource(DeidentifySourceType.SKYFLOW_ID).value("rec-1").configurationId("cfg-1").build(), "vault-1");
         Assert.assertEquals("SKYFLOW_ID", api.getDataSource().toString());
         Assert.assertEquals("rec-1", api.getValue());
         Assert.assertEquals("cfg-1", api.getConfigurationId().get());
@@ -53,14 +53,14 @@ public class DeidentifyFileMapperTests {
     @Test
     public void dataFormatIsSentLowerCase() throws Exception {
         DeidentifyFileRequestV2 api = DetectRequestMapper.toDeidentifyFileRequest(DeidentifyFileRequest.builder()
-                .dataSource(DataSourceType.PRESIGNED_URL).value("https://s3/in").dataFormat(FileDataFormat.PDF).build(), "v");
+                .dataSource(DeidentifySourceType.PRESIGNED_URL).value("https://s3/in").dataFormat(FileDataFormat.PDF).build(), "v");
         Assert.assertTrue(wire(api).contains("\"dataFormat\":\"pdf\""));
     }
 
     @Test
     public void noConfigurationSendsVaultIdOnlyConfiguration() throws Exception {
         DeidentifyFileRequestV2 api = DetectRequestMapper.toDeidentifyFileRequest(DeidentifyFileRequest.builder()
-                .dataSource(DataSourceType.BASE64).value("aGVsbG8=").build(), "vault-1");
+                .dataSource(DeidentifySourceType.BASE64).value("aGVsbG8=").build(), "vault-1");
         Assert.assertFalse(api.getConfigurationId().isPresent());
         Assert.assertEquals("vault-1", api.getConfiguration().get().getVaultId());
         Assert.assertFalse(api.getConfiguration().get().getDetect().isPresent());
@@ -71,7 +71,7 @@ public class DeidentifyFileMapperTests {
     @Test
     public void storedConfigurationIdSendsNoConfiguration() throws Exception {
         DeidentifyFileRequestV2 api = DetectRequestMapper.toDeidentifyFileRequest(DeidentifyFileRequest.builder()
-                .dataSource(DataSourceType.BASE64).value("aGVsbG8=").configurationId("cfg-1").build(), "vault-1");
+                .dataSource(DeidentifySourceType.BASE64).value("aGVsbG8=").configurationId("cfg-1").build(), "vault-1");
         Assert.assertEquals("cfg-1", api.getConfigurationId().get());
         Assert.assertFalse(api.getConfiguration().isPresent());
     }
@@ -79,7 +79,7 @@ public class DeidentifyFileMapperTests {
     @Test
     public void inlineConfigurationGetsVaultId() throws Exception {
         DeidentifyFileRequestV2 api = DetectRequestMapper.toDeidentifyFileRequest(DeidentifyFileRequest.builder()
-                .dataSource(DataSourceType.BASE64).value("Zm9v")
+                .dataSource(DeidentifySourceType.BASE64).value("Zm9v")
                 .configuration(DetectConfiguration.builder().detect(Detect.builder().entities(Collections.singletonList(
                         Entity.builder().entityType(EntityType.NAME).build())).build()).build())
                 .build(), "vault-9");
@@ -157,7 +157,7 @@ public class DeidentifyFileMapperTests {
         DeidentifyFileResponse response = DetectResponseMapper.toDeidentifyFileResponse("run-7", run);
         Assert.assertEquals("run-7", response.getRunId());
         Assert.assertEquals(DetectRunStatus.SUCCESS, response.getStatus());
-        Assert.assertEquals(DataSourceType.BASE64, response.getOutputType());
+        Assert.assertEquals(DeidentifySourceType.BASE64, response.getOutputType());
         Assert.assertEquals("UERG", response.getOutput().get(0).getProcessedFile());
         Assert.assertEquals(FileDataFormat.PDF, response.getOutput().get(0).getProcessedFileExtension());
         Assert.assertEquals(Integer.valueOf(2), response.getMetrics().getPages());

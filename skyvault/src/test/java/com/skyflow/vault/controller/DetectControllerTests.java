@@ -5,7 +5,8 @@ import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
 import com.skyflow.detect.CheckGuardrailsRequest;
 import com.skyflow.detect.CheckGuardrailsResponse;
-import com.skyflow.detect.DataSourceType;
+import com.skyflow.detect.ReidentifySourceType;
+import com.skyflow.detect.DeidentifySourceType;
 import com.skyflow.detect.DeidentificationType;
 import com.skyflow.detect.DeidentifyFileRequest;
 import com.skyflow.detect.DeidentifyFileResponse;
@@ -276,7 +277,7 @@ public class DetectControllerTests {
             GetRunResponse done = controller.getRun(GetRunRequest.builder().runId(" run-42 ").build());
             Assert.assertEquals("run-42", done.getRunId());
             Assert.assertEquals(DetectRunStatus.SUCCESS, done.getStatus());
-            Assert.assertEquals(DataSourceType.BASE64, done.getOutputType());
+            Assert.assertEquals(DeidentifySourceType.BASE64, done.getOutputType());
             Assert.assertEquals("UERG", done.getOutput().get(0).getProcessedFile());
             Assert.assertEquals("REDACTED_FILE", done.getOutput().get(0).getProcessedFileType());
             Assert.assertEquals(FileDataFormat.PDF, done.getOutput().get(0).getProcessedFileExtension());
@@ -365,7 +366,7 @@ public class DetectControllerTests {
         ReidentifyFileRequest[] bad = {
                 null,
                 ReidentifyFileRequest.builder().value("Zm9v").build(),
-                ReidentifyFileRequest.builder().dataSource(DataSourceType.BASE64).value(" ").build(),
+                ReidentifyFileRequest.builder().dataSource(ReidentifySourceType.BASE64).value(" ").build(),
         };
         BaseErrorMessage[] expected = {
                 BaseErrorMessage.ReidentifyFileRequestNull,
@@ -388,7 +389,7 @@ public class DetectControllerTests {
         DetectController controller = new DetectController(vaultConfig("vault-a"), emptyCredentials());
         try {
             controller.reidentifyFile(ReidentifyFileRequest.builder()
-                    .dataSource(DataSourceType.BASE64).value("Zm9v").build());
+                    .dataSource(ReidentifySourceType.BASE64).value("Zm9v").build());
             Assert.fail("expected SkyflowException");
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
@@ -408,7 +409,7 @@ public class DetectControllerTests {
                             + "\"metrics\":{\"size\":0.5,\"wordCount\":3,\"characterCount\":12}}"));
 
             ReidentifyFileResponse response = controllerFor(server).reidentifyFile(ReidentifyFileRequest.builder()
-                    .dataSource(DataSourceType.BASE64)
+                    .dataSource(ReidentifySourceType.BASE64)
                     .value("W05BTUVfMV0=")
                     .dataFormat(FileDataFormat.TXT)
                     .redactionLevel(Arrays.asList(
@@ -416,7 +417,7 @@ public class DetectControllerTests {
                     .build());
 
             Assert.assertEquals(DetectRunStatus.SUCCESS, response.getStatus());
-            Assert.assertEquals(DataSourceType.BASE64, response.getOutputType());
+            Assert.assertEquals(ReidentifySourceType.BASE64, response.getOutputType());
             Assert.assertEquals(1, response.getOutput().size());
             Assert.assertEquals("SGVsbG8=", response.getOutput().get(0).getProcessedFile());
             Assert.assertEquals("REIDENTIFIED_FILE", response.getOutput().get(0).getProcessedFileType());
@@ -447,7 +448,7 @@ public class DetectControllerTests {
         try {
             server.enqueue(new MockResponse().setResponseCode(200).setBody("{\"status\":\"SOMETHING_NEW\"}"));
             ReidentifyFileResponse response = controllerFor(server).reidentifyFile(ReidentifyFileRequest.builder()
-                    .dataSource(DataSourceType.SKYFLOW_ID).value("rec-1").build());
+                    .dataSource(ReidentifySourceType.PRESIGNED_URL).value("https://example.com/tokenized.txt").build());
             Assert.assertEquals(DetectRunStatus.UNKNOWN, response.getStatus());
             Assert.assertNull(response.getOutputType());
             Assert.assertTrue(response.getOutput().isEmpty());
@@ -470,7 +471,7 @@ public class DetectControllerTests {
                             + "\"http_status\":\"Bad Request\",\"details\":[]}}"));
             try {
                 controllerFor(server).reidentifyFile(ReidentifyFileRequest.builder()
-                        .dataSource(DataSourceType.PRESIGNED_URL).value("https://example.com/f").build());
+                        .dataSource(ReidentifySourceType.PRESIGNED_URL).value("https://example.com/f").build());
                 Assert.fail("expected SkyflowException");
             } catch (SkyflowException e) {
                 Assert.assertEquals(400, e.getHttpCode());
@@ -505,7 +506,7 @@ public class DetectControllerTests {
             server.enqueue(new MockResponse().setResponseCode(200).setBody("{\"runId\":\"run-42\"}"));
 
             DeidentifyFileResponse response = controllerFor(server).deidentifyFile(DeidentifyFileRequest.builder()
-                    .dataSource(DataSourceType.SKYFLOW_ID).value("rec-1").dataFormat(FileDataFormat.PDF)
+                    .dataSource(DeidentifySourceType.SKYFLOW_ID).value("rec-1").dataFormat(FileDataFormat.PDF)
                     .configurationId("cfg-1").build());
 
             Assert.assertEquals("run-42", response.getRunId());
@@ -550,7 +551,7 @@ public class DetectControllerTests {
 
             Assert.assertEquals("run-7", response.getRunId());
             Assert.assertEquals(DetectRunStatus.SUCCESS, response.getStatus());
-            Assert.assertEquals(DataSourceType.BASE64, response.getOutputType());
+            Assert.assertEquals(DeidentifySourceType.BASE64, response.getOutputType());
             Assert.assertEquals(2, response.getOutput().size());
             Assert.assertEquals(Integer.valueOf(3), response.getMetrics().getWordCount());
             Assert.assertEquals("Pay [NAME_1]", new String(Files.readAllBytes(new File(outDir, "processed-invoice.txt").toPath()), "UTF-8"));
@@ -578,7 +579,7 @@ public class DetectControllerTests {
             server.enqueue(new MockResponse().setResponseCode(200).setBody("{\"status\":\"IN_PROGRESS\"}"));
 
             DeidentifyFileResponse response = controllerFor(server).deidentifyFile(DeidentifyFileRequest.builder()
-                    .dataSource(DataSourceType.BASE64).value("Zm9v")
+                    .dataSource(DeidentifySourceType.BASE64).value("Zm9v")
                     .pollOptions(PollOptions.builder().maxAttempts(1).build()).build());
 
             Assert.assertEquals("run-8", response.getRunId());
@@ -599,7 +600,7 @@ public class DetectControllerTests {
             server.enqueue(new MockResponse().setResponseCode(200).setBody("{\"status\":\"FAILED\",\"message\":\"unsupported file\"}"));
 
             DeidentifyFileResponse response = controllerFor(server).deidentifyFile(DeidentifyFileRequest.builder()
-                    .dataSource(DataSourceType.BASE64).value("Zm9v").pollOptions(PollOptions.builder().build()).build());
+                    .dataSource(DeidentifySourceType.BASE64).value("Zm9v").pollOptions(PollOptions.builder().build()).build());
 
             Assert.assertEquals(DetectRunStatus.FAILED, response.getStatus());
             Assert.assertEquals("unsupported file", response.getMessage());
@@ -618,7 +619,7 @@ public class DetectControllerTests {
                     .setBody("{\"error\":{\"grpc_code\":3,\"http_code\":400,\"message\":\"configuration not found\",\"http_status\":\"Bad Request\",\"details\":[]}}"));
             try {
                 controllerFor(server).deidentifyFile(DeidentifyFileRequest.builder()
-                        .dataSource(DataSourceType.BASE64).value("Zm9v").configurationId("missing").build());
+                        .dataSource(DeidentifySourceType.BASE64).value("Zm9v").configurationId("missing").build());
                 Assert.fail("expected SkyflowException");
             } catch (SkyflowException e) {
                 Assert.assertEquals(400, e.getHttpCode());
