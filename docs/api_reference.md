@@ -1,11 +1,16 @@
 # API Reference
 
-A reference for the public Skyflow Java SDK surface: client-management methods, config classes, request and response objects, helper classes, enums, and service-account utilities. For task-oriented usage and examples, see the [README](../README.md).
+A reference for the public Skyflow Java SDK surface: client-management methods, config classes, request and response objects, helper classes, enums, and service-account utilities.
+
+The vault, connection and file-upload classes belong to the skyvault SDK (`com.skyflow:skyflow-java`). The Detect classes in `com.skyflow.detect`, together with the credentials, config and service-account classes, live in the shared `common` module and apply to both the skyvault and the flowvault SDK (`com.skyflow:skyflow-flowvault-java`). Where a Detect field is specific to one vault type the table says so. The flowvault vault-operation classes (bulk insert, tokenize, detokenize and delete) are documented in the [flowvault README](../flowvault/README.md).
+
+For task-oriented usage and examples, see the [skyvault README](../skyvault/README.md) and the [flowvault README](../flowvault/README.md).
 
 All attributes, parameters, and enum values below are taken directly from the SDK source.
 
 ## Table of Contents
 
+- [Detect API](#detect-api)
 - [Client management methods](#client-management-methods)
 - [Config classes](#config-classes)
 - [Request objects](#request-objects)
@@ -13,6 +18,23 @@ All attributes, parameters, and enum values below are taken directly from the SD
 - [Helper classes](#helper-classes)
 - [Enums](#enums)
 - [Service account utilities](#service-account-utilities)
+
+---
+
+## Detect API
+
+Shared by the skyvault and flowvault SDKs. `skyflowClient.detect()` and `skyflowClient.detect(vaultId)` return a `DetectController`; every class below is in `com.skyflow.detect`. Usage and examples: [skyvault README](../skyvault/README.md#detect), [flowvault README](../flowvault/README.md#detect).
+
+| Method | Request | Response |
+|--------|---------|----------|
+| `deidentifyString` | [`DeidentifyStringRequest`](#deidentifystringrequest) | [`DeidentifyStringResponse`](#deidentifystringresponse) |
+| `deidentifyFile` | [`DeidentifyFileRequest`](#deidentifyfilerequest) | [`DeidentifyFileResponse`](#deidentifyfileresponse) |
+| `reidentifyString` | [`ReidentifyStringRequest`](#reidentifystringrequest) | [`ReidentifyStringResponse`](#reidentifystringresponse) |
+| `reidentifyFile` | [`ReidentifyFileRequest`](#reidentifyfilerequest) | [`ReidentifyFileResponse`](#reidentifyfileresponse) |
+| `getRun` | [`GetRunRequest`](#getrunrequest) | [`GetRunResponse`](#getrunresponse) |
+| `checkGuardrails` | [`CheckGuardrailsRequest`](#checkguardrailsrequest) | [`CheckGuardrailsResponse`](#checkguardrailsresponse) |
+
+Configuration and helper classes: [`DetectConfiguration`](#detectconfiguration), [`Detect`](#detect), [`Entity`](#entity), [`Transformation` and `ShiftDates`](#transformation-and-shiftdates), [`CustomType`](#customtype), [`ObjectEntity`](#objectentity), [`FileMapping`](#filemapping), [`Media`](#media) (with `Audio`, `Bleep`, `Document`, `Pdf`, `Image`), [`PollOptions`](#polloptions), [`RedactionLevel`](#redactionlevel), [`DetectedEntity`](#detectedentity), [`EntityLocation`](#entitylocation), [`Metrics`](#metrics), [`FileOutput`](#fileoutput). Enums: [Detect enums](#detect-enums).
 
 ---
 
@@ -204,60 +226,69 @@ Parameters listed with their defaults as defined in the builders.
 |----------------|---------|-------------|
 | `values(List<ColumnValue>)` | _(required)_ | List of [`ColumnValue`](#columnvalue) objects to tokenize. |
 
-### `DeidentifyTextRequest`
+### `DeidentifyStringRequest`
 
-`com.skyflow.vault.detect` — passed to `detect().deidentifyText()`.
+`com.skyflow.detect` — passed to `detect().deidentifyString()`.
 
 | Builder method | Default | Description |
 |----------------|---------|-------------|
 | `text(String)` | _(required)_ | Text to de-identify. |
-| `entities(List<DetectEntities>)` | `null` | Entity types to detect. See [`DetectEntities`](#detectentities). |
-| `allowRegexList(List<String>)` | `null` | Regex patterns to always treat as detectable. |
-| `restrictRegexList(List<String>)` | `null` | Regex patterns to exclude from detection. |
-| `tokenFormat(TokenFormat)` | `null` | Token format controlling token types per entity. See [`TokenFormat`](#tokenformat). |
-| `transformations(Transformations)` | `null` | Data transformations (e.g. date shifting). See [`Transformations`](#transformations). |
-
-### `ReidentifyTextRequest`
-
-`com.skyflow.vault.detect` — passed to `detect().reidentifyText()`.
-
-| Builder method | Default | Description |
-|----------------|---------|-------------|
-| `text(String)` | _(required)_ | The redacted/de-identified text to re-identify. |
-| `redactedEntities(List<DetectEntities>)` | `null` | Entity types to keep redacted. |
-| `maskedEntities(List<DetectEntities>)` | `null` | Entity types to mask. |
-| `plainTextEntities(List<DetectEntities>)` | `null` | Entity types to reveal as plain text. |
+| `configurationId(String)` | `null` | Id of a Detect configuration created through the management API. Sending it together with `configuration` is rejected by the API. |
+| `configuration(DetectConfiguration)` | `null` | Inline configuration. See [`DetectConfiguration`](#detectconfiguration). With neither this nor `configurationId` set, the SDK sends only the vault id and the server applies the vault's defaults. |
 
 ### `DeidentifyFileRequest`
 
-`com.skyflow.vault.detect` — passed to `detect().deidentifyFile()`.
+`com.skyflow.detect` — passed to `detect().deidentifyFile()`. Supply the file through exactly one of `value` (with a `dataSource`), `file` or `filePath`.
 
 | Builder method | Default | Description |
 |----------------|---------|-------------|
-| `file(FileInput)` | _(required)_ | File source. See [`FileInput`](#fileinput). |
-| `entities(List<DetectEntities>)` | `null` | Entity types to detect. |
-| `allowRegexList(List<String>)` | `null` | Regex patterns to always treat as detectable. |
-| `restrictRegexList(List<String>)` | `null` | Regex patterns to exclude. |
-| `tokenFormat(TokenFormat)` | `null` | Token format per entity. |
-| `transformations(Transformations)` | `null` | Transformations (not supported for Documents/Images/PDFs). |
-| `outputProcessedImage(Boolean)` | `false` | Include the processed image in the response. |
-| `outputOcrText(Boolean)` | `false` | Include OCR text in the response. |
-| `maskingMethod(MaskingMethod)` | `null` | See [`MaskingMethod`](#maskingmethod). |
-| `pixelDensity(Number)` | `null` | Pixel density for PDF processing. |
-| `maxResolution(Number)` | `null` | Max resolution for PDF processing. |
-| `outputProcessedAudio(Boolean)` | `false` | Include processed audio in the response. |
-| `outputTranscription(DetectOutputTranscriptions)` | `null` | See [`DetectOutputTranscriptions`](#detectoutputtranscriptions). |
-| `bleep(AudioBleep)` | `null` | Audio bleep configuration. See [`AudioBleep`](#audiobleep). |
-| `outputDirectory(String)` | `null` | Directory to write the processed file. |
-| `waitTime(Integer)` | `null` | Max seconds to wait for async file processing (≤ 64). |
+| `dataSource(DeidentifySourceType)` | `null` | How `value` supplies the file: `BASE64`, `SKYFLOW_ID` or `PRESIGNED_URL`. See [Detect enums](#detect-enums). |
+| `value(String)` | `null` | Base64 content, a skyflow id, or a presigned URL, per `dataSource`. |
+| `file(File)` | `null` | Local file; read and base64-encoded when sent, `dataSource` set to `BASE64`. |
+| `filePath(String)` | `null` | Same as `file(File)`, from a path. |
+| `dataFormat(FileDataFormat)` | inferred from the extension | File format. See [`FileDataFormat`](#filedataformat). |
+| `configurationId(String)` | `null` | Id of a stored Detect configuration. Sending it together with `configuration` is rejected by the API. |
+| `configuration(DetectConfiguration)` | `null` | Inline configuration. See [`DetectConfiguration`](#detectconfiguration). With neither this nor `configurationId` set, the SDK sends only the vault id and the server applies the vault's defaults. |
+| `pollOptions(PollOptions)` | `null` | Poll the run after submitting. `null` submits only and returns the run id. See [`PollOptions`](#polloptions). |
+| `outputDirectory(String)` | working directory | Where outputs are written on success. Requires `pollOptions` and a local file; setting it without `pollOptions` fails client-side validation. |
 
-### `GetDetectRunRequest`
+### `ReidentifyStringRequest`
 
-`com.skyflow.vault.detect` — passed to `detect().getDetectRun()`.
+`com.skyflow.detect` — passed to `detect().reidentifyString()`.
 
 | Builder method | Default | Description |
 |----------------|---------|-------------|
-| `runId(String)` | _(required)_ | The `run_id` returned by a prior `deidentifyFile` call. |
+| `text(String)` | _(required)_ | The de-identified text to re-identify. |
+| `redactionLevel(List<RedactionLevel>)` | `null` | Per-entity redaction rules. See [`RedactionLevel`](#redactionlevel). Without rules every token is replaced by its original value. |
+
+### `ReidentifyFileRequest`
+
+`com.skyflow.detect` — passed to `detect().reidentifyFile()`. Synchronous: the re-identified file comes back in the response.
+
+| Builder method | Default | Description |
+|----------------|---------|-------------|
+| `dataSource(ReidentifySourceType)` | _(required)_ | `BASE64` or `PRESIGNED_URL`. Re-identification does not accept a skyflow id as the source. |
+| `value(String)` | _(required)_ | Base64 content, a skyflow id, or a presigned URL, per `dataSource`. |
+| `dataFormat(FileDataFormat)` | `null` | File format. Limited to the formats that support `VAULT_TOKEN`: `TXT`, `CSV`, `JSON`, `JSONL`, `XML`, `DOCX`, `XLSX` or `PPTX`. |
+| `redactionLevel(List<RedactionLevel>)` | `null` | Redaction rules. See [`RedactionLevel`](#redactionlevel). |
+
+### `GetRunRequest`
+
+`com.skyflow.detect` — passed to `detect().getRun()`.
+
+| Builder method | Default | Description |
+|----------------|---------|-------------|
+| `runId(String)` | _(required)_ | The run id returned by a prior `deidentifyFile` call. |
+
+### `CheckGuardrailsRequest`
+
+`com.skyflow.detect` — passed to `detect().checkGuardrails()`.
+
+| Builder method | Default | Description |
+|----------------|---------|-------------|
+| `text(String)` | _(required)_ | Text to screen. |
+| `checkToxicity(Boolean)` | `null` | Whether to check for toxicity. Sent only when set. |
+| `denyTopics(List<String>)` | `null` | Topics to deny. |
 
 ### `InvokeConnectionRequest`
 
@@ -363,44 +394,63 @@ Each element returned by `getDetokenizedFields()` and `getErrors()`.
 |--------|-------------|-------------|
 | `getTokens()` | `List<String>` | One token per input `ColumnValue`, in order. |
 
-### `DeidentifyTextResponse`
+### `DeidentifyStringResponse`
 
-`com.skyflow.vault.detect` — returned by `detect().deidentifyText()`.
+`com.skyflow.detect` — returned by `detect().deidentifyString()`.
 
 | Getter | Return type | Description |
 |--------|-------------|-------------|
 | `getProcessedText()` | `String` | The de-identified text with entity values replaced by tokens. |
-| `getEntities()` | `List<EntityInfo>` | Detected entities. See [`EntityInfo`](#entityinfo). |
-| `getWordCount()` | `int` | Word count of the input text. |
-| `getCharCount()` | `int` | Character count of the input text. |
+| `getEntities()` | `List<DetectedEntity>` | Detected entities, never `null`. See [`DetectedEntity`](#detectedentity). |
+| `getMetrics()` | `Metrics` | Word and character counts. See [`Metrics`](#metrics). |
 
-### `ReidentifyTextResponse`
+### `ReidentifyStringResponse`
 
-`com.skyflow.vault.detect` — returned by `detect().reidentifyText()`.
+`com.skyflow.detect` — returned by `detect().reidentifyString()`.
 
 | Getter | Return type | Description |
 |--------|-------------|-------------|
-| `getProcessedText()` | `String` | The re-identified text with tokens replaced by their original values. |
+| `getProcessedText()` | `String` | The re-identified text. |
+| `getMetrics()` | `Metrics` | Word and character counts. |
 
 ### `DeidentifyFileResponse`
 
-`com.skyflow.vault.detect` — returned by `detect().deidentifyFile()`.
+`com.skyflow.detect` — returned by `detect().deidentifyFile()`. Without `pollOptions` only `getRunId()` is set.
 
 | Getter | Return type | Description |
 |--------|-------------|-------------|
-| `getFile()` | `FileInfo` | Metadata about the processed file. See [`FileInfo`](#fileinfo). |
-| `getFileBase64()` | `String` | Base64-encoded processed file content (when `outputProcessedImage=true`). |
-| `getType()` | `String` | MIME type of the output file. |
-| `getExtension()` | `String` | File extension of the output file. |
-| `getWordCount()` | `Integer` | Word count (text/document files). |
-| `getCharCount()` | `Integer` | Character count (text/document files). |
-| `getSizeInKb()` | `Float` | Output file size in kilobytes. |
-| `getDurationInSeconds()` | `Float` | Duration in seconds (audio/video files). |
-| `getPageCount()` | `Integer` | Page count (PDF files). |
-| `getSlideCount()` | `Integer` | Slide count (presentation files). |
-| `getEntities()` | `List<FileEntityInfo>` | Detected entities. See [`FileEntityInfo`](#fileentityinfo). |
-| `getRunId()` | `String` | Run ID for async polling with `getDetectRun()`. |
-| `getStatus()` | `String` | Processing status. See [`DeidentifyFileStatus`](#deidentifyfilestatus). |
+| `getRunId()` | `String` | Run id, always present. |
+| `getStatus()` | `DetectRunStatus` | Run status when polled, `null` when submit only. See [`DetectRunStatus`](#detectrunstatus). |
+| `getOutputType()` | `DeidentifySourceType` | `BASE64` or `PRESIGNED_URL`, `null` until the run completes. |
+| `getOutput()` | `List<FileOutput>` | Every output of the run, empty until complete, never `null`. See [`FileOutput`](#fileoutput). |
+| `getMetrics()` | `Metrics` | Size, counts, pages, slides, duration. `null` until complete. |
+| `getMessage()` | `String` | Failure detail when the status is `FAILED`. |
+
+### `ReidentifyFileResponse`
+
+`com.skyflow.detect` — returned by `detect().reidentifyFile()`.
+
+| Getter | Return type | Description |
+|--------|-------------|-------------|
+| `getStatus()` | `DetectRunStatus` | Status of the re-identification. |
+| `getOutputType()` | `ReidentifySourceType` | `BASE64` or `PRESIGNED_URL`. |
+| `getOutput()` | `List<FileOutput>` | Re-identified file outputs, never `null`. |
+| `getMetrics()` | `Metrics` | Size and counts. |
+
+### `GetRunResponse`
+
+`com.skyflow.detect` — returned by `detect().getRun()`. Same getters as [`DeidentifyFileResponse`](#deidentifyfileresponse).
+
+### `CheckGuardrailsResponse`
+
+`com.skyflow.detect` — returned by `detect().checkGuardrails()`.
+
+| Getter | Return type | Description |
+|--------|-------------|-------------|
+| `getText()` | `String` | The screened text. |
+| `getValidation()` | `GuardrailsValidation` | `PASSED` or `FAILED`. See [`GuardrailsValidation`](#guardrailsvalidation). |
+| `getToxic()` | `Boolean` | Whether the text was judged toxic, `null` when the check did not run. |
+| `getDeniedTopic()` | `Boolean` | Whether a denied topic was found, `null` when no topics were supplied. |
 
 ### `InvokeConnectionResponse`
 
@@ -444,117 +494,137 @@ Each element returned by `getDetokenizedFields()` and `getErrors()`.
 | `getValue()` | `String` | The value to tokenize. |
 | `getColumnGroup()` | `String` | The column group name. |
 
-### `FileInput`
+### `DetectConfiguration`
 
-`com.skyflow.vault.detect` — used inside [`DeidentifyFileRequest`](#deidentifyfilerequest). Provide exactly one source.
-
-| Builder method | Default | Description |
-|----------------|---------|-------------|
-| `file(File)` | `null` | A `java.io.File` object. |
-| `filePath(String)` | `null` | Path to a file. |
-
-| Getter | Return type | Description |
-|--------|-------------|-------------|
-| `getFile()` | `File` | The file object. |
-| `getFilePath()` | `String` | The file path. |
-
-### `AudioBleep`
-
-`com.skyflow.vault.detect` — used inside [`DeidentifyFileRequest`](#deidentifyfilerequest) for audio bleeping.
+`com.skyflow.detect` — inline Detect policy for `deidentifyString` and `deidentifyFile`.
 
 | Builder method | Default | Description |
 |----------------|---------|-------------|
-| `gain(Double)` | `null` | Gain level of the bleep tone. |
-| `frequency(Double)` | `null` | Frequency (Hz) of the bleep tone. |
-| `startPadding(Double)` | `null` | Seconds of silence before the bleep. |
-| `stopPadding(Double)` | `null` | Seconds of silence after the bleep. |
+| `name(String)` | `null` | Configuration name. |
+| `description(String)` | `null` | Configuration description. |
+| `detect(Detect)` | `null` | What to detect and how to de-identify it. See [`Detect`](#detect). |
+| `fileMapping(List<FileMapping>)` | `null` | Per-column handling for structured files. See [`FileMapping`](#filemapping). |
+| `media(Media)` | `null` | Audio, document and image options for file calls. See [`Media`](#media). |
 
-| Getter | Return type | Description |
-|--------|-------------|-------------|
-| `getGain()` | `Double` | Gain level. |
-| `getFrequency()` | `Double` | Frequency. |
-| `getStartPadding()` | `Double` | Start padding in seconds. |
-| `getStopPadding()` | `Double` | Stop padding in seconds. |
-
-### `TokenFormat`
-
-`com.skyflow.vault.detect` — used inside [`DeidentifyTextRequest`](#deidentifytextrequest) and [`DeidentifyFileRequest`](#deidentifyfilerequest) to control token types per entity.
+### `Detect`
 
 | Builder method | Default | Description |
 |----------------|---------|-------------|
-| `defaultType(TokenType)` | `TokenType.ENTITY_UNIQUE_COUNTER` | Default token type for entities not explicitly listed. See [`TokenType`](#tokentype). |
-| `vaultToken(List<DetectEntities>)` | `null` | Entities to tokenize as vault tokens. |
-| `entityUniqueCounter(List<DetectEntities>)` | `null` | Entities to tokenize as entity-unique-counter tokens. |
-| `entityOnly(List<DetectEntities>)` | `null` | Entities to tokenize as entity-only tokens. |
+| `entities(List<Entity>)` | `null` | Entities to detect, each with its own de-identification type. See [`Entity`](#entity). |
+| `objectEntities(List<ObjectEntity>)` | `null` | Visual objects to detect in images. See [`ObjectEntity`](#objectentity). |
+| `restrict(List<String>)` | `null` | Regexes to always treat as restricted. |
+| `skip(List<String>)` | `null` | Regexes to never treat as sensitive. |
+| `customTypes(List<CustomType>)` | `null` | Regex-defined entity types. See [`CustomType`](#customtype). |
+| `returnEntities(ReturnEntitiesType)` | `EXCLUDE_SENSITIVE_DATA` | Whether raw values come back in the response. See [`ReturnEntitiesType`](#returnentitiestype). |
 
-### `Transformations`
+### `Entity`
 
-`com.skyflow.vault.detect` — used inside [`DeidentifyTextRequest`](#deidentifytextrequest) and [`DeidentifyFileRequest`](#deidentifyfilerequest).
+| Builder method | Default | Description |
+|----------------|---------|-------------|
+| `entityType(EntityType)` | `ALL` | Entity type. See [`EntityType`](#entitytype). |
+| `deidentificationType(DeidentificationType)` | `ENTITY_UNIQUE_COUNTER` | How the value is replaced. See [`DeidentificationType`](#deidentificationtype). |
+| `destination(String)` | `null` | For `VAULT_TOKEN`: where the value is stored. A `table.column` on skyvault vaults, a token group name on flowvault vaults. Must already exist. |
+| `transformation(Transformation)` | `null` | Date shifting. See [`Transformation`](#transformation). |
 
-| Constructor | Description |
-|-------------|-------------|
-| `new Transformations(DateTransformation shiftDates)` | Apply date shifting. |
+### `Transformation` and `ShiftDates`
+
+`Transformation.builder().shiftDates(ShiftDates)`; `ShiftDates.builder().minDays(Integer).maxDays(Integer)`. Dates are shifted by a random amount within the range.
+
+### `CustomType`
+
+| Builder method | Default | Description |
+|----------------|---------|-------------|
+| `label(String)` | `null` | Becomes the entity type on the response. |
+| `match(List<String>)` | `null` | Regexes that define the type. |
+
+### `ObjectEntity`
+
+| Builder method | Default | Description |
+|----------------|---------|-------------|
+| `entityType(ObjectEntityType)` | `null` | `FACE`, `LICENSE_PLATE`, `LOGO`, `SIGNATURE` or `ALL`. |
+| `deidentificationType(ObjectDeidentificationType)` | `null` | `REDACT` or `UNREDACT`. |
+
+### `FileMapping`
+
+| Builder method | Description |
+|----------------|-------------|
+| `source(String)` | Source column. |
+| `destination(String)` | Destination column. |
+| `outputFileNameSuffix(String)` | Suffix added to the output file name. |
+| `entitiesDestination(String)` | Column that receives the detected entities. |
+| `objectEntitiesDestination(String)` | Column that receives the detected object entities. |
+
+### `Media`
+
+`Media.builder().audio(Audio).document(Document).image(Image)`.
+
+| Class | Builder methods |
+|-------|-----------------|
+| `Audio` | `outputProcessedAudio(Boolean)`, `outputTranscription(OutputTranscriptionType)`, `bleep(Bleep)` |
+| `Bleep` | `startPadding(Float)`, `stopPadding(Float)`, `frequency(Integer)`, `gain(Integer)` |
+| `Document` | `pdf(Pdf)` |
+| `Pdf` | `processingMode(PdfProcessingMode)`, `density(Integer)`, `maxResolution(Integer)` |
+| `Image` | `outputProcessedImage(Boolean)`, `outputOcrText(Boolean)`, `maskingMethod(MaskingMethod)` |
+
+### `PollOptions`
+
+`com.skyflow.detect` — opts `deidentifyFile` into submit-and-poll mode. The SDK polls with exponential backoff (1, 2, 4, 8, 16, then 32 seconds) on the calling thread.
+
+| Builder method | Default | Description |
+|----------------|---------|-------------|
+| `waitTime(Integer)` | `60` | Maximum total seconds to keep polling, 1 to 300. |
+| `maxAttempts(Integer)` | `23` | Maximum number of run lookups, 1 to 23. |
+
+### `RedactionLevel`
+
+`com.skyflow.detect` — element of `redactionLevel()` on `ReidentifyStringRequest` and `ReidentifyFileRequest`. Each rule names one source and one replacement: `entityName` plus `redactionType` on skyvault vaults, `tokenGroupName` plus `redactionPattern` on flowvault vaults. Every field is optional on the API; the server rejects invalid combinations.
+
+| Builder method | Description |
+|----------------|-------------|
+| `entityName(EntityType)` | Skyvault vaults: entity type the rule applies to. |
+| `redactionType(RedactionType)` | Skyvault vaults: `PLAIN_TEXT`, `MASKED`, `REDACTED` or `DEFAULT`, the same `com.skyflow.enums.RedactionType` used by `get` and `detokenize`. See [`RedactionType`](#redactiontype). |
+| `tokenGroupName(String)` | Flowvault vaults: token group the rule applies to. |
+| `redactionPattern(String)` | Flowvault vaults: name of a redaction pattern configured in the vault. |
+
+### `DetectedEntity`
+
+`com.skyflow.detect` — element of `DeidentifyStringResponse.getEntities()`.
 
 | Getter | Return type | Description |
 |--------|-------------|-------------|
-| `getShiftDates()` | `DateTransformation` | The date transformation to apply. |
+| `getToken()` | `String` | The token that replaced the value, e.g. `NAME_1`. |
+| `getValue()` | `String` | The original value; empty unless `returnEntities` is `ALL`. |
+| `getLocation()` | `EntityLocation` | Offsets in the original and processed text. |
+| `getEntityType()` | `String` | Entity type label, including custom type labels. |
+| `getEntityScores()` | `Map<String, Double>` | Confidence scores per entity type. |
 
-### `DateTransformation`
-
-`com.skyflow.vault.detect` — used inside [`Transformations`](#transformations).
-
-| Constructor | Description |
-|-------------|-------------|
-| `new DateTransformation(int max, int min, List<DetectEntities> entities)` | Shift dates by a random amount within `[min, max]` days. |
+### `EntityLocation`
 
 | Getter | Return type | Description |
 |--------|-------------|-------------|
-| `getMax()` | `int` | Maximum day-shift value. |
-| `getMin()` | `int` | Minimum day-shift value. |
-| `getEntities()` | `List<DetectEntities>` | Entity types to date-shift. |
+| `getStartIndex()` / `getEndIndex()` | `Integer` | Offsets into the original text. |
+| `getStartIndexProcessed()` / `getEndIndexProcessed()` | `Integer` | Offsets into the processed text. |
 
-### `EntityInfo`
-
-`com.skyflow.vault.detect` — element of `DeidentifyTextResponse.getEntities()`.
+### `Metrics`
 
 | Getter | Return type | Description |
 |--------|-------------|-------------|
-| `getToken()` | `String` | The token that replaced the original entity value. |
-| `getValue()` | `String` | The original entity value. |
-| `getTextIndex()` | `TextIndex` | Character offsets of the entity in the original text. |
-| `getProcessedIndex()` | `TextIndex` | Character offsets of the token in the processed text. |
-| `getEntity()` | `String` | Entity type label (e.g. `"EMAIL_ADDRESS"`). |
-| `getScores()` | `Map<String, Double>` | Confidence scores per entity type. |
+| `getSize()` | `Double` | Size in kilobytes. |
+| `getWordCount()` | `Integer` | Word count. |
+| `getCharacterCount()` | `Integer` | Character count. |
+| `getPages()` | `Integer` | Page count, documents only. |
+| `getSlides()` | `Integer` | Slide count, presentations only. |
+| `getDuration()` | `Double` | Duration in seconds, audio only. |
 
-### `TextIndex`
+### `FileOutput`
 
-`com.skyflow.vault.detect` — used in [`EntityInfo`](#entityinfo).
-
-| Getter | Return type | Description |
-|--------|-------------|-------------|
-| `getStart()` | `int` | Start character offset (inclusive). |
-| `getEnd()` | `int` | End character offset (exclusive). |
-
-### `FileEntityInfo`
-
-`com.skyflow.vault.detect` — element of `DeidentifyFileResponse.getEntities()`.
+`com.skyflow.detect` — element of `getOutput()` on the file responses.
 
 | Getter | Return type | Description |
 |--------|-------------|-------------|
-| `getFile()` | `String` | File name or identifier. |
-| `getType()` | `String` | Output file type. |
-| `getExtension()` | `String` | Output file extension. |
-
-### `FileInfo`
-
-`com.skyflow.vault.detect` — returned by `DeidentifyFileResponse.getFile()`.
-
-| Getter | Return type | Description |
-|--------|-------------|-------------|
-| `getName()` | `String` | Original file name. |
-| `getSize()` | `long` | File size in bytes. |
-| `getType()` | `String` | MIME type. |
-| `getLastModified()` | `long` | Last-modified timestamp (milliseconds since epoch). |
+| `getProcessedFile()` | `String` | Base64 content or a presigned URL, per the response's `getOutputType()`. |
+| `getProcessedFileType()` | `String` | `REDACTED_FILE`, `ENTITIES`, `OBJECT_ENTITIES`, `REDACTED_TEXT`, and so on. |
+| `getProcessedFileExtension()` | `FileDataFormat` | Extension of the output. |
 
 ---
 
@@ -585,7 +655,7 @@ Each element returned by `getDetokenizedFields()` and `getErrors()`.
 
 ### `RedactionType`
 
-`com.skyflow.enums`
+`com.skyflow.enums` — one enum for every place a redaction is chosen: `GetRequest.redactionType`, `DetokenizeData`, and Detect's `RedactionLevel.redactionType` on skyvault vaults.
 
 | Value | Description |
 |-------|-------------|
@@ -604,16 +674,6 @@ Each element returned by `getDetokenizedFields()` and `getErrors()`.
 | `ENABLE` | Use provided tokens where supplied; generate tokens for missing fields. |
 | `ENABLE_STRICT` | All fields must supply a BYOT token; missing tokens cause an error. |
 
-### `TokenType`
-
-`com.skyflow.enums` — used in [`TokenFormat`](#tokenformat) for Detect operations.
-
-| Value | Description |
-|-------|-------------|
-| `VAULT_TOKEN` | Token stored in the vault and associated with a skyflow_id. |
-| `ENTITY_UNIQUE_COUNTER` | Deterministic token unique to the entity value (consistent across occurrences). |
-| `ENTITY_ONLY` | Token represents the entity type only, with no value stored in the vault. |
-
 ### `RequestMethod`
 
 `com.skyflow.enums` — used in [`InvokeConnectionRequest`](#invokeconnectionrequest).
@@ -626,54 +686,25 @@ Each element returned by `getDetokenizedFields()` and `getErrors()`.
 | `PATCH` | HTTP PATCH. |
 | `DELETE` | HTTP DELETE. |
 
-### `MaskingMethod`
+### Detect enums
 
-`com.skyflow.enums` — used in [`DeidentifyFileRequest`](#deidentifyfilerequest).
+All in `com.skyflow.detect`.
 
-| Value | Description |
-|-------|-------------|
-| `BLACKBOX` | Cover detected entities with a solid black rectangle. |
-| `BLUR` | Blur detected entities. |
-
-### `DetectOutputTranscriptions`
-
-`com.skyflow.enums` — used in [`DeidentifyFileRequest`](#deidentifyfilerequest).
-
-| Value | Description |
-|-------|-------------|
-| `TRANSCRIPTION` | Standard transcription. |
-| `DIARIZED_TRANSCRIPTION` | Transcription with speaker diarization. |
-| `MEDICAL_TRANSCRIPTION` | Medical-domain transcription. |
-| `MEDICAL_DIARIZED_TRANSCRIPTION` | Medical transcription with speaker diarization. |
-
-### `DeidentifyFileStatus`
-
-`com.skyflow.enums` — returned in `DeidentifyFileResponse.getStatus()`.
-
-| Value | Description |
-|-------|-------------|
-| `IN_PROGRESS` | File processing is ongoing. Poll with `getDetectRun()`. |
-| `SUCCESS` | Processing completed successfully. |
-| `FAILED` | Processing failed. |
-| `UNKNOWN` | Status could not be determined. |
-
-### `DetectEntities`
-
-`com.skyflow.enums` — entity type values for Detect operations.
-
-| Category | Values |
-|----------|--------|
-| Personal identity | `NAME`, `NAME_GIVEN`, `NAME_FAMILY`, `NAME_MEDICAL_PROFESSIONAL`, `DOB`, `AGE`, `GENDER`, `MARITAL_STATUS`, `SEXUALITY`, `RELIGION`, `POLITICAL_AFFILIATION`, `PHYSICAL_ATTRIBUTE`, `ORIGIN`, `NATIONALITY` |
-| Contact | `EMAIL_ADDRESS`, `PHONE_NUMBER`, `LOCATION`, `LOCATION_ADDRESS`, `LOCATION_ADDRESS_STREET`, `LOCATION_CITY`, `LOCATION_STATE`, `LOCATION_COUNTRY`, `LOCATION_ZIP`, `LOCATION_COORDINATE` |
-| Financial | `CREDIT_CARD`, `CREDIT_CARD_EXPIRATION`, `CVV`, `BANK_ACCOUNT`, `ACCOUNT_NUMBER`, `ROUTING_NUMBER`, `MONEY`, `FINANCIAL_METRIC`, `CORPORATE_ACTION` |
-| Government ID | `SSN`, `DRIVER_LICENSE`, `PASSPORT_NUMBER`, `HEALTHCARE_NUMBER`, `ORGANIZATION_ID`, `NUMERICAL_PII` |
-| Medical | `BLOOD_TYPE`, `CONDITION`, `DRUG`, `DOSE`, `EFFECT`, `INJURY`, `MEDICAL_CODE`, `MEDICAL_PROCESS`, `ORGANIZATION_MEDICAL_FACILITY` |
-| Date & time | `DATE`, `DAY`, `MONTH`, `YEAR`, `TIME`, `DURATION`, `DATE_INTERVAL`, `EVENT` |
-| Technology | `IP_ADDRESS`, `URL`, `USERNAME`, `PASSWORD`, `FILENAME`, `VEHICLE_ID` |
-| Organization | `ORGANIZATION`, `OCCUPATION`, `PROJECT`, `PRODUCT` |
-| Other | `LANGUAGE`, `STATISTICS`, `TREND`, `ZODIAC_SIGN`, `ALL` |
-
-Use `DetectEntities.ALL` to detect all supported entity types.
+| Enum | Values |
+|------|--------|
+| `EntityType` | the 70 entity types (`NAME`, `EMAIL_ADDRESS`, `SSN`, `CREDIT_CARD`, `DOB`, ...), plus `ALL` and `NONE` |
+| `DeidentificationType` | `ENTITY_UNIQUE_COUNTER` _(default)_, `ENTITY_ONLY`, `VAULT_TOKEN`, `MASK`, `UNKNOWN` |
+| `DeidentifySourceType` | `BASE64`, `SKYFLOW_ID`, `PRESIGNED_URL`. Input source for `deidentifyFile`, and the `getOutputType()` of `DeidentifyFileResponse` and `GetRunResponse`, where the API returns `BASE64` or `PRESIGNED_URL`. |
+| `ReidentifySourceType` | `BASE64`, `PRESIGNED_URL`. Input source for `reidentifyFile` (the API does not accept a skyflow id there) and the `getOutputType()` of `ReidentifyFileResponse`. |
+| `FileDataFormat` | `BMP`, `CSV`, `DCM`, `DOC`, `DOCX`, `GIF`, `JPEG`, `JPG`, `JSON`, `JSONL`, `MP3`, `PDF`, `PNG`, `PPT`, `PPTX`, `TIF`, `TIFF`, `TXT`, `WAV`, `XLS`, `XLSX`, `XML`, `ZIP` |
+| `DetectRunStatus` | `QUEUED`, `IN_PROGRESS`, `SUCCESS`, `FAILED`, `UNKNOWN`. `SUCCESS`, `FAILED` and `UNKNOWN` end polling. |
+| `ReturnEntitiesType` | `EXCLUDE_SENSITIVE_DATA` _(default)_, `ALL`, `NONE` |
+| `MaskingMethod` | `NONE`, `BLUR`, `BLACKBOX` |
+| `OutputTranscriptionType` | `NONE`, `TRANSCRIPTION`, `MEDICAL_TRANSCRIPTION`, `DIARIZED_TRANSCRIPTION`, `MEDICAL_DIARIZED_TRANSCRIPTION` |
+| `PdfProcessingMode` | `NONE`, `OCR`, `TEXT_LAYER` |
+| `ObjectEntityType` | `NONE`, `FACE`, `LICENSE_PLATE`, `LOGO`, `SIGNATURE`, `ALL` |
+| `ObjectDeidentificationType` | `UNKNOWN`, `REDACT`, `UNREDACT` |
+| `GuardrailsValidation` | `PASSED`, `FAILED`, `UNKNOWN` |
 
 ---
 

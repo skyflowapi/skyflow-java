@@ -3,10 +3,10 @@ package com.skyflow.serviceaccount.util;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.skyflow.errors.ErrorCode;
-import com.skyflow.errors.ErrorMessage;
+import com.skyflow.errors.BaseErrorMessage;
 import com.skyflow.errors.SkyflowException;
-import com.skyflow.generated.auth.rest.core.ApiClientException;
-import com.skyflow.generated.auth.rest.types.V1GetAuthTokenResponse;
+import com.skyflow.generated.common.rest.core.ApiClientException;
+import com.skyflow.generated.common.rest.types.GetAuthTokenResponse;
 import com.skyflow.utils.BaseConstants;
 import com.skyflow.utils.BaseUtils;
 import org.junit.Assert;
@@ -102,7 +102,7 @@ public class BearerTokenTests {
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
-                    BaseUtils.parameterizedString(ErrorMessage.FileNotFound.getMessage(), ""), e.getMessage()
+                    BaseUtils.parameterizedString(BaseErrorMessage.FileNotFound.getMessage(), ""), e.getMessage()
             );
         }
     }
@@ -117,7 +117,7 @@ public class BearerTokenTests {
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
-                    BaseUtils.parameterizedString(ErrorMessage.FileNotFound.getMessage(), invalidFilePath),
+                    BaseUtils.parameterizedString(BaseErrorMessage.FileNotFound.getMessage(), invalidFilePath),
                     e.getMessage()
             );
         }
@@ -133,7 +133,7 @@ public class BearerTokenTests {
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
-                    BaseUtils.parameterizedString(ErrorMessage.FileInvalidJson.getMessage(), invalidJsonFilePath),
+                    BaseUtils.parameterizedString(BaseErrorMessage.FileInvalidJson.getMessage(), invalidJsonFilePath),
                     e.getMessage()
             );
         }
@@ -147,7 +147,7 @@ public class BearerTokenTests {
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(ErrorMessage.InvalidCredentials.getMessage(), e.getMessage());
+            Assert.assertEquals(BaseErrorMessage.InvalidCredentials.getMessage(), e.getMessage());
         }
     }
 
@@ -159,7 +159,7 @@ public class BearerTokenTests {
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(ErrorMessage.CredentialsStringInvalidJson.getMessage(), e.getMessage());
+            Assert.assertEquals(BaseErrorMessage.CredentialsStringInvalidJson.getMessage(), e.getMessage());
         }
     }
 
@@ -174,7 +174,7 @@ public class BearerTokenTests {
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(ErrorMessage.MissingPrivateKey.getMessage(), e.getMessage());
+            Assert.assertEquals(BaseErrorMessage.MissingPrivateKey.getMessage(), e.getMessage());
         }
     }
 
@@ -188,7 +188,7 @@ public class BearerTokenTests {
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(ErrorMessage.MissingClientId.getMessage(), e.getMessage());
+            Assert.assertEquals(BaseErrorMessage.MissingClientId.getMessage(), e.getMessage());
         }
     }
 
@@ -202,7 +202,7 @@ public class BearerTokenTests {
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(ErrorMessage.MissingKeyId.getMessage(), e.getMessage());
+            Assert.assertEquals(BaseErrorMessage.MissingKeyId.getMessage(), e.getMessage());
         }
     }
 
@@ -216,7 +216,7 @@ public class BearerTokenTests {
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(ErrorMessage.MissingTokenUri.getMessage(), e.getMessage());
+            Assert.assertEquals(BaseErrorMessage.MissingTokenUri.getMessage(), e.getMessage());
         }
     }
 
@@ -230,7 +230,7 @@ public class BearerTokenTests {
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(ErrorMessage.JwtInvalidFormat.getMessage(), e.getMessage());
+            Assert.assertEquals(BaseErrorMessage.JwtInvalidFormat.getMessage(), e.getMessage());
         }
     }
 
@@ -243,7 +243,7 @@ public class BearerTokenTests {
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(ErrorMessage.InvalidKeySpec.getMessage(), e.getMessage());
+            Assert.assertEquals(BaseErrorMessage.InvalidKeySpec.getMessage(), e.getMessage());
         }
     }
 
@@ -257,7 +257,7 @@ public class BearerTokenTests {
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(ErrorMessage.InvalidTokenUri.getMessage(), e.getMessage());
+            Assert.assertEquals(BaseErrorMessage.InvalidTokenUri.getMessage(), e.getMessage());
         }
     }
 
@@ -274,7 +274,7 @@ public class BearerTokenTests {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             // InvalidKeySpec confirms all credential fields were resolved — failure is at RSA parsing, not field lookup
             Assert.assertEquals(
-                    BaseUtils.parameterizedString(ErrorMessage.InvalidKeySpec.getMessage(), BaseConstants.SDK_PREFIX),
+                    BaseUtils.parameterizedString(BaseErrorMessage.InvalidKeySpec.getMessage(), BaseConstants.SDK_PREFIX),
                     e.getMessage());
         }
     }
@@ -361,8 +361,8 @@ public class BearerTokenTests {
 
     @Test
     public void testExtractAccessTokenMissingThrowsSkyflowException() throws Exception {
-        V1GetAuthTokenResponse response = V1GetAuthTokenResponse.builder().build();
-        Method method = BearerToken.class.getDeclaredMethod("extractAccessToken", V1GetAuthTokenResponse.class);
+        GetAuthTokenResponse response = GetAuthTokenResponse.builder().build();
+        Method method = BearerToken.class.getDeclaredMethod("extractAccessToken", GetAuthTokenResponse.class);
         method.setAccessible(true);
         try {
             method.invoke(null, response);
@@ -371,14 +371,14 @@ public class BearerTokenTests {
             Assert.assertTrue(e.getCause() instanceof SkyflowException);
             SkyflowException skyflowException = (SkyflowException) e.getCause();
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), skyflowException.getHttpCode());
-            Assert.assertEquals(ErrorMessage.MissingAccessToken.getMessage(), skyflowException.getMessage());
+            Assert.assertEquals(BaseErrorMessage.MissingAccessToken.getMessage(), skyflowException.getMessage());
         }
     }
 
     @Test
     public void testExtractAccessTokenPresentReturnsToken() throws Exception {
-        V1GetAuthTokenResponse response = V1GetAuthTokenResponse.builder().accessToken("test-access-token").build();
-        Method method = BearerToken.class.getDeclaredMethod("extractAccessToken", V1GetAuthTokenResponse.class);
+        GetAuthTokenResponse response = GetAuthTokenResponse.builder().accessToken("test-access-token").build();
+        Method method = BearerToken.class.getDeclaredMethod("extractAccessToken", GetAuthTokenResponse.class);
         method.setAccessible(true);
         Object result = method.invoke(null, response);
         Assert.assertEquals("test-access-token", result);

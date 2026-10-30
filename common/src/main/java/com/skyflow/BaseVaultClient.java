@@ -1,12 +1,12 @@
 package com.skyflow;
 
-import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.skyflow.config.BaseCredentials;
 import com.skyflow.config.BaseVaultConfig;
 import com.skyflow.errors.ErrorCode;
-import com.skyflow.errors.ErrorMessage;
+import com.skyflow.errors.BaseErrorMessage;
 import com.skyflow.errors.SkyflowException;
+import com.skyflow.generated.common.rest.core.ObjectMappers;
 import com.skyflow.logs.ErrorLogs;
 import com.skyflow.logs.InfoLogs;
 import com.skyflow.logs.WarningLogs;
@@ -29,7 +29,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-class BaseVaultClient<V extends BaseVaultConfig> {
+public class BaseVaultClient<V extends BaseVaultConfig> {
     protected V vaultConfig;
     protected OkHttpClient sharedHttpClient;
     protected String currentVaultURL;
@@ -182,7 +182,7 @@ class BaseVaultClient<V extends BaseVaultConfig> {
                     sysCredentials = dotenv.get(BaseConstants.ENV_CREDENTIALS_KEY_NAME);
                 }
                 if (sysCredentials == null) {
-                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyCredentials.getMessage());
+                    throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), BaseErrorMessage.EmptyCredentials.getMessage());
                 } else {
                     this.finalCredentials = new BaseCredentials();
                     this.finalCredentials.setCredentialsString(sysCredentials);
@@ -194,7 +194,7 @@ class BaseVaultClient<V extends BaseVaultConfig> {
                 refreshFailedFor = null;
             }
         } catch (DotenvException e) {
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyCredentials.getMessage());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), BaseErrorMessage.EmptyCredentials.getMessage());
         } catch (SkyflowException e) {
             throw e;
         } catch (Exception e) {
@@ -222,7 +222,27 @@ class BaseVaultClient<V extends BaseVaultConfig> {
                                                          Map<String, List<String>> headers,
                                                          Object responseBody, ErrorLogs errorLog) {
         LogUtil.printErrorLog(errorLog.getLog());
-        Gson gson = new GsonBuilder().serializeNulls().create();
-        return new SkyflowException(statusCode, cause, headers, gson.toJson(responseBody));
+        return new SkyflowException(statusCode, cause, headers, errorBodyAsJson(responseBody));
+    }
+
+    /**
+     * Serializes an API error body back to the JSON the server sent. The generated clients hand us either a
+     * plain {@code Map} or a typed {@code ErrorResponse}; the typed form carries Jackson annotations for the wire
+     * names ({@code grpc_code}, {@code http_status}) and {@code Optional} fields, so Jackson must do the
+     * serialization. Gson would emit the Java field names, which {@link SkyflowException} cannot parse, and
+     * fails outright on {@code Optional} under JDK 17+.
+     */
+    static String errorBodyAsJson(Object responseBody) {
+        if (responseBody == null) {
+            return null;
+        }
+        if (responseBody instanceof String) {
+            return (String) responseBody;
+        }
+        try {
+            return ObjectMappers.JSON_MAPPER.writeValueAsString(responseBody);
+        } catch (Exception e) {
+            return new GsonBuilder().serializeNulls().create().toJson(responseBody);
+        }
     }
 }

@@ -5,7 +5,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 import com.skyflow.errors.ErrorCode;
-import com.skyflow.errors.ErrorMessage;
+import com.skyflow.errors.BaseErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.logs.ErrorLogs;
 import com.skyflow.logs.InfoLogs;
@@ -49,7 +49,7 @@ public class SignedDataTokens {
         try {
             if (credentialsFile == null) {
                 LogUtil.printErrorLog(ErrorLogs.INVALID_CREDENTIALS_FILE.getLog());
-                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidCredentials.getMessage());
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), BaseErrorMessage.InvalidCredentials.getMessage());
             }
             FileReader reader = new FileReader(String.valueOf(credentialsFile));
             try {
@@ -61,11 +61,11 @@ public class SignedDataTokens {
         } catch (JsonSyntaxException e) {
             LogUtil.printErrorLog(ErrorLogs.INVALID_CREDENTIALS_FILE_FORMAT.getLog());
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), BaseUtils.parameterizedString(
-                    ErrorMessage.FileInvalidJson.getMessage(), credentialsFile.getPath()));
+                    BaseErrorMessage.FileInvalidJson.getMessage(), credentialsFile.getPath()));
         } catch (FileNotFoundException e) {
             LogUtil.printErrorLog(ErrorLogs.CREDENTIALS_FILE_NOT_FOUND.getLog());
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), BaseUtils.parameterizedString(
-                    ErrorMessage.FileNotFound.getMessage(), credentialsFile.getPath()));
+                    BaseErrorMessage.FileNotFound.getMessage(), credentialsFile.getPath()));
         }
         return responseToken;
     }
@@ -78,14 +78,14 @@ public class SignedDataTokens {
         try {
             if (credentials == null || credentials.isEmpty()) {
                 LogUtil.printErrorLog(ErrorLogs.INVALID_CREDENTIALS_STRING.getLog());
-                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidCredentials.getMessage());
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), BaseErrorMessage.InvalidCredentials.getMessage());
             }
             JsonObject serviceAccountCredentials = JsonParser.parseString(credentials).getAsJsonObject();
             responseToken = generateSignedTokensFromCredentials(serviceAccountCredentials, dataTokens, timeToLive, context);
         } catch (JsonSyntaxException e) {
             LogUtil.printErrorLog(ErrorLogs.INVALID_CREDENTIALS_STRING_FORMAT.getLog());
             throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(),
-                    ErrorMessage.CredentialsStringInvalidJson.getMessage());
+                    BaseErrorMessage.CredentialsStringInvalidJson.getMessage());
         }
         return responseToken;
     }
@@ -98,7 +98,7 @@ public class SignedDataTokens {
             JsonElement privateKey = credentials.get("privateKey");
             if (privateKey == null) {
                 LogUtil.printErrorLog(ErrorLogs.PRIVATE_KEY_IS_REQUIRED.getLog());
-                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.MissingPrivateKey.getMessage());
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), BaseErrorMessage.MissingPrivateKey.getMessage());
             }
 
             // Accept both new-form keys (clientId/keyId) and legacy all-caps form for migration
@@ -111,7 +111,7 @@ public class SignedDataTokens {
             }
             if (clientId == null) {
                 LogUtil.printErrorLog(ErrorLogs.CLIENT_ID_IS_REQUIRED.getLog());
-                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.MissingClientId.getMessage());
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), BaseErrorMessage.MissingClientId.getMessage());
             }
 
             JsonElement keyId = credentials.get("keyId");
@@ -123,7 +123,7 @@ public class SignedDataTokens {
             }
             if (keyId == null) {
                 LogUtil.printErrorLog(ErrorLogs.KEY_ID_IS_REQUIRED.getLog());
-                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.MissingKeyId.getMessage());
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), BaseErrorMessage.MissingKeyId.getMessage());
             }
             PrivateKey pvtKey = BaseUtils.getPrivateKeyFromPem(privateKey.getAsString());
             signedDataTokens = getSignedToken(

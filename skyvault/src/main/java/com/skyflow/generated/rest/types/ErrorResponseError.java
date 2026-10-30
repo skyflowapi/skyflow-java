@@ -3,12 +3,21 @@
  */
 package com.skyflow.generated.rest.types;
 
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.annotation.Nulls;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.skyflow.generated.rest.core.ObjectMappers;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.*;
 
 @JsonInclude(JsonInclude.Include.NON_ABSENT)
 @JsonDeserialize(builder = ErrorResponseError.Builder.class)
@@ -68,7 +77,7 @@ public final class ErrorResponseError {
         return details;
     }
 
-    @Override
+    @java.lang.Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof ErrorResponseError && equalTo((ErrorResponseError) other);
@@ -87,12 +96,12 @@ public final class ErrorResponseError {
                 && details.equals(other.details);
     }
 
-    @Override
+    @java.lang.Override
     public int hashCode() {
         return Objects.hash(this.grpcCode, this.httpCode, this.httpStatus, this.message, this.details);
     }
 
-    @Override
+    @java.lang.Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }
@@ -103,7 +112,7 @@ public final class ErrorResponseError {
 
     public interface GrpcCodeStage {
         /**
-         * gRPC status codes. See https://grpc.io/docs/guides/status-codes.
+         * <p>gRPC status codes. See https://grpc.io/docs/guides/status-codes.</p>
          */
         HttpCodeStage grpcCode(int grpcCode);
 
@@ -124,6 +133,10 @@ public final class ErrorResponseError {
 
     public interface _FinalStage {
         ErrorResponseError build();
+
+        _FinalStage additionalProperty(String key, Object value);
+
+        _FinalStage additionalProperties(Map<String, Object> additionalProperties);
 
         _FinalStage details(Optional<List<Map<String, Object>>> details);
 
@@ -148,7 +161,7 @@ public final class ErrorResponseError {
 
         private Builder() {}
 
-        @Override
+        @java.lang.Override
         public Builder from(ErrorResponseError other) {
             grpcCode(other.getGrpcCode());
             httpCode(other.getHttpCode());
@@ -159,53 +172,65 @@ public final class ErrorResponseError {
         }
 
         /**
-         * gRPC status codes. See https://grpc.io/docs/guides/status-codes.<p>gRPC status codes. See https://grpc.io/docs/guides/status-codes.</p>
+         * <p>gRPC status codes. See https://grpc.io/docs/guides/status-codes.</p>
          * @return Reference to {@code this} so that method calls can be chained together.
          */
-        @Override
+        @java.lang.Override
         @JsonSetter("grpc_code")
         public HttpCodeStage grpcCode(int grpcCode) {
             this.grpcCode = grpcCode;
             return this;
         }
 
-        @Override
+        @java.lang.Override
         @JsonSetter("http_code")
         public HttpStatusStage httpCode(int httpCode) {
             this.httpCode = httpCode;
             return this;
         }
 
-        @Override
+        @java.lang.Override
         @JsonSetter("http_status")
         public MessageStage httpStatus(@NotNull String httpStatus) {
             this.httpStatus = Objects.requireNonNull(httpStatus, "httpStatus must not be null");
             return this;
         }
 
-        @Override
+        @java.lang.Override
         @JsonSetter("message")
         public _FinalStage message(@NotNull String message) {
             this.message = Objects.requireNonNull(message, "message must not be null");
             return this;
         }
 
-        @Override
+        @java.lang.Override
         public _FinalStage details(List<Map<String, Object>> details) {
             this.details = Optional.ofNullable(details);
             return this;
         }
 
-        @Override
+        @java.lang.Override
         @JsonSetter(value = "details", nulls = Nulls.SKIP)
         public _FinalStage details(Optional<List<Map<String, Object>>> details) {
             this.details = details;
             return this;
         }
 
-        @Override
+        @java.lang.Override
         public ErrorResponseError build() {
             return new ErrorResponseError(grpcCode, httpCode, httpStatus, message, details, additionalProperties);
+        }
+
+        @java.lang.Override
+        public Builder additionalProperty(String key, Object value) {
+            this.additionalProperties.put(key, value);
+            return this;
+        }
+
+        @java.lang.Override
+        public Builder additionalProperties(Map<String, Object> additionalProperties) {
+            this.additionalProperties.putAll(additionalProperties);
+            return this;
         }
     }
 }

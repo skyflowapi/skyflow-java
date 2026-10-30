@@ -1,15 +1,16 @@
 package com.skyflow.utils;
 
-import com.google.gson.JsonObject;
-import com.skyflow.config.ConnectionConfig;
-import com.skyflow.enums.RequestMethod;
-import com.skyflow.vault.connection.InvokeConnectionRequest;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.HashMap;
-import java.util.Map;
+import com.google.gson.JsonObject;
+import com.skyflow.config.ConnectionConfig;
+import com.skyflow.enums.RequestMethod;
+import com.skyflow.vault.connection.InvokeConnectionRequest;
 
 public class UtilsTests {
     private static final String INVALID_EXCEPTION_THROWN = "Should not have thrown any exception";
@@ -76,13 +77,12 @@ public class UtilsTests {
 
     @Test
     public void testGetMetricsWithException() {
-        // The JDK reads os.name once, when its socket layer initializes; leaving it cleared breaks
-        // every later test in this JVM that opens a server socket. Restore the properties on exit.
+        // Clearing System Properties explicitly to throw exception. They are restored afterwards: the JDK's
+        // socket layer reads os.name on first use, and a null value breaks every later test that opens a socket.
         String osName = System.getProperty("os.name");
         String osVersion = System.getProperty("os.version");
         String javaVersion = System.getProperty("java.version");
         try {
-            // Clearing System Properties explicitly to throw exception
             System.clearProperty("os.name");
             System.clearProperty("os.version");
             System.clearProperty("java.version");
