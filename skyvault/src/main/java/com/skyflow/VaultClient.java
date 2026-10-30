@@ -235,7 +235,7 @@ public class VaultClient extends BaseVaultClient<VaultConfig> {
 
     private void updateExecutorInHTTP() {
         if (sharedHttpClient == null) {
-            sharedHttpClient = buildSharedHttpClient(() -> this.token);
+            sharedHttpClient = buildSharedHttpClient(this::getToken);
             apiClientBuilder.httpClient(sharedHttpClient);
         }
     }
