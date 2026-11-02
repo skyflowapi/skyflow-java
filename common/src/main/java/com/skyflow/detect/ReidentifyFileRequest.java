@@ -3,12 +3,12 @@ package com.skyflow.detect;
 import java.util.List;
 
 /**
- * Request for {@code reidentifyFile}. Supply the file through exactly one {@link ReidentifySourceType}:
- * the base64-encoded content, the skyflow id of a vault record that holds the file, or an S3
- * presigned URL. The vault id is filled in by the controller.
+ * Request for {@code reidentifyFile}. Supply the file through this SDK's {@code ReidentifySourceType}
+ * ({@code BASE64} or {@code PRESIGNED_URL}; re-identification does not accept a skyflow id) and the matching
+ * {@code value}.
  */
 public final class ReidentifyFileRequest {
-    private final ReidentifySourceType dataSource;
+    private final ReidentifyFileSource dataSource;
     private final String value;
     private final FileDataFormat dataFormat;
     private final List<RedactionLevel> redactionLevel;
@@ -30,12 +30,12 @@ public final class ReidentifyFileRequest {
     /**
      * @return How {@code value} supplies the file. Required.
      */
-    public ReidentifySourceType getDataSource() {
+    public ReidentifyFileSource getDataSource() {
         return dataSource;
     }
 
     /**
-     * @return Base64 content, skyflow id or presigned URL of the file, according to {@code dataSource}. Required.
+     * @return Base64 content or presigned URL of the file, according to {@code dataSource}. Required.
      */
     public String getValue() {
         return value;
@@ -67,7 +67,7 @@ public final class ReidentifyFileRequest {
     }
 
     public static final class ReidentifyFileRequestBuilder {
-        private ReidentifySourceType dataSource;
+        private ReidentifyFileSource dataSource;
         private String value;
         private FileDataFormat dataFormat;
         private List<RedactionLevel> redactionLevel;
@@ -79,13 +79,13 @@ public final class ReidentifyFileRequest {
          * @param dataSource How {@code value} supplies the file. Required.
          * @return this builder
          */
-        public ReidentifyFileRequestBuilder dataSource(ReidentifySourceType dataSource) {
+        public ReidentifyFileRequestBuilder dataSource(ReidentifyFileSource dataSource) {
             this.dataSource = dataSource;
             return this;
         }
 
         /**
-         * @param value Base64 content, skyflow id or presigned URL of the file, according to {@code dataSource}. Required.
+         * @param value Base64 content or presigned URL of the file, according to {@code dataSource}. Required.
          * @return this builder
          */
         public ReidentifyFileRequestBuilder value(String value) {

@@ -13,6 +13,8 @@ import com.skyflow.logs.ErrorLogs;
 import com.skyflow.utils.BaseUtils;
 import com.skyflow.utils.logger.LogUtil;
 
+import java.io.File;
+
 
 /**
  * Client-side validation for Detect V2 requests. Internal to the SDK.
@@ -38,19 +40,26 @@ public final class DetectValidations {
         if (request == null) {
             throw invalid(ErrorLogs.DEIDENTIFY_FILE_REQUEST_NULL, BaseErrorMessage.DeidentifyFileRequestNull);
         }
-        if (request.getFile() != null) {
-            if (!isBlank(request.getValue())) {
-                throw invalid(ErrorLogs.MULTIPLE_FILE_SOURCES_IN_DEIDENTIFY_FILE, BaseErrorMessage.MultipleFileSourcesInDeidentifyFile);
-            }
-            if (!request.getFile().isFile()) {
-                throw invalid(ErrorLogs.FILE_NOT_FOUND_IN_DEIDENTIFY_FILE, BaseErrorMessage.FileNotFoundToDeidentify);
-            }
-        } else {
+        // The file comes from exactly one of filePath, file or value; dataSource belongs to value only.
+        int sources = (request.getFilePath() != null ? 1 : 0) + (request.getFile() != null ? 1 : 0)
+                + (request.getValue() != null ? 1 : 0);
+        if (sources == 0) {
+            throw invalid(ErrorLogs.MISSING_FILE_SOURCE_IN_DEIDENTIFY_FILE, BaseErrorMessage.MissingFileSourceInDeidentifyFile);
+        }
+        if (sources > 1) {
+            throw invalid(ErrorLogs.MULTIPLE_FILE_SOURCES_IN_DEIDENTIFY_FILE, BaseErrorMessage.MultipleFileSourcesInDeidentifyFile);
+        }
+        if (request.getValue() != null) {
             if (request.getDataSource() == null) {
                 throw invalid(ErrorLogs.INVALID_DATA_SOURCE_IN_DEIDENTIFY_FILE, BaseErrorMessage.InvalidDataSourceInDeidentifyFile);
             }
             if (isBlank(request.getValue())) {
                 throw invalid(ErrorLogs.INVALID_VALUE_IN_DEIDENTIFY_FILE, BaseErrorMessage.InvalidValueInDeidentifyFile);
+            }
+        } else {
+            File file = DetectRequestMapper.localFile(request);
+            if (file == null || !file.isFile()) {
+                throw invalid(ErrorLogs.FILE_NOT_FOUND_IN_DEIDENTIFY_FILE, BaseErrorMessage.FileNotFoundToDeidentify);
             }
         }
         // configurationId and configuration are both optional on the API and are passed through as given;

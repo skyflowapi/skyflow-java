@@ -1,11 +1,11 @@
 package com.skyflow.vault.controller;
 
+import com.skyflow.detect.ReidentifySourceType;
 import com.skyflow.Skyflow;
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
 import com.skyflow.detect.CheckGuardrailsRequest;
 import com.skyflow.detect.CheckGuardrailsResponse;
-import com.skyflow.detect.ReidentifySourceType;
 import com.skyflow.detect.DeidentifySourceType;
 import com.skyflow.detect.DeidentificationType;
 import com.skyflow.detect.DeidentifyFileRequest;

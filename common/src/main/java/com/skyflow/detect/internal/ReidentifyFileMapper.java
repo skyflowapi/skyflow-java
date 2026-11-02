@@ -1,6 +1,6 @@
 package com.skyflow.detect.internal;
 
-import com.skyflow.detect.ReidentifySourceType;
+import com.skyflow.detect.ReidentifyFileSource;
 import com.skyflow.detect.DetectRunStatus;
 import com.skyflow.detect.FileOutput;
 import com.skyflow.detect.ReidentifyFileRequest;
@@ -13,6 +13,7 @@ import com.skyflow.generated.common.rest.types.ReidentifyFileResponseV2;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * Converts the flowvault {@code reidentifyFile} models to and from the generated V2 API types.
@@ -37,7 +38,12 @@ public final class ReidentifyFileMapper {
         return builder.build();
     }
 
-    public static ReidentifyFileResponse toResponse(ReidentifyFileResponseV2 response) {
+    /**
+     * @param sourceResolver maps the wire outputType onto this SDK's {@code ReidentifySourceType}; returns null for an
+     *                       unknown value
+     */
+    public static ReidentifyFileResponse toResponse(ReidentifyFileResponseV2 response,
+                                                    Function<String, ReidentifyFileSource> sourceResolver) {
         List<FileOutput> outputs = new ArrayList<>();
         List<com.skyflow.generated.common.rest.types.FileOutput> apiOutputs = response.getOutput().orElse(null);
         if (apiOutputs != null) {
@@ -50,7 +56,7 @@ public final class ReidentifyFileMapper {
         return new ReidentifyFileResponse(
                 response.getStatus().map(s -> enumOrDefault(DetectRunStatus.class, s.toString(), DetectRunStatus.UNKNOWN))
                         .orElse(DetectRunStatus.UNKNOWN),
-                response.getOutputType().map(t -> enumOrDefault(ReidentifySourceType.class, t.toString(), null)).orElse(null),
+                response.getOutputType().map(t -> sourceResolver.apply(t.toString())).orElse(null),
                 Collections.unmodifiableList(outputs),
                 response.getMetrics().map(DetectResponseMapper::toMetrics).orElse(null));
     }

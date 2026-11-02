@@ -2,6 +2,10 @@ package com.skyflow.vault.controller;
 
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
+import com.skyflow.detect.DeidentifyFileSource;
+import com.skyflow.detect.DeidentifySourceType;
+import com.skyflow.detect.ReidentifyFileSource;
+import com.skyflow.detect.ReidentifySourceType;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.utils.Utils;
 
@@ -34,6 +38,16 @@ public final class DetectController extends BaseDetectController<VaultConfig> {
             return vaultUrlOverride;
         }
         return Utils.getVaultURL(getVaultConfig().getClusterId(), getVaultConfig().getEnv());
+    }
+
+    @Override
+    protected DeidentifyFileSource toDeidentifySource(String wireValue) {
+        return enumOrNull(DeidentifySourceType.class, wireValue);
+    }
+
+    @Override
+    protected ReidentifyFileSource toReidentifySource(String wireValue) {
+        return enumOrNull(ReidentifySourceType.class, wireValue);
     }
 
     @Override

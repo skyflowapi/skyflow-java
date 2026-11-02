@@ -1,5 +1,6 @@
 package com.skyflow.detect.internal;
 
+import java.io.File;
 import com.skyflow.detect.DeidentifyFileRequest;
 import com.skyflow.detect.DeidentifyFileResponse;
 import com.skyflow.detect.DetectRunStatus;
@@ -32,8 +33,9 @@ public final class DeidentifyFileFlow {
         }
         GetRunResponse run = RunPoller.poll(runId, request.getPollOptions(), fetcher, sleeper);
         DeidentifyFileResponse response = DetectResponseMapper.toDeidentifyFileResponse(runId, run);
-        if (response.getStatus() == DetectRunStatus.SUCCESS && request.getFile() != null) {
-            FileOutputWriter.write(response.getOutput(), response.getOutputType(), request.getFile().getName(),
+        File localFile = DetectRequestMapper.localFile(request);
+        if (response.getStatus() == DetectRunStatus.SUCCESS && localFile != null) {
+            FileOutputWriter.write(response.getOutput(), response.getOutputType(), localFile.getName(),
                     request.getOutputDirectory());
         }
         return response;

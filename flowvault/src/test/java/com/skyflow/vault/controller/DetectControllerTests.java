@@ -1,11 +1,11 @@
 package com.skyflow.vault.controller;
 
+import com.skyflow.detect.ReidentifySourceType;
 import com.skyflow.Skyflow;
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
 import com.skyflow.detect.CheckGuardrailsRequest;
 import com.skyflow.detect.CheckGuardrailsResponse;
-import com.skyflow.detect.ReidentifySourceType;
 import com.skyflow.detect.DeidentifySourceType;
 import com.skyflow.detect.DeidentificationType;
 import com.skyflow.detect.DeidentifyFileRequest;
@@ -507,7 +507,7 @@ public class DetectControllerTests {
             server.enqueue(new MockResponse().setResponseCode(200).setBody("{\"runId\":\"run-42\"}"));
 
             DeidentifyFileResponse response = controllerFor(server).deidentifyFile(DeidentifyFileRequest.builder()
-                    .dataSource(DeidentifySourceType.SKYFLOW_ID).value("rec-1").dataFormat(FileDataFormat.PDF)
+                    .dataSource(DeidentifySourceType.PRESIGNED_URL).value("https://example.com/in.pdf").dataFormat(FileDataFormat.PDF)
                     .configurationId("cfg-1").build());
 
             Assert.assertEquals("run-42", response.getRunId());
@@ -517,8 +517,8 @@ public class DetectControllerTests {
             RecordedRequest recorded = server.takeRequest();
             assertCommonHeaders(recorded, "POST", "/v2/detect/deidentify/file");
             String body = recorded.getBody().readUtf8();
-            Assert.assertTrue(body, body.contains("\"dataSource\":\"SKYFLOW_ID\""));
-            Assert.assertTrue(body, body.contains("\"value\":\"rec-1\""));
+            Assert.assertTrue(body, body.contains("\"dataSource\":\"PRESIGNED_URL\""));
+            Assert.assertTrue(body, body.contains("\"value\":\"https://example.com/in.pdf\""));
             Assert.assertTrue(body, body.contains("\"dataFormat\":\"pdf\""));
             Assert.assertTrue(body, body.contains("\"configurationId\":\"cfg-1\""));
             Assert.assertEquals("only the submit call was made", 1, server.getRequestCount());

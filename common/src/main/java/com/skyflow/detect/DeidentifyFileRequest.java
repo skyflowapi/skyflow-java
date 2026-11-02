@@ -3,10 +3,10 @@ package com.skyflow.detect;
 import java.io.File;
 
 /**
- * Request for {@code deidentifyFile}. Supply the file through exactly one of {@code value} (with a
- * {@code dataSource}), {@code file} or {@code filePath}. The two file forms are builder sugar that set
- * {@code dataSource = BASE64}, encode the content into {@code value} when the request is sent, and infer
- * {@code dataFormat} from the extension unless it is set explicitly.
+ * Request for {@code deidentifyFile}. Supply the file through exactly one of {@code filePath}, {@code file}
+ * or {@code value} (with a {@code dataSource}); more than one, or none, is rejected before any call. A local
+ * file given as {@code file} or {@code filePath} is read when the request is sent, sent as {@code BASE64}, and
+ * its {@code dataFormat} is inferred from the extension unless set explicitly.
  *
  * <p>Without {@code pollOptions} the call submits the run and returns its id. With {@code pollOptions} the
  * SDK polls the run and, on success for a file-based request, writes the outputs to disk.
@@ -16,9 +16,10 @@ import java.io.File;
  * the vault's defaults.
  */
 public final class DeidentifyFileRequest {
-    private final DeidentifySourceType dataSource;
+    private final DeidentifyFileSource dataSource;
     private final String value;
     private final File file;
+    private final String filePath;
     private final FileDataFormat dataFormat;
     private final String configurationId;
     private final DetectConfiguration configuration;
@@ -29,6 +30,7 @@ public final class DeidentifyFileRequest {
         this.dataSource = builder.dataSource;
         this.value = builder.value;
         this.file = builder.file;
+        this.filePath = builder.filePath;
         this.dataFormat = builder.dataFormat;
         this.configurationId = builder.configurationId;
         this.configuration = builder.configuration;
@@ -44,24 +46,31 @@ public final class DeidentifyFileRequest {
     }
 
     /**
-     * @return How {@code value} supplies the file. Required unless {@code file} or {@code filePath} was used.
+     * @return How {@code value} supplies the file: this SDK's {@code DeidentifySourceType}. Required with {@code value}.
      */
-    public DeidentifySourceType getDataSource() {
+    public DeidentifyFileSource getDataSource() {
         return dataSource;
     }
 
     /**
-     * @return Base64 content, skyflow id or presigned URL, according to {@code dataSource}.
+     * @return The file as {@code dataSource} describes it: base64 content, a presigned URL or, on skyvault, a skyflow id.
      */
     public String getValue() {
         return value;
     }
 
     /**
-     * @return Local file to de-identify, when {@code file} or {@code filePath} was used.
+     * @return Local file to de-identify, when {@code file} was used.
      */
     public File getFile() {
         return file;
+    }
+
+    /**
+     * @return Path of the local file to de-identify, when {@code filePath} was used.
+     */
+    public String getFilePath() {
+        return filePath;
     }
 
     /**
@@ -105,6 +114,7 @@ public final class DeidentifyFileRequest {
                 "dataSource=" + dataSource +
                 ", value=" + (value == null ? null : "<" + value.length() + " chars>") +
                 ", file=" + file +
+                ", filePath=" + filePath +
                 ", dataFormat=" + dataFormat +
                 ", configurationId=" + configurationId +
                 ", configuration=" + configuration +
@@ -114,9 +124,10 @@ public final class DeidentifyFileRequest {
     }
 
     public static final class DeidentifyFileRequestBuilder {
-        private DeidentifySourceType dataSource;
+        private DeidentifyFileSource dataSource;
         private String value;
         private File file;
+        private String filePath;
         private FileDataFormat dataFormat;
         private String configurationId;
         private DetectConfiguration configuration;
@@ -127,16 +138,17 @@ public final class DeidentifyFileRequest {
         }
 
         /**
-         * @param dataSource How {@code value} supplies the file.
+         * @param dataSource How {@code value} supplies the file: this SDK's {@code DeidentifySourceType}
+         *                   (skyvault: BASE64, SKYFLOW_ID, PRESIGNED_URL; flowvault: BASE64, PRESIGNED_URL).
          * @return this builder
          */
-        public DeidentifyFileRequestBuilder dataSource(DeidentifySourceType dataSource) {
+        public DeidentifyFileRequestBuilder dataSource(DeidentifyFileSource dataSource) {
             this.dataSource = dataSource;
             return this;
         }
 
         /**
-         * @param value Base64 content, skyflow id or presigned URL, according to {@code dataSource}.
+         * @param value The file as {@code dataSource} describes it: base64 content, a presigned URL or, on skyvault, a skyflow id.
          * @return this builder
          */
         public DeidentifyFileRequestBuilder value(String value) {
@@ -145,23 +157,21 @@ public final class DeidentifyFileRequest {
         }
 
         /**
-         * @param file Local file to de-identify. Sets {@code dataSource} to BASE64; the content is encoded when sent.
+         * @param file Local file to de-identify. Sent as BASE64; the content is encoded when sent.
          * @return this builder
          */
         public DeidentifyFileRequestBuilder file(File file) {
             this.file = file;
-            if (file != null) {
-                this.dataSource = DeidentifySourceType.BASE64;
-            }
             return this;
         }
 
         /**
-         * @param filePath Path of a local file to de-identify. Same as {@link #file(File)}.
+         * @param filePath Path of a local file to de-identify. Sent as BASE64; the content is encoded when sent.
          * @return this builder
          */
         public DeidentifyFileRequestBuilder filePath(String filePath) {
-            return file(filePath == null ? null : new File(filePath));
+            this.filePath = filePath;
+            return this;
         }
 
         /**

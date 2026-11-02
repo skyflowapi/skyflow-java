@@ -242,7 +242,7 @@ Parameters listed with their defaults as defined in the builders.
 
 | Builder method | Default | Description |
 |----------------|---------|-------------|
-| `dataSource(DeidentifySourceType)` | `null` | How `value` supplies the file: `BASE64`, `SKYFLOW_ID` or `PRESIGNED_URL`. See [Detect enums](#detect-enums). |
+| `dataSource(DeidentifySourceType)` | `null` | How `value` supplies the file, using this SDK's enum: skyvault `BASE64`, `SKYFLOW_ID` or `PRESIGNED_URL`; flowvault `BASE64` or `PRESIGNED_URL`. Required with `value`; a `file` or `filePath` is always sent as `BASE64`. See [Detect enums](#detect-enums). |
 | `value(String)` | `null` | Base64 content, a skyflow id, or a presigned URL, per `dataSource`. |
 | `file(File)` | `null` | Local file; read and base64-encoded when sent, `dataSource` set to `BASE64`. |
 | `filePath(String)` | `null` | Same as `file(File)`, from a path. |
@@ -694,8 +694,8 @@ All in `com.skyflow.detect`.
 |------|--------|
 | `EntityType` | the 70 entity types (`NAME`, `EMAIL_ADDRESS`, `SSN`, `CREDIT_CARD`, `DOB`, ...), plus `ALL` and `NONE` |
 | `DeidentificationType` | `ENTITY_UNIQUE_COUNTER` _(default)_, `ENTITY_ONLY`, `VAULT_TOKEN`, `MASK`, `UNKNOWN` |
-| `DeidentifySourceType` | `BASE64`, `SKYFLOW_ID`, `PRESIGNED_URL`. Input source for `deidentifyFile`, and the `getOutputType()` of `DeidentifyFileResponse` and `GetRunResponse`, where the API returns `BASE64` or `PRESIGNED_URL`. |
-| `ReidentifySourceType` | `BASE64`, `PRESIGNED_URL`. Input source for `reidentifyFile` (the API does not accept a skyflow id there) and the `getOutputType()` of `ReidentifyFileResponse`. |
+| `DeidentifySourceType` | Defined per SDK: skyvault `BASE64`, `SKYFLOW_ID`, `PRESIGNED_URL`; flowvault `BASE64`, `PRESIGNED_URL`. The `dataSource` of `deidentifyFile` and the `getOutputType()` of `DeidentifyFileResponse` and `GetRunResponse`. |
+| `ReidentifySourceType` | `BASE64`, `PRESIGNED_URL` in both SDKs. The `dataSource` of `reidentifyFile` and the `getOutputType()` of `ReidentifyFileResponse`. |
 | `FileDataFormat` | `BMP`, `CSV`, `DCM`, `DOC`, `DOCX`, `GIF`, `JPEG`, `JPG`, `JSON`, `JSONL`, `MP3`, `PDF`, `PNG`, `PPT`, `PPTX`, `TIF`, `TIFF`, `TXT`, `WAV`, `XLS`, `XLSX`, `XML`, `ZIP` |
 | `DetectRunStatus` | `QUEUED`, `IN_PROGRESS`, `SUCCESS`, `FAILED`, `UNKNOWN`. `SUCCESS`, `FAILED` and `UNKNOWN` end polling. |
 | `ReturnEntitiesType` | `EXCLUDE_SENSITIVE_DATA` _(default)_, `ALL`, `NONE` |

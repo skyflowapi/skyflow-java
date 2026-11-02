@@ -6,6 +6,8 @@ import com.skyflow.config.BaseVaultConfig;
 import com.skyflow.detect.CheckGuardrailsRequest;
 import com.skyflow.detect.CheckGuardrailsResponse;
 import com.skyflow.detect.DeidentifyFileRequest;
+import com.skyflow.detect.ReidentifyFileSource;
+import com.skyflow.detect.DeidentifyFileSource;
 import com.skyflow.detect.DeidentifyFileResponse;
 import com.skyflow.detect.DeidentifyStringRequest;
 import com.skyflow.detect.DeidentifyStringResponse;
@@ -88,6 +90,35 @@ public abstract class BaseDetectController<V extends BaseVaultConfig> extends Ba
      * @throws SkyflowException if the URL cannot be determined
      */
     protected abstract String resolveVaultUrl() throws SkyflowException;
+
+    /**
+     * Maps a run's wire {@code outputType} onto this SDK's {@code DeidentifySourceType}, so that
+     * {@code getOutputType()} returns the same enum the caller used on the request.
+     *
+     * @param wireValue the API value, for example {@code BASE64}
+     * @return the matching constant, or null for a value this SDK does not know
+     */
+    protected abstract DeidentifyFileSource toDeidentifySource(String wireValue);
+
+    /**
+     * Maps a re-identify response's wire {@code outputType} onto this SDK's {@code ReidentifySourceType}.
+     *
+     * @param wireValue the API value, for example {@code BASE64}
+     * @return the matching constant, or null for a value this SDK does not know
+     */
+    protected abstract ReidentifyFileSource toReidentifySource(String wireValue);
+
+    /** {@link Enum#valueOf} that returns null instead of throwing for an unknown wire value. */
+    protected static <E extends Enum<E>> E enumOrNull(Class<E> type, String wireValue) {
+        if (wireValue == null) {
+            return null;
+        }
+        try {
+            return Enum.valueOf(type, wireValue);
+        } catch (IllegalArgumentException unknown) {
+            return null;
+        }
+    }
 
     /**
      * @return JSON sent in the {@code sky-metadata} header. Override to report SDK name and version.
@@ -271,7 +302,7 @@ public abstract class BaseDetectController<V extends BaseVaultConfig> extends Ba
      * Replaces tokens in a file with their original values or a redacted rendering. Synchronous:
      * the re-identified file is returned in the response rather than through a run id.
      *
-     * @param request the file (base64, skyflow id or presigned URL) plus optional per-group redaction rules
+     * @param request the file (base64 or presigned URL) plus optional per-group redaction rules
      * @return status, output files and metrics
      * @throws SkyflowException on validation failure, credential failure or an API error
      */
@@ -284,7 +315,7 @@ public abstract class BaseDetectController<V extends BaseVaultConfig> extends Ba
         try {
             ReidentifyFileResponseV2 apiResponse = filesClient().reidentifyFileV2(apiRequest, requestOptions(token));
             LogUtil.printInfoLog(InfoLogs.REIDENTIFY_FILE_REQUEST_RESOLVED.getLog());
-            ReidentifyFileResponse response = ReidentifyFileMapper.toResponse(apiResponse);
+            ReidentifyFileResponse response = ReidentifyFileMapper.toResponse(apiResponse, this::toReidentifySource);
             LogUtil.printInfoLog(InfoLogs.REIDENTIFY_FILE_SUCCESS.getLog());
             return response;
         } catch (ApiClientApiException e) {
@@ -312,7 +343,7 @@ public abstract class BaseDetectController<V extends BaseVaultConfig> extends Ba
         try {
             DetectRunsResponseV2 apiResponse = filesClient().getRunV2(runId, apiRequest, requestOptions(token));
             LogUtil.printInfoLog(InfoLogs.GET_RUN_REQUEST_RESOLVED.getLog());
-            GetRunResponse response = DetectResponseMapper.toGetRunResponse(runId, apiResponse);
+            GetRunResponse response = DetectResponseMapper.toGetRunResponse(runId, apiResponse, this::toDeidentifySource);
             LogUtil.printInfoLog(InfoLogs.GET_RUN_SUCCESS.getLog());
             return response;
         } catch (ApiClientApiException e) {

@@ -11,7 +11,6 @@ import com.skyflow.detect.Audio;
 import com.skyflow.detect.Bleep;
 import com.skyflow.detect.CheckGuardrailsRequest;
 import com.skyflow.detect.CustomType;
-import com.skyflow.detect.DeidentifySourceType;
 import com.skyflow.detect.DeidentifyFileRequest;
 import com.skyflow.detect.DeidentifyStringRequest;
 import com.skyflow.detect.FileDataFormat;
@@ -94,11 +93,23 @@ public final class DetectRequestMapper {
      * Builds the submit request. For file-based requests this reads and base64-encodes the file and infers
      * the format from its extension when none was given.
      */
+    /**
+     * The local file a deidentifyFile request points at, from {@code file} or {@code filePath}, or null for a
+     * {@code value}-based request.
+     */
+    public static File localFile(DeidentifyFileRequest request) {
+        if (request.getFile() != null) {
+            return request.getFile();
+        }
+        String path = request.getFilePath();
+        return path == null || path.trim().isEmpty() ? null : new File(path);
+    }
+
     public static DeidentifyFileRequestV2 toDeidentifyFileRequest(DeidentifyFileRequest request, String vaultId)
             throws SkyflowException {
         String value = request.getValue();
         FileDataFormat format = request.getDataFormat();
-        File file = request.getFile();
+        File file = localFile(request);
         if (file != null) {
             value = encodeFile(file);
             if (format == null) {
@@ -106,9 +117,11 @@ public final class DetectRequestMapper {
             }
         }
         // A local file is always sent as BASE64, whatever dataSource the builder was left with.
-        DeidentifySourceType dataSource = file != null ? DeidentifySourceType.BASE64 : request.getDataSource();
+        DeidentifyFileRequestV2DataSource dataSource = file != null
+                ? DeidentifyFileRequestV2DataSource.BASE64
+                : DeidentifyFileRequestV2DataSource.valueOf(request.getDataSource().name());
         DeidentifyFileRequestV2._FinalStage builder = DeidentifyFileRequestV2.builder()
-                .dataSource(DeidentifyFileRequestV2DataSource.valueOf(dataSource.name()))
+                .dataSource(dataSource)
                 .value(value);
         if (format != null) {
             // The wire value for a file format is the lower-case extension.
