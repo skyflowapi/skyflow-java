@@ -3,7 +3,7 @@ package com.skyflow;
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.LogLevel;
-import com.skyflow.errors.ErrorMessage;
+import com.skyflow.errors.BaseErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.logs.ErrorLogs;
 import com.skyflow.logs.InfoLogs;
@@ -12,6 +12,7 @@ import com.skyflow.utils.SdkVersion;
 import com.skyflow.utils.Utils;
 import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.utils.validations.Validations;
+import com.skyflow.vault.controller.DetectController;
 import com.skyflow.vault.controller.VaultController;
 
 import java.util.LinkedHashMap;
@@ -55,16 +56,38 @@ public final class Skyflow extends BaseSkyflow<Skyflow, VaultConfig> {
     }
 
     public VaultController vault() throws SkyflowException {
-        return resolveOrThrow(this.builder.vaultClientsMap, null, ErrorLogs.VAULT_CONFIG_DOES_NOT_EXIST, ErrorMessage.VaultIdNotInConfigList);
+        return resolveOrThrow(this.builder.vaultClientsMap, null, ErrorLogs.VAULT_CONFIG_DOES_NOT_EXIST, BaseErrorMessage.VaultIdNotInConfigList);
     }
 
     public VaultController vault(String vaultId) throws SkyflowException {
-        return resolveOrThrow(this.builder.vaultClientsMap, vaultId, ErrorLogs.VAULT_CONFIG_DOES_NOT_EXIST, ErrorMessage.VaultIdNotInConfigList);
+        return resolveOrThrow(this.builder.vaultClientsMap, vaultId, ErrorLogs.VAULT_CONFIG_DOES_NOT_EXIST, BaseErrorMessage.VaultIdNotInConfigList);
+    }
+
+    /**
+     * Detect operations for the single configured vault.
+     *
+     * @return the detect controller
+     * @throws SkyflowException if no vault is configured
+     */
+    public DetectController detect() throws SkyflowException {
+        return resolveOrThrow(this.builder.detectClientsMap, null, ErrorLogs.VAULT_CONFIG_DOES_NOT_EXIST, BaseErrorMessage.VaultIdNotInConfigList);
+    }
+
+    /**
+     * Detect operations for a specific configured vault.
+     *
+     * @param vaultId id of a configured vault
+     * @return the detect controller
+     * @throws SkyflowException if the vault is not configured
+     */
+    public DetectController detect(String vaultId) throws SkyflowException {
+        return resolveOrThrow(this.builder.detectClientsMap, vaultId, ErrorLogs.VAULT_CONFIG_DOES_NOT_EXIST, BaseErrorMessage.VaultIdNotInConfigList);
     }
 
 
     public static final class SkyflowClientBuilder extends BaseSkyflowClientBuilder<VaultConfig> {
         private final LinkedHashMap<String, VaultController> vaultClientsMap = new LinkedHashMap<>();
+        private final LinkedHashMap<String, DetectController> detectClientsMap = new LinkedHashMap<>();
         // Client-wide HTTP config. Resolution per vault, most specific first:
         //   VaultConfig value -> the value set here -> SDK default (60s call timeout, 0 retries).
         // null here means "not set", so the SDK default applies to vaults that don't override it.
@@ -89,6 +112,9 @@ public final class Skyflow extends BaseSkyflow<Skyflow, VaultConfig> {
                     this.writeTimeout, this.maxRetries, this.initialRetryDelayMillis,
                     this.maxRetryDelayMillis);
             this.vaultClientsMap.put(vaultConfig.getVaultId(), controller);
+            DetectController detectController = new DetectController(vaultConfig, this.skyflowCredentials);
+            detectController.setCommonHttpConfig(this.timeout, this.maxRetries, this.initialRetryDelayMillis, this.maxRetryDelayMillis);
+            this.detectClientsMap.put(vaultConfig.getVaultId(), detectController);
             LogUtil.printInfoLog(Utils.parameterizedString(InfoLogs.VAULT_CONTROLLER_INITIALIZED.getLog(), vaultConfig.getVaultId()));
         }
 
@@ -106,11 +132,20 @@ public final class Skyflow extends BaseSkyflow<Skyflow, VaultConfig> {
             updated.setCommonHttpConfig(this.timeout, this.connectTimeout, this.readTimeout,
                     this.writeTimeout, this.maxRetries, this.initialRetryDelayMillis,
                     this.maxRetryDelayMillis);
+            DetectController updatedDetect = this.detectClientsMap.get(updatedConfig.getVaultId());
+            if (updatedDetect == null) {
+                updatedDetect = new DetectController(updatedConfig, this.skyflowCredentials);
+                this.detectClientsMap.put(updatedConfig.getVaultId(), updatedDetect);
+            } else {
+                updatedDetect.setVaultConfig(updatedConfig);
+            }
+            updatedDetect.setCommonHttpConfig(this.timeout, this.maxRetries, this.initialRetryDelayMillis, this.maxRetryDelayMillis);
         }
 
         @Override
         protected void onVaultConfigRemoved(String vaultId) throws SkyflowException {
             this.vaultClientsMap.remove(vaultId);
+            this.detectClientsMap.remove(vaultId);
         }
 
         @Override
@@ -122,6 +157,9 @@ public final class Skyflow extends BaseSkyflow<Skyflow, VaultConfig> {
         protected void onCredentialsUpdated(Credentials credentials) throws SkyflowException {
             for (VaultController vault : this.vaultClientsMap.values()) {
                 vault.setCommonCredentials(credentials);
+            }
+            for (DetectController detect : this.detectClientsMap.values()) {
+                detect.setCommonCredentials(credentials);
             }
         }
 
@@ -178,6 +216,10 @@ public final class Skyflow extends BaseSkyflow<Skyflow, VaultConfig> {
                 VaultController controller = this.vaultClientsMap.get(incoming.getVaultId());
                 if (controller != null) {
                     controller.refreshVaultUrl();
+                }
+                DetectController detectController = this.detectClientsMap.get(incoming.getVaultId());
+                if (detectController != null) {
+                    detectController.refreshVaultUrl();
                 }
             }
         }
@@ -292,6 +334,10 @@ public final class Skyflow extends BaseSkyflow<Skyflow, VaultConfig> {
             for (VaultController vault : this.vaultClientsMap.values()) {
                 vault.setCommonHttpConfig(this.timeout, this.connectTimeout, this.readTimeout,
                         this.writeTimeout, this.maxRetries, this.initialRetryDelayMillis,
+                        this.maxRetryDelayMillis);
+            }
+            for (DetectController detect : this.detectClientsMap.values()) {
+                detect.setCommonHttpConfig(this.timeout, this.maxRetries, this.initialRetryDelayMillis,
                         this.maxRetryDelayMillis);
             }
         }

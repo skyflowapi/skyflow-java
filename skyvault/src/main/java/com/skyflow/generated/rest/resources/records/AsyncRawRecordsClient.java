@@ -4,21 +4,46 @@
 package com.skyflow.generated.rest.resources.records;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.skyflow.generated.rest.core.*;
+import com.skyflow.generated.rest.core.ApiClientApiException;
+import com.skyflow.generated.rest.core.ApiClientException;
+import com.skyflow.generated.rest.core.ApiClientHttpResponse;
+import com.skyflow.generated.rest.core.ClientOptions;
+import com.skyflow.generated.rest.core.MediaTypes;
+import com.skyflow.generated.rest.core.ObjectMappers;
+import com.skyflow.generated.rest.core.QueryStringMapper;
+import com.skyflow.generated.rest.core.RequestOptions;
+import com.skyflow.generated.rest.core.RetryInterceptor;
 import com.skyflow.generated.rest.errors.BadRequestError;
 import com.skyflow.generated.rest.errors.InternalServerError;
 import com.skyflow.generated.rest.errors.NotFoundError;
 import com.skyflow.generated.rest.errors.UnauthorizedError;
-import com.skyflow.generated.rest.resources.records.requests.*;
-import com.skyflow.generated.rest.types.*;
-import okhttp3.*;
-import org.jetbrains.annotations.NotNull;
-
-import java.io.File;
+import com.skyflow.generated.rest.resources.records.requests.BatchOperationRequest;
+import com.skyflow.generated.rest.resources.records.requests.BulkDeleteRecordRequest;
+import com.skyflow.generated.rest.resources.records.requests.DeleteRecordRequest;
+import com.skyflow.generated.rest.resources.records.requests.GetRecordByIdRequest;
+import com.skyflow.generated.rest.resources.records.requests.GetRecordsRequest;
+import com.skyflow.generated.rest.resources.records.requests.InsertRecordRequest;
+import com.skyflow.generated.rest.resources.records.requests.UpdateRecordRequest;
+import com.skyflow.generated.rest.types.BatchOperationResponse;
+import com.skyflow.generated.rest.types.BulkDeleteRecordResponse;
+import com.skyflow.generated.rest.types.BulkGetRecordResponse;
+import com.skyflow.generated.rest.types.DeleteRecordResponse;
+import com.skyflow.generated.rest.types.ErrorResponse;
+import com.skyflow.generated.rest.types.GetFieldRecords;
+import com.skyflow.generated.rest.types.InsertRecordResponse;
+import com.skyflow.generated.rest.types.UpdateRecordResponse;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.Headers;
+import okhttp3.HttpUrl;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
+import org.jetbrains.annotations.NotNull;
 
 public class AsyncRawRecordsClient {
     protected final ClientOptions clientOptions;
@@ -30,30 +55,25 @@ public class AsyncRawRecordsClient {
     /**
      * Performs multiple record operations in a single transaction.
      */
-    public CompletableFuture<ApiClientHttpResponse<V1BatchOperationResponse>> recordServiceBatchOperation(
-            String vaultId) {
-        return recordServiceBatchOperation(
-                vaultId, RecordServiceBatchOperationBody.builder().build());
+    public CompletableFuture<ApiClientHttpResponse<BatchOperationResponse>> batchOperation(
+            String vaultId, BatchOperationRequest request) {
+        return batchOperation(vaultId, request, null);
     }
 
     /**
      * Performs multiple record operations in a single transaction.
      */
-    public CompletableFuture<ApiClientHttpResponse<V1BatchOperationResponse>> recordServiceBatchOperation(
-            String vaultId, RecordServiceBatchOperationBody request) {
-        return recordServiceBatchOperation(vaultId, request, null);
-    }
-
-    /**
-     * Performs multiple record operations in a single transaction.
-     */
-    public CompletableFuture<ApiClientHttpResponse<V1BatchOperationResponse>> recordServiceBatchOperation(
-            String vaultId, RecordServiceBatchOperationBody request, RequestOptions requestOptions) {
-        HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
+    public CompletableFuture<ApiClientHttpResponse<BatchOperationResponse>> batchOperation(
+            String vaultId, BatchOperationRequest request, RequestOptions requestOptions) {
+        HttpUrl.Builder httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
                 .newBuilder()
                 .addPathSegments("v1/vaults")
-                .addPathSegment(vaultId)
-                .build();
+                .addPathSegment(vaultId);
+        if (requestOptions != null) {
+            requestOptions.getQueryParameters().forEach((_key, _value) -> {
+                httpUrl.addQueryParameter(_key, _value);
+            });
+        }
         RequestBody body;
         try {
             body = RequestBody.create(
@@ -62,7 +82,7 @@ public class AsyncRawRecordsClient {
             throw new ApiClientException("Failed to serialize request", e);
         }
         Request okhttpRequest = new Request.Builder()
-                .url(httpUrl)
+                .url(httpUrl.build())
                 .method("POST", body)
                 .headers(Headers.of(clientOptions.headers(requestOptions)))
                 .addHeader("Content-Type", "application/json")
@@ -72,34 +92,60 @@ public class AsyncRawRecordsClient {
         if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
             client = clientOptions.httpClientWithTimeout(requestOptions);
         }
-        CompletableFuture<ApiClientHttpResponse<V1BatchOperationResponse>> future = new CompletableFuture<>();
+        if (requestOptions != null && requestOptions.getMaxRetries().isPresent()) {
+            okhttpRequest = okhttpRequest
+                    .newBuilder()
+                    .tag(
+                            RetryInterceptor.MaxRetriesOverride.class,
+                            new RetryInterceptor.MaxRetriesOverride(
+                                    requestOptions.getMaxRetries().get()))
+                    .build();
+        }
+        CompletableFuture<ApiClientHttpResponse<BatchOperationResponse>> future = new CompletableFuture<>();
         client.newCall(okhttpRequest).enqueue(new Callback() {
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
                 try (ResponseBody responseBody = response.body()) {
+                    String responseBodyString = responseBody != null ? responseBody.string() : "{}";
                     if (response.isSuccessful()) {
                         future.complete(new ApiClientHttpResponse<>(
-                                ObjectMappers.JSON_MAPPER.readValue(
-                                        responseBody.string(), V1BatchOperationResponse.class),
+                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, BatchOperationResponse.class),
                                 response));
                         return;
                     }
-                    String responseBodyString = responseBody != null ? responseBody.string() : "{}";
                     try {
-                        if (response.code() == 404) {
-                            future.completeExceptionally(new NotFoundError(
-                                    ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class), response));
-                            return;
+                        switch (response.code()) {
+                            case 400:
+                                future.completeExceptionally(new BadRequestError(
+                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class),
+                                        response));
+                                return;
+                            case 401:
+                                future.completeExceptionally(new UnauthorizedError(
+                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class),
+                                        response));
+                                return;
+                            case 404:
+                                future.completeExceptionally(new NotFoundError(
+                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class),
+                                        response));
+                                return;
+                            case 500:
+                                future.completeExceptionally(new InternalServerError(
+                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class),
+                                        response));
+                                return;
                         }
                     } catch (JsonProcessingException ignored) {
                         // unable to map error response, throwing generic error
                     }
+                    Object errorBody = ObjectMappers.parseErrorBody(responseBodyString);
                     future.completeExceptionally(new ApiClientApiException(
-                            "Error with status code " + response.code(),
-                            response.code(),
-                            ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                            response));
+                            "Error with status code " + response.code(), response.code(), errorBody, response));
                     return;
+                } catch (JsonProcessingException e) {
+                    future.completeExceptionally(
+                            new ApiClientException("Failed to deserialize response: " + e.getMessage(), e));
                 } catch (IOException e) {
                     future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
                 }
@@ -114,30 +160,34 @@ public class AsyncRawRecordsClient {
     }
 
     /**
-     * Gets the specified records from a table.
+     * Returns the specified records from a table.
      */
-    public CompletableFuture<ApiClientHttpResponse<V1BulkGetRecordResponse>> recordServiceBulkGetRecord(
+    public CompletableFuture<ApiClientHttpResponse<BulkGetRecordResponse>> getRecords(
             String vaultId, String objectName) {
-        return recordServiceBulkGetRecord(
-                vaultId, objectName, RecordServiceBulkGetRecordRequest.builder().build());
+        return getRecords(vaultId, objectName, GetRecordsRequest.builder().build());
     }
 
     /**
-     * Gets the specified records from a table.
+     * Returns the specified records from a table.
      */
-    public CompletableFuture<ApiClientHttpResponse<V1BulkGetRecordResponse>> recordServiceBulkGetRecord(
-            String vaultId, String objectName, RecordServiceBulkGetRecordRequest request) {
-        return recordServiceBulkGetRecord(vaultId, objectName, request, null);
+    public CompletableFuture<ApiClientHttpResponse<BulkGetRecordResponse>> getRecords(
+            String vaultId, String objectName, RequestOptions requestOptions) {
+        return getRecords(vaultId, objectName, GetRecordsRequest.builder().build(), requestOptions);
     }
 
     /**
-     * Gets the specified records from a table.
+     * Returns the specified records from a table.
      */
-    public CompletableFuture<ApiClientHttpResponse<V1BulkGetRecordResponse>> recordServiceBulkGetRecord(
-            String vaultId,
-            String objectName,
-            RecordServiceBulkGetRecordRequest request,
-            RequestOptions requestOptions) {
+    public CompletableFuture<ApiClientHttpResponse<BulkGetRecordResponse>> getRecords(
+            String vaultId, String objectName, GetRecordsRequest request) {
+        return getRecords(vaultId, objectName, request, null);
+    }
+
+    /**
+     * Returns the specified records from a table.
+     */
+    public CompletableFuture<ApiClientHttpResponse<BulkGetRecordResponse>> getRecords(
+            String vaultId, String objectName, GetRecordsRequest request, RequestOptions requestOptions) {
         HttpUrl.Builder httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
                 .newBuilder()
                 .addPathSegments("v1/vaults")
@@ -171,6 +221,13 @@ public class AsyncRawRecordsClient {
             QueryStringMapper.addQueryParameter(
                     httpUrl, "order_by", request.getOrderBy().get(), false);
         }
+        if (request.getReturnFileMetadata().isPresent()) {
+            QueryStringMapper.addQueryParameter(
+                    httpUrl,
+                    "returnFileMetadata",
+                    request.getReturnFileMetadata().get(),
+                    false);
+        }
         if (request.getSkyflowIds().isPresent()) {
             QueryStringMapper.addQueryParameter(
                     httpUrl, "skyflow_ids", request.getSkyflowIds().get(), true);
@@ -183,6 +240,11 @@ public class AsyncRawRecordsClient {
             QueryStringMapper.addQueryParameter(
                     httpUrl, "column_values", request.getColumnValues().get(), true);
         }
+        if (requestOptions != null) {
+            requestOptions.getQueryParameters().forEach((_key, _value) -> {
+                httpUrl.addQueryParameter(_key, _value);
+            });
+        }
         Request.Builder _requestBuilder = new Request.Builder()
                 .url(httpUrl.build())
                 .method("GET", null)
@@ -193,34 +255,60 @@ public class AsyncRawRecordsClient {
         if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
             client = clientOptions.httpClientWithTimeout(requestOptions);
         }
-        CompletableFuture<ApiClientHttpResponse<V1BulkGetRecordResponse>> future = new CompletableFuture<>();
+        if (requestOptions != null && requestOptions.getMaxRetries().isPresent()) {
+            okhttpRequest = okhttpRequest
+                    .newBuilder()
+                    .tag(
+                            RetryInterceptor.MaxRetriesOverride.class,
+                            new RetryInterceptor.MaxRetriesOverride(
+                                    requestOptions.getMaxRetries().get()))
+                    .build();
+        }
+        CompletableFuture<ApiClientHttpResponse<BulkGetRecordResponse>> future = new CompletableFuture<>();
         client.newCall(okhttpRequest).enqueue(new Callback() {
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
                 try (ResponseBody responseBody = response.body()) {
+                    String responseBodyString = responseBody != null ? responseBody.string() : "{}";
                     if (response.isSuccessful()) {
                         future.complete(new ApiClientHttpResponse<>(
-                                ObjectMappers.JSON_MAPPER.readValue(
-                                        responseBody.string(), V1BulkGetRecordResponse.class),
+                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, BulkGetRecordResponse.class),
                                 response));
                         return;
                     }
-                    String responseBodyString = responseBody != null ? responseBody.string() : "{}";
                     try {
-                        if (response.code() == 404) {
-                            future.completeExceptionally(new NotFoundError(
-                                    ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class), response));
-                            return;
+                        switch (response.code()) {
+                            case 400:
+                                future.completeExceptionally(new BadRequestError(
+                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class),
+                                        response));
+                                return;
+                            case 401:
+                                future.completeExceptionally(new UnauthorizedError(
+                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class),
+                                        response));
+                                return;
+                            case 404:
+                                future.completeExceptionally(new NotFoundError(
+                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class),
+                                        response));
+                                return;
+                            case 500:
+                                future.completeExceptionally(new InternalServerError(
+                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class),
+                                        response));
+                                return;
                         }
                     } catch (JsonProcessingException ignored) {
                         // unable to map error response, throwing generic error
                     }
+                    Object errorBody = ObjectMappers.parseErrorBody(responseBodyString);
                     future.completeExceptionally(new ApiClientApiException(
-                            "Error with status code " + response.code(),
-                            response.code(),
-                            ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                            response));
+                            "Error with status code " + response.code(), response.code(), errorBody, response));
                     return;
+                } catch (JsonProcessingException e) {
+                    future.completeExceptionally(
+                            new ApiClientException("Failed to deserialize response: " + e.getMessage(), e));
                 } catch (IOException e) {
                     future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
                 }
@@ -235,33 +323,28 @@ public class AsyncRawRecordsClient {
     }
 
     /**
-     * Inserts a record in the specified table.&lt;br /&gt;&lt;br /&gt;The time-to-live (TTL) for a transient field begins when the field value is set during record insertion.&lt;br /&gt;&lt;br /&gt;Columns that have a string data type and a uniqueness constraint accept strings up to 2500 characters. If an inserted string exceeds 2500 characters, the call returns a token insertion error.
+     * Inserts a record in the specified table.The time-to-live (TTL) for a transient field begins when the field value is set during record insertion.Columns that have a string data type and a uniqueness constraint accept strings up to 2500 characters. If an inserted string exceeds 2500 characters, the call returns a token insertion error.
      */
-    public CompletableFuture<ApiClientHttpResponse<V1InsertRecordResponse>> recordServiceInsertRecord(
-            String vaultId, String objectName) {
-        return recordServiceInsertRecord(
-                vaultId, objectName, RecordServiceInsertRecordBody.builder().build());
+    public CompletableFuture<ApiClientHttpResponse<InsertRecordResponse>> insertRecords(
+            String vaultId, String objectName, InsertRecordRequest request) {
+        return insertRecords(vaultId, objectName, request, null);
     }
 
     /**
-     * Inserts a record in the specified table.&lt;br /&gt;&lt;br /&gt;The time-to-live (TTL) for a transient field begins when the field value is set during record insertion.&lt;br /&gt;&lt;br /&gt;Columns that have a string data type and a uniqueness constraint accept strings up to 2500 characters. If an inserted string exceeds 2500 characters, the call returns a token insertion error.
+     * Inserts a record in the specified table.The time-to-live (TTL) for a transient field begins when the field value is set during record insertion.Columns that have a string data type and a uniqueness constraint accept strings up to 2500 characters. If an inserted string exceeds 2500 characters, the call returns a token insertion error.
      */
-    public CompletableFuture<ApiClientHttpResponse<V1InsertRecordResponse>> recordServiceInsertRecord(
-            String vaultId, String objectName, RecordServiceInsertRecordBody request) {
-        return recordServiceInsertRecord(vaultId, objectName, request, null);
-    }
-
-    /**
-     * Inserts a record in the specified table.&lt;br /&gt;&lt;br /&gt;The time-to-live (TTL) for a transient field begins when the field value is set during record insertion.&lt;br /&gt;&lt;br /&gt;Columns that have a string data type and a uniqueness constraint accept strings up to 2500 characters. If an inserted string exceeds 2500 characters, the call returns a token insertion error.
-     */
-    public CompletableFuture<ApiClientHttpResponse<V1InsertRecordResponse>> recordServiceInsertRecord(
-            String vaultId, String objectName, RecordServiceInsertRecordBody request, RequestOptions requestOptions) {
-        HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
+    public CompletableFuture<ApiClientHttpResponse<InsertRecordResponse>> insertRecords(
+            String vaultId, String objectName, InsertRecordRequest request, RequestOptions requestOptions) {
+        HttpUrl.Builder httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
                 .newBuilder()
                 .addPathSegments("v1/vaults")
                 .addPathSegment(vaultId)
-                .addPathSegment(objectName)
-                .build();
+                .addPathSegment(objectName);
+        if (requestOptions != null) {
+            requestOptions.getQueryParameters().forEach((_key, _value) -> {
+                httpUrl.addQueryParameter(_key, _value);
+            });
+        }
         RequestBody body;
         try {
             body = RequestBody.create(
@@ -270,7 +353,7 @@ public class AsyncRawRecordsClient {
             throw new ApiClientException("Failed to serialize request", e);
         }
         Request okhttpRequest = new Request.Builder()
-                .url(httpUrl)
+                .url(httpUrl.build())
                 .method("POST", body)
                 .headers(Headers.of(clientOptions.headers(requestOptions)))
                 .addHeader("Content-Type", "application/json")
@@ -280,34 +363,55 @@ public class AsyncRawRecordsClient {
         if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
             client = clientOptions.httpClientWithTimeout(requestOptions);
         }
-        CompletableFuture<ApiClientHttpResponse<V1InsertRecordResponse>> future = new CompletableFuture<>();
+        if (requestOptions != null && requestOptions.getMaxRetries().isPresent()) {
+            okhttpRequest = okhttpRequest
+                    .newBuilder()
+                    .tag(
+                            RetryInterceptor.MaxRetriesOverride.class,
+                            new RetryInterceptor.MaxRetriesOverride(
+                                    requestOptions.getMaxRetries().get()))
+                    .build();
+        }
+        CompletableFuture<ApiClientHttpResponse<InsertRecordResponse>> future = new CompletableFuture<>();
         client.newCall(okhttpRequest).enqueue(new Callback() {
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
                 try (ResponseBody responseBody = response.body()) {
+                    String responseBodyString = responseBody != null ? responseBody.string() : "{}";
                     if (response.isSuccessful()) {
                         future.complete(new ApiClientHttpResponse<>(
-                                ObjectMappers.JSON_MAPPER.readValue(
-                                        responseBody.string(), V1InsertRecordResponse.class),
+                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, InsertRecordResponse.class),
                                 response));
                         return;
                     }
-                    String responseBodyString = responseBody != null ? responseBody.string() : "{}";
                     try {
-                        if (response.code() == 404) {
-                            future.completeExceptionally(new NotFoundError(
-                                    ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class), response));
-                            return;
+                        switch (response.code()) {
+                            case 400:
+                                future.completeExceptionally(new BadRequestError(
+                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class),
+                                        response));
+                                return;
+                            case 401:
+                                future.completeExceptionally(new UnauthorizedError(
+                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class),
+                                        response));
+                                return;
+                            case 500:
+                                future.completeExceptionally(new InternalServerError(
+                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class),
+                                        response));
+                                return;
                         }
                     } catch (JsonProcessingException ignored) {
                         // unable to map error response, throwing generic error
                     }
+                    Object errorBody = ObjectMappers.parseErrorBody(responseBodyString);
                     future.completeExceptionally(new ApiClientApiException(
-                            "Error with status code " + response.code(),
-                            response.code(),
-                            ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                            response));
+                            "Error with status code " + response.code(), response.code(), errorBody, response));
                     return;
+                } catch (JsonProcessingException e) {
+                    future.completeExceptionally(
+                            new ApiClientException("Failed to deserialize response: " + e.getMessage(), e));
                 } catch (IOException e) {
                     future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
                 }
@@ -324,34 +428,44 @@ public class AsyncRawRecordsClient {
     /**
      * Deletes the specified records from a table.
      */
-    public CompletableFuture<ApiClientHttpResponse<V1BulkDeleteRecordResponse>> recordServiceBulkDeleteRecord(
+    public CompletableFuture<ApiClientHttpResponse<BulkDeleteRecordResponse>> deleteRecords(
             String vaultId, String objectName) {
-        return recordServiceBulkDeleteRecord(
-                vaultId, objectName, RecordServiceBulkDeleteRecordBody.builder().build());
+        return deleteRecords(
+                vaultId, objectName, BulkDeleteRecordRequest.builder().build());
     }
 
     /**
      * Deletes the specified records from a table.
      */
-    public CompletableFuture<ApiClientHttpResponse<V1BulkDeleteRecordResponse>> recordServiceBulkDeleteRecord(
-            String vaultId, String objectName, RecordServiceBulkDeleteRecordBody request) {
-        return recordServiceBulkDeleteRecord(vaultId, objectName, request, null);
+    public CompletableFuture<ApiClientHttpResponse<BulkDeleteRecordResponse>> deleteRecords(
+            String vaultId, String objectName, RequestOptions requestOptions) {
+        return deleteRecords(
+                vaultId, objectName, BulkDeleteRecordRequest.builder().build(), requestOptions);
     }
 
     /**
      * Deletes the specified records from a table.
      */
-    public CompletableFuture<ApiClientHttpResponse<V1BulkDeleteRecordResponse>> recordServiceBulkDeleteRecord(
-            String vaultId,
-            String objectName,
-            RecordServiceBulkDeleteRecordBody request,
-            RequestOptions requestOptions) {
-        HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
+    public CompletableFuture<ApiClientHttpResponse<BulkDeleteRecordResponse>> deleteRecords(
+            String vaultId, String objectName, BulkDeleteRecordRequest request) {
+        return deleteRecords(vaultId, objectName, request, null);
+    }
+
+    /**
+     * Deletes the specified records from a table.
+     */
+    public CompletableFuture<ApiClientHttpResponse<BulkDeleteRecordResponse>> deleteRecords(
+            String vaultId, String objectName, BulkDeleteRecordRequest request, RequestOptions requestOptions) {
+        HttpUrl.Builder httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
                 .newBuilder()
                 .addPathSegments("v1/vaults")
                 .addPathSegment(vaultId)
-                .addPathSegment(objectName)
-                .build();
+                .addPathSegment(objectName);
+        if (requestOptions != null) {
+            requestOptions.getQueryParameters().forEach((_key, _value) -> {
+                httpUrl.addQueryParameter(_key, _value);
+            });
+        }
         RequestBody body;
         try {
             body = RequestBody.create(
@@ -360,7 +474,7 @@ public class AsyncRawRecordsClient {
             throw new ApiClientException("Failed to serialize request", e);
         }
         Request okhttpRequest = new Request.Builder()
-                .url(httpUrl)
+                .url(httpUrl.build())
                 .method("DELETE", body)
                 .headers(Headers.of(clientOptions.headers(requestOptions)))
                 .addHeader("Content-Type", "application/json")
@@ -370,34 +484,60 @@ public class AsyncRawRecordsClient {
         if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
             client = clientOptions.httpClientWithTimeout(requestOptions);
         }
-        CompletableFuture<ApiClientHttpResponse<V1BulkDeleteRecordResponse>> future = new CompletableFuture<>();
+        if (requestOptions != null && requestOptions.getMaxRetries().isPresent()) {
+            okhttpRequest = okhttpRequest
+                    .newBuilder()
+                    .tag(
+                            RetryInterceptor.MaxRetriesOverride.class,
+                            new RetryInterceptor.MaxRetriesOverride(
+                                    requestOptions.getMaxRetries().get()))
+                    .build();
+        }
+        CompletableFuture<ApiClientHttpResponse<BulkDeleteRecordResponse>> future = new CompletableFuture<>();
         client.newCall(okhttpRequest).enqueue(new Callback() {
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
                 try (ResponseBody responseBody = response.body()) {
+                    String responseBodyString = responseBody != null ? responseBody.string() : "{}";
                     if (response.isSuccessful()) {
                         future.complete(new ApiClientHttpResponse<>(
-                                ObjectMappers.JSON_MAPPER.readValue(
-                                        responseBody.string(), V1BulkDeleteRecordResponse.class),
+                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, BulkDeleteRecordResponse.class),
                                 response));
                         return;
                     }
-                    String responseBodyString = responseBody != null ? responseBody.string() : "{}";
                     try {
-                        if (response.code() == 404) {
-                            future.completeExceptionally(new NotFoundError(
-                                    ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class), response));
-                            return;
+                        switch (response.code()) {
+                            case 400:
+                                future.completeExceptionally(new BadRequestError(
+                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class),
+                                        response));
+                                return;
+                            case 401:
+                                future.completeExceptionally(new UnauthorizedError(
+                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class),
+                                        response));
+                                return;
+                            case 404:
+                                future.completeExceptionally(new NotFoundError(
+                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class),
+                                        response));
+                                return;
+                            case 500:
+                                future.completeExceptionally(new InternalServerError(
+                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class),
+                                        response));
+                                return;
                         }
                     } catch (JsonProcessingException ignored) {
                         // unable to map error response, throwing generic error
                     }
+                    Object errorBody = ObjectMappers.parseErrorBody(responseBodyString);
                     future.completeExceptionally(new ApiClientApiException(
-                            "Error with status code " + response.code(),
-                            response.code(),
-                            ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                            response));
+                            "Error with status code " + response.code(), response.code(), errorBody, response));
                     return;
+                } catch (JsonProcessingException e) {
+                    future.completeExceptionally(
+                            new ApiClientException("Failed to deserialize response: " + e.getMessage(), e));
                 } catch (IOException e) {
                     future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
                 }
@@ -414,29 +554,34 @@ public class AsyncRawRecordsClient {
     /**
      * Returns the specified record from a table.
      */
-    public CompletableFuture<ApiClientHttpResponse<V1FieldRecords>> recordServiceGetRecord(
+    public CompletableFuture<ApiClientHttpResponse<GetFieldRecords>> getRecordById(
             String vaultId, String objectName, String id) {
-        return recordServiceGetRecord(
-                vaultId, objectName, id, RecordServiceGetRecordRequest.builder().build());
+        return getRecordById(
+                vaultId, objectName, id, GetRecordByIdRequest.builder().build());
     }
 
     /**
      * Returns the specified record from a table.
      */
-    public CompletableFuture<ApiClientHttpResponse<V1FieldRecords>> recordServiceGetRecord(
-            String vaultId, String objectName, String id, RecordServiceGetRecordRequest request) {
-        return recordServiceGetRecord(vaultId, objectName, id, request, null);
+    public CompletableFuture<ApiClientHttpResponse<GetFieldRecords>> getRecordById(
+            String vaultId, String objectName, String id, RequestOptions requestOptions) {
+        return getRecordById(
+                vaultId, objectName, id, GetRecordByIdRequest.builder().build(), requestOptions);
     }
 
     /**
      * Returns the specified record from a table.
      */
-    public CompletableFuture<ApiClientHttpResponse<V1FieldRecords>> recordServiceGetRecord(
-            String vaultId,
-            String objectName,
-            String id,
-            RecordServiceGetRecordRequest request,
-            RequestOptions requestOptions) {
+    public CompletableFuture<ApiClientHttpResponse<GetFieldRecords>> getRecordById(
+            String vaultId, String objectName, String id, GetRecordByIdRequest request) {
+        return getRecordById(vaultId, objectName, id, request, null);
+    }
+
+    /**
+     * Returns the specified record from a table.
+     */
+    public CompletableFuture<ApiClientHttpResponse<GetFieldRecords>> getRecordById(
+            String vaultId, String objectName, String id, GetRecordByIdRequest request, RequestOptions requestOptions) {
         HttpUrl.Builder httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
                 .newBuilder()
                 .addPathSegments("v1/vaults")
@@ -455,9 +600,21 @@ public class AsyncRawRecordsClient {
             QueryStringMapper.addQueryParameter(
                     httpUrl, "downloadURL", request.getDownloadUrl().get(), false);
         }
+        if (request.getReturnFileMetadata().isPresent()) {
+            QueryStringMapper.addQueryParameter(
+                    httpUrl,
+                    "returnFileMetadata",
+                    request.getReturnFileMetadata().get(),
+                    false);
+        }
         if (request.getFields().isPresent()) {
             QueryStringMapper.addQueryParameter(
                     httpUrl, "fields", request.getFields().get(), true);
+        }
+        if (requestOptions != null) {
+            requestOptions.getQueryParameters().forEach((_key, _value) -> {
+                httpUrl.addQueryParameter(_key, _value);
+            });
         }
         Request.Builder _requestBuilder = new Request.Builder()
                 .url(httpUrl.build())
@@ -469,537 +626,42 @@ public class AsyncRawRecordsClient {
         if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
             client = clientOptions.httpClientWithTimeout(requestOptions);
         }
-        CompletableFuture<ApiClientHttpResponse<V1FieldRecords>> future = new CompletableFuture<>();
+        if (requestOptions != null && requestOptions.getMaxRetries().isPresent()) {
+            okhttpRequest = okhttpRequest
+                    .newBuilder()
+                    .tag(
+                            RetryInterceptor.MaxRetriesOverride.class,
+                            new RetryInterceptor.MaxRetriesOverride(
+                                    requestOptions.getMaxRetries().get()))
+                    .build();
+        }
+        CompletableFuture<ApiClientHttpResponse<GetFieldRecords>> future = new CompletableFuture<>();
         client.newCall(okhttpRequest).enqueue(new Callback() {
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
                 try (ResponseBody responseBody = response.body()) {
+                    String responseBodyString = responseBody != null ? responseBody.string() : "{}";
                     if (response.isSuccessful()) {
                         future.complete(new ApiClientHttpResponse<>(
-                                ObjectMappers.JSON_MAPPER.readValue(responseBody.string(), V1FieldRecords.class),
+                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, GetFieldRecords.class),
                                 response));
                         return;
                     }
-                    String responseBodyString = responseBody != null ? responseBody.string() : "{}";
-                    try {
-                        if (response.code() == 404) {
-                            future.completeExceptionally(new NotFoundError(
-                                    ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class), response));
-                            return;
-                        }
-                    } catch (JsonProcessingException ignored) {
-                        // unable to map error response, throwing generic error
-                    }
-                    future.completeExceptionally(new ApiClientApiException(
-                            "Error with status code " + response.code(),
-                            response.code(),
-                            ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                            response));
-                    return;
-                } catch (IOException e) {
-                    future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
-                }
-            }
-
-            @Override
-            public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
-            }
-        });
-        return future;
-    }
-
-    /**
-     * Updates the specified record in a table.&lt;br /&gt;&lt;br /&gt;When you update a field, include the entire contents you want the field to store. For JSON fields, include all nested fields and values. If a nested field isn't included, it's removed.&lt;br /&gt;&lt;br /&gt;The time-to-live (TTL) for a transient field resets when the field value is updated.
-     */
-    public CompletableFuture<ApiClientHttpResponse<V1UpdateRecordResponse>> recordServiceUpdateRecord(
-            String vaultId, String objectName, String id) {
-        return recordServiceUpdateRecord(
-                vaultId, objectName, id, RecordServiceUpdateRecordBody.builder().build());
-    }
-
-    /**
-     * Updates the specified record in a table.&lt;br /&gt;&lt;br /&gt;When you update a field, include the entire contents you want the field to store. For JSON fields, include all nested fields and values. If a nested field isn't included, it's removed.&lt;br /&gt;&lt;br /&gt;The time-to-live (TTL) for a transient field resets when the field value is updated.
-     */
-    public CompletableFuture<ApiClientHttpResponse<V1UpdateRecordResponse>> recordServiceUpdateRecord(
-            String vaultId, String objectName, String id, RecordServiceUpdateRecordBody request) {
-        return recordServiceUpdateRecord(vaultId, objectName, id, request, null);
-    }
-
-    /**
-     * Updates the specified record in a table.&lt;br /&gt;&lt;br /&gt;When you update a field, include the entire contents you want the field to store. For JSON fields, include all nested fields and values. If a nested field isn't included, it's removed.&lt;br /&gt;&lt;br /&gt;The time-to-live (TTL) for a transient field resets when the field value is updated.
-     */
-    public CompletableFuture<ApiClientHttpResponse<V1UpdateRecordResponse>> recordServiceUpdateRecord(
-            String vaultId,
-            String objectName,
-            String id,
-            RecordServiceUpdateRecordBody request,
-            RequestOptions requestOptions) {
-        HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
-                .newBuilder()
-                .addPathSegments("v1/vaults")
-                .addPathSegment(vaultId)
-                .addPathSegment(objectName)
-                .addPathSegment(id)
-                .build();
-        RequestBody body;
-        try {
-            body = RequestBody.create(
-                    ObjectMappers.JSON_MAPPER.writeValueAsBytes(request), MediaTypes.APPLICATION_JSON);
-        } catch (JsonProcessingException e) {
-            throw new ApiClientException("Failed to serialize request", e);
-        }
-        Request okhttpRequest = new Request.Builder()
-                .url(httpUrl)
-                .method("PUT", body)
-                .headers(Headers.of(clientOptions.headers(requestOptions)))
-                .addHeader("Content-Type", "application/json")
-                .addHeader("Accept", "application/json")
-                .build();
-        OkHttpClient client = clientOptions.httpClient();
-        if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
-            client = clientOptions.httpClientWithTimeout(requestOptions);
-        }
-        CompletableFuture<ApiClientHttpResponse<V1UpdateRecordResponse>> future = new CompletableFuture<>();
-        client.newCall(okhttpRequest).enqueue(new Callback() {
-            @Override
-            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                try (ResponseBody responseBody = response.body()) {
-                    if (response.isSuccessful()) {
-                        future.complete(new ApiClientHttpResponse<>(
-                                ObjectMappers.JSON_MAPPER.readValue(
-                                        responseBody.string(), V1UpdateRecordResponse.class),
-                                response));
-                        return;
-                    }
-                    String responseBodyString = responseBody != null ? responseBody.string() : "{}";
-                    try {
-                        if (response.code() == 404) {
-                            future.completeExceptionally(new NotFoundError(
-                                    ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class), response));
-                            return;
-                        }
-                    } catch (JsonProcessingException ignored) {
-                        // unable to map error response, throwing generic error
-                    }
-                    future.completeExceptionally(new ApiClientApiException(
-                            "Error with status code " + response.code(),
-                            response.code(),
-                            ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                            response));
-                    return;
-                } catch (IOException e) {
-                    future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
-                }
-            }
-
-            @Override
-            public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
-            }
-        });
-        return future;
-    }
-
-    /**
-     * Deletes the specified record from a table.&lt;br /&gt;&lt;br /&gt;&lt;b&gt;Note:&lt;/b&gt; This method doesn't delete transient field tokens. Transient field values are available until they expire based on the fields' time-to-live (TTL) setting.
-     */
-    public CompletableFuture<ApiClientHttpResponse<V1DeleteRecordResponse>> recordServiceDeleteRecord(
-            String vaultId, String objectName, String id) {
-        return recordServiceDeleteRecord(vaultId, objectName, id, null);
-    }
-
-    /**
-     * Deletes the specified record from a table.&lt;br /&gt;&lt;br /&gt;&lt;b&gt;Note:&lt;/b&gt; This method doesn't delete transient field tokens. Transient field values are available until they expire based on the fields' time-to-live (TTL) setting.
-     */
-    public CompletableFuture<ApiClientHttpResponse<V1DeleteRecordResponse>> recordServiceDeleteRecord(
-            String vaultId, String objectName, String id, RequestOptions requestOptions) {
-        HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
-                .newBuilder()
-                .addPathSegments("v1/vaults")
-                .addPathSegment(vaultId)
-                .addPathSegment(objectName)
-                .addPathSegment(id)
-                .build();
-        Request okhttpRequest = new Request.Builder()
-                .url(httpUrl)
-                .method("DELETE", null)
-                .headers(Headers.of(clientOptions.headers(requestOptions)))
-                .addHeader("Accept", "application/json")
-                .build();
-        OkHttpClient client = clientOptions.httpClient();
-        if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
-            client = clientOptions.httpClientWithTimeout(requestOptions);
-        }
-        CompletableFuture<ApiClientHttpResponse<V1DeleteRecordResponse>> future = new CompletableFuture<>();
-        client.newCall(okhttpRequest).enqueue(new Callback() {
-            @Override
-            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                try (ResponseBody responseBody = response.body()) {
-                    if (response.isSuccessful()) {
-                        future.complete(new ApiClientHttpResponse<>(
-                                ObjectMappers.JSON_MAPPER.readValue(
-                                        responseBody.string(), V1DeleteRecordResponse.class),
-                                response));
-                        return;
-                    }
-                    String responseBodyString = responseBody != null ? responseBody.string() : "{}";
-                    try {
-                        if (response.code() == 404) {
-                            future.completeExceptionally(new NotFoundError(
-                                    ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class), response));
-                            return;
-                        }
-                    } catch (JsonProcessingException ignored) {
-                        // unable to map error response, throwing generic error
-                    }
-                    future.completeExceptionally(new ApiClientApiException(
-                            "Error with status code " + response.code(),
-                            response.code(),
-                            ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                            response));
-                    return;
-                } catch (IOException e) {
-                    future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
-                }
-            }
-
-            @Override
-            public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
-            }
-        });
-        return future;
-    }
-
-    /**
-     * Uploads a file to the specified record.
-     */
-    public CompletableFuture<ApiClientHttpResponse<V1UpdateRecordResponse>> fileServiceUploadFile(
-            String vaultId, String objectName, String id, Optional<File> file) {
-        return fileServiceUploadFile(
-                vaultId,
-                objectName,
-                id,
-                file,
-                FileServiceUploadFileRequest.builder().build());
-    }
-
-    /**
-     * Uploads a file to the specified record.
-     */
-    public CompletableFuture<ApiClientHttpResponse<V1UpdateRecordResponse>> fileServiceUploadFile(
-            String vaultId, String objectName, String id, Optional<File> file, FileServiceUploadFileRequest request) {
-        return fileServiceUploadFile(vaultId, objectName, id, file, request, null);
-    }
-
-    /**
-     * Uploads a file to the specified record.
-     */
-    public CompletableFuture<ApiClientHttpResponse<V1UpdateRecordResponse>> fileServiceUploadFile(
-            String vaultId,
-            String objectName,
-            String id,
-            Optional<File> file,
-            FileServiceUploadFileRequest request,
-            RequestOptions requestOptions) {
-        HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
-                .newBuilder()
-                .addPathSegments("v1/vaults")
-                .addPathSegment(vaultId)
-                .addPathSegment(objectName)
-                .addPathSegment(id)
-                .addPathSegments("files")
-                .build();
-        MultipartBody.Builder body = new MultipartBody.Builder().setType(MultipartBody.FORM);
-        try {
-            if (file.isPresent()) {
-                String fileMimeType = Files.probeContentType(file.get().toPath());
-                MediaType fileMimeTypeMediaType = fileMimeType != null ? MediaType.parse(fileMimeType) : null;
-                body.addFormDataPart(
-                        "file", file.get().getName(), RequestBody.create(file.get(), fileMimeTypeMediaType));
-            }
-            if (request.getColumnName().isPresent()) {
-                QueryStringMapper.addFormDataPart(
-                        body, "columnName", request.getColumnName().get(), false);
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        Request.Builder _requestBuilder = new Request.Builder()
-                .url(httpUrl)
-                .method("POST", body.build())
-                .headers(Headers.of(clientOptions.headers(requestOptions)))
-                .addHeader("Accept", "application/json");
-        Request okhttpRequest = _requestBuilder.build();
-        OkHttpClient client = clientOptions.httpClient();
-        if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
-            client = clientOptions.httpClientWithTimeout(requestOptions);
-        }
-        CompletableFuture<ApiClientHttpResponse<V1UpdateRecordResponse>> future = new CompletableFuture<>();
-        client.newCall(okhttpRequest).enqueue(new Callback() {
-            @Override
-            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                try (ResponseBody responseBody = response.body()) {
-                    if (response.isSuccessful()) {
-                        future.complete(new ApiClientHttpResponse<>(
-                                ObjectMappers.JSON_MAPPER.readValue(
-                                        responseBody.string(), V1UpdateRecordResponse.class),
-                                response));
-                        return;
-                    }
-                    String responseBodyString = responseBody != null ? responseBody.string() : "{}";
-                    try {
-                        if (response.code() == 404) {
-                            future.completeExceptionally(new NotFoundError(
-                                    ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class), response));
-                            return;
-                        }
-                    } catch (JsonProcessingException ignored) {
-                        // unable to map error response, throwing generic error
-                    }
-                    future.completeExceptionally(new ApiClientApiException(
-                            "Error with status code " + response.code(),
-                            response.code(),
-                            ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                            response));
-                    return;
-                } catch (IOException e) {
-                    future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
-                }
-            }
-
-            @Override
-            public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
-            }
-        });
-        return future;
-    }
-
-    /**
-     * Deletes a file from the specified record.
-     */
-    public CompletableFuture<ApiClientHttpResponse<V1DeleteFileResponse>> fileServiceDeleteFile(
-            String vaultId, String tableName, String id, String columnName) {
-        return fileServiceDeleteFile(vaultId, tableName, id, columnName, null);
-    }
-
-    /**
-     * Deletes a file from the specified record.
-     */
-    public CompletableFuture<ApiClientHttpResponse<V1DeleteFileResponse>> fileServiceDeleteFile(
-            String vaultId, String tableName, String id, String columnName, RequestOptions requestOptions) {
-        HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
-                .newBuilder()
-                .addPathSegments("v1/vaults")
-                .addPathSegment(vaultId)
-                .addPathSegment(tableName)
-                .addPathSegment(id)
-                .addPathSegments("files")
-                .addPathSegment(columnName)
-                .build();
-        Request okhttpRequest = new Request.Builder()
-                .url(httpUrl)
-                .method("DELETE", null)
-                .headers(Headers.of(clientOptions.headers(requestOptions)))
-                .addHeader("Accept", "application/json")
-                .build();
-        OkHttpClient client = clientOptions.httpClient();
-        if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
-            client = clientOptions.httpClientWithTimeout(requestOptions);
-        }
-        CompletableFuture<ApiClientHttpResponse<V1DeleteFileResponse>> future = new CompletableFuture<>();
-        client.newCall(okhttpRequest).enqueue(new Callback() {
-            @Override
-            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                try (ResponseBody responseBody = response.body()) {
-                    if (response.isSuccessful()) {
-                        future.complete(new ApiClientHttpResponse<>(
-                                ObjectMappers.JSON_MAPPER.readValue(responseBody.string(), V1DeleteFileResponse.class),
-                                response));
-                        return;
-                    }
-                    String responseBodyString = responseBody != null ? responseBody.string() : "{}";
-                    try {
-                        if (response.code() == 404) {
-                            future.completeExceptionally(new NotFoundError(
-                                    ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class), response));
-                            return;
-                        }
-                    } catch (JsonProcessingException ignored) {
-                        // unable to map error response, throwing generic error
-                    }
-                    future.completeExceptionally(new ApiClientApiException(
-                            "Error with status code " + response.code(),
-                            response.code(),
-                            ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                            response));
-                    return;
-                } catch (IOException e) {
-                    future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
-                }
-            }
-
-            @Override
-            public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
-            }
-        });
-        return future;
-    }
-
-    /**
-     * Returns the anti-virus scan status of a file.
-     */
-    public CompletableFuture<ApiClientHttpResponse<V1GetFileScanStatusResponse>> fileServiceGetFileScanStatus(
-            String vaultId, String tableName, String id, String columnName) {
-        return fileServiceGetFileScanStatus(vaultId, tableName, id, columnName, null);
-    }
-
-    /**
-     * Returns the anti-virus scan status of a file.
-     */
-    public CompletableFuture<ApiClientHttpResponse<V1GetFileScanStatusResponse>> fileServiceGetFileScanStatus(
-            String vaultId, String tableName, String id, String columnName, RequestOptions requestOptions) {
-        HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
-                .newBuilder()
-                .addPathSegments("v1/vaults")
-                .addPathSegment(vaultId)
-                .addPathSegment(tableName)
-                .addPathSegment(id)
-                .addPathSegments("files")
-                .addPathSegment(columnName)
-                .addPathSegments("scan-status")
-                .build();
-        Request okhttpRequest = new Request.Builder()
-                .url(httpUrl)
-                .method("GET", null)
-                .headers(Headers.of(clientOptions.headers(requestOptions)))
-                .addHeader("Accept", "application/json")
-                .build();
-        OkHttpClient client = clientOptions.httpClient();
-        if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
-            client = clientOptions.httpClientWithTimeout(requestOptions);
-        }
-        CompletableFuture<ApiClientHttpResponse<V1GetFileScanStatusResponse>> future = new CompletableFuture<>();
-        client.newCall(okhttpRequest).enqueue(new Callback() {
-            @Override
-            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                try (ResponseBody responseBody = response.body()) {
-                    if (response.isSuccessful()) {
-                        future.complete(new ApiClientHttpResponse<>(
-                                ObjectMappers.JSON_MAPPER.readValue(
-                                        responseBody.string(), V1GetFileScanStatusResponse.class),
-                                response));
-                        return;
-                    }
-                    String responseBodyString = responseBody != null ? responseBody.string() : "{}";
-                    try {
-                        if (response.code() == 404) {
-                            future.completeExceptionally(new NotFoundError(
-                                    ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class), response));
-                            return;
-                        }
-                    } catch (JsonProcessingException ignored) {
-                        // unable to map error response, throwing generic error
-                    }
-                    future.completeExceptionally(new ApiClientApiException(
-                            "Error with status code " + response.code(),
-                            response.code(),
-                            ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                            response));
-                    return;
-                } catch (IOException e) {
-                    future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
-                }
-            }
-
-            @Override
-            public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
-            }
-        });
-        return future;
-    }
-
-    /**
-     * Uploads the specified file to a record. If an existing record isn't specified, creates a new record and uploads the file to that record.
-     */
-    public CompletableFuture<ApiClientHttpResponse<UploadFileV2Response>> uploadFileV2(
-            String vaultId, File file, UploadFileV2Request request) {
-        return uploadFileV2(vaultId, file, request, null);
-    }
-
-    /**
-     * Uploads the specified file to a record. If an existing record isn't specified, creates a new record and uploads the file to that record.
-     */
-    public CompletableFuture<ApiClientHttpResponse<UploadFileV2Response>> uploadFileV2(
-            String vaultId, File file, UploadFileV2Request request, RequestOptions requestOptions) {
-        HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
-                .newBuilder()
-                .addPathSegments("v2/vaults")
-                .addPathSegment(vaultId)
-                .addPathSegments("files/upload")
-                .build();
-        MultipartBody.Builder body = new MultipartBody.Builder().setType(MultipartBody.FORM);
-        try {
-            QueryStringMapper.addFormDataPart(body, "tableName", request.getTableName(), false);
-            QueryStringMapper.addFormDataPart(body, "columnName", request.getColumnName(), false);
-            String fileMimeType = Files.probeContentType(file.toPath());
-            MediaType fileMimeTypeMediaType = fileMimeType != null ? MediaType.parse(fileMimeType) : null;
-            body.addFormDataPart("file", file.getName(), RequestBody.create(file, fileMimeTypeMediaType));
-            if (request.getSkyflowId().isPresent()) {
-                QueryStringMapper.addFormDataPart(
-                        body, "skyflowID", request.getSkyflowId().get(), false);
-            }
-            if (request.getReturnFileMetadata().isPresent()) {
-                QueryStringMapper.addFormDataPart(
-                        body,
-                        "returnFileMetadata",
-                        request.getReturnFileMetadata().get(),
-                        false);
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        Request.Builder _requestBuilder = new Request.Builder()
-                .url(httpUrl)
-                .method("POST", body.build())
-                .headers(Headers.of(clientOptions.headers(requestOptions)))
-                .addHeader("Accept", "application/json");
-        Request okhttpRequest = _requestBuilder.build();
-        OkHttpClient client = clientOptions.httpClient();
-        if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
-            client = clientOptions.httpClientWithTimeout(requestOptions);
-        }
-        CompletableFuture<ApiClientHttpResponse<UploadFileV2Response>> future = new CompletableFuture<>();
-        client.newCall(okhttpRequest).enqueue(new Callback() {
-            @Override
-            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                try (ResponseBody responseBody = response.body()) {
-                    if (response.isSuccessful()) {
-                        future.complete(new ApiClientHttpResponse<>(
-                                ObjectMappers.JSON_MAPPER.readValue(responseBody.string(), UploadFileV2Response.class),
-                                response));
-                        return;
-                    }
-                    String responseBodyString = responseBody != null ? responseBody.string() : "{}";
                     try {
                         switch (response.code()) {
                             case 400:
                                 future.completeExceptionally(new BadRequestError(
-                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
+                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class),
                                         response));
                                 return;
                             case 401:
                                 future.completeExceptionally(new UnauthorizedError(
-                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
+                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class),
                                         response));
                                 return;
                             case 404:
                                 future.completeExceptionally(new NotFoundError(
-                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
+                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class),
                                         response));
                                 return;
                             case 500:
@@ -1011,12 +673,259 @@ public class AsyncRawRecordsClient {
                     } catch (JsonProcessingException ignored) {
                         // unable to map error response, throwing generic error
                     }
+                    Object errorBody = ObjectMappers.parseErrorBody(responseBodyString);
                     future.completeExceptionally(new ApiClientApiException(
-                            "Error with status code " + response.code(),
-                            response.code(),
-                            ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                            response));
+                            "Error with status code " + response.code(), response.code(), errorBody, response));
                     return;
+                } catch (JsonProcessingException e) {
+                    future.completeExceptionally(
+                            new ApiClientException("Failed to deserialize response: " + e.getMessage(), e));
+                } catch (IOException e) {
+                    future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
+                }
+            }
+
+            @Override
+            public void onFailure(@NotNull Call call, @NotNull IOException e) {
+                future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
+            }
+        });
+        return future;
+    }
+
+    /**
+     * Updates the specified record in a table.When you update a field, include the entire contents you want the field to store. For JSON fields, include all nested fields and values. If a nested field isn't included, it's removed.The time-to-live (TTL) for a transient field resets when the field value is updated.
+     */
+    public CompletableFuture<ApiClientHttpResponse<UpdateRecordResponse>> updateRecord(
+            String vaultId, String objectName, String id) {
+        return updateRecord(
+                vaultId, objectName, id, UpdateRecordRequest.builder().build());
+    }
+
+    /**
+     * Updates the specified record in a table.When you update a field, include the entire contents you want the field to store. For JSON fields, include all nested fields and values. If a nested field isn't included, it's removed.The time-to-live (TTL) for a transient field resets when the field value is updated.
+     */
+    public CompletableFuture<ApiClientHttpResponse<UpdateRecordResponse>> updateRecord(
+            String vaultId, String objectName, String id, RequestOptions requestOptions) {
+        return updateRecord(
+                vaultId, objectName, id, UpdateRecordRequest.builder().build(), requestOptions);
+    }
+
+    /**
+     * Updates the specified record in a table.When you update a field, include the entire contents you want the field to store. For JSON fields, include all nested fields and values. If a nested field isn't included, it's removed.The time-to-live (TTL) for a transient field resets when the field value is updated.
+     */
+    public CompletableFuture<ApiClientHttpResponse<UpdateRecordResponse>> updateRecord(
+            String vaultId, String objectName, String id, UpdateRecordRequest request) {
+        return updateRecord(vaultId, objectName, id, request, null);
+    }
+
+    /**
+     * Updates the specified record in a table.When you update a field, include the entire contents you want the field to store. For JSON fields, include all nested fields and values. If a nested field isn't included, it's removed.The time-to-live (TTL) for a transient field resets when the field value is updated.
+     */
+    public CompletableFuture<ApiClientHttpResponse<UpdateRecordResponse>> updateRecord(
+            String vaultId, String objectName, String id, UpdateRecordRequest request, RequestOptions requestOptions) {
+        HttpUrl.Builder httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
+                .newBuilder()
+                .addPathSegments("v1/vaults")
+                .addPathSegment(vaultId)
+                .addPathSegment(objectName)
+                .addPathSegment(id);
+        if (requestOptions != null) {
+            requestOptions.getQueryParameters().forEach((_key, _value) -> {
+                httpUrl.addQueryParameter(_key, _value);
+            });
+        }
+        RequestBody body;
+        try {
+            body = RequestBody.create(
+                    ObjectMappers.JSON_MAPPER.writeValueAsBytes(request), MediaTypes.APPLICATION_JSON);
+        } catch (JsonProcessingException e) {
+            throw new ApiClientException("Failed to serialize request", e);
+        }
+        Request okhttpRequest = new Request.Builder()
+                .url(httpUrl.build())
+                .method("PUT", body)
+                .headers(Headers.of(clientOptions.headers(requestOptions)))
+                .addHeader("Content-Type", "application/json")
+                .addHeader("Accept", "application/json")
+                .build();
+        OkHttpClient client = clientOptions.httpClient();
+        if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
+            client = clientOptions.httpClientWithTimeout(requestOptions);
+        }
+        if (requestOptions != null && requestOptions.getMaxRetries().isPresent()) {
+            okhttpRequest = okhttpRequest
+                    .newBuilder()
+                    .tag(
+                            RetryInterceptor.MaxRetriesOverride.class,
+                            new RetryInterceptor.MaxRetriesOverride(
+                                    requestOptions.getMaxRetries().get()))
+                    .build();
+        }
+        CompletableFuture<ApiClientHttpResponse<UpdateRecordResponse>> future = new CompletableFuture<>();
+        client.newCall(okhttpRequest).enqueue(new Callback() {
+            @Override
+            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+                try (ResponseBody responseBody = response.body()) {
+                    String responseBodyString = responseBody != null ? responseBody.string() : "{}";
+                    if (response.isSuccessful()) {
+                        future.complete(new ApiClientHttpResponse<>(
+                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, UpdateRecordResponse.class),
+                                response));
+                        return;
+                    }
+                    try {
+                        switch (response.code()) {
+                            case 400:
+                                future.completeExceptionally(new BadRequestError(
+                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class),
+                                        response));
+                                return;
+                            case 401:
+                                future.completeExceptionally(new UnauthorizedError(
+                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class),
+                                        response));
+                                return;
+                            case 404:
+                                future.completeExceptionally(new NotFoundError(
+                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class),
+                                        response));
+                                return;
+                            case 500:
+                                future.completeExceptionally(new InternalServerError(
+                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class),
+                                        response));
+                                return;
+                        }
+                    } catch (JsonProcessingException ignored) {
+                        // unable to map error response, throwing generic error
+                    }
+                    Object errorBody = ObjectMappers.parseErrorBody(responseBodyString);
+                    future.completeExceptionally(new ApiClientApiException(
+                            "Error with status code " + response.code(), response.code(), errorBody, response));
+                    return;
+                } catch (JsonProcessingException e) {
+                    future.completeExceptionally(
+                            new ApiClientException("Failed to deserialize response: " + e.getMessage(), e));
+                } catch (IOException e) {
+                    future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
+                }
+            }
+
+            @Override
+            public void onFailure(@NotNull Call call, @NotNull IOException e) {
+                future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
+            }
+        });
+        return future;
+    }
+
+    /**
+     * Deletes the specified record from a table.<b>Note:</b> This method doesn't delete transient field tokens. Transient field values are available until they expire based on the fields' time-to-live (TTL) setting.
+     */
+    public CompletableFuture<ApiClientHttpResponse<DeleteRecordResponse>> deleteRecord(
+            String vaultId, String objectName, String id) {
+        return deleteRecord(
+                vaultId, objectName, id, DeleteRecordRequest.builder().build());
+    }
+
+    /**
+     * Deletes the specified record from a table.<b>Note:</b> This method doesn't delete transient field tokens. Transient field values are available until they expire based on the fields' time-to-live (TTL) setting.
+     */
+    public CompletableFuture<ApiClientHttpResponse<DeleteRecordResponse>> deleteRecord(
+            String vaultId, String objectName, String id, RequestOptions requestOptions) {
+        return deleteRecord(
+                vaultId, objectName, id, DeleteRecordRequest.builder().build(), requestOptions);
+    }
+
+    /**
+     * Deletes the specified record from a table.<b>Note:</b> This method doesn't delete transient field tokens. Transient field values are available until they expire based on the fields' time-to-live (TTL) setting.
+     */
+    public CompletableFuture<ApiClientHttpResponse<DeleteRecordResponse>> deleteRecord(
+            String vaultId, String objectName, String id, DeleteRecordRequest request) {
+        return deleteRecord(vaultId, objectName, id, request, null);
+    }
+
+    /**
+     * Deletes the specified record from a table.<b>Note:</b> This method doesn't delete transient field tokens. Transient field values are available until they expire based on the fields' time-to-live (TTL) setting.
+     */
+    public CompletableFuture<ApiClientHttpResponse<DeleteRecordResponse>> deleteRecord(
+            String vaultId, String objectName, String id, DeleteRecordRequest request, RequestOptions requestOptions) {
+        HttpUrl.Builder httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
+                .newBuilder()
+                .addPathSegments("v1/vaults")
+                .addPathSegment(vaultId)
+                .addPathSegment(objectName)
+                .addPathSegment(id);
+        if (requestOptions != null) {
+            requestOptions.getQueryParameters().forEach((_key, _value) -> {
+                httpUrl.addQueryParameter(_key, _value);
+            });
+        }
+        Request.Builder _requestBuilder = new Request.Builder()
+                .url(httpUrl.build())
+                .method("DELETE", null)
+                .headers(Headers.of(clientOptions.headers(requestOptions)))
+                .addHeader("Accept", "application/json");
+        Request okhttpRequest = _requestBuilder.build();
+        OkHttpClient client = clientOptions.httpClient();
+        if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
+            client = clientOptions.httpClientWithTimeout(requestOptions);
+        }
+        if (requestOptions != null && requestOptions.getMaxRetries().isPresent()) {
+            okhttpRequest = okhttpRequest
+                    .newBuilder()
+                    .tag(
+                            RetryInterceptor.MaxRetriesOverride.class,
+                            new RetryInterceptor.MaxRetriesOverride(
+                                    requestOptions.getMaxRetries().get()))
+                    .build();
+        }
+        CompletableFuture<ApiClientHttpResponse<DeleteRecordResponse>> future = new CompletableFuture<>();
+        client.newCall(okhttpRequest).enqueue(new Callback() {
+            @Override
+            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+                try (ResponseBody responseBody = response.body()) {
+                    String responseBodyString = responseBody != null ? responseBody.string() : "{}";
+                    if (response.isSuccessful()) {
+                        future.complete(new ApiClientHttpResponse<>(
+                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, DeleteRecordResponse.class),
+                                response));
+                        return;
+                    }
+                    try {
+                        switch (response.code()) {
+                            case 400:
+                                future.completeExceptionally(new BadRequestError(
+                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class),
+                                        response));
+                                return;
+                            case 401:
+                                future.completeExceptionally(new UnauthorizedError(
+                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class),
+                                        response));
+                                return;
+                            case 404:
+                                future.completeExceptionally(new NotFoundError(
+                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class),
+                                        response));
+                                return;
+                            case 500:
+                                future.completeExceptionally(new InternalServerError(
+                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class),
+                                        response));
+                                return;
+                        }
+                    } catch (JsonProcessingException ignored) {
+                        // unable to map error response, throwing generic error
+                    }
+                    Object errorBody = ObjectMappers.parseErrorBody(responseBodyString);
+                    future.completeExceptionally(new ApiClientApiException(
+                            "Error with status code " + response.code(), response.code(), errorBody, response));
+                    return;
+                } catch (JsonProcessingException e) {
+                    future.completeExceptionally(
+                            new ApiClientException("Failed to deserialize response: " + e.getMessage(), e));
                 } catch (IOException e) {
                     future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
                 }

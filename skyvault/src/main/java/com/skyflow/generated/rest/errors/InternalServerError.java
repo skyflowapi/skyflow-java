@@ -26,7 +26,7 @@ public final class InternalServerError extends ApiClientApiException {
     /**
      * @return the body
      */
-    @Override
+    @java.lang.Override
     public ErrorResponse body() {
         return this.body;
     }

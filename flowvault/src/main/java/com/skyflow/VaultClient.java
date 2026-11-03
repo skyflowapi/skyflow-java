@@ -1,5 +1,7 @@
 package com.skyflow;
 
+import java.util.concurrent.TimeUnit;
+
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
 import com.skyflow.errors.SkyflowException;
@@ -8,8 +10,6 @@ import com.skyflow.generated.rest.ApiClientBuilder;
 import com.skyflow.generated.rest.resources.flowservice.FlowserviceClient;
 import com.skyflow.utils.SkyflowRetryInterceptor;
 import com.skyflow.utils.Utils;
-
-import java.util.concurrent.TimeUnit;
 
 import okhttp3.ConnectionPool;
 import okhttp3.OkHttpClient;
@@ -62,6 +62,7 @@ public class VaultClient extends BaseVaultClient<VaultConfig> {
         if (vaultLevel != null) {
             return vaultLevel;
         }
+        
         return clientLevel != null ? clientLevel : defaultValue;
     }
 

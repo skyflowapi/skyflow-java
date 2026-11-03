@@ -20,19 +20,6 @@ import com.skyflow.generated.rest.resources.records.RawRecordsClient;
 import com.skyflow.generated.rest.resources.records.RecordsClient;
 import com.skyflow.generated.rest.resources.tokens.RawTokensClient;
 import com.skyflow.generated.rest.resources.tokens.TokensClient;
-import com.skyflow.generated.rest.types.UploadFileV2Response;
-import com.skyflow.generated.rest.types.V1BatchOperationResponse;
-import com.skyflow.generated.rest.types.V1BulkDeleteRecordResponse;
-import com.skyflow.generated.rest.types.V1BulkGetRecordResponse;
-import com.skyflow.generated.rest.types.V1DetokenizeRecordResponse;
-import com.skyflow.generated.rest.types.V1DetokenizeResponse;
-import com.skyflow.generated.rest.types.V1FieldRecords;
-import com.skyflow.generated.rest.types.V1GetQueryResponse;
-import com.skyflow.generated.rest.types.V1InsertRecordResponse;
-import com.skyflow.generated.rest.types.V1RecordMetaProperties;
-import com.skyflow.generated.rest.types.V1TokenizeRecordResponse;
-import com.skyflow.generated.rest.types.V1TokenizeResponse;
-import com.skyflow.generated.rest.types.V1UpdateRecordResponse;
 import com.skyflow.utils.Constants;
 import com.skyflow.utils.Utils;
 import com.skyflow.vault.data.DeleteRequest;
@@ -74,6 +61,18 @@ import java.util.Map;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
+import com.skyflow.generated.rest.types.UploadFileResponseV2;
+import com.skyflow.generated.rest.types.UpdateRecordResponse;
+import com.skyflow.generated.rest.types.TokenizeRecordResponse;
+import com.skyflow.generated.rest.types.RecordMetaProperties;
+import com.skyflow.generated.rest.types.InsertRecordResponse;
+import com.skyflow.generated.rest.types.GetQueryResponse;
+import com.skyflow.generated.rest.types.GetFieldRecords;
+import com.skyflow.generated.rest.types.FieldRecords;
+import com.skyflow.generated.rest.types.BulkGetRecordResponse;
+import com.skyflow.generated.rest.types.BulkDeleteRecordResponse;
+import com.skyflow.generated.rest.types.BatchOperationResponse;
+import com.skyflow.generated.rest.resources.files.FilesClient;
 
 public class VaultControllerTests {
     private static final String INVALID_EXCEPTION_THROWN = "Should not have thrown any exception";
@@ -275,9 +274,9 @@ public class VaultControllerTests {
         Map<String, Object> fields = new HashMap<>();
         fields.put("skyflow_id", "abc-123");
         fields.put("name", "John");
-        V1FieldRecords record = V1FieldRecords.builder().fields(fields).build();
+        GetFieldRecords record = GetFieldRecords.builder().fields(fields).build();
 
-        Method method = VaultController.class.getDeclaredMethod("getFormattedGetRecord", V1FieldRecords.class);
+        Method method = VaultController.class.getDeclaredMethod("getFormattedGetRecord", GetFieldRecords.class);
         method.setAccessible(true);
         @SuppressWarnings("unchecked")
         HashMap<String, Object> result = (HashMap<String, Object>) method.invoke(null, record);
@@ -292,9 +291,9 @@ public class VaultControllerTests {
         Map<String, Object> fields = new HashMap<>();
         fields.put("skyflow_id", "xyz-456");
         fields.put("email", "test@example.com");
-        V1FieldRecords record = V1FieldRecords.builder().fields(fields).build();
+        FieldRecords record = FieldRecords.builder().fields(fields).build();
 
-        Method method = VaultController.class.getDeclaredMethod("getFormattedQueryRecord", V1FieldRecords.class);
+        Method method = VaultController.class.getDeclaredMethod("getFormattedQueryRecord", FieldRecords.class);
         method.setAccessible(true);
         @SuppressWarnings("unchecked")
         HashMap<String, Object> result = (HashMap<String, Object>) method.invoke(null, record);
@@ -309,9 +308,9 @@ public class VaultControllerTests {
         Map<String, Object> tokens = new HashMap<>();
         tokens.put("skyflow_id", "tok-789");
         tokens.put("card_number", "tok-card-abc");
-        V1FieldRecords record = V1FieldRecords.builder().tokens(tokens).build();
+        GetFieldRecords record = GetFieldRecords.builder().tokens(tokens).build();
 
-        Method method = VaultController.class.getDeclaredMethod("getFormattedGetRecord", V1FieldRecords.class);
+        Method method = VaultController.class.getDeclaredMethod("getFormattedGetRecord", GetFieldRecords.class);
         method.setAccessible(true);
         @SuppressWarnings("unchecked")
         HashMap<String, Object> result = (HashMap<String, Object>) method.invoke(null, record);
@@ -443,11 +442,11 @@ public class VaultControllerTests {
         RecordsClient mockRecords = Mockito.mock(RecordsClient.class);
         when(mockApi.records()).thenReturn(mockRecords);
 
-        V1RecordMetaProperties meta = V1RecordMetaProperties.builder().skyflowId("id-123").build();
-        V1InsertRecordResponse insertResp = V1InsertRecordResponse.builder()
+        RecordMetaProperties meta = RecordMetaProperties.builder().skyflowId("id-123").build();
+        InsertRecordResponse insertResp = InsertRecordResponse.builder()
                 .records(Collections.singletonList(meta))
                 .build();
-        when(mockRecords.recordServiceInsertRecord(anyString(), anyString(), any())).thenReturn(insertResp);
+        when(mockRecords.insertRecords(anyString(), anyString(), any())).thenReturn(insertResp);
 
         VaultController controller = createControllerWithMock(mockApi);
 
@@ -470,7 +469,7 @@ public class VaultControllerTests {
         ApiClient mockApi = Mockito.mock(ApiClient.class);
         RecordsClient mockRecords = Mockito.mock(RecordsClient.class);
         when(mockApi.records()).thenReturn(mockRecords);
-        when(mockRecords.recordServiceInsertRecord(anyString(), anyString(), any()))
+        when(mockRecords.insertRecords(anyString(), anyString(), any()))
                 .thenThrow(new ApiClientApiException("insert failed", 400, "bad request body"));
 
         VaultController controller = createControllerWithMock(mockApi);
@@ -496,7 +495,7 @@ public class VaultControllerTests {
         ApiClient mockApi = Mockito.mock(ApiClient.class);
         RecordsClient mockRecords = Mockito.mock(RecordsClient.class);
         when(mockApi.records()).thenReturn(mockRecords);
-        when(mockRecords.recordServiceInsertRecord(anyString(), anyString(), any()))
+        when(mockRecords.insertRecords(anyString(), anyString(), any()))
                 .thenThrow(new ApiClientException("Network error executing HTTP request"));
 
         VaultController controller = createControllerWithMock(mockApi);
@@ -525,10 +524,10 @@ public class VaultControllerTests {
         when(mockApi.records()).thenReturn(mockRecords);
         when(mockRecords.withRawResponse()).thenReturn(mockRawRecords);
 
-        V1BatchOperationResponse batchBody = V1BatchOperationResponse.builder().build();
+        BatchOperationResponse batchBody = BatchOperationResponse.builder().build();
         Response rawResp = buildOkHttpResponse();
-        ApiClientHttpResponse<V1BatchOperationResponse> httpResp = new ApiClientHttpResponse<>(batchBody, rawResp);
-        when(mockRawRecords.recordServiceBatchOperation(anyString(), any(), any())).thenReturn(httpResp);
+        ApiClientHttpResponse<BatchOperationResponse> httpResp = new ApiClientHttpResponse<>(batchBody, rawResp);
+        when(mockRawRecords.batchOperation(anyString(), any(), any())).thenReturn(httpResp);
 
         VaultController controller = createControllerWithMock(mockApi);
 
@@ -553,7 +552,7 @@ public class VaultControllerTests {
         RawRecordsClient mockRawRecords = Mockito.mock(RawRecordsClient.class);
         when(mockApi.records()).thenReturn(mockRecords);
         when(mockRecords.withRawResponse()).thenReturn(mockRawRecords);
-        when(mockRawRecords.recordServiceBatchOperation(anyString(), any(), any()))
+        when(mockRawRecords.batchOperation(anyString(), any(), any()))
                 .thenThrow(new ApiClientApiException("batch failed", 500, "server error"));
 
         VaultController controller = createControllerWithMock(mockApi);
@@ -586,15 +585,15 @@ public class VaultControllerTests {
         when(mockApi.tokens()).thenReturn(mockTokens);
         when(mockTokens.withRawResponse()).thenReturn(mockRawTokens);
 
-        V1DetokenizeRecordResponse detokRecord = V1DetokenizeRecordResponse.builder()
+        com.skyflow.generated.rest.types.DetokenizeRecordResponse detokRecord = com.skyflow.generated.rest.types.DetokenizeRecordResponse.builder()
                 .token("tok-123")
                 .build();
-        V1DetokenizeResponse detokBody = V1DetokenizeResponse.builder()
+        com.skyflow.generated.rest.types.DetokenizeResponse detokBody = com.skyflow.generated.rest.types.DetokenizeResponse.builder()
                 .records(Collections.singletonList(detokRecord))
                 .build();
         Response rawResp = buildOkHttpResponse();
-        ApiClientHttpResponse<V1DetokenizeResponse> httpResp = new ApiClientHttpResponse<>(detokBody, rawResp);
-        when(mockRawTokens.recordServiceDetokenize(anyString(), any(), any())).thenReturn(httpResp);
+        ApiClientHttpResponse<com.skyflow.generated.rest.types.DetokenizeResponse> httpResp = new ApiClientHttpResponse<>(detokBody, rawResp);
+        when(mockRawTokens.detokenize(anyString(), any(), any())).thenReturn(httpResp);
 
         VaultController controller = createControllerWithMock(mockApi);
 
@@ -617,7 +616,7 @@ public class VaultControllerTests {
         RawTokensClient mockRawTokens = Mockito.mock(RawTokensClient.class);
         when(mockApi.tokens()).thenReturn(mockTokens);
         when(mockTokens.withRawResponse()).thenReturn(mockRawTokens);
-        when(mockRawTokens.recordServiceDetokenize(anyString(), any(), any()))
+        when(mockRawTokens.detokenize(anyString(), any(), any()))
                 .thenThrow(new ApiClientApiException("detokenize failed", 401, "unauthorized"));
 
         VaultController controller = createControllerWithMock(mockApi);
@@ -643,7 +642,7 @@ public class VaultControllerTests {
         RawTokensClient mockRawTokens = Mockito.mock(RawTokensClient.class);
         when(mockApi.tokens()).thenReturn(mockTokens);
         when(mockTokens.withRawResponse()).thenReturn(mockRawTokens);
-        when(mockRawTokens.recordServiceDetokenize(anyString(), any(), any()))
+        when(mockRawTokens.detokenize(anyString(), any(), any()))
                 .thenThrow(new ApiClientException("Network error executing HTTP request"));
 
         VaultController controller = createControllerWithMock(mockApi);
@@ -673,11 +672,11 @@ public class VaultControllerTests {
         Map<String, Object> fields = new HashMap<>();
         fields.put("skyflow_id", "id-get-001");
         fields.put("card_number", "4111111111111111");
-        V1FieldRecords fieldRecords = V1FieldRecords.builder().fields(fields).build();
-        V1BulkGetRecordResponse getResp = V1BulkGetRecordResponse.builder()
+        GetFieldRecords fieldRecords = GetFieldRecords.builder().fields(fields).build();
+        BulkGetRecordResponse getResp = BulkGetRecordResponse.builder()
                 .records(Collections.singletonList(fieldRecords))
                 .build();
-        when(mockRecords.recordServiceBulkGetRecord(anyString(), anyString(), any(), any())).thenReturn(getResp);
+        when(mockRecords.getRecords(anyString(), anyString(), any(), any())).thenReturn(getResp);
 
         VaultController controller = createControllerWithMock(mockApi);
 
@@ -697,7 +696,7 @@ public class VaultControllerTests {
         ApiClient mockApi = Mockito.mock(ApiClient.class);
         RecordsClient mockRecords = Mockito.mock(RecordsClient.class);
         when(mockApi.records()).thenReturn(mockRecords);
-        when(mockRecords.recordServiceBulkGetRecord(anyString(), anyString(), any(), any()))
+        when(mockRecords.getRecords(anyString(), anyString(), any(), any()))
                 .thenThrow(new ApiClientApiException("get failed", 404, "not found"));
 
         VaultController controller = createControllerWithMock(mockApi);
@@ -719,7 +718,7 @@ public class VaultControllerTests {
         ApiClient mockApi = Mockito.mock(ApiClient.class);
         RecordsClient mockRecords = Mockito.mock(RecordsClient.class);
         when(mockApi.records()).thenReturn(mockRecords);
-        when(mockRecords.recordServiceBulkGetRecord(anyString(), anyString(), any(), any()))
+        when(mockRecords.getRecords(anyString(), anyString(), any(), any()))
                 .thenThrow(new ApiClientException("Network error executing HTTP request"));
 
         VaultController controller = createControllerWithMock(mockApi);
@@ -744,8 +743,8 @@ public class VaultControllerTests {
         RecordsClient mockRecords = Mockito.mock(RecordsClient.class);
         when(mockApi.records()).thenReturn(mockRecords);
 
-        V1UpdateRecordResponse updateResp = V1UpdateRecordResponse.builder().skyflowId("id-upd-001").build();
-        when(mockRecords.recordServiceUpdateRecord(anyString(), anyString(), anyString(), any(), any()))
+        UpdateRecordResponse updateResp = UpdateRecordResponse.builder().skyflowId("id-upd-001").build();
+        when(mockRecords.updateRecord(anyString(), anyString(), anyString(), any(), any()))
                 .thenReturn(updateResp);
 
         VaultController controller = createControllerWithMock(mockApi);
@@ -764,7 +763,7 @@ public class VaultControllerTests {
         ApiClient mockApi = Mockito.mock(ApiClient.class);
         RecordsClient mockRecords = Mockito.mock(RecordsClient.class);
         when(mockApi.records()).thenReturn(mockRecords);
-        when(mockRecords.recordServiceUpdateRecord(anyString(), anyString(), anyString(), any(), any()))
+        when(mockRecords.updateRecord(anyString(), anyString(), anyString(), any(), any()))
                 .thenThrow(new ApiClientApiException("update failed", 403, "forbidden"));
 
         VaultController controller = createControllerWithMock(mockApi);
@@ -787,7 +786,7 @@ public class VaultControllerTests {
         ApiClient mockApi = Mockito.mock(ApiClient.class);
         RecordsClient mockRecords = Mockito.mock(RecordsClient.class);
         when(mockApi.records()).thenReturn(mockRecords);
-        when(mockRecords.recordServiceUpdateRecord(anyString(), anyString(), anyString(), any(), any()))
+        when(mockRecords.updateRecord(anyString(), anyString(), anyString(), any(), any()))
                 .thenThrow(new ApiClientException("Network error executing HTTP request"));
 
         VaultController controller = createControllerWithMock(mockApi);
@@ -813,10 +812,10 @@ public class VaultControllerTests {
         RecordsClient mockRecords = Mockito.mock(RecordsClient.class);
         when(mockApi.records()).thenReturn(mockRecords);
 
-        V1BulkDeleteRecordResponse deleteResp = V1BulkDeleteRecordResponse.builder()
+        BulkDeleteRecordResponse deleteResp = BulkDeleteRecordResponse.builder()
                 .recordIdResponse(Collections.singletonList("id-del-001"))
                 .build();
-        when(mockRecords.recordServiceBulkDeleteRecord(anyString(), anyString(), any(), any()))
+        when(mockRecords.deleteRecords(anyString(), anyString(), any(), any()))
                 .thenReturn(deleteResp);
 
         VaultController controller = createControllerWithMock(mockApi);
@@ -837,7 +836,7 @@ public class VaultControllerTests {
         ApiClient mockApi = Mockito.mock(ApiClient.class);
         RecordsClient mockRecords = Mockito.mock(RecordsClient.class);
         when(mockApi.records()).thenReturn(mockRecords);
-        when(mockRecords.recordServiceBulkDeleteRecord(anyString(), anyString(), any(), any()))
+        when(mockRecords.deleteRecords(anyString(), anyString(), any(), any()))
                 .thenThrow(new ApiClientApiException("delete failed", 400, "bad id"));
 
         VaultController controller = createControllerWithMock(mockApi);
@@ -859,7 +858,7 @@ public class VaultControllerTests {
         ApiClient mockApi = Mockito.mock(ApiClient.class);
         RecordsClient mockRecords = Mockito.mock(RecordsClient.class);
         when(mockApi.records()).thenReturn(mockRecords);
-        when(mockRecords.recordServiceBulkDeleteRecord(anyString(), anyString(), any(), any()))
+        when(mockRecords.deleteRecords(anyString(), anyString(), any(), any()))
                 .thenThrow(new ApiClientException("Network error executing HTTP request"));
 
         VaultController controller = createControllerWithMock(mockApi);
@@ -886,11 +885,11 @@ public class VaultControllerTests {
 
         Map<String, Object> fields = new HashMap<>();
         fields.put("skyflow_id", "id-qry-001");
-        V1FieldRecords fieldRecords = V1FieldRecords.builder().fields(fields).build();
-        V1GetQueryResponse queryResp = V1GetQueryResponse.builder()
+        FieldRecords fieldRecords = FieldRecords.builder().fields(fields).build();
+        GetQueryResponse queryResp = GetQueryResponse.builder()
                 .records(Collections.singletonList(fieldRecords))
                 .build();
-        when(mockQuery.queryServiceExecuteQuery(anyString(), any(), any())).thenReturn(queryResp);
+        when(mockQuery.executeQuery(anyString(), any(), any())).thenReturn(queryResp);
 
         VaultController controller = createControllerWithMock(mockApi);
 
@@ -908,7 +907,7 @@ public class VaultControllerTests {
         ApiClient mockApi = Mockito.mock(ApiClient.class);
         QueryClient mockQuery = Mockito.mock(QueryClient.class);
         when(mockApi.query()).thenReturn(mockQuery);
-        when(mockQuery.queryServiceExecuteQuery(anyString(), any(), any()))
+        when(mockQuery.executeQuery(anyString(), any(), any()))
                 .thenThrow(new ApiClientApiException("query failed", 400, "invalid sql"));
 
         VaultController controller = createControllerWithMock(mockApi);
@@ -928,7 +927,7 @@ public class VaultControllerTests {
         ApiClient mockApi = Mockito.mock(ApiClient.class);
         QueryClient mockQuery = Mockito.mock(QueryClient.class);
         when(mockApi.query()).thenReturn(mockQuery);
-        when(mockQuery.queryServiceExecuteQuery(anyString(), any(), any()))
+        when(mockQuery.executeQuery(anyString(), any(), any()))
                 .thenThrow(new ApiClientException("Network error executing HTTP request"));
 
         VaultController controller = createControllerWithMock(mockApi);
@@ -973,12 +972,12 @@ public class VaultControllerTests {
         List<Map<String, Object>> responses = new ArrayList<>();
         responses.add(responseItem);
 
-        V1BatchOperationResponse batchBody = V1BatchOperationResponse.builder()
+        BatchOperationResponse batchBody = BatchOperationResponse.builder()
                 .responses(responses)
                 .build();
         Response rawResp = buildOkHttpResponse();
-        ApiClientHttpResponse<V1BatchOperationResponse> httpResp = new ApiClientHttpResponse<>(batchBody, rawResp);
-        when(mockRawRecords.recordServiceBatchOperation(anyString(), any(), any())).thenReturn(httpResp);
+        ApiClientHttpResponse<BatchOperationResponse> httpResp = new ApiClientHttpResponse<>(batchBody, rawResp);
+        when(mockRawRecords.batchOperation(anyString(), any(), any())).thenReturn(httpResp);
 
         VaultController controller = createControllerWithMock(mockApi);
 
@@ -1009,14 +1008,14 @@ public class VaultControllerTests {
 
         Map<String, Object> tokens = new HashMap<>();
         tokens.put("card_number", "tok-card-456");
-        V1RecordMetaProperties meta = V1RecordMetaProperties.builder()
+        RecordMetaProperties meta = RecordMetaProperties.builder()
                 .skyflowId("id-with-tokens")
                 .tokens(tokens)
                 .build();
-        V1InsertRecordResponse insertResp = V1InsertRecordResponse.builder()
+        InsertRecordResponse insertResp = InsertRecordResponse.builder()
                 .records(Collections.singletonList(meta))
                 .build();
-        when(mockRecords.recordServiceInsertRecord(anyString(), anyString(), any())).thenReturn(insertResp);
+        when(mockRecords.insertRecords(anyString(), anyString(), any())).thenReturn(insertResp);
 
         VaultController controller = createControllerWithMock(mockApi);
 
@@ -1044,11 +1043,11 @@ public class VaultControllerTests {
 
         Map<String, Object> tokens = new HashMap<>();
         tokens.put("card_number", "tok-upd-card");
-        V1UpdateRecordResponse updateResp = V1UpdateRecordResponse.builder()
+        UpdateRecordResponse updateResp = UpdateRecordResponse.builder()
                 .skyflowId("id-upd-tok")
                 .tokens(tokens)
                 .build();
-        when(mockRecords.recordServiceUpdateRecord(anyString(), anyString(), anyString(), any(), any()))
+        when(mockRecords.updateRecord(anyString(), anyString(), anyString(), any(), any()))
                 .thenReturn(updateResp);
 
         VaultController controller = createControllerWithMock(mockApi);
@@ -1076,16 +1075,16 @@ public class VaultControllerTests {
         when(mockApi.tokens()).thenReturn(mockTokens);
         when(mockTokens.withRawResponse()).thenReturn(mockRawTokens);
 
-        V1DetokenizeRecordResponse errRecord = V1DetokenizeRecordResponse.builder()
+        com.skyflow.generated.rest.types.DetokenizeRecordResponse errRecord = com.skyflow.generated.rest.types.DetokenizeRecordResponse.builder()
                 .token("tok-bad")
                 .error("token not found")
                 .build();
-        V1DetokenizeResponse detokBody = V1DetokenizeResponse.builder()
+        com.skyflow.generated.rest.types.DetokenizeResponse detokBody = com.skyflow.generated.rest.types.DetokenizeResponse.builder()
                 .records(Collections.singletonList(errRecord))
                 .build();
         Response rawResp = buildOkHttpResponse();
-        ApiClientHttpResponse<V1DetokenizeResponse> httpResp = new ApiClientHttpResponse<>(detokBody, rawResp);
-        when(mockRawTokens.recordServiceDetokenize(anyString(), any(), any())).thenReturn(httpResp);
+        ApiClientHttpResponse<com.skyflow.generated.rest.types.DetokenizeResponse> httpResp = new ApiClientHttpResponse<>(detokBody, rawResp);
+        when(mockRawTokens.detokenize(anyString(), any(), any())).thenReturn(httpResp);
 
         VaultController controller = createControllerWithMock(mockApi);
 
@@ -1122,12 +1121,12 @@ public class VaultControllerTests {
         Map<String, Object> responseItem = new HashMap<>();
         responseItem.put("Body", bodyMap);
 
-        V1BatchOperationResponse batchBody = V1BatchOperationResponse.builder()
+        BatchOperationResponse batchBody = BatchOperationResponse.builder()
                 .responses(Collections.singletonList(responseItem))
                 .build();
         Response rawResp = buildOkHttpResponse();
-        ApiClientHttpResponse<V1BatchOperationResponse> httpResp = new ApiClientHttpResponse<>(batchBody, rawResp);
-        when(mockRawRecords.recordServiceBatchOperation(anyString(), any(), any())).thenReturn(httpResp);
+        ApiClientHttpResponse<BatchOperationResponse> httpResp = new ApiClientHttpResponse<>(batchBody, rawResp);
+        when(mockRawRecords.batchOperation(anyString(), any(), any())).thenReturn(httpResp);
 
         VaultController controller = createControllerWithMock(mockApi);
 
@@ -1166,12 +1165,12 @@ public class VaultControllerTests {
         Map<String, Object> errorItem = new HashMap<>();
         errorItem.put("Body", errorBody);
 
-        V1BatchOperationResponse batchBody = V1BatchOperationResponse.builder()
+        BatchOperationResponse batchBody = BatchOperationResponse.builder()
                 .responses(Arrays.asList(successItem, errorItem))
                 .build();
         Response rawResp = buildOkHttpResponse();
-        ApiClientHttpResponse<V1BatchOperationResponse> httpResp = new ApiClientHttpResponse<>(batchBody, rawResp);
-        when(mockRawRecords.recordServiceBatchOperation(anyString(), any(), any())).thenReturn(httpResp);
+        ApiClientHttpResponse<BatchOperationResponse> httpResp = new ApiClientHttpResponse<>(batchBody, rawResp);
+        when(mockRawRecords.batchOperation(anyString(), any(), any())).thenReturn(httpResp);
 
         VaultController controller = createControllerWithMock(mockApi);
 
@@ -1208,12 +1207,12 @@ public class VaultControllerTests {
         Map<String, Object> errorItem = new HashMap<>();
         errorItem.put("Body", errorBody);
 
-        V1BatchOperationResponse batchBody = V1BatchOperationResponse.builder()
+        BatchOperationResponse batchBody = BatchOperationResponse.builder()
                 .responses(Collections.singletonList(errorItem))
                 .build();
         Response rawResp = buildOkHttpResponse();
-        ApiClientHttpResponse<V1BatchOperationResponse> httpResp = new ApiClientHttpResponse<>(batchBody, rawResp);
-        when(mockRawRecords.recordServiceBatchOperation(anyString(), any(), any())).thenReturn(httpResp);
+        ApiClientHttpResponse<BatchOperationResponse> httpResp = new ApiClientHttpResponse<>(batchBody, rawResp);
+        when(mockRawRecords.batchOperation(anyString(), any(), any())).thenReturn(httpResp);
 
         VaultController controller = createControllerWithMock(mockApi);
 
@@ -1241,12 +1240,12 @@ public class VaultControllerTests {
         when(mockApi.tokens()).thenReturn(mockTokens);
         when(mockTokens.withRawResponse()).thenReturn(mockRawTokens);
 
-        V1DetokenizeResponse detokBody = V1DetokenizeResponse.builder()
-                .records(Collections.<V1DetokenizeRecordResponse>emptyList())
+        com.skyflow.generated.rest.types.DetokenizeResponse detokBody = com.skyflow.generated.rest.types.DetokenizeResponse.builder()
+                .records(Collections.<com.skyflow.generated.rest.types.DetokenizeRecordResponse>emptyList())
                 .build();
         Response rawResp = buildOkHttpResponse();
-        ApiClientHttpResponse<V1DetokenizeResponse> httpResp = new ApiClientHttpResponse<>(detokBody, rawResp);
-        when(mockRawTokens.recordServiceDetokenize(anyString(), any(), any())).thenReturn(httpResp);
+        ApiClientHttpResponse<com.skyflow.generated.rest.types.DetokenizeResponse> httpResp = new ApiClientHttpResponse<>(detokBody, rawResp);
+        when(mockRawTokens.detokenize(anyString(), any(), any())).thenReturn(httpResp);
 
         VaultController controller = createControllerWithMock(mockApi);
 
@@ -1272,11 +1271,11 @@ public class VaultControllerTests {
 
         Map<String, Object> fields = new HashMap<>();
         fields.put("skyflow_id", "id-redact-001");
-        V1FieldRecords fieldRecords = V1FieldRecords.builder().fields(fields).build();
-        V1BulkGetRecordResponse getResp = V1BulkGetRecordResponse.builder()
+        GetFieldRecords fieldRecords = GetFieldRecords.builder().fields(fields).build();
+        BulkGetRecordResponse getResp = BulkGetRecordResponse.builder()
                 .records(Collections.singletonList(fieldRecords))
                 .build();
-        when(mockRecords.recordServiceBulkGetRecord(anyString(), anyString(), any(), any())).thenReturn(getResp);
+        when(mockRecords.getRecords(anyString(), anyString(), any(), any())).thenReturn(getResp);
 
         VaultController controller = createControllerWithMock(mockApi);
 
@@ -1304,19 +1303,19 @@ public class VaultControllerTests {
         when(mockApi.tokens()).thenReturn(mockTokens);
         when(mockTokens.withRawResponse()).thenReturn(mockRawTokens);
 
-        V1DetokenizeRecordResponse goodRecord = V1DetokenizeRecordResponse.builder()
+        com.skyflow.generated.rest.types.DetokenizeRecordResponse goodRecord = com.skyflow.generated.rest.types.DetokenizeRecordResponse.builder()
                 .token("tok-good")
                 .build();
-        V1DetokenizeRecordResponse badRecord = V1DetokenizeRecordResponse.builder()
+        com.skyflow.generated.rest.types.DetokenizeRecordResponse badRecord = com.skyflow.generated.rest.types.DetokenizeRecordResponse.builder()
                 .token("tok-bad")
                 .error("token not found")
                 .build();
-        V1DetokenizeResponse detokBody = V1DetokenizeResponse.builder()
+        com.skyflow.generated.rest.types.DetokenizeResponse detokBody = com.skyflow.generated.rest.types.DetokenizeResponse.builder()
                 .records(Arrays.asList(goodRecord, badRecord))
                 .build();
         Response rawResp = buildOkHttpResponse();
-        ApiClientHttpResponse<V1DetokenizeResponse> httpResp = new ApiClientHttpResponse<>(detokBody, rawResp);
-        when(mockRawTokens.recordServiceDetokenize(anyString(), any(), any())).thenReturn(httpResp);
+        ApiClientHttpResponse<com.skyflow.generated.rest.types.DetokenizeResponse> httpResp = new ApiClientHttpResponse<>(detokBody, rawResp);
+        when(mockRawTokens.detokenize(anyString(), any(), any())).thenReturn(httpResp);
 
         VaultController controller = createControllerWithMock(mockApi);
 
@@ -1343,11 +1342,11 @@ public class VaultControllerTests {
         TokensClient mockTokens = Mockito.mock(TokensClient.class);
         when(mockApi.tokens()).thenReturn(mockTokens);
 
-        V1TokenizeRecordResponse tokenRecord = V1TokenizeRecordResponse.builder().token("tok-abc").build();
-        V1TokenizeResponse tokenResp = V1TokenizeResponse.builder()
+        TokenizeRecordResponse tokenRecord = TokenizeRecordResponse.builder().token("tok-abc").build();
+        com.skyflow.generated.rest.types.TokenizeResponse tokenResp = com.skyflow.generated.rest.types.TokenizeResponse.builder()
                 .records(Collections.singletonList(tokenRecord))
                 .build();
-        when(mockTokens.recordServiceTokenize(anyString(), any(), any())).thenReturn(tokenResp);
+        when(mockTokens.tokenize(anyString(), any(), any())).thenReturn(tokenResp);
 
         VaultController controller = createControllerWithMock(mockApi);
 
@@ -1368,7 +1367,7 @@ public class VaultControllerTests {
         ApiClient mockApi = Mockito.mock(ApiClient.class);
         TokensClient mockTokens = Mockito.mock(TokensClient.class);
         when(mockApi.tokens()).thenReturn(mockTokens);
-        when(mockTokens.recordServiceTokenize(anyString(), any(), any()))
+        when(mockTokens.tokenize(anyString(), any(), any()))
                 .thenThrow(new ApiClientApiException("tokenize failed", 422, "unprocessable"));
 
         VaultController controller = createControllerWithMock(mockApi);
@@ -1391,7 +1390,7 @@ public class VaultControllerTests {
         ApiClient mockApi = Mockito.mock(ApiClient.class);
         TokensClient mockTokens = Mockito.mock(TokensClient.class);
         when(mockApi.tokens()).thenReturn(mockTokens);
-        when(mockTokens.recordServiceTokenize(anyString(), any(), any()))
+        when(mockTokens.tokenize(anyString(), any(), any()))
                 .thenThrow(new ApiClientException("Network error executing HTTP request"));
 
         VaultController controller = createControllerWithMock(mockApi);
@@ -1418,11 +1417,11 @@ public class VaultControllerTests {
         java.nio.file.Files.write(tmpFile.toPath(), "data".getBytes());
 
         ApiClient mockApi = Mockito.mock(ApiClient.class);
-        RecordsClient mockRecords = Mockito.mock(RecordsClient.class);
-        when(mockApi.records()).thenReturn(mockRecords);
-        UploadFileV2Response uploadResp = UploadFileV2Response.builder()
+        FilesClient mockFiles = Mockito.mock(FilesClient.class);
+        when(mockApi.files()).thenReturn(mockFiles);
+        UploadFileResponseV2 uploadResp = UploadFileResponseV2.builder()
                 .skyflowId(java.util.Optional.of("sky-id-path")).build();
-        when(mockRecords.uploadFileV2(anyString(), any(File.class), any(), any())).thenReturn(uploadResp);
+        when(mockFiles.uploadFileV2(anyString(), any(File.class), any(), any())).thenReturn(uploadResp);
 
         VaultController controller = createControllerWithMock(mockApi);
         FileUploadRequest request = FileUploadRequest.builder()
@@ -1441,11 +1440,11 @@ public class VaultControllerTests {
         String b64 = java.util.Base64.getEncoder().encodeToString("file content".getBytes());
 
         ApiClient mockApi = Mockito.mock(ApiClient.class);
-        RecordsClient mockRecords = Mockito.mock(RecordsClient.class);
-        when(mockApi.records()).thenReturn(mockRecords);
-        UploadFileV2Response uploadResp = UploadFileV2Response.builder()
+        FilesClient mockFiles = Mockito.mock(FilesClient.class);
+        when(mockApi.files()).thenReturn(mockFiles);
+        UploadFileResponseV2 uploadResp = UploadFileResponseV2.builder()
                 .skyflowId(java.util.Optional.of("sky-id-b64")).build();
-        when(mockRecords.uploadFileV2(anyString(), any(File.class), any(), any())).thenReturn(uploadResp);
+        when(mockFiles.uploadFileV2(anyString(), any(File.class), any(), any())).thenReturn(uploadResp);
 
         VaultController controller = createControllerWithMock(mockApi);
         FileUploadRequest request = FileUploadRequest.builder()
@@ -1467,11 +1466,11 @@ public class VaultControllerTests {
         java.nio.file.Files.write(tmpFile.toPath(), "data".getBytes());
 
         ApiClient mockApi = Mockito.mock(ApiClient.class);
-        RecordsClient mockRecords = Mockito.mock(RecordsClient.class);
-        when(mockApi.records()).thenReturn(mockRecords);
-        UploadFileV2Response uploadResp = UploadFileV2Response.builder()
+        FilesClient mockFiles = Mockito.mock(FilesClient.class);
+        when(mockApi.files()).thenReturn(mockFiles);
+        UploadFileResponseV2 uploadResp = UploadFileResponseV2.builder()
                 .skyflowId(java.util.Optional.of("sky-id-obj")).build();
-        when(mockRecords.uploadFileV2(anyString(), any(File.class), any(), any())).thenReturn(uploadResp);
+        when(mockFiles.uploadFileV2(anyString(), any(File.class), any(), any())).thenReturn(uploadResp);
 
         VaultController controller = createControllerWithMock(mockApi);
         FileUploadRequest request = FileUploadRequest.builder()
@@ -1492,9 +1491,9 @@ public class VaultControllerTests {
         java.nio.file.Files.write(tmpFile.toPath(), "data".getBytes());
 
         ApiClient mockApi = Mockito.mock(ApiClient.class);
-        RecordsClient mockRecords = Mockito.mock(RecordsClient.class);
-        when(mockApi.records()).thenReturn(mockRecords);
-        when(mockRecords.uploadFileV2(anyString(), any(File.class), any(), any()))
+        FilesClient mockFiles = Mockito.mock(FilesClient.class);
+        when(mockApi.files()).thenReturn(mockFiles);
+        when(mockFiles.uploadFileV2(anyString(), any(File.class), any(), any()))
                 .thenThrow(new ApiClientApiException("upload failed", 403, "forbidden"));
 
         VaultController controller = createControllerWithMock(mockApi);
@@ -1519,9 +1518,9 @@ public class VaultControllerTests {
         java.nio.file.Files.write(tmpFile.toPath(), "data".getBytes());
 
         ApiClient mockApi = Mockito.mock(ApiClient.class);
-        RecordsClient mockRecords = Mockito.mock(RecordsClient.class);
-        when(mockApi.records()).thenReturn(mockRecords);
-        when(mockRecords.uploadFileV2(anyString(), any(File.class), any(), any()))
+        FilesClient mockFiles = Mockito.mock(FilesClient.class);
+        when(mockApi.files()).thenReturn(mockFiles);
+        when(mockFiles.uploadFileV2(anyString(), any(File.class), any(), any()))
                 .thenThrow(new ApiClientException("Network error executing HTTP request"));
 
         VaultController controller = createControllerWithMock(mockApi);
@@ -1608,11 +1607,11 @@ public class VaultControllerTests {
         when(mockApi.tokens()).thenReturn(mockTokens);
         when(mockTokens.withRawResponse()).thenReturn(mockRawTokens);
 
-        V1DetokenizeRecordResponse errRecord = V1DetokenizeRecordResponse.builder()
+        com.skyflow.generated.rest.types.DetokenizeRecordResponse errRecord = com.skyflow.generated.rest.types.DetokenizeRecordResponse.builder()
                 .token("tok-bad")
                 .error("token not found")
                 .build();
-        V1DetokenizeResponse detokBody = V1DetokenizeResponse.builder()
+        com.skyflow.generated.rest.types.DetokenizeResponse detokBody = com.skyflow.generated.rest.types.DetokenizeResponse.builder()
                 .records(Collections.singletonList(errRecord))
                 .build();
         // Deliberately no REQUEST_ID_HEADER_KEY header set (unlike buildOkHttpResponse())
@@ -1622,8 +1621,8 @@ public class VaultControllerTests {
                 .code(200)
                 .message("OK")
                 .build();
-        ApiClientHttpResponse<V1DetokenizeResponse> httpResp = new ApiClientHttpResponse<>(detokBody, rawResp);
-        when(mockRawTokens.recordServiceDetokenize(anyString(), any(), any())).thenReturn(httpResp);
+        ApiClientHttpResponse<com.skyflow.generated.rest.types.DetokenizeResponse> httpResp = new ApiClientHttpResponse<>(detokBody, rawResp);
+        when(mockRawTokens.detokenize(anyString(), any(), any())).thenReturn(httpResp);
 
         VaultController controller = createControllerWithMock(mockApi);
 
@@ -1688,8 +1687,8 @@ public class VaultControllerTests {
         RecordsClient mockRecords = Mockito.mock(RecordsClient.class);
         when(mockApi.records()).thenReturn(mockRecords);
 
-        V1BulkGetRecordResponse getResp = V1BulkGetRecordResponse.builder().build();
-        when(mockRecords.recordServiceBulkGetRecord(anyString(), anyString(), any(), any())).thenReturn(getResp);
+        BulkGetRecordResponse getResp = BulkGetRecordResponse.builder().build();
+        when(mockRecords.getRecords(anyString(), anyString(), any(), any())).thenReturn(getResp);
 
         VaultController controller = createControllerWithMock(mockApi);
 

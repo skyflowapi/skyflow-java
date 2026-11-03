@@ -37,6 +37,7 @@ public class VaultConfig extends BaseVaultConfig {
     }
 
     public String getVaultUrl() {
+        
         return vaultUrl;
     }
 
