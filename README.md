@@ -17,7 +17,7 @@ This repository hosts Skyflow's Java SDKs for integrating Skyflow into a Java ba
 
 > **The two artifacts are versioned independently.** `flowvault` is a new SDK starting at `1.0.0`; its lower version number reflects a first release, not an older or lesser SDK than `skyvault` 2.x. Upgrade each on its own version line.
 
-> Migrating from v1? See skyvault's **[Migration Guide](docs/migrate_to_v2.md)**. V1 is in maintenance mode and will reach End of Life on October 31, 2026.
+> :warning: **skyflow-java v1 reached End of Life on October 31, 2026 and is no longer supported.** It will not receive any further security patches, bug fixes, or updates. Please upgrade to the latest skyflow-java v2 ([2.1.1](https://github.com/skyflowapi/skyflow-java/releases/tag/2.1.1)) using the **[Migration Guide](docs/migrate_to_v2.md)**.
 
 ## Repository layout
 
