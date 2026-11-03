@@ -733,4 +733,5 @@ Response: a `List` of objects, each with:
 
 | Method | Return type | Description |
 |--------|-------------|-------------|
-| `Token.isExpired(String token)` | `boolean` | Returns `true` if the token is `null` or has expired. Use before every API call to avoid mid-flight expiry. |
+| `Token.isExpired(String token)` | `boolean` | Returns `true` if the token is `null` or has expired. Use it before every API call when you manage tokens yourself. |
+| `Token.isExpiringWithin(String token, long windowSeconds)` | `boolean` | Returns `true` if the token has expired or expires within `windowSeconds`. Returns `false` if the token is `null`, empty, malformed, or has no `exp` claim. |
