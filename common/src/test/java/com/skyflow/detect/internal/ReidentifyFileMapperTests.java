@@ -5,7 +5,7 @@ import com.skyflow.detect.DetectRunStatus;
 import com.skyflow.detect.EntityType;
 import com.skyflow.detect.FileDataFormat;
 import com.skyflow.detect.FileOutput;
-import com.skyflow.detect.RedactionLevel;
+import com.skyflow.detect.TestRedactionLevel;
 import com.skyflow.enums.RedactionType;
 import com.skyflow.detect.ReidentifyFileRequest;
 import com.skyflow.detect.ReidentifyFileResponse;
@@ -82,8 +82,8 @@ public class ReidentifyFileMapperTests {
         ReidentifyFileRequestV2 api = ReidentifyFileMapper.toApiRequest(ReidentifyFileRequest.builder()
                 .dataSource(TestReidentifySource.PRESIGNED_URL).value("https://s3/presigned")
                 .redactionLevel(Arrays.asList(
-                        RedactionLevel.builder().tokenGroupName("names").redactionPattern("mask-middle").build(),
-                        RedactionLevel.builder().entityName(EntityType.EMAIL_ADDRESS).redactionType(RedactionType.MASKED).build()))
+                        TestRedactionLevel.builder().tokenGroupName("names").redactionPattern("mask-middle").build(),
+                        TestRedactionLevel.builder().entityName(EntityType.EMAIL_ADDRESS).redactionType(RedactionType.MASKED).build()))
                 .build(), "v");
 
         Assert.assertEquals(2, api.getRedactionLevel().get().size());
@@ -99,7 +99,7 @@ public class ReidentifyFileMapperTests {
     @Test
     public void emptyRedactionLevelListIsSentAsEmptyArray() throws Exception {
         ReidentifyFileRequestV2 api = ReidentifyFileMapper.toApiRequest(ReidentifyFileRequest.builder()
-                .dataSource(TestReidentifySource.BASE64).value("x").redactionLevel(Collections.<RedactionLevel>emptyList()).build(), "v");
+                .dataSource(TestReidentifySource.BASE64).value("x").redactionLevel(Collections.<TestRedactionLevel>emptyList()).build(), "v");
         Assert.assertTrue(api.getRedactionLevel().get().isEmpty());
         Assert.assertTrue(wire(api).contains("\"redactionLevel\":[]"));
     }

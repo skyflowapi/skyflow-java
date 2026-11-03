@@ -18,7 +18,7 @@ import com.skyflow.detect.FileDataFormat;
 import com.skyflow.detect.GetRunRequest;
 import com.skyflow.detect.GetRunResponse;
 import com.skyflow.detect.GuardrailsValidation;
-import com.skyflow.detect.RedactionLevel;
+import com.skyflow.detect.TestRedactionLevel;
 import com.skyflow.detect.ReidentifyStringRequest;
 import com.skyflow.detect.ReidentifyStringResponse;
 import com.skyflow.enums.Env;
@@ -143,7 +143,7 @@ public class BaseDetectControllerTests {
         ReidentifyStringResponse second = controller.reidentifyString(ReidentifyStringRequest.builder()
                 .text("My name is [NAME_1].")
                 .redactionLevel(Collections.singletonList(
-                        RedactionLevel.builder().tokenGroupName("group").redactionPattern("mask").build()))
+                        TestRedactionLevel.builder().tokenGroupName("group").redactionPattern("mask").build()))
                 .build());
 
         Assert.assertEquals("My name is John Doe.", first.getProcessedText());

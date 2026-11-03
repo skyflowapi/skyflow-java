@@ -1887,7 +1887,7 @@ System.out.println(response.getProcessedText());
 // My name is J**n D*e.
 ```
 
-A `RedactionLevel` names one source and one replacement. On flowvault vaults the source is a `tokenGroupName` and the replacement a `redactionPattern` configured in the vault. The `entityName` and `redactionType` fields are the skyvault equivalents and do not apply to flowvault vaults. Every field is optional on the API, so the SDK passes the list through as given and the server rejects invalid combinations.
+A `RedactionLevel` names one source and one replacement. On flowvault vaults the source is a `tokenGroupName` and the replacement a `redactionPattern` configured in the vault. The flowvault SDK's `RedactionLevel` has only these two fields; the skyvault SDK's has `entityName` and `redactionType` instead. Both are optional on the API and are sent as given.
 
 ## Reidentify file
 

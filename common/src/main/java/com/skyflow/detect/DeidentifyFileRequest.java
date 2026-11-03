@@ -46,7 +46,8 @@ public final class DeidentifyFileRequest {
     }
 
     /**
-     * @return How {@code value} supplies the file: this SDK's {@code DeidentifySourceType}. Required with {@code value}.
+     * @return How {@code value} supplies the file: this SDK's {@code DeidentifySourceType} (skyvault: BASE64, SKYFLOW_ID,
+     * PRESIGNED_URL; flowvault: BASE64, PRESIGNED_URL). Required with {@code value}.
      */
     public DeidentifyFileSource getDataSource() {
         return dataSource;

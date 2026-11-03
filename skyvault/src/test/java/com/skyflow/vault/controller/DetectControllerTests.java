@@ -23,6 +23,7 @@ import com.skyflow.detect.GetRunResponse;
 import com.skyflow.detect.GuardrailsValidation;
 import com.skyflow.detect.PollOptions;
 import com.skyflow.detect.RedactionLevel;
+import com.skyflow.enums.RedactionType;
 import com.skyflow.detect.ReidentifyFileRequest;
 import com.skyflow.detect.ReidentifyFileResponse;
 import com.skyflow.detect.ReidentifyStringRequest;
@@ -243,7 +244,7 @@ public class DetectControllerTests {
             ReidentifyStringResponse response = controllerFor(server).reidentifyString(ReidentifyStringRequest.builder()
                     .text("My name is [NAME_1].")
                     .redactionLevel(Collections.singletonList(
-                            RedactionLevel.builder().tokenGroupName("names").redactionPattern("mask").build()))
+                            RedactionLevel.builder().entityName(EntityType.NAME).redactionType(RedactionType.MASKED).build()))
                     .build());
 
             Assert.assertEquals("My name is J**n D*e.", response.getProcessedText());
@@ -254,8 +255,8 @@ public class DetectControllerTests {
             String body = recorded.getBody().readUtf8();
             Assert.assertTrue(body, body.contains("\"text\":\"My name is [NAME_1].\""));
             Assert.assertTrue(body, body.contains("\"vaultId\":\"vault-1\""));
-            Assert.assertTrue(body, body.contains("\"tokenGroupName\":\"names\""));
-            Assert.assertTrue(body, body.contains("\"redactionPattern\":\"mask\""));
+            Assert.assertTrue(body, body.contains("\"entityName\":\"NAME\""));
+            Assert.assertTrue(body, body.contains("\"redactionType\":\"MASKED\""));
         } finally {
             server.shutdown();
         }
@@ -413,7 +414,7 @@ public class DetectControllerTests {
                     .value("W05BTUVfMV0=")
                     .dataFormat(FileDataFormat.TXT)
                     .redactionLevel(Arrays.asList(
-                            RedactionLevel.builder().tokenGroupName("names").redactionPattern("mask").build()))
+                            RedactionLevel.builder().entityName(EntityType.NAME).redactionType(RedactionType.MASKED).build()))
                     .build());
 
             Assert.assertEquals(DetectRunStatus.SUCCESS, response.getStatus());
@@ -434,8 +435,8 @@ public class DetectControllerTests {
             Assert.assertTrue(body, body.contains("\"value\":\"W05BTUVfMV0=\""));
             Assert.assertTrue(body, body.contains("\"vaultId\":\"vault-1\""));
             Assert.assertTrue(body, body.contains("\"dataFormat\":\"txt\""));
-            Assert.assertTrue(body, body.contains("\"tokenGroupName\":\"names\""));
-            Assert.assertTrue(body, body.contains("\"redactionPattern\":\"mask\""));
+            Assert.assertTrue(body, body.contains("\"entityName\":\"NAME\""));
+            Assert.assertTrue(body, body.contains("\"redactionType\":\"MASKED\""));
         } finally {
             server.shutdown();
         }

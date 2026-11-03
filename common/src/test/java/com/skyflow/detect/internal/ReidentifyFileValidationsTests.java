@@ -3,7 +3,7 @@ package com.skyflow.detect.internal;
 
 import com.skyflow.detect.TestReidentifySource;
 import com.skyflow.detect.EntityType;
-import com.skyflow.detect.RedactionLevel;
+import com.skyflow.detect.TestRedactionLevel;
 import com.skyflow.enums.RedactionType;
 import com.skyflow.detect.ReidentifyFileRequest;
 import com.skyflow.errors.ErrorCode;
@@ -60,27 +60,27 @@ public class ReidentifyFileValidationsTests {
         ReidentifyFileValidations.validateReidentifyFileRequest(valid()
                 .dataSource(TestReidentifySource.PRESIGNED_URL).value("https://example.com/f")
                 .redactionLevel(Arrays.asList(
-                        RedactionLevel.builder().tokenGroupName("g").redactionPattern("p").build(),
-                        RedactionLevel.builder().entityName(EntityType.NAME).redactionType(RedactionType.REDACTED).build(),
-                        RedactionLevel.builder().tokenGroupName("g2").redactionType(RedactionType.PLAIN_TEXT).build(),
-                        RedactionLevel.builder().entityName(EntityType.SSN).redactionPattern("p2").build()))
+                        TestRedactionLevel.builder().tokenGroupName("g").redactionPattern("p").build(),
+                        TestRedactionLevel.builder().entityName(EntityType.NAME).redactionType(RedactionType.REDACTED).build(),
+                        TestRedactionLevel.builder().tokenGroupName("g2").redactionType(RedactionType.PLAIN_TEXT).build(),
+                        TestRedactionLevel.builder().entityName(EntityType.SSN).redactionPattern("p2").build()))
                 .build());
     }
 
     @Test
     public void nullOrEmptyRedactionLevelListIsAllowed() throws SkyflowException {
         ReidentifyFileValidations.validateReidentifyFileRequest(valid().redactionLevel(null).build());
-        ReidentifyFileValidations.validateReidentifyFileRequest(valid().redactionLevel(Collections.<RedactionLevel>emptyList()).build());
+        ReidentifyFileValidations.validateReidentifyFileRequest(valid().redactionLevel(Collections.<TestRedactionLevel>emptyList()).build());
     }
 
     @Test
     public void anyRedactionLevelShapePassesThrough() throws SkyflowException {
-        // Every RedactionLevel field is optional on the API; the server applies its own rules.
+        // Every TestRedactionLevel field is optional on the API; the server applies its own rules.
         ReidentifyFileValidations.validateReidentifyFileRequest(valid().redactionLevel(Arrays.asList(
                 null,
-                RedactionLevel.builder().build(),
-                RedactionLevel.builder().tokenGroupName("g").build(),
-                RedactionLevel.builder().tokenGroupName("g").entityName(EntityType.NAME)
+                TestRedactionLevel.builder().build(),
+                TestRedactionLevel.builder().tokenGroupName("g").build(),
+                TestRedactionLevel.builder().tokenGroupName("g").entityName(EntityType.NAME)
                         .redactionPattern("p").redactionType(RedactionType.MASKED).build())).build());
     }
 }

@@ -11,7 +11,7 @@ import com.skyflow.detect.EntityType;
 import com.skyflow.detect.Image;
 import com.skyflow.detect.MaskingMethod;
 import com.skyflow.detect.Media;
-import com.skyflow.detect.RedactionLevel;
+import com.skyflow.detect.TestRedactionLevel;
 import com.skyflow.enums.RedactionType;
 import com.skyflow.detect.ReidentifyStringRequest;
 import com.skyflow.detect.ReturnEntitiesType;
@@ -117,8 +117,8 @@ public class DetectRequestMapperTests {
                 ReidentifyStringRequest.builder()
                         .text("[NAME_1]")
                         .redactionLevel(Arrays.asList(
-                                RedactionLevel.builder().entityName(EntityType.NAME).redactionType(RedactionType.MASKED).build(),
-                                RedactionLevel.builder().tokenGroupName("group").redactionPattern("pattern").build()))
+                                TestRedactionLevel.builder().entityName(EntityType.NAME).redactionType(RedactionType.MASKED).build(),
+                                TestRedactionLevel.builder().tokenGroupName("group").redactionPattern("pattern").build()))
                         .build(), "vault-1");
         Assert.assertEquals("vault-1", mapped.getVaultId());
         Assert.assertEquals("[NAME_1]", mapped.getText());
@@ -143,7 +143,7 @@ public class DetectRequestMapperTests {
         for (EntityType type : EntityType.values()) {
             Entity entity = Entity.builder().entityType(type).build();
             Assert.assertEquals(type.name(), DetectRequestMapper.toEntity(entity).getEntityType().get().toString());
-            RedactionLevel level = RedactionLevel.builder().entityName(type).redactionType(RedactionType.DEFAULT).build();
+            TestRedactionLevel level = TestRedactionLevel.builder().entityName(type).redactionType(RedactionType.DEFAULT).build();
             Assert.assertEquals(type.name(),
                     DetectRequestMapper.toRedactionLevels(Collections.singletonList(level)).get(0).getEntityName().get().toString());
         }

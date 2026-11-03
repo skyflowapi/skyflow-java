@@ -23,7 +23,8 @@ import com.skyflow.detect.Image;
 import com.skyflow.detect.Media;
 import com.skyflow.detect.ObjectEntity;
 import com.skyflow.detect.Pdf;
-import com.skyflow.detect.RedactionLevel;
+import com.skyflow.detect.RedactionRule;
+import com.skyflow.detect.RedactionRules;
 import com.skyflow.detect.ReidentifyStringRequest;
 import com.skyflow.detect.ShiftDates;
 import com.skyflow.detect.Transformation;
@@ -57,8 +58,6 @@ import com.skyflow.generated.common.rest.types.DocumentV2PdfProcessingMode;
 import com.skyflow.generated.common.rest.types.EntityTransformation;
 import com.skyflow.generated.common.rest.types.ImageV2;
 import com.skyflow.generated.common.rest.types.ImageV2MaskingMethod;
-import com.skyflow.generated.common.rest.types.RedactionLevelEntityName;
-import com.skyflow.generated.common.rest.types.RedactionLevelRedactionType;
 import com.skyflow.generated.common.rest.types.TransformationShiftDates;
 
 /**
@@ -410,27 +409,13 @@ public final class DetectRequestMapper {
         return builder.build();
     }
 
-    public static List<com.skyflow.generated.common.rest.types.RedactionLevel> toRedactionLevels(List<RedactionLevel> levels) {
+    public static List<com.skyflow.generated.common.rest.types.RedactionLevel> toRedactionLevels(List<? extends RedactionRule> levels) {
         List<com.skyflow.generated.common.rest.types.RedactionLevel> result = new ArrayList<>();
-        for (RedactionLevel level : levels) {
+        for (RedactionRule level : levels) {
             if (level == null) {
                 continue;
             }
-            com.skyflow.generated.common.rest.types.RedactionLevel.Builder builder =
-                    com.skyflow.generated.common.rest.types.RedactionLevel.builder();
-            if (level.getEntityName() != null) {
-                builder.entityName(RedactionLevelEntityName.valueOf(level.getEntityName().name()));
-            }
-            if (level.getRedactionType() != null) {
-                builder.redactionType(RedactionLevelRedactionType.valueOf(level.getRedactionType().name()));
-            }
-            if (level.getTokenGroupName() != null) {
-                builder.tokenGroupName(level.getTokenGroupName());
-            }
-            if (level.getRedactionPattern() != null) {
-                builder.redactionPattern(level.getRedactionPattern());
-            }
-            result.add(builder.build());
+            result.add(RedactionRules.toApi(level));
         }
         return result;
     }

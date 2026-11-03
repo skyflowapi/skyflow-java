@@ -577,14 +577,14 @@ Each element returned by `getDetokenizedFields()` and `getErrors()`.
 
 ### `RedactionLevel`
 
-`com.skyflow.detect` — element of `redactionLevel()` on `ReidentifyStringRequest` and `ReidentifyFileRequest`. Each rule names one source and one replacement: `entityName` plus `redactionType` on skyvault vaults, `tokenGroupName` plus `redactionPattern` on flowvault vaults. Every field is optional on the API; the server rejects invalid combinations.
+`com.skyflow.detect` — element of `redactionLevel()` on `ReidentifyStringRequest` and `ReidentifyFileRequest`. The class is defined per SDK and carries only the pair of fields its vault type uses, so the other vault's fields cannot be set. Both fields are optional on the API and are sent as given.
 
-| Builder method | Description |
-|----------------|-------------|
-| `entityName(EntityType)` | Skyvault vaults: entity type the rule applies to. |
-| `redactionType(RedactionType)` | Skyvault vaults: `PLAIN_TEXT`, `MASKED`, `REDACTED` or `DEFAULT`, the same `com.skyflow.enums.RedactionType` used by `get` and `detokenize`. See [`RedactionType`](#redactiontype). |
-| `tokenGroupName(String)` | Flowvault vaults: token group the rule applies to. |
-| `redactionPattern(String)` | Flowvault vaults: name of a redaction pattern configured in the vault. |
+| SDK | Builder method | Description |
+|-----|----------------|-------------|
+| skyvault | `entityName(EntityType)` | Entity type the rule applies to. |
+| skyvault | `redactionType(RedactionType)` | `PLAIN_TEXT`, `MASKED`, `REDACTED` or `DEFAULT`, the same `com.skyflow.enums.RedactionType` used by `get` and `detokenize`. See [`RedactionType`](#redactiontype). |
+| flowvault | `tokenGroupName(String)` | Token group the rule applies to. |
+| flowvault | `redactionPattern(String)` | Name of a redaction pattern configured in the vault. |
 
 ### `DetectedEntity`
 

@@ -7,7 +7,7 @@ import java.util.List;
  */
 public final class ReidentifyStringRequest {
     private final String text;
-    private final List<RedactionLevel> redactionLevel;
+    private final List<? extends RedactionRule> redactionLevel;
 
     private ReidentifyStringRequest(ReidentifyStringRequestBuilder builder) {
         this.text = builder.text;
@@ -29,9 +29,9 @@ public final class ReidentifyStringRequest {
     }
 
     /**
-     * @return Optional per-group rendering rules.
+     * @return Optional per-group rendering rules. Built with this SDK's {@code RedactionLevel}.
      */
-    public List<RedactionLevel> getRedactionLevel() {
+    public List<? extends RedactionRule> getRedactionLevel() {
         return redactionLevel;
     }
 
@@ -45,7 +45,7 @@ public final class ReidentifyStringRequest {
 
     public static final class ReidentifyStringRequestBuilder {
         private String text;
-        private List<RedactionLevel> redactionLevel;
+        private List<? extends RedactionRule> redactionLevel;
 
         private ReidentifyStringRequestBuilder() {
         }
@@ -60,10 +60,10 @@ public final class ReidentifyStringRequest {
         }
 
         /**
-         * @param redactionLevel Optional per-group rendering rules.
+         * @param redactionLevel Optional rendering rules, built with this SDK's {@code RedactionLevel}.
          * @return this builder
          */
-        public ReidentifyStringRequestBuilder redactionLevel(List<RedactionLevel> redactionLevel) {
+        public ReidentifyStringRequestBuilder redactionLevel(List<? extends RedactionRule> redactionLevel) {
             this.redactionLevel = redactionLevel;
             return this;
         }
