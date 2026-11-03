@@ -34,7 +34,7 @@ The Skyflow Java SDK is designed to help with integrating Skyflow into a Java ba
     - [DetokenizeRecordResponse](#detokenizerecordresponse)
   - [Tokenize](#tokenize)
   - [Get](#get)
-    - [Get by skyflow IDS](#get-by-skyflow-ids)
+    - [Get by skyflow IDs](#get-by-skyflow-ids)
     - [Get tokens](#get-tokens)
     - [Get by column name and column values](#get-by-column-name-and-column-values)
     - [Redaction types](#redaction-types)
@@ -90,7 +90,7 @@ The Skyflow Java SDK is designed to help with integrating Skyflow into a Java ba
 Add this dependency to your project's `build.gradle` file:
 
 ```
-implementation 'com.skyflow:skyflow-java:2.0.0'
+implementation 'com.skyflow:skyflow-java:2.1.1'
 ```
 
 ### Maven users
@@ -101,9 +101,11 @@ Add this dependency to your project's `pom.xml` file:
 <dependency>
     <groupId>com.skyflow</groupId>
     <artifactId>skyflow-java</artifactId>
-    <version>2.0.0</version>
+    <version>2.1.1</version>
 </dependency>
 ```
+
+The snippets above pin the latest release at the time of writing. Check [Maven Central](https://central.sonatype.com/artifact/com.skyflow/skyflow-java) for the current version and [GitHub releases](https://github.com/skyflowapi/skyflow-java/releases) for what changed in each one.
 
 ---
 
@@ -320,7 +322,7 @@ Skyflow returns tokens for the record that was just inserted.
 
 # Vault
 
-The [Vault](https://github.com/skyflowapi/skyflow-java/tree/main/samples/src/main/java/com/example/vault) module performs operations on the vault, including inserting records, detokenizing tokens, and retrieving tokens associated with a `skyflow_id`.
+The [Vault](https://github.com/skyflowapi/skyflow-java/tree/main/skyvault/samples/src/main/java/com/example/vault) module performs operations on the vault, including inserting records, detokenizing tokens, and retrieving tokens associated with a `skyflow_id`.
 
 ## VaultController
 
@@ -409,7 +411,7 @@ public class InsertSchema {
 }
 ```
 
-### Insert call [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/vault/InsertExample.java) with `continueOnError` option
+### Insert call [example](https://github.com/skyflowapi/skyflow-java/blob/main/skyvault/samples/src/main/java/com/example/vault/InsertExample.java) with `continueOnError` option
 
 The `continueOnError` flag is a boolean that determines whether insert operation should proceed despite encountering partial errors. Set to `true` to allow the process to continue even if some errors occur.
 
@@ -626,7 +628,7 @@ Notes:
 - `redactionType` defaults to [`RedactionType.PLAIN_TEXT`](#redaction-types).
 - `continueOnError` defaults to `true`.
 
-### An [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/vault/DetokenizeExample.java) of a detokenize call:
+### An [example](https://github.com/skyflowapi/skyflow-java/blob/main/skyvault/samples/src/main/java/com/example/vault/DetokenizeExample.java) of a detokenize call:
 
 ```java
 import com.skyflow.enums.RedactionType;
@@ -846,7 +848,7 @@ public class TokenizeSchema {
 }
 ```
 
-### An [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/vault/TokenizeExample.java) of Tokenize call:
+### An [example](https://github.com/skyflowapi/skyflow-java/blob/main/skyvault/samples/src/main/java/com/example/vault/TokenizeExample.java) of Tokenize call:
 
 ```java
 import com.skyflow.errors.SkyflowException;
@@ -985,7 +987,7 @@ public class GetSchema {
 
 Retrieve specific records using `skyflow_ids`. Ideal for fetching exact records when IDs are known.
 
-#### An [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/vault/GetExample.java) of a get call to retrieve data using Redaction type:
+#### An [example](https://github.com/skyflowapi/skyflow-java/blob/main/skyvault/samples/src/main/java/com/example/vault/GetExample.java) of a get call to retrieve data using Redaction type:
 
 ```java
 import com.skyflow.enums.RedactionType;
@@ -1067,7 +1069,7 @@ Sample response:
 
 Return tokens for records. Ideal for securely processing sensitive data while maintaining data privacy.
 
-#### An [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/vault/getExample.java) of get call to retrieve tokens using Skyflow IDs:
+#### An [example](https://github.com/skyflowapi/skyflow-java/blob/main/skyvault/samples/src/main/java/com/example/vault/GetExample.java) of get call to retrieve tokens using Skyflow IDs:
 
 ```java
 import com.skyflow.enums.RedactionType;
@@ -1145,7 +1147,7 @@ Sample response:
 
 Retrieve records by unique column values. Ideal for querying data without knowing Skyflow IDs, using alternate unique identifiers.
 
-#### An [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/vault/GetExample.java) of get call to retrieve data using column name and column values:
+#### An [example](https://github.com/skyflowapi/skyflow-java/blob/main/skyvault/samples/src/main/java/com/example/vault/GetExample.java) of get call to retrieve data using column name and column values:
 
 ```java
 import com.skyflow.enums.RedactionType;
@@ -1282,7 +1284,7 @@ public class UpdateSchema {
 }
 ```
 
-### An [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/vault/UpdateExample.java) of update call
+### An [example](https://github.com/skyflowapi/skyflow-java/blob/main/skyvault/samples/src/main/java/com/example/vault/UpdateExample.java) of update call
 
 ```java
 import com.skyflow.enums.TokenMode;
@@ -1406,7 +1408,7 @@ public class DeleteSchema {
 }
 ```
 
-### An [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/vault/DeleteExample.java) of delete call:
+### An [example](https://github.com/skyflowapi/skyflow-java/blob/main/skyvault/samples/src/main/java/com/example/vault/DeleteExample.java) of delete call:
 
 ```java
 import com.skyflow.errors.SkyflowException;
@@ -1509,7 +1511,7 @@ public class QuerySchema {
 }
 ```
 
-### An [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/vault/QueryExample.java) of query call
+### An [example](https://github.com/skyflowapi/skyflow-java/blob/main/skyvault/samples/src/main/java/com/example/vault/QueryExample.java) of query call
 
 ```java
 import com.skyflow.errors.SkyflowException;
@@ -1611,7 +1613,7 @@ public class UploadFileSchema {
 
 ```
 
-### An [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/vault/FileUploadExample.java) of file upload call
+### An [example](https://github.com/skyflowapi/skyflow-java/blob/main/skyvault/samples/src/main/java/com/example/vault/FileUploadExample.java) of file upload call
 ```java
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.vault.data.FileUploadRequest;
@@ -1771,7 +1773,7 @@ public class DeidentifyTextSchema {
 
 ```
 
-## An [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/detect/DeidentifyTextExample.java) of deidentify text:
+## An [example](https://github.com/skyflowapi/skyflow-java/blob/main/skyvault/samples/src/main/java/com/example/detect/DeidentifyTextExample.java) of deidentify text:
 ```java
 import java.util.ArrayList;
 import java.util.List;
@@ -1934,7 +1936,7 @@ public class ReidentifyTextSchema {
 }
 ```
 
-## An [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/detect/ReidentifyTextExample.java) of Reidentify text
+## An [example](https://github.com/skyflowapi/skyflow-java/blob/main/skyvault/samples/src/main/java/com/example/detect/ReidentifyTextExample.java) of Reidentify text
 
 ```java
 import com.skyflow.enums.DetectEntities;
@@ -2100,7 +2102,7 @@ public class DeidentifyFileSchema {
 } 
 ```
 
-## An [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/detect/DeidentifyFileExample.java) of Deidentify file
+## An [example](https://github.com/skyflowapi/skyflow-java/blob/main/skyvault/samples/src/main/java/com/example/detect/DeidentifyFileExample.java) of Deidentify file
 
 ```java
 import java.io.File;
@@ -2277,7 +2279,7 @@ public class GetDetectRunSchema {
 
 ```
 
-## An [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/detect/GetDetectRunExample.java) of get run
+## An [example](https://github.com/skyflowapi/skyflow-java/blob/main/skyvault/samples/src/main/java/com/example/detect/GetDetectRunExample.java) of get run
 ```java
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
@@ -2415,7 +2417,7 @@ DeidentifyFileRequest request = DeidentifyFileRequest.builder()
 
 # Connections
 
-Skyflow Connections is a gateway service that uses tokenization to securely send and receive data between your systems and first- or third-party services. The [connections](https://github.com/skyflowapi/skyflow-java/tree/main/src/main/java/com/skyflow/vault/connection) module invokes both inbound and/or outbound connections.
+Skyflow Connections is a gateway service that uses tokenization to securely send and receive data between your systems and first- or third-party services. The [connections](https://github.com/skyflowapi/skyflow-java/tree/main/skyvault/src/main/java/com/skyflow/vault/connection) module invokes both inbound and/or outbound connections.
 
 - **Inbound connections**: Act as intermediaries between your client and server, tokenizing sensitive data before it reaches your backend, ensuring downstream services handle only tokenized data.
 - **Outbound connections**: Enable secure extraction of data from the vault and transfer it to third-party services via your backend server, such as processing checkout or card issuance flows.
@@ -2515,7 +2517,7 @@ public class InvokeConnectionSchema {
 
 **pathParams, queryParams, requestHeader, requestBody** are the JSON objects represented as HashMaps, that will be sent through the connection integration url.
 
-### An [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/connection/InvokeConnectionExample.java) of invokeConnection
+### An [example](https://github.com/skyflowapi/skyflow-java/blob/main/skyvault/samples/src/main/java/com/example/connection/InvokeConnectionExample.java) of invokeConnection
 
 ```java
 import com.skyflow.Skyflow;
@@ -2623,11 +2625,11 @@ This section covers methods for generating and managing tokens to authenticate A
 
 ## Generate a bearer token
 
-The [Service Account](https://github.com/skyflowapi/skyflow-java/tree/main/src/main/java/com/skyflow/serviceaccount/util) Java module generates service account tokens using a service account credentials file, which is provided when a service account is created. The tokens generated by this module are valid for 60 minutes and can be used to make API calls to the [Data](https://docs.skyflow.com/record/) and [Management](https://docs.skyflow.com/management/) APIs, depending on the permissions assigned to the service account.
+The [Service Account](https://github.com/skyflowapi/skyflow-java/tree/main/common/src/main/java/com/skyflow/serviceaccount/util) Java module generates service account tokens using a service account credentials file, which is provided when a service account is created. The tokens generated by this module are valid for 60 minutes and can be used to make API calls to the [Data](https://docs.skyflow.com/record/) and [Management](https://docs.skyflow.com/management/) APIs, depending on the permissions assigned to the service account.
 
 The `BearerToken` utility class generates bearer tokens using a credentials JSON file. Alternatively, you can pass the credentials as a string.
 
-[Example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/serviceaccount/BearerTokenGenerationExample.java):
+[Example](https://github.com/skyflowapi/skyflow-java/blob/main/skyvault/samples/src/main/java/com/example/serviceaccount/BearerTokenGenerationExample.java):
 
 ```java
 /**
@@ -2742,7 +2744,7 @@ credentials.setContext(ctx);
 
 Context map keys must contain only alphanumeric characters and underscores (`[a-zA-Z0-9_]`). Invalid keys will throw a `SkyflowException`.
 
-[Full example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/serviceaccount/BearerTokenGenerationWithContextExample.java)
+[Full example](https://github.com/skyflowapi/skyflow-java/blob/main/skyvault/samples/src/main/java/com/example/serviceaccount/BearerTokenGenerationWithContextExample.java)
 
 See Skyflow's [context-aware authorization](https://docs.skyflow.com) and [conditional data access](https://docs.skyflow.com) docs for policy variable syntax like `request.context.*`.
 
@@ -2750,7 +2752,7 @@ See Skyflow's [context-aware authorization](https://docs.skyflow.com) and [condi
 
 A service account with multiple roles can generate bearer tokens with access limited to a specific role by specifying the appropriate `roleID`. This can be used to limit access to specific roles for services with multiple responsibilities, such as segregating access for billing and analytics. The generated bearer tokens are valid for 60 minutes and can only execute operations permitted by the permissions associated with the designated role.
 
-[Example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/serviceaccount/ScopedTokenGenerationExample.java):
+[Example](https://github.com/skyflowapi/skyflow-java/blob/main/skyvault/samples/src/main/java/com/example/serviceaccount/ScopedTokenGenerationExample.java):
 
 ```java
 import com.skyflow.errors.SkyflowException;
@@ -2801,7 +2803,7 @@ Notes:
 
 - You can pass either the file path of a service account key credentials file or the service account key credentials as a string to the `setCredentials` method of the `BearerTokenBuilder` class.
 - If both a file path and a string are provided, the last method used takes precedence.
-- To generate multiple bearer tokens concurrently using threads, refer to the following [example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/serviceaccount/BearerTokenGenerationUsingThreadsExample.java).
+- To generate multiple bearer tokens concurrently using threads, refer to the following [example](https://github.com/skyflowapi/skyflow-java/blob/main/skyvault/samples/src/main/java/com/example/serviceaccount/BearerTokenGenerationUsingThreadsExample.java).
 
 ## Generate Signed Data Tokens
 
@@ -2834,7 +2836,7 @@ SignedDataTokens signedToken = SignedDataTokens.builder()
         .build();
 ```
 
-[Full example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/serviceaccount/SignedTokenGenerationExample.java)
+[Full example](https://github.com/skyflowapi/skyflow-java/blob/main/skyvault/samples/src/main/java/com/example/serviceaccount/SignedTokenGenerationExample.java)
 
 Response:
 
@@ -2863,7 +2865,7 @@ message: Authentication failed. Bearer token is expired. Use a valid bearer toke
 
 If you encounter this kind of error, retry the request. During the retry, the SDK detects that the previous bearer token has expired and generates a new one for the current and subsequent requests.
 
-#### [Example](https://github.com/skyflowapi/skyflow-java/blob/main/samples/src/main/java/com/example/serviceaccount/BearerTokenExpiryExample.java):
+#### [Example](https://github.com/skyflowapi/skyflow-java/blob/main/skyvault/samples/src/main/java/com/example/serviceaccount/BearerTokenExpiryExample.java):
 
 ```java
 package com.example.serviceaccount;

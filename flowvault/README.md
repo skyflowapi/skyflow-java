@@ -97,7 +97,15 @@ import com.skyflow.Skyflow;
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.Env;
+import com.skyflow.errors.SkyflowException;
 import com.skyflow.vault.controller.VaultController;
+import com.skyflow.vault.data.BulkInsertRequest;
+import com.skyflow.vault.data.BulkInsertRequestRecord;
+import com.skyflow.vault.data.BulkInsertResponse;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 Credentials credentials = new Credentials();
 credentials.setApiKey("<API_KEY>"); // or setToken / setCredentialsString / setPath
@@ -114,9 +122,32 @@ Skyflow skyflowClient = Skyflow.builder()
 
 // Returns the controller for the first configured vault
 VaultController vault = skyflowClient.vault();
+
+// A minimal bulk insert, to confirm the setup above actually works
+Map<String, Object> data = new HashMap<>();
+data.put("card_number", "4111111111111111");
+
+BulkInsertRequestRecord record = BulkInsertRequestRecord.builder()
+        .data(data)
+        .build();
+
+BulkInsertRequest insertRequest = BulkInsertRequest.builder()
+        .tableName("<TABLE_NAME>")
+        .records(Collections.singletonList(record))
+        .build();
+
+try {
+    BulkInsertResponse insertResponse = vault.bulkInsert(insertRequest);
+    System.out.println("inserted " + insertResponse.getSummary().getTotalInserted()
+            + " of " + insertResponse.getSummary().getTotalRecords());
+} catch (SkyflowException e) {
+    System.err.println("bulk insert failed: " + e.getMessage());
+}
 ```
 
 `vault()` with no arguments returns the controller for the first vault added to the builder. To talk to more than one vault from a single client, register each with `addVaultConfig(...)` and fetch each controller by ID: `skyflowClient.vault("<VAULT_ID>")`.
+
+The `bulkInsert` call above is the [Bulk Insert](#bulk-insert) operation; see that section for multi-table inserts, upserts, and reading back tokens, and [Error Handling](#error-handling) for the per-record result model that `getSummary()` is part of.
 
 # Authenticate
 
