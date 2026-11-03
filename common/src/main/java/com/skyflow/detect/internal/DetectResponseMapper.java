@@ -1,7 +1,7 @@
 package com.skyflow.detect.internal;
 
 import com.skyflow.detect.CheckGuardrailsResponse;
-import com.skyflow.detect.DataSourceType;
+import com.skyflow.detect.DeidentifyFileSource;
 import com.skyflow.detect.DeidentifyFileResponse;
 import com.skyflow.detect.DeidentifyStringResponse;
 import com.skyflow.detect.DetectRunStatus;
@@ -23,6 +23,7 @@ import com.skyflow.generated.common.rest.types.ReidentifyStringResponseV2;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 import java.util.Map;
 
 /**
@@ -81,7 +82,12 @@ public final class DetectResponseMapper {
                 response.getDeniedTopic().orElse(null));
     }
 
-    public static GetRunResponse toGetRunResponse(String runId, DetectRunsResponseV2 response) {
+    /**
+     * @param sourceResolver maps the wire outputType onto this SDK's {@code DeidentifySourceType}; returns null for an
+     *                       unknown value
+     */
+    public static GetRunResponse toGetRunResponse(String runId, DetectRunsResponseV2 response,
+                                               Function<String, DeidentifyFileSource> sourceResolver) {
         List<FileOutput> outputs = new ArrayList<>();
         List<com.skyflow.generated.common.rest.types.FileOutput> apiOutputs = response.getOutput().orElse(null);
         if (apiOutputs != null) {
@@ -95,7 +101,7 @@ public final class DetectResponseMapper {
                 runId,
                 response.getStatus().map(s -> enumOrDefault(DetectRunStatus.class, s.toString(), DetectRunStatus.UNKNOWN))
                         .orElse(DetectRunStatus.UNKNOWN),
-                response.getOutputType().map(t -> enumOrDefault(DataSourceType.class, t.toString(), null)).orElse(null),
+                response.getOutputType().map(t -> sourceResolver.apply(t.toString())).orElse(null),
                 Collections.unmodifiableList(outputs),
                 response.getMetrics().map(DetectResponseMapper::toMetrics).orElse(null),
                 response.getMessage().orElse(null));

@@ -3,15 +3,15 @@ package com.skyflow.detect;
 import java.util.List;
 
 /**
- * Request for {@code reidentifyFile}. Supply the file through exactly one {@link DataSourceType}:
- * the base64-encoded content, the skyflow id of a vault record that holds the file, or an S3
- * presigned URL. The vault id is filled in by the controller.
+ * Request for {@code reidentifyFile}. Supply the file through this SDK's {@code ReidentifySourceType}
+ * ({@code BASE64} or {@code PRESIGNED_URL}; re-identification does not accept a skyflow id) and the matching
+ * {@code value}.
  */
 public final class ReidentifyFileRequest {
-    private final DataSourceType dataSource;
+    private final ReidentifyFileSource dataSource;
     private final String value;
     private final FileDataFormat dataFormat;
-    private final List<RedactionLevel> redactionLevel;
+    private final List<? extends RedactionRule> redactionLevel;
 
     private ReidentifyFileRequest(ReidentifyFileRequestBuilder builder) {
         this.dataSource = builder.dataSource;
@@ -28,14 +28,15 @@ public final class ReidentifyFileRequest {
     }
 
     /**
-     * @return How {@code value} supplies the file. Required.
+     * @return How {@code value} supplies the file: this SDK's {@code ReidentifySourceType} (skyvault and flowvault:
+     * BASE64, PRESIGNED_URL; a skyflow id is not offered for re-identification). Required.
      */
-    public DataSourceType getDataSource() {
+    public ReidentifyFileSource getDataSource() {
         return dataSource;
     }
 
     /**
-     * @return Base64 content, skyflow id or presigned URL of the file, according to {@code dataSource}. Required.
+     * @return Base64 content or presigned URL of the file, according to {@code dataSource}. Required.
      */
     public String getValue() {
         return value;
@@ -50,9 +51,9 @@ public final class ReidentifyFileRequest {
     }
 
     /**
-     * @return Optional per-group rendering rules.
+     * @return Optional per-group rendering rules. Built with this SDK's {@code RedactionLevel}.
      */
-    public List<RedactionLevel> getRedactionLevel() {
+    public List<? extends RedactionRule> getRedactionLevel() {
         return redactionLevel;
     }
 
@@ -67,25 +68,26 @@ public final class ReidentifyFileRequest {
     }
 
     public static final class ReidentifyFileRequestBuilder {
-        private DataSourceType dataSource;
+        private ReidentifyFileSource dataSource;
         private String value;
         private FileDataFormat dataFormat;
-        private List<RedactionLevel> redactionLevel;
+        private List<? extends RedactionRule> redactionLevel;
 
         private ReidentifyFileRequestBuilder() {
         }
 
         /**
-         * @param dataSource How {@code value} supplies the file. Required.
+         * @param dataSource How {@code value} supplies the file: this SDK's {@code ReidentifySourceType} (skyvault and
+         *                   flowvault: BASE64, PRESIGNED_URL; a skyflow id is not offered for re-identification). Required.
          * @return this builder
          */
-        public ReidentifyFileRequestBuilder dataSource(DataSourceType dataSource) {
+        public ReidentifyFileRequestBuilder dataSource(ReidentifyFileSource dataSource) {
             this.dataSource = dataSource;
             return this;
         }
 
         /**
-         * @param value Base64 content, skyflow id or presigned URL of the file, according to {@code dataSource}. Required.
+         * @param value Base64 content or presigned URL of the file, according to {@code dataSource}. Required.
          * @return this builder
          */
         public ReidentifyFileRequestBuilder value(String value) {
@@ -103,10 +105,10 @@ public final class ReidentifyFileRequest {
         }
 
         /**
-         * @param redactionLevel Optional per-group rendering rules.
+         * @param redactionLevel Optional rendering rules, built with this SDK's {@code RedactionLevel}.
          * @return this builder
          */
-        public ReidentifyFileRequestBuilder redactionLevel(List<RedactionLevel> redactionLevel) {
+        public ReidentifyFileRequestBuilder redactionLevel(List<? extends RedactionRule> redactionLevel) {
             this.redactionLevel = redactionLevel;
             return this;
         }

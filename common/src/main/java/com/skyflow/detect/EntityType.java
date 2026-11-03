@@ -1,7 +1,7 @@
 package com.skyflow.detect;
 
 /**
- * Entity types Skyflow Detect can identify. Also used to target entities in {@link RedactionLevel}.
+ * Entity types Skyflow Detect can identify. Also used to target entities in {@code RedactionLevel}.
  */
 public enum EntityType {
     NONE,

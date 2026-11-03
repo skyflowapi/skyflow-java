@@ -11,7 +11,6 @@ import com.skyflow.detect.Audio;
 import com.skyflow.detect.Bleep;
 import com.skyflow.detect.CheckGuardrailsRequest;
 import com.skyflow.detect.CustomType;
-import com.skyflow.detect.DataSourceType;
 import com.skyflow.detect.DeidentifyFileRequest;
 import com.skyflow.detect.DeidentifyStringRequest;
 import com.skyflow.detect.FileDataFormat;
@@ -24,7 +23,8 @@ import com.skyflow.detect.Image;
 import com.skyflow.detect.Media;
 import com.skyflow.detect.ObjectEntity;
 import com.skyflow.detect.Pdf;
-import com.skyflow.detect.RedactionLevel;
+import com.skyflow.detect.RedactionRule;
+import com.skyflow.detect.RedactionRules;
 import com.skyflow.detect.ReidentifyStringRequest;
 import com.skyflow.detect.ShiftDates;
 import com.skyflow.detect.Transformation;
@@ -58,8 +58,6 @@ import com.skyflow.generated.common.rest.types.DocumentV2PdfProcessingMode;
 import com.skyflow.generated.common.rest.types.EntityTransformation;
 import com.skyflow.generated.common.rest.types.ImageV2;
 import com.skyflow.generated.common.rest.types.ImageV2MaskingMethod;
-import com.skyflow.generated.common.rest.types.RedactionLevelEntityName;
-import com.skyflow.generated.common.rest.types.RedactionLevelRedactionType;
 import com.skyflow.generated.common.rest.types.TransformationShiftDates;
 
 /**
@@ -94,11 +92,23 @@ public final class DetectRequestMapper {
      * Builds the submit request. For file-based requests this reads and base64-encodes the file and infers
      * the format from its extension when none was given.
      */
+    /**
+     * The local file a deidentifyFile request points at, from {@code file} or {@code filePath}, or null for a
+     * {@code value}-based request.
+     */
+    public static File localFile(DeidentifyFileRequest request) {
+        if (request.getFile() != null) {
+            return request.getFile();
+        }
+        String path = request.getFilePath();
+        return path == null || path.trim().isEmpty() ? null : new File(path);
+    }
+
     public static DeidentifyFileRequestV2 toDeidentifyFileRequest(DeidentifyFileRequest request, String vaultId)
             throws SkyflowException {
         String value = request.getValue();
         FileDataFormat format = request.getDataFormat();
-        File file = request.getFile();
+        File file = localFile(request);
         if (file != null) {
             value = encodeFile(file);
             if (format == null) {
@@ -106,9 +116,11 @@ public final class DetectRequestMapper {
             }
         }
         // A local file is always sent as BASE64, whatever dataSource the builder was left with.
-        DataSourceType dataSource = file != null ? DataSourceType.BASE64 : request.getDataSource();
+        DeidentifyFileRequestV2DataSource dataSource = file != null
+                ? DeidentifyFileRequestV2DataSource.BASE64
+                : DeidentifyFileRequestV2DataSource.valueOf(request.getDataSource().name());
         DeidentifyFileRequestV2._FinalStage builder = DeidentifyFileRequestV2.builder()
-                .dataSource(DeidentifyFileRequestV2DataSource.valueOf(dataSource.name()))
+                .dataSource(dataSource)
                 .value(value);
         if (format != null) {
             // The wire value for a file format is the lower-case extension.
@@ -397,27 +409,13 @@ public final class DetectRequestMapper {
         return builder.build();
     }
 
-    public static List<com.skyflow.generated.common.rest.types.RedactionLevel> toRedactionLevels(List<RedactionLevel> levels) {
+    public static List<com.skyflow.generated.common.rest.types.RedactionLevel> toRedactionLevels(List<? extends RedactionRule> levels) {
         List<com.skyflow.generated.common.rest.types.RedactionLevel> result = new ArrayList<>();
-        for (RedactionLevel level : levels) {
+        for (RedactionRule level : levels) {
             if (level == null) {
                 continue;
             }
-            com.skyflow.generated.common.rest.types.RedactionLevel.Builder builder =
-                    com.skyflow.generated.common.rest.types.RedactionLevel.builder();
-            if (level.getEntityName() != null) {
-                builder.entityName(RedactionLevelEntityName.valueOf(level.getEntityName().name()));
-            }
-            if (level.getRedactionType() != null) {
-                builder.redactionType(RedactionLevelRedactionType.valueOf(level.getRedactionType().name()));
-            }
-            if (level.getTokenGroupName() != null) {
-                builder.tokenGroupName(level.getTokenGroupName());
-            }
-            if (level.getRedactionPattern() != null) {
-                builder.redactionPattern(level.getRedactionPattern());
-            }
-            result.add(builder.build());
+            result.add(RedactionRules.toApi(level));
         }
         return result;
     }

@@ -1,5 +1,8 @@
 package com.skyflow.vault.controller;
 
+import com.skyflow.detect.TestReidentifySource;
+import com.skyflow.detect.ReidentifyFileSource;
+import com.skyflow.detect.DeidentifyFileSource;
 import com.skyflow.config.BaseVaultConfig;
 import com.skyflow.detect.DeidentifyStringRequest;
 import com.skyflow.detect.DeidentifyStringResponse;
@@ -8,14 +11,14 @@ import com.skyflow.detect.DetectConfiguration;
 import com.skyflow.detect.Entity;
 import com.skyflow.detect.CheckGuardrailsRequest;
 import com.skyflow.detect.CheckGuardrailsResponse;
-import com.skyflow.detect.DataSourceType;
+import com.skyflow.detect.TestDeidentifySource;
 import com.skyflow.detect.DetectRunStatus;
 import com.skyflow.detect.EntityType;
 import com.skyflow.detect.FileDataFormat;
 import com.skyflow.detect.GetRunRequest;
 import com.skyflow.detect.GetRunResponse;
 import com.skyflow.detect.GuardrailsValidation;
-import com.skyflow.detect.RedactionLevel;
+import com.skyflow.detect.TestRedactionLevel;
 import com.skyflow.detect.ReidentifyStringRequest;
 import com.skyflow.detect.ReidentifyStringResponse;
 import com.skyflow.enums.Env;
@@ -55,6 +58,16 @@ public class BaseDetectControllerTests {
         @Override
         protected String getSdkMetrics() {
             return "{\"sdk_name_version\":\"test\"}";
+        }
+
+        @Override
+        protected DeidentifyFileSource toDeidentifySource(String wireValue) {
+            return TestDeidentifySource.fromWire(wireValue);
+        }
+
+        @Override
+        protected ReidentifyFileSource toReidentifySource(String wireValue) {
+            return TestReidentifySource.fromWire(wireValue);
         }
 
         @Override
@@ -130,7 +143,7 @@ public class BaseDetectControllerTests {
         ReidentifyStringResponse second = controller.reidentifyString(ReidentifyStringRequest.builder()
                 .text("My name is [NAME_1].")
                 .redactionLevel(Collections.singletonList(
-                        RedactionLevel.builder().tokenGroupName("group").redactionPattern("mask").build()))
+                        TestRedactionLevel.builder().tokenGroupName("group").redactionPattern("mask").build()))
                 .build());
 
         Assert.assertEquals("My name is John Doe.", first.getProcessedText());
@@ -162,7 +175,7 @@ public class BaseDetectControllerTests {
 
         Assert.assertEquals("run-42", response.getRunId());
         Assert.assertEquals(DetectRunStatus.SUCCESS, response.getStatus());
-        Assert.assertEquals(DataSourceType.BASE64, response.getOutputType());
+        Assert.assertEquals(TestDeidentifySource.BASE64, response.getOutputType());
         Assert.assertEquals(2, response.getOutput().size());
         Assert.assertEquals("QUJD", response.getOutput().get(0).getProcessedFile());
         Assert.assertEquals("REDACTED_FILE", response.getOutput().get(0).getProcessedFileType());

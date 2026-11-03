@@ -242,7 +242,7 @@ Parameters listed with their defaults as defined in the builders.
 
 | Builder method | Default | Description |
 |----------------|---------|-------------|
-| `dataSource(DataSourceType)` | `null` | How `value` supplies the file. See [`DataSourceType`](#datasourcetype). |
+| `dataSource(DeidentifySourceType)` | `null` | How `value` supplies the file, using this SDK's enum: skyvault `BASE64`, `SKYFLOW_ID` or `PRESIGNED_URL`; flowvault `BASE64` or `PRESIGNED_URL`. Required with `value`; a `file` or `filePath` is always sent as `BASE64`. See [Detect enums](#detect-enums). |
 | `value(String)` | `null` | Base64 content, a skyflow id, or a presigned URL, per `dataSource`. |
 | `file(File)` | `null` | Local file; read and base64-encoded when sent, `dataSource` set to `BASE64`. |
 | `filePath(String)` | `null` | Same as `file(File)`, from a path. |
@@ -267,7 +267,7 @@ Parameters listed with their defaults as defined in the builders.
 
 | Builder method | Default | Description |
 |----------------|---------|-------------|
-| `dataSource(DataSourceType)` | _(required)_ | `BASE64`, `SKYFLOW_ID` or `PRESIGNED_URL`. |
+| `dataSource(ReidentifySourceType)` | _(required)_ | `BASE64` or `PRESIGNED_URL`. Re-identification does not accept a skyflow id as the source. |
 | `value(String)` | _(required)_ | Base64 content, a skyflow id, or a presigned URL, per `dataSource`. |
 | `dataFormat(FileDataFormat)` | `null` | File format. Limited to the formats that support `VAULT_TOKEN`: `TXT`, `CSV`, `JSON`, `JSONL`, `XML`, `DOCX`, `XLSX` or `PPTX`. |
 | `redactionLevel(List<RedactionLevel>)` | `null` | Redaction rules. See [`RedactionLevel`](#redactionlevel). |
@@ -421,7 +421,7 @@ Each element returned by `getDetokenizedFields()` and `getErrors()`.
 |--------|-------------|-------------|
 | `getRunId()` | `String` | Run id, always present. |
 | `getStatus()` | `DetectRunStatus` | Run status when polled, `null` when submit only. See [`DetectRunStatus`](#detectrunstatus). |
-| `getOutputType()` | `DataSourceType` | `BASE64` or `PRESIGNED_URL`, `null` until the run completes. |
+| `getOutputType()` | `DeidentifySourceType` | `BASE64` or `PRESIGNED_URL`, `null` until the run completes. |
 | `getOutput()` | `List<FileOutput>` | Every output of the run, empty until complete, never `null`. See [`FileOutput`](#fileoutput). |
 | `getMetrics()` | `Metrics` | Size, counts, pages, slides, duration. `null` until complete. |
 | `getMessage()` | `String` | Failure detail when the status is `FAILED`. |
@@ -433,7 +433,7 @@ Each element returned by `getDetokenizedFields()` and `getErrors()`.
 | Getter | Return type | Description |
 |--------|-------------|-------------|
 | `getStatus()` | `DetectRunStatus` | Status of the re-identification. |
-| `getOutputType()` | `DataSourceType` | `BASE64` or `PRESIGNED_URL`. |
+| `getOutputType()` | `ReidentifySourceType` | `BASE64` or `PRESIGNED_URL`. |
 | `getOutput()` | `List<FileOutput>` | Re-identified file outputs, never `null`. |
 | `getMetrics()` | `Metrics` | Size and counts. |
 
@@ -577,14 +577,14 @@ Each element returned by `getDetokenizedFields()` and `getErrors()`.
 
 ### `RedactionLevel`
 
-`com.skyflow.detect` — element of `redactionLevel()` on `ReidentifyStringRequest` and `ReidentifyFileRequest`. Each rule names one source and one replacement: `entityName` plus `redactionType` on skyvault vaults, `tokenGroupName` plus `redactionPattern` on flowvault vaults. Every field is optional on the API; the server rejects invalid combinations.
+`com.skyflow.detect` — element of `redactionLevel()` on `ReidentifyStringRequest` and `ReidentifyFileRequest`. The class is defined per SDK and carries only the pair of fields its vault type uses, so the other vault's fields cannot be set. Both fields are optional on the API and are sent as given.
 
-| Builder method | Description |
-|----------------|-------------|
-| `entityName(EntityType)` | Skyvault vaults: entity type the rule applies to. |
-| `redactionType(RedactionType)` | Skyvault vaults: `PLAIN_TEXT`, `MASKED`, `REDACTED` or `DEFAULT`, the same `com.skyflow.enums.RedactionType` used by `get` and `detokenize`. See [`RedactionType`](#redactiontype). |
-| `tokenGroupName(String)` | Flowvault vaults: token group the rule applies to. |
-| `redactionPattern(String)` | Flowvault vaults: name of a redaction pattern configured in the vault. |
+| SDK | Builder method | Description |
+|-----|----------------|-------------|
+| skyvault | `entityName(EntityType)` | Entity type the rule applies to. |
+| skyvault | `redactionType(RedactionType)` | `PLAIN_TEXT`, `MASKED`, `REDACTED` or `DEFAULT`, the same `com.skyflow.enums.RedactionType` used by `get` and `detokenize`. See [`RedactionType`](#redactiontype). |
+| flowvault | `tokenGroupName(String)` | Token group the rule applies to. |
+| flowvault | `redactionPattern(String)` | Name of a redaction pattern configured in the vault. |
 
 ### `DetectedEntity`
 
@@ -694,7 +694,8 @@ All in `com.skyflow.detect`.
 |------|--------|
 | `EntityType` | the 70 entity types (`NAME`, `EMAIL_ADDRESS`, `SSN`, `CREDIT_CARD`, `DOB`, ...), plus `ALL` and `NONE` |
 | `DeidentificationType` | `ENTITY_UNIQUE_COUNTER` _(default)_, `ENTITY_ONLY`, `VAULT_TOKEN`, `MASK`, `UNKNOWN` |
-| `DataSourceType` | `BASE64`, `SKYFLOW_ID`, `PRESIGNED_URL` |
+| `DeidentifySourceType` | Defined per SDK: skyvault `BASE64`, `SKYFLOW_ID`, `PRESIGNED_URL`; flowvault `BASE64`, `PRESIGNED_URL`. The `dataSource` of `deidentifyFile` and the `getOutputType()` of `DeidentifyFileResponse` and `GetRunResponse`. |
+| `ReidentifySourceType` | `BASE64`, `PRESIGNED_URL` in both SDKs. The `dataSource` of `reidentifyFile` and the `getOutputType()` of `ReidentifyFileResponse`. |
 | `FileDataFormat` | `BMP`, `CSV`, `DCM`, `DOC`, `DOCX`, `GIF`, `JPEG`, `JPG`, `JSON`, `JSONL`, `MP3`, `PDF`, `PNG`, `PPT`, `PPTX`, `TIF`, `TIFF`, `TXT`, `WAV`, `XLS`, `XLSX`, `XML`, `ZIP` |
 | `DetectRunStatus` | `QUEUED`, `IN_PROGRESS`, `SUCCESS`, `FAILED`, `UNKNOWN`. `SUCCESS`, `FAILED` and `UNKNOWN` end polling. |
 | `ReturnEntitiesType` | `EXCLUDE_SENSITIVE_DATA` _(default)_, `ALL`, `NONE` |

@@ -3,7 +3,7 @@ package com.example.detect;
 import com.skyflow.Skyflow;
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
-import com.skyflow.detect.DataSourceType;
+import com.skyflow.detect.ReidentifySourceType;
 import com.skyflow.detect.DetectRunStatus;
 import com.skyflow.detect.FileDataFormat;
 import com.skyflow.detect.FileOutput;
@@ -45,7 +45,7 @@ public class ReidentifyFileSample {
         try {
             ReidentifyFileResponse response = skyflowClient.detect().reidentifyFile(
                     ReidentifyFileRequest.builder()
-                            .dataSource(DataSourceType.BASE64)
+                            .dataSource(ReidentifySourceType.BASE64)
                             .value(base64)
                             .dataFormat(FileDataFormat.TXT)
                             // Optional: render one token group with a named redaction pattern instead of its plain value.
@@ -61,7 +61,7 @@ public class ReidentifyFileSample {
                 int index = 0;
                 for (FileOutput output : response.getOutput()) {
                     index++;
-                    if (response.getOutputType() != DataSourceType.BASE64) {
+                    if (response.getOutputType() != ReidentifySourceType.BASE64) {
                         // PRESIGNED_URL outputs carry a URL, not base64: download them instead of decoding.
                         System.out.println(output.getProcessedFileType() + " available at " + output.getProcessedFile());
                         continue;

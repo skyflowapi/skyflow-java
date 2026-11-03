@@ -1,6 +1,7 @@
 package com.skyflow.detect.internal;
 
-import com.skyflow.detect.DataSourceType;
+import com.skyflow.detect.TestDeidentifySource;
+
 import com.skyflow.detect.DeidentifyFileRequest;
 import com.skyflow.detect.PollOptions;
 import com.skyflow.errors.BaseErrorMessage;
@@ -30,7 +31,7 @@ public class DeidentifyFileValidationsTests {
     }
 
     private static DeidentifyFileRequest.DeidentifyFileRequestBuilder raw() {
-        return DeidentifyFileRequest.builder().dataSource(DataSourceType.BASE64).value("Zm9v");
+        return DeidentifyFileRequest.builder().dataSource(TestDeidentifySource.BASE64).value("Zm9v");
     }
 
     @Test
@@ -41,7 +42,7 @@ public class DeidentifyFileValidationsTests {
     @Test
     public void rawValueRequiresDataSourceAndValue() throws SkyflowException {
         assertRejected(DeidentifyFileRequest.builder().value("x").build(), BaseErrorMessage.InvalidDataSourceInDeidentifyFile);
-        assertRejected(DeidentifyFileRequest.builder().dataSource(DataSourceType.SKYFLOW_ID).build(), BaseErrorMessage.InvalidValueInDeidentifyFile);
+        assertRejected(raw().value("").build(), BaseErrorMessage.InvalidValueInDeidentifyFile);
         assertRejected(raw().value(" ").build(), BaseErrorMessage.InvalidValueInDeidentifyFile);
         DetectValidations.validateDeidentifyFileRequest(raw().build());
         DetectValidations.validateDeidentifyFileRequest(raw().configurationId("cfg").build());
@@ -58,6 +59,25 @@ public class DeidentifyFileValidationsTests {
         assertRejected(DeidentifyFileRequest.builder().filePath(new File(folder.getRoot(), "missing.txt").getPath()).build(),
                 BaseErrorMessage.FileNotFoundToDeidentify);
         assertRejected(DeidentifyFileRequest.builder().file(folder.getRoot()).build(), BaseErrorMessage.FileNotFoundToDeidentify);
+    }
+
+    @Test
+    public void exactlyOneOfFilePathFileOrValueIsRequired() throws Exception {
+        File existing = folder.newFile("one.txt");
+        Files.write(existing.toPath(), "hello".getBytes("UTF-8"));
+        String path = existing.getPath();
+
+        assertRejected(DeidentifyFileRequest.builder().build(), BaseErrorMessage.MissingFileSourceInDeidentifyFile);
+        assertRejected(DeidentifyFileRequest.builder().dataSource(TestDeidentifySource.SKYFLOW_ID).build(), BaseErrorMessage.MissingFileSourceInDeidentifyFile);
+
+        assertRejected(DeidentifyFileRequest.builder().file(existing).filePath(path).build(), BaseErrorMessage.MultipleFileSourcesInDeidentifyFile);
+        assertRejected(DeidentifyFileRequest.builder().filePath(path).value("Zm9v").build(), BaseErrorMessage.MultipleFileSourcesInDeidentifyFile);
+        assertRejected(DeidentifyFileRequest.builder().file(existing).value("").build(), BaseErrorMessage.MultipleFileSourcesInDeidentifyFile);
+        assertRejected(DeidentifyFileRequest.builder().file(existing).filePath(path).value("Zm9v").build(), BaseErrorMessage.MultipleFileSourcesInDeidentifyFile);
+
+        // dataSource alongside a local file is tolerated: the file is always sent as BASE64
+        DetectValidations.validateDeidentifyFileRequest(DeidentifyFileRequest.builder().filePath(path).dataSource(TestDeidentifySource.PRESIGNED_URL).build());
+        assertRejected(DeidentifyFileRequest.builder().filePath("  ").build(), BaseErrorMessage.FileNotFoundToDeidentify);
     }
 
     @Test

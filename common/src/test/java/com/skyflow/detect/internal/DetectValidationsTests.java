@@ -5,7 +5,7 @@ import com.skyflow.detect.DeidentifyStringRequest;
 import com.skyflow.detect.DetectConfiguration;
 import com.skyflow.detect.EntityType;
 import com.skyflow.detect.GetRunRequest;
-import com.skyflow.detect.RedactionLevel;
+import com.skyflow.detect.TestRedactionLevel;
 import com.skyflow.enums.RedactionType;
 import com.skyflow.detect.ReidentifyStringRequest;
 import com.skyflow.errors.BaseErrorMessage;
@@ -79,20 +79,20 @@ public class DetectValidationsTests {
         DetectValidations.validateReidentifyStringRequest(ReidentifyStringRequest.builder()
                 .text("[NAME_1]")
                 .redactionLevel(Arrays.asList(
-                        RedactionLevel.builder().entityName(EntityType.NAME).redactionType(RedactionType.MASKED).build(),
-                        RedactionLevel.builder().tokenGroupName("group").redactionPattern("pattern").build()))
+                        TestRedactionLevel.builder().entityName(EntityType.NAME).redactionType(RedactionType.MASKED).build(),
+                        TestRedactionLevel.builder().tokenGroupName("group").redactionPattern("pattern").build()))
                 .build());
         DetectValidations.validateReidentifyStringRequest(ReidentifyStringRequest.builder().text("[NAME_1]").build());
     }
 
     @Test
     public void reidentifyStringPassesAnyRedactionLevelShapeThrough() throws SkyflowException {
-        // The API marks every RedactionLevel field optional; the server applies its own rules.
+        // The API marks every TestRedactionLevel field optional; the server applies its own rules.
         DetectValidations.validateReidentifyStringRequest(ReidentifyStringRequest.builder().text("[NAME_1]")
                 .redactionLevel(Arrays.asList(
-                        RedactionLevel.builder().build(),
-                        RedactionLevel.builder().tokenGroupName("g").build(),
-                        RedactionLevel.builder().entityName(EntityType.NAME).redactionType(RedactionType.MASKED).redactionPattern("p").build(),
+                        TestRedactionLevel.builder().build(),
+                        TestRedactionLevel.builder().tokenGroupName("g").build(),
+                        TestRedactionLevel.builder().entityName(EntityType.NAME).redactionType(RedactionType.MASKED).redactionPattern("p").build(),
                         null))
                 .build());
     }

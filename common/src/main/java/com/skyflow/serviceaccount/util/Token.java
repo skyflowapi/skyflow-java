@@ -40,6 +40,29 @@ public class Token {
         return currentTime > expiryTime;
     }
 
+    /**
+     * Returns true when the token's {@code exp} claim is at or before now plus {@code windowSeconds},
+     * that is, the token has expired or will within the window. Unlike {@link #isExpired(String)},
+     * a token that is empty, cannot be decoded, or carries no {@code exp} is reported as
+     * <em>not</em> expiring: callers use this to decide whether a {@code 401} was caused by expiry,
+     * and a malformed token is not an expiry.
+     */
+    public static boolean isExpiringWithin(String token, long windowSeconds) {
+        if (token == null || token.trim().isEmpty()) {
+            return false;
+        }
+        try {
+            JsonElement exp = decoded(token).get("exp");
+            if (exp == null) {
+                return false;
+            }
+            long currentTime = new Date().getTime() / 1000;
+            return exp.getAsLong() <= currentTime + windowSeconds;
+        } catch (SkyflowException | RuntimeException e) {
+            return false;
+        }
+    }
+
     static JsonObject decoded(String encodedToken) throws JsonSyntaxException, SkyflowException {
         String[] split = encodedToken.split("\\.");
         if (split.length < 3) {

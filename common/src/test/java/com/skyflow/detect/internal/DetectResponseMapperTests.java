@@ -1,7 +1,7 @@
 package com.skyflow.detect.internal;
 
 import com.skyflow.detect.CheckGuardrailsResponse;
-import com.skyflow.detect.DataSourceType;
+import com.skyflow.detect.TestDeidentifySource;
 import com.skyflow.detect.DeidentifyStringResponse;
 import com.skyflow.detect.DetectRunStatus;
 import com.skyflow.detect.FileDataFormat;
@@ -61,7 +61,7 @@ public class DetectResponseMapperTests {
 
         DetectRunsResponseV2 run = ObjectMappers.JSON_MAPPER.readValue(
                 "{\"status\":\"SUCCESS\",\"output\":[null,{\"processedFile\":\"x\"}]}", DetectRunsResponseV2.class);
-        Assert.assertEquals(1, DetectResponseMapper.toGetRunResponse("r", run).getOutput().size());
+        Assert.assertEquals(1, DetectResponseMapper.toGetRunResponse("r", run, TestDeidentifySource::fromWire).getOutput().size());
     }
 
     @Test
@@ -99,10 +99,10 @@ public class DetectResponseMapperTests {
                 "{\"status\":\"SUCCESS\",\"outputType\":\"PRESIGNED_URL\",\"output\":[{\"processedFile\":\"https://x/y.pdf\","
                         + "\"processedFileType\":\"REDACTED_FILE\",\"processedFileExtension\":\"pdf\"}],\"metrics\":{\"pages\":2}}",
                 DetectRunsResponseV2.class);
-        GetRunResponse run = DetectResponseMapper.toGetRunResponse("run-1", api);
+        GetRunResponse run = DetectResponseMapper.toGetRunResponse("run-1", api, TestDeidentifySource::fromWire);
         Assert.assertEquals("run-1", run.getRunId());
         Assert.assertEquals(DetectRunStatus.SUCCESS, run.getStatus());
-        Assert.assertEquals(DataSourceType.PRESIGNED_URL, run.getOutputType());
+        Assert.assertEquals(TestDeidentifySource.PRESIGNED_URL, run.getOutputType());
         Assert.assertEquals("https://x/y.pdf", run.getOutput().get(0).getProcessedFile());
         Assert.assertEquals(FileDataFormat.PDF, run.getOutput().get(0).getProcessedFileExtension());
         Assert.assertEquals(Integer.valueOf(2), run.getMetrics().getPages());
@@ -111,14 +111,14 @@ public class DetectResponseMapperTests {
     @Test
     public void runWithoutStatusIsUnknownAndUnknownWireValuesAreTolerated() throws Exception {
         GetRunResponse empty = DetectResponseMapper.toGetRunResponse("r",
-                ObjectMappers.JSON_MAPPER.readValue("{}", DetectRunsResponseV2.class));
+                ObjectMappers.JSON_MAPPER.readValue("{}", DetectRunsResponseV2.class), TestDeidentifySource::fromWire);
         Assert.assertEquals(DetectRunStatus.UNKNOWN, empty.getStatus());
         Assert.assertTrue(empty.getOutput().isEmpty());
         Assert.assertNull(empty.getOutputType());
 
         GetRunResponse odd = DetectResponseMapper.toGetRunResponse("r", ObjectMappers.JSON_MAPPER.readValue(
                 "{\"status\":\"NEW_STATE\",\"outputType\":\"FTP\",\"output\":[{\"processedFileExtension\":\"heic\"}]}",
-                DetectRunsResponseV2.class));
+                DetectRunsResponseV2.class), TestDeidentifySource::fromWire);
         Assert.assertEquals(DetectRunStatus.UNKNOWN, odd.getStatus());
         Assert.assertNull(odd.getOutputType());
         Assert.assertNull(odd.getOutput().get(0).getProcessedFileExtension());

@@ -1,11 +1,11 @@
 package com.skyflow.detect.internal;
 
-import com.skyflow.detect.DataSourceType;
+import com.skyflow.detect.TestReidentifySource;
 import com.skyflow.detect.DetectRunStatus;
 import com.skyflow.detect.EntityType;
 import com.skyflow.detect.FileDataFormat;
 import com.skyflow.detect.FileOutput;
-import com.skyflow.detect.RedactionLevel;
+import com.skyflow.detect.TestRedactionLevel;
 import com.skyflow.enums.RedactionType;
 import com.skyflow.detect.ReidentifyFileRequest;
 import com.skyflow.detect.ReidentifyFileResponse;
@@ -26,7 +26,7 @@ public class ReidentifyFileMapperTests {
     }
 
     private static ReidentifyFileResponse fromJson(String json) throws Exception {
-        return ReidentifyFileMapper.toResponse(ObjectMappers.JSON_MAPPER.readValue(json, ReidentifyFileResponseV2.class));
+        return ReidentifyFileMapper.toResponse(ObjectMappers.JSON_MAPPER.readValue(json, ReidentifyFileResponseV2.class), TestReidentifySource::fromWire);
     }
 
     // ─── request ──────────────────────────────────────────────────────────────
@@ -34,7 +34,7 @@ public class ReidentifyFileMapperTests {
     @Test
     public void mapsRequiredFieldsAndInjectsVaultId() throws Exception {
         ReidentifyFileRequestV2 api = ReidentifyFileMapper.toApiRequest(ReidentifyFileRequest.builder()
-                .dataSource(DataSourceType.BASE64).value("W05BTUVfMV0=").build(), "vault-1");
+                .dataSource(TestReidentifySource.BASE64).value("W05BTUVfMV0=").build(), "vault-1");
 
         Assert.assertEquals("BASE64", api.getDataSource().toString());
         Assert.assertEquals("W05BTUVfMV0=", api.getValue());
@@ -52,7 +52,7 @@ public class ReidentifyFileMapperTests {
 
     @Test
     public void mapsEveryDataSource() throws Exception {
-        for (DataSourceType source : DataSourceType.values()) {
+        for (TestReidentifySource source : TestReidentifySource.values()) {
             ReidentifyFileRequestV2 api = ReidentifyFileMapper.toApiRequest(ReidentifyFileRequest.builder()
                     .dataSource(source).value("x").build(), "v");
             Assert.assertEquals(source.name(), api.getDataSource().toString());
@@ -61,11 +61,17 @@ public class ReidentifyFileMapperTests {
     }
 
     @Test
+    public void outputTypeTheSdkDoesNotOfferMapsToNull() throws Exception {
+        // the API lists SKYFLOW_ID for re-identification but the SDK enum does not offer it
+        Assert.assertNull(fromJson("{\"outputType\":\"SKYFLOW_ID\"}").getOutputType());
+    }
+
+    @Test
     public void dataFormatIsSentAsLowerCaseWireValue() throws Exception {
         for (FileDataFormat format : new FileDataFormat[]{FileDataFormat.TXT, FileDataFormat.CSV, FileDataFormat.JSON,
                 FileDataFormat.JSONL, FileDataFormat.XML, FileDataFormat.DOCX, FileDataFormat.XLSX, FileDataFormat.PPTX}) {
             ReidentifyFileRequestV2 api = ReidentifyFileMapper.toApiRequest(ReidentifyFileRequest.builder()
-                    .dataSource(DataSourceType.SKYFLOW_ID).value("rec").dataFormat(format).build(), "v");
+                    .dataSource(TestReidentifySource.BASE64).value("eA==").dataFormat(format).build(), "v");
             Assert.assertEquals(format.name().toLowerCase(), api.getDataFormat().get().toString());
             Assert.assertTrue(wire(api).contains("\"dataFormat\":\"" + format.name().toLowerCase() + "\""));
         }
@@ -74,10 +80,10 @@ public class ReidentifyFileMapperTests {
     @Test
     public void mapsFlowvaultAndSkyvaultStyleRedactionLevels() throws Exception {
         ReidentifyFileRequestV2 api = ReidentifyFileMapper.toApiRequest(ReidentifyFileRequest.builder()
-                .dataSource(DataSourceType.PRESIGNED_URL).value("https://s3/presigned")
+                .dataSource(TestReidentifySource.PRESIGNED_URL).value("https://s3/presigned")
                 .redactionLevel(Arrays.asList(
-                        RedactionLevel.builder().tokenGroupName("names").redactionPattern("mask-middle").build(),
-                        RedactionLevel.builder().entityName(EntityType.EMAIL_ADDRESS).redactionType(RedactionType.MASKED).build()))
+                        TestRedactionLevel.builder().tokenGroupName("names").redactionPattern("mask-middle").build(),
+                        TestRedactionLevel.builder().entityName(EntityType.EMAIL_ADDRESS).redactionType(RedactionType.MASKED).build()))
                 .build(), "v");
 
         Assert.assertEquals(2, api.getRedactionLevel().get().size());
@@ -93,7 +99,7 @@ public class ReidentifyFileMapperTests {
     @Test
     public void emptyRedactionLevelListIsSentAsEmptyArray() throws Exception {
         ReidentifyFileRequestV2 api = ReidentifyFileMapper.toApiRequest(ReidentifyFileRequest.builder()
-                .dataSource(DataSourceType.BASE64).value("x").redactionLevel(Collections.<RedactionLevel>emptyList()).build(), "v");
+                .dataSource(TestReidentifySource.BASE64).value("x").redactionLevel(Collections.<TestRedactionLevel>emptyList()).build(), "v");
         Assert.assertTrue(api.getRedactionLevel().get().isEmpty());
         Assert.assertTrue(wire(api).contains("\"redactionLevel\":[]"));
     }
@@ -108,7 +114,7 @@ public class ReidentifyFileMapperTests {
                 + "\"metrics\":{\"size\":12.5,\"wordCount\":120,\"characterCount\":800,\"pages\":2,\"slides\":0,\"duration\":1.25}}");
 
         Assert.assertEquals(DetectRunStatus.SUCCESS, response.getStatus());
-        Assert.assertEquals(DataSourceType.PRESIGNED_URL, response.getOutputType());
+        Assert.assertEquals(TestReidentifySource.PRESIGNED_URL, response.getOutputType());
         Assert.assertEquals(2, response.getOutput().size());
         FileOutput first = response.getOutput().get(0);
         Assert.assertEquals("https://s3/out-1", first.getProcessedFile());
@@ -129,7 +135,7 @@ public class ReidentifyFileMapperTests {
         for (DetectRunStatus status : DetectRunStatus.values()) {
             Assert.assertEquals(status, fromJson("{\"status\":\"" + status.name() + "\"}").getStatus());
         }
-        for (DataSourceType type : DataSourceType.values()) {
+        for (TestReidentifySource type : TestReidentifySource.values()) {
             Assert.assertEquals(type, fromJson("{\"outputType\":\"" + type.name() + "\"}").getOutputType());
         }
     }

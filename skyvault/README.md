@@ -1795,7 +1795,7 @@ File de-identification is asynchronous on the API: the submit call returns a run
 - **Submit only** (default): one call, returns `getRunId()`. `getStatus()` is `null` and nothing is written to disk. Retrieve the result later with [`getRun`](#get-run).
 - **Submit and poll**: set `pollOptions`. The SDK polls the run with exponential backoff (1, 2, 4, 8, 16, then 32 seconds between lookups) until it is `SUCCESS`, `FAILED` or `UNKNOWN`, or until `waitTime` (default 60 s, max 300) or `maxAttempts` (default 23, max 23) is used up. If the budget runs out the response carries the run id with `IN_PROGRESS` or `QUEUED` so you can resume with `getRun`.
 
-The file is supplied in one of three ways: `dataSource` plus `value` (`BASE64` content, a `SKYFLOW_ID`, or a `PRESIGNED_URL`), or `file(File)` / `filePath(String)`, which read and encode a local file and infer `dataFormat` from its extension. Supply exactly one of `value`, `file` or `filePath`. `configurationId` and `configuration` follow the same rules as for strings: both optional, sent as supplied, vault defaults when neither is set, and both together rejected by the API (see [Before you start](#before-you-start)).
+The file is supplied in exactly one of three ways: `filePath(String)`, `file(File)`, or `value` plus a `DeidentifySourceType` `dataSource` (`BASE64`, the `SKYFLOW_ID` of a file record in the vault, or `PRESIGNED_URL`). `file` and `filePath` read a local file when the request is sent, send it as `BASE64` and infer `dataFormat` from its extension. Passing more than one of `filePath`, `file` and `value`, or none of them, is rejected before any network call. `configurationId` and `configuration` follow the same rules as for strings: both optional, sent as supplied, vault defaults when neither is set, and both together rejected by the API (see [Before you start](#before-you-start)).
 
 `dataFormat` accepts every `FileDataFormat`: `BMP`, `CSV`, `DCM`, `DOC`, `DOCX`, `GIF`, `JPEG`, `JPG`, `JSON`, `JSONL`, `MP3`, `PDF`, `PNG`, `PPT`, `PPTX`, `TIF`, `TIFF`, `TXT`, `WAV`, `XLS`, `XLSX`, `XML` and `ZIP`. The `VAULT_TOKEN` de-identification type is supported only for `TXT`, `CSV`, `JSON`, `JSONL`, `XML`, `DOCX`, `XLSX` and `PPTX`.
 
@@ -1834,7 +1834,7 @@ switch (response.getStatus()) {
 }
 ```
 
-Outputs are written only when polling reached `SUCCESS`, the request was built from a local file, and the run delivered them as base64. A request built from a `SKYFLOW_ID` or `PRESIGNED_URL` has no local name to derive from, and presigned-URL outputs are not fetched, so in those cases read `getOutput()` and write the files yourself. Files are named `processed-<input name>.<extension>`, with the entities output as `processed-entities-<input name>.json` (and `processed-object-entities-<input name>.json` for object entities); `outputDirectory` is created if missing and defaults to the working directory. Polling blocks the calling thread.
+Outputs are written only when polling reached `SUCCESS`, the request was built from a local file, and the run delivered them as base64. A request built from a `SKYFLOW_ID` or `PRESIGNED_URL` value has no local name to derive from, and presigned-URL outputs are not fetched, so in those cases read `getOutput()` and write the files yourself. Files are named `processed-<input name>.<extension>`, with the entities output as `processed-entities-<input name>.json` (and `processed-object-entities-<input name>.json` for object entities); `outputDirectory` is created if missing and defaults to the working directory. Polling blocks the calling thread.
 
 ### Polling from a worker thread
 
@@ -1924,18 +1924,18 @@ System.out.println(response.getProcessedText());
 // My name is John Doe and my email is j*******@acme.com.
 ```
 
-A `RedactionLevel` names one source and one replacement. On skyvault vaults the source is an `entityName` and the replacement a `redactionType`, the same `com.skyflow.enums.RedactionType` that `get` and `detokenize` use. The `tokenGroupName` and `redactionPattern` fields are the flowvault equivalents and do not apply to skyvault vaults. Every field is optional on the API, so the SDK passes the list through as given and the server rejects invalid combinations.
+A `RedactionLevel` names one source and one replacement. On skyvault vaults the source is an `entityName` and the replacement a `redactionType`, the same `com.skyflow.enums.RedactionType` that `get` and `detokenize` use. The skyvault SDK's `RedactionLevel` has only these two fields; the flowvault SDK's has `tokenGroupName` and `redactionPattern` instead. Both are optional on the API and are sent as given.
 
 ## Reidentify file
 
-`reidentifyFile` is synchronous: the re-identified file comes back in the response, not through a run id. `ReidentifyFileRequest` takes a `dataSource` (`BASE64`, `SKYFLOW_ID` or `PRESIGNED_URL`), the matching `value`, an optional `dataFormat` and the same optional `RedactionLevel` rules as `reidentifyString`. `dataFormat` is limited to the formats that support `VAULT_TOKEN`: `TXT`, `CSV`, `JSON`, `JSONL`, `XML`, `DOCX`, `XLSX` and `PPTX`.
+`reidentifyFile` is synchronous: the re-identified file comes back in the response, not through a run id. `ReidentifyFileRequest` takes a `dataSource` (`ReidentifySourceType.BASE64` or `PRESIGNED_URL`; re-identification does not accept a skyflow id as the source), the matching `value`, an optional `dataFormat` and the same optional `RedactionLevel` rules as `reidentifyString`. `dataFormat` is limited to the formats that support `VAULT_TOKEN`: `TXT`, `CSV`, `JSON`, `JSONL`, `XML`, `DOCX`, `XLSX` and `PPTX`.
 
 ```java
 byte[] content = Files.readAllBytes(Paths.get("tokenized.txt"));
 
 ReidentifyFileResponse response = skyflowClient.detect().reidentifyFile(
         ReidentifyFileRequest.builder()
-                .dataSource(DataSourceType.BASE64)
+                .dataSource(ReidentifySourceType.BASE64)
                 .value(Base64.getEncoder().encodeToString(content))
                 .dataFormat(FileDataFormat.TXT)
                 .redactionLevel(Collections.singletonList(

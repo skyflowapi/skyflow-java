@@ -1,15 +1,16 @@
 package com.skyflow.utils;
 
-import com.google.gson.JsonObject;
-import com.skyflow.config.ConnectionConfig;
-import com.skyflow.enums.RequestMethod;
-import com.skyflow.vault.connection.InvokeConnectionRequest;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.HashMap;
-import java.util.Map;
+import com.google.gson.JsonObject;
+import com.skyflow.config.ConnectionConfig;
+import com.skyflow.enums.RequestMethod;
+import com.skyflow.vault.connection.InvokeConnectionRequest;
 
 public class UtilsTests {
     private static final String INVALID_EXCEPTION_THROWN = "Should not have thrown any exception";
@@ -94,13 +95,13 @@ public class UtilsTests {
         } catch (Exception e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
         } finally {
-            restoreProperty("os.name", osName);
-            restoreProperty("os.version", osVersion);
-            restoreProperty("java.version", javaVersion);
+            restore("os.name", osName);
+            restore("os.version", osVersion);
+            restore("java.version", javaVersion);
         }
     }
 
-    private static void restoreProperty(String key, String value) {
+    private static void restore(String key, String value) {
         if (value == null) {
             System.clearProperty(key);
         } else {

@@ -8,11 +8,11 @@ import java.util.List;
  */
 public final class ReidentifyFileResponse {
     private final DetectRunStatus status;
-    private final DataSourceType outputType;
+    private final ReidentifyFileSource outputType;
     private final List<FileOutput> output;
     private final Metrics metrics;
 
-    public ReidentifyFileResponse(DetectRunStatus status, DataSourceType outputType, List<FileOutput> output, Metrics metrics) {
+    public ReidentifyFileResponse(DetectRunStatus status, ReidentifyFileSource outputType, List<FileOutput> output, Metrics metrics) {
         this.status = status;
         this.outputType = outputType;
         this.output = output;
@@ -27,9 +27,9 @@ public final class ReidentifyFileResponse {
     }
 
     /**
-     * @return How output files are delivered, or null when not reported.
+     * @return How output files are delivered, or null when not reported. A constant of this SDK's {@code ReidentifySourceType}: {@code BASE64} or {@code PRESIGNED_URL}.
      */
-    public DataSourceType getOutputType() {
+    public ReidentifyFileSource getOutputType() {
         return outputType;
     }
 
