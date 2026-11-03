@@ -75,7 +75,7 @@ The `flowvault` module is a Skyflow Java SDK built for high-throughput vault ope
 ### Gradle users
 
 ```
-implementation 'com.skyflow:skyflow-flowvault-java:1.2.0'
+implementation 'com.skyflow:skyflow-flowvault-java:1.3.0'
 ```
 
 ### Maven users
@@ -84,7 +84,7 @@ implementation 'com.skyflow:skyflow-flowvault-java:1.2.0'
 <dependency>
     <groupId>com.skyflow</groupId>
     <artifactId>skyflow-flowvault-java</artifactId>
-    <version>1.2.0</version>
+    <version>1.3.0</version>
 </dependency>
 ```
 
