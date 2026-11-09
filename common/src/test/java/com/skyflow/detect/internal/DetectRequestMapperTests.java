@@ -9,6 +9,7 @@ import com.skyflow.detect.DetectConfiguration;
 import com.skyflow.detect.Entity;
 import com.skyflow.detect.EntityType;
 import com.skyflow.detect.Image;
+import com.skyflow.detect.IncludePrefix;
 import com.skyflow.detect.MaskingMethod;
 import com.skyflow.detect.Media;
 import com.skyflow.detect.TestRedactionLevel;
@@ -75,7 +76,9 @@ public class DetectRequestMapperTests {
                         .entities(Arrays.asList(
                                 Entity.builder().entityType(EntityType.NAME)
                                         .deidentificationType(DeidentificationType.VAULT_TOKEN)
-                                        .destination("persons.name").build(),
+                                        .destination("persons.name")
+                                        .includePrefix(IncludePrefix.YES)
+                                        .prefixOverride("NAAM").build(),
                                 Entity.builder().entityType(EntityType.DOB)
                                         .deidentificationType(DeidentificationType.ENTITY_UNIQUE_COUNTER)
                                         .transformation(Transformation.builder()
@@ -84,7 +87,11 @@ public class DetectRequestMapperTests {
                         .restrict(Collections.singletonList("[0-9]{3}-[0-9]{2}-[0-9]{4}"))
                         .skip(Collections.singletonList("Skyflow"))
                         .customTypes(Collections.singletonList(
-                                CustomType.builder().label("EMPLOYEE_ID").match(Collections.singletonList("EMP-[0-9]{6}")).build()))
+                                CustomType.builder().label("EMPLOYEE_ID").match(Collections.singletonList("EMP-[0-9]{6}"))
+                                        .deidentificationType(DeidentificationType.VAULT_TOKEN)
+                                        .destination("persons.employee_id")
+                                        .includePrefix(IncludePrefix.NO)
+                                        .build()))
                         .returnEntities(ReturnEntitiesType.ALL)
                         .build())
                 .media(Media.builder().image(Image.builder().maskingMethod(MaskingMethod.BLUR).outputOcrText(true).build()).build())
@@ -105,10 +112,47 @@ public class DetectRequestMapperTests {
                 "\"vaultId\":\"vault-1\"", "\"entityType\":\"NAME\"", "\"deidentificationType\":\"VAULT_TOKEN\"",
                 "\"destination\":\"persons.name\"", "\"minDays\":10", "\"maxDays\":30",
                 "\"restrict\":[\"[0-9]{3}-[0-9]{2}-[0-9]{4}\"]", "\"skip\":[\"Skyflow\"]",
-                "\"label\":\"EMPLOYEE_ID\"", "\"returnEntities\":\"ALL\"", "\"maskingMethod\":\"BLUR\"", "\"outputOcrText\":true"}) {
+                "\"includePrefix\":\"YES\"", "\"prefixOverride\":\"NAAM\"",
+                "\"label\":\"EMPLOYEE_ID\"", "\"destination\":\"persons.employee_id\"", "\"includePrefix\":\"NO\"",
+                "\"returnEntities\":\"ALL\"", "\"maskingMethod\":\"BLUR\"", "\"outputOcrText\":true"}) {
             Assert.assertTrue("missing " + expected + " in " + json, json.contains(expected));
         }
+        Assert.assertEquals("custom type carries its own deidentificationType",
+                2, json.split("\"deidentificationType\":\"VAULT_TOKEN\"", -1).length - 1);
         Assert.assertFalse("unset fields must be omitted: " + json, json.contains("\"description\""));
+    }
+
+    @Test
+    public void unspecifiedIncludePrefixIsOmittedAndYesNoAreSent() throws Exception {
+        Entity unspecified = Entity.builder().includePrefix(IncludePrefix.INCLUDE_PREFIX_UNSPECIFIED).build();
+        Assert.assertFalse(DetectRequestMapper.toEntity(unspecified).getIncludePrefix().isPresent());
+        Assert.assertFalse(DetectRequestMapper.toEntity(Entity.builder().build()).getIncludePrefix().isPresent());
+        Assert.assertEquals("YES", DetectRequestMapper.toEntity(
+                Entity.builder().includePrefix(IncludePrefix.YES).build()).getIncludePrefix().get().toString());
+        Assert.assertEquals("NO", DetectRequestMapper.toEntity(
+                Entity.builder().includePrefix(IncludePrefix.NO).build()).getIncludePrefix().get().toString());
+
+        CustomType custom = CustomType.builder().label("ID").includePrefix(IncludePrefix.INCLUDE_PREFIX_UNSPECIFIED).build();
+        Assert.assertFalse(DetectRequestMapper.toCustomType(custom).getIncludePrefix().isPresent());
+        Assert.assertEquals("NO", DetectRequestMapper.toCustomType(
+                CustomType.builder().includePrefix(IncludePrefix.NO).build()).getIncludePrefix().get().toString());
+    }
+
+    @Test
+    public void everyPublicDeidentificationTypeMapsForEntitiesAndCustomTypes() {
+        for (DeidentificationType type : DeidentificationType.values()) {
+            Assert.assertEquals(type.name(), DetectRequestMapper.toEntity(
+                    Entity.builder().deidentificationType(type).build()).getDeidentificationType().get().toString());
+            Assert.assertEquals(type.name(), DetectRequestMapper.toCustomType(
+                    CustomType.builder().deidentificationType(type).build()).getDeidentificationType().get().toString());
+        }
+    }
+
+    @Test
+    public void customTypeWithOnlyLabelAndMatchOmitsVaultFields() throws Exception {
+        String json = ObjectMappers.JSON_MAPPER.writeValueAsString(DetectRequestMapper.toCustomType(
+                CustomType.builder().label("ID").match(Collections.singletonList("[0-9]+")).build()));
+        Assert.assertEquals("{\"label\":\"ID\",\"match\":[\"[0-9]+\"]}", json);
     }
 
     @Test

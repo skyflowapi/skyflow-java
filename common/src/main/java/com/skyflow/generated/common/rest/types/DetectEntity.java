@@ -28,6 +28,10 @@ public final class DetectEntity {
 
     private final Optional<EntityTransformation> transformation;
 
+    private final Optional<DetectEntityIncludePrefix> includePrefix;
+
+    private final Optional<String> prefixOverride;
+
     private final Map<String, Object> additionalProperties;
 
     private DetectEntity(
@@ -35,11 +39,15 @@ public final class DetectEntity {
             Optional<DetectEntityDeidentificationType> deidentificationType,
             Optional<String> destination,
             Optional<EntityTransformation> transformation,
+            Optional<DetectEntityIncludePrefix> includePrefix,
+            Optional<String> prefixOverride,
             Map<String, Object> additionalProperties) {
         this.entityType = entityType;
         this.deidentificationType = deidentificationType;
         this.destination = destination;
         this.transformation = transformation;
+        this.includePrefix = includePrefix;
+        this.prefixOverride = prefixOverride;
         this.additionalProperties = additionalProperties;
     }
 
@@ -72,6 +80,22 @@ public final class DetectEntity {
         return transformation;
     }
 
+    /**
+     * @return Whether to include the label as a prefix in the generated token. Only applies when <code>deidentificationType</code> is <code>VAULT_TOKEN</code>. <code>NO</code> returns the raw vault token, and the value can't be re-identified later.
+     */
+    @JsonProperty("includePrefix")
+    public Optional<DetectEntityIncludePrefix> getIncludePrefix() {
+        return includePrefix;
+    }
+
+    /**
+     * @return Overrides the default entity-type prefix used in the generated token (for example, <code>NAAM</code> instead of <code>NAME</code>, producing <code>[NAAM_&lt;token&gt;]</code>). Can't be combined with <code>includePrefix: NO</code>.
+     */
+    @JsonProperty("prefixOverride")
+    public Optional<String> getPrefixOverride() {
+        return prefixOverride;
+    }
+
     @java.lang.Override
     public boolean equals(Object other) {
         if (this == other) return true;
@@ -87,12 +111,20 @@ public final class DetectEntity {
         return entityType.equals(other.entityType)
                 && deidentificationType.equals(other.deidentificationType)
                 && destination.equals(other.destination)
-                && transformation.equals(other.transformation);
+                && transformation.equals(other.transformation)
+                && includePrefix.equals(other.includePrefix)
+                && prefixOverride.equals(other.prefixOverride);
     }
 
     @java.lang.Override
     public int hashCode() {
-        return Objects.hash(this.entityType, this.deidentificationType, this.destination, this.transformation);
+        return Objects.hash(
+                this.entityType,
+                this.deidentificationType,
+                this.destination,
+                this.transformation,
+                this.includePrefix,
+                this.prefixOverride);
     }
 
     @java.lang.Override
@@ -114,6 +146,10 @@ public final class DetectEntity {
 
         private Optional<EntityTransformation> transformation = Optional.empty();
 
+        private Optional<DetectEntityIncludePrefix> includePrefix = Optional.empty();
+
+        private Optional<String> prefixOverride = Optional.empty();
+
         @JsonAnySetter
         private Map<String, Object> additionalProperties = new HashMap<>();
 
@@ -124,6 +160,8 @@ public final class DetectEntity {
             deidentificationType(other.getDeidentificationType());
             destination(other.getDestination());
             transformation(other.getTransformation());
+            includePrefix(other.getIncludePrefix());
+            prefixOverride(other.getPrefixOverride());
             return this;
         }
 
@@ -180,9 +218,43 @@ public final class DetectEntity {
             return this;
         }
 
+        /**
+         * <p>Whether to include the label as a prefix in the generated token. Only applies when <code>deidentificationType</code> is <code>VAULT_TOKEN</code>. <code>NO</code> returns the raw vault token, and the value can't be re-identified later.</p>
+         */
+        @JsonSetter(value = "includePrefix", nulls = Nulls.SKIP)
+        public Builder includePrefix(Optional<DetectEntityIncludePrefix> includePrefix) {
+            this.includePrefix = includePrefix;
+            return this;
+        }
+
+        public Builder includePrefix(DetectEntityIncludePrefix includePrefix) {
+            this.includePrefix = Optional.ofNullable(includePrefix);
+            return this;
+        }
+
+        /**
+         * <p>Overrides the default entity-type prefix used in the generated token (for example, <code>NAAM</code> instead of <code>NAME</code>, producing <code>[NAAM_&lt;token&gt;]</code>). Can't be combined with <code>includePrefix: NO</code>.</p>
+         */
+        @JsonSetter(value = "prefixOverride", nulls = Nulls.SKIP)
+        public Builder prefixOverride(Optional<String> prefixOverride) {
+            this.prefixOverride = prefixOverride;
+            return this;
+        }
+
+        public Builder prefixOverride(String prefixOverride) {
+            this.prefixOverride = Optional.ofNullable(prefixOverride);
+            return this;
+        }
+
         public DetectEntity build() {
             return new DetectEntity(
-                    entityType, deidentificationType, destination, transformation, additionalProperties);
+                    entityType,
+                    deidentificationType,
+                    destination,
+                    transformation,
+                    includePrefix,
+                    prefixOverride,
+                    additionalProperties);
         }
 
         public Builder additionalProperty(String key, Object value) {

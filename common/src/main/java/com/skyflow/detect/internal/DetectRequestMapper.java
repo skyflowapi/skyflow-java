@@ -20,6 +20,7 @@ import com.skyflow.detect.Document;
 import com.skyflow.detect.Entity;
 import com.skyflow.detect.FileMapping;
 import com.skyflow.detect.Image;
+import com.skyflow.detect.IncludePrefix;
 import com.skyflow.detect.Media;
 import com.skyflow.detect.ObjectEntity;
 import com.skyflow.detect.Pdf;
@@ -45,9 +46,12 @@ import com.skyflow.generated.common.rest.types.AudioV2Bleep;
 import com.skyflow.generated.common.rest.types.AudioV2OutputTranscription;
 import com.skyflow.generated.common.rest.types.DetectConfigV2;
 import com.skyflow.generated.common.rest.types.DetectCustomTypes;
+import com.skyflow.generated.common.rest.types.DetectCustomTypesDeidentificationType;
+import com.skyflow.generated.common.rest.types.DetectCustomTypesIncludePrefix;
 import com.skyflow.generated.common.rest.types.DetectEntity;
 import com.skyflow.generated.common.rest.types.DetectEntityDeidentificationType;
 import com.skyflow.generated.common.rest.types.DetectEntityEntityType;
+import com.skyflow.generated.common.rest.types.DetectEntityIncludePrefix;
 import com.skyflow.generated.common.rest.types.DetectObjectEntity;
 import com.skyflow.generated.common.rest.types.DetectObjectEntityDeidentificationType;
 import com.skyflow.generated.common.rest.types.DetectObjectEntityEntityType;
@@ -263,7 +267,20 @@ public final class DetectRequestMapper {
         if (entity.getTransformation() != null) {
             builder.transformation(toTransformation(entity.getTransformation()));
         }
+        if (isSpecified(entity.getIncludePrefix())) {
+            builder.includePrefix(DetectEntityIncludePrefix.valueOf(entity.getIncludePrefix().name()));
+        }
+        if (entity.getPrefixOverride() != null) {
+            builder.prefixOverride(entity.getPrefixOverride());
+        }
         return builder.build();
+    }
+
+    /**
+     * INCLUDE_PREFIX_UNSPECIFIED has no REST value: the field is omitted so the server applies its default (YES).
+     */
+    private static boolean isSpecified(IncludePrefix includePrefix) {
+        return includePrefix != null && includePrefix != IncludePrefix.INCLUDE_PREFIX_UNSPECIFIED;
     }
 
     static EntityTransformation toTransformation(Transformation transformation) {
@@ -289,6 +306,19 @@ public final class DetectRequestMapper {
         }
         if (customType.getMatch() != null) {
             builder.match(customType.getMatch());
+        }
+        if (customType.getDeidentificationType() != null) {
+            builder.deidentificationType(
+                    DetectCustomTypesDeidentificationType.valueOf(customType.getDeidentificationType().name()));
+        }
+        if (customType.getDestination() != null) {
+            builder.destination(customType.getDestination());
+        }
+        if (isSpecified(customType.getIncludePrefix())) {
+            builder.includePrefix(DetectCustomTypesIncludePrefix.valueOf(customType.getIncludePrefix().name()));
+        }
+        if (customType.getPrefixOverride() != null) {
+            builder.prefixOverride(customType.getPrefixOverride());
         }
         return builder.build();
     }

@@ -525,6 +525,8 @@ Each element returned by `getDetokenizedFields()` and `getErrors()`.
 | `deidentificationType(DeidentificationType)` | `ENTITY_UNIQUE_COUNTER` | How the value is replaced. See [`DeidentificationType`](#deidentificationtype). |
 | `destination(String)` | `null` | For `VAULT_TOKEN`: where the value is stored. A `table.column` on skyvault vaults, a token group name on flowvault vaults. Must already exist. |
 | `transformation(Transformation)` | `null` | Date shifting. See [`Transformation`](#transformation). |
+| `includePrefix(IncludePrefix)` | `YES` | For `VAULT_TOKEN`: whether the entity label prefixes the token (`[NAME_<token>]`). `NO` returns the raw vault token, which cannot be re-identified. `INCLUDE_PREFIX_UNSPECIFIED` leaves the field unset. See [`IncludePrefix`](#includeprefix). |
+| `prefixOverride(String)` | `null` | For `VAULT_TOKEN`: replaces the entity-type prefix, for example `NAAM` gives `[NAAM_<token>]`. Not valid with `includePrefix(NO)`. |
 
 ### `Transformation` and `ShiftDates`
 
@@ -534,8 +536,12 @@ Each element returned by `getDetokenizedFields()` and `getErrors()`.
 
 | Builder method | Default | Description |
 |----------------|---------|-------------|
-| `label(String)` | `null` | Becomes the entity type on the response. |
+| `label(String)` | `null` | Becomes the entity type on the response and the default token prefix. |
 | `match(List<String>)` | `null` | Regexes that define the type. |
+| `deidentificationType(DeidentificationType)` | `ENTITY_UNIQUE_COUNTER` | How matches are replaced. See [`DeidentificationType`](#deidentificationtype). |
+| `destination(String)` | `null` | For `VAULT_TOKEN`: where matches are stored. A `table.column` on skyvault vaults, a token group name on flowvault vaults. Required with `VAULT_TOKEN`. |
+| `includePrefix(IncludePrefix)` | `YES` | For `VAULT_TOKEN`: whether the label prefixes the token. `NO` returns the raw vault token, which cannot be re-identified. See [`IncludePrefix`](#includeprefix). |
+| `prefixOverride(String)` | `null` | For `VAULT_TOKEN`: replaces the label as the token prefix. Not valid with `includePrefix(NO)`. |
 
 ### `ObjectEntity`
 
@@ -694,6 +700,7 @@ All in `com.skyflow.detect`.
 |------|--------|
 | `EntityType` | the 70 entity types (`NAME`, `EMAIL_ADDRESS`, `SSN`, `CREDIT_CARD`, `DOB`, ...), plus `ALL` and `NONE` |
 | `DeidentificationType` | `ENTITY_UNIQUE_COUNTER` _(default)_, `ENTITY_ONLY`, `VAULT_TOKEN`, `MASK`, `UNKNOWN` |
+| `IncludePrefix` | `YES` _(server default)_, `NO`, `INCLUDE_PREFIX_UNSPECIFIED` _(field omitted)_. `VAULT_TOKEN` only. |
 | `DeidentifySourceType` | Defined per SDK: skyvault `BASE64`, `SKYFLOW_ID`, `PRESIGNED_URL`; flowvault `BASE64`, `PRESIGNED_URL`. The `dataSource` of `deidentifyFile` and the `getOutputType()` of `DeidentifyFileResponse` and `GetRunResponse`. |
 | `ReidentifySourceType` | `BASE64`, `PRESIGNED_URL` in both SDKs. The `dataSource` of `reidentifyFile` and the `getOutputType()` of `ReidentifyFileResponse`. |
 | `FileDataFormat` | `BMP`, `CSV`, `DCM`, `DOC`, `DOCX`, `GIF`, `JPEG`, `JPG`, `JSON`, `JSONL`, `MP3`, `PDF`, `PNG`, `PPT`, `PPTX`, `TIF`, `TIFF`, `TXT`, `WAV`, `XLS`, `XLSX`, `XML`, `ZIP` |

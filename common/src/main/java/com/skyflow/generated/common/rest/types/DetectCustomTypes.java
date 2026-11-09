@@ -25,17 +25,35 @@ public final class DetectCustomTypes {
 
     private final Optional<List<String>> match;
 
+    private final Optional<DetectCustomTypesDeidentificationType> deidentificationType;
+
+    private final Optional<String> destination;
+
+    private final Optional<DetectCustomTypesIncludePrefix> includePrefix;
+
+    private final Optional<String> prefixOverride;
+
     private final Map<String, Object> additionalProperties;
 
     private DetectCustomTypes(
-            Optional<String> label, Optional<List<String>> match, Map<String, Object> additionalProperties) {
+            Optional<String> label,
+            Optional<List<String>> match,
+            Optional<DetectCustomTypesDeidentificationType> deidentificationType,
+            Optional<String> destination,
+            Optional<DetectCustomTypesIncludePrefix> includePrefix,
+            Optional<String> prefixOverride,
+            Map<String, Object> additionalProperties) {
         this.label = label;
         this.match = match;
+        this.deidentificationType = deidentificationType;
+        this.destination = destination;
+        this.includePrefix = includePrefix;
+        this.prefixOverride = prefixOverride;
         this.additionalProperties = additionalProperties;
     }
 
     /**
-     * @return Label of the custom type. <b>Note</b>: Vault tokens are currently not supported.
+     * @return Label of the custom type. Used as the entity's identity and default token prefix.
      */
     @JsonProperty("label")
     public Optional<String> getLabel() {
@@ -50,6 +68,38 @@ public final class DetectCustomTypes {
         return match;
     }
 
+    /**
+     * @return Type of deidentification to apply to matches of this custom type.
+     */
+    @JsonProperty("deidentificationType")
+    public Optional<DetectCustomTypesDeidentificationType> getDeidentificationType() {
+        return deidentificationType;
+    }
+
+    /**
+     * @return Vault destination where matches of this custom type are stored. Required when <code>deidentificationType</code> is <code>VAULT_TOKEN</code>. For vaults with a schema, specify the table and column in <code>table.column</code> format (for example, <code>persons.product</code>). For schemaless vaults, specify the token group name (for example, <code>productTokenGroup</code>).
+     */
+    @JsonProperty("destination")
+    public Optional<String> getDestination() {
+        return destination;
+    }
+
+    /**
+     * @return Whether to include the label as a prefix in the generated token. Only applies when <code>deidentificationType</code> is <code>VAULT_TOKEN</code>. <code>NO</code> returns the raw vault token, and the value can't be re-identified later.
+     */
+    @JsonProperty("includePrefix")
+    public Optional<DetectCustomTypesIncludePrefix> getIncludePrefix() {
+        return includePrefix;
+    }
+
+    /**
+     * @return Overrides the default entity-type prefix used in the generated token (for example, <code>NAAM</code> instead of <code>NAME</code>, producing <code>[NAAM_&lt;token&gt;]</code>). Can't be combined with <code>includePrefix: NO</code>.
+     */
+    @JsonProperty("prefixOverride")
+    public Optional<String> getPrefixOverride() {
+        return prefixOverride;
+    }
+
     @java.lang.Override
     public boolean equals(Object other) {
         if (this == other) return true;
@@ -62,12 +112,23 @@ public final class DetectCustomTypes {
     }
 
     private boolean equalTo(DetectCustomTypes other) {
-        return label.equals(other.label) && match.equals(other.match);
+        return label.equals(other.label)
+                && match.equals(other.match)
+                && deidentificationType.equals(other.deidentificationType)
+                && destination.equals(other.destination)
+                && includePrefix.equals(other.includePrefix)
+                && prefixOverride.equals(other.prefixOverride);
     }
 
     @java.lang.Override
     public int hashCode() {
-        return Objects.hash(this.label, this.match);
+        return Objects.hash(
+                this.label,
+                this.match,
+                this.deidentificationType,
+                this.destination,
+                this.includePrefix,
+                this.prefixOverride);
     }
 
     @java.lang.Override
@@ -85,6 +146,14 @@ public final class DetectCustomTypes {
 
         private Optional<List<String>> match = Optional.empty();
 
+        private Optional<DetectCustomTypesDeidentificationType> deidentificationType = Optional.empty();
+
+        private Optional<String> destination = Optional.empty();
+
+        private Optional<DetectCustomTypesIncludePrefix> includePrefix = Optional.empty();
+
+        private Optional<String> prefixOverride = Optional.empty();
+
         @JsonAnySetter
         private Map<String, Object> additionalProperties = new HashMap<>();
 
@@ -93,11 +162,15 @@ public final class DetectCustomTypes {
         public Builder from(DetectCustomTypes other) {
             label(other.getLabel());
             match(other.getMatch());
+            deidentificationType(other.getDeidentificationType());
+            destination(other.getDestination());
+            includePrefix(other.getIncludePrefix());
+            prefixOverride(other.getPrefixOverride());
             return this;
         }
 
         /**
-         * <p>Label of the custom type. <b>Note</b>: Vault tokens are currently not supported.</p>
+         * <p>Label of the custom type. Used as the entity's identity and default token prefix.</p>
          */
         @JsonSetter(value = "label", nulls = Nulls.SKIP)
         public Builder label(Optional<String> label) {
@@ -124,8 +197,71 @@ public final class DetectCustomTypes {
             return this;
         }
 
+        /**
+         * <p>Type of deidentification to apply to matches of this custom type.</p>
+         */
+        @JsonSetter(value = "deidentificationType", nulls = Nulls.SKIP)
+        public Builder deidentificationType(Optional<DetectCustomTypesDeidentificationType> deidentificationType) {
+            this.deidentificationType = deidentificationType;
+            return this;
+        }
+
+        public Builder deidentificationType(DetectCustomTypesDeidentificationType deidentificationType) {
+            this.deidentificationType = Optional.ofNullable(deidentificationType);
+            return this;
+        }
+
+        /**
+         * <p>Vault destination where matches of this custom type are stored. Required when <code>deidentificationType</code> is <code>VAULT_TOKEN</code>. For vaults with a schema, specify the table and column in <code>table.column</code> format (for example, <code>persons.product</code>). For schemaless vaults, specify the token group name (for example, <code>productTokenGroup</code>).</p>
+         */
+        @JsonSetter(value = "destination", nulls = Nulls.SKIP)
+        public Builder destination(Optional<String> destination) {
+            this.destination = destination;
+            return this;
+        }
+
+        public Builder destination(String destination) {
+            this.destination = Optional.ofNullable(destination);
+            return this;
+        }
+
+        /**
+         * <p>Whether to include the label as a prefix in the generated token. Only applies when <code>deidentificationType</code> is <code>VAULT_TOKEN</code>. <code>NO</code> returns the raw vault token, and the value can't be re-identified later.</p>
+         */
+        @JsonSetter(value = "includePrefix", nulls = Nulls.SKIP)
+        public Builder includePrefix(Optional<DetectCustomTypesIncludePrefix> includePrefix) {
+            this.includePrefix = includePrefix;
+            return this;
+        }
+
+        public Builder includePrefix(DetectCustomTypesIncludePrefix includePrefix) {
+            this.includePrefix = Optional.ofNullable(includePrefix);
+            return this;
+        }
+
+        /**
+         * <p>Overrides the default entity-type prefix used in the generated token (for example, <code>NAAM</code> instead of <code>NAME</code>, producing <code>[NAAM_&lt;token&gt;]</code>). Can't be combined with <code>includePrefix: NO</code>.</p>
+         */
+        @JsonSetter(value = "prefixOverride", nulls = Nulls.SKIP)
+        public Builder prefixOverride(Optional<String> prefixOverride) {
+            this.prefixOverride = prefixOverride;
+            return this;
+        }
+
+        public Builder prefixOverride(String prefixOverride) {
+            this.prefixOverride = Optional.ofNullable(prefixOverride);
+            return this;
+        }
+
         public DetectCustomTypes build() {
-            return new DetectCustomTypes(label, match, additionalProperties);
+            return new DetectCustomTypes(
+                    label,
+                    match,
+                    deidentificationType,
+                    destination,
+                    includePrefix,
+                    prefixOverride,
+                    additionalProperties);
         }
 
         public Builder additionalProperty(String key, Object value) {

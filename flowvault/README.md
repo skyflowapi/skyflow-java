@@ -1708,9 +1708,9 @@ System.out.println(response.getMetrics().getWordCount());
 | Class | Builder methods | Notes |
 |-------|-----------------|-------|
 | `Detect` | `entities`, `objectEntities`, `restrict`, `skip`, `customTypes`, `returnEntities` | `restrict` and `skip` are regexes that are always, respectively never, treated as sensitive. `returnEntities` is `EXCLUDE_SENSITIVE_DATA` (server default), `ALL` or `NONE`. |
-| `Entity` | `entityType`, `deidentificationType`, `destination`, `transformation` | `entityType` defaults to `ALL`. `deidentificationType` is `ENTITY_UNIQUE_COUNTER` (server default), `ENTITY_ONLY`, `MASK` or `VAULT_TOKEN`. `destination` is used only with `VAULT_TOKEN`. |
+| `Entity` | `entityType`, `deidentificationType`, `destination`, `transformation`, `includePrefix`, `prefixOverride` | `entityType` defaults to `ALL`. `deidentificationType` is `ENTITY_UNIQUE_COUNTER` (server default), `ENTITY_ONLY`, `MASK` or `VAULT_TOKEN`. `destination`, `includePrefix` and `prefixOverride` apply only with `VAULT_TOKEN`: `includePrefix` is `YES` (server default), `NO` (raw token, cannot be re-identified) or `INCLUDE_PREFIX_UNSPECIFIED` (field omitted); `prefixOverride` replaces the entity-type prefix in the token and is not valid with `includePrefix` `NO`. |
 | `Transformation` / `ShiftDates` | `shiftDates(ShiftDates)`; `minDays`, `maxDays` | Shifts detected dates by a random number of days within the range. |
-| `CustomType` | `label`, `match` | A regex-defined entity type. `label` is reported as the entity type of its matches. |
+| `CustomType` | `label`, `match`, `deidentificationType`, `destination`, `includePrefix`, `prefixOverride` | A regex-defined entity type. `label` is reported as the entity type of its matches and is the default token prefix. The remaining fields work as on `Entity`; `destination` is required with `VAULT_TOKEN`. |
 | `ObjectEntity` | `entityType`, `deidentificationType` | Visual objects in images: `FACE`, `LICENSE_PLATE`, `LOGO`, `SIGNATURE` or `ALL`, handled with `REDACT` or `UNREDACT`. File inputs only. |
 | `FileMapping` | `source`, `destination`, `outputFileNameSuffix`, `entitiesDestination`, `objectEntitiesDestination` | Where the processed file and the entity files are written. File inputs only. |
 | `Media` | `audio(Audio)`, `document(Document)`, `image(Image)` | Media-type options. File inputs only. |

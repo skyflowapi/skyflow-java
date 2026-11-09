@@ -8,12 +8,16 @@ public final class Entity {
     private final DeidentificationType deidentificationType;
     private final String destination;
     private final Transformation transformation;
+    private final IncludePrefix includePrefix;
+    private final String prefixOverride;
 
     private Entity(EntityBuilder builder) {
         this.entityType = builder.entityType;
         this.deidentificationType = builder.deidentificationType;
         this.destination = builder.destination;
         this.transformation = builder.transformation;
+        this.includePrefix = builder.includePrefix;
+        this.prefixOverride = builder.prefixOverride;
     }
 
     /**
@@ -51,6 +55,20 @@ public final class Entity {
         return transformation;
     }
 
+    /**
+     * @return Whether the entity label is included as a prefix in the generated token. Defaults to YES on the server. Only used with VAULT_TOKEN.
+     */
+    public IncludePrefix getIncludePrefix() {
+        return includePrefix;
+    }
+
+    /**
+     * @return Replacement for the default entity-type prefix in the generated token. Not valid when includePrefix is NO.
+     */
+    public String getPrefixOverride() {
+        return prefixOverride;
+    }
+
     @Override
     public String toString() {
         return "Entity{" +
@@ -58,6 +76,8 @@ public final class Entity {
                 ", deidentificationType=" + deidentificationType +
                 ", destination=" + destination +
                 ", transformation=" + transformation +
+                ", includePrefix=" + includePrefix +
+                ", prefixOverride=" + prefixOverride +
                 '}';
     }
 
@@ -66,6 +86,8 @@ public final class Entity {
         private DeidentificationType deidentificationType;
         private String destination;
         private Transformation transformation;
+        private IncludePrefix includePrefix;
+        private String prefixOverride;
 
         private EntityBuilder() {
         }
@@ -103,6 +125,24 @@ public final class Entity {
          */
         public EntityBuilder transformation(Transformation transformation) {
             this.transformation = transformation;
+            return this;
+        }
+
+        /**
+         * @param includePrefix Whether the entity label is included as a prefix in the generated token. Defaults to YES on the server. Only used with VAULT_TOKEN. NO returns the raw vault token, which cannot be re-identified later.
+         * @return this builder
+         */
+        public EntityBuilder includePrefix(IncludePrefix includePrefix) {
+            this.includePrefix = includePrefix;
+            return this;
+        }
+
+        /**
+         * @param prefixOverride Replacement for the default entity-type prefix in the generated token, for example NAAM instead of NAME, producing [NAAM_&lt;token&gt;]. Not valid when includePrefix is NO.
+         * @return this builder
+         */
+        public EntityBuilder prefixOverride(String prefixOverride) {
+            this.prefixOverride = prefixOverride;
             return this;
         }
 

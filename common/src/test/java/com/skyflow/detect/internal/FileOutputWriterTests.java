@@ -41,6 +41,28 @@ public class FileOutputWriterTests {
     }
 
     @Test
+    public void stripExtensionFallsBackToOutputForMissingNames() {
+        Assert.assertEquals("output", FileOutputWriter.stripExtension(null));
+        Assert.assertEquals("output", FileOutputWriter.stripExtension(""));
+        Assert.assertEquals("invoice", FileOutputWriter.stripExtension("invoice.pdf"));
+        Assert.assertEquals("archive.tar", FileOutputWriter.stripExtension("archive.tar.gz"));
+        Assert.assertEquals("README", FileOutputWriter.stripExtension("README"));
+        Assert.assertEquals(".hidden", FileOutputWriter.stripExtension(".hidden"));
+    }
+
+    @Test
+    public void nestedOutputDirectoryIsCreatedOnDemand() throws Exception {
+        File nested = new File(folder.getRoot(), "a/b/c");
+        Assert.assertFalse(nested.exists());
+        List<File> written = FileOutputWriter.write(
+                Collections.singletonList(new FileOutput(b64("x"), "REDACTED_FILE", FileDataFormat.TXT)),
+                TestDeidentifySource.BASE64, "n.txt", nested.getPath());
+        Assert.assertEquals(1, written.size());
+        Assert.assertEquals(nested, written.get(0).getParentFile());
+        Assert.assertEquals("processed-n.txt", written.get(0).getName());
+    }
+
+    @Test
     public void entityOutputsCarryTheirTypeInTheName() throws Exception {
         List<File> written = FileOutputWriter.write(Arrays.asList(
                 new FileOutput(b64("a"), "ENTITIES", FileDataFormat.JSON),

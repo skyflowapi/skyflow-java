@@ -11,10 +11,17 @@ import com.skyflow.utils.Utils;
 
 /**
  * Skyflow Detect operations for a flowvault vault, returned by {@code Skyflow.detect()} and
- * {@code Skyflow.detect(vaultId)}. The shared Detect V2 methods are inherited from
- * {@link BaseDetectController} and shared with the skyvault SDK; this class only supplies the
- * flowvault URL rules, SDK metrics and the vault-level timeout and retry overrides from
- * {@link VaultConfig}.
+ * {@code Skyflow.detect(vaultId)}. Every Detect V2 method ({@code deidentifyString},
+ * {@code deidentifyFile}, {@code getRun}, {@code reidentifyString}, {@code reidentifyFile},
+ * {@code checkGuardrails}) is inherited from {@link BaseDetectController} and shared with the
+ * skyvault SDK; this class supplies the flowvault URL rules, the SDK metrics, the vault-level timeout
+ * and retry overrides from {@link VaultConfig}, and the mapping of a response's {@code outputType} onto
+ * this SDK's {@code DeidentifySourceType} / {@code ReidentifySourceType}.
+ *
+ * <p>Vault-specific types for flowvault: {@code DeidentifySourceType} and {@code ReidentifySourceType}
+ * both offer {@code BASE64} and {@code PRESIGNED_URL} only (flowvault vaults do not accept a skyflow id);
+ * {@code RedactionLevel} rules use {@code tokenGroupName} and {@code redactionPattern}; a
+ * {@code VAULT_TOKEN} entity's {@code destination} is a token-group name.
  */
 public final class DetectController extends BaseDetectController<VaultConfig> {
     private static final int DEFAULT_TIMEOUT_SECONDS = 60;
