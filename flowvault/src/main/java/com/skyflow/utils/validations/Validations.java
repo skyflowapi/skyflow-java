@@ -767,19 +767,19 @@ public class Validations extends BaseValidations {
             LogUtil.printErrorLog(Utils.parameterizedString(
                     ErrorLogs.QUERY_REQUEST_NULL.getLog(), InterfaceName.QUERY.getName()
             ));
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.QueryRequestNull.getMessage());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), BaseErrorMessage.QueryRequestNull.getMessage());
         }
         String query = queryRequest.getQuery();
         if (query == null) {
             LogUtil.printErrorLog(Utils.parameterizedString(
                     ErrorLogs.QUERY_IS_REQUIRED.getLog(), InterfaceName.QUERY.getName()
             ));
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.QueryKeyError.getMessage());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), BaseErrorMessage.QueryKeyError.getMessage());
         } else if (query.trim().isEmpty()) {
             LogUtil.printErrorLog(Utils.parameterizedString(
                     ErrorLogs.EMPTY_QUERY.getLog(), InterfaceName.QUERY.getName()
             ));
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.EmptyQuery.getMessage());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), BaseErrorMessage.EmptyQuery.getMessage());
         }
     }
 
