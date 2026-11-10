@@ -4,6 +4,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
+import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.generated.rest.ApiClient;
 import com.skyflow.generated.rest.ApiClientBuilder;
@@ -12,6 +13,7 @@ import com.skyflow.generated.rest.resources.query.QueryClient;
 import com.skyflow.generated.rest.resources.records.RecordsClient;
 import com.skyflow.generated.rest.resources.tokens.TokensClient;
 import com.skyflow.utils.SkyflowRetryInterceptor;
+import com.skyflow.utils.SuccessBodyInterceptor;
 import com.skyflow.utils.Utils;
 
 import okhttp3.ConnectionPool;
@@ -20,6 +22,9 @@ import okhttp3.OkHttpClient;
 public class VaultClient extends BaseVaultClient<VaultConfig> {
     private final ApiClientBuilder apiClientBuilder;
     private ApiClient apiClient;
+    // Cached signed-URL upload client and the vault HTTP client it was derived from.
+    private OkHttpClient signedUrlHttpClient;
+    private OkHttpClient signedUrlHttpClientBase;
     // Client-wide (Skyflow builder) HTTP config; null => fall back to the SDK defaults below.
     private Integer commonTimeout;
     private Integer commonConnectTimeout;
@@ -107,13 +112,19 @@ public class VaultClient extends BaseVaultClient<VaultConfig> {
      * is sent. The overall call timeout is lifted: it bounds a whole vault call, and a large file
      * can take longer than that to transfer while still making steady progress.
      */
-    protected OkHttpClient getSignedUrlHttpClient() {
-        OkHttpClient.Builder builder = sharedHttpClient == null
-                ? new OkHttpClient.Builder()
-                : sharedHttpClient.newBuilder();
-        builder.interceptors().clear();
-        builder.networkInterceptors().clear();
-        return builder.callTimeout(0, TimeUnit.SECONDS).build();
+    protected synchronized OkHttpClient getSignedUrlHttpClient() {
+        // Built once per vault client and rebuilt only when the vault client itself is, so every
+        // uploaded file reuses it instead of paying for a new OkHttpClient each time.
+        if (signedUrlHttpClient == null || signedUrlHttpClientBase != sharedHttpClient) {
+            OkHttpClient.Builder builder = sharedHttpClient == null
+                    ? new OkHttpClient.Builder()
+                    : sharedHttpClient.newBuilder();
+            builder.interceptors().clear();
+            builder.networkInterceptors().clear();
+            signedUrlHttpClient = builder.callTimeout(0, TimeUnit.SECONDS).build();
+            signedUrlHttpClientBase = sharedHttpClient;
+        }
+        return signedUrlHttpClient;
     }
 
     protected void setCommonCredentials(Credentials commonCredentials) throws SkyflowException {
@@ -122,7 +133,15 @@ public class VaultClient extends BaseVaultClient<VaultConfig> {
     }
 
     protected synchronized void setBearerToken() throws SkyflowException {
-        super.setBearerToken(this.vaultConfig.getCredentials());
+        try {
+            super.setBearerToken(this.vaultConfig.getCredentials());
+        } catch (RuntimeException e) {
+            // Credential resolution in common wraps unexpected failures in a bare RuntimeException;
+            // surface them as a SkyflowException (with the underlying cause) like every other failure.
+            Throwable cause = e.getClass() == RuntimeException.class && e.getCause() != null ? e.getCause() : e;
+            throw new SkyflowException(cause.getMessage() != null ? cause.getMessage()
+                    : ErrorMessage.CredentialResolutionFailed.getMessage(), cause);
+        }
         if (apiClient == null) {
             updateExecutorInHTTP();
             this.apiClient = this.apiClientBuilder.build();
@@ -198,7 +217,10 @@ public class VaultClient extends BaseVaultClient<VaultConfig> {
                         .addInterceptor(new SkyflowRetryInterceptor(maxRetries, initialRetryDelayMillis, maxRetryDelayMillis))
                         // INNER: auth, shared with skyvault. Attaches the token and, on a 401 for an
                         // expired SDK-generated token, regenerates once and resends once.
-                        .addInterceptor(authInterceptor(this::getToken));
+                        .addInterceptor(authInterceptor(this::getToken))
+                        // INNERMOST: turns blank or non-JSON 2xx bodies from query, getTokens,
+                        // uploadFiles and deleteFiles into an empty response or a proper error.
+                        .addInterceptor(new SuccessBodyInterceptor());
                 if (connectTimeout != null) {
                     httpBuilder.connectTimeout(connectTimeout, TimeUnit.SECONDS);
                 }

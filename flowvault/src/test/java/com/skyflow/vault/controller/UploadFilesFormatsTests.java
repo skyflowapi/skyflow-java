@@ -430,7 +430,9 @@ public class UploadFilesFormatsTests {
         Assert.assertEquals(UploadStatus.FAILED, columns.get(1).getUploadStatus());
         Assert.assertEquals("PUT failed: 415", columns.get(1).getError());
         Assert.assertEquals(UploadStatus.UPLOADED, columns.get(2).getUploadStatus());
-        Assert.assertNull(response.getRecords().get(0).getError());
+        // the record reports that a file was not uploaded; its status stays the signed-URL step's
+        Assert.assertEquals("1 of 3 files were not uploaded. See each column for details.",
+                response.getRecords().get(0).getError());
         Assert.assertEquals(200, response.getRecords().get(0).getHttpCode());
     }
 

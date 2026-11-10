@@ -20,6 +20,7 @@ import com.skyflow.VaultClient;
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.UploadStatus;
+import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.generated.rest.core.ApiClientApiException;
 import com.skyflow.generated.rest.core.ApiClientException;
@@ -44,6 +45,7 @@ import com.skyflow.logs.ErrorLogs;
 import com.skyflow.logs.InfoLogs;
 import com.skyflow.logs.WarningLogs;
 import com.skyflow.utils.Constants;
+import com.skyflow.utils.UnparseableResponseException;
 import com.skyflow.utils.Utils;
 import com.skyflow.utils.logger.LogUtil;
 import com.skyflow.utils.validations.Validations;
@@ -127,6 +129,45 @@ public final class VaultController extends VaultClient {
             this.batchSize = batchSize;
             this.concurrencyLimit = concurrencyLimit;
         }
+    }
+
+    /**
+     * Runs the caller's interceptor, if any. Its exceptions surface as a SkyflowException (cause
+     * attached, the interceptor's own message kept, as the bulk paths do) instead of escaping the
+     * SDK unwrapped.
+     */
+    private static void runInterceptor(RequestInterceptor interceptor, RequestContext ctx) throws SkyflowException {
+        if (interceptor == null) {
+            return;
+        }
+        try {
+            interceptor.intercept(ctx);
+        } catch (ApiClientException e) {
+            // A vault-shaped error raised by the interceptor keeps flowing to the caller's
+            // ApiClientApiException / ApiClientException handling, as on the bulk paths.
+            throw e;
+        } catch (RuntimeException e) {
+            LogUtil.printErrorLog(ErrorMessage.RequestInterceptorFailed.getMessage());
+            String message = e.getMessage() != null ? e.getMessage() : ErrorMessage.RequestInterceptorFailed.getMessage();
+            throw new SkyflowException(message, e);
+        }
+    }
+
+    /**
+     * A failure the generated client raised without a vault error body. A 2xx response whose body
+     * was not JSON keeps its real status and body (see SuccessBodyInterceptor); anything else,
+     * such as a network failure, is wrapped as before.
+     */
+    private static SkyflowException clientFailure(ApiClientException e) {
+        if (e.getCause() instanceof UnparseableResponseException) {
+            UnparseableResponseException unparseable = (UnparseableResponseException) e.getCause();
+            Map<String, Object> body = new HashMap<>();
+            body.put("message", Utils.parameterizedString(
+                    ErrorMessage.UnparseableSuccessResponse.getMessage(), unparseable.getBody()));
+            return new SkyflowException(unparseable.getStatusCode(), e, unparseable.getHeaders(),
+                    Utils.errorBodyJson(body, unparseable.getStatusCode()));
+        }
+        return new SkyflowException(e);
     }
 
     private RequestOptions buildRequestOptions(RequestContext context) {
@@ -692,22 +733,27 @@ public final class VaultController extends VaultClient {
             setBearerToken();
             ExecuteQueryRequest request = Utils.getQueryRequestBody(queryRequest, this.getVaultConfig().getVaultId());
             RequestInterceptor interceptor = options != null ? options.getInterceptor() : null;
-            RequestContext ctx = new RequestContext("QUERY", 0, 1);
-            if (interceptor != null) interceptor.intercept(ctx);
+            RequestContext ctx = new RequestContext("QUERY");
+            runInterceptor(interceptor, ctx);
 
             ApiClientHttpResponse<ExecuteQueryResponse> response =
                     this.getQueryApi().withRawResponse().executeQuery(request, buildRequestOptions(ctx));
 
             QueryResponse formattedResponse = Utils.formatQueryResponse(response.body(), response.headers());
+            // The vault returns at most QUERY_RECORD_LIMIT rows and gives no sign of truncation, so
+            // a full page is the only hint that more rows may match.
+            if (formattedResponse.getRecords().size() >= Constants.QUERY_RECORD_LIMIT) {
+                LogUtil.printWarningLog(Constants.QUERY_RECORD_LIMIT_REACHED_WARNING);
+            }
             LogUtil.printInfoLog(InfoLogs.QUERY_REQUEST_RESOLVED.getLog());
             return formattedResponse;
         } catch (ApiClientApiException e) {
-            String bodyString = gson.toJson(Utils.errorBody(e));
+            String bodyString = Utils.errorBodyJson(Utils.errorBody(e), e.statusCode());
             LogUtil.printErrorLog(ErrorLogs.QUERY_REQUEST_REJECTED.getLog());
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
         } catch (ApiClientException e) {
             LogUtil.printErrorLog(ErrorLogs.QUERY_REQUEST_REJECTED.getLog());
-            throw new SkyflowException(e);
+            throw clientFailure(e);
         }
     }
 
@@ -728,8 +774,8 @@ public final class VaultController extends VaultClient {
             setBearerToken();
             GetTokensFromValuesRequest request = Utils.getGetTokensRequestBody(getTokensRequest, this.getVaultConfig().getVaultId());
             RequestInterceptor interceptor = options != null ? options.getInterceptor() : null;
-            RequestContext ctx = new RequestContext("GET_TOKENS", 0, 1);
-            if (interceptor != null) interceptor.intercept(ctx);
+            RequestContext ctx = new RequestContext("GET_TOKENS");
+            runInterceptor(interceptor, ctx);
 
             ApiClientHttpResponse<GetTokensFromValuesResponse> response =
                     this.getTokensApi().withRawResponse().getTokens(request, buildRequestOptions(ctx));
@@ -745,12 +791,12 @@ public final class VaultController extends VaultClient {
             if (fallback != null) {
                 return fallback;
             }
-            String bodyString = gson.toJson(Utils.errorBody(e));
+            String bodyString = Utils.errorBodyJson(Utils.errorBody(e), e.statusCode());
             LogUtil.printErrorLog(ErrorLogs.GET_TOKENS_REQUEST_REJECTED.getLog());
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
         } catch (ApiClientException e) {
             LogUtil.printErrorLog(ErrorLogs.GET_TOKENS_REQUEST_REJECTED.getLog());
-            throw new SkyflowException(e);
+            throw clientFailure(e);
         }
     }
 
@@ -768,37 +814,35 @@ public final class VaultController extends VaultClient {
             throws SkyflowException {
         LogUtil.printInfoLog(InfoLogs.UPLOAD_FILES_TRIGGERED.getLog());
         ApiClientHttpResponse<FileUploadResponse> response;
-        Map<UploadFilesRequestColumn, byte[]> decodedBase64;
         try {
             LogUtil.printInfoLog(InfoLogs.VALIDATING_UPLOAD_FILES_REQUEST.getLog());
             Validations.validateUploadFilesRequest(uploadFilesRequest);
-            decodedBase64 = Utils.decodeBase64Columns(uploadFilesRequest);
+            Utils.validateBase64Columns(uploadFilesRequest);
 
             setBearerToken();
             FileUploadRequest request = Utils.getUploadFilesRequestBody(uploadFilesRequest, this.getVaultConfig().getVaultId());
             RequestInterceptor interceptor = options != null ? options.getInterceptor() : null;
-            RequestContext ctx = new RequestContext("UPLOAD_FILES", 0, 1);
-            if (interceptor != null) interceptor.intercept(ctx);
+            RequestContext ctx = new RequestContext("UPLOAD_FILES");
+            runInterceptor(interceptor, ctx);
 
             response = this.getFilesApi().withRawResponse().uploadFiles(request, buildRequestOptions(ctx));
         } catch (ApiClientApiException e) {
-            String bodyString = gson.toJson(Utils.uploadFilesErrorBody(e));
+            String bodyString = Utils.errorBodyJson(Utils.uploadFilesErrorBody(e), e.statusCode());
             LogUtil.printErrorLog(ErrorLogs.UPLOAD_FILES_REQUEST_REJECTED.getLog());
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
         } catch (ApiClientException e) {
             LogUtil.printErrorLog(ErrorLogs.UPLOAD_FILES_REQUEST_REJECTED.getLog());
-            throw new SkyflowException(e);
+            throw clientFailure(e);
         }
 
         LogUtil.printInfoLog(InfoLogs.UPLOADING_FILES_TO_SIGNED_URLS.getLog());
         UploadFilesResponse formattedResponse = uploadToSignedUrls(
-                uploadFilesRequest.getRecords(), decodedBase64, response.body(), response.headers());
+                uploadFilesRequest.getRecords(), response.body(), response.headers());
         LogUtil.printInfoLog(InfoLogs.UPLOAD_FILES_REQUEST_RESOLVED.getLog());
         return formattedResponse;
     }
 
     private UploadFilesResponse uploadToSignedUrls(List<UploadFilesRequestRecord> requested,
-                                                   Map<UploadFilesRequestColumn, byte[]> decodedBase64,
                                                    FileUploadResponse body, Map<String, List<String>> headers) {
         List<FileUploadResponseObject> returned = body != null && body.getRecords() != null
                 ? body.getRecords() : Collections.emptyList();
@@ -836,7 +880,7 @@ public final class VaultController extends VaultClient {
                     errors[i] = Utils.UPLOAD_RESPONSE_MISMATCH_ERROR;
                 }
                 if (errors[i] == null) {
-                    uploads.add(uploadColumns(requested.get(i), decodedBase64,
+                    uploads.add(uploadColumns(requested.get(i),
                             record.getData().orElse(Collections.emptyMap()), executor));
                 } else {
                     uploads.add(Collections.emptyList());
@@ -853,8 +897,18 @@ public final class VaultController extends VaultClient {
                     columns = Utils.skippedUploadColumns(requested.get(i), error);
                 } else {
                     columns = new ArrayList<>();
+                    int notUploaded = 0;
                     for (CompletableFuture<UploadFilesColumnResult> column : uploads.get(i)) {
-                        columns.add(column.join());
+                        UploadFilesColumnResult result = column.join();
+                        if (result.getUploadStatus() != UploadStatus.UPLOADED) {
+                            notUploaded++;
+                        }
+                        columns.add(result);
+                    }
+                    // Phase A succeeded, but a file that never reached storage is still a failure
+                    // the caller must see on the record, not only on its column.
+                    if (notUploaded > 0) {
+                        error = Utils.uploadColumnsFailedError(notUploaded, columns.size());
                     }
                 }
                 records.add(new UploadFilesResponseRecord(record.getSkyflowId(), record.getTableName(), columns,
@@ -867,7 +921,6 @@ public final class VaultController extends VaultClient {
     }
 
     private List<CompletableFuture<UploadFilesColumnResult>> uploadColumns(UploadFilesRequestRecord requestRecord,
-                                                                           Map<UploadFilesRequestColumn, byte[]> decodedBase64,
                                                                            Map<String, Object> signedUrls,
                                                                            ExecutorService executor) {
         List<CompletableFuture<UploadFilesColumnResult>> columns = new ArrayList<>();
@@ -875,29 +928,28 @@ public final class VaultController extends VaultClient {
             Object signedUrl = signedUrls.get(column.getColumn());
             if (signedUrl == null) {
                 columns.add(CompletableFuture.completedFuture(new UploadFilesColumnResult(
-                        column.getColumn(), Utils.resolveUploadFileName(column), UploadStatus.SKIPPED, null)));
+                        column.getColumn(), Utils.resolveUploadFileName(column), UploadStatus.SKIPPED,
+                        Utils.NO_SIGNED_URL_ERROR)));
                 continue;
             }
             columns.add(CompletableFuture.supplyAsync(
-                    () -> uploadColumn(column, decodedBase64.get(column), signedUrl.toString()), executor));
+                    () -> uploadColumn(column, signedUrl.toString()), executor));
         }
         return columns;
     }
 
     /** PUTs one column's file; a failure is reported on that column only. */
-    private UploadFilesColumnResult uploadColumn(UploadFilesRequestColumn column, byte[] decodedBase64,
-                                                 String signedUrl) {
+    private UploadFilesColumnResult uploadColumn(UploadFilesRequestColumn column, String signedUrl) {
         String fileName = Utils.resolveUploadFileName(column);
         String error = null;
         try {
-            RequestBody fileBody = Utils.buildUploadFileBody(
-                    column, decodedBase64, Utils.resolveUploadContentType(fileName));
+            RequestBody fileBody = Utils.buildUploadFileBody(column, Utils.resolveUploadContentType(fileName));
             int status = signedUrlUploader.upload(signedUrl, fileBody);
             if (status < 200 || status >= 300) {
-                error = "PUT failed: " + status;
+                error = Utils.PUT_FAILED_ERROR_PREFIX + status;
             }
         } catch (IOException | RuntimeException e) {
-            error = "PUT failed: " + (e.getMessage() != null ? e.getMessage() : e.toString());
+            error = Utils.PUT_FAILED_ERROR_PREFIX + (e.getMessage() != null ? e.getMessage() : e.toString());
         }
         if (error != null) {
             LogUtil.printErrorLog(Utils.parameterizedString(
@@ -943,8 +995,8 @@ public final class VaultController extends VaultClient {
             setBearerToken();
             FileDeleteRequest request = Utils.getDeleteFilesRequestBody(deleteFilesRequest, this.getVaultConfig().getVaultId());
             RequestInterceptor interceptor = options != null ? options.getInterceptor() : null;
-            RequestContext ctx = new RequestContext("DELETE_FILES", 0, 1);
-            if (interceptor != null) interceptor.intercept(ctx);
+            RequestContext ctx = new RequestContext("DELETE_FILES");
+            runInterceptor(interceptor, ctx);
 
             ApiClientHttpResponse<FileDeleteResponse> response =
                     this.getFilesApi().withRawResponse().deleteFiles(request, buildRequestOptions(ctx));
@@ -960,12 +1012,12 @@ public final class VaultController extends VaultClient {
             if (fallback != null) {
                 return fallback;
             }
-            String bodyString = gson.toJson(Utils.errorBody(e));
+            String bodyString = Utils.errorBodyJson(Utils.errorBody(e), e.statusCode());
             LogUtil.printErrorLog(ErrorLogs.DELETE_FILES_REQUEST_REJECTED.getLog());
             throw new SkyflowException(e.statusCode(), e, e.headers(), bodyString);
         } catch (ApiClientException e) {
             LogUtil.printErrorLog(ErrorLogs.DELETE_FILES_REQUEST_REJECTED.getLog());
-            throw new SkyflowException(e);
+            throw clientFailure(e);
         }
     }
 

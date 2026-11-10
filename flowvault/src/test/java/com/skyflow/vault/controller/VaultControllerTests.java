@@ -89,6 +89,7 @@ import com.skyflow.vault.data.InsertResponse;
 import com.skyflow.vault.data.QueryOptions;
 import com.skyflow.vault.data.QueryRequest;
 import com.skyflow.vault.data.QueryResponse;
+import com.skyflow.vault.data.RequestContext;
 import com.skyflow.vault.data.RequestInterceptor;
 import com.skyflow.vault.data.Token;
 import com.skyflow.vault.data.TokenGroupRedactions;
@@ -840,8 +841,9 @@ public class VaultControllerTests {
         Assert.assertEquals("sky-new", created.getSkyflowId());
         Assert.assertEquals("onboarding", created.getTableName());
         Assert.assertEquals(200, created.getHttpCode());
-        Assert.assertNull(created.getError());
-        Assert.assertNull(created.getRequestId());
+        // one of its two files failed to upload, so the record carries an error and the request id
+        Assert.assertEquals("1 of 2 files were not uploaded. See each column for details.", created.getError());
+        Assert.assertEquals("req-test-123", created.getRequestId());
         List<UploadFilesColumnResult> columns = columnsOf(created);
         Assert.assertEquals("resumePDF", columns.get(0).getColumn());
         Assert.assertEquals("resume.pdf", columns.get(0).getFileName());
@@ -922,8 +924,9 @@ public class VaultControllerTests {
         Assert.assertEquals(UploadStatus.FAILED, columns.get(1).getUploadStatus());
         Assert.assertEquals("PUT failed: connection reset", columns.get(1).getError());
         Assert.assertEquals(UploadStatus.SKIPPED, columns.get(2).getUploadStatus());
-        Assert.assertNull(columns.get(2).getError());
-        Assert.assertNull(response.getRecords().get(0).getError());
+        Assert.assertEquals(com.skyflow.utils.Utils.NO_SIGNED_URL_ERROR, columns.get(2).getError());
+        Assert.assertEquals("2 of 3 files were not uploaded. See each column for details.",
+                response.getRecords().get(0).getError());
     }
 
     @Test
@@ -1139,7 +1142,7 @@ public class VaultControllerTests {
         Assert.assertEquals(2, response.getRecords().size());
         DeleteFilesResponseRecord ok = response.getRecords().get(0);
         Assert.assertEquals("sky-1", ok.getSkyflowId());
-        Assert.assertEquals("DELETED", columnsOf(ok).get(1).getStatus());
+        Assert.assertEquals(com.skyflow.enums.DeleteFilesStatus.DELETED, columnsOf(ok).get(1).getStatus());
         Assert.assertNull(ok.getRequestId());
         DeleteFilesResponseRecord failed = response.getRecords().get(1);
         Assert.assertNull(failed.getColumns());
@@ -2412,6 +2415,207 @@ public class VaultControllerTests {
                         UploadFilesRequestColumn.builder().column("kyc").base64("a3lj").fileName("kyc.txt").build()))
                         .build())).build()));
         assertTransportFailure(() -> controller.deleteFiles(deleteFilesRequest()));
+    }
+
+    // ── query / getTokens / uploadFiles / deleteFiles: whole-call error shapes ─
+
+    private static final QueryRequest QUERY_REQUEST = QueryRequest.builder().query("SELECT * FROM table1").build();
+
+    private static GetTokensRequest getTokensRequest() {
+        return GetTokensRequest.builder().records(Collections.singletonList(GetTokensRequestRecord.builder()
+                .value("john@example.com").tokenGroupName("det_group").build())).build();
+    }
+
+    private static UploadFilesRequest uploadFilesRequest() {
+        return UploadFilesRequest.builder().records(Collections.singletonList(
+                UploadFilesRequestRecord.builder().tableName("onboarding").columns(Collections.singletonList(
+                        UploadFilesRequestColumn.builder().column("kyc").base64("a3lj").fileName("kyc.txt").build()))
+                        .build())).build();
+    }
+
+    /** Stubs all four operations to throw {@code error} and asserts each surfaces it as expected. */
+    private static void assertNewUnaryOperationsThrow(ApiClientApiException error, int expectedCode,
+                                                      String expectedMessage) throws Exception {
+        ApiClient mockApi = Mockito.mock(ApiClient.class);
+        MockRaw mockRaw = mockRawFlowservice(mockApi);
+        when(mockRaw.query.executeQuery(any(), any())).thenThrow(error);
+        when(mockRaw.tokens.getTokens(any(), any())).thenThrow(error);
+        when(mockRaw.files.uploadFiles(any(), any())).thenThrow(error);
+        when(mockRaw.files.deleteFiles(any(), any())).thenThrow(error);
+        VaultController controller = createControllerWithMock(mockApi);
+        controller.signedUrlUploader = new RecordingUploader();
+
+        List<ControllerCall> calls = Arrays.asList(
+                () -> controller.query(QUERY_REQUEST),
+                () -> controller.getTokens(getTokensRequest()),
+                () -> controller.uploadFiles(uploadFilesRequest()),
+                () -> controller.deleteFiles(deleteFilesRequest()));
+        for (ControllerCall call : calls) {
+            try {
+                call.run();
+                Assert.fail(EXCEPTION_NOT_THROWN);
+            } catch (SkyflowException e) {
+                Assert.assertEquals(expectedCode, e.getHttpCode());
+                Assert.assertEquals(expectedMessage, e.getMessage());
+            }
+        }
+    }
+
+    @Test
+    public void testNewUnaryOperations_plainTextErrorBodyIsNotJsonQuoted() throws Exception {
+        assertNewUnaryOperationsThrow(
+                new ApiClientApiException("Error with status code 502", 502, "Bad gateway"), 502, "Bad gateway");
+    }
+
+    @Test
+    public void testNewUnaryOperations_errorBodyWithoutErrorObjectStillCarriesMessage() throws Exception {
+        Map<String, Object> body = new HashMap<>();
+        body.put("message", "quota exceeded");
+        assertNewUnaryOperationsThrow(new ApiClientApiException("x", 429, body), 429, "quota exceeded");
+    }
+
+    @Test
+    public void testNewUnaryOperations_emptyErrorBodyFallsBackToStatus() throws Exception {
+        assertNewUnaryOperationsThrow(new ApiClientApiException("x", 500, new HashMap<String, Object>()),
+                500, "Error with status code 500");
+    }
+
+    @Test
+    public void testNewUnaryOperations_nonJsonSuccessBodyKeepsItsStatusAndBody() throws Exception {
+        Map<String, List<String>> headers = new HashMap<>();
+        headers.put("x-request-id", Collections.singletonList("req-html"));
+        ApiClientException failure = new ApiClientException("Network error executing HTTP request",
+                new com.skyflow.utils.UnparseableResponseException(200, "<html>gateway</html>", headers));
+        ApiClient mockApi = Mockito.mock(ApiClient.class);
+        MockRaw mockRaw = mockRawFlowservice(mockApi);
+        when(mockRaw.query.executeQuery(any(), any())).thenThrow(failure);
+        when(mockRaw.tokens.getTokens(any(), any())).thenThrow(failure);
+        when(mockRaw.files.uploadFiles(any(), any())).thenThrow(failure);
+        when(mockRaw.files.deleteFiles(any(), any())).thenThrow(failure);
+        VaultController controller = createControllerWithMock(mockApi);
+        controller.signedUrlUploader = new RecordingUploader();
+
+        List<ControllerCall> calls = Arrays.asList(
+                () -> controller.query(QUERY_REQUEST),
+                () -> controller.getTokens(getTokensRequest()),
+                () -> controller.uploadFiles(uploadFilesRequest()),
+                () -> controller.deleteFiles(deleteFilesRequest()));
+        for (ControllerCall call : calls) {
+            try {
+                call.run();
+                Assert.fail(EXCEPTION_NOT_THROWN);
+            } catch (SkyflowException e) {
+                Assert.assertEquals(200, e.getHttpCode());
+                Assert.assertEquals(com.skyflow.utils.Utils.parameterizedString(
+                        ErrorMessage.UnparseableSuccessResponse.getMessage(), "<html>gateway</html>"), e.getMessage());
+                Assert.assertEquals("req-html", e.getRequestId());
+            }
+        }
+    }
+
+    @Test
+    public void testNewUnaryOperations_requestContextReportsNotBatched() throws Exception {
+        ApiClient mockApi = Mockito.mock(ApiClient.class);
+        MockRaw mockRaw = mockRawFlowservice(mockApi);
+        when(mockRaw.query.executeQuery(any(), any())).thenReturn(
+                new ApiClientHttpResponse<>(ExecuteQueryResponse.builder().build(), buildOkHttpResponse()));
+        when(mockRaw.tokens.getTokens(any(), any())).thenReturn(new ApiClientHttpResponse<>(
+                ObjectMappers.JSON_MAPPER.readValue("{\"records\":[]}",
+                        com.skyflow.generated.rest.types.GetTokensFromValuesResponse.class), buildOkHttpResponse()));
+        when(mockRaw.files.uploadFiles(any(), any())).thenReturn(new ApiClientHttpResponse<>(
+                uploadWire("{\"records\":[{\"tableName\":\"onboarding\",\"httpCode\":200,\"data\":{}}]}"),
+                buildOkHttpResponse()));
+        when(mockRaw.files.deleteFiles(any(), any())).thenReturn(new ApiClientHttpResponse<>(
+                ObjectMappers.JSON_MAPPER.readValue("{\"records\":[]}",
+                        com.skyflow.generated.rest.types.FileDeleteResponse.class), buildOkHttpResponse()));
+        VaultController controller = createControllerWithMock(mockApi);
+        controller.signedUrlUploader = new RecordingUploader();
+        List<RequestContext> contexts = new ArrayList<>();
+        RequestInterceptor capture = contexts::add;
+
+        controller.query(QUERY_REQUEST, QueryOptions.builder().interceptor(capture).build());
+        controller.getTokens(getTokensRequest(), GetTokensOptions.builder().interceptor(capture).build());
+        controller.uploadFiles(uploadFilesRequest(), UploadFilesOptions.builder().interceptor(capture).build());
+        controller.deleteFiles(deleteFilesRequest(), DeleteFilesOptions.builder().interceptor(capture).build());
+
+        Assert.assertEquals(4, contexts.size());
+        for (RequestContext context : contexts) {
+            Assert.assertEquals(context.getOperation(), -1, context.getBatchIndex());
+            Assert.assertEquals(context.getOperation(), -1, context.getTotalBatches());
+        }
+    }
+
+    @Test
+    public void testQuery_fullPageOfRowsStillReturnsThemAll() throws Exception {
+        // a full page logs a paging warning; the rows themselves are returned unchanged
+        StringBuilder rows = new StringBuilder();
+        for (int i = 0; i < com.skyflow.utils.Constants.QUERY_RECORD_LIMIT; i++) {
+            rows.append(i == 0 ? "" : ",").append("{\"data\":{\"id\":").append(i).append("}}");
+        }
+        ApiClient mockApi = Mockito.mock(ApiClient.class);
+        MockRaw mockRaw = mockRawFlowservice(mockApi);
+        when(mockRaw.query.executeQuery(any(), any())).thenReturn(new ApiClientHttpResponse<>(
+                ObjectMappers.JSON_MAPPER.readValue("{\"records\":[" + rows + "]}", ExecuteQueryResponse.class),
+                buildOkHttpResponse()));
+        VaultController controller = createControllerWithMock(mockApi);
+
+        QueryResponse response = controller.query(QUERY_REQUEST);
+
+        Assert.assertEquals(com.skyflow.utils.Constants.QUERY_RECORD_LIMIT, response.getRecords().size());
+    }
+
+    @Test
+    public void testNewUnaryOperations_throwingInterceptorWrappedAsSkyflowException() throws Exception {
+        ApiClient mockApi = Mockito.mock(ApiClient.class);
+        mockRawFlowservice(mockApi);
+        VaultController controller = createControllerWithMock(mockApi);
+        RequestInterceptor failing = ctx -> {
+            throw new IllegalStateException("interceptor blew up");
+        };
+        RequestInterceptor failingWithoutMessage = ctx -> {
+            throw new IllegalStateException();
+        };
+
+        for (RequestInterceptor interceptor : Arrays.asList(failing, failingWithoutMessage)) {
+            List<ControllerCall> calls = Arrays.asList(
+                    () -> controller.query(QUERY_REQUEST, QueryOptions.builder().interceptor(interceptor).build()),
+                    () -> controller.getTokens(getTokensRequest(),
+                            GetTokensOptions.builder().interceptor(interceptor).build()),
+                    () -> controller.uploadFiles(uploadFilesRequest(),
+                            UploadFilesOptions.builder().interceptor(interceptor).build()),
+                    () -> controller.deleteFiles(deleteFilesRequest(),
+                            DeleteFilesOptions.builder().interceptor(interceptor).build()));
+            String expected = interceptor == failing
+                    ? "interceptor blew up" : ErrorMessage.RequestInterceptorFailed.getMessage();
+            for (ControllerCall call : calls) {
+                try {
+                    call.run();
+                    Assert.fail(EXCEPTION_NOT_THROWN);
+                } catch (SkyflowException e) {
+                    Assert.assertEquals(expected, e.getMessage());
+                    Assert.assertTrue(e.getCause() instanceof IllegalStateException);
+                }
+            }
+        }
+    }
+
+    @Test
+    public void testNewUnaryOperations_interceptorRaisingVaultErrorIsThrownWithItsStatus() throws Exception {
+        ApiClient mockApi = Mockito.mock(ApiClient.class);
+        mockRawFlowservice(mockApi);
+        VaultController controller = createControllerWithMock(mockApi);
+        RequestInterceptor failing = ctx -> {
+            throw vaultUnavailable();
+        };
+
+        assertVaultUnavailable(() -> controller.query(QUERY_REQUEST,
+                QueryOptions.builder().interceptor(failing).build()));
+        assertVaultUnavailable(() -> controller.getTokens(getTokensRequest(),
+                GetTokensOptions.builder().interceptor(failing).build()));
+        assertVaultUnavailable(() -> controller.uploadFiles(uploadFilesRequest(),
+                UploadFilesOptions.builder().interceptor(failing).build()));
+        assertVaultUnavailable(() -> controller.deleteFiles(deleteFilesRequest(),
+                DeleteFilesOptions.builder().interceptor(failing).build()));
     }
 
     @Test

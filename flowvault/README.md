@@ -1684,14 +1684,15 @@ Sample response:
 
 ```json
 {
-  "fields": [ { "skyflow_id": "9f5b8e6e-...", "name": "John Doe", "email": "john@example.com" } ],
-  "errors": null,
+  "records": [ { "skyflow_id": "9f5b8e6e-...", "name": "John Doe", "email": "john@example.com" } ],
   "metadata": { "columns": ["skyflow_id", "name", "email"] },
   "requestId": "<id>"
 }
 ```
 
-Accessors: `queryResponse.getFields()` (one `HashMap<String, Object>` per row), `getErrors()`, `getMetadata().getColumns()`, `getRequestId()`.
+Accessors: `queryResponse.getRecords()` (one read-only `Map<String, Object>` per row, in the vault's column order), `getMetadata().getColumns()`, `getRequestId()`. The vault returns at most 25 rows per call; page with `LIMIT` and `OFFSET` in the query (the SDK logs a warning when a call returns a full page).
+
+> **Deprecation notice:** `getFields()` (the same rows under a misleading name) and `getErrors()` (always `null`) are deprecated. Use `getRecords()`, and catch `SkyflowException` for query failures.
 
 # Get Tokens
 
@@ -1940,7 +1941,7 @@ Sample response (partial success):
 }
 ```
 
-`deleteFilesResponse.getRecords()` returns one `DeleteFilesResponseRecord` per resolved record, with the accessors `getSkyflowId()`, `getTableName()`, `getColumns()`, `getHttpCode()`, `getError()` and `getRequestId()` (set only when `getError()` is non-null). `getColumns()` is a list of `DeleteFilesColumnResult` (`getColumn()`, `getStatus()`), or null on a failed record.
+`deleteFilesResponse.getRecords()` returns one `DeleteFilesResponseRecord` per resolved record, with the accessors `getSkyflowId()`, `getTableName()`, `getColumns()`, `getHttpCode()`, `getError()` and `getRequestId()` (set only when `getError()` is non-null). `getColumns()` is a list of `DeleteFilesColumnResult` (`getColumn()`, `getStatus()` returning a `DeleteFilesStatus` — `DELETED`, or `UNKNOWN` for a status this SDK version does not recognise — and `getRawStatus()` with the value as sent), or null on a failed record.
 
 # Detect
 

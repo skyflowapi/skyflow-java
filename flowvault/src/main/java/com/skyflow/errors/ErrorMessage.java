@@ -93,6 +93,12 @@ public enum ErrorMessage {
     DuplicateColumnInDeleteFilesColumns("%s0 Validation error. 'columns' in DeleteFilesRequestRecord contains a duplicate column name. Specify each column only once."),
     EmptySkyflowIdInDeleteFilesRecord("%s0 Validation error. 'skyflowId' in DeleteFilesRequestRecord is empty. Specify a valid skyflow ID, or use 'uniqueValues' instead."),
     InvalidIdOrUniqueValuesInDeleteFilesRecord("%s0 Validation error. DeleteFilesRequestRecord must set exactly one of 'skyflowId' or 'uniqueValues'. Specify one of them."),
+    // Credentials
+    CredentialResolutionFailed("%s0 Failed to resolve credentials. Check the configured credentials."),
+    // Request interceptor
+    RequestInterceptorFailed("%s0 Request interceptor threw an exception. The request was not sent."),
+    // Responses
+    UnparseableSuccessResponse("%s0 The vault returned a response that isn't valid JSON. Response body: %s1"),
     // Detect (flowvault only)
     ;
 
