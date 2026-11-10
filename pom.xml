@@ -132,7 +132,7 @@
                 <configuration>
                     <excludePackageNames>
                         com.skyflow.generated.rest.*:
-                        com.skyflow.generated.auth.*:
+                        com.skyflow.generated.common.*:
                     </excludePackageNames>
                 </configuration>
                 <executions>

@@ -4,24 +4,20 @@
 package com.skyflow.generated.rest;
 
 import com.skyflow.generated.rest.core.ClientOptions;
+import com.skyflow.generated.rest.core.RequestOptions;
 import com.skyflow.generated.rest.core.Suppliers;
-import com.skyflow.generated.rest.resources.audit.AuditClient;
-import com.skyflow.generated.rest.resources.binlookup.BinLookupClient;
+import com.skyflow.generated.rest.requests.PatchV2VaultsIdRequest;
 import com.skyflow.generated.rest.resources.files.FilesClient;
-import com.skyflow.generated.rest.resources.guardrails.GuardrailsClient;
 import com.skyflow.generated.rest.resources.query.QueryClient;
 import com.skyflow.generated.rest.resources.records.RecordsClient;
-import com.skyflow.generated.rest.resources.strings.StringsClient;
 import com.skyflow.generated.rest.resources.tokens.TokensClient;
-
+import java.util.Optional;
 import java.util.function.Supplier;
 
-public class ApiClient {
+public class ApiClient implements AutoCloseable {
     protected final ClientOptions clientOptions;
 
-    protected final Supplier<AuditClient> auditClient;
-
-    protected final Supplier<BinLookupClient> binLookupClient;
+    private final RawApiClient rawClient;
 
     protected final Supplier<RecordsClient> recordsClient;
 
@@ -31,28 +27,37 @@ public class ApiClient {
 
     protected final Supplier<FilesClient> filesClient;
 
-    protected final Supplier<StringsClient> stringsClient;
-
-    protected final Supplier<GuardrailsClient> guardrailsClient;
-
     public ApiClient(ClientOptions clientOptions) {
         this.clientOptions = clientOptions;
-        this.auditClient = Suppliers.memoize(() -> new AuditClient(clientOptions));
-        this.binLookupClient = Suppliers.memoize(() -> new BinLookupClient(clientOptions));
+        this.rawClient = new RawApiClient(clientOptions);
         this.recordsClient = Suppliers.memoize(() -> new RecordsClient(clientOptions));
         this.tokensClient = Suppliers.memoize(() -> new TokensClient(clientOptions));
         this.queryClient = Suppliers.memoize(() -> new QueryClient(clientOptions));
         this.filesClient = Suppliers.memoize(() -> new FilesClient(clientOptions));
-        this.stringsClient = Suppliers.memoize(() -> new StringsClient(clientOptions));
-        this.guardrailsClient = Suppliers.memoize(() -> new GuardrailsClient(clientOptions));
     }
 
-    public AuditClient audit() {
-        return this.auditClient.get();
+    /**
+     * Get responses with HTTP metadata like headers
+     */
+    public RawApiClient withRawResponse() {
+        return this.rawClient;
     }
 
-    public BinLookupClient binLookup() {
-        return this.binLookupClient.get();
+    public void patchV2VaultsId(Optional<String> vaultId) {
+        this.rawClient.patchV2VaultsId(vaultId).body();
+    }
+
+    public void patchV2VaultsId(Optional<String> vaultId, RequestOptions requestOptions) {
+        this.rawClient.patchV2VaultsId(vaultId, requestOptions).body();
+    }
+
+    public void patchV2VaultsId(Optional<String> vaultId, PatchV2VaultsIdRequest request) {
+        this.rawClient.patchV2VaultsId(vaultId, request).body();
+    }
+
+    public void patchV2VaultsId(
+            Optional<String> vaultId, PatchV2VaultsIdRequest request, RequestOptions requestOptions) {
+        this.rawClient.patchV2VaultsId(vaultId, request, requestOptions).body();
     }
 
     public RecordsClient records() {
@@ -71,12 +76,13 @@ public class ApiClient {
         return this.filesClient.get();
     }
 
-    public StringsClient strings() {
-        return this.stringsClient.get();
-    }
-
-    public GuardrailsClient guardrails() {
-        return this.guardrailsClient.get();
+    /**
+     * Releases resources owned by this client. See {@code ClientOptions.close()} for what is
+     * and is not released.
+     */
+    @Override
+    public void close() {
+        this.clientOptions.close();
     }
 
     public static ApiClientBuilder builder() {

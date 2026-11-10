@@ -4,20 +4,21 @@
 package com.skyflow.generated.rest.errors;
 
 import com.skyflow.generated.rest.core.ApiClientApiException;
+import com.skyflow.generated.rest.types.ErrorResponse;
 import okhttp3.Response;
 
 public final class NotFoundError extends ApiClientApiException {
     /**
      * The body of the response that triggered the exception.
      */
-    private final Object body;
+    private final ErrorResponse body;
 
-    public NotFoundError(Object body) {
+    public NotFoundError(ErrorResponse body) {
         super("NotFoundError", 404, body);
         this.body = body;
     }
 
-    public NotFoundError(Object body, Response rawResponse) {
+    public NotFoundError(ErrorResponse body, Response rawResponse) {
         super("NotFoundError", 404, body, rawResponse);
         this.body = body;
     }
@@ -25,8 +26,8 @@ public final class NotFoundError extends ApiClientApiException {
     /**
      * @return the body
      */
-    @Override
-    public Object body() {
+    @java.lang.Override
+    public ErrorResponse body() {
         return this.body;
     }
 }

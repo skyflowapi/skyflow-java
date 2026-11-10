@@ -10,8 +10,8 @@ import java.util.Map;
 
 /**
  * Tests for the plain record/redaction data holders: {@link TokenGroupRedactions},
- * {@link InsertRequestRecord}, {@link BulkInsertRequestRecord}
- * and {@link BulkTokenizeRequestRecord}. None of these classes perform
+ * {@link InsertRequestRecord}, {@link BulkInsertRequestRecord},
+ * {@link BulkTokenizeRequestRecord} and {@link GetTokensRequestRecord}. None of these classes perform
  * validation in their builders, so coverage here is builder-construction plus getters.
  */
 public class RecordAndRedactionTests {
@@ -161,5 +161,31 @@ public class RecordAndRedactionTests {
         // the bulk record adds nothing today; it must still satisfy the parent contract
         BulkTokenizeRequestRecord record = BulkTokenizeRequestRecord.builder().value("v1").build();
         Assert.assertTrue(record instanceof TokenizeRequestRecord);
+    }
+
+    // ── GetTokensRequestRecord ──────────────────────────────────────────────────────
+
+    @Test
+    public void testGetTokensRequestRecord_gettersReturnBuilderValues() {
+        GetTokensRequestRecord record = GetTokensRequestRecord.builder()
+                .value("john@example.com")
+                .tokenGroupName("det_group")
+                .build();
+
+        Assert.assertEquals("john@example.com", record.getValue());
+        Assert.assertEquals("det_group", record.getTokenGroupName());
+    }
+
+    @Test
+    public void testGetTokensRequestRecord_nonStringValueKeptAsIs() {
+        GetTokensRequestRecord record = GetTokensRequestRecord.builder().value(12345).build();
+        Assert.assertEquals(12345, record.getValue());
+    }
+
+    @Test
+    public void testGetTokensRequestRecord_defaultsAreNull() {
+        GetTokensRequestRecord record = GetTokensRequestRecord.builder().build();
+        Assert.assertNull(record.getValue());
+        Assert.assertNull(record.getTokenGroupName());
     }
 }

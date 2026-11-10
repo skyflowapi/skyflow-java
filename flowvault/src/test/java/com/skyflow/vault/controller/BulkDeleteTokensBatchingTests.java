@@ -1,17 +1,21 @@
 package com.skyflow.vault.controller;
 
+import com.skyflow.generated.rest.resources.tokens.requests.DeleteTokenRequest;
+import com.skyflow.generated.rest.types.DeleteTokenResponse;
+import com.skyflow.generated.rest.types.DeleteTokenResponseObject;
 import com.skyflow.VaultClient;
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.Env;
 import com.skyflow.generated.rest.ApiClient;
+import com.skyflow.generated.rest.resources.query.QueryClient;
+import com.skyflow.generated.rest.resources.query.RawQueryClient;
+import com.skyflow.generated.rest.resources.records.RawRecordsClient;
+import com.skyflow.generated.rest.resources.records.RecordsClient;
+import com.skyflow.generated.rest.resources.tokens.RawTokensClient;
+import com.skyflow.generated.rest.resources.tokens.TokensClient;
 import com.skyflow.generated.rest.core.ApiClientApiException;
 import com.skyflow.generated.rest.core.ApiClientHttpResponse;
-import com.skyflow.generated.rest.resources.flowservice.FlowserviceClient;
-import com.skyflow.generated.rest.resources.flowservice.RawFlowserviceClient;
-import com.skyflow.generated.rest.resources.flowservice.requests.V1FlowDeleteTokenRequest;
-import com.skyflow.generated.rest.types.V1DeleteTokenResponseObject;
-import com.skyflow.generated.rest.types.V1FlowDeleteTokenResponse;
 import com.skyflow.utils.Constants;
 import com.skyflow.vault.data.BulkDeleteTokensRequest;
 import com.skyflow.vault.data.BulkDeleteTokensResponse;
@@ -97,34 +101,47 @@ public class BulkDeleteTokensBatchingTests {
         return controller;
     }
 
-    private static RawFlowserviceClient mockRawFlowservice(ApiClient mockApi) {
-        FlowserviceClient mockFlow = Mockito.mock(FlowserviceClient.class);
-        RawFlowserviceClient mockRaw = Mockito.mock(RawFlowserviceClient.class);
-        when(mockApi.flowservice()).thenReturn(mockFlow);
-        when(mockFlow.withRawResponse()).thenReturn(mockRaw);
+    /** Raw-response mocks for each generated resource client the controller calls. */
+    private static final class MockRaw {
+        final RawRecordsClient records = Mockito.mock(RawRecordsClient.class);
+        final RawTokensClient tokens = Mockito.mock(RawTokensClient.class);
+        final RawQueryClient query = Mockito.mock(RawQueryClient.class);
+    }
+
+    private static MockRaw mockRawFlowservice(ApiClient mockApi) {
+        MockRaw mockRaw = new MockRaw();
+        RecordsClient records = Mockito.mock(RecordsClient.class);
+        TokensClient tokens = Mockito.mock(TokensClient.class);
+        QueryClient query = Mockito.mock(QueryClient.class);
+        when(mockApi.records()).thenReturn(records);
+        when(mockApi.tokens()).thenReturn(tokens);
+        when(mockApi.query()).thenReturn(query);
+        when(records.withRawResponse()).thenReturn(mockRaw.records);
+        when(tokens.withRawResponse()).thenReturn(mockRaw.tokens);
+        when(query.withRawResponse()).thenReturn(mockRaw.query);
         return mockRaw;
     }
 
     /** Echoes each batch back; any token whose number ends in 7 fails with 404. */
     private static ApiClient mockApiEchoingBatches() throws Exception {
         ApiClient mockApi = Mockito.mock(ApiClient.class);
-        RawFlowserviceClient mockRaw = mockRawFlowservice(mockApi);
-        when(mockRaw.deletetoken(any(), any())).thenAnswer(invocation -> {
-            V1FlowDeleteTokenRequest request = invocation.getArgument(0);
-            List<String> batchTokens = request.getTokens().get();
+        MockRaw mockRaw = mockRawFlowservice(mockApi);
+        when(mockRaw.tokens.deleteToken(any(), any())).thenAnswer(invocation -> {
+            DeleteTokenRequest request = invocation.getArgument(0);
+            List<String> batchTokens = request.getTokens();
             scrambleCompletion(batchTokens);
-            List<V1DeleteTokenResponseObject> records = new ArrayList<>();
+            List<DeleteTokenResponseObject> records = new ArrayList<>();
             for (String token : batchTokens) {
                 if (token.endsWith("7")) {
-                    records.add(V1DeleteTokenResponseObject.builder()
+                    records.add(DeleteTokenResponseObject.builder()
                             .value(token).error("Token not found").httpCode(404).build());
                 } else {
-                    records.add(V1DeleteTokenResponseObject.builder()
+                    records.add(DeleteTokenResponseObject.builder()
                             .value(token).httpCode(200).build());
                 }
             }
             return new ApiClientHttpResponse<>(
-                    V1FlowDeleteTokenResponse.builder().tokens(records).build(), okHttp());
+                    DeleteTokenResponse.builder().tokens(records).build(), okHttp());
         });
         return mockApi;
     }
@@ -187,21 +204,21 @@ public class BulkDeleteTokensBatchingTests {
     public void testBulkDeleteTokens_failedBatchKeepsItsOwnIndexSlice() throws Exception {
         useBatching(10, 5);
         ApiClient mockApi = Mockito.mock(ApiClient.class);
-        RawFlowserviceClient mockRaw = mockRawFlowservice(mockApi);
+        MockRaw mockRaw = mockRawFlowservice(mockApi);
         // the batch starting at tok-20 fails wholesale; the rest succeed
-        when(mockRaw.deletetoken(any(), any())).thenAnswer(invocation -> {
-            V1FlowDeleteTokenRequest request = invocation.getArgument(0);
-            List<String> batchTokens = request.getTokens().get();
+        when(mockRaw.tokens.deleteToken(any(), any())).thenAnswer(invocation -> {
+            DeleteTokenRequest request = invocation.getArgument(0);
+            List<String> batchTokens = request.getTokens();
             scrambleCompletion(batchTokens);
             if ("tok-20".equals(batchTokens.get(0))) {
                 throw new ApiClientApiException("delete failed", 503, "service unavailable");
             }
-            List<V1DeleteTokenResponseObject> records = new ArrayList<>();
+            List<DeleteTokenResponseObject> records = new ArrayList<>();
             for (String token : batchTokens) {
-                records.add(V1DeleteTokenResponseObject.builder().value(token).httpCode(200).build());
+                records.add(DeleteTokenResponseObject.builder().value(token).httpCode(200).build());
             }
             return new ApiClientHttpResponse<>(
-                    V1FlowDeleteTokenResponse.builder().tokens(records).build(), okHttp());
+                    DeleteTokenResponse.builder().tokens(records).build(), okHttp());
         });
         VaultController controller = controllerWith(mockApi);
 

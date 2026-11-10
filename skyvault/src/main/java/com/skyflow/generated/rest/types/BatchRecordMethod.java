@@ -3,28 +3,101 @@
  */
 package com.skyflow.generated.rest.types;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
-public enum BatchRecordMethod {
-    NONE("NONE"),
+public final class BatchRecordMethod {
+    public static final BatchRecordMethod GET = new BatchRecordMethod(Value.GET, "GET");
 
-    POST("POST"),
+    public static final BatchRecordMethod PUT = new BatchRecordMethod(Value.PUT, "PUT");
 
-    PUT("PUT"),
+    public static final BatchRecordMethod DELETE = new BatchRecordMethod(Value.DELETE, "DELETE");
 
-    GET("GET"),
+    public static final BatchRecordMethod POST = new BatchRecordMethod(Value.POST, "POST");
 
-    DELETE("DELETE");
+    private final Value value;
 
-    private final String value;
+    private final String string;
 
-    BatchRecordMethod(String value) {
+    BatchRecordMethod(Value value, String string) {
         this.value = value;
+        this.string = string;
     }
 
+    public Value getEnumValue() {
+        return value;
+    }
+
+    @java.lang.Override
     @JsonValue
-    @Override
     public String toString() {
-        return this.value;
+        return this.string;
+    }
+
+    @java.lang.Override
+    public boolean equals(Object other) {
+        return (this == other)
+                || (other instanceof BatchRecordMethod && this.string.equals(((BatchRecordMethod) other).string));
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+        return this.string.hashCode();
+    }
+
+    public <T> T visit(Visitor<T> visitor) {
+        switch (value) {
+            case GET:
+                return visitor.visitGet();
+            case PUT:
+                return visitor.visitPut();
+            case DELETE:
+                return visitor.visitDelete();
+            case POST:
+                return visitor.visitPost();
+            case UNKNOWN:
+            default:
+                return visitor.visitUnknown(string);
+        }
+    }
+
+    @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
+    public static BatchRecordMethod valueOf(String value) {
+        switch (value) {
+            case "GET":
+                return GET;
+            case "PUT":
+                return PUT;
+            case "DELETE":
+                return DELETE;
+            case "POST":
+                return POST;
+            default:
+                return new BatchRecordMethod(Value.UNKNOWN, value);
+        }
+    }
+
+    public enum Value {
+        POST,
+
+        PUT,
+
+        GET,
+
+        DELETE,
+
+        UNKNOWN
+    }
+
+    public interface Visitor<T> {
+        T visitPost();
+
+        T visitPut();
+
+        T visitGet();
+
+        T visitDelete();
+
+        T visitUnknown(String unknownType);
     }
 }

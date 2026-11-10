@@ -5,8 +5,14 @@ package com.skyflow.generated.rest.resources.records;
 
 import com.skyflow.generated.rest.core.ClientOptions;
 import com.skyflow.generated.rest.core.RequestOptions;
-import com.skyflow.generated.rest.resources.records.requests.V1ExecuteQueryRequest;
-import com.skyflow.generated.rest.types.V1ExecuteQueryResponse;
+import com.skyflow.generated.rest.resources.records.requests.DeleteRequest;
+import com.skyflow.generated.rest.resources.records.requests.GetRequest;
+import com.skyflow.generated.rest.resources.records.requests.InsertRequest;
+import com.skyflow.generated.rest.resources.records.requests.UpdateRequest;
+import com.skyflow.generated.rest.types.DeleteResponse;
+import com.skyflow.generated.rest.types.GetResponse;
+import com.skyflow.generated.rest.types.InsertResponse;
+import com.skyflow.generated.rest.types.UpdateResponse;
 
 public class RecordsClient {
     protected final ClientOptions clientOptions;
@@ -26,24 +32,58 @@ public class RecordsClient {
     }
 
     /**
-     * Executes a query on the specified vault.
+     * Deletes records from a vault.
      */
-    public V1ExecuteQueryResponse flowServiceExecuteQuery() {
-        return this.rawClient.flowServiceExecuteQuery().body();
+    public DeleteResponse deleteRecords(DeleteRequest request) {
+        return this.rawClient.deleteRecords(request).body();
     }
 
     /**
-     * Executes a query on the specified vault.
+     * Deletes records from a vault.
      */
-    public V1ExecuteQueryResponse flowServiceExecuteQuery(V1ExecuteQueryRequest request) {
-        return this.rawClient.flowServiceExecuteQuery(request).body();
+    public DeleteResponse deleteRecords(DeleteRequest request, RequestOptions requestOptions) {
+        return this.rawClient.deleteRecords(request, requestOptions).body();
     }
 
     /**
-     * Executes a query on the specified vault.
+     * Returns the specified records from a vault.
      */
-    public V1ExecuteQueryResponse flowServiceExecuteQuery(
-            V1ExecuteQueryRequest request, RequestOptions requestOptions) {
-        return this.rawClient.flowServiceExecuteQuery(request, requestOptions).body();
+    public GetResponse getRecords(GetRequest request) {
+        return this.rawClient.getRecords(request).body();
+    }
+
+    /**
+     * Returns the specified records from a vault.
+     */
+    public GetResponse getRecords(GetRequest request, RequestOptions requestOptions) {
+        return this.rawClient.getRecords(request, requestOptions).body();
+    }
+
+    /**
+     * Inserts new records into a vault.
+     */
+    public InsertResponse insertRecords(InsertRequest request) {
+        return this.rawClient.insertRecords(request).body();
+    }
+
+    /**
+     * Inserts new records into a vault.
+     */
+    public InsertResponse insertRecords(InsertRequest request, RequestOptions requestOptions) {
+        return this.rawClient.insertRecords(request, requestOptions).body();
+    }
+
+    /**
+     * Updates the specified records in a vault.
+     */
+    public UpdateResponse updateRecords(UpdateRequest request) {
+        return this.rawClient.updateRecords(request).body();
+    }
+
+    /**
+     * Updates the specified records in a vault.
+     */
+    public UpdateResponse updateRecords(UpdateRequest request, RequestOptions requestOptions) {
+        return this.rawClient.updateRecords(request, requestOptions).body();
     }
 }

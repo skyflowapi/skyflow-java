@@ -49,6 +49,15 @@ The `flowvault` module is a Skyflow Java SDK built for high-throughput vault ope
 - [Get](#get)
 - [Update](#update)
 - [Delete](#delete)
+- [Query](#query)
+- [Get Tokens](#get-tokens)
+- [Upload Files](#upload-files)
+- [Delete Files](#delete-files)
+- [Detect](#detect)
+  - [Deidentify string](#deidentify-string)
+  - [Reidentify string](#reidentify-string)
+  - [Get run](#get-run)
+  - [Check guardrails](#check-guardrails)
 - [Custom Request Headers](#custom-request-headers)
 - [Error Handling](#error-handling)
   - [Two layers of errors](#two-layers-of-errors)
@@ -619,7 +628,7 @@ The 100,000-item ceiling per bulk call is a separate, fixed limit and is not con
 
 # VaultController — Unary operations
 
-Alongside the bulk methods, `VaultController` exposes five **unary** operations. Each sends exactly one API call and hands the result straight back:
+Alongside the bulk methods, `VaultController` exposes nine **unary** operations. Each sends exactly one API call and hands the result straight back:
 
 | Method | Parameters | Returns | Description |
 |--------|-----------|---------|-------------|
@@ -628,10 +637,14 @@ Alongside the bulk methods, `VaultController` exposes five **unary** operations.
 | `get(GetRequest)` | `GetRequest`, optional `GetOptions` | `GetResponse` | Read records by skyflow ID or unique value, optionally with a redaction override per column |
 | `update(UpdateRequest)` | `UpdateRequest`, optional `UpdateOptions` | `UpdateResponse` | Update records by skyflow ID |
 | `delete(DeleteRequest)` | `DeleteRequest`, optional `DeleteOptions` | `DeleteResponse` | Delete records by skyflow ID or unique value |
+| `query(QueryRequest)` | `QueryRequest`, optional `QueryOptions` | `QueryResponse` | Run a SQL `SELECT` against the vault |
+| `getTokens(GetTokensRequest)` | `GetTokensRequest`, optional `GetTokensOptions` | `GetTokensResponse` | Look up the existing deterministic token for each value |
+| `uploadFiles(UploadFilesRequest)` | `UploadFilesRequest`, optional `UploadFilesOptions` | `UploadFilesResponse` | Upload files into the file columns of new or existing records |
+| `deleteFiles(DeleteFilesRequest)` | `DeleteFilesRequest`, optional `DeleteFilesOptions` | `DeleteFilesResponse` | Delete the files in file columns of existing records |
 
-`insert` and `detokenize` are the unary counterparts of `bulkInsert` and `bulkDetokenize` — the same request builders, sent as one call instead of many batches. `get`, `update`, and `delete` have no bulk counterpart at all; they exist only in this unary form.
+`insert` and `detokenize` are the unary counterparts of `bulkInsert` and `bulkDetokenize` — the same request builders, sent as one call instead of many batches. `get`, `update`, `delete`, `query`, `getTokens`, `uploadFiles`, and `deleteFiles` have no bulk counterpart at all; they exist only in this unary form.
 
-Each method also accepts an optional options object (`InsertOptions`, `DetokenizeOptions`, `GetOptions`, `UpdateOptions`, `DeleteOptions`) — see [Custom Request Headers](#custom-request-headers).
+Each method also accepts an optional options object (`InsertOptions`, `DetokenizeOptions`, `GetOptions`, `UpdateOptions`, `DeleteOptions`, `QueryOptions`, `GetTokensOptions`, `UploadFilesOptions`, `DeleteFilesOptions`) — see [Custom Request Headers](#custom-request-headers).
 
 ## Unary vs. bulk Parity
 
@@ -649,7 +662,7 @@ Everything the bulk machinery adds — batching, concurrency, the payload ceilin
 
 ## Vault type support
 
-The same distinction as [Schema vs. schemaless vaults](#schema-vs-schemaless-vaults) applies. Four of the five unary operations address records inside a table, so they only make sense against a structured vault:
+The same distinction as [Schema vs. schemaless vaults](#schema-vs-schemaless-vaults) applies. Seven of the nine unary operations address records inside a table, so they only make sense against a structured vault:
 
 | Operation | Supported on |
 |---|---|
@@ -658,6 +671,10 @@ The same distinction as [Schema vs. schemaless vaults](#schema-vs-schemaless-vau
 | `update` | Structured vaults — updates a table's records by skyflow ID. |
 | `delete` | Structured vaults — deletes a table's records. Distinct from `bulkDeleteTokens`, which removes tokens only and leaves the record in place. |
 | `detokenize` | Both — detokenizing only needs the token itself, not a table, so it works regardless of which kind of vault the token came from. |
+| `query` | Structured vaults — runs a SQL `SELECT` over a table's records. |
+| `getTokens` | Both — the lookup only needs a value and a deterministic token group, not a table. |
+| `uploadFiles` | Structured vaults — uploads into a table's file columns. |
+| `deleteFiles` | Structured vaults — deletes the files in a table's file columns. |
 
 # SDK Guidelines: Unary vs Bulk Operations
 
@@ -1624,6 +1641,784 @@ for (DeleteResponseRecord record : deleteResponse.getRecords()) {
 }
 ```
 
+# Query
+
+Run a SQL `SELECT` against the vault, in a single API call.
+
+> **Vault type supported:** structured (schema) vaults. See [Vault type support](#vault-type-support).
+
+**Note:**
+
+- Only `SELECT` is supported. A call returns at most 25 records; to page, use SQL `OFFSET`.
+- Values may be masked. They are never tokens or file URLs.
+- There is no per-record status: any failure is thrown as a `SkyflowException`, and `getErrors()` is always `null`. `getRequestId()` is call-level and always populated.
+
+### Construct a query request
+
+Continuing from [Quickstart](#quickstart) — `skyflowClient` below is the `Skyflow` client built there.
+
+```java
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.controller.VaultController;
+import com.skyflow.vault.data.QueryRequest;
+import com.skyflow.vault.data.QueryResponse;
+
+public class QueryExample {
+    public static void main(String[] args) throws SkyflowException {
+        // skyflowClient is the Skyflow client built in Quickstart
+        VaultController vault = skyflowClient.vault();
+
+        QueryRequest queryRequest = QueryRequest.builder()
+                .query("SELECT * FROM persons WHERE name = 'John Doe'")
+                .build();
+
+        QueryResponse queryResponse = vault.query(queryRequest);
+        System.out.println(queryResponse);
+    }
+}
+```
+
+There is no async variant: `query` returns its `QueryResponse` directly.
+
+Sample response:
+
+```json
+{
+  "records": [ { "skyflow_id": "9f5b8e6e-...", "name": "John Doe", "email": "john@example.com" } ],
+  "metadata": { "columns": ["skyflow_id", "name", "email"] },
+  "requestId": "<id>"
+}
+```
+
+Accessors: `queryResponse.getRecords()` (one read-only `Map<String, Object>` per row, in the vault's column order), `getMetadata().getColumns()`, `getRequestId()`. The vault returns at most 25 rows per call; page with `LIMIT` and `OFFSET` in the query (the SDK logs a warning when a call returns a full page).
+
+> **Deprecation notice:** `getFields()` (the same rows under a misleading name) and `getErrors()` (always `null`) are deprecated. Use `getRecords()`, and catch `SkyflowException` for query failures.
+
+# Get Tokens
+
+Look up the deterministic token previously issued for each plaintext value, in a single API call.
+
+> **Vault type supported:** both. See [Vault type support](#vault-type-support).
+
+**Note:**
+
+- `records`, and `value` and `tokenGroupName` on each record, are required. Only deterministic token groups are supported.
+- One record comes back per input entry, in request order; duplicate inputs are not collapsed.
+- Record-level failures come back on the response (HTTP 200/207); whole-call failures are thrown as a `SkyflowException`.
+
+### Construct a get tokens request
+
+Continuing from [Quickstart](#quickstart) — `skyflowClient` below is the `Skyflow` client built there.
+
+```java
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.controller.VaultController;
+import com.skyflow.vault.data.GetTokensRequest;
+import com.skyflow.vault.data.GetTokensRequestRecord;
+import com.skyflow.vault.data.GetTokensResponse;
+
+import java.util.Arrays;
+
+public class GetTokensExample {
+    public static void main(String[] args) throws SkyflowException {
+        // skyflowClient is the Skyflow client built in Quickstart
+        VaultController vault = skyflowClient.vault();
+
+        GetTokensRequest getTokensRequest = GetTokensRequest.builder()
+                .records(Arrays.asList(
+                        GetTokensRequestRecord.builder().value("john@example.com").tokenGroupName("det_reg_rtf").build(),
+                        GetTokensRequestRecord.builder().value("unknown@example.com").tokenGroupName("det_reg_rtf").build()
+                ))
+                .build();
+
+        GetTokensResponse getTokensResponse = vault.getTokens(getTokensRequest);
+        System.out.println(getTokensResponse);
+    }
+}
+```
+
+There is no async variant: `getTokens` returns its `GetTokensResponse` directly.
+
+Sample response:
+
+```json
+{
+  "records": [
+    { "value": "john@example.com",    "tokenGroupName": "det_reg_rtf", "token": "1R9kNnLOPM", "httpCode": 200, "error": null, "requestId": null },
+    { "value": "unknown@example.com", "tokenGroupName": "det_reg_rtf", "token": "",           "httpCode": 404, "error": "Token not found.", "requestId": "<id>" }
+  ]
+}
+```
+
+`getTokensResponse.getRecords()` returns one `GetTokensResponseRecord` per input entry, with the accessors `getValue()`, `getTokenGroupName()`, `getToken()`, `getHttpCode()`, `getError()` and `getRequestId()` (set only when `getError()` is non-null). `token` is `""` (never null) on a record that has no token.
+
+```java
+for (GetTokensResponseRecord record : getTokensResponse.getRecords()) {
+    if (record.getError() == null) {
+        System.out.println(record.getValue() + " -> " + record.getToken());
+    } else {
+        System.err.println(record.getValue() + " failed ["
+                + record.getHttpCode() + "] " + record.getError());
+    }
+}
+```
+
+# Upload Files
+
+Upload files into the file columns of new or existing records. One call does two things inside the SDK:
+
+1. **(A)** It calls `POST /v2/files/upload`, which returns a signed upload URL for each column.
+2. **(B)** It uploads each file's bytes to its signed URL with a separate HTTP `PUT`, the raw bytes as the body. The signed URL is an AWS S3 `PutObject` URL; that request carries no `Authorization` header, because the signature in the URL is the credential.
+
+The signed URL is a credential that expires after about 15 minutes. The SDK uses it straight away in step B and never returns it to you.
+
+> **Vault type supported:** structured. See [Vault type support](#vault-type-support).
+
+**Note:**
+
+- Each record needs a `tableName` and at least one column. Omit `skyflowId` to create a new record (needs CREATE permission); set it to upload into an existing record (needs UPDATE permission).
+- Give each column its file in **exactly one** of three forms:
+
+| Field | Type | Notes |
+|---|---|---|
+| `filePath` | `String` | Local path; the file must exist. `fileName` defaults to the path's file name. |
+| `base64` | `String` | Base64-encoded content. **Requires** `fileName`. |
+| `fileObject` | `java.io.File` | `fileName` defaults to its `getName()`. |
+
+  A column that sets none, or more than one, fails validation. If `fileName` is still unset, the server generates a random 16-byte UUID name. The file's content type is inferred from the file name, else `application/octet-stream`.
+- Errors:
+  - Any error status from step A (400/401/403/404/500) is thrown as a `SkyflowException`, and nothing is uploaded.
+  - A record that fails in step A (inside a 207 response) comes back with its `error` set and every column `SKIPPED`.
+  - A column the vault returned no signed URL for is `SKIPPED`, with no error.
+  - A column whose upload fails in step B is `FAILED` (`"PUT failed: <status>"`); other columns and records are unaffected.
+
+### Construct an upload files request
+
+Continuing from [Quickstart](#quickstart) — `skyflowClient` below is the `Skyflow` client built there.
+
+```java
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.controller.VaultController;
+import com.skyflow.vault.data.UploadFilesRequest;
+import com.skyflow.vault.data.UploadFilesRequestColumn;
+import com.skyflow.vault.data.UploadFilesRequestRecord;
+import com.skyflow.vault.data.UploadFilesResponse;
+
+import java.util.Arrays;
+import java.util.Collections;
+
+public class UploadFilesExample {
+    public static void main(String[] args) throws SkyflowException {
+        // skyflowClient is the Skyflow client built in Quickstart
+        VaultController vault = skyflowClient.vault();
+
+        UploadFilesRequest uploadFilesRequest = UploadFilesRequest.builder()
+                .records(Arrays.asList(
+                        // no skyflowId: creates a new record
+                        UploadFilesRequestRecord.builder()
+                                .tableName("onboarding")
+                                .columns(Arrays.asList(
+                                        UploadFilesRequestColumn.builder().column("resumePDF").filePath("/path/to/resume.pdf").build(),
+                                        UploadFilesRequestColumn.builder().column("photoID").base64("<BASE64_CONTENT>").fileName("photo.jpg").build()))
+                                .build(),
+                        // with skyflowId: uploads into an existing record
+                        UploadFilesRequestRecord.builder()
+                                .tableName("onboarding")
+                                .skyflowId("<SKYFLOW_ID>")
+                                .columns(Collections.singletonList(
+                                        UploadFilesRequestColumn.builder().column("kyc").fileObject(new java.io.File("/path/to/kyc.pdf")).build()))
+                                .build()))
+                .build();
+
+        UploadFilesResponse uploadFilesResponse = vault.uploadFiles(uploadFilesRequest);
+        System.out.println(uploadFilesResponse);
+    }
+}
+```
+
+There is no async variant: `uploadFiles` returns its `UploadFilesResponse` directly.
+
+Sample response (partial success):
+
+```json
+{
+  "records": [
+    { "skyflowId": "2a62a1fd-...", "tableName": "onboarding",
+      "columns": [
+        { "column": "resumePDF", "fileName": "resume.pdf", "uploadStatus": "UPLOADED", "error": null },
+        { "column": "photoID",   "fileName": "photo.jpg",  "uploadStatus": "FAILED",   "error": "PUT failed: 403" }
+      ], "httpCode": 200, "error": null, "requestId": null },
+    { "skyflowId": null, "tableName": "onboarding",
+      "columns": [ { "column": "kyc", "fileName": "kyc.pdf", "uploadStatus": "SKIPPED", "error": "Invalid request. skyflowID {ID} is invalid." } ],
+      "httpCode": 400, "error": "Invalid request. skyflowID {ID} is invalid.", "requestId": "<id>" }
+  ]
+}
+```
+
+`uploadFilesResponse.getRecords()` returns one `UploadFilesResponseRecord` per input record, with the accessors `getSkyflowId()`, `getTableName()`, `getColumns()`, `getHttpCode()`, `getError()` and `getRequestId()` (set only when `getError()` is non-null). Each `UploadFilesColumnResult` in `getColumns()` has `getColumn()`, `getFileName()`, `getUploadStatus()` (the `com.skyflow.enums.UploadStatus` enum: `UPLOADED`, `FAILED` or `SKIPPED`) and `getError()`. A record's `error` stays null when only some of its columns failed in step B, so check each column:
+
+```java
+for (UploadFilesResponseRecord record : uploadFilesResponse.getRecords()) {
+    for (UploadFilesColumnResult column : record.getColumns()) {
+        if (column.getUploadStatus() != UploadStatus.UPLOADED) {
+            System.err.println(record.getSkyflowId() + "." + column.getColumn() + " "
+                    + column.getUploadStatus() + ": " + column.getError());
+        }
+    }
+}
+```
+
+# Delete Files
+
+Delete the files in file columns of existing records, and the stored objects behind them (`POST /v2/files/delete`), in a single API call.
+
+> **Vault type supported:** structured. See [Vault type support](#vault-type-support).
+
+**Note:**
+
+- Each record needs a `tableName` and `columns` (the file columns to delete). Set **exactly one** of `skyflowId` or `uniqueValues`; a record that sets both or neither fails validation, and the call throws a `SkyflowException` before anything is sent.
+- `uniqueValues` is a list of `{column: value}` maps, as in get and delete. Each one may match more than one record, which gives one response entry per matched `skyflowId`.
+- It works whatever the file's `fileStatus`, and it is a hard delete: afterwards `get()` returns null for that column. A `PENDING` upload is cancelled and its signed URL invalidated; a `READY` file's object is removed; `FAILED`/`SCAN_ERROR` just clears the metadata.
+- Record-level failures come back on the response; whole-call failures are thrown as a `SkyflowException`.
+
+### Construct a delete files request
+
+Continuing from [Quickstart](#quickstart) — `skyflowClient` below is the `Skyflow` client built there.
+
+```java
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.controller.VaultController;
+import com.skyflow.vault.data.DeleteFilesRequest;
+import com.skyflow.vault.data.DeleteFilesRequestRecord;
+import com.skyflow.vault.data.DeleteFilesResponse;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
+public class DeleteFilesExample {
+    public static void main(String[] args) throws SkyflowException {
+        // skyflowClient is the Skyflow client built in Quickstart
+        VaultController vault = skyflowClient.vault();
+
+        Map<String, Object> uniqueValue = new HashMap<>();
+        uniqueValue.put("email", "john@example.com");
+
+        DeleteFilesRequest deleteFilesRequest = DeleteFilesRequest.builder()
+                .records(Arrays.asList(
+                        DeleteFilesRequestRecord.builder()
+                                .tableName("onboarding")
+                                .skyflowId("<SKYFLOW_ID>")
+                                .columns(Arrays.asList("resumePDF", "photoID"))
+                                .build(),
+                        DeleteFilesRequestRecord.builder()
+                                .tableName("employees")
+                                .uniqueValues(Collections.singletonList(uniqueValue))
+                                .columns(Collections.singletonList("photo"))
+                                .build()))
+                .build();
+
+        DeleteFilesResponse deleteFilesResponse = vault.deleteFiles(deleteFilesRequest);
+        System.out.println(deleteFilesResponse);
+    }
+}
+```
+
+There is no async variant: `deleteFiles` returns its `DeleteFilesResponse` directly.
+
+Sample response (partial success):
+
+```json
+{
+  "records": [
+    { "skyflowId": "77ea0577-...", "tableName": "onboarding",
+      "columns": [ { "column": "resumePDF", "status": "DELETED" }, { "column": "photoID", "status": "DELETED" } ],
+      "httpCode": 200, "error": null, "requestId": null },
+    { "skyflowId": "invalid-id-0000", "tableName": "employees", "columns": null,
+      "httpCode": 404, "error": "Invalid request. skyflowID invalid-id-0000 is invalid. Specify a valid skyflowID.", "requestId": "<id>" }
+  ]
+}
+```
+
+`deleteFilesResponse.getRecords()` returns one `DeleteFilesResponseRecord` per resolved record, with the accessors `getSkyflowId()`, `getTableName()`, `getColumns()`, `getHttpCode()`, `getError()` and `getRequestId()` (set only when `getError()` is non-null). `getColumns()` is a list of `DeleteFilesColumnResult` (`getColumn()`, `getStatus()` returning a `DeleteFilesStatus` — `DELETED`, or `UNKNOWN` for a status this SDK version does not recognize — and `getRawStatus()` with the value as sent), or null on a failed record.
+
+# Detect
+
+Skyflow Detect finds and de-identifies sensitive data in strings and files (documents, spreadsheets, images and audio), re-identifies vault tokens on demand, and screens text against guardrails for toxicity and denied topics. The flowvault SDK exposes it through `DetectController`, returned by `skyflowClient.detect()` and `skyflowClient.detect(vaultId)`. Every request is scoped to that vault, and the controller honours the same credentials, [timeouts and retries](#timeouts-and-retries) as `vault()`.
+
+Detect configurations are created in [Skyflow Studio](https://docs.skyflow.com) or through the Detect configurations management API. The SDK does not create, update or delete them.
+
+| Method | Request | Response | Description |
+|--------|---------|----------|-------------|
+| `deidentifyString(DeidentifyStringRequest)` | `com.skyflow.detect.DeidentifyStringRequest` | `com.skyflow.detect.DeidentifyStringResponse` | Detect and replace sensitive data in a string |
+| `deidentifyFile(DeidentifyFileRequest)` | `com.skyflow.detect.DeidentifyFileRequest` | `com.skyflow.detect.DeidentifyFileResponse` | Submit a file for de-identification, optionally polling the run to completion |
+| `reidentifyString(ReidentifyStringRequest)` | `com.skyflow.detect.ReidentifyStringRequest` | `com.skyflow.detect.ReidentifyStringResponse` | Replace tokens in a string with their original or redacted values |
+| `reidentifyFile(ReidentifyFileRequest)` | `com.skyflow.detect.ReidentifyFileRequest` | `com.skyflow.detect.ReidentifyFileResponse` | Replace tokens in a file with their original or redacted values |
+| `getRun(GetRunRequest)` | `com.skyflow.detect.GetRunRequest` | `com.skyflow.detect.GetRunResponse` | Retrieve the status and outputs of a Detect file run |
+| `checkGuardrails(CheckGuardrailsRequest)` | `com.skyflow.detect.CheckGuardrailsRequest` | `com.skyflow.detect.CheckGuardrailsResponse` | Screen text for toxicity and denied topics |
+
+## Before you start
+
+- **Role.** The service account needs the Detect Invoker, Detect Manager or Vault Owner role on the vault. Detect Invoker can de-identify data and write vault tokens into the vault; Detect Manager adds the ability to create, update and delete Detect configurations. Re-identifying values stored as `VAULT_TOKEN` is governed like detokenization: the caller also needs a policy that grants the Detokenization action on the destination, unless it is a Vault Owner. Detect Invoker or Detect Manager alone is not enough.
+- **Configuration.** `configurationId` is the id of a Detect configuration created through the management API; the SDK does not create, update or delete them. The alternative is an inline `DetectConfiguration` passed as `configuration` (see [Detect configuration](#detect-configuration)). Both are optional: with neither set the SDK sends only the vault id and the run uses the vault's default Detect settings. Sending both is rejected by the API with HTTP 400.
+- **Destination for vault tokens.** An entity de-identified with `VAULT_TOKEN` stores its value in the token group named by `destination`. That token group must already exist in the vault; Detect writes into it but does not create it.
+- **Where the values come from.**
+  - `<CONFIGURATION_ID>`: open the configuration in Studio under your vault's Detect settings and copy its id, or take the `id` returned when you create one through the management API.
+  - `<TOKEN_GROUP_NAME>`: a token group defined in the vault schema (Studio: vault > **Schema**). Each token group names the tokenization settings that `VAULT_TOKEN` values are stored with.
+  - `<REDACTION_PATTERN>`: a redaction pattern configured on the vault (Studio: vault > **Settings**), referenced by name in a `RedactionLevel`.
+  - If you do not have a vault yet, start at [Try Skyflow](https://skyflow.com/try-skyflow); the [Skyflow docs](https://docs.skyflow.com) cover Studio, token groups and redaction patterns.
+- **API reference.** Every Detect request, response and configuration class is listed in the [API reference](../docs/api_reference.md#detect-api). Errors are listed under [Detect errors](#detect-errors).
+
+## Deidentify string
+
+`DeidentifyStringRequest` takes the text plus, optionally, `configurationId` (a stored Detect configuration) or `configuration` (an inline `DetectConfiguration`). Both are sent exactly as supplied. With neither set the SDK sends only the vault id and the server applies the vault's defaults; sending both is rejected by the API (see [Before you start](#before-you-start)). The SDK fills the vault id into the configuration from the controller.
+
+```java
+import com.skyflow.detect.*;
+
+// Stored configuration
+DeidentifyStringResponse response = skyflowClient.detect().deidentifyString(
+        DeidentifyStringRequest.builder()
+                .text("My name is John Doe, and my email is johndoe@acme.com.")
+                .configurationId("<CONFIGURATION_ID>")
+                .build());
+
+System.out.println(response.getProcessedText());
+// My name is [NAME_1], and my email is [EMAIL_ADDRESS_1].
+
+// Inline configuration
+DetectConfiguration configuration = DetectConfiguration.builder()
+        .detect(Detect.builder()
+                .entities(Arrays.asList(
+                        Entity.builder()
+                                .entityType(EntityType.NAME)
+                                .deidentificationType(DeidentificationType.VAULT_TOKEN)
+                                .destination("<TOKEN_GROUP_NAME>")   // token group that stores the value
+                                .build(),
+                        Entity.builder()
+                                .entityType(EntityType.ALL)
+                                .deidentificationType(DeidentificationType.ENTITY_UNIQUE_COUNTER)
+                                .build()))
+                .skip(Collections.singletonList("Skyflow"))
+                .returnEntities(ReturnEntitiesType.EXCLUDE_SENSITIVE_DATA)
+                .build())
+        .build();
+
+response = skyflowClient.detect().deidentifyString(
+        DeidentifyStringRequest.builder()
+                .text("My name is John Doe, and my email is johndoe@acme.com.")
+                .configuration(configuration)
+                .build());
+
+for (DetectedEntity entity : response.getEntities()) {
+    System.out.println(entity.getEntityType() + " " + entity.getToken()
+            + " [" + entity.getLocation().getStartIndex() + "," + entity.getLocation().getEndIndex() + "]");
+}
+System.out.println(response.getMetrics().getWordCount());
+```
+
+`DeidentifyStringResponse` carries `getProcessedText()`, `getEntities()` (a `List<DetectedEntity>` with token, entity type, location and confidence scores; never `null`) and `getMetrics()`. As JSON, the inline-configuration response above looks like this (`value` is empty unless `returnEntities` is `ALL`):
+
+```json
+{
+  "processedText": "My name is [NAME_1], and my email is [EMAIL_ADDRESS_1].",
+  "entities": [
+    {
+      "token": "NAME_1",
+      "value": "",
+      "location": { "startIndex": 11, "endIndex": 19, "startIndexProcessed": 11, "endIndexProcessed": 19 },
+      "entityType": "NAME",
+      "entityScores": { "NAME": 0.9152 }
+    },
+    {
+      "token": "EMAIL_ADDRESS_1",
+      "value": "",
+      "location": { "startIndex": 37, "endIndex": 53, "startIndexProcessed": 37, "endIndexProcessed": 54 },
+      "entityType": "EMAIL_ADDRESS",
+      "entityScores": { "EMAIL_ADDRESS": 0.8955 }
+    }
+  ],
+  "metrics": { "size": 0.05, "wordCount": 10, "characterCount": 54, "slides": null, "pages": null, "duration": null }
+}
+```
+
+With `VAULT_TOKEN` the token carries a vault reference instead of a counter, for example `[NAME_QUo9AjT]`; only those tokens can be re-identified later.
+
+## Detect configuration
+
+`DetectConfiguration` is the inline form of a stored configuration and accepts the same options. `detect` applies to string and file inputs; `fileMapping` and `media` apply to file inputs only.
+
+| Class | Builder methods | Notes |
+|-------|-----------------|-------|
+| `Detect` | `entities`, `objectEntities`, `restrict`, `skip`, `customTypes`, `returnEntities` | `restrict` and `skip` are regexes that are always, respectively never, treated as sensitive. `returnEntities` is `EXCLUDE_SENSITIVE_DATA` (server default), `ALL` or `NONE`. |
+| `Entity` | `entityType`, `deidentificationType`, `destination`, `transformation`, `includePrefix`, `prefixOverride` | `entityType` defaults to `ALL`. `deidentificationType` is `ENTITY_UNIQUE_COUNTER` (server default), `ENTITY_ONLY`, `MASK` or `VAULT_TOKEN`. `destination`, `includePrefix` and `prefixOverride` apply only with `VAULT_TOKEN`: `includePrefix` is `YES` (server default), `NO` (raw token, cannot be re-identified) or `INCLUDE_PREFIX_UNSPECIFIED` (field omitted); `prefixOverride` replaces the entity-type prefix in the token and is not valid with `includePrefix` `NO`. |
+| `Transformation` / `ShiftDates` | `shiftDates(ShiftDates)`; `minDays`, `maxDays` | Shifts detected dates by a random number of days within the range. |
+| `CustomType` | `label`, `match`, `deidentificationType`, `destination`, `includePrefix`, `prefixOverride` | A regex-defined entity type. `label` is reported as the entity type of its matches and is the default token prefix. The remaining fields work as on `Entity`; `destination` is required with `VAULT_TOKEN`. |
+| `ObjectEntity` | `entityType`, `deidentificationType` | Visual objects in images: `FACE`, `LICENSE_PLATE`, `LOGO`, `SIGNATURE` or `ALL`, handled with `REDACT` or `UNREDACT`. File inputs only. |
+| `FileMapping` | `source`, `destination`, `outputFileNameSuffix`, `entitiesDestination`, `objectEntitiesDestination` | Where the processed file and the entity files are written. File inputs only. |
+| `Media` | `audio(Audio)`, `document(Document)`, `image(Image)` | Media-type options. File inputs only. |
+| `Audio` / `Bleep` | `outputProcessedAudio`, `outputTranscription`, `bleep`; `startPadding`, `stopPadding`, `frequency`, `gain` | `outputTranscription` is `NONE`, `TRANSCRIPTION`, `MEDICAL_TRANSCRIPTION`, `DIARIZED_TRANSCRIPTION` or `MEDICAL_DIARIZED_TRANSCRIPTION`. `outputProcessedAudio` (server default `true`) and a transcription cannot be requested together: set `outputProcessedAudio(false)` when you ask for a transcription, or the API rejects the request. `Bleep` is the tone laid over detected speech; paddings are in seconds, frequency in Hz. |
+| `Document` / `Pdf` | `pdf(Pdf)`; `processingMode`, `density`, `maxResolution` | `processingMode` is `NONE`, `OCR` or `TEXT_LAYER`. `density` is the rendering DPI. |
+| `Image` | `outputProcessedImage`, `outputOcrText`, `maskingMethod` | `maskingMethod` is `NONE`, `BLUR` or `BLACKBOX`. |
+
+```java
+DetectConfiguration configuration = DetectConfiguration.builder()
+        .detect(Detect.builder()
+                .entities(Arrays.asList(
+                        Entity.builder()
+                                .entityType(EntityType.DOB)
+                                .deidentificationType(DeidentificationType.ENTITY_UNIQUE_COUNTER)
+                                .transformation(Transformation.builder()
+                                        .shiftDates(ShiftDates.builder().minDays(10).maxDays(30).build())
+                                        .build())
+                                .build(),
+                        Entity.builder().entityType(EntityType.ALL).build()))
+                .objectEntities(Collections.singletonList(
+                        ObjectEntity.builder()
+                                .entityType(ObjectEntityType.FACE)
+                                .deidentificationType(ObjectDeidentificationType.REDACT)
+                                .build()))
+                .customTypes(Collections.singletonList(
+                        CustomType.builder()
+                                .label("EMPLOYEE_ID")
+                                .match(Collections.singletonList("EMP-[0-9]{6}"))
+                                .build()))
+                .restrict(Collections.singletonList("[0-9]{3}-[0-9]{2}-[0-9]{4}"))
+                .build())
+        .media(Media.builder()
+                .image(Image.builder().maskingMethod(MaskingMethod.BLUR).outputOcrText(true).build())
+                .document(Document.builder()
+                        .pdf(Pdf.builder().processingMode(PdfProcessingMode.OCR).build())
+                        .build())
+                .audio(Audio.builder()
+                        .outputProcessedAudio(false)          // required when asking for a transcription
+                        .outputTranscription(OutputTranscriptionType.TRANSCRIPTION)
+                        .bleep(Bleep.builder().startPadding(0.5f).stopPadding(0.5f).build())
+                        .build())
+                .build())
+        .build();
+```
+
+## Deidentify file
+
+File de-identification is asynchronous on the API: the submit call returns a run id and the result is retrieved from the run. `deidentifyFile` exposes both modes.
+
+> [!WARNING]
+> **`deidentifyFile` does not wait for the result unless you set `pollOptions`.** Without it the call returns only the run id: `getStatus()` is `null`, `getOutput()` is empty and nothing is written to disk. Code that reads the outputs straight after the call compiles and runs, and the missing files only show up downstream. Set `pollOptions` to block until the run completes, or keep the run id and call [`getRun`](#get-run).
+
+- **Submit only** (default): one call, returns `getRunId()`. `getStatus()` is `null` and nothing is written to disk. Retrieve the result later with [`getRun`](#get-run).
+- **Submit and poll**: set `pollOptions`. The SDK polls the run with exponential backoff (1, 2, 4, 8, 16, then 32 seconds between lookups) until it is `SUCCESS`, `FAILED` or `UNKNOWN`, or until `waitTime` (default 60 s, max 300) or `maxAttempts` (default 23, max 23) is used up. If the budget runs out the response carries the run id with `IN_PROGRESS` or `QUEUED` so you can resume with `getRun`.
+
+The file is supplied in exactly one of three ways: `filePath(String)`, `file(File)`, or `value` plus a `DeidentifySourceType` `dataSource` (`BASE64` or `PRESIGNED_URL`; flowvault vaults do not accept a skyflow id as the source). `file` and `filePath` read a local file when the request is sent, send it as `BASE64` and infer `dataFormat` from its extension. Passing more than one of `filePath`, `file` and `value`, or none of them, is rejected before any network call. `configurationId` and `configuration` follow the same rules as for strings: both optional, sent as supplied, vault defaults when neither is set, and both together rejected by the API (see [Before you start](#before-you-start)).
+
+`dataFormat` accepts every `DeidentifyFileDataFormat`: `BMP`, `CSV`, `DCM`, `DOC`, `DOCX`, `GIF`, `JPEG`, `JPG`, `JSON`, `JSONL`, `MP3`, `PDF`, `PNG`, `PPT`, `PPTX`, `TIF`, `TIFF`, `TXT`, `WAV`, `XLS`, `XLSX`, `XML` and `ZIP`. The `VAULT_TOKEN` de-identification type is supported only for `TXT`, `CSV`, `JSON`, `JSONL`, `XML`, `DOCX`, `XLSX` and `PPTX`.
+
+`outputDirectory` is meaningful only when polling. Setting it without `pollOptions` fails client-side validation with a `SkyflowException` before any request is sent.
+
+```java
+// Submit only
+DeidentifyFileResponse submitted = skyflowClient.detect().deidentifyFile(
+        DeidentifyFileRequest.builder()
+                .filePath("/data/intake/patient-notes.pdf")   // BASE64 + pdf inferred
+                .configurationId("<CONFIGURATION_ID>")
+                .build());
+String runId = submitted.getRunId();
+
+// Submit and poll
+DeidentifyFileResponse response = skyflowClient.detect().deidentifyFile(
+        DeidentifyFileRequest.builder()
+                .filePath("/data/intake/patient-notes.pdf")
+                .configurationId("<CONFIGURATION_ID>")
+                .pollOptions(PollOptions.builder().waitTime(120).build())
+                .outputDirectory("/data/processed")           // optional
+                .build());
+
+switch (response.getStatus()) {
+    case SUCCESS:
+        // For file-based requests the outputs are already on disk:
+        //   /data/processed/processed-patient-notes.pdf    the redacted file
+        //   /data/processed/processed-entities-patient-notes.json   the detected entities
+        // response.getOutput() and getMetrics() carry the same data.
+        break;
+    case FAILED:
+        System.err.println(response.getMessage());
+        break;
+    default:            // IN_PROGRESS or QUEUED: budget ran out, resume with getRun(runId)
+        break;
+}
+```
+
+Outputs are written only when polling reached `SUCCESS`, the request was built from a local file, and the run delivered them as base64. A request built from a `PRESIGNED_URL` value has no local name to derive from, and presigned-URL outputs are not fetched, so in those cases read `getOutput()` and write the files yourself. Files are named `processed-<input name>.<extension>`, with the entities output as `processed-entities-<input name>.json` (and `processed-object-entities-<input name>.json` for PDFs, Office documents and images, which can carry visual objects; a plain-text file yields the first two only); `outputDirectory` is created if missing and defaults to the working directory. Polling blocks the calling thread.
+
+As JSON, a submit-only response is just the run id, and a polled run that succeeded looks like this:
+
+```json
+{ "runId": "0927a82c-7dd6-437a-ba5e-1eeb00f9f45c", "status": null, "outputType": null, "output": [], "metrics": null, "message": null }
+```
+
+```json
+{
+  "runId": "0927a82c-7dd6-437a-ba5e-1eeb00f9f45c",
+  "status": "SUCCESS",
+  "outputType": "BASE64",
+  "output": [
+    { "processedFile": "<base64>", "processedFileType": "REDACTED_FILE", "processedFileExtension": "PDF" },
+    { "processedFile": "<base64>", "processedFileType": "ENTITIES", "processedFileExtension": "JSON" },
+    { "processedFile": "<base64>", "processedFileType": "OBJECT_ENTITIES", "processedFileExtension": "JSON" }
+  ],
+  "metrics": { "size": 48.21, "wordCount": null, "characterCount": null, "slides": null, "pages": 2, "duration": null },
+  "message": ""
+}
+```
+
+### Polling from a worker thread
+
+With `pollOptions` set, `deidentifyFile` polls on the thread that called it: each lookup is a synchronous `getRun` followed by a sleep, until the run is terminal or the budget runs out. No other thread, lock or connection is held while it waits, so other SDK calls are unaffected, but the calling thread is. If that thread is your main thread, a request thread or an event loop, run the call elsewhere.
+
+**Run the blocking call on a thread you own.** Simplest when you process a few files at a time. The SDK still enforces the budget and writes outputs to disk; your thread is parked for the whole poll. [DeidentifyFileAsyncSample.java](samples/src/main/java/com/example/detect/DeidentifyFileAsyncSample.java) runs several files this way on a bounded pool.
+
+```java
+ExecutorService pool = Executors.newFixedThreadPool(4);   // or Executors.newVirtualThreadPerTaskExecutor() on JDK 21+
+
+pool.execute(() -> {
+    try {
+        DeidentifyFileResponse response = skyflowClient.detect().deidentifyFile(
+                DeidentifyFileRequest.builder()
+                        .filePath("/data/intake/patient-notes.pdf")
+                        .configurationId("<CONFIGURATION_ID>")
+                        .pollOptions(PollOptions.builder().waitTime(120).build())
+                        .outputDirectory("/data/processed")
+                        .build());
+        handle(response);                      // SUCCESS, FAILED, UNKNOWN, or IN_PROGRESS/QUEUED if the budget ran out
+    } catch (SkyflowException e) {
+        handleError(e);                        // catch inside the task; an uncaught exception only ends this thread
+    }
+});
+```
+
+Use `pool.submit(...)` instead of `execute` if you want a `Future` to cancel with: interrupting the thread wakes the sleep and the SDK returns the last run it saw. Bound the pool, since every in-flight run parks one thread.
+
+**Submit only, then poll `getRun` on a scheduler.** Best for services and anything concurrent. No thread is held between lookups, so one scheduler thread serves any number of runs. You control the backoff and budget, and you write the outputs yourself since the SDK only writes them when it polls.
+
+```java
+ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+
+String runId = skyflowClient.detect().deidentifyFile(
+        DeidentifyFileRequest.builder()
+                .filePath("/data/intake/patient-notes.pdf")
+                .configurationId("<CONFIGURATION_ID>")
+                .build())                      // no pollOptions: returns the run id immediately
+        .getRunId();
+
+scheduler.schedule(new Runnable() {
+    long delaySeconds = 1;
+
+    @Override
+    public void run() {
+        try {
+            GetRunResponse run = skyflowClient.detect().getRun(GetRunRequest.builder().runId(runId).build());
+            switch (run.getStatus()) {
+                case SUCCESS: case FAILED: case UNKNOWN:
+                    handle(run);
+                    return;
+                default:                       // QUEUED, IN_PROGRESS
+                    scheduler.schedule(this, delaySeconds, TimeUnit.SECONDS);
+                    delaySeconds = Math.min(delaySeconds * 2, 32);
+            }
+        } catch (SkyflowException e) {
+            handleError(e);
+        }
+    }
+}, 0, TimeUnit.SECONDS);
+```
+
+Either way the main thread only pays for the submit round trip. Avoid `new Thread(...)` per file or `CompletableFuture.runAsync` on the common pool for anything that runs at scale: the first has no bound on threads, and the second blocks a shared pool sized for CPU work.
+
+## Reidentify string
+
+Re-identification looks tokens up in the vault, so it applies to values that were de-identified with `VAULT_TOKEN`. Placeholders produced by `ENTITY_UNIQUE_COUNTER`, `ENTITY_ONLY` or `MASK` are not stored anywhere and cannot be re-identified.
+
+`ReidentifyStringRequest` takes the tokenized text and an optional list of `RedactionLevel` rules. For flowvault vaults each rule targets a `tokenGroupName` and applies a named `redactionPattern`. Without rules every token is replaced by its original value.
+
+The text to re-identify is the `processedText` of a de-identification that used `VAULT_TOKEN`. A vault token looks like `[NAME_QUo9AjT]`, not like the `[NAME_1]` counter placeholder, so the round trip is:
+
+```java
+// 1. De-identify with VAULT_TOKEN: the value is stored in the token group and replaced by a vault token.
+DeidentifyStringResponse deidentified = skyflowClient.detect().deidentifyString(
+        DeidentifyStringRequest.builder()
+                .text("My name is John Doe.")
+                .configuration(DetectConfiguration.builder()
+                        .detect(Detect.builder()
+                                .entities(Collections.singletonList(
+                                        Entity.builder()
+                                                .entityType(EntityType.NAME)
+                                                .deidentificationType(DeidentificationType.VAULT_TOKEN)
+                                                .destination("<TOKEN_GROUP_NAME>")
+                                                .build()))
+                                .build())
+                        .build())
+                .build());
+String tokenized = deidentified.getProcessedText();
+// My name is [NAME_QUo9AjT].
+
+// 2. Re-identify: every vault token is replaced by its original value.
+ReidentifyStringResponse original = skyflowClient.detect().reidentifyString(
+        ReidentifyStringRequest.builder().text(tokenized).build());
+System.out.println(original.getProcessedText());
+// My name is John Doe.
+
+// 3. Or render the tokens of one token group with a redaction pattern configured in the vault.
+ReidentifyStringResponse masked = skyflowClient.detect().reidentifyString(
+        ReidentifyStringRequest.builder()
+                .text(tokenized)
+                .redactionLevel(Collections.singletonList(
+                        RedactionLevel.builder()
+                                .tokenGroupName("<TOKEN_GROUP_NAME>")
+                                .redactionPattern("<REDACTION_PATTERN>")
+                                .build()))
+                .build());
+System.out.println(masked.getProcessedText());
+// My name is J**n D*e.
+```
+
+As JSON, the plain re-identification response is:
+
+```json
+{ "processedText": "My name is John Doe.", "metrics": { "size": 0.02, "wordCount": 5, "characterCount": 20, "slides": null, "pages": null, "duration": null } }
+```
+
+A `RedactionLevel` names one source and one replacement. On flowvault vaults the source is a `tokenGroupName` and the replacement a `redactionPattern` configured in the vault. The flowvault SDK's `RedactionLevel` has only these two fields; the skyvault SDK's has `entityName` and `redactionType` instead. Both are optional on the API and are sent as given.
+
+## Reidentify file
+
+`reidentifyFile` is synchronous: the re-identified file comes back in the response, not through a run id. `ReidentifyFileRequest` takes a `dataSource` (`ReidentifySourceType.BASE64` or `PRESIGNED_URL`; re-identification does not accept a skyflow id as the source), the matching `value`, an optional `dataFormat` (a `ReidentifyFileDataFormat`) and the same optional `RedactionLevel` rules as `reidentifyString`. `dataFormat` is limited to the formats that support `VAULT_TOKEN`: `TXT`, `CSV`, `JSON`, `JSONL`, `XML`, `DOCX`, `XLSX` and `PPTX`.
+
+```java
+byte[] content = Files.readAllBytes(Paths.get("tokenized.txt"));
+
+ReidentifyFileResponse response = skyflowClient.detect().reidentifyFile(
+        ReidentifyFileRequest.builder()
+                .dataSource(ReidentifySourceType.BASE64)
+                .value(Base64.getEncoder().encodeToString(content))
+                .dataFormat(ReidentifyFileDataFormat.TXT)
+                .redactionLevel(Collections.singletonList(
+                        RedactionLevel.builder()
+                                .tokenGroupName("<TOKEN_GROUP_NAME>")
+                                .redactionPattern("<REDACTION_PATTERN>")
+                                .build()))
+                .build());
+
+if (response.getStatus() == DetectRunStatus.SUCCESS) {
+    for (ReidentifyFileOutput output : response.getOutput()) {
+        if (response.getOutputType() == ReidentifySourceType.BASE64) {
+            byte[] processed = Base64.getDecoder().decode(output.getProcessedFile());
+            Files.write(Paths.get("reidentified-tokenized." + output.getProcessedFileExtension().name().toLowerCase()), processed);
+        } else {
+            // PRESIGNED_URL: download it yourself, and do not log it; anyone holding the URL can fetch the file.
+            System.out.println(output.getProcessedFileType() + " is available at a presigned URL");
+        }
+    }
+}
+```
+
+`ReidentifyFileResponse` carries `getStatus()`, `getOutputType()`, `getOutput()` (never `null`) and `getMetrics()`. As JSON:
+
+```json
+{
+  "status": "SUCCESS",
+  "outputType": "BASE64",
+  "output": [ { "processedFile": "<base64>", "processedFileType": "REIDENTIFIED_FILE", "processedFileExtension": "TXT" } ],
+  "metrics": { "size": 0.31, "wordCount": 52, "characterCount": 318, "slides": null, "pages": null, "duration": null }
+}
+```
+
+## Get run
+
+File de-identification is asynchronous: the submit call returns a run id, and `getRun` retrieves the run's status and, once it has succeeded, its outputs. `GetRunResponse.getOutput()` is empty and `getOutputType()` and `getMetrics()` are `null` until the run completes.
+
+```java
+GetRunResponse run = skyflowClient.detect().getRun(
+        GetRunRequest.builder().runId("<RUN_ID>").build());
+
+switch (run.getStatus()) {
+    case SUCCESS:
+        for (FileOutput output : run.getOutput()) {
+            // output.getProcessedFileType() is REDACTED_FILE, ENTITIES or OBJECT_ENTITIES;
+            // output.getProcessedFileExtension() is a DeidentifyFileDataFormat such as PDF or JSON.
+            if (run.getOutputType() == DeidentifySourceType.BASE64) {
+                byte[] processed = Base64.getDecoder().decode(output.getProcessedFile());
+                Files.write(Paths.get("processed-" + output.getProcessedFileType() + "." + output.getProcessedFileExtension().name().toLowerCase()), processed);
+            } else {
+                // PRESIGNED_URL: download it yourself; the SDK never fetches or logs presigned URLs.
+            }
+        }
+        break;
+    case FAILED:
+        System.err.println(run.getMessage());
+        break;
+    default:            // QUEUED, IN_PROGRESS, UNKNOWN
+        // poll again later
+}
+```
+
+`GetRunResponse` has the same JSON shape as a polled `DeidentifyFileResponse` (see [Deidentify file](#deidentify-file)), with `runId` echoed from the request.
+
+## Check guardrails
+
+`checkGuardrails` screens text for toxicity and for a list of denied topics, which makes it a natural pre-LLM check. `checkToxicity` and `denyTopics` are optional: the SDK sends each one only when you set it and does not fill in a default. The server evaluates toxicity only when `checkToxicity(true)` is sent; with `denyTopics` alone, `getToxic()` is `false` even for toxic text, so set `checkToxicity(true)` explicitly whenever you want that check. A request with neither field is rejected with HTTP 400. The response is passed through as returned, so `getToxic()`, `getDeniedTopic()` and `getValidation()` carry exactly what the API sent back.
+
+```java
+CheckGuardrailsResponse response = skyflowClient.detect().checkGuardrails(
+        CheckGuardrailsRequest.builder()
+                .text(userPrompt)
+                .checkToxicity(true)
+                .denyTopics(Arrays.asList("politics", "medical advice"))
+                .build());
+
+if (response.getValidation() == GuardrailsValidation.FAILED) {
+    throw new IllegalArgumentException("blocked: toxic=" + response.getToxic() + " deniedTopic=" + response.getDeniedTopic());
+}
+```
+
+As JSON, a response that failed both checks is:
+
+```json
+{ "text": "<the input text>", "validation": "FAILED", "toxic": true, "deniedTopic": true }
+```
+
+A check you did not request comes back as `null`. Sending neither `checkToxicity` nor `denyTopics` is rejected by the API.
+
+## Detect errors
+
+All Detect methods throw `SkyflowException` as described in [Error Handling](#error-handling); `getHttpCode()`, `getMessage()` and `getRequestId()` identify the failure, and the request id is what Skyflow support asks for. Client-side validation fails before any network call with HTTP code 400 and no request id. Server-side failures carry the API's message, for example a `checkGuardrails` call with neither `checkToxicity` nor `denyTopics`:
+
+```java
+try {
+    skyflowClient.detect().checkGuardrails(
+            CheckGuardrailsRequest.builder().text(userPrompt).build());
+} catch (SkyflowException e) {
+    System.err.println("Error during checkGuardrails: [" + e.getHttpCode() + "] " + e.getMessage()
+            + " (requestId=" + e.getRequestId() + ")");
+}
+```
+
+```json
+{
+  "error": {
+    "grpc_code": 3,
+    "http_code": 400,
+    "message": "Guardrails are not provided. Please provide 'check_toxicity' or 'deny_topics' in the request body.",
+    "http_status": "Bad Request",
+    "details": []
+  }
+}
+```
+
+A `deidentifyFile` run that was accepted but failed while processing does not throw: `getStatus()` is `FAILED` and `getMessage()` carries the detail.
+
+See the samples [DeidentifyStringSample.java](samples/src/main/java/com/example/detect/DeidentifyStringSample.java), [DeidentifyFileSample.java](samples/src/main/java/com/example/detect/DeidentifyFileSample.java), [DeidentifyFileAsyncSample.java](samples/src/main/java/com/example/detect/DeidentifyFileAsyncSample.java), [ReidentifyStringSample.java](samples/src/main/java/com/example/detect/ReidentifyStringSample.java), [ReidentifyFileSample.java](samples/src/main/java/com/example/detect/ReidentifyFileSample.java), [GetRunSample.java](samples/src/main/java/com/example/detect/GetRunSample.java) and [CheckGuardrailsSample.java](samples/src/main/java/com/example/detect/CheckGuardrailsSample.java).
+
 # Custom Request Headers
 
 To include custom HTTP headers on an outgoing request — bulk or unary — pass a `RequestInterceptor` via that operation's options object. The headers available are defined by the `CustomHeaderKey` enum:
@@ -1662,6 +2457,8 @@ The same pattern applies to every operation, via its corresponding options class
 | `get` | `GetOptions` |
 | `update` | `UpdateOptions` |
 | `delete` | `DeleteOptions` |
+| `query` | `QueryOptions` |
+| `getTokens` | `GetTokensOptions` |
 
 # Error Handling
 

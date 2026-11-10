@@ -2,7 +2,6 @@ package com.skyflow.utils;
 
 import com.skyflow.generated.rest.core.ApiClientApiException;
 import com.skyflow.generated.rest.core.ObjectMappers;
-import com.skyflow.generated.rest.types.V1FlowTokenizeResponse;
 import com.skyflow.vault.data.BulkTokenizeRequestRecord;
 import com.skyflow.vault.data.BulkTokenizeResponse;
 import com.skyflow.vault.data.BulkTokenizeResponseRecord;
@@ -25,9 +24,9 @@ import java.util.Map;
  */
 public class FlatTokenizeResponseTests {
 
-    private static V1FlowTokenizeResponse parse(String json) {
+    private static com.skyflow.generated.rest.types.TokenizeResponse parse(String json) {
         try {
-            return ObjectMappers.JSON_MAPPER.readValue(json, V1FlowTokenizeResponse.class);
+            return ObjectMappers.JSON_MAPPER.readValue(json, com.skyflow.generated.rest.types.TokenizeResponse.class);
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }
