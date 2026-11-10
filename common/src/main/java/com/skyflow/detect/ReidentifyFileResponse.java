@@ -9,10 +9,10 @@ import java.util.List;
 public final class ReidentifyFileResponse {
     private final DetectRunStatus status;
     private final ReidentifyFileSource outputType;
-    private final List<FileOutput> output;
+    private final List<ReidentifyFileOutput> output;
     private final Metrics metrics;
 
-    public ReidentifyFileResponse(DetectRunStatus status, ReidentifyFileSource outputType, List<FileOutput> output, Metrics metrics) {
+    public ReidentifyFileResponse(DetectRunStatus status, ReidentifyFileSource outputType, List<ReidentifyFileOutput> output, Metrics metrics) {
         this.status = status;
         this.outputType = outputType;
         this.output = output;
@@ -36,7 +36,7 @@ public final class ReidentifyFileResponse {
     /**
      * @return Output artifacts. Empty when none were returned, never null.
      */
-    public List<FileOutput> getOutput() {
+    public List<ReidentifyFileOutput> getOutput() {
         return output;
     }
 

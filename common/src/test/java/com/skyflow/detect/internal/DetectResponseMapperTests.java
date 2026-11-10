@@ -1,10 +1,10 @@
 package com.skyflow.detect.internal;
 
 import com.skyflow.detect.CheckGuardrailsResponse;
+import com.skyflow.detect.DeidentifyFileDataFormat;
 import com.skyflow.detect.TestDeidentifySource;
 import com.skyflow.detect.DeidentifyStringResponse;
 import com.skyflow.detect.DetectRunStatus;
-import com.skyflow.detect.FileDataFormat;
 import com.skyflow.detect.GetRunResponse;
 import com.skyflow.detect.GuardrailsValidation;
 import com.skyflow.detect.DetectedEntity;
@@ -104,7 +104,7 @@ public class DetectResponseMapperTests {
         Assert.assertEquals(DetectRunStatus.SUCCESS, run.getStatus());
         Assert.assertEquals(TestDeidentifySource.PRESIGNED_URL, run.getOutputType());
         Assert.assertEquals("https://x/y.pdf", run.getOutput().get(0).getProcessedFile());
-        Assert.assertEquals(FileDataFormat.PDF, run.getOutput().get(0).getProcessedFileExtension());
+        Assert.assertEquals(DeidentifyFileDataFormat.PDF, run.getOutput().get(0).getProcessedFileExtension());
         Assert.assertEquals(Integer.valueOf(2), run.getMetrics().getPages());
     }
 

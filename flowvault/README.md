@@ -1684,14 +1684,15 @@ Sample response:
 
 ```json
 {
-  "fields": [ { "skyflow_id": "9f5b8e6e-...", "name": "John Doe", "email": "john@example.com" } ],
-  "errors": null,
+  "records": [ { "skyflow_id": "9f5b8e6e-...", "name": "John Doe", "email": "john@example.com" } ],
   "metadata": { "columns": ["skyflow_id", "name", "email"] },
   "requestId": "<id>"
 }
 ```
 
-Accessors: `queryResponse.getFields()` (one `HashMap<String, Object>` per row), `getErrors()`, `getMetadata().getColumns()`, `getRequestId()`.
+Accessors: `queryResponse.getRecords()` (one read-only `Map<String, Object>` per row, in the vault's column order), `getMetadata().getColumns()`, `getRequestId()`. The vault returns at most 25 rows per call; page with `LIMIT` and `OFFSET` in the query (the SDK logs a warning when a call returns a full page).
+
+> **Deprecation notice:** `getFields()` (the same rows under a misleading name) and `getErrors()` (always `null`) are deprecated. Use `getRecords()`, and catch `SkyflowException` for query failures.
 
 # Get Tokens
 
@@ -1940,7 +1941,7 @@ Sample response (partial success):
 }
 ```
 
-`deleteFilesResponse.getRecords()` returns one `DeleteFilesResponseRecord` per resolved record, with the accessors `getSkyflowId()`, `getTableName()`, `getColumns()`, `getHttpCode()`, `getError()` and `getRequestId()` (set only when `getError()` is non-null). `getColumns()` is a list of `DeleteFilesColumnResult` (`getColumn()`, `getStatus()`), or null on a failed record.
+`deleteFilesResponse.getRecords()` returns one `DeleteFilesResponseRecord` per resolved record, with the accessors `getSkyflowId()`, `getTableName()`, `getColumns()`, `getHttpCode()`, `getError()` and `getRequestId()` (set only when `getError()` is non-null). `getColumns()` is a list of `DeleteFilesColumnResult` (`getColumn()`, `getStatus()` returning a `DeleteFilesStatus` — `DELETED`, or `UNKNOWN` for a status this SDK version does not recognize — and `getRawStatus()` with the value as sent), or null on a failed record.
 
 # Detect
 
@@ -2111,7 +2112,7 @@ File de-identification is asynchronous on the API: the submit call returns a run
 
 The file is supplied in exactly one of three ways: `filePath(String)`, `file(File)`, or `value` plus a `DeidentifySourceType` `dataSource` (`BASE64` or `PRESIGNED_URL`; flowvault vaults do not accept a skyflow id as the source). `file` and `filePath` read a local file when the request is sent, send it as `BASE64` and infer `dataFormat` from its extension. Passing more than one of `filePath`, `file` and `value`, or none of them, is rejected before any network call. `configurationId` and `configuration` follow the same rules as for strings: both optional, sent as supplied, vault defaults when neither is set, and both together rejected by the API (see [Before you start](#before-you-start)).
 
-`dataFormat` accepts every `FileDataFormat`: `BMP`, `CSV`, `DCM`, `DOC`, `DOCX`, `GIF`, `JPEG`, `JPG`, `JSON`, `JSONL`, `MP3`, `PDF`, `PNG`, `PPT`, `PPTX`, `TIF`, `TIFF`, `TXT`, `WAV`, `XLS`, `XLSX`, `XML` and `ZIP`. The `VAULT_TOKEN` de-identification type is supported only for `TXT`, `CSV`, `JSON`, `JSONL`, `XML`, `DOCX`, `XLSX` and `PPTX`.
+`dataFormat` accepts every `DeidentifyFileDataFormat`: `BMP`, `CSV`, `DCM`, `DOC`, `DOCX`, `GIF`, `JPEG`, `JPG`, `JSON`, `JSONL`, `MP3`, `PDF`, `PNG`, `PPT`, `PPTX`, `TIF`, `TIFF`, `TXT`, `WAV`, `XLS`, `XLSX`, `XML` and `ZIP`. The `VAULT_TOKEN` de-identification type is supported only for `TXT`, `CSV`, `JSON`, `JSONL`, `XML`, `DOCX`, `XLSX` and `PPTX`.
 
 `outputDirectory` is meaningful only when polling. Setting it without `pollOptions` fails client-side validation with a `SkyflowException` before any request is sent.
 
@@ -2291,7 +2292,7 @@ A `RedactionLevel` names one source and one replacement. On flowvault vaults the
 
 ## Reidentify file
 
-`reidentifyFile` is synchronous: the re-identified file comes back in the response, not through a run id. `ReidentifyFileRequest` takes a `dataSource` (`ReidentifySourceType.BASE64` or `PRESIGNED_URL`; re-identification does not accept a skyflow id as the source), the matching `value`, an optional `dataFormat` and the same optional `RedactionLevel` rules as `reidentifyString`. `dataFormat` is limited to the formats that support `VAULT_TOKEN`: `TXT`, `CSV`, `JSON`, `JSONL`, `XML`, `DOCX`, `XLSX` and `PPTX`.
+`reidentifyFile` is synchronous: the re-identified file comes back in the response, not through a run id. `ReidentifyFileRequest` takes a `dataSource` (`ReidentifySourceType.BASE64` or `PRESIGNED_URL`; re-identification does not accept a skyflow id as the source), the matching `value`, an optional `dataFormat` (a `ReidentifyFileDataFormat`) and the same optional `RedactionLevel` rules as `reidentifyString`. `dataFormat` is limited to the formats that support `VAULT_TOKEN`: `TXT`, `CSV`, `JSON`, `JSONL`, `XML`, `DOCX`, `XLSX` and `PPTX`.
 
 ```java
 byte[] content = Files.readAllBytes(Paths.get("tokenized.txt"));
@@ -2300,7 +2301,7 @@ ReidentifyFileResponse response = skyflowClient.detect().reidentifyFile(
         ReidentifyFileRequest.builder()
                 .dataSource(ReidentifySourceType.BASE64)
                 .value(Base64.getEncoder().encodeToString(content))
-                .dataFormat(FileDataFormat.TXT)
+                .dataFormat(ReidentifyFileDataFormat.TXT)
                 .redactionLevel(Collections.singletonList(
                         RedactionLevel.builder()
                                 .tokenGroupName("<TOKEN_GROUP_NAME>")
@@ -2309,7 +2310,7 @@ ReidentifyFileResponse response = skyflowClient.detect().reidentifyFile(
                 .build());
 
 if (response.getStatus() == DetectRunStatus.SUCCESS) {
-    for (FileOutput output : response.getOutput()) {
+    for (ReidentifyFileOutput output : response.getOutput()) {
         if (response.getOutputType() == ReidentifySourceType.BASE64) {
             byte[] processed = Base64.getDecoder().decode(output.getProcessedFile());
             Files.write(Paths.get("reidentified-tokenized." + output.getProcessedFileExtension().name().toLowerCase()), processed);
@@ -2344,7 +2345,7 @@ switch (run.getStatus()) {
     case SUCCESS:
         for (FileOutput output : run.getOutput()) {
             // output.getProcessedFileType() is REDACTED_FILE, ENTITIES or OBJECT_ENTITIES;
-            // output.getProcessedFileExtension() is a FileDataFormat such as PDF or JSON.
+            // output.getProcessedFileExtension() is a DeidentifyFileDataFormat such as PDF or JSON.
             if (run.getOutputType() == DeidentifySourceType.BASE64) {
                 byte[] processed = Base64.getDecoder().decode(output.getProcessedFile());
                 Files.write(Paths.get("processed-" + output.getProcessedFileType() + "." + output.getProcessedFileExtension().name().toLowerCase()), processed);

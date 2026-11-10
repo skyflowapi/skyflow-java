@@ -251,4 +251,38 @@ public class SkyflowRetryInterceptorTests {
         Assert.assertTrue("expected ~" + expected + " (+/-" + jitter + ") but got " + actual,
                 actual >= expected - jitter && actual <= expected + jitter);
     }
+
+    // ── uploadFiles' signed-URL request may create records, so no 5xx replay ──
+
+    private static final String UPLOAD_URL = "https://vault1.example.com/v2/files/upload";
+
+    @Test
+    public void testIntercept_uploadFilesIsNotRetriedOnServerError() throws IOException {
+        FakeChain chain = new FakeChain(UPLOAD_URL, 503, 200);
+
+        Response response = retrying(3).intercept(chain);
+
+        Assert.assertEquals("a 5xx on upload may already have created records", 1, chain.calls());
+        Assert.assertEquals(503, response.code());
+    }
+
+    @Test
+    public void testIntercept_uploadFilesStillRetriesRequestsTheServerDidNotProcess() throws IOException {
+        FakeChain chain = new FakeChain(UPLOAD_URL, 429, 408, 200);
+
+        Response response = retrying(3).intercept(chain);
+
+        Assert.assertEquals(3, chain.calls());
+        Assert.assertEquals(200, response.code());
+    }
+
+    @Test
+    public void testIntercept_otherOperationsStillRetryServerErrors() throws IOException {
+        FakeChain chain = new FakeChain("https://vault1.example.com/v2/files/delete", 503, 200);
+
+        Response response = retrying(3).intercept(chain);
+
+        Assert.assertEquals(2, chain.calls());
+        Assert.assertEquals(200, response.code());
+    }
 }

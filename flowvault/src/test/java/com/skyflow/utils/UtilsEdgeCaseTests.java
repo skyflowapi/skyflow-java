@@ -231,7 +231,8 @@ public class UtilsEdgeCaseTests {
         Assert.assertEquals(200, deleted.getHttpCode());
         List<DeleteFilesColumnResult> columns = deleted.getColumns();
         Assert.assertEquals("photo", columns.get(0).getColumn());
-        Assert.assertNull(columns.get(0).getStatus());
+        Assert.assertEquals(com.skyflow.enums.DeleteFilesStatus.UNKNOWN, columns.get(0).getStatus());
+        Assert.assertNull(columns.get(0).getRawStatus());
         Assert.assertEquals(500, formatted.getRecords().get(1).getHttpCode());
         Assert.assertEquals("req-1", formatted.getRecords().get(1).getRequestId());
     }

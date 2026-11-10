@@ -10,7 +10,7 @@ import java.util.List;
 public final class ReidentifyFileRequest {
     private final ReidentifyFileSource dataSource;
     private final String value;
-    private final FileDataFormat dataFormat;
+    private final ReidentifyFileDataFormat dataFormat;
     private final List<? extends RedactionRule> redactionLevel;
 
     private ReidentifyFileRequest(ReidentifyFileRequestBuilder builder) {
@@ -43,10 +43,10 @@ public final class ReidentifyFileRequest {
     }
 
     /**
-     * @return Format of the file. Optional; the API infers it when omitted. Re-identification supports text formats
-     * such as TXT, CSV, JSON, JSONL, XML, DOCX, XLSX and PPTX.
+     * @return Format of the file. Optional; the API infers it when omitted. Limited to the formats that support
+     * {@code VAULT_TOKEN}: TXT, CSV, JSON, JSONL, XML, DOCX, XLSX and PPTX.
      */
-    public FileDataFormat getDataFormat() {
+    public ReidentifyFileDataFormat getDataFormat() {
         return dataFormat;
     }
 
@@ -70,7 +70,7 @@ public final class ReidentifyFileRequest {
     public static final class ReidentifyFileRequestBuilder {
         private ReidentifyFileSource dataSource;
         private String value;
-        private FileDataFormat dataFormat;
+        private ReidentifyFileDataFormat dataFormat;
         private List<? extends RedactionRule> redactionLevel;
 
         private ReidentifyFileRequestBuilder() {
@@ -96,10 +96,10 @@ public final class ReidentifyFileRequest {
         }
 
         /**
-         * @param dataFormat Format of the file. Optional.
+         * @param dataFormat Format of the file. Optional. Only the formats that support {@code VAULT_TOKEN} are offered.
          * @return this builder
          */
-        public ReidentifyFileRequestBuilder dataFormat(FileDataFormat dataFormat) {
+        public ReidentifyFileRequestBuilder dataFormat(ReidentifyFileDataFormat dataFormat) {
             this.dataFormat = dataFormat;
             return this;
         }

@@ -2,7 +2,8 @@ package com.skyflow.detect.internal;
 
 import com.skyflow.detect.ReidentifyFileSource;
 import com.skyflow.detect.DetectRunStatus;
-import com.skyflow.detect.FileOutput;
+import com.skyflow.detect.ReidentifyFileDataFormat;
+import com.skyflow.detect.ReidentifyFileOutput;
 import com.skyflow.detect.ReidentifyFileRequest;
 import com.skyflow.detect.ReidentifyFileResponse;
 import com.skyflow.generated.common.rest.resources.filesv2.requests.ReidentifyFileRequestV2;
@@ -44,12 +45,12 @@ public final class ReidentifyFileMapper {
      */
     public static ReidentifyFileResponse toResponse(ReidentifyFileResponseV2 response,
                                                     Function<String, ReidentifyFileSource> sourceResolver) {
-        List<FileOutput> outputs = new ArrayList<>();
+        List<ReidentifyFileOutput> outputs = new ArrayList<>();
         List<com.skyflow.generated.common.rest.types.FileOutput> apiOutputs = response.getOutput().orElse(null);
         if (apiOutputs != null) {
             for (com.skyflow.generated.common.rest.types.FileOutput apiOutput : apiOutputs) {
                 if (apiOutput != null) {
-                    outputs.add(DetectResponseMapper.toFileOutput(apiOutput));
+                    outputs.add(toReidentifyFileOutput(apiOutput));
                 }
             }
         }
@@ -59,6 +60,16 @@ public final class ReidentifyFileMapper {
                 response.getOutputType().map(t -> sourceResolver.apply(t.toString())).orElse(null),
                 Collections.unmodifiableList(outputs),
                 response.getMetrics().map(DetectResponseMapper::toMetrics).orElse(null));
+    }
+
+    /** The re-identify counterpart of {@link DetectResponseMapper#toFileOutput}: the format is a {@link ReidentifyFileDataFormat}. */
+    static ReidentifyFileOutput toReidentifyFileOutput(com.skyflow.generated.common.rest.types.FileOutput apiOutput) {
+        return new ReidentifyFileOutput(
+                apiOutput.getProcessedFile().orElse(null),
+                apiOutput.getProcessedFileType().map(Object::toString).orElse(null),
+                apiOutput.getProcessedFileExtension()
+                        .map(e -> enumOrDefault(ReidentifyFileDataFormat.class, e.toString().toUpperCase(), null))
+                        .orElse(null));
     }
 
     /** Maps a wire value onto a public enum, tolerating values this SDK version does not know. */

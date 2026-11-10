@@ -9,7 +9,7 @@ import com.skyflow.enums.LogLevel;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.vault.data.*;
 
-import java.util.HashMap;
+import java.util.Map;
 
 /**
  * This sample demonstrates the Skyflow Java SDK's unary query operation — running a SQL SELECT
@@ -55,7 +55,7 @@ public class QueryExample {
 
             // Step 5: Read the rows. Each map holds one record's column/value pairs.
             System.out.println("columns: " + response.getMetadata().getColumns());
-            for (HashMap<String, Object> row : response.getFields()) {
+            for (Map<String, Object> row : response.getRecords()) {
                 System.out.println("row: " + row);
             }
             System.out.println("requestId: " + response.getRequestId());

@@ -3062,40 +3062,31 @@ public class UtilsTests {
         }
         Assert.assertEquals("from disk", bodyText(Utils.buildUploadFileBody(
                 com.skyflow.vault.data.UploadFilesRequestColumn.builder().filePath(file.getPath()).build(),
-                null, "text/plain")));
-        // base64 content is sent from the bytes decoded up front, not decoded again here
+                "text/plain")));
+        // base64 content is decoded when its own upload starts
         Assert.assertEquals("hello", bodyText(Utils.buildUploadFileBody(
                 com.skyflow.vault.data.UploadFilesRequestColumn.builder().base64("aGVsbG8=").fileName("h.txt").build(),
-                "hello".getBytes(java.nio.charset.StandardCharsets.UTF_8), "text/plain")));
+                "text/plain")));
         okhttp3.RequestBody fromObject = Utils.buildUploadFileBody(
-                com.skyflow.vault.data.UploadFilesRequestColumn.builder().fileObject(file).build(), null, "text/plain");
+                com.skyflow.vault.data.UploadFilesRequestColumn.builder().fileObject(file).build(), "text/plain");
         Assert.assertEquals("from disk", bodyText(fromObject));
         Assert.assertEquals("text/plain", fromObject.contentType().toString());
     }
 
     @Test
-    public void testDecodeBase64Columns_decodesEachBase64ColumnOnce() throws Exception {
+    public void testValidateBase64Columns_acceptsValidBase64AndIgnoresOtherSources() throws Exception {
         com.skyflow.vault.data.UploadFilesRequestColumn first =
                 com.skyflow.vault.data.UploadFilesRequestColumn.builder().column("a").base64("aGVsbG8=").fileName("a.txt").build();
-        com.skyflow.vault.data.UploadFilesRequestColumn second =
-                com.skyflow.vault.data.UploadFilesRequestColumn.builder().column("b").base64("aGVsbG8=").fileName("b.txt").build();
         com.skyflow.vault.data.UploadFilesRequestColumn fromDisk =
                 com.skyflow.vault.data.UploadFilesRequestColumn.builder().column("c").filePath("/tmp/c.pdf").build();
 
-        Map<com.skyflow.vault.data.UploadFilesRequestColumn, byte[]> decoded =
-                Utils.decodeBase64Columns(uploadRequest(uploadRecord(null, first, fromDisk), uploadRecord("sky-1", second)));
-
-        Assert.assertEquals(2, decoded.size());
-        Assert.assertArrayEquals("hello".getBytes(java.nio.charset.StandardCharsets.UTF_8), decoded.get(first));
-        // keyed by the column itself, so two columns with equal content keep separate entries
-        Assert.assertNotSame(decoded.get(first), decoded.get(second));
-        Assert.assertFalse(decoded.containsKey(fromDisk));
+        Utils.validateBase64Columns(uploadRequest(uploadRecord(null, first, fromDisk)));
     }
 
     @Test
-    public void testDecodeBase64Columns_invalidContentThrows() {
+    public void testValidateBase64Columns_invalidContentThrows() {
         try {
-            Utils.decodeBase64Columns(uploadRequest(uploadRecord(null,
+            Utils.validateBase64Columns(uploadRequest(uploadRecord(null,
                     com.skyflow.vault.data.UploadFilesRequestColumn.builder().column("kyc").base64("not base64!")
                             .fileName("kyc.txt").build())));
             Assert.fail("Should have thrown an exception");
@@ -3161,9 +3152,9 @@ public class UtilsTests {
         Assert.assertNull(ok.getRequestId());
         List<DeleteFilesColumnResult> columns = ok.getColumns();
         Assert.assertEquals("resumePDF", columns.get(0).getColumn());
-        Assert.assertEquals("DELETED", columns.get(0).getStatus());
+        Assert.assertEquals(com.skyflow.enums.DeleteFilesStatus.DELETED, columns.get(0).getStatus());
         Assert.assertEquals("photoID", columns.get(1).getColumn());
-        Assert.assertEquals("DELETED", columns.get(1).getStatus());
+        Assert.assertEquals(com.skyflow.enums.DeleteFilesStatus.DELETED, columns.get(1).getStatus());
         DeleteFilesResponseRecord failed = result.getRecords().get(1);
         Assert.assertNull(failed.getColumns());
         Assert.assertEquals(404, failed.getHttpCode());
@@ -3196,5 +3187,135 @@ public class UtilsTests {
         Assert.assertEquals(404, record.getHttpCode());
         Assert.assertNull(Utils.handleDeleteFilesRequestException(
                 new ApiClientApiException("Error with status code 500", 500, "boom")));
+    }
+
+    @Test
+    public void testHandleGetTokensRequestException_successfulRecordInFailedCallIsNotMarkedFailed() {
+        Map<String, Object> found = new LinkedHashMap<>();
+        found.put("value", "john@example.com");
+        found.put("tokenGroupName", "det_group");
+        found.put("token", "tok-123");
+        found.put("httpCode", 200);
+        Map<String, Object> missing = new LinkedHashMap<>();
+        missing.put("value", "unknown@example.com");
+        missing.put("tokenGroupName", "det_group");
+        missing.put("error", "Token not found.");
+        missing.put("httpCode", 404);
+        Map<String, Object> body = new HashMap<>();
+        body.put("records", Arrays.asList(found, missing));
+
+        GetTokensResponse response = Utils.handleGetTokensRequestException(
+                new ApiClientApiException("Error with status code 404", 404, body));
+
+        GetTokensResponseRecord ok = response.getRecords().get(0);
+        Assert.assertNull(ok.getError());
+        Assert.assertNull(ok.getRequestId());
+        Assert.assertEquals("tok-123", ok.getToken());
+        Assert.assertEquals(200, ok.getHttpCode());
+        GetTokensResponseRecord failed = response.getRecords().get(1);
+        Assert.assertEquals("Token not found.", failed.getError());
+        Assert.assertEquals(404, failed.getHttpCode());
+    }
+
+    @Test
+    public void testHandleGetTokensRequestException_blankErrorWithoutStatusIsStillFailed() {
+        Map<String, Object> record = new HashMap<>();
+        record.put("value", "v");
+        record.put("error", "");
+        Map<String, Object> body = new HashMap<>();
+        body.put("records", Collections.singletonList(record));
+
+        GetTokensResponse response = Utils.handleGetTokensRequestException(
+                new ApiClientApiException("boom", 400, body));
+
+        Assert.assertEquals("Unknown error", response.getRecords().get(0).getError());
+        Assert.assertEquals(400, response.getRecords().get(0).getHttpCode());
+    }
+
+    @Test
+    public void testHandleDeleteFilesRequestException_successfulRecordKeepsDeletedColumns() {
+        Map<String, Object> status = new HashMap<>();
+        status.put("status", "DELETED");
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("kyc", status);
+        Map<String, Object> deleted = new HashMap<>();
+        deleted.put("skyflowID", "sky-1");
+        deleted.put("tableName", "employees");
+        deleted.put("data", data);
+        deleted.put("httpCode", 200);
+        Map<String, Object> failed = new HashMap<>();
+        failed.put("skyflowID", "sky-2");
+        failed.put("tableName", "employees");
+        failed.put("error", "Record not found.");
+        failed.put("httpCode", 404);
+        Map<String, Object> body = new HashMap<>();
+        body.put("records", Arrays.asList(deleted, failed));
+
+        com.skyflow.vault.data.DeleteFilesResponse response = Utils.handleDeleteFilesRequestException(
+                new ApiClientApiException("Error with status code 404", 404, body));
+
+        DeleteFilesResponseRecord ok = response.getRecords().get(0);
+        Assert.assertNull(ok.getError());
+        Assert.assertNull(ok.getRequestId());
+        Assert.assertEquals(200, ok.getHttpCode());
+        Assert.assertEquals(1, ok.getColumns().size());
+        Assert.assertEquals("kyc", ok.getColumns().get(0).getColumn());
+        Assert.assertEquals(com.skyflow.enums.DeleteFilesStatus.DELETED, ok.getColumns().get(0).getStatus());
+        DeleteFilesResponseRecord notOk = response.getRecords().get(1);
+        Assert.assertEquals("Record not found.", notOk.getError());
+        Assert.assertNull(notOk.getColumns());
+    }
+
+    // ── errorBodyJson: the body SkyflowException parses always yields a message ─
+
+    private static String messageOf(String errorBodyJson) {
+        return com.google.gson.JsonParser.parseString(errorBodyJson).getAsJsonObject()
+                .getAsJsonObject("error").get("message").getAsString();
+    }
+
+    @Test
+    public void testErrorBodyJson_plainTextPassedThroughUnquoted() {
+        Assert.assertEquals("Bad gateway", Utils.errorBodyJson("Bad gateway", 502));
+    }
+
+    @Test
+    public void testErrorBodyJson_errorObjectPassedThrough() {
+        Map<String, Object> error = new LinkedHashMap<>();
+        error.put("message", "Permission denied.");
+        error.put("grpc_code", 7);
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("error", error);
+
+        String json = Utils.errorBodyJson(body, 403);
+
+        Assert.assertEquals("Permission denied.", messageOf(json));
+        Assert.assertEquals(7, com.google.gson.JsonParser.parseString(json).getAsJsonObject()
+                .getAsJsonObject("error").get("grpc_code").getAsInt());
+    }
+
+    @Test
+    public void testErrorBodyJson_stringErrorOrMessageIsWrapped() {
+        Map<String, Object> stringError = new HashMap<>();
+        stringError.put("error", "bad column");
+        Assert.assertEquals("bad column", messageOf(Utils.errorBodyJson(stringError, 400)));
+
+        Map<String, Object> topLevelMessage = new HashMap<>();
+        topLevelMessage.put("message", "quota exceeded");
+        Assert.assertEquals("quota exceeded", messageOf(Utils.errorBodyJson(topLevelMessage, 429)));
+    }
+
+    @Test
+    public void testErrorBodyJson_unrecognizedObjectBecomesTheMessage() {
+        Map<String, Object> body = new HashMap<>();
+        body.put("detail", "something");
+        Assert.assertEquals("{\"detail\":\"something\"}", messageOf(Utils.errorBodyJson(body, 500)));
+    }
+
+    @Test
+    public void testErrorBodyJson_emptyOrMissingBodyFallsBackToStatus() {
+        Assert.assertEquals("Error with status code 503", messageOf(Utils.errorBodyJson(null, 503)));
+        Assert.assertEquals("Error with status code 503", messageOf(Utils.errorBodyJson("  ", 503)));
+        Assert.assertEquals("Error with status code 503",
+                messageOf(Utils.errorBodyJson(new HashMap<String, Object>(), 503)));
     }
 }

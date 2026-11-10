@@ -359,8 +359,7 @@ public class RequestResponseWrapperTests {
 
         QueryResponse response = new QueryResponse(fields, metadata, "req-1");
 
-        Assert.assertEquals(fields, response.getFields());
-        Assert.assertNull(response.getErrors());
+        Assert.assertEquals(fields, response.getRecords());
         Assert.assertSame(metadata, response.getMetadata());
         Assert.assertEquals("req-1", response.getRequestId());
         Assert.assertTrue(response instanceof BaseQueryResponse);
@@ -375,10 +374,29 @@ public class RequestResponseWrapperTests {
 
         String json = response.toString();
 
-        Assert.assertTrue(json, json.contains("\"fields\":[{\"name\":\"john\"}]"));
-        Assert.assertTrue(json, json.contains("\"errors\":null"));
-        Assert.assertTrue(json, json.contains("\"metadata\":{\"columns\":[\"name\"]}"));
-        Assert.assertTrue(json, json.contains("\"requestId\":\"req-1\""));
+        Assert.assertEquals("{\"records\":[{\"name\":\"john\"}],\"metadata\":{\"columns\":[\"name\"]},"
+                + "\"requestId\":\"req-1\"}", json);
+    }
+
+    @Test
+    @SuppressWarnings("deprecation")
+    public void testQueryResponse_recordsAreReadOnlyAndDeprecatedGettersStillWork() {
+        HashMap<String, Object> row = new HashMap<>();
+        row.put("name", "john");
+        ArrayList<HashMap<String, Object>> fields = new ArrayList<>(Collections.singletonList(row));
+        QueryResponse response = new QueryResponse(fields, new QueryResponseMetadata(null), null);
+
+        try {
+            response.getRecords().clear();
+            Assert.fail("getRecords() should be read-only");
+        } catch (UnsupportedOperationException expected) {
+            Assert.assertEquals(1, response.getRecords().size());
+        }
+        // kept for compatibility until removal
+        Assert.assertSame(fields, response.getFields());
+        Assert.assertNull(response.getErrors());
+        // a null row list reads as empty, never null
+        Assert.assertTrue(new QueryResponse(null, null, null).getRecords().isEmpty());
     }
 
     // ── GetTokensRequest ─────────────────────────────────────────────────────
@@ -473,7 +491,7 @@ public class RequestResponseWrapperTests {
         Assert.assertEquals("documents", record.getTableName());
         Assert.assertEquals(200, record.getHttpCode());
         Assert.assertEquals("photo", column.getColumn());
-        Assert.assertEquals("DELETED", column.getStatus());
+        Assert.assertEquals(com.skyflow.enums.DeleteFilesStatus.DELETED, column.getStatus());
         Assert.assertNull(failed.getColumns());
         Assert.assertEquals("Not found", failed.getError());
         Assert.assertEquals("req-1", failed.getRequestId());
@@ -482,5 +500,22 @@ public class RequestResponseWrapperTests {
         Assert.assertTrue(json, json.contains("\"status\":\"DELETED\""));
         Assert.assertTrue(json, failed.toString().contains("\"error\":\"Not found\""));
         Assert.assertTrue(json, column.toString().contains("\"column\":\"photo\""));
+    }
+
+    @Test
+    public void testDeleteFilesColumnResult_unrecognizedStatusIsUnknownButKeepsTheRawValue() {
+        com.skyflow.vault.data.DeleteFilesColumnResult lower =
+                new com.skyflow.vault.data.DeleteFilesColumnResult("kyc", "deleted");
+        Assert.assertEquals(com.skyflow.enums.DeleteFilesStatus.DELETED, lower.getStatus());
+
+        com.skyflow.vault.data.DeleteFilesColumnResult other =
+                new com.skyflow.vault.data.DeleteFilesColumnResult("kyc", "NOT_FOUND");
+        Assert.assertEquals(com.skyflow.enums.DeleteFilesStatus.UNKNOWN, other.getStatus());
+        Assert.assertEquals("NOT_FOUND", other.getRawStatus());
+
+        com.skyflow.vault.data.DeleteFilesColumnResult missing =
+                new com.skyflow.vault.data.DeleteFilesColumnResult("kyc", null);
+        Assert.assertEquals(com.skyflow.enums.DeleteFilesStatus.UNKNOWN, missing.getStatus());
+        Assert.assertNull(missing.getRawStatus());
     }
 }

@@ -24,7 +24,7 @@ public class DetectFileModelsTests {
         DeidentifyFileRequest withValue = DeidentifyFileRequest.builder()
                 .dataSource(TestDeidentifySource.PRESIGNED_URL)
                 .value("https://example.test/secret-payload")
-                .dataFormat(FileDataFormat.PDF)
+                .dataFormat(DeidentifyFileDataFormat.PDF)
                 .configurationId("cfg-1")
                 .pollOptions(poll)
                 .outputDirectory("/tmp/out")
@@ -55,7 +55,7 @@ public class DetectFileModelsTests {
         ReidentifyFileRequest request = ReidentifyFileRequest.builder()
                 .dataSource(TestReidentifySource.BASE64)
                 .value("QUJD")
-                .dataFormat(FileDataFormat.TXT)
+                .dataFormat(ReidentifyFileDataFormat.TXT)
                 .redactionLevel(Collections.singletonList(
                         TestRedactionLevel.builder().entityName(EntityType.NAME).redactionType(RedactionType.PLAIN_TEXT).build()))
                 .build();
@@ -94,7 +94,7 @@ public class DetectFileModelsTests {
         ReidentifyFileResponse response = ReidentifyFileMapper.toResponse(api, TestReidentifySource::valueOf);
         String text = response.toString();
         for (String expected : new String[]{"ReidentifyFileResponse{", "status=SUCCESS", "outputType=PRESIGNED_URL",
-                "output=[FileOutput{", "processedFileType=REIDENTIFIED_FILE", "metrics=Metrics{", "pages=2"}) {
+                "output=[ReidentifyFileOutput{", "processedFileType=REIDENTIFIED_FILE", "metrics=Metrics{", "pages=2"}) {
             Assert.assertTrue("expected '" + expected + "' in " + text, text.contains(expected));
         }
     }

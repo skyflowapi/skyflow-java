@@ -19,6 +19,7 @@ import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.Env;
 import com.skyflow.enums.UpdateType;
 import com.skyflow.errors.BaseErrorMessage;
+import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.utils.Constants;
@@ -312,6 +313,22 @@ public class ValidationsTests {
         }
     }
 
+
+    @Test
+    public void testValidateVaultConfiguration_rejectsNonHttpsVaultUrl() {
+        for (String url : new String[]{"http://vault.example.com", "vault.example.com", "https://"}) {
+            VaultConfig config = new VaultConfig();
+            config.setVaultId("vault123");
+            config.setVaultUrl(url);
+            try {
+                Validations.validateVaultConfiguration(config);
+                Assert.fail(EXCEPTION_NOT_THROWN + ": " + url);
+            } catch (SkyflowException e) {
+                Assert.assertEquals(url, ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
+                Assert.assertEquals(url, ErrorMessage.InvalidVaultUrlFormat.getMessage(), e.getMessage());
+            }
+        }
+    }
 
     @Test
     public void testValidateVaultConfiguration_validWithClusterId() {
@@ -2493,7 +2510,7 @@ public class ValidationsTests {
 
     @Test
     public void testValidateUploadFilesRequest_leavesBase64DecodingToTheUploadStep() {
-        // the content is decoded once, by Utils.decodeBase64Columns, rather than here and again on upload
+        // base64 content is checked by Utils.validateBase64Columns, not by request validation
         try {
             Validations.validateUploadFilesRequest(uploadRequest(uploadRecord(
                     UploadFilesRequestColumn.builder().column("kyc").base64("not base64!").fileName("kyc.txt").build())));

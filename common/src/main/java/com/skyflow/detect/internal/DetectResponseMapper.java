@@ -1,11 +1,11 @@
 package com.skyflow.detect.internal;
 
 import com.skyflow.detect.CheckGuardrailsResponse;
+import com.skyflow.detect.DeidentifyFileDataFormat;
 import com.skyflow.detect.DeidentifyFileSource;
 import com.skyflow.detect.DeidentifyFileResponse;
 import com.skyflow.detect.DeidentifyStringResponse;
 import com.skyflow.detect.DetectRunStatus;
-import com.skyflow.detect.FileDataFormat;
 import com.skyflow.detect.FileOutput;
 import com.skyflow.detect.GetRunResponse;
 import com.skyflow.detect.GuardrailsValidation;
@@ -123,7 +123,7 @@ public final class DetectResponseMapper {
                 apiOutput.getProcessedFile().orElse(null),
                 apiOutput.getProcessedFileType().map(Object::toString).orElse(null),
                 apiOutput.getProcessedFileExtension()
-                        .map(e -> enumOrDefault(FileDataFormat.class, e.toString().toUpperCase(), null))
+                        .map(e -> enumOrDefault(DeidentifyFileDataFormat.class, e.toString().toUpperCase(), null))
                         .orElse(null));
     }
 

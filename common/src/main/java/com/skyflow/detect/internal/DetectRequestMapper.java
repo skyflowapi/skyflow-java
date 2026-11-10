@@ -13,7 +13,7 @@ import com.skyflow.detect.CheckGuardrailsRequest;
 import com.skyflow.detect.CustomType;
 import com.skyflow.detect.DeidentifyFileRequest;
 import com.skyflow.detect.DeidentifyStringRequest;
-import com.skyflow.detect.FileDataFormat;
+import com.skyflow.detect.DeidentifyFileDataFormat;
 import com.skyflow.detect.Detect;
 import com.skyflow.detect.DetectConfiguration;
 import com.skyflow.detect.Document;
@@ -111,7 +111,7 @@ public final class DetectRequestMapper {
     public static DeidentifyFileRequestV2 toDeidentifyFileRequest(DeidentifyFileRequest request, String vaultId)
             throws SkyflowException {
         String value = request.getValue();
-        FileDataFormat format = request.getDataFormat();
+        DeidentifyFileDataFormat format = request.getDataFormat();
         File file = localFile(request);
         if (file != null) {
             value = encodeFile(file);
@@ -149,13 +149,13 @@ public final class DetectRequestMapper {
     }
 
     /** @return the format matching the file extension, or null when unknown so the server infers it */
-    static FileDataFormat inferFormat(String fileName) {
+    static DeidentifyFileDataFormat inferFormat(String fileName) {
         int dot = fileName == null ? -1 : fileName.lastIndexOf('.');
         if (dot < 0 || dot == fileName.length() - 1) {
             return null;
         }
         try {
-            return FileDataFormat.valueOf(fileName.substring(dot + 1).toUpperCase());
+            return DeidentifyFileDataFormat.valueOf(fileName.substring(dot + 1).toUpperCase());
         } catch (IllegalArgumentException unknown) {
             return null;
         }

@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -564,6 +563,24 @@ public final class Utils extends BaseUtils {
         return message != null ? message : "Unknown error";
     }
 
+    /**
+     * The error on one record of a records-shaped error body, or null when that record succeeded.
+     * The call as a whole failed, so a record only counts as a success when it says so itself: no
+     * error text and a 2xx status of its own. A record with neither is treated as failed.
+     */
+    private static String recordErrorInFailedCall(Map<String, Object> recordMap) {
+        String error = readString(recordMap, "error");
+        if (error != null && !error.isEmpty()) {
+            return error;
+        }
+        int code = readHttpCode(recordMap, -1);
+        if (code >= 200 && code < 300) {
+            return null;
+        }
+        String message = readString(recordMap, "message");
+        return message != null && !message.isEmpty() ? message : "Unknown error";
+    }
+
     public static BulkInsertResponseRecord createInsertErrorRecord(Map<String, Object> recordMap, int indexNumber, String requestId) {
         BulkInsertResponseRecord err = null;
         if (recordMap != null) {
@@ -639,6 +656,54 @@ public final class Utils extends BaseUtils {
     public static Object errorBody(ApiClientApiException apiException) {
         Map<String, Object> body = errorBodyAsMap(apiException);
         return body != null ? body : apiException.body();
+    }
+
+    /**
+     * The error body as the JSON string SkyflowException parses, shaped so the thrown exception
+     * always carries a message. A plain-text body is passed through as-is, so it becomes the
+     * message without being JSON-quoted. A JSON object with no {@code {"error": {...}}} object is
+     * wrapped in one, using its "error" or "message" text, else the body itself, else the status.
+     */
+    @SuppressWarnings("unchecked")
+    public static String errorBodyJson(Object body, int statusCode) {
+        if (body instanceof String && !((String) body).trim().isEmpty()) {
+            return (String) body;
+        }
+        String message = null;
+        if (body instanceof Map) {
+            Map<String, Object> map = (Map<String, Object>) body;
+            if (map.get("error") instanceof Map) {
+                return toJson(map);
+            }
+            message = nonEmptyText(map.get("error"));
+            if (message == null) {
+                message = nonEmptyText(map.get("message"));
+            }
+            if (message == null && !map.isEmpty()) {
+                message = toJson(map);
+            }
+        } else if (body != null && !(body instanceof String)) {
+            message = toJson(body);
+        }
+        Map<String, Object> error = new LinkedHashMap<>();
+        error.put("http_code", statusCode);
+        error.put("message", message != null ? message : "Error with status code " + statusCode);
+        Map<String, Object> wrapped = new LinkedHashMap<>();
+        wrapped.put("error", error);
+        return toJson(wrapped);
+    }
+
+    private static String nonEmptyText(Object value) {
+        return value instanceof String && !((String) value).trim().isEmpty() ? (String) value : null;
+    }
+
+    /** JSON via Jackson, which honors the generated types' wire names; Gson only as a fallback. */
+    private static String toJson(Object value) {
+        try {
+            return ObjectMappers.JSON_MAPPER.writeValueAsString(value);
+        } catch (Exception e) {
+            return new com.google.gson.GsonBuilder().serializeNulls().create().toJson(value);
+        }
     }
 
     /**
@@ -792,13 +857,14 @@ public final class Utils extends BaseUtils {
         String requestId = extractRequestId(apiException.headers());
         List<GetTokensResponseRecord> records = new ArrayList<>();
         for (Map<String, Object> recordMap : recordMaps) {
+            String error = recordErrorInFailedCall(recordMap);
             records.add(new GetTokensResponseRecord(
                     recordMap.get("value"),
                     readString(recordMap, "tokenGroupName"),
                     getTokensToken(recordMap.get("token")),
                     readHttpCode(recordMap, apiException.statusCode()),
-                    readErrorMessage(recordMap),
-                    requestId));
+                    error,
+                    error != null ? requestId : null));
         }
         return new GetTokensResponse(records);
     }
@@ -1665,12 +1731,11 @@ public final class Utils extends BaseUtils {
     }
 
     /**
-     * Decodes each base64 column once, before Phase A, so an invalid value fails the call before
-     * anything is sent. The decoded bytes are reused for the Phase B upload.
+     * Checks every base64 column decodes, before Phase A, so an invalid value fails the call before
+     * anything is sent. The decoded bytes are not kept: each file is decoded again only when its
+     * own upload starts, so at most a few decoded files are held in memory at once instead of all.
      */
-    public static Map<UploadFilesRequestColumn, byte[]> decodeBase64Columns(UploadFilesRequest request)
-            throws SkyflowException {
-        Map<UploadFilesRequestColumn, byte[]> decoded = new IdentityHashMap<>();
+    public static void validateBase64Columns(UploadFilesRequest request) throws SkyflowException {
         List<UploadFilesRequestRecord> records = request.getRecords();
         for (int i = 0; i < records.size(); i++) {
             for (UploadFilesRequestColumn column : records.get(i).getColumns()) {
@@ -1678,7 +1743,7 @@ public final class Utils extends BaseUtils {
                     continue;
                 }
                 try {
-                    decoded.put(column, Base64.getDecoder().decode(column.getBase64()));
+                    Base64.getDecoder().decode(column.getBase64());
                 } catch (IllegalArgumentException e) {
                     LogUtil.printErrorLog(parameterizedString(ErrorLogs.INVALID_BASE64_IN_UPLOAD_FILES_COLUMN.getLog(),
                             InterfaceName.UPLOAD_FILES.getName(), String.valueOf(i)));
@@ -1687,23 +1752,33 @@ public final class Utils extends BaseUtils {
                 }
             }
         }
-        return decoded;
     }
 
     /**
      * Phase B body: the bytes of the column's one file source. Files are streamed from disk rather
-     * than read into memory; base64 content arrives already decoded.
+     * than read into memory; base64 content is decoded here, already validated before Phase A.
      */
-    public static RequestBody buildUploadFileBody(UploadFilesRequestColumn column, byte[] decodedBase64,
-                                                  String contentType) {
+    public static RequestBody buildUploadFileBody(UploadFilesRequestColumn column, String contentType) {
         MediaType mediaType = MediaType.parse(contentType);
         if (hasText(column.getFilePath())) {
             return RequestBody.create(new File(column.getFilePath()), mediaType);
         }
-        if (decodedBase64 != null) {
-            return RequestBody.create(decodedBase64, mediaType);
+        if (hasText(column.getBase64())) {
+            return RequestBody.create(Base64.getDecoder().decode(column.getBase64()), mediaType);
         }
         return RequestBody.create(column.getFileObject(), mediaType);
+    }
+
+    /** Start of a column's error when its PUT to the signed URL failed; followed by the status or cause. */
+    public static final String PUT_FAILED_ERROR_PREFIX = "PUT failed: ";
+
+    /** Column error when the vault returned no signed URL for a requested column. */
+    public static final String NO_SIGNED_URL_ERROR =
+            "No signed URL was returned for this column; file was not uploaded.";
+
+    /** Record error when some of a record's files were not uploaded; each column says why. */
+    public static String uploadColumnsFailedError(int notUploaded, int total) {
+        return notUploaded + " of " + total + " files were not uploaded. See each column for details.";
     }
 
     /** Row error when the vault's upload response cannot be safely paired with the request. */
@@ -1781,13 +1856,16 @@ public final class Utils extends BaseUtils {
         String requestId = extractRequestId(apiException.headers());
         List<DeleteFilesResponseRecord> records = new ArrayList<>();
         for (Map<String, Object> recordMap : recordMaps) {
+            String error = recordErrorInFailedCall(recordMap);
+            Object data = recordMap.get("data");
+            //noinspection unchecked
             records.add(new DeleteFilesResponseRecord(
                     readString(recordMap, "skyflowID"),
                     readString(recordMap, "tableName"),
-                    null,
+                    data instanceof Map ? deletedColumns((Map<String, Object>) data) : null,
                     readHttpCode(recordMap, apiException.statusCode()),
-                    readErrorMessage(recordMap),
-                    requestId));
+                    error,
+                    error != null ? requestId : null));
         }
         return new DeleteFilesResponse(records);
     }

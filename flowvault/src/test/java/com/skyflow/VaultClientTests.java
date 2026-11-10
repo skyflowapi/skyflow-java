@@ -162,4 +162,20 @@ public class VaultClientTests {
         Assert.assertEquals(0, upload.callTimeoutMillis());
         Assert.assertTrue(upload.interceptors().isEmpty());
     }
+
+    @Test
+    public void testSignedUrlHttpClient_isReusedUntilTheVaultClientIsRebuilt() throws SkyflowException {
+        VaultClient client = new VaultClient(buildConfig("vault1", "cluster1", null), null);
+        client.updateExecutorInHTTP();
+
+        okhttp3.OkHttpClient first = client.getSignedUrlHttpClient();
+        Assert.assertSame("one upload client per vault client, not one per file",
+                first, client.getSignedUrlHttpClient());
+
+        client.sharedHttpClient = null;
+        client.updateExecutorInHTTP();
+        okhttp3.OkHttpClient rebuilt = client.getSignedUrlHttpClient();
+        Assert.assertNotSame("a rebuilt vault client gets a matching upload client", first, rebuilt);
+        Assert.assertSame(client.sharedHttpClient.connectionPool(), rebuilt.connectionPool());
+    }
 }
