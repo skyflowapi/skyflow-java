@@ -1,5 +1,6 @@
 package com.skyflow.vault.data;
 
+import com.skyflow.enums.UploadStatus;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
@@ -17,8 +18,9 @@ import java.util.Map;
 /**
  * Tests for the simple request/response wrapper classes: {@link InsertRequest},
  * {@link InsertResponseRecord}, {@link DetokenizeRequest}, {@link DetokenizeResponseRecord},
- * {@link BulkDeleteTokensRequest}, {@link BulkDetokenizeRequest}, {@link BulkTokenizeRequest}
- * and {@link BulkInsertRequest}.
+ * {@link BulkDeleteTokensRequest}, {@link BulkDetokenizeRequest}, {@link BulkTokenizeRequest},
+ * {@link BulkInsertRequest}, {@link QueryRequest}, {@link QueryResponse}, {@link GetTokensRequest}
+ * and {@link GetTokensResponse}.
  */
 public class RequestResponseWrapperTests {
 
@@ -326,4 +328,194 @@ public class RequestResponseWrapperTests {
 
     // Tests for DeleteTokensResponse were removed: the class no longer exists (bulk-only module).
 
+    // ── QueryRequest ─────────────────────────────────────────────────────────
+
+    @Test
+    public void testQueryRequest_getterReturnsBuilderValue() {
+        QueryRequest request = QueryRequest.builder().query("SELECT * FROM persons").build();
+        Assert.assertEquals("SELECT * FROM persons", request.getQuery());
+    }
+
+    @Test
+    public void testQueryRequest_defaultsAreNull() {
+        QueryRequest request = QueryRequest.builder().build();
+        Assert.assertNull(request.getQuery());
+    }
+
+    @Test
+    public void testQueryRequest_isABaseQueryRequest() {
+        QueryRequest request = QueryRequest.builder().query("SELECT 1").build();
+        Assert.assertTrue(request instanceof BaseQueryRequest);
+    }
+
+    // ── QueryResponse ────────────────────────────────────────────────────────
+
+    @Test
+    public void testQueryResponse_gettersReturnConstructorValues() {
+        HashMap<String, Object> row = new HashMap<>();
+        row.put("name", "john");
+        ArrayList<HashMap<String, Object>> fields = new ArrayList<>(Collections.singletonList(row));
+        QueryResponseMetadata metadata = new QueryResponseMetadata(Collections.singletonList("name"));
+
+        QueryResponse response = new QueryResponse(fields, metadata, "req-1");
+
+        Assert.assertEquals(fields, response.getRecords());
+        Assert.assertSame(metadata, response.getMetadata());
+        Assert.assertEquals("req-1", response.getRequestId());
+        Assert.assertTrue(response instanceof BaseQueryResponse);
+    }
+
+    @Test
+    public void testQueryResponse_toStringSerializesAllFieldsIncludingNulls() {
+        HashMap<String, Object> row = new HashMap<>();
+        row.put("name", "john");
+        QueryResponse response = new QueryResponse(new ArrayList<>(Collections.singletonList(row)),
+                new QueryResponseMetadata(Collections.singletonList("name")), "req-1");
+
+        String json = response.toString();
+
+        Assert.assertEquals("{\"records\":[{\"name\":\"john\"}],\"metadata\":{\"columns\":[\"name\"]},"
+                + "\"requestId\":\"req-1\"}", json);
+    }
+
+    @Test
+    @SuppressWarnings("deprecation")
+    public void testQueryResponse_recordsAreReadOnlyAndDeprecatedGettersStillWork() {
+        HashMap<String, Object> row = new HashMap<>();
+        row.put("name", "john");
+        ArrayList<HashMap<String, Object>> fields = new ArrayList<>(Collections.singletonList(row));
+        QueryResponse response = new QueryResponse(fields, new QueryResponseMetadata(null), null);
+
+        try {
+            response.getRecords().clear();
+            Assert.fail("getRecords() should be read-only");
+        } catch (UnsupportedOperationException expected) {
+            Assert.assertEquals(1, response.getRecords().size());
+        }
+        // kept for compatibility until removal
+        Assert.assertSame(fields, response.getFields());
+        Assert.assertNull(response.getErrors());
+        // a null row list reads as empty, never null
+        Assert.assertTrue(new QueryResponse(null, null, null).getRecords().isEmpty());
+    }
+
+    // ── GetTokensRequest ─────────────────────────────────────────────────────
+
+    @Test
+    public void testGetTokensRequest_getterReturnsBuilderValue() {
+        List<GetTokensRequestRecord> records = Collections.singletonList(
+                GetTokensRequestRecord.builder().value("john@example.com").tokenGroupName("det_group").build());
+
+        GetTokensRequest request = GetTokensRequest.builder().records(records).build();
+
+        Assert.assertEquals(records, request.getRecords());
+        Assert.assertTrue(request instanceof BaseGetTokensRequest);
+    }
+
+    @Test
+    public void testGetTokensRequest_defaultsAreNull() {
+        GetTokensRequest request = GetTokensRequest.builder().build();
+        Assert.assertNull(request.getRecords());
+    }
+
+    // ── GetTokensResponse / UploadFilesResponse / DeleteFilesResponse ──────────
+
+    @Test
+    public void testGetTokensResponse_getterReturnsConstructorValue() {
+        GetTokensResponseRecord record = new GetTokensResponseRecord("v", "g", "tok-1", 200, null, null);
+        List<GetTokensResponseRecord> records = Collections.singletonList(record);
+
+        GetTokensResponse response = new GetTokensResponse(records);
+
+        Assert.assertSame(records, response.getRecords());
+        Assert.assertTrue(response instanceof BaseGetTokensResponse);
+        Assert.assertEquals("v", record.getValue());
+        Assert.assertEquals("g", record.getTokenGroupName());
+        Assert.assertEquals("tok-1", record.getToken());
+        Assert.assertEquals(200, record.getHttpCode());
+        Assert.assertNull(record.getError());
+        Assert.assertNull(record.getRequestId());
+    }
+
+    @Test
+    public void testGetTokensResponse_toStringSerializesNulls() {
+        GetTokensResponse response = new GetTokensResponse(Collections.singletonList(
+                new GetTokensResponseRecord("v", "g", "tok-1", 200, null, null)));
+
+        String json = response.toString();
+
+        Assert.assertTrue(json, json.contains("\"token\":\"tok-1\""));
+        Assert.assertTrue(json, json.contains("\"error\":null"));
+        Assert.assertTrue(json, json.contains("\"requestId\":null"));
+        Assert.assertTrue(json, new GetTokensResponseRecord(null, null, "", 404, "boom", "req-1").toString()
+                .contains("\"requestId\":\"req-1\""));
+    }
+
+    @Test
+    public void testUploadFilesResponse_typedRecordsAndStatusEnum() {
+        UploadFilesColumnResult column = new UploadFilesColumnResult("photo", "a.png", UploadStatus.FAILED, "PUT failed: 403");
+        UploadFilesResponseRecord record = new UploadFilesResponseRecord(
+                "sky-1", "documents", Collections.singletonList(column), 200, null, null);
+
+        UploadFilesResponse response = new UploadFilesResponse(Collections.singletonList(record));
+
+        Assert.assertTrue(response instanceof BaseUploadFilesResponse);
+        Assert.assertSame(record, response.getRecords().get(0));
+        Assert.assertEquals("sky-1", record.getSkyflowId());
+        Assert.assertEquals("documents", record.getTableName());
+        Assert.assertEquals(200, record.getHttpCode());
+        Assert.assertNull(record.getError());
+        Assert.assertNull(record.getRequestId());
+        Assert.assertSame(column, record.getColumns().get(0));
+        Assert.assertEquals("photo", column.getColumn());
+        Assert.assertEquals("a.png", column.getFileName());
+        Assert.assertEquals(UploadStatus.FAILED, column.getUploadStatus());
+        Assert.assertEquals("PUT failed: 403", column.getError());
+        String json = response.toString();
+        Assert.assertTrue(json, json.contains("\"uploadStatus\":\"FAILED\""));
+        Assert.assertTrue(json, record.toString().contains("\"requestId\":null"));
+        Assert.assertTrue(json, column.toString().contains("\"fileName\":\"a.png\""));
+    }
+
+    @Test
+    public void testDeleteFilesResponse_typedRecords() {
+        DeleteFilesColumnResult column = new DeleteFilesColumnResult("photo", "DELETED");
+        DeleteFilesResponseRecord record = new DeleteFilesResponseRecord(
+                "sky-1", "documents", Collections.singletonList(column), 200, null, null);
+        DeleteFilesResponseRecord failed = new DeleteFilesResponseRecord(null, "documents", null, 404, "Not found", "req-1");
+
+        DeleteFilesResponse response = new DeleteFilesResponse(Arrays.asList(record, failed));
+
+        Assert.assertTrue(response instanceof BaseDeleteFilesResponse);
+        Assert.assertEquals("sky-1", record.getSkyflowId());
+        Assert.assertEquals("documents", record.getTableName());
+        Assert.assertEquals(200, record.getHttpCode());
+        Assert.assertEquals("photo", column.getColumn());
+        Assert.assertEquals(com.skyflow.enums.DeleteFilesStatus.DELETED, column.getStatus());
+        Assert.assertNull(failed.getColumns());
+        Assert.assertEquals("Not found", failed.getError());
+        Assert.assertEquals("req-1", failed.getRequestId());
+        String json = response.toString();
+        Assert.assertTrue(json, json.contains("\"columns\":null"));
+        Assert.assertTrue(json, json.contains("\"status\":\"DELETED\""));
+        Assert.assertTrue(json, failed.toString().contains("\"error\":\"Not found\""));
+        Assert.assertTrue(json, column.toString().contains("\"column\":\"photo\""));
+    }
+
+    @Test
+    public void testDeleteFilesColumnResult_unrecognizedStatusIsUnknownButKeepsTheRawValue() {
+        com.skyflow.vault.data.DeleteFilesColumnResult lower =
+                new com.skyflow.vault.data.DeleteFilesColumnResult("kyc", "deleted");
+        Assert.assertEquals(com.skyflow.enums.DeleteFilesStatus.DELETED, lower.getStatus());
+
+        com.skyflow.vault.data.DeleteFilesColumnResult other =
+                new com.skyflow.vault.data.DeleteFilesColumnResult("kyc", "NOT_FOUND");
+        Assert.assertEquals(com.skyflow.enums.DeleteFilesStatus.UNKNOWN, other.getStatus());
+        Assert.assertEquals("NOT_FOUND", other.getRawStatus());
+
+        com.skyflow.vault.data.DeleteFilesColumnResult missing =
+                new com.skyflow.vault.data.DeleteFilesColumnResult("kyc", null);
+        Assert.assertEquals(com.skyflow.enums.DeleteFilesStatus.UNKNOWN, missing.getStatus());
+        Assert.assertNull(missing.getRawStatus());
+    }
 }

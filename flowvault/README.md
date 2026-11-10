@@ -49,6 +49,10 @@ The `flowvault` module is a Skyflow Java SDK built for high-throughput vault ope
 - [Get](#get)
 - [Update](#update)
 - [Delete](#delete)
+- [Query](#query)
+- [Get Tokens](#get-tokens)
+- [Upload Files](#upload-files)
+- [Delete Files](#delete-files)
 - [Detect](#detect)
   - [Deidentify string](#deidentify-string)
   - [Reidentify string](#reidentify-string)
@@ -624,7 +628,7 @@ The 100,000-item ceiling per bulk call is a separate, fixed limit and is not con
 
 # VaultController — Unary operations
 
-Alongside the bulk methods, `VaultController` exposes five **unary** operations. Each sends exactly one API call and hands the result straight back:
+Alongside the bulk methods, `VaultController` exposes nine **unary** operations. Each sends exactly one API call and hands the result straight back:
 
 | Method | Parameters | Returns | Description |
 |--------|-----------|---------|-------------|
@@ -633,10 +637,14 @@ Alongside the bulk methods, `VaultController` exposes five **unary** operations.
 | `get(GetRequest)` | `GetRequest`, optional `GetOptions` | `GetResponse` | Read records by skyflow ID or unique value, optionally with a redaction override per column |
 | `update(UpdateRequest)` | `UpdateRequest`, optional `UpdateOptions` | `UpdateResponse` | Update records by skyflow ID |
 | `delete(DeleteRequest)` | `DeleteRequest`, optional `DeleteOptions` | `DeleteResponse` | Delete records by skyflow ID or unique value |
+| `query(QueryRequest)` | `QueryRequest`, optional `QueryOptions` | `QueryResponse` | Run a SQL `SELECT` against the vault |
+| `getTokens(GetTokensRequest)` | `GetTokensRequest`, optional `GetTokensOptions` | `GetTokensResponse` | Look up the existing deterministic token for each value |
+| `uploadFiles(UploadFilesRequest)` | `UploadFilesRequest`, optional `UploadFilesOptions` | `UploadFilesResponse` | Upload files into the file columns of new or existing records |
+| `deleteFiles(DeleteFilesRequest)` | `DeleteFilesRequest`, optional `DeleteFilesOptions` | `DeleteFilesResponse` | Delete the files in file columns of existing records |
 
-`insert` and `detokenize` are the unary counterparts of `bulkInsert` and `bulkDetokenize` — the same request builders, sent as one call instead of many batches. `get`, `update`, and `delete` have no bulk counterpart at all; they exist only in this unary form.
+`insert` and `detokenize` are the unary counterparts of `bulkInsert` and `bulkDetokenize` — the same request builders, sent as one call instead of many batches. `get`, `update`, `delete`, `query`, `getTokens`, `uploadFiles`, and `deleteFiles` have no bulk counterpart at all; they exist only in this unary form.
 
-Each method also accepts an optional options object (`InsertOptions`, `DetokenizeOptions`, `GetOptions`, `UpdateOptions`, `DeleteOptions`) — see [Custom Request Headers](#custom-request-headers).
+Each method also accepts an optional options object (`InsertOptions`, `DetokenizeOptions`, `GetOptions`, `UpdateOptions`, `DeleteOptions`, `QueryOptions`, `GetTokensOptions`, `UploadFilesOptions`, `DeleteFilesOptions`) — see [Custom Request Headers](#custom-request-headers).
 
 ## Unary vs. bulk Parity
 
@@ -654,7 +662,7 @@ Everything the bulk machinery adds — batching, concurrency, the payload ceilin
 
 ## Vault type support
 
-The same distinction as [Schema vs. schemaless vaults](#schema-vs-schemaless-vaults) applies. Four of the five unary operations address records inside a table, so they only make sense against a structured vault:
+The same distinction as [Schema vs. schemaless vaults](#schema-vs-schemaless-vaults) applies. Seven of the nine unary operations address records inside a table, so they only make sense against a structured vault:
 
 | Operation | Supported on |
 |---|---|
@@ -663,6 +671,10 @@ The same distinction as [Schema vs. schemaless vaults](#schema-vs-schemaless-vau
 | `update` | Structured vaults — updates a table's records by skyflow ID. |
 | `delete` | Structured vaults — deletes a table's records. Distinct from `bulkDeleteTokens`, which removes tokens only and leaves the record in place. |
 | `detokenize` | Both — detokenizing only needs the token itself, not a table, so it works regardless of which kind of vault the token came from. |
+| `query` | Structured vaults — runs a SQL `SELECT` over a table's records. |
+| `getTokens` | Both — the lookup only needs a value and a deterministic token group, not a table. |
+| `uploadFiles` | Structured vaults — uploads into a table's file columns. |
+| `deleteFiles` | Structured vaults — deletes the files in a table's file columns. |
 
 # SDK Guidelines: Unary vs Bulk Operations
 
@@ -1629,6 +1641,308 @@ for (DeleteResponseRecord record : deleteResponse.getRecords()) {
 }
 ```
 
+# Query
+
+Run a SQL `SELECT` against the vault, in a single API call.
+
+> **Vault type supported:** structured (schema) vaults. See [Vault type support](#vault-type-support).
+
+**Note:**
+
+- Only `SELECT` is supported. A call returns at most 25 records; to page, use SQL `OFFSET`.
+- Values may be masked. They are never tokens or file URLs.
+- There is no per-record status: any failure is thrown as a `SkyflowException`, and `getErrors()` is always `null`. `getRequestId()` is call-level and always populated.
+
+### Construct a query request
+
+Continuing from [Quickstart](#quickstart) — `skyflowClient` below is the `Skyflow` client built there.
+
+```java
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.controller.VaultController;
+import com.skyflow.vault.data.QueryRequest;
+import com.skyflow.vault.data.QueryResponse;
+
+public class QueryExample {
+    public static void main(String[] args) throws SkyflowException {
+        // skyflowClient is the Skyflow client built in Quickstart
+        VaultController vault = skyflowClient.vault();
+
+        QueryRequest queryRequest = QueryRequest.builder()
+                .query("SELECT * FROM persons WHERE name = 'John Doe'")
+                .build();
+
+        QueryResponse queryResponse = vault.query(queryRequest);
+        System.out.println(queryResponse);
+    }
+}
+```
+
+There is no async variant: `query` returns its `QueryResponse` directly.
+
+Sample response:
+
+```json
+{
+  "records": [ { "skyflow_id": "9f5b8e6e-...", "name": "John Doe", "email": "john@example.com" } ],
+  "metadata": { "columns": ["skyflow_id", "name", "email"] },
+  "requestId": "<id>"
+}
+```
+
+Accessors: `queryResponse.getRecords()` (one read-only `Map<String, Object>` per row, in the vault's column order), `getMetadata().getColumns()`, `getRequestId()`. The vault returns at most 25 rows per call; page with `LIMIT` and `OFFSET` in the query (the SDK logs a warning when a call returns a full page).
+
+> **Deprecation notice:** `getFields()` (the same rows under a misleading name) and `getErrors()` (always `null`) are deprecated. Use `getRecords()`, and catch `SkyflowException` for query failures.
+
+# Get Tokens
+
+Look up the deterministic token previously issued for each plaintext value, in a single API call.
+
+> **Vault type supported:** both. See [Vault type support](#vault-type-support).
+
+**Note:**
+
+- `records`, and `value` and `tokenGroupName` on each record, are required. Only deterministic token groups are supported.
+- One record comes back per input entry, in request order; duplicate inputs are not collapsed.
+- Record-level failures come back on the response (HTTP 200/207); whole-call failures are thrown as a `SkyflowException`.
+
+### Construct a get tokens request
+
+Continuing from [Quickstart](#quickstart) — `skyflowClient` below is the `Skyflow` client built there.
+
+```java
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.controller.VaultController;
+import com.skyflow.vault.data.GetTokensRequest;
+import com.skyflow.vault.data.GetTokensRequestRecord;
+import com.skyflow.vault.data.GetTokensResponse;
+
+import java.util.Arrays;
+
+public class GetTokensExample {
+    public static void main(String[] args) throws SkyflowException {
+        // skyflowClient is the Skyflow client built in Quickstart
+        VaultController vault = skyflowClient.vault();
+
+        GetTokensRequest getTokensRequest = GetTokensRequest.builder()
+                .records(Arrays.asList(
+                        GetTokensRequestRecord.builder().value("john@example.com").tokenGroupName("det_reg_rtf").build(),
+                        GetTokensRequestRecord.builder().value("unknown@example.com").tokenGroupName("det_reg_rtf").build()
+                ))
+                .build();
+
+        GetTokensResponse getTokensResponse = vault.getTokens(getTokensRequest);
+        System.out.println(getTokensResponse);
+    }
+}
+```
+
+There is no async variant: `getTokens` returns its `GetTokensResponse` directly.
+
+Sample response:
+
+```json
+{
+  "records": [
+    { "value": "john@example.com",    "tokenGroupName": "det_reg_rtf", "token": "1R9kNnLOPM", "httpCode": 200, "error": null, "requestId": null },
+    { "value": "unknown@example.com", "tokenGroupName": "det_reg_rtf", "token": "",           "httpCode": 404, "error": "Token not found.", "requestId": "<id>" }
+  ]
+}
+```
+
+`getTokensResponse.getRecords()` returns one `GetTokensResponseRecord` per input entry, with the accessors `getValue()`, `getTokenGroupName()`, `getToken()`, `getHttpCode()`, `getError()` and `getRequestId()` (set only when `getError()` is non-null). `token` is `""` (never null) on a record that has no token.
+
+```java
+for (GetTokensResponseRecord record : getTokensResponse.getRecords()) {
+    if (record.getError() == null) {
+        System.out.println(record.getValue() + " -> " + record.getToken());
+    } else {
+        System.err.println(record.getValue() + " failed ["
+                + record.getHttpCode() + "] " + record.getError());
+    }
+}
+```
+
+# Upload Files
+
+Upload files into the file columns of new or existing records. One call does two things inside the SDK:
+
+1. **(A)** It calls `POST /v2/files/upload`, which returns a signed upload URL for each column.
+2. **(B)** It uploads each file's bytes to its signed URL with a separate HTTP `PUT`, the raw bytes as the body. The signed URL is an AWS S3 `PutObject` URL; that request carries no `Authorization` header, because the signature in the URL is the credential.
+
+The signed URL is a credential that expires after about 15 minutes. The SDK uses it straight away in step B and never returns it to you.
+
+> **Vault type supported:** structured. See [Vault type support](#vault-type-support).
+
+**Note:**
+
+- Each record needs a `tableName` and at least one column. Omit `skyflowId` to create a new record (needs CREATE permission); set it to upload into an existing record (needs UPDATE permission).
+- Give each column its file in **exactly one** of three forms:
+
+| Field | Type | Notes |
+|---|---|---|
+| `filePath` | `String` | Local path; the file must exist. `fileName` defaults to the path's file name. |
+| `base64` | `String` | Base64-encoded content. **Requires** `fileName`. |
+| `fileObject` | `java.io.File` | `fileName` defaults to its `getName()`. |
+
+  A column that sets none, or more than one, fails validation. If `fileName` is still unset, the server generates a random 16-byte UUID name. The file's content type is inferred from the file name, else `application/octet-stream`.
+- Errors:
+  - Any error status from step A (400/401/403/404/500) is thrown as a `SkyflowException`, and nothing is uploaded.
+  - A record that fails in step A (inside a 207 response) comes back with its `error` set and every column `SKIPPED`.
+  - A column the vault returned no signed URL for is `SKIPPED`, with no error.
+  - A column whose upload fails in step B is `FAILED` (`"PUT failed: <status>"`); other columns and records are unaffected.
+
+### Construct an upload files request
+
+Continuing from [Quickstart](#quickstart) — `skyflowClient` below is the `Skyflow` client built there.
+
+```java
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.controller.VaultController;
+import com.skyflow.vault.data.UploadFilesRequest;
+import com.skyflow.vault.data.UploadFilesRequestColumn;
+import com.skyflow.vault.data.UploadFilesRequestRecord;
+import com.skyflow.vault.data.UploadFilesResponse;
+
+import java.util.Arrays;
+import java.util.Collections;
+
+public class UploadFilesExample {
+    public static void main(String[] args) throws SkyflowException {
+        // skyflowClient is the Skyflow client built in Quickstart
+        VaultController vault = skyflowClient.vault();
+
+        UploadFilesRequest uploadFilesRequest = UploadFilesRequest.builder()
+                .records(Arrays.asList(
+                        // no skyflowId: creates a new record
+                        UploadFilesRequestRecord.builder()
+                                .tableName("onboarding")
+                                .columns(Arrays.asList(
+                                        UploadFilesRequestColumn.builder().column("resumePDF").filePath("/path/to/resume.pdf").build(),
+                                        UploadFilesRequestColumn.builder().column("photoID").base64("<BASE64_CONTENT>").fileName("photo.jpg").build()))
+                                .build(),
+                        // with skyflowId: uploads into an existing record
+                        UploadFilesRequestRecord.builder()
+                                .tableName("onboarding")
+                                .skyflowId("<SKYFLOW_ID>")
+                                .columns(Collections.singletonList(
+                                        UploadFilesRequestColumn.builder().column("kyc").fileObject(new java.io.File("/path/to/kyc.pdf")).build()))
+                                .build()))
+                .build();
+
+        UploadFilesResponse uploadFilesResponse = vault.uploadFiles(uploadFilesRequest);
+        System.out.println(uploadFilesResponse);
+    }
+}
+```
+
+There is no async variant: `uploadFiles` returns its `UploadFilesResponse` directly.
+
+Sample response (partial success):
+
+```json
+{
+  "records": [
+    { "skyflowId": "2a62a1fd-...", "tableName": "onboarding",
+      "columns": [
+        { "column": "resumePDF", "fileName": "resume.pdf", "uploadStatus": "UPLOADED", "error": null },
+        { "column": "photoID",   "fileName": "photo.jpg",  "uploadStatus": "FAILED",   "error": "PUT failed: 403" }
+      ], "httpCode": 200, "error": null, "requestId": null },
+    { "skyflowId": null, "tableName": "onboarding",
+      "columns": [ { "column": "kyc", "fileName": "kyc.pdf", "uploadStatus": "SKIPPED", "error": "Invalid request. skyflowID {ID} is invalid." } ],
+      "httpCode": 400, "error": "Invalid request. skyflowID {ID} is invalid.", "requestId": "<id>" }
+  ]
+}
+```
+
+`uploadFilesResponse.getRecords()` returns one `UploadFilesResponseRecord` per input record, with the accessors `getSkyflowId()`, `getTableName()`, `getColumns()`, `getHttpCode()`, `getError()` and `getRequestId()` (set only when `getError()` is non-null). Each `UploadFilesColumnResult` in `getColumns()` has `getColumn()`, `getFileName()`, `getUploadStatus()` (the `com.skyflow.enums.UploadStatus` enum: `UPLOADED`, `FAILED` or `SKIPPED`) and `getError()`. A record's `error` stays null when only some of its columns failed in step B, so check each column:
+
+```java
+for (UploadFilesResponseRecord record : uploadFilesResponse.getRecords()) {
+    for (UploadFilesColumnResult column : record.getColumns()) {
+        if (column.getUploadStatus() != UploadStatus.UPLOADED) {
+            System.err.println(record.getSkyflowId() + "." + column.getColumn() + " "
+                    + column.getUploadStatus() + ": " + column.getError());
+        }
+    }
+}
+```
+
+# Delete Files
+
+Delete the files in file columns of existing records, and the stored objects behind them (`POST /v2/files/delete`), in a single API call.
+
+> **Vault type supported:** structured. See [Vault type support](#vault-type-support).
+
+**Note:**
+
+- Each record needs a `tableName` and `columns` (the file columns to delete). Set **exactly one** of `skyflowId` or `uniqueValues`; a record that sets both or neither fails validation, and the call throws a `SkyflowException` before anything is sent.
+- `uniqueValues` is a list of `{column: value}` maps, as in get and delete. Each one may match more than one record, which gives one response entry per matched `skyflowId`.
+- It works whatever the file's `fileStatus`, and it is a hard delete: afterwards `get()` returns null for that column. A `PENDING` upload is cancelled and its signed URL invalidated; a `READY` file's object is removed; `FAILED`/`SCAN_ERROR` just clears the metadata.
+- Record-level failures come back on the response; whole-call failures are thrown as a `SkyflowException`.
+
+### Construct a delete files request
+
+Continuing from [Quickstart](#quickstart) — `skyflowClient` below is the `Skyflow` client built there.
+
+```java
+import com.skyflow.errors.SkyflowException;
+import com.skyflow.vault.controller.VaultController;
+import com.skyflow.vault.data.DeleteFilesRequest;
+import com.skyflow.vault.data.DeleteFilesRequestRecord;
+import com.skyflow.vault.data.DeleteFilesResponse;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
+public class DeleteFilesExample {
+    public static void main(String[] args) throws SkyflowException {
+        // skyflowClient is the Skyflow client built in Quickstart
+        VaultController vault = skyflowClient.vault();
+
+        Map<String, Object> uniqueValue = new HashMap<>();
+        uniqueValue.put("email", "john@example.com");
+
+        DeleteFilesRequest deleteFilesRequest = DeleteFilesRequest.builder()
+                .records(Arrays.asList(
+                        DeleteFilesRequestRecord.builder()
+                                .tableName("onboarding")
+                                .skyflowId("<SKYFLOW_ID>")
+                                .columns(Arrays.asList("resumePDF", "photoID"))
+                                .build(),
+                        DeleteFilesRequestRecord.builder()
+                                .tableName("employees")
+                                .uniqueValues(Collections.singletonList(uniqueValue))
+                                .columns(Collections.singletonList("photo"))
+                                .build()))
+                .build();
+
+        DeleteFilesResponse deleteFilesResponse = vault.deleteFiles(deleteFilesRequest);
+        System.out.println(deleteFilesResponse);
+    }
+}
+```
+
+There is no async variant: `deleteFiles` returns its `DeleteFilesResponse` directly.
+
+Sample response (partial success):
+
+```json
+{
+  "records": [
+    { "skyflowId": "77ea0577-...", "tableName": "onboarding",
+      "columns": [ { "column": "resumePDF", "status": "DELETED" }, { "column": "photoID", "status": "DELETED" } ],
+      "httpCode": 200, "error": null, "requestId": null },
+    { "skyflowId": "invalid-id-0000", "tableName": "employees", "columns": null,
+      "httpCode": 404, "error": "Invalid request. skyflowID invalid-id-0000 is invalid. Specify a valid skyflowID.", "requestId": "<id>" }
+  ]
+}
+```
+
+`deleteFilesResponse.getRecords()` returns one `DeleteFilesResponseRecord` per resolved record, with the accessors `getSkyflowId()`, `getTableName()`, `getColumns()`, `getHttpCode()`, `getError()` and `getRequestId()` (set only when `getError()` is non-null). `getColumns()` is a list of `DeleteFilesColumnResult` (`getColumn()`, `getStatus()` returning a `DeleteFilesStatus` — `DELETED`, or `UNKNOWN` for a status this SDK version does not recognize — and `getRawStatus()` with the value as sent), or null on a failed record.
+
 # Detect
 
 Skyflow Detect finds and de-identifies sensitive data in strings and files (documents, spreadsheets, images and audio), re-identifies vault tokens on demand, and screens text against guardrails for toxicity and denied topics. The flowvault SDK exposes it through `DetectController`, returned by `skyflowClient.detect()` and `skyflowClient.detect(vaultId)`. Every request is scoped to that vault, and the controller honours the same credentials, [timeouts and retries](#timeouts-and-retries) as `vault()`.
@@ -2143,6 +2457,8 @@ The same pattern applies to every operation, via its corresponding options class
 | `get` | `GetOptions` |
 | `update` | `UpdateOptions` |
 | `delete` | `DeleteOptions` |
+| `query` | `QueryOptions` |
+| `getTokens` | `GetTokensOptions` |
 
 # Error Handling
 
