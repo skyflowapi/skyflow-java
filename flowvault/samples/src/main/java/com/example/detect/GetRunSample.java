@@ -63,8 +63,9 @@ public class GetRunSample {
                 System.out.println("Run still pending, poll again later.");
             }
         } catch (SkyflowException e) {
-            System.err.println("Error during getRun:");
-            e.printStackTrace();
+            // Quote the request id when contacting Skyflow support.
+            System.err.println("Error during getRun: [" + e.getHttpCode() + "] "
+                    + e.getMessage() + " (requestId=" + e.getRequestId() + ")");
         }
     }
 

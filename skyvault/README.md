@@ -4,7 +4,9 @@
 >
 > Meant for **Privacy DB** vaults.
 >
-> Migrating from v1? See the **[Migration Guide](../docs/migrate_to_v2.md)** for step-by-step instructions. V1 is in maintenance mode and will reach End of Life on October 31, 2026.
+> Migrating from v1? See the **[Migration Guide](../docs/migrate_to_v2.md)** for step-by-step instructions. V1 is in maintenance mode and reached End of Life on October 31, 2026.
+>
+> Using the Detect methods that this SDK replaced (`deidentifyText`, `reidentifyText`, `getDetectRun`)? See **[Migrate to the new Detect methods](../docs/migrate_detect.md)**.
 
 The Skyflow Java SDK is designed to help with integrating Skyflow into a Java backend.
 
@@ -23,6 +25,7 @@ The Skyflow Java SDK is designed to help with integrating Skyflow into a Java ba
     - [Maven users](#maven-users)
 - [API Reference](../docs/api_reference.md)
 - [Migration from v1 to v2](../docs/migrate_to_v2.md)
+- [Migrate to the new Detect methods](../docs/migrate_detect.md)
 - [Quickstart](#quickstart)
   - [Authenticate](#authenticate)
   - [Initialize the client](#initialize-the-client)
@@ -110,6 +113,8 @@ Add this dependency to your project's `pom.xml` file:
 # Migrate from v1 to v2
 
 Upgrading from v1? See the dedicated migration guide: **[../docs/migrate_to_v2.md](../docs/migrate_to_v2.md)**
+
+Already on v2 and using `deidentifyText`, `reidentifyText`, `deidentifyFile` or `getDetectRun`? Those are replaced by the [Detect](#detect) methods in 2.2.0; see **[Migrate to the new Detect methods](../docs/migrate_detect.md)**.
 
 # Quickstart
 
@@ -1665,9 +1670,11 @@ Sample response:
 
 # Detect
 
-Skyflow Detect finds and de-identifies sensitive data in free text, then re-identifies it on demand. The skyvault SDK exposes the Detect V2 API through `DetectController`, returned by `skyflowClient.detect()` and `skyflowClient.detect(vaultId)`. Every request is scoped to that vault, and the controller honours the same credentials, timeouts and retries as `vault()`.
+Skyflow Detect finds and de-identifies sensitive data in strings and files (documents, spreadsheets, images and audio), re-identifies vault tokens on demand, and screens text against guardrails for toxicity and denied topics. The skyvault SDK exposes it through `DetectController`, returned by `skyflowClient.detect()` and `skyflowClient.detect(vaultId)`. Every request is scoped to that vault, and the controller honours the same credentials, timeouts and retries as `vault()`.
 
-Detect configurations are created in Studio or through the management API. The SDK does not create, update or delete them.
+These methods replace `deidentifyText`, `reidentifyText`, `deidentifyFile` (old shape) and `getDetectRun`; see [Migrate to the new Detect methods](../docs/migrate_detect.md) if you call those.
+
+Detect configurations are created in [Skyflow Studio](https://docs.skyflow.com) or through the Detect configurations management API. The SDK does not create, update or delete them.
 
 | Method | Request | Response | Description |
 |--------|---------|----------|-------------|
@@ -1682,7 +1689,12 @@ Detect configurations are created in Studio or through the management API. The S
 - **Role.** The service account needs the Detect Invoker, Detect Manager or Vault Owner role on the vault. Detect Invoker can de-identify data and write vault tokens into the vault; Detect Manager adds the ability to create, update and delete Detect configurations. Re-identifying values stored as `VAULT_TOKEN` is governed like detokenization: the caller also needs a policy that grants the Detokenization action on the destination table and columns, unless it is a Vault Owner. Detect Invoker or Detect Manager alone is not enough.
 - **Configuration.** `configurationId` is the id of a Detect configuration created through the management API; the SDK does not create, update or delete them. The alternative is an inline `DetectConfiguration` passed as `configuration` (see [Detect configuration](#detect-configuration)). Both are optional: with neither set the SDK sends only the vault id and the run uses the vault's default Detect settings. Sending both is rejected by the API with HTTP 400.
 - **Destination for vault tokens.** An entity de-identified with `VAULT_TOKEN` stores its value in the `table.column` named by `destination`. That table and column must already exist in the vault; Detect writes into them but does not create them.
-- **API reference.** Every Detect request, response and configuration class is listed in the [API reference](../docs/api_reference.md#detect-api).
+- **Where the values come from.**
+  - `<CONFIGURATION_ID>`: open the configuration in Studio under your vault's Detect settings and copy its id, or take the `id` returned when you create one through the management API.
+  - `<TABLE>.<COLUMN>`: a table and column of the vault schema (Studio: vault > **Schema**) with tokenization enabled; `VAULT_TOKEN` values are stored there and re-identified from there.
+  - `RedactionType`: `PLAIN_TEXT`, `MASKED` or `REDACTED`, the same values `get` and `detokenize` use.
+  - If you do not have a vault yet, start at [Try Skyflow](https://skyflow.com/try-skyflow); the [Skyflow docs](https://docs.skyflow.com) cover Studio, schemas and tokenization.
+- **API reference.** Every Detect request, response and configuration class is listed in the [API reference](../docs/api_reference.md#detect-api). Errors are listed under [Detect errors](#detect-errors).
 
 ## Deidentify string
 
@@ -1732,7 +1744,32 @@ for (DetectedEntity entity : response.getEntities()) {
 System.out.println(response.getMetrics().getWordCount());
 ```
 
-`DeidentifyStringResponse` carries `getProcessedText()`, `getEntities()` (a `List<DetectedEntity>` with token, entity type, location and confidence scores; never `null`) and `getMetrics()`.
+`DeidentifyStringResponse` carries `getProcessedText()`, `getEntities()` (a `List<DetectedEntity>` with token, entity type, location and confidence scores; never `null`) and `getMetrics()`. As JSON, the inline-configuration response above looks like this (`value` is empty unless `returnEntities` is `ALL`):
+
+```json
+{
+  "processedText": "My name is [NAME_1], and my email is [EMAIL_ADDRESS_1].",
+  "entities": [
+    {
+      "token": "NAME_1",
+      "value": "",
+      "location": { "startIndex": 11, "endIndex": 19, "startIndexProcessed": 11, "endIndexProcessed": 19 },
+      "entityType": "NAME",
+      "entityScores": { "NAME": 0.9152 }
+    },
+    {
+      "token": "EMAIL_ADDRESS_1",
+      "value": "",
+      "location": { "startIndex": 37, "endIndex": 53, "startIndexProcessed": 37, "endIndexProcessed": 54 },
+      "entityType": "EMAIL_ADDRESS",
+      "entityScores": { "EMAIL_ADDRESS": 0.8955 }
+    }
+  ],
+  "metrics": { "size": 0.05, "wordCount": 10, "characterCount": 54, "slides": null, "pages": null, "duration": null }
+}
+```
+
+With `VAULT_TOKEN` the token carries the vault token of the stored value instead of a counter, for example `[NAME_daa78453-9ca9-4ba5-a3ef-91934c11196c]`; only those tokens can be re-identified later.
 
 ## Detect configuration
 
@@ -1747,7 +1784,7 @@ System.out.println(response.getMetrics().getWordCount());
 | `ObjectEntity` | `entityType`, `deidentificationType` | Visual objects in images: `FACE`, `LICENSE_PLATE`, `LOGO`, `SIGNATURE` or `ALL`, handled with `REDACT` or `UNREDACT`. File inputs only. |
 | `FileMapping` | `source`, `destination`, `outputFileNameSuffix`, `entitiesDestination`, `objectEntitiesDestination` | Where the processed file and the entity files are written. File inputs only. |
 | `Media` | `audio(Audio)`, `document(Document)`, `image(Image)` | Media-type options. File inputs only. |
-| `Audio` / `Bleep` | `outputProcessedAudio`, `outputTranscription`, `bleep`; `startPadding`, `stopPadding`, `frequency`, `gain` | `outputTranscription` is `NONE`, `TRANSCRIPTION`, `MEDICAL_TRANSCRIPTION`, `DIARIZED_TRANSCRIPTION` or `MEDICAL_DIARIZED_TRANSCRIPTION`. `Bleep` is the tone laid over detected speech; paddings are in seconds, frequency in Hz. |
+| `Audio` / `Bleep` | `outputProcessedAudio`, `outputTranscription`, `bleep`; `startPadding`, `stopPadding`, `frequency`, `gain` | `outputTranscription` is `NONE`, `TRANSCRIPTION`, `MEDICAL_TRANSCRIPTION`, `DIARIZED_TRANSCRIPTION` or `MEDICAL_DIARIZED_TRANSCRIPTION`. `outputProcessedAudio` (server default `true`) and a transcription cannot be requested together: set `outputProcessedAudio(false)` when you ask for a transcription, or the API rejects the request. `Bleep` is the tone laid over detected speech; paddings are in seconds, frequency in Hz. |
 | `Document` / `Pdf` | `pdf(Pdf)`; `processingMode`, `density`, `maxResolution` | `processingMode` is `NONE`, `OCR` or `TEXT_LAYER`. `density` is the rendering DPI. |
 | `Image` | `outputProcessedImage`, `outputOcrText`, `maskingMethod` | `maskingMethod` is `NONE`, `BLUR` or `BLACKBOX`. |
 
@@ -1781,6 +1818,7 @@ DetectConfiguration configuration = DetectConfiguration.builder()
                         .pdf(Pdf.builder().processingMode(PdfProcessingMode.OCR).build())
                         .build())
                 .audio(Audio.builder()
+                        .outputProcessedAudio(false)          // required when asking for a transcription
                         .outputTranscription(OutputTranscriptionType.TRANSCRIPTION)
                         .bleep(Bleep.builder().startPadding(0.5f).stopPadding(0.5f).build())
                         .build())
@@ -1791,6 +1829,9 @@ DetectConfiguration configuration = DetectConfiguration.builder()
 ## Deidentify file
 
 File de-identification is asynchronous on the API: the submit call returns a run id and the result is retrieved from the run. `deidentifyFile` exposes both modes.
+
+> [!WARNING]
+> **`deidentifyFile` does not wait for the result unless you set `pollOptions`.** Without it the call returns only the run id: `getStatus()` is `null`, `getOutput()` is empty and nothing is written to disk. Code that reads the outputs straight after the call compiles and runs, and the missing files only show up downstream. Set `pollOptions` to block until the run completes, or keep the run id and call [`getRun`](#get-run). If you are migrating from `deidentifyText`-era code that always waited, see [Migrate to the new Detect methods](../docs/migrate_detect.md#step-4-deidentifyfile-new-request-and-response).
 
 - **Submit only** (default): one call, returns `getRunId()`. `getStatus()` is `null` and nothing is written to disk. Retrieve the result later with [`getRun`](#get-run).
 - **Submit and poll**: set `pollOptions`. The SDK polls the run with exponential backoff (1, 2, 4, 8, 16, then 32 seconds between lookups) until it is `SUCCESS`, `FAILED` or `UNKNOWN`, or until `waitTime` (default 60 s, max 300) or `maxAttempts` (default 23, max 23) is used up. If the budget runs out the response carries the run id with `IN_PROGRESS` or `QUEUED` so you can resume with `getRun`.
@@ -1834,7 +1875,28 @@ switch (response.getStatus()) {
 }
 ```
 
-Outputs are written only when polling reached `SUCCESS`, the request was built from a local file, and the run delivered them as base64. A request built from a `SKYFLOW_ID` or `PRESIGNED_URL` value has no local name to derive from, and presigned-URL outputs are not fetched, so in those cases read `getOutput()` and write the files yourself. Files are named `processed-<input name>.<extension>`, with the entities output as `processed-entities-<input name>.json` (and `processed-object-entities-<input name>.json` for object entities); `outputDirectory` is created if missing and defaults to the working directory. Polling blocks the calling thread.
+Outputs are written only when polling reached `SUCCESS`, the request was built from a local file, and the run delivered them as base64. A request built from a `SKYFLOW_ID` or `PRESIGNED_URL` value has no local name to derive from, and presigned-URL outputs are not fetched, so in those cases read `getOutput()` and write the files yourself. Files are named `processed-<input name>.<extension>`, with the entities output as `processed-entities-<input name>.json` (and `processed-object-entities-<input name>.json` for PDFs, Office documents and images, which can carry visual objects; a plain-text file yields the first two only); `outputDirectory` is created if missing and defaults to the working directory. Polling blocks the calling thread.
+
+As JSON, a submit-only response is just the run id, and a polled run that succeeded looks like this:
+
+```json
+{ "runId": "0927a82c-7dd6-437a-ba5e-1eeb00f9f45c", "status": null, "outputType": null, "output": [], "metrics": null, "message": null }
+```
+
+```json
+{
+  "runId": "0927a82c-7dd6-437a-ba5e-1eeb00f9f45c",
+  "status": "SUCCESS",
+  "outputType": "BASE64",
+  "output": [
+    { "processedFile": "<base64>", "processedFileType": "REDACTED_FILE", "processedFileExtension": "PDF" },
+    { "processedFile": "<base64>", "processedFileType": "ENTITIES", "processedFileExtension": "JSON" },
+    { "processedFile": "<base64>", "processedFileType": "OBJECT_ENTITIES", "processedFileExtension": "JSON" }
+  ],
+  "metrics": { "size": 48.21, "wordCount": null, "characterCount": null, "slides": null, "pages": 2, "duration": null },
+  "message": ""
+}
+```
 
 ### Polling from a worker thread
 
@@ -1903,12 +1965,44 @@ Either way the main thread only pays for the submit round trip. Avoid `new Threa
 
 Re-identification looks tokens up in the vault, so it applies to values that were de-identified with `VAULT_TOKEN`. Placeholders produced by `ENTITY_UNIQUE_COUNTER`, `ENTITY_ONLY` or `MASK` are not stored anywhere and cannot be re-identified.
 
-`ReidentifyStringRequest` takes the tokenized text and an optional list of `RedactionLevel` rules. For skyvault vaults each rule names an `entityName` and the `redactionType` to apply to it: `PLAIN_TEXT` reveals the original value, `MASKED` masks it, `REDACTED` keeps the token, `DEFAULT` applies the vault's default. Without rules every token is replaced by its original value.
+`ReidentifyStringRequest` takes the tokenized text and an optional list of `RedactionLevel` rules. For skyvault vaults each rule names an `entityName` and the `redactionType` to apply to it: `PLAIN_TEXT` reveals the original value, `MASKED` masks it, `REDACTED` keeps the token. `RedactionType.DEFAULT` belongs to `get` and `detokenize`; the Detect API does not accept it in a `RedactionLevel`. Without rules every token is replaced by its original value.
+
+The text to re-identify is the `processedText` of a de-identification that used `VAULT_TOKEN`. A vault token carries the token of the value stored in the `table.column` destination, for example `[NAME_daa78453-9ca9-4ba5-a3ef-91934c11196c]`, not the `[NAME_1]` counter placeholder, so the round trip is:
 
 ```java
-ReidentifyStringResponse response = skyflowClient.detect().reidentifyString(
+// 1. De-identify with VAULT_TOKEN: the value is stored in <TABLE>.<COLUMN> and replaced by its vault token.
+DeidentifyStringResponse deidentified = skyflowClient.detect().deidentifyString(
+        DeidentifyStringRequest.builder()
+                .text("My name is John Doe and my email is johndoe@acme.com.")
+                .configuration(DetectConfiguration.builder()
+                        .detect(Detect.builder()
+                                .entities(Arrays.asList(
+                                        Entity.builder()
+                                                .entityType(EntityType.NAME)
+                                                .deidentificationType(DeidentificationType.VAULT_TOKEN)
+                                                .destination("<TABLE>.<COLUMN>")
+                                                .build(),
+                                        Entity.builder()
+                                                .entityType(EntityType.EMAIL_ADDRESS)
+                                                .deidentificationType(DeidentificationType.VAULT_TOKEN)
+                                                .destination("<TABLE>.<COLUMN>")
+                                                .build()))
+                                .build())
+                        .build())
+                .build());
+String tokenized = deidentified.getProcessedText();
+// My name is [NAME_daa78453-9ca9-4ba5-a3ef-91934c11196c] and my email is [EMAIL_ADDRESS_3f0c…].
+
+// 2. Re-identify: every vault token is replaced by its original value.
+ReidentifyStringResponse original = skyflowClient.detect().reidentifyString(
+        ReidentifyStringRequest.builder().text(tokenized).build());
+System.out.println(original.getProcessedText());
+// My name is John Doe and my email is johndoe@acme.com.
+
+// 3. Or choose how each entity type is rendered.
+ReidentifyStringResponse rendered = skyflowClient.detect().reidentifyString(
         ReidentifyStringRequest.builder()
-                .text("My name is [NAME_1] and my email is [EMAIL_ADDRESS_1].")
+                .text(tokenized)
                 .redactionLevel(Arrays.asList(
                         RedactionLevel.builder()
                                 .entityName(EntityType.NAME)
@@ -1919,9 +2013,14 @@ ReidentifyStringResponse response = skyflowClient.detect().reidentifyString(
                                 .redactionType(RedactionType.MASKED)
                                 .build()))
                 .build());
-
-System.out.println(response.getProcessedText());
+System.out.println(rendered.getProcessedText());
 // My name is John Doe and my email is j*******@acme.com.
+```
+
+As JSON, the plain re-identification response is:
+
+```json
+{ "processedText": "My name is John Doe and my email is johndoe@acme.com.", "metrics": { "size": 0.05, "wordCount": 10, "characterCount": 54, "slides": null, "pages": null, "duration": null } }
 ```
 
 A `RedactionLevel` names one source and one replacement. On skyvault vaults the source is an `entityName` and the replacement a `redactionType`, the same `com.skyflow.enums.RedactionType` that `get` and `detokenize` use. The skyvault SDK's `RedactionLevel` has only these two fields; the flowvault SDK's has `tokenGroupName` and `redactionPattern` instead. Both are optional on the API and are sent as given.
@@ -1947,13 +2046,27 @@ ReidentifyFileResponse response = skyflowClient.detect().reidentifyFile(
 
 if (response.getStatus() == DetectRunStatus.SUCCESS) {
     for (FileOutput output : response.getOutput()) {
-        // output.getProcessedFile() is base64 or a presigned URL, per response.getOutputType()
-        byte[] processed = Base64.getDecoder().decode(output.getProcessedFile());
+        if (response.getOutputType() == ReidentifySourceType.BASE64) {
+            byte[] processed = Base64.getDecoder().decode(output.getProcessedFile());
+            Files.write(Paths.get("reidentified-tokenized." + output.getProcessedFileExtension().name().toLowerCase()), processed);
+        } else {
+            // PRESIGNED_URL: download it yourself, and do not log it; anyone holding the URL can fetch the file.
+            System.out.println(output.getProcessedFileType() + " is available at a presigned URL");
+        }
     }
 }
 ```
 
-`ReidentifyFileResponse` carries `getStatus()`, `getOutputType()`, `getOutput()` (never `null`) and `getMetrics()`.
+`ReidentifyFileResponse` carries `getStatus()`, `getOutputType()`, `getOutput()` (never `null`) and `getMetrics()`. As JSON:
+
+```json
+{
+  "status": "SUCCESS",
+  "outputType": "BASE64",
+  "output": [ { "processedFile": "<base64>", "processedFileType": "REIDENTIFIED_FILE", "processedFileExtension": "TXT" } ],
+  "metrics": { "size": 0.31, "wordCount": 52, "characterCount": 318, "slides": null, "pages": null, "duration": null }
+}
+```
 
 ## Get run
 
@@ -1966,9 +2079,14 @@ GetRunResponse run = skyflowClient.detect().getRun(
 switch (run.getStatus()) {
     case SUCCESS:
         for (FileOutput output : run.getOutput()) {
-            // output.getProcessedFile() is base64 or a presigned URL, per run.getOutputType()
-            // output.getProcessedFileType() is e.g. REDACTED_FILE or ENTITIES
-            // output.getProcessedFileExtension() is a FileDataFormat such as PDF
+            // output.getProcessedFileType() is REDACTED_FILE, ENTITIES or OBJECT_ENTITIES;
+            // output.getProcessedFileExtension() is a FileDataFormat such as PDF or JSON.
+            if (run.getOutputType() == DeidentifySourceType.BASE64) {
+                byte[] processed = Base64.getDecoder().decode(output.getProcessedFile());
+                Files.write(Paths.get("processed-" + output.getProcessedFileType() + "." + output.getProcessedFileExtension().name().toLowerCase()), processed);
+            } else {
+                // PRESIGNED_URL: download it yourself; the SDK never fetches or logs presigned URLs.
+            }
         }
         break;
     case FAILED:
@@ -1979,9 +2097,11 @@ switch (run.getStatus()) {
 }
 ```
 
+`GetRunResponse` has the same JSON shape as a polled `DeidentifyFileResponse` (see [Deidentify file](#deidentify-file)), with `runId` echoed from the request.
+
 ## Check guardrails
 
-`checkGuardrails` screens text for toxicity and for a list of denied topics, which makes it a natural pre-LLM check. `checkToxicity` and `denyTopics` are optional: the SDK sends each one only when you set it and does not fill in a default. The response is passed through as returned, so `getToxic()`, `getDeniedTopic()` and `getValidation()` carry exactly what the API sent back.
+`checkGuardrails` screens text for toxicity and for a list of denied topics, which makes it a natural pre-LLM check. `checkToxicity` and `denyTopics` are optional: the SDK sends each one only when you set it and does not fill in a default. The server evaluates toxicity only when `checkToxicity(true)` is sent; with `denyTopics` alone, `getToxic()` is `false` even for toxic text, so set `checkToxicity(true)` explicitly whenever you want that check. A request with neither field is rejected with HTTP 400. The response is passed through as returned, so `getToxic()`, `getDeniedTopic()` and `getValidation()` carry exactly what the API sent back.
 
 ```java
 CheckGuardrailsResponse response = skyflowClient.detect().checkGuardrails(
@@ -1996,7 +2116,48 @@ if (response.getValidation() == GuardrailsValidation.FAILED) {
 }
 ```
 
-All Detect methods throw `SkyflowException` as described in [Error Handling](#error-handling). Client-side validation fails before any network call.
+As JSON, a response that failed both checks is:
+
+```json
+{ "text": "<the input text>", "validation": "FAILED", "toxic": true, "deniedTopic": true }
+```
+
+A check you did not request comes back as `null`. Sending neither `checkToxicity` nor `denyTopics` is rejected by the API.
+
+## Detect errors
+
+All Detect methods throw `SkyflowException` as described in [Error Handling](#error-handling); `getHttpCode()`, `getMessage()` and `getRequestId()` identify the failure, and the request id is what Skyflow support asks for. Client-side validation fails before any network call with HTTP code 400 and no request id. Server-side failures carry the API's message, for example a `RedactionLevel` that uses `RedactionType.DEFAULT`:
+
+```java
+try {
+    skyflowClient.detect().reidentifyString(
+            ReidentifyStringRequest.builder()
+                    .text(tokenized)
+                    .redactionLevel(Collections.singletonList(
+                            RedactionLevel.builder()
+                                    .entityName(EntityType.NAME)
+                                    .redactionType(RedactionType.DEFAULT)
+                                    .build()))
+                    .build());
+} catch (SkyflowException e) {
+    System.err.println("Error during reidentifyString: [" + e.getHttpCode() + "] " + e.getMessage()
+            + " (requestId=" + e.getRequestId() + ")");
+}
+```
+
+```json
+{
+  "error": {
+    "grpc_code": 3,
+    "http_code": 400,
+    "message": "ReidentifyStringRequestV2 failed. redaction_type in redaction_level[0] must be REDACTED, MASKED, or PLAIN_TEXT",
+    "http_status": "Bad Request",
+    "details": []
+  }
+}
+```
+
+A `deidentifyFile` run that was accepted but failed while processing does not throw: `getStatus()` is `FAILED` and `getMessage()` carries the detail.
 
 See the samples [DeidentifyStringSample.java](samples/src/main/java/com/example/detect/DeidentifyStringSample.java), [DeidentifyFileSample.java](samples/src/main/java/com/example/detect/DeidentifyFileSample.java), [DeidentifyFileAsyncSample.java](samples/src/main/java/com/example/detect/DeidentifyFileAsyncSample.java), [ReidentifyStringSample.java](samples/src/main/java/com/example/detect/ReidentifyStringSample.java), [ReidentifyFileSample.java](samples/src/main/java/com/example/detect/ReidentifyFileSample.java), [GetRunSample.java](samples/src/main/java/com/example/detect/GetRunSample.java) and [CheckGuardrailsSample.java](samples/src/main/java/com/example/detect/CheckGuardrailsSample.java).
 

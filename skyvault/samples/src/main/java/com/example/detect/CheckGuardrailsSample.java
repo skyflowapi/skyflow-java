@@ -45,8 +45,9 @@ public class CheckGuardrailsSample {
                 System.out.println("Prompt passed guardrails.");
             }
         } catch (SkyflowException e) {
-            System.err.println("Error during checkGuardrails:");
-            e.printStackTrace();
+            // Quote the request id when contacting Skyflow support.
+            System.err.println("Error during checkGuardrails: [" + e.getHttpCode() + "] "
+                    + e.getMessage() + " (requestId=" + e.getRequestId() + ")");
         }
     }
 }

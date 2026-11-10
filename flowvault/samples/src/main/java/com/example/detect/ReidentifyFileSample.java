@@ -20,7 +20,7 @@ import java.util.Base64;
 import java.util.Collections;
 
 /**
- * Re-identifies the tokens in a text file with the Detect V2 API. The file is sent as base64 and
+ * Re-identifies the tokens in a text file with the Detect API. The file is sent as base64 and
  * the re-identified file is returned synchronously and written next to the input.
  */
 public class ReidentifyFileSample {
@@ -81,8 +81,9 @@ public class ReidentifyFileSample {
                 System.out.println("Metrics: " + response.getMetrics());
             }
         } catch (SkyflowException e) {
-            System.err.println("Error during reidentifyFile:");
-            e.printStackTrace();
+            // Quote the request id when contacting Skyflow support.
+            System.err.println("Error during reidentifyFile: [" + e.getHttpCode() + "] "
+                    + e.getMessage() + " (requestId=" + e.getRequestId() + ")");
         }
     }
 }

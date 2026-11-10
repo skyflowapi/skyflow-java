@@ -17,7 +17,9 @@ This repository hosts Skyflow's Java SDKs for integrating Skyflow into a Java ba
 
 > **The two artifacts are versioned independently.** `flowvault` is a new SDK starting at `1.0.0`; its lower version number reflects a first release, not an older or lesser SDK than `skyvault` 2.x. Upgrade each on its own version line.
 
-> Migrating from v1? See skyvault's **[Migration Guide](docs/migrate_to_v2.md)**. V1 is in maintenance mode and will reach End of Life on October 31, 2026.
+> Migrating from v1? See skyvault's **[Migration Guide](docs/migrate_to_v2.md)**. V1 is in maintenance mode and reached End of Life on October 31, 2026.
+>
+> Using skyvault's replaced Detect methods (`deidentifyText`, `reidentifyText`, `getDetectRun`)? See **[Migrate to the new Detect methods](docs/migrate_detect.md)**.
 
 ## Repository layout
 
@@ -32,6 +34,7 @@ The root `pom.xml` (`packaging=pom`) aggregates this Maven reactor:
 - [skyvault API Reference](docs/api_reference.md) — full list of request builder methods, response getters, enums, and service-account utilities
 - [Detect API Reference](docs/api_reference.md#detect-api) — request, response, configuration and enum classes for Detect, shared by both SDKs
 - [Migrate from v1 to v2](docs/migrate_to_v2.md)
+- [Migrate to the new Detect methods](docs/migrate_detect.md) — for skyvault users of `deidentifyText`, `reidentifyText`, `deidentifyFile` and `getDetectRun`
 
 ## Reporting a Vulnerability
 

@@ -12,7 +12,7 @@ import com.skyflow.enums.LogLevel;
 import com.skyflow.errors.SkyflowException;
 
 /**
- * De-identifies a local file with the Detect V2 API. With {@code waitForResult} false the sample
+ * De-identifies a local file with the Detect API. With {@code waitForResult} false the sample
  * submits the run and returns its id; with it true the sample submits, polls, and on success the
  * SDK writes the outputs into {@code outputDirectory} (the working directory when unset). Only one
  * path runs, so each execution creates a single run.
@@ -68,8 +68,9 @@ public class DeidentifyFileSample {
                 System.out.println("Still running; poll later with getRun(" + polled.getRunId() + ")");
             }
         } catch (SkyflowException e) {
-            System.err.println("Error during deidentifyFile:");
-            e.printStackTrace();
+            // Quote the request id when contacting Skyflow support.
+            System.err.println("Error during deidentifyFile: [" + e.getHttpCode() + "] "
+                    + e.getMessage() + " (requestId=" + e.getRequestId() + ")");
         }
     }
 }

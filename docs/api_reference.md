@@ -588,7 +588,7 @@ Each element returned by `getDetokenizedFields()` and `getErrors()`.
 | SDK | Builder method | Description |
 |-----|----------------|-------------|
 | skyvault | `entityName(EntityType)` | Entity type the rule applies to. |
-| skyvault | `redactionType(RedactionType)` | `PLAIN_TEXT`, `MASKED`, `REDACTED` or `DEFAULT`, the same `com.skyflow.enums.RedactionType` used by `get` and `detokenize`. See [`RedactionType`](#redactiontype). |
+| skyvault | `redactionType(RedactionType)` | `PLAIN_TEXT`, `MASKED` or `REDACTED`, the same `com.skyflow.enums.RedactionType` used by `get` and `detokenize`. The Detect API does not accept `DEFAULT` here. See [`RedactionType`](#redactiontype). |
 | flowvault | `tokenGroupName(String)` | Token group the rule applies to. |
 | flowvault | `redactionPattern(String)` | Name of a redaction pattern configured in the vault. |
 
@@ -668,7 +668,7 @@ Each element returned by `getDetokenizedFields()` and `getErrors()`.
 | `PLAIN_TEXT` | Return the original, unmasked value. |
 | `MASKED` | Return a partially masked value (e.g. `****1234`). |
 | `REDACTED` | Return a fully redacted placeholder. |
-| `DEFAULT` | Use the redaction type configured on the vault column. |
+| `DEFAULT` | Use the redaction type configured on the vault column. Valid for `get` and `detokenize`; the Detect API does not accept it in a `RedactionLevel`. |
 
 ### `TokenMode`
 

@@ -79,10 +79,12 @@ public class DeidentifyFileAsyncSample {
                     // The task threw: unwrap the SkyflowException raised inside deidentifyFile.
                     Throwable cause = e.getCause();
                     if (cause instanceof SkyflowException) {
-                        System.err.println(file + ": error during deidentifyFile: " + cause.getMessage());
+                        SkyflowException se = (SkyflowException) cause;
+                        // Quote the request id when contacting Skyflow support.
+                        System.err.println(file + ": error during deidentifyFile: [" + se.getHttpCode() + "] "
+                                + se.getMessage() + " (requestId=" + se.getRequestId() + ")");
                     } else {
-                        System.err.println(file + ": unexpected error");
-                        cause.printStackTrace();
+                        System.err.println(file + ": unexpected error: " + cause);
                     }
                 }
             }

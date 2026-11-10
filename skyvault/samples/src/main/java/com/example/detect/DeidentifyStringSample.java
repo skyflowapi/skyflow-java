@@ -20,7 +20,7 @@ import java.util.Arrays;
 import java.util.Collections;
 
 /**
- * De-identifies sensitive data in a string with the Detect V2 API, first with a stored
+ * De-identifies sensitive data in a string with the Detect API, first with a stored
  * configuration id and then with an inline configuration.
  */
 public class DeidentifyStringSample {
@@ -50,8 +50,9 @@ public class DeidentifyStringSample {
                             .build());
             System.out.println("Processed text: " + response.getProcessedText());
         } catch (SkyflowException e) {
-            System.err.println("Error during deidentifyString (stored configuration):");
-            e.printStackTrace();
+            // Quote the request id when contacting Skyflow support.
+            System.err.println("Error during deidentifyString (stored configuration): [" + e.getHttpCode() + "] "
+                    + e.getMessage() + " (requestId=" + e.getRequestId() + ")");
         }
 
         // 2. Inline configuration, nothing to create beforehand.
@@ -87,8 +88,9 @@ public class DeidentifyStringSample {
             }
             System.out.println("Metrics: " + response.getMetrics());
         } catch (SkyflowException e) {
-            System.err.println("Error during deidentifyString (inline configuration):");
-            e.printStackTrace();
+            // Quote the request id when contacting Skyflow support.
+            System.err.println("Error during deidentifyString (inline configuration): [" + e.getHttpCode() + "] "
+                    + e.getMessage() + " (requestId=" + e.getRequestId() + ")");
         }
     }
 }
