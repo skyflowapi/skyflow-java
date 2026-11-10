@@ -70,7 +70,7 @@ The `flowvault` module is a Skyflow Java SDK built for high-throughput vault ope
 
 - Authenticate using a Skyflow service account, an API key, or a bearer token — see [Authenticate](#authenticate).
 - Perform bulk Vault API operations — insert, tokenize, detokenize, and delete tokens — each with a synchronous and an async variant, built for high-throughput Flow Vault workloads.
-- Perform unary Vault API operations: insert, detokenize, get, update, delete, query, get tokens, upload files, and delete files. Each sends a single API call, for when you want a plain request and response rather than the bulk batching machinery. See [VaultController — Unary operations](#vaultcontroller--unary-operations).
+- Perform unary Vault API operations — insert, detokenize, get, update, delete, query, get tokens, upload files, and delete files. Each sends a single API call, for when you want a plain request and response rather than the bulk batching machinery. See [VaultController — Unary operations](#vaultcontroller--unary-operations).
 - **Per-record reporting, not all-or-nothing.** A bulk call succeeds as a call even when individual records fail; every response reports a summary plus the outcome of each individual record or token. See [Error Handling](#error-handling).
 
 # Install
