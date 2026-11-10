@@ -76,11 +76,11 @@ public class DeleteFilesExample {
             DeleteFilesResponse response = skyflowClient.vault().deleteFiles(request, options);
 
             // Step 6: Read the outcome. A record succeeded when its error is null.
-            for (HashMap<String, Object> record : response.getRecords()) {
-                if (record.get("error") == null) {
-                    System.out.printf("deleteFiles: %s -> %s%n", record.get("skyflowId"), record.get("columns"));
+            for (DeleteFilesResponseRecord record : response.getRecords()) {
+                if (record.getError() == null) {
+                    System.out.printf("deleteFiles: %s -> %s%n", record.getSkyflowId(), record.getColumns());
                 } else {
-                    System.out.printf("deleteFiles failed (%s): %s%n", record.get("httpCode"), record.get("error"));
+                    System.out.printf("deleteFiles failed (%s): %s%n", record.getHttpCode(), record.getError());
                 }
             }
         } catch (SkyflowException e) {

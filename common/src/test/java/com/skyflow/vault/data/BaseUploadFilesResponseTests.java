@@ -15,14 +15,14 @@ public class BaseUploadFilesResponseTests {
         record.put("skyflowId", "sky-1");
         ArrayList<HashMap<String, Object>> records = new ArrayList<>(Collections.singletonList(record));
 
-        BaseUploadFilesResponse response = new BaseUploadFilesResponse(records);
+        BaseUploadFilesResponse<HashMap<String, Object>> response = new BaseUploadFilesResponse<>(records);
 
         Assert.assertSame(records, response.getRecords());
     }
 
     @Test
     public void testNullRecordsAllowed() {
-        BaseUploadFilesResponse response = new BaseUploadFilesResponse(null);
+        BaseUploadFilesResponse<HashMap<String, Object>> response = new BaseUploadFilesResponse<>(null);
 
         Assert.assertNull(response.getRecords());
     }
@@ -32,7 +32,7 @@ public class BaseUploadFilesResponseTests {
         HashMap<String, Object> record = new HashMap<>();
         record.put("skyflowId", null);
         record.put("error", "Invalid request. skyflowID is invalid.");
-        BaseUploadFilesResponse response = new BaseUploadFilesResponse(new ArrayList<>(Collections.singletonList(record)));
+        BaseUploadFilesResponse<HashMap<String, Object>> response = new BaseUploadFilesResponse<>(new ArrayList<>(Collections.singletonList(record)));
 
         String json = response.toString();
 
@@ -42,6 +42,6 @@ public class BaseUploadFilesResponseTests {
 
     @Test
     public void testToStringWithNullRecords() {
-        Assert.assertEquals("{\"records\":null}", new BaseUploadFilesResponse(null).toString());
+        Assert.assertEquals("{\"records\":null}", new BaseUploadFilesResponse<HashMap<String, Object>>(null).toString());
     }
 }

@@ -4,6 +4,7 @@ import com.skyflow.VaultClient;
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.Env;
+import com.skyflow.enums.UploadStatus;
 import com.skyflow.generated.rest.ApiClient;
 import com.skyflow.generated.rest.core.ApiClientHttpResponse;
 import com.skyflow.generated.rest.resources.files.FilesClient;
@@ -14,10 +15,12 @@ import com.skyflow.generated.rest.types.FileUploadRecord;
 import com.skyflow.generated.rest.types.FileUploadResponse;
 import com.skyflow.generated.rest.types.FileUploadResponseObject;
 import com.skyflow.utils.Constants;
+import com.skyflow.vault.data.UploadFilesColumnResult;
 import com.skyflow.vault.data.UploadFilesRequest;
 import com.skyflow.vault.data.UploadFilesRequestColumn;
 import com.skyflow.vault.data.UploadFilesRequestRecord;
 import com.skyflow.vault.data.UploadFilesResponse;
+import com.skyflow.vault.data.UploadFilesResponseRecord;
 import com.sun.net.httpserver.HttpServer;
 import okhttp3.Protocol;
 import okhttp3.Request;
@@ -270,9 +273,8 @@ public class UploadFilesFormatsTests {
         return raw;
     }
 
-    @SuppressWarnings("unchecked")
-    private static List<Map<String, Object>> columnsOf(Map<String, Object> record) {
-        return (List<Map<String, Object>>) record.get("columns");
+    private static List<UploadFilesColumnResult> columnsOf(UploadFilesResponseRecord record) {
+        return record.getColumns();
     }
 
     // ── tests ─────────────────────────────────────────────────────────────────
@@ -312,19 +314,19 @@ public class UploadFilesFormatsTests {
 
         Assert.assertEquals(sources.size(), response.getRecords().size());
         for (int r = 0; r < sources.size(); r++) {
-            Map<String, Object> record = response.getRecords().get(r);
-            Assert.assertNull(record.get("error"));
-            List<Map<String, Object>> columns = columnsOf(record);
+            UploadFilesResponseRecord record = response.getRecords().get(r);
+            Assert.assertNull(record.getError());
+            List<UploadFilesColumnResult> columns = columnsOf(record);
             Assert.assertEquals(FORMATS.size(), columns.size());
             for (int c = 0; c < FORMATS.size(); c++) {
                 Format format = FORMATS.get(c);
                 String label = sources.get(r) + " " + format.fileName;
                 String path = "/upload/" + r + "/" + format.column();
-                Map<String, Object> column = columns.get(c);
+                UploadFilesColumnResult column = columns.get(c);
 
-                Assert.assertEquals(label, "UPLOADED", column.get("uploadStatus"));
-                Assert.assertNull(label, column.get("error"));
-                Assert.assertEquals(label, format.fileName, column.get("fileName"));
+                Assert.assertEquals(label, UploadStatus.UPLOADED, column.getUploadStatus());
+                Assert.assertNull(label, column.getError());
+                Assert.assertEquals(label, format.fileName, column.getFileName());
                 Assert.assertEquals(label, "PUT", receivedMethods.get(path));
                 Assert.assertArrayEquals(label, expected.get(path), receivedBodies.get(path));
                 Assert.assertEquals(label, format.contentType, receivedContentTypes.get(path));
@@ -348,7 +350,7 @@ public class UploadFilesFormatsTests {
                 Collections.singletonList(UploadFilesRequestRecord.builder().tableName("documents").columns(
                         Collections.singletonList(column(video, Source.FILE_PATH, bytes))).build())).build());
 
-        Assert.assertEquals("UPLOADED", columnsOf(response.getRecords().get(0)).get(0).get("uploadStatus"));
+        Assert.assertEquals(UploadStatus.UPLOADED, columnsOf(response.getRecords().get(0)).get(0).getUploadStatus());
         byte[] received = receivedBodies.get("/upload/0/" + video.column());
         Assert.assertEquals(bytes.length, received.length);
         Assert.assertArrayEquals(bytes, received);
@@ -366,7 +368,7 @@ public class UploadFilesFormatsTests {
                         Collections.singletonList(UploadFilesRequestColumn.builder().column("notes")
                                 .filePath(empty.getPath()).build())).build())).build());
 
-        Assert.assertEquals("UPLOADED", columnsOf(response.getRecords().get(0)).get(0).get("uploadStatus"));
+        Assert.assertEquals(UploadStatus.UPLOADED, columnsOf(response.getRecords().get(0)).get(0).getUploadStatus());
         Assert.assertEquals(0, receivedBodies.get("/upload/0/notes").length);
         Assert.assertEquals("text/plain", receivedContentTypes.get("/upload/0/notes"));
     }
@@ -387,10 +389,10 @@ public class UploadFilesFormatsTests {
                         UploadFilesRequestColumn.builder().column("renamed").fileObject(scan)
                                 .fileName("statement.pdf").build())).build())).build());
 
-        List<Map<String, Object>> columns = columnsOf(response.getRecords().get(0));
-        Assert.assertEquals("scan.bin", columns.get(0).get("fileName"));
+        List<UploadFilesColumnResult> columns = columnsOf(response.getRecords().get(0));
+        Assert.assertEquals("scan.bin", columns.get(0).getFileName());
         Assert.assertEquals("application/octet-stream", receivedContentTypes.get("/upload/0/scan"));
-        Assert.assertEquals("statement.pdf", columns.get(1).get("fileName"));
+        Assert.assertEquals("statement.pdf", columns.get(1).getFileName());
         Assert.assertEquals("application/pdf", receivedContentTypes.get("/upload/0/renamed"));
         Assert.assertArrayEquals(pdf, receivedBodies.get("/upload/0/renamed"));
 
@@ -423,13 +425,13 @@ public class UploadFilesFormatsTests {
                         column(mp4, Source.BASE64, content(mp4, 64)),
                         column(png, Source.BASE64, content(png, 64)))).build())).build());
 
-        List<Map<String, Object>> columns = columnsOf(response.getRecords().get(0));
-        Assert.assertEquals("UPLOADED", columns.get(0).get("uploadStatus"));
-        Assert.assertEquals("FAILED", columns.get(1).get("uploadStatus"));
-        Assert.assertEquals("PUT failed: 415", columns.get(1).get("error"));
-        Assert.assertEquals("UPLOADED", columns.get(2).get("uploadStatus"));
-        Assert.assertNull(response.getRecords().get(0).get("error"));
-        Assert.assertEquals(200, response.getRecords().get(0).get("httpCode"));
+        List<UploadFilesColumnResult> columns = columnsOf(response.getRecords().get(0));
+        Assert.assertEquals(UploadStatus.UPLOADED, columns.get(0).getUploadStatus());
+        Assert.assertEquals(UploadStatus.FAILED, columns.get(1).getUploadStatus());
+        Assert.assertEquals("PUT failed: 415", columns.get(1).getError());
+        Assert.assertEquals(UploadStatus.UPLOADED, columns.get(2).getUploadStatus());
+        Assert.assertNull(response.getRecords().get(0).getError());
+        Assert.assertEquals(200, response.getRecords().get(0).getHttpCode());
     }
 
     @Test
@@ -457,8 +459,8 @@ public class UploadFilesFormatsTests {
                 Collections.singletonList(UploadFilesRequestRecord.builder().tableName("documents").columns(
                         Collections.singletonList(column(pdf, Source.FILE_PATH, bytes))).build())).build());
 
-        Map<String, Object> column = columnsOf(response.getRecords().get(0)).get(0);
-        Assert.assertEquals(String.valueOf(column.get("error")), "UPLOADED", column.get("uploadStatus"));
+        UploadFilesColumnResult column = columnsOf(response.getRecords().get(0)).get(0);
+        Assert.assertEquals(String.valueOf(column.getError()), UploadStatus.UPLOADED, column.getUploadStatus());
         Assert.assertArrayEquals(bytes, receivedBodies.get("/upload/0/" + pdf.column()));
     }
 }

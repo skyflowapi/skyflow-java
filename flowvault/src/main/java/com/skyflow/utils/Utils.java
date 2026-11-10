@@ -21,6 +21,7 @@ import com.skyflow.config.VaultConfig;
 import com.skyflow.enums.Env;
 import com.skyflow.enums.InterfaceName;
 import com.skyflow.enums.UpdateType;
+import com.skyflow.enums.UploadStatus;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
@@ -75,7 +76,9 @@ import com.skyflow.vault.data.BulkTokenizeResponseRecord;
 import com.skyflow.vault.data.ColumnRedactions;
 import com.skyflow.vault.data.DeleteFilesRequest;
 import com.skyflow.vault.data.DeleteFilesRequestRecord;
+import com.skyflow.vault.data.DeleteFilesColumnResult;
 import com.skyflow.vault.data.DeleteFilesResponse;
+import com.skyflow.vault.data.DeleteFilesResponseRecord;
 import com.skyflow.vault.data.DeleteRequest;
 import com.skyflow.vault.data.DeleteResponse;
 import com.skyflow.vault.data.DeleteResponseRecord;
@@ -91,6 +94,7 @@ import com.skyflow.vault.data.GetResponseRecord;
 import com.skyflow.vault.data.GetTokensRequest;
 import com.skyflow.vault.data.GetTokensRequestRecord;
 import com.skyflow.vault.data.GetTokensResponse;
+import com.skyflow.vault.data.GetTokensResponseRecord;
 import com.skyflow.vault.data.InsertRequest;
 import com.skyflow.vault.data.InsertRequestRecord;
 import com.skyflow.vault.data.InsertResponse;
@@ -108,6 +112,7 @@ import com.skyflow.vault.data.UpdateResponseRecord;
 import com.skyflow.vault.data.UploadFilesRequest;
 import com.skyflow.vault.data.UploadFilesRequestColumn;
 import com.skyflow.vault.data.UploadFilesRequestRecord;
+import com.skyflow.vault.data.UploadFilesColumnResult;
 import com.skyflow.vault.data.UploadFilesResponse;
 import com.skyflow.vault.data.UpsertOptions;
 
@@ -785,9 +790,9 @@ public final class Utils extends BaseUtils {
             return null;
         }
         String requestId = extractRequestId(apiException.headers());
-        ArrayList<HashMap<String, Object>> records = new ArrayList<>();
+        List<GetTokensResponseRecord> records = new ArrayList<>();
         for (Map<String, Object> recordMap : recordMaps) {
-            records.add(getTokensRow(
+            records.add(new GetTokensResponseRecord(
                     recordMap.get("value"),
                     readString(recordMap, "tokenGroupName"),
                     getTokensToken(recordMap.get("token")),
@@ -1389,11 +1394,11 @@ public final class Utils extends BaseUtils {
     // Unary, unbatched: one row per input entry in request order, with the call's requestId set
     // only on rows that carry an error, matching the other unary operations.
     public static GetTokensResponse formatGetTokensResponse(GetTokensFromValuesResponse response, Map<String, List<String>> headers) {
-        ArrayList<HashMap<String, Object>> records = new ArrayList<>();
+        List<GetTokensResponseRecord> records = new ArrayList<>();
         if (response != null && response.getRecords() != null) {
             for (TokenizeResponseObject current : response.getRecords()) {
                 String error = asNonEmptyString(current.getError().orElse(null));
-                records.add(getTokensRow(
+                records.add(new GetTokensResponseRecord(
                         unwrap(current.getValue().orElse(null)),
                         asNonEmptyString(current.getTokenGroupName().orElse(null)),
                         getTokensToken(current.getToken()),
@@ -1403,18 +1408,6 @@ public final class Utils extends BaseUtils {
             }
         }
         return new GetTokensResponse(records);
-    }
-
-    private static HashMap<String, Object> getTokensRow(
-            Object value, String tokenGroupName, String token, int httpCode, String error, String requestId) {
-        HashMap<String, Object> row = new LinkedHashMap<>();
-        row.put("value", value);
-        row.put("tokenGroupName", tokenGroupName);
-        row.put("token", token);
-        row.put("httpCode", httpCode);
-        row.put("error", error);
-        row.put("requestId", requestId);
-        return row;
     }
 
     private static TokenizeRequestObject buildTokenizeRequestObject(TokenizeRequestRecord record) {
@@ -1571,9 +1564,6 @@ public final class Utils extends BaseUtils {
 
     // ── Upload / delete files ────────────────────────────────────────────────
 
-    public static final String UPLOAD_STATUS_UPLOADED = "UPLOADED";
-    public static final String UPLOAD_STATUS_FAILED = "FAILED";
-    public static final String UPLOAD_STATUS_SKIPPED = "SKIPPED";
     private static final String DEFAULT_UPLOAD_CONTENT_TYPE = "application/octet-stream";
 
     /** Phase A body: the file columns of each record, with the name each file will be stored under. */
@@ -1716,28 +1706,6 @@ public final class Utils extends BaseUtils {
         return RequestBody.create(column.getFileObject(), mediaType);
     }
 
-    public static HashMap<String, Object> uploadFilesColumnRow(
-            String column, String fileName, String uploadStatus, String error) {
-        HashMap<String, Object> row = new LinkedHashMap<>();
-        row.put("column", column);
-        row.put("fileName", fileName);
-        row.put("uploadStatus", uploadStatus);
-        row.put("error", error);
-        return row;
-    }
-
-    public static HashMap<String, Object> uploadFilesRecordRow(String skyflowId, String tableName,
-            List<HashMap<String, Object>> columns, int httpCode, String error, String requestId) {
-        HashMap<String, Object> row = new LinkedHashMap<>();
-        row.put("skyflowId", skyflowId);
-        row.put("tableName", tableName);
-        row.put("columns", columns);
-        row.put("httpCode", httpCode);
-        row.put("error", error);
-        row.put("requestId", requestId);
-        return row;
-    }
-
     /** Row error when the vault's upload response cannot be safely paired with the request. */
     public static final String UPLOAD_RESPONSE_MISMATCH_ERROR =
             "Upload response did not match the request; file was not uploaded.";
@@ -1756,12 +1724,12 @@ public final class Utils extends BaseUtils {
     }
 
     /** Every requested column of a record that failed in Phase A: nothing was uploaded. */
-    public static List<HashMap<String, Object>> skippedUploadColumns(UploadFilesRequestRecord record, String error) {
-        List<HashMap<String, Object>> columns = new ArrayList<>();
+    public static List<UploadFilesColumnResult> skippedUploadColumns(UploadFilesRequestRecord record, String error) {
+        List<UploadFilesColumnResult> columns = new ArrayList<>();
         if (record != null && record.getColumns() != null) {
             for (UploadFilesRequestColumn column : record.getColumns()) {
-                columns.add(uploadFilesColumnRow(column.getColumn(), resolveUploadFileName(column),
-                        UPLOAD_STATUS_SKIPPED, error));
+                columns.add(new UploadFilesColumnResult(column.getColumn(), resolveUploadFileName(column),
+                        UploadStatus.SKIPPED, error));
             }
         }
         return columns;
@@ -1789,11 +1757,11 @@ public final class Utils extends BaseUtils {
     // requestId set only on entries that carry an error, matching the other unary operations.
     public static DeleteFilesResponse formatDeleteFilesResponse(
             FileDeleteResponse response, Map<String, List<String>> headers) {
-        ArrayList<HashMap<String, Object>> records = new ArrayList<>();
+        List<DeleteFilesResponseRecord> records = new ArrayList<>();
         if (response != null && response.getRecords() != null) {
             for (FileDeleteResponseObject current : response.getRecords()) {
                 String error = asNonEmptyString(current.getError().orElse(null));
-                records.add(deleteFilesRecordRow(
+                records.add(new DeleteFilesResponseRecord(
                         current.getSkyflowId().orElse(null),
                         current.getTableName(),
                         deletedColumns(current.getData().orElse(null)),
@@ -1811,9 +1779,9 @@ public final class Utils extends BaseUtils {
             return null;
         }
         String requestId = extractRequestId(apiException.headers());
-        ArrayList<HashMap<String, Object>> records = new ArrayList<>();
+        List<DeleteFilesResponseRecord> records = new ArrayList<>();
         for (Map<String, Object> recordMap : recordMaps) {
-            records.add(deleteFilesRecordRow(
+            records.add(new DeleteFilesResponseRecord(
                     readString(recordMap, "skyflowID"),
                     readString(recordMap, "tableName"),
                     null,
@@ -1825,31 +1793,16 @@ public final class Utils extends BaseUtils {
     }
 
     /** The deleted columns from the wire "data" map, or null when the record failed. */
-    private static List<HashMap<String, Object>> deletedColumns(Map<String, Object> data) {
+    private static List<DeleteFilesColumnResult> deletedColumns(Map<String, Object> data) {
         if (data == null) {
             return null;
         }
-        List<HashMap<String, Object>> columns = new ArrayList<>();
+        List<DeleteFilesColumnResult> columns = new ArrayList<>();
         for (Map.Entry<String, Object> entry : data.entrySet()) {
             Object result = entry.getValue();
             Object status = result instanceof Map ? ((Map<?, ?>) result).get("status") : result;
-            HashMap<String, Object> column = new LinkedHashMap<>();
-            column.put("column", entry.getKey());
-            column.put("status", status == null ? null : status.toString());
-            columns.add(column);
+            columns.add(new DeleteFilesColumnResult(entry.getKey(), status == null ? null : status.toString()));
         }
         return columns;
-    }
-
-    private static HashMap<String, Object> deleteFilesRecordRow(String skyflowId, String tableName,
-            List<HashMap<String, Object>> columns, int httpCode, String error, String requestId) {
-        HashMap<String, Object> row = new LinkedHashMap<>();
-        row.put("skyflowId", skyflowId);
-        row.put("tableName", tableName);
-        row.put("columns", columns);
-        row.put("httpCode", httpCode);
-        row.put("error", error);
-        row.put("requestId", requestId);
-        return row;
     }
 }

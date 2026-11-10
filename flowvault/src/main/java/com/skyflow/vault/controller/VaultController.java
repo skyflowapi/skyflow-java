@@ -19,6 +19,7 @@ import com.google.gson.JsonObject;
 import com.skyflow.VaultClient;
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
+import com.skyflow.enums.UploadStatus;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.generated.rest.core.ApiClientApiException;
 import com.skyflow.generated.rest.core.ApiClientException;
@@ -94,7 +95,9 @@ import com.skyflow.vault.data.UploadFilesOptions;
 import com.skyflow.vault.data.UploadFilesRequest;
 import com.skyflow.vault.data.UploadFilesRequestColumn;
 import com.skyflow.vault.data.UploadFilesRequestRecord;
+import com.skyflow.vault.data.UploadFilesColumnResult;
 import com.skyflow.vault.data.UploadFilesResponse;
+import com.skyflow.vault.data.UploadFilesResponseRecord;
 
 import io.github.cdimascio.dotenv.Dotenv;
 import io.github.cdimascio.dotenv.DotenvException;
@@ -804,9 +807,9 @@ public final class VaultController extends VaultClient {
         if (returned.size() != requested.size()) {
             LogUtil.printWarningLog(WarningLogs.INCOMPLETE_UPLOAD_FILES_RESPONSE.getLog());
             String requestId = Utils.extractRequestId(headers);
-            ArrayList<HashMap<String, Object>> records = new ArrayList<>();
+            List<UploadFilesResponseRecord> records = new ArrayList<>();
             for (UploadFilesRequestRecord requestRecord : requested) {
-                records.add(Utils.uploadFilesRecordRow(requestRecord.getSkyflowId(), requestRecord.getTableName(),
+                records.add(new UploadFilesResponseRecord(requestRecord.getSkyflowId(), requestRecord.getTableName(),
                         Utils.skippedUploadColumns(requestRecord, Utils.UPLOAD_RESPONSE_MISMATCH_ERROR),
                         500, Utils.UPLOAD_RESPONSE_MISMATCH_ERROR, requestId));
             }
@@ -823,7 +826,7 @@ public final class VaultController extends VaultClient {
                 Math.min(fileCount, Constants.UPLOAD_FILES_CONCURRENCY_LIMIT));
         try {
             String[] errors = new String[returned.size()];
-            List<List<CompletableFuture<HashMap<String, Object>>>> uploads = new ArrayList<>();
+            List<List<CompletableFuture<UploadFilesColumnResult>>> uploads = new ArrayList<>();
             for (int i = 0; i < returned.size(); i++) {
                 FileUploadResponseObject record = returned.get(i);
                 errors[i] = record.getError().filter(e -> !e.isEmpty()).orElse(null);
@@ -840,21 +843,21 @@ public final class VaultController extends VaultClient {
                 }
             }
 
-            ArrayList<HashMap<String, Object>> records = new ArrayList<>();
+            List<UploadFilesResponseRecord> records = new ArrayList<>();
             for (int i = 0; i < returned.size(); i++) {
                 FileUploadResponseObject record = returned.get(i);
                 String error = errors[i];
                 int httpCode = record.getHttpCode() != 0 ? record.getHttpCode() : (error != null ? 500 : 200);
-                List<HashMap<String, Object>> columns;
+                List<UploadFilesColumnResult> columns;
                 if (error != null) {
                     columns = Utils.skippedUploadColumns(requested.get(i), error);
                 } else {
                     columns = new ArrayList<>();
-                    for (CompletableFuture<HashMap<String, Object>> column : uploads.get(i)) {
+                    for (CompletableFuture<UploadFilesColumnResult> column : uploads.get(i)) {
                         columns.add(column.join());
                     }
                 }
-                records.add(Utils.uploadFilesRecordRow(record.getSkyflowId(), record.getTableName(), columns,
+                records.add(new UploadFilesResponseRecord(record.getSkyflowId(), record.getTableName(), columns,
                         httpCode, error, error != null ? Utils.extractRequestId(headers) : null));
             }
             return new UploadFilesResponse(records);
@@ -863,16 +866,16 @@ public final class VaultController extends VaultClient {
         }
     }
 
-    private List<CompletableFuture<HashMap<String, Object>>> uploadColumns(UploadFilesRequestRecord requestRecord,
+    private List<CompletableFuture<UploadFilesColumnResult>> uploadColumns(UploadFilesRequestRecord requestRecord,
                                                                            Map<UploadFilesRequestColumn, byte[]> decodedBase64,
                                                                            Map<String, Object> signedUrls,
                                                                            ExecutorService executor) {
-        List<CompletableFuture<HashMap<String, Object>>> columns = new ArrayList<>();
+        List<CompletableFuture<UploadFilesColumnResult>> columns = new ArrayList<>();
         for (UploadFilesRequestColumn column : requestRecord.getColumns()) {
             Object signedUrl = signedUrls.get(column.getColumn());
             if (signedUrl == null) {
-                columns.add(CompletableFuture.completedFuture(Utils.uploadFilesColumnRow(
-                        column.getColumn(), Utils.resolveUploadFileName(column), Utils.UPLOAD_STATUS_SKIPPED, null)));
+                columns.add(CompletableFuture.completedFuture(new UploadFilesColumnResult(
+                        column.getColumn(), Utils.resolveUploadFileName(column), UploadStatus.SKIPPED, null)));
                 continue;
             }
             columns.add(CompletableFuture.supplyAsync(
@@ -882,7 +885,7 @@ public final class VaultController extends VaultClient {
     }
 
     /** PUTs one column's file; a failure is reported on that column only. */
-    private HashMap<String, Object> uploadColumn(UploadFilesRequestColumn column, byte[] decodedBase64,
+    private UploadFilesColumnResult uploadColumn(UploadFilesRequestColumn column, byte[] decodedBase64,
                                                  String signedUrl) {
         String fileName = Utils.resolveUploadFileName(column);
         String error = null;
@@ -900,8 +903,8 @@ public final class VaultController extends VaultClient {
             LogUtil.printErrorLog(Utils.parameterizedString(
                     ErrorLogs.SIGNED_URL_UPLOAD_FAILED.getLog(), column.getColumn()));
         }
-        return Utils.uploadFilesColumnRow(column.getColumn(), fileName,
-                error == null ? Utils.UPLOAD_STATUS_UPLOADED : Utils.UPLOAD_STATUS_FAILED, error);
+        return new UploadFilesColumnResult(column.getColumn(), fileName,
+                error == null ? UploadStatus.UPLOADED : UploadStatus.FAILED, error);
     }
 
     /** Sends one file to its signed URL and returns the HTTP status. */

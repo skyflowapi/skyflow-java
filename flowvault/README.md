@@ -1749,15 +1749,15 @@ Sample response:
 }
 ```
 
-`getTokensResponse.getRecords()` returns one `HashMap<String, Object>` per input entry, with the keys `value`, `tokenGroupName`, `token`, `httpCode`, `error` and `requestId` (set only when `error` is non-null). `token` is `""` (never null) on a record that has no token.
+`getTokensResponse.getRecords()` returns one `GetTokensResponseRecord` per input entry, with the accessors `getValue()`, `getTokenGroupName()`, `getToken()`, `getHttpCode()`, `getError()` and `getRequestId()` (set only when `getError()` is non-null). `token` is `""` (never null) on a record that has no token.
 
 ```java
-for (HashMap<String, Object> record : getTokensResponse.getRecords()) {
-    if (record.get("error") == null) {
-        System.out.println(record.get("value") + " -> " + record.get("token"));
+for (GetTokensResponseRecord record : getTokensResponse.getRecords()) {
+    if (record.getError() == null) {
+        System.out.println(record.getValue() + " -> " + record.getToken());
     } else {
-        System.err.println(record.get("value") + " failed ["
-                + record.get("httpCode") + "] " + record.get("error"));
+        System.err.println(record.getValue() + " failed ["
+                + record.getHttpCode() + "] " + record.getError());
     }
 }
 ```
@@ -1854,14 +1854,14 @@ Sample response (partial success):
 }
 ```
 
-`uploadFilesResponse.getRecords()` returns one `HashMap<String, Object>` per input record, with the keys `skyflowId`, `tableName`, `columns`, `httpCode`, `error` and `requestId` (set only when `error` is non-null). Each entry of `columns` has the keys `column`, `fileName`, `uploadStatus` (`UPLOADED`, `FAILED` or `SKIPPED`) and `error`. A record's `error` stays null when only some of its columns failed in step B, so check each column:
+`uploadFilesResponse.getRecords()` returns one `UploadFilesResponseRecord` per input record, with the accessors `getSkyflowId()`, `getTableName()`, `getColumns()`, `getHttpCode()`, `getError()` and `getRequestId()` (set only when `getError()` is non-null). Each `UploadFilesColumnResult` in `getColumns()` has `getColumn()`, `getFileName()`, `getUploadStatus()` (the `com.skyflow.enums.UploadStatus` enum: `UPLOADED`, `FAILED` or `SKIPPED`) and `getError()`. A record's `error` stays null when only some of its columns failed in step B, so check each column:
 
 ```java
-for (HashMap<String, Object> record : uploadFilesResponse.getRecords()) {
-    for (Map<String, Object> column : (List<Map<String, Object>>) record.get("columns")) {
-        if (!"UPLOADED".equals(column.get("uploadStatus"))) {
-            System.err.println(record.get("skyflowId") + "." + column.get("column") + " "
-                    + column.get("uploadStatus") + ": " + column.get("error"));
+for (UploadFilesResponseRecord record : uploadFilesResponse.getRecords()) {
+    for (UploadFilesColumnResult column : record.getColumns()) {
+        if (column.getUploadStatus() != UploadStatus.UPLOADED) {
+            System.err.println(record.getSkyflowId() + "." + column.getColumn() + " "
+                    + column.getUploadStatus() + ": " + column.getError());
         }
     }
 }
@@ -1940,7 +1940,7 @@ Sample response (partial success):
 }
 ```
 
-`deleteFilesResponse.getRecords()` returns one `HashMap<String, Object>` per resolved record, with the keys `skyflowId`, `tableName`, `columns`, `httpCode`, `error` and `requestId` (set only when `error` is non-null). `columns` is a list of `{column, status}` maps, or null on a failed record.
+`deleteFilesResponse.getRecords()` returns one `DeleteFilesResponseRecord` per resolved record, with the accessors `getSkyflowId()`, `getTableName()`, `getColumns()`, `getHttpCode()`, `getError()` and `getRequestId()` (set only when `getError()` is non-null). `getColumns()` is a list of `DeleteFilesColumnResult` (`getColumn()`, `getStatus()`), or null on a failed record.
 
 # Detect
 

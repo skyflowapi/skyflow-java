@@ -423,9 +423,9 @@ public class RequestIdTests {
 
         GetTokensResponse result = Utils.formatGetTokensResponse(wire, headers(REQ_ID_A));
 
-        Assert.assertNull(result.getRecords().get(0).get("requestId"));
-        Assert.assertEquals(REQ_ID_A, result.getRecords().get(1).get("requestId"));
-        Assert.assertEquals(REQ_ID_A, result.getRecords().get(2).get("requestId"));
+        Assert.assertNull(result.getRecords().get(0).getRequestId());
+        Assert.assertEquals(REQ_ID_A, result.getRecords().get(1).getRequestId());
+        Assert.assertEquals(REQ_ID_A, result.getRecords().get(2).getRequestId());
     }
 
     @Test
@@ -436,7 +436,7 @@ public class RequestIdTests {
 
         GetTokensResponse result = Utils.formatGetTokensResponse(wire, headers(null));
 
-        Assert.assertNull(result.getRecords().get(0).get("requestId"));
+        Assert.assertNull(result.getRecords().get(0).getRequestId());
     }
 
     @Test
@@ -456,8 +456,8 @@ public class RequestIdTests {
                 apiException("Error with status code 404", 404, body, REQ_ID_B));
 
         Assert.assertNotNull(result);
-        Assert.assertEquals(REQ_ID_B, result.getRecords().get(0).get("requestId"));
-        Assert.assertEquals(REQ_ID_B, result.getRecords().get(1).get("requestId"));
+        Assert.assertEquals(REQ_ID_B, result.getRecords().get(0).getRequestId());
+        Assert.assertEquals(REQ_ID_B, result.getRecords().get(1).getRequestId());
     }
 
     // ── query: the id is call-level, set on success too ───────────────────────

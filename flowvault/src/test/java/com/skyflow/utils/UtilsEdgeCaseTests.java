@@ -14,9 +14,11 @@ import com.skyflow.vault.data.BulkDeleteTokensResponseRecord;
 import com.skyflow.vault.data.BulkTokenizeRequestRecord;
 import com.skyflow.vault.data.BulkTokenizeResponseRecord;
 import com.skyflow.vault.data.ColumnRedactions;
+import com.skyflow.vault.data.DeleteFilesColumnResult;
 import com.skyflow.vault.data.DeleteFilesRequest;
 import com.skyflow.vault.data.DeleteFilesRequestRecord;
 import com.skyflow.vault.data.DeleteFilesResponse;
+import com.skyflow.vault.data.DeleteFilesResponseRecord;
 import com.skyflow.vault.data.GetRequest;
 import com.skyflow.vault.data.GetRequestRecord;
 import com.skyflow.vault.data.InsertRequest;
@@ -225,14 +227,13 @@ public class UtilsEdgeCaseTests {
 
         DeleteFilesResponse formatted = Utils.formatDeleteFilesResponse(response, HEADERS);
 
-        HashMap<String, Object> deleted = formatted.getRecords().get(0);
-        Assert.assertEquals(200, deleted.get("httpCode"));
-        @SuppressWarnings("unchecked")
-        List<Map<String, Object>> columns = (List<Map<String, Object>>) deleted.get("columns");
-        Assert.assertEquals("photo", columns.get(0).get("column"));
-        Assert.assertNull(columns.get(0).get("status"));
-        Assert.assertEquals(500, formatted.getRecords().get(1).get("httpCode"));
-        Assert.assertEquals("req-1", formatted.getRecords().get(1).get("requestId"));
+        DeleteFilesResponseRecord deleted = formatted.getRecords().get(0);
+        Assert.assertEquals(200, deleted.getHttpCode());
+        List<DeleteFilesColumnResult> columns = deleted.getColumns();
+        Assert.assertEquals("photo", columns.get(0).getColumn());
+        Assert.assertNull(columns.get(0).getStatus());
+        Assert.assertEquals(500, formatted.getRecords().get(1).getHttpCode());
+        Assert.assertEquals("req-1", formatted.getRecords().get(1).getRequestId());
     }
 
     // ── uploadFiles response pairing ─────────────────────────────────────────
