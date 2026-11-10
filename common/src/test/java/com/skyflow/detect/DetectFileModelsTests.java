@@ -24,7 +24,7 @@ public class DetectFileModelsTests {
         DeidentifyFileRequest withValue = DeidentifyFileRequest.builder()
                 .dataSource(TestDeidentifySource.PRESIGNED_URL)
                 .value("https://example.test/secret-payload")
-                .dataFormat(FileDataFormat.PDF)
+                .dataFormat(DeidentifyFileDataFormat.PDF)
                 .configurationId("cfg-1")
                 .pollOptions(poll)
                 .outputDirectory("/tmp/out")
@@ -55,7 +55,7 @@ public class DetectFileModelsTests {
         ReidentifyFileRequest request = ReidentifyFileRequest.builder()
                 .dataSource(TestReidentifySource.BASE64)
                 .value("QUJD")
-                .dataFormat(FileDataFormat.TXT)
+                .dataFormat(ReidentifyFileDataFormat.TXT)
                 .redactionLevel(Collections.singletonList(
                         TestRedactionLevel.builder().entityName(EntityType.NAME).redactionType(RedactionType.PLAIN_TEXT).build()))
                 .build();

@@ -6,7 +6,7 @@ import com.skyflow.config.VaultConfig;
 import com.skyflow.detect.ReidentifySourceType;
 import com.skyflow.detect.DetectRunStatus;
 import com.skyflow.detect.EntityType;
-import com.skyflow.detect.FileDataFormat;
+import com.skyflow.detect.ReidentifyFileDataFormat;
 import com.skyflow.detect.FileOutput;
 import com.skyflow.detect.RedactionLevel;
 import com.skyflow.enums.RedactionType;
@@ -49,7 +49,7 @@ public class ReidentifyFileSample {
                     ReidentifyFileRequest.builder()
                             .dataSource(ReidentifySourceType.BASE64)
                             .value(base64)
-                            .dataFormat(FileDataFormat.TXT)
+                            .dataFormat(ReidentifyFileDataFormat.TXT)
                             // Optional: render one entity type with a redaction type instead of its plain value.
                             .redactionLevel(Collections.singletonList(
                                     RedactionLevel.builder()

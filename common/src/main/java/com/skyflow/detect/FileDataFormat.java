@@ -1,7 +1,10 @@
 package com.skyflow.detect;
 
 /**
- * File formats understood by Detect file operations. The wire value is the lower-case extension.
+ * File format of an output returned by Detect file operations, reported as {@code processedFileExtension} on each
+ * {@link FileOutput}. The wire value is the lower-case extension. Mirrors the API's
+ * {@code FileOutput.processedFileExtension} enum. Request formats use {@link DeidentifyFileDataFormat} and
+ * {@link ReidentifyFileDataFormat}.
  */
 public enum FileDataFormat {
     BMP,

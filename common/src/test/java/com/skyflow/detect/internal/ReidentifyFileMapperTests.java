@@ -4,6 +4,7 @@ import com.skyflow.detect.TestReidentifySource;
 import com.skyflow.detect.DetectRunStatus;
 import com.skyflow.detect.EntityType;
 import com.skyflow.detect.FileDataFormat;
+import com.skyflow.detect.ReidentifyFileDataFormat;
 import com.skyflow.detect.FileOutput;
 import com.skyflow.detect.TestRedactionLevel;
 import com.skyflow.enums.RedactionType;
@@ -68,8 +69,8 @@ public class ReidentifyFileMapperTests {
 
     @Test
     public void dataFormatIsSentAsLowerCaseWireValue() throws Exception {
-        for (FileDataFormat format : new FileDataFormat[]{FileDataFormat.TXT, FileDataFormat.CSV, FileDataFormat.JSON,
-                FileDataFormat.JSONL, FileDataFormat.XML, FileDataFormat.DOCX, FileDataFormat.XLSX, FileDataFormat.PPTX}) {
+        for (ReidentifyFileDataFormat format : new ReidentifyFileDataFormat[]{ReidentifyFileDataFormat.TXT, ReidentifyFileDataFormat.CSV, ReidentifyFileDataFormat.JSON,
+                ReidentifyFileDataFormat.JSONL, ReidentifyFileDataFormat.XML, ReidentifyFileDataFormat.DOCX, ReidentifyFileDataFormat.XLSX, ReidentifyFileDataFormat.PPTX}) {
             ReidentifyFileRequestV2 api = ReidentifyFileMapper.toApiRequest(ReidentifyFileRequest.builder()
                     .dataSource(TestReidentifySource.BASE64).value("eA==").dataFormat(format).build(), "v");
             Assert.assertEquals(format.name().toLowerCase(), api.getDataFormat().get().toString());

@@ -1838,7 +1838,7 @@ File de-identification is asynchronous on the API: the submit call returns a run
 
 The file is supplied in exactly one of three ways: `filePath(String)`, `file(File)`, or `value` plus a `DeidentifySourceType` `dataSource` (`BASE64`, the `SKYFLOW_ID` of a file record in the vault, or `PRESIGNED_URL`). `file` and `filePath` read a local file when the request is sent, send it as `BASE64` and infer `dataFormat` from its extension. Passing more than one of `filePath`, `file` and `value`, or none of them, is rejected before any network call. `configurationId` and `configuration` follow the same rules as for strings: both optional, sent as supplied, vault defaults when neither is set, and both together rejected by the API (see [Before you start](#before-you-start)).
 
-`dataFormat` accepts every `FileDataFormat`: `BMP`, `CSV`, `DCM`, `DOC`, `DOCX`, `GIF`, `JPEG`, `JPG`, `JSON`, `JSONL`, `MP3`, `PDF`, `PNG`, `PPT`, `PPTX`, `TIF`, `TIFF`, `TXT`, `WAV`, `XLS`, `XLSX`, `XML` and `ZIP`. The `VAULT_TOKEN` de-identification type is supported only for `TXT`, `CSV`, `JSON`, `JSONL`, `XML`, `DOCX`, `XLSX` and `PPTX`.
+`dataFormat` accepts every `DeidentifyFileDataFormat`: `BMP`, `CSV`, `DCM`, `DOC`, `DOCX`, `GIF`, `JPEG`, `JPG`, `JSON`, `JSONL`, `MP3`, `PDF`, `PNG`, `PPT`, `PPTX`, `TIF`, `TIFF`, `TXT`, `WAV`, `XLS`, `XLSX`, `XML` and `ZIP`. The `VAULT_TOKEN` de-identification type is supported only for `TXT`, `CSV`, `JSON`, `JSONL`, `XML`, `DOCX`, `XLSX` and `PPTX`.
 
 `outputDirectory` is meaningful only when polling. Setting it without `pollOptions` fails client-side validation with a `SkyflowException` before any request is sent.
 
@@ -2027,7 +2027,7 @@ A `RedactionLevel` names one source and one replacement. On skyvault vaults the 
 
 ## Reidentify file
 
-`reidentifyFile` is synchronous: the re-identified file comes back in the response, not through a run id. `ReidentifyFileRequest` takes a `dataSource` (`ReidentifySourceType.BASE64` or `PRESIGNED_URL`; re-identification does not accept a skyflow id as the source), the matching `value`, an optional `dataFormat` and the same optional `RedactionLevel` rules as `reidentifyString`. `dataFormat` is limited to the formats that support `VAULT_TOKEN`: `TXT`, `CSV`, `JSON`, `JSONL`, `XML`, `DOCX`, `XLSX` and `PPTX`.
+`reidentifyFile` is synchronous: the re-identified file comes back in the response, not through a run id. `ReidentifyFileRequest` takes a `dataSource` (`ReidentifySourceType.BASE64` or `PRESIGNED_URL`; re-identification does not accept a skyflow id as the source), the matching `value`, an optional `dataFormat` (a `ReidentifyFileDataFormat`) and the same optional `RedactionLevel` rules as `reidentifyString`. `dataFormat` is limited to the formats that support `VAULT_TOKEN`: `TXT`, `CSV`, `JSON`, `JSONL`, `XML`, `DOCX`, `XLSX` and `PPTX`.
 
 ```java
 byte[] content = Files.readAllBytes(Paths.get("tokenized.txt"));
@@ -2036,7 +2036,7 @@ ReidentifyFileResponse response = skyflowClient.detect().reidentifyFile(
         ReidentifyFileRequest.builder()
                 .dataSource(ReidentifySourceType.BASE64)
                 .value(Base64.getEncoder().encodeToString(content))
-                .dataFormat(FileDataFormat.TXT)
+                .dataFormat(ReidentifyFileDataFormat.TXT)
                 .redactionLevel(Collections.singletonList(
                         RedactionLevel.builder()
                                 .entityName(EntityType.NAME)

@@ -336,9 +336,9 @@ String runId = submitted.getRunId();           // getStatus() is null, nothing w
   being complete must add `pollOptions`.
 - **Budget limits changed.** `waitTime` defaults to 60 and tops out at 300, where the old method defaulted to 64 and
   capped at 64. `maxAttempts` is new, default and maximum 23.
-- **Elapsed time is measured by the clock.** The old method counted only its planned sleeps, so the time spent on the
-  status calls themselves was not charged to the budget. The new one measures real elapsed time and never exceeds
-  `waitTime`.
+- **The budget counts the pauses between lookups.** Like the old method, the time spent inside each status call is
+  not charged to `waitTime`, so wall-clock time can exceed it by the latency of the lookups. The final pause is
+  trimmed so the pauses alone never exceed `waitTime`.
 - **No temp file.** The old method wrote a copy of the processed file to the Java temp directory and exposed it through
   `getFile()`. The new one writes only to `outputDirectory`, or the working directory when none is set, and only for
   local file inputs that reached `SUCCESS` with base64 outputs. Remove any code that cleaned up temp copies.

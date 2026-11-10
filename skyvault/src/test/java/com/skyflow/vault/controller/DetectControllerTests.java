@@ -18,6 +18,8 @@ import com.skyflow.detect.DetectRunStatus;
 import com.skyflow.detect.Entity;
 import com.skyflow.detect.EntityType;
 import com.skyflow.detect.FileDataFormat;
+import com.skyflow.detect.ReidentifyFileDataFormat;
+import com.skyflow.detect.DeidentifyFileDataFormat;
 import com.skyflow.detect.GetRunRequest;
 import com.skyflow.detect.GetRunResponse;
 import com.skyflow.detect.GuardrailsValidation;
@@ -412,7 +414,7 @@ public class DetectControllerTests {
             ReidentifyFileResponse response = controllerFor(server).reidentifyFile(ReidentifyFileRequest.builder()
                     .dataSource(ReidentifySourceType.BASE64)
                     .value("W05BTUVfMV0=")
-                    .dataFormat(FileDataFormat.TXT)
+                    .dataFormat(ReidentifyFileDataFormat.TXT)
                     .redactionLevel(Arrays.asList(
                             RedactionLevel.builder().entityName(EntityType.NAME).redactionType(RedactionType.MASKED).build()))
                     .build());
@@ -507,7 +509,7 @@ public class DetectControllerTests {
             server.enqueue(new MockResponse().setResponseCode(200).setBody("{\"runId\":\"run-42\"}"));
 
             DeidentifyFileResponse response = controllerFor(server).deidentifyFile(DeidentifyFileRequest.builder()
-                    .dataSource(DeidentifySourceType.SKYFLOW_ID).value("rec-1").dataFormat(FileDataFormat.PDF)
+                    .dataSource(DeidentifySourceType.SKYFLOW_ID).value("rec-1").dataFormat(DeidentifyFileDataFormat.PDF)
                     .configurationId("cfg-1").build());
 
             Assert.assertEquals("run-42", response.getRunId());
