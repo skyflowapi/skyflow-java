@@ -1996,7 +1996,7 @@ ReidentifyFileResponse response = skyflowClient.detect().reidentifyFile(
                 .build());
 
 if (response.getStatus() == DetectRunStatus.SUCCESS) {
-    for (FileOutput output : response.getOutput()) {
+    for (ReidentifyFileOutput output : response.getOutput()) {
         if (response.getOutputType() == ReidentifySourceType.BASE64) {
             byte[] processed = Base64.getDecoder().decode(output.getProcessedFile());
             Files.write(Paths.get("reidentified-tokenized." + output.getProcessedFileExtension().name().toLowerCase()), processed);
@@ -2031,7 +2031,7 @@ switch (run.getStatus()) {
     case SUCCESS:
         for (FileOutput output : run.getOutput()) {
             // output.getProcessedFileType() is REDACTED_FILE, ENTITIES or OBJECT_ENTITIES;
-            // output.getProcessedFileExtension() is a FileDataFormat such as PDF or JSON.
+            // output.getProcessedFileExtension() is a DeidentifyFileDataFormat such as PDF or JSON.
             if (run.getOutputType() == DeidentifySourceType.BASE64) {
                 byte[] processed = Base64.getDecoder().decode(output.getProcessedFile());
                 Files.write(Paths.get("processed-" + output.getProcessedFileType() + "." + output.getProcessedFileExtension().name().toLowerCase()), processed);

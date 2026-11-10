@@ -6,8 +6,8 @@ package com.skyflow.detect;
  *
  * <p>The {@code VAULT_TOKEN} de-identification type is supported only for {@link #TXT}, {@link #CSV},
  * {@link #JSON}, {@link #JSONL}, {@link #XML}, {@link #DOCX}, {@link #XLSX} and {@link #PPTX}; these are also
- * the formats {@link ReidentifyFileDataFormat} offers for re-identification. Formats of returned outputs are
- * reported as {@link FileDataFormat}.
+ * the formats {@link ReidentifyFileDataFormat} offers for re-identification. The outputs of {@code deidentifyFile}
+ * and {@code getRun} report their format with this enum on {@link FileOutput}.
  */
 public enum DeidentifyFileDataFormat {
     BMP,

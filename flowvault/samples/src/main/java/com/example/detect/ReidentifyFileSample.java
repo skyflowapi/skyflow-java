@@ -6,7 +6,7 @@ import com.skyflow.config.VaultConfig;
 import com.skyflow.detect.ReidentifySourceType;
 import com.skyflow.detect.DetectRunStatus;
 import com.skyflow.detect.ReidentifyFileDataFormat;
-import com.skyflow.detect.FileOutput;
+import com.skyflow.detect.ReidentifyFileOutput;
 import com.skyflow.detect.RedactionLevel;
 import com.skyflow.detect.ReidentifyFileRequest;
 import com.skyflow.detect.ReidentifyFileResponse;
@@ -59,7 +59,7 @@ public class ReidentifyFileSample {
             System.out.println("Status: " + response.getStatus());
             if (response.getStatus() == DetectRunStatus.SUCCESS) {
                 int index = 0;
-                for (FileOutput output : response.getOutput()) {
+                for (ReidentifyFileOutput output : response.getOutput()) {
                     index++;
                     if (response.getOutputType() != ReidentifySourceType.BASE64) {
                         // PRESIGNED_URL outputs carry a URL, not base64: download them instead of decoding.

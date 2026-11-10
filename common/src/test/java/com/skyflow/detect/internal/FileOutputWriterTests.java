@@ -1,7 +1,7 @@
 package com.skyflow.detect.internal;
 
 import com.skyflow.detect.TestDeidentifySource;
-import com.skyflow.detect.FileDataFormat;
+import com.skyflow.detect.DeidentifyFileDataFormat;
 import com.skyflow.detect.FileOutput;
 import com.skyflow.errors.SkyflowException;
 import org.junit.Assert;
@@ -28,7 +28,7 @@ public class FileOutputWriterTests {
     @Test
     public void writesEachOutputWithV1StyleNames() throws Exception {
         List<File> written = FileOutputWriter.write(Arrays.asList(
-                new FileOutput(b64("%PDF"), "REDACTED_FILE", FileDataFormat.PDF),
+                new FileOutput(b64("%PDF"), "REDACTED_FILE", DeidentifyFileDataFormat.PDF),
                 new FileOutput(b64("[]"), "ENTITIES", null)),
                 TestDeidentifySource.BASE64, "invoice.pdf", folder.getRoot().getPath());
 
@@ -55,7 +55,7 @@ public class FileOutputWriterTests {
         File nested = new File(folder.getRoot(), "a/b/c");
         Assert.assertFalse(nested.exists());
         List<File> written = FileOutputWriter.write(
-                Collections.singletonList(new FileOutput(b64("x"), "REDACTED_FILE", FileDataFormat.TXT)),
+                Collections.singletonList(new FileOutput(b64("x"), "REDACTED_FILE", DeidentifyFileDataFormat.TXT)),
                 TestDeidentifySource.BASE64, "n.txt", nested.getPath());
         Assert.assertEquals(1, written.size());
         Assert.assertEquals(nested, written.get(0).getParentFile());
@@ -65,8 +65,8 @@ public class FileOutputWriterTests {
     @Test
     public void entityOutputsCarryTheirTypeInTheName() throws Exception {
         List<File> written = FileOutputWriter.write(Arrays.asList(
-                new FileOutput(b64("a"), "ENTITIES", FileDataFormat.JSON),
-                new FileOutput(b64("b"), "OBJECT_ENTITIES", FileDataFormat.JSON)),
+                new FileOutput(b64("a"), "ENTITIES", DeidentifyFileDataFormat.JSON),
+                new FileOutput(b64("b"), "OBJECT_ENTITIES", DeidentifyFileDataFormat.JSON)),
                 TestDeidentifySource.BASE64, "scan.png", folder.getRoot().getPath());
         Assert.assertEquals("processed-entities-scan.json", written.get(0).getName());
         Assert.assertEquals("processed-object-entities-scan.json", written.get(1).getName());
@@ -75,8 +75,8 @@ public class FileOutputWriterTests {
     @Test
     public void jsonInputDoesNotCollideWithItsEntitiesOutput() throws Exception {
         List<File> written = FileOutputWriter.write(Arrays.asList(
-                new FileOutput(b64("{}"), "REDACTED_TEXT", FileDataFormat.JSON),
-                new FileOutput(b64("[]"), "ENTITIES", FileDataFormat.JSON)),
+                new FileOutput(b64("{}"), "REDACTED_TEXT", DeidentifyFileDataFormat.JSON),
+                new FileOutput(b64("[]"), "ENTITIES", DeidentifyFileDataFormat.JSON)),
                 TestDeidentifySource.BASE64, "data.json", folder.getRoot().getPath());
         Assert.assertEquals("processed-data.json", written.get(0).getName());
         Assert.assertEquals("processed-entities-data.json", written.get(1).getName());
@@ -85,8 +85,8 @@ public class FileOutputWriterTests {
     @Test
     public void nameCollisionsGetTheFileTypeInserted() throws Exception {
         List<File> written = FileOutputWriter.write(Arrays.asList(
-                new FileOutput(b64("a"), "REDACTED_FILE", FileDataFormat.TXT),
-                new FileOutput(b64("b"), "REDACTED_TEXT", FileDataFormat.TXT)),
+                new FileOutput(b64("a"), "REDACTED_FILE", DeidentifyFileDataFormat.TXT),
+                new FileOutput(b64("b"), "REDACTED_TEXT", DeidentifyFileDataFormat.TXT)),
                 TestDeidentifySource.BASE64, "notes.txt", folder.getRoot().getPath());
         Assert.assertEquals("processed-notes.txt", written.get(0).getName());
         Assert.assertEquals("processed-notes.redacted_text.txt", written.get(1).getName());
@@ -96,7 +96,7 @@ public class FileOutputWriterTests {
     public void createsMissingOutputDirectory() throws Exception {
         File nested = new File(folder.getRoot(), "a/b/c");
         List<File> written = FileOutputWriter.write(
-                Collections.singletonList(new FileOutput(b64("x"), "REDACTED_TEXT", FileDataFormat.TXT)),
+                Collections.singletonList(new FileOutput(b64("x"), "REDACTED_TEXT", DeidentifyFileDataFormat.TXT)),
                 TestDeidentifySource.BASE64, "notes.txt", nested.getPath());
         Assert.assertTrue(nested.isDirectory());
         Assert.assertEquals(new File(nested, "processed-notes.txt"), written.get(0));
@@ -105,7 +105,7 @@ public class FileOutputWriterTests {
     @Test
     public void presignedUrlOutputsAreNotWritten() throws Exception {
         List<File> written = FileOutputWriter.write(
-                Collections.singletonList(new FileOutput("https://s3/out", "REDACTED_FILE", FileDataFormat.PDF)),
+                Collections.singletonList(new FileOutput("https://s3/out", "REDACTED_FILE", DeidentifyFileDataFormat.PDF)),
                 TestDeidentifySource.PRESIGNED_URL, "invoice.pdf", folder.getRoot().getPath());
         Assert.assertTrue(written.isEmpty());
         Assert.assertEquals(0, folder.getRoot().list().length);
@@ -122,7 +122,7 @@ public class FileOutputWriterTests {
     @Test
     public void invalidBase64IsReportedAsWriteFailure() {
         try {
-            FileOutputWriter.write(Collections.singletonList(new FileOutput("not base64!", "REDACTED_FILE", FileDataFormat.TXT)),
+            FileOutputWriter.write(Collections.singletonList(new FileOutput("not base64!", "REDACTED_FILE", DeidentifyFileDataFormat.TXT)),
                     TestDeidentifySource.BASE64, "x.txt", folder.getRoot().getPath());
             Assert.fail("expected SkyflowException");
         } catch (SkyflowException e) {
@@ -135,8 +135,8 @@ public class FileOutputWriterTests {
     @Test
     public void nullOrEmptyTypeFallsBackToPlainName() throws Exception {
         List<File> written = FileOutputWriter.write(Arrays.asList(
-                new FileOutput(b64("a"), null, FileDataFormat.PDF),
-                new FileOutput(b64("b"), "", FileDataFormat.TXT)),
+                new FileOutput(b64("a"), null, DeidentifyFileDataFormat.PDF),
+                new FileOutput(b64("b"), "", DeidentifyFileDataFormat.TXT)),
                 TestDeidentifySource.BASE64, "invoice.pdf", folder.getRoot().getPath());
         Assert.assertEquals("processed-invoice.pdf", written.get(0).getName());
         Assert.assertEquals("processed-invoice.txt", written.get(1).getName());
@@ -153,7 +153,7 @@ public class FileOutputWriterTests {
     @Test
     public void entityOutputHonoursAnExplicitExtension() throws Exception {
         List<File> written = FileOutputWriter.write(
-                Collections.singletonList(new FileOutput(b64("x"), "ENTITIES", FileDataFormat.TXT)),
+                Collections.singletonList(new FileOutput(b64("x"), "ENTITIES", DeidentifyFileDataFormat.TXT)),
                 TestDeidentifySource.BASE64, "notes.txt", folder.getRoot().getPath());
         Assert.assertEquals("processed-entities-notes.txt", written.get(0).getName());
     }
@@ -169,8 +169,8 @@ public class FileOutputWriterTests {
     @Test
     public void duplicateEntityOutputsGetTheTypeInsertedOnCollision() throws Exception {
         List<File> written = FileOutputWriter.write(Arrays.asList(
-                new FileOutput(b64("a"), "ENTITIES", FileDataFormat.JSON),
-                new FileOutput(b64("b"), "ENTITIES", FileDataFormat.JSON)),
+                new FileOutput(b64("a"), "ENTITIES", DeidentifyFileDataFormat.JSON),
+                new FileOutput(b64("b"), "ENTITIES", DeidentifyFileDataFormat.JSON)),
                 TestDeidentifySource.BASE64, "scan.png", folder.getRoot().getPath());
         Assert.assertEquals("processed-entities-scan.json", written.get(0).getName());
         Assert.assertEquals("processed-entities-scan.entities.json", written.get(1).getName());
@@ -179,9 +179,9 @@ public class FileOutputWriterTests {
     @Test
     public void collisionWithoutATypeUsesARunningNumber() throws Exception {
         List<File> written = FileOutputWriter.write(Arrays.asList(
-                new FileOutput(b64("a"), null, FileDataFormat.TXT),
-                new FileOutput(b64("b"), null, FileDataFormat.TXT),
-                new FileOutput(b64("c"), null, FileDataFormat.TXT)),
+                new FileOutput(b64("a"), null, DeidentifyFileDataFormat.TXT),
+                new FileOutput(b64("b"), null, DeidentifyFileDataFormat.TXT),
+                new FileOutput(b64("c"), null, DeidentifyFileDataFormat.TXT)),
                 TestDeidentifySource.BASE64, "notes.txt", folder.getRoot().getPath());
         Assert.assertEquals("processed-notes.txt", written.get(0).getName());
         Assert.assertEquals("processed-notes.1.txt", written.get(1).getName());
@@ -196,7 +196,7 @@ public class FileOutputWriterTests {
         Assert.assertEquals("processed-entities-README.json", plain.get(0).getName());
 
         List<File> dotted = FileOutputWriter.write(
-                Collections.singletonList(new FileOutput(b64("x"), "REDACTED_TEXT", FileDataFormat.TXT)),
+                Collections.singletonList(new FileOutput(b64("x"), "REDACTED_TEXT", DeidentifyFileDataFormat.TXT)),
                 TestDeidentifySource.BASE64, ".notes", folder.getRoot().getPath());
         Assert.assertEquals("processed-.notes.txt", dotted.get(0).getName());
     }
@@ -204,7 +204,7 @@ public class FileOutputWriterTests {
     @Test
     public void missingInputNameFallsBackToOutput() throws Exception {
         List<File> written = FileOutputWriter.write(Arrays.asList(
-                new FileOutput(b64("a"), "REDACTED_FILE", FileDataFormat.PDF),
+                new FileOutput(b64("a"), "REDACTED_FILE", DeidentifyFileDataFormat.PDF),
                 new FileOutput(b64("b"), "ENTITIES", null)),
                 TestDeidentifySource.BASE64, null, folder.getRoot().getPath());
         Assert.assertEquals("processed-output.pdf", written.get(0).getName());
@@ -216,7 +216,7 @@ public class FileOutputWriterTests {
     @Test
     public void nullOutputTypeWritesNothing() throws Exception {
         List<File> written = FileOutputWriter.write(
-                Collections.singletonList(new FileOutput(b64("x"), "REDACTED_FILE", FileDataFormat.PDF)),
+                Collections.singletonList(new FileOutput(b64("x"), "REDACTED_FILE", DeidentifyFileDataFormat.PDF)),
                 null, "invoice.pdf", folder.getRoot().getPath());
         Assert.assertTrue(written.isEmpty());
         Assert.assertEquals(0, folder.getRoot().list().length);
@@ -226,7 +226,7 @@ public class FileOutputWriterTests {
     public void nullElementsInTheOutputListAreSkipped() throws Exception {
         List<File> written = FileOutputWriter.write(Arrays.asList(
                 null,
-                new FileOutput(b64("x"), "REDACTED_TEXT", FileDataFormat.TXT)),
+                new FileOutput(b64("x"), "REDACTED_TEXT", DeidentifyFileDataFormat.TXT)),
                 TestDeidentifySource.BASE64, "notes.txt", folder.getRoot().getPath());
         Assert.assertEquals(1, written.size());
         Assert.assertEquals("processed-notes.txt", written.get(0).getName());
@@ -237,7 +237,7 @@ public class FileOutputWriterTests {
         File expected = new File("processed-writer-cwd-test.txt");
         try {
             List<File> written = FileOutputWriter.write(
-                    Collections.singletonList(new FileOutput(b64("x"), "REDACTED_TEXT", FileDataFormat.TXT)),
+                    Collections.singletonList(new FileOutput(b64("x"), "REDACTED_TEXT", DeidentifyFileDataFormat.TXT)),
                     TestDeidentifySource.BASE64, "writer-cwd-test.txt", "   ");
             Assert.assertEquals(expected, written.get(0));
             Assert.assertNull(written.get(0).getParentFile());
@@ -252,7 +252,7 @@ public class FileOutputWriterTests {
         File notADirectory = folder.newFile("blocker");
         try {
             FileOutputWriter.write(
-                    Collections.singletonList(new FileOutput(b64("x"), "REDACTED_TEXT", FileDataFormat.TXT)),
+                    Collections.singletonList(new FileOutput(b64("x"), "REDACTED_TEXT", DeidentifyFileDataFormat.TXT)),
                     TestDeidentifySource.BASE64, "notes.txt", notADirectory.getPath());
             Assert.fail("expected SkyflowException");
         } catch (SkyflowException e) {
@@ -265,7 +265,7 @@ public class FileOutputWriterTests {
         File target = new File(folder.getRoot(), "processed-notes.txt");
         Files.write(target.toPath(), "old".getBytes());
         FileOutputWriter.write(
-                Collections.singletonList(new FileOutput(b64("new"), "REDACTED_TEXT", FileDataFormat.TXT)),
+                Collections.singletonList(new FileOutput(b64("new"), "REDACTED_TEXT", DeidentifyFileDataFormat.TXT)),
                 TestDeidentifySource.BASE64, "notes.txt", folder.getRoot().getPath());
         Assert.assertEquals("new", new String(Files.readAllBytes(target.toPath())));
     }
@@ -274,7 +274,7 @@ public class FileOutputWriterTests {
     public void aLaterFailureLeavesEarlierFilesOnDisk() throws Exception {
         try {
             FileOutputWriter.write(Arrays.asList(
-                    new FileOutput(b64("ok"), "REDACTED_FILE", FileDataFormat.PDF),
+                    new FileOutput(b64("ok"), "REDACTED_FILE", DeidentifyFileDataFormat.PDF),
                     new FileOutput("not base64!", "ENTITIES", null)),
                     TestDeidentifySource.BASE64, "invoice.pdf", folder.getRoot().getPath());
             Assert.fail("expected SkyflowException");

@@ -8,7 +8,6 @@ import com.skyflow.detect.DetectConfiguration;
 import com.skyflow.detect.DetectRunStatus;
 import com.skyflow.detect.Entity;
 import com.skyflow.detect.EntityType;
-import com.skyflow.detect.FileDataFormat;
 import com.skyflow.detect.DeidentifyFileDataFormat;
 import com.skyflow.detect.GetRunResponse;
 import com.skyflow.errors.BaseErrorMessage;
@@ -160,7 +159,7 @@ public class DeidentifyFileMapperTests {
         Assert.assertEquals(DetectRunStatus.SUCCESS, response.getStatus());
         Assert.assertEquals(TestDeidentifySource.BASE64, response.getOutputType());
         Assert.assertEquals("UERG", response.getOutput().get(0).getProcessedFile());
-        Assert.assertEquals(FileDataFormat.PDF, response.getOutput().get(0).getProcessedFileExtension());
+        Assert.assertEquals(DeidentifyFileDataFormat.PDF, response.getOutput().get(0).getProcessedFileExtension());
         Assert.assertEquals(Integer.valueOf(2), response.getMetrics().getPages());
     }
 }

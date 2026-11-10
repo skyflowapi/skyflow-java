@@ -45,12 +45,12 @@ public class DetectFileFormatEnumsTests {
     }
 
     @Test
-    public void fileDataFormatMirrorsTheOutputExtensionWireEnum() {
+    public void deidentifyFileDataFormatAlsoMirrorsTheOutputExtensionWireEnum() {
         Set<String> wire = new TreeSet<>();
         for (FileOutputProcessedFileExtension.Value v : EnumSet.complementOf(EnumSet.of(FileOutputProcessedFileExtension.Value.UNKNOWN))) {
             wire.add(v.name());
         }
-        Assert.assertEquals(wire, names(FileDataFormat.values()));
+        Assert.assertEquals(wire, names(DeidentifyFileDataFormat.values()));
     }
 
     @Test

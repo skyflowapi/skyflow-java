@@ -94,7 +94,7 @@ public class DetectFileModelsTests {
         ReidentifyFileResponse response = ReidentifyFileMapper.toResponse(api, TestReidentifySource::valueOf);
         String text = response.toString();
         for (String expected : new String[]{"ReidentifyFileResponse{", "status=SUCCESS", "outputType=PRESIGNED_URL",
-                "output=[FileOutput{", "processedFileType=REIDENTIFIED_FILE", "metrics=Metrics{", "pages=2"}) {
+                "output=[ReidentifyFileOutput{", "processedFileType=REIDENTIFIED_FILE", "metrics=Metrics{", "pages=2"}) {
             Assert.assertTrue("expected '" + expected + "' in " + text, text.contains(expected));
         }
     }

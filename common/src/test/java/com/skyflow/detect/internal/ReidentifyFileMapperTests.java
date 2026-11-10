@@ -3,9 +3,8 @@ package com.skyflow.detect.internal;
 import com.skyflow.detect.TestReidentifySource;
 import com.skyflow.detect.DetectRunStatus;
 import com.skyflow.detect.EntityType;
-import com.skyflow.detect.FileDataFormat;
 import com.skyflow.detect.ReidentifyFileDataFormat;
-import com.skyflow.detect.FileOutput;
+import com.skyflow.detect.ReidentifyFileOutput;
 import com.skyflow.detect.TestRedactionLevel;
 import com.skyflow.enums.RedactionType;
 import com.skyflow.detect.ReidentifyFileRequest;
@@ -117,12 +116,12 @@ public class ReidentifyFileMapperTests {
         Assert.assertEquals(DetectRunStatus.SUCCESS, response.getStatus());
         Assert.assertEquals(TestReidentifySource.PRESIGNED_URL, response.getOutputType());
         Assert.assertEquals(2, response.getOutput().size());
-        FileOutput first = response.getOutput().get(0);
+        ReidentifyFileOutput first = response.getOutput().get(0);
         Assert.assertEquals("https://s3/out-1", first.getProcessedFile());
         Assert.assertEquals("REIDENTIFIED_FILE", first.getProcessedFileType());
-        Assert.assertEquals(FileDataFormat.DOCX, first.getProcessedFileExtension());
+        Assert.assertEquals(ReidentifyFileDataFormat.DOCX, first.getProcessedFileExtension());
         Assert.assertEquals("ENTITIES", response.getOutput().get(1).getProcessedFileType());
-        Assert.assertEquals(FileDataFormat.JSON, response.getOutput().get(1).getProcessedFileExtension());
+        Assert.assertEquals(ReidentifyFileDataFormat.JSON, response.getOutput().get(1).getProcessedFileExtension());
         Assert.assertEquals(12.5, response.getMetrics().getSize(), 1e-9);
         Assert.assertEquals(Integer.valueOf(120), response.getMetrics().getWordCount());
         Assert.assertEquals(Integer.valueOf(800), response.getMetrics().getCharacterCount());
@@ -157,7 +156,7 @@ public class ReidentifyFileMapperTests {
                 + "\"output\":[{\"processedFile\":\"x\",\"processedFileType\":\"NEW_KIND\",\"processedFileExtension\":\"heic\"}]}");
         Assert.assertEquals(DetectRunStatus.UNKNOWN, response.getStatus());
         Assert.assertNull(response.getOutputType());
-        FileOutput output = response.getOutput().get(0);
+        ReidentifyFileOutput output = response.getOutput().get(0);
         Assert.assertEquals("x", output.getProcessedFile());
         Assert.assertEquals("NEW_KIND", output.getProcessedFileType());
         Assert.assertNull(output.getProcessedFileExtension());
@@ -170,7 +169,7 @@ public class ReidentifyFileMapperTests {
 
     @Test
     public void outputWithMissingFieldsMapsToNulls() throws Exception {
-        FileOutput output = fromJson("{\"output\":[{}]}").getOutput().get(0);
+        ReidentifyFileOutput output = fromJson("{\"output\":[{}]}").getOutput().get(0);
         Assert.assertNull(output.getProcessedFile());
         Assert.assertNull(output.getProcessedFileType());
         Assert.assertNull(output.getProcessedFileExtension());

@@ -17,7 +17,6 @@ import com.skyflow.detect.DetectConfiguration;
 import com.skyflow.detect.DetectRunStatus;
 import com.skyflow.detect.Entity;
 import com.skyflow.detect.EntityType;
-import com.skyflow.detect.FileDataFormat;
 import com.skyflow.detect.ReidentifyFileDataFormat;
 import com.skyflow.detect.DeidentifyFileDataFormat;
 import com.skyflow.detect.GetRunRequest;
@@ -214,7 +213,7 @@ public class DetectControllerTests {
             Assert.assertEquals(1, response.getOutput().size());
             Assert.assertEquals("SGVsbG8=", response.getOutput().get(0).getProcessedFile());
             Assert.assertEquals("REIDENTIFIED_FILE", response.getOutput().get(0).getProcessedFileType());
-            Assert.assertEquals(FileDataFormat.TXT, response.getOutput().get(0).getProcessedFileExtension());
+            Assert.assertEquals(ReidentifyFileDataFormat.TXT, response.getOutput().get(0).getProcessedFileExtension());
             Assert.assertEquals(Integer.valueOf(3), response.getMetrics().getWordCount());
 
             RecordedRequest recorded = server.takeRequest();
@@ -409,7 +408,7 @@ public class DetectControllerTests {
             Assert.assertEquals(DeidentifySourceType.BASE64, done.getOutputType());
             Assert.assertEquals("UERG", done.getOutput().get(0).getProcessedFile());
             Assert.assertEquals("REDACTED_FILE", done.getOutput().get(0).getProcessedFileType());
-            Assert.assertEquals(FileDataFormat.PDF, done.getOutput().get(0).getProcessedFileExtension());
+            Assert.assertEquals(DeidentifyFileDataFormat.PDF, done.getOutput().get(0).getProcessedFileExtension());
             Assert.assertEquals(Integer.valueOf(3), done.getMetrics().getPages());
             Assert.assertNull(done.getMessage());
 
