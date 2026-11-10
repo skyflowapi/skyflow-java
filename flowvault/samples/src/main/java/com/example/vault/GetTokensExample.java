@@ -10,7 +10,6 @@ import com.skyflow.errors.SkyflowException;
 import com.skyflow.vault.data.*;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -69,11 +68,11 @@ public class GetTokensExample {
             GetTokensResponse response = skyflowClient.vault().getTokens(request, options);
 
             // Step 6: Read the outcome. A record succeeded when its error is null.
-            for (HashMap<String, Object> record : response.getRecords()) {
-                if (record.get("error") == null) {
-                    System.out.printf("getTokens: %s -> %s%n", record.get("value"), record.get("token"));
+            for (GetTokensResponseRecord record : response.getRecords()) {
+                if (record.getError() == null) {
+                    System.out.printf("getTokens: %s -> %s%n", record.getValue(), record.getToken());
                 } else {
-                    System.out.printf("getTokens failed (%s): %s%n", record.get("httpCode"), record.get("error"));
+                    System.out.printf("getTokens failed (%s): %s%n", record.getHttpCode(), record.getError());
                 }
             }
         } catch (SkyflowException e) {

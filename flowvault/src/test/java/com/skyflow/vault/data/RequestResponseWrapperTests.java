@@ -1,5 +1,6 @@
 package com.skyflow.vault.data;
 
+import com.skyflow.enums.UploadStatus;
 import com.skyflow.errors.ErrorCode;
 import com.skyflow.errors.ErrorMessage;
 import com.skyflow.errors.SkyflowException;
@@ -399,32 +400,87 @@ public class RequestResponseWrapperTests {
         Assert.assertNull(request.getRecords());
     }
 
-    // ── GetTokensResponse ────────────────────────────────────────────────────
+    // ── GetTokensResponse / UploadFilesResponse / DeleteFilesResponse ──────────
 
     @Test
     public void testGetTokensResponse_getterReturnsConstructorValue() {
-        HashMap<String, Object> record = new HashMap<>();
-        record.put("token", "tok-1");
-        ArrayList<HashMap<String, Object>> records = new ArrayList<>(Collections.singletonList(record));
+        GetTokensResponseRecord record = new GetTokensResponseRecord("v", "g", "tok-1", 200, null, null);
+        List<GetTokensResponseRecord> records = Collections.singletonList(record);
 
         GetTokensResponse response = new GetTokensResponse(records);
 
-        Assert.assertEquals(records, response.getRecords());
+        Assert.assertSame(records, response.getRecords());
         Assert.assertTrue(response instanceof BaseGetTokensResponse);
+        Assert.assertEquals("v", record.getValue());
+        Assert.assertEquals("g", record.getTokenGroupName());
+        Assert.assertEquals("tok-1", record.getToken());
+        Assert.assertEquals(200, record.getHttpCode());
+        Assert.assertNull(record.getError());
+        Assert.assertNull(record.getRequestId());
     }
 
     @Test
     public void testGetTokensResponse_toStringSerializesNulls() {
-        HashMap<String, Object> record = new HashMap<>();
-        record.put("token", "tok-1");
-        record.put("error", null);
-        record.put("requestId", null);
-        GetTokensResponse response = new GetTokensResponse(new ArrayList<>(Collections.singletonList(record)));
+        GetTokensResponse response = new GetTokensResponse(Collections.singletonList(
+                new GetTokensResponseRecord("v", "g", "tok-1", 200, null, null)));
 
         String json = response.toString();
 
         Assert.assertTrue(json, json.contains("\"token\":\"tok-1\""));
         Assert.assertTrue(json, json.contains("\"error\":null"));
         Assert.assertTrue(json, json.contains("\"requestId\":null"));
+        Assert.assertTrue(json, new GetTokensResponseRecord(null, null, "", 404, "boom", "req-1").toString()
+                .contains("\"requestId\":\"req-1\""));
+    }
+
+    @Test
+    public void testUploadFilesResponse_typedRecordsAndStatusEnum() {
+        UploadFilesColumnResult column = new UploadFilesColumnResult("photo", "a.png", UploadStatus.FAILED, "PUT failed: 403");
+        UploadFilesResponseRecord record = new UploadFilesResponseRecord(
+                "sky-1", "documents", Collections.singletonList(column), 200, null, null);
+
+        UploadFilesResponse response = new UploadFilesResponse(Collections.singletonList(record));
+
+        Assert.assertTrue(response instanceof BaseUploadFilesResponse);
+        Assert.assertSame(record, response.getRecords().get(0));
+        Assert.assertEquals("sky-1", record.getSkyflowId());
+        Assert.assertEquals("documents", record.getTableName());
+        Assert.assertEquals(200, record.getHttpCode());
+        Assert.assertNull(record.getError());
+        Assert.assertNull(record.getRequestId());
+        Assert.assertSame(column, record.getColumns().get(0));
+        Assert.assertEquals("photo", column.getColumn());
+        Assert.assertEquals("a.png", column.getFileName());
+        Assert.assertEquals(UploadStatus.FAILED, column.getUploadStatus());
+        Assert.assertEquals("PUT failed: 403", column.getError());
+        String json = response.toString();
+        Assert.assertTrue(json, json.contains("\"uploadStatus\":\"FAILED\""));
+        Assert.assertTrue(json, record.toString().contains("\"requestId\":null"));
+        Assert.assertTrue(json, column.toString().contains("\"fileName\":\"a.png\""));
+    }
+
+    @Test
+    public void testDeleteFilesResponse_typedRecords() {
+        DeleteFilesColumnResult column = new DeleteFilesColumnResult("photo", "DELETED");
+        DeleteFilesResponseRecord record = new DeleteFilesResponseRecord(
+                "sky-1", "documents", Collections.singletonList(column), 200, null, null);
+        DeleteFilesResponseRecord failed = new DeleteFilesResponseRecord(null, "documents", null, 404, "Not found", "req-1");
+
+        DeleteFilesResponse response = new DeleteFilesResponse(Arrays.asList(record, failed));
+
+        Assert.assertTrue(response instanceof BaseDeleteFilesResponse);
+        Assert.assertEquals("sky-1", record.getSkyflowId());
+        Assert.assertEquals("documents", record.getTableName());
+        Assert.assertEquals(200, record.getHttpCode());
+        Assert.assertEquals("photo", column.getColumn());
+        Assert.assertEquals("DELETED", column.getStatus());
+        Assert.assertNull(failed.getColumns());
+        Assert.assertEquals("Not found", failed.getError());
+        Assert.assertEquals("req-1", failed.getRequestId());
+        String json = response.toString();
+        Assert.assertTrue(json, json.contains("\"columns\":null"));
+        Assert.assertTrue(json, json.contains("\"status\":\"DELETED\""));
+        Assert.assertTrue(json, failed.toString().contains("\"error\":\"Not found\""));
+        Assert.assertTrue(json, column.toString().contains("\"column\":\"photo\""));
     }
 }

@@ -1011,12 +1011,12 @@ public class RequestFidelityTests {
         GetTokensResponse response = Utils.formatGetTokensResponse(wire, new HashMap<>());
 
         Assert.assertEquals(2, response.getRecords().size());
-        Assert.assertEquals("john@example.com", response.getRecords().get(0).get("value"));
-        Assert.assertEquals("1R9kNnLOPM", response.getRecords().get(0).get("token"));
-        Assert.assertNull(response.getRecords().get(0).get("error"));
-        Assert.assertEquals("unknown@example.com", response.getRecords().get(1).get("value"));
-        Assert.assertEquals("", response.getRecords().get(1).get("token"));
-        Assert.assertEquals("Token not found.", response.getRecords().get(1).get("error"));
-        Assert.assertEquals(404, response.getRecords().get(1).get("httpCode"));
+        Assert.assertEquals("john@example.com", response.getRecords().get(0).getValue());
+        Assert.assertEquals("1R9kNnLOPM", response.getRecords().get(0).getToken());
+        Assert.assertNull(response.getRecords().get(0).getError());
+        Assert.assertEquals("unknown@example.com", response.getRecords().get(1).getValue());
+        Assert.assertEquals("", response.getRecords().get(1).getToken());
+        Assert.assertEquals("Token not found.", response.getRecords().get(1).getError());
+        Assert.assertEquals(404, response.getRecords().get(1).getHttpCode());
     }
 }

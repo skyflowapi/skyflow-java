@@ -12,9 +12,7 @@ import com.skyflow.vault.data.*;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * This sample demonstrates the Skyflow Java SDK's unary uploadFiles operation — uploading files
@@ -87,12 +85,10 @@ public class UploadFilesExample {
 
             // Step 6: Read the outcome per column. A record's error stays null when only some of
             // its columns failed to upload.
-            for (HashMap<String, Object> record : response.getRecords()) {
-                @SuppressWarnings("unchecked")
-                List<Map<String, Object>> columns = (List<Map<String, Object>>) record.get("columns");
-                for (Map<String, Object> column : columns) {
-                    System.out.printf("uploadFiles: %s.%s -> %s%s%n", record.get("skyflowId"), column.get("column"),
-                            column.get("uploadStatus"), column.get("error") == null ? "" : " (" + column.get("error") + ")");
+            for (UploadFilesResponseRecord record : response.getRecords()) {
+                for (UploadFilesColumnResult column : record.getColumns()) {
+                    System.out.printf("uploadFiles: %s.%s -> %s%s%n", record.getSkyflowId(), column.getColumn(),
+                            column.getUploadStatus(), column.getError() == null ? "" : " (" + column.getError() + ")");
                 }
             }
         } catch (SkyflowException e) {

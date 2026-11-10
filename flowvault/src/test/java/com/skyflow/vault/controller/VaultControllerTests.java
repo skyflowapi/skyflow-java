@@ -1,5 +1,6 @@
 package com.skyflow.vault.controller;
 
+import com.skyflow.enums.UploadStatus;
 import com.skyflow.generated.rest.types.DeleteResponseObject;
 import com.skyflow.generated.rest.types.DeleteTokenResponse;
 import com.skyflow.generated.rest.types.DeleteTokenResponseObject;
@@ -19,10 +20,13 @@ import com.skyflow.errors.SkyflowException;
 import com.skyflow.generated.rest.ApiClient;
 import com.skyflow.generated.rest.errors.NotFoundError;
 import com.skyflow.generated.rest.errors.UnauthorizedError;
+import com.skyflow.vault.data.DeleteFilesColumnResult;
 import com.skyflow.vault.data.DeleteFilesOptions;
 import com.skyflow.vault.data.DeleteFilesRequest;
 import com.skyflow.vault.data.DeleteFilesRequestRecord;
 import com.skyflow.vault.data.DeleteFilesResponse;
+import com.skyflow.vault.data.DeleteFilesResponseRecord;
+import com.skyflow.vault.data.UploadFilesColumnResult;
 import com.skyflow.vault.data.UploadFilesOptions;
 import com.skyflow.vault.data.UploadFilesRequest;
 import com.skyflow.vault.data.UploadFilesRequestColumn;
@@ -96,6 +100,7 @@ import com.skyflow.vault.data.UpdateOptions;
 import com.skyflow.vault.data.UpdateRequest;
 import com.skyflow.vault.data.UpdateRequestRecord;
 import com.skyflow.vault.data.UpdateResponse;
+import com.skyflow.vault.data.UploadFilesResponseRecord;
 import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -604,8 +609,8 @@ public class VaultControllerTests {
         GetTokensResponse response = controller.getTokens(request);
         Assert.assertNotNull(INVALID_EXCEPTION_THROWN, response);
         Assert.assertEquals(1, response.getRecords().size());
-        Assert.assertEquals("tok-1", response.getRecords().get(0).get("token"));
-        Assert.assertNull(response.getRecords().get(0).get("error"));
+        Assert.assertEquals("tok-1", response.getRecords().get(0).getToken());
+        Assert.assertNull(response.getRecords().get(0).getError());
     }
 
     @Test
@@ -645,9 +650,9 @@ public class VaultControllerTests {
         GetTokensResponse response = controller.getTokens(request);
         Assert.assertNotNull(INVALID_EXCEPTION_THROWN, response);
         Assert.assertEquals(1, response.getRecords().size());
-        Assert.assertEquals(404, response.getRecords().get(0).get("httpCode"));
-        Assert.assertEquals("Token not found.", response.getRecords().get(0).get("error"));
-        Assert.assertEquals("", response.getRecords().get(0).get("token"));
+        Assert.assertEquals(404, response.getRecords().get(0).getHttpCode());
+        Assert.assertEquals("Token not found.", response.getRecords().get(0).getError());
+        Assert.assertEquals("", response.getRecords().get(0).getToken());
     }
 
     @Test
@@ -696,10 +701,10 @@ public class VaultControllerTests {
 
         GetTokensResponse response = controller.getTokens(request);
         Assert.assertEquals(1, response.getRecords().size());
-        Assert.assertEquals("unknown@example.com", response.getRecords().get(0).get("value"));
-        Assert.assertEquals(400, response.getRecords().get(0).get("httpCode"));
-        Assert.assertEquals("Token not found.", response.getRecords().get(0).get("error"));
-        Assert.assertEquals("", response.getRecords().get(0).get("token"));
+        Assert.assertEquals("unknown@example.com", response.getRecords().get(0).getValue());
+        Assert.assertEquals(400, response.getRecords().get(0).getHttpCode());
+        Assert.assertEquals("Token not found.", response.getRecords().get(0).getError());
+        Assert.assertEquals("", response.getRecords().get(0).getToken());
     }
 
     @Test
@@ -791,9 +796,12 @@ public class VaultControllerTests {
         return file;
     }
 
-    @SuppressWarnings("unchecked")
-    private static List<Map<String, Object>> columnsOf(HashMap<String, Object> record) {
-        return (List<Map<String, Object>>) record.get("columns");
+    private static List<UploadFilesColumnResult> columnsOf(UploadFilesResponseRecord record) {
+        return record.getColumns();
+    }
+
+    private static List<DeleteFilesColumnResult> columnsOf(DeleteFilesResponseRecord record) {
+        return record.getColumns();
     }
 
     @Test
@@ -828,27 +836,27 @@ public class VaultControllerTests {
         UploadFilesResponse response = controller.uploadFiles(request);
 
         Assert.assertEquals(2, response.getRecords().size());
-        HashMap<String, Object> created = response.getRecords().get(0);
-        Assert.assertEquals("sky-new", created.get("skyflowId"));
-        Assert.assertEquals("onboarding", created.get("tableName"));
-        Assert.assertEquals(200, created.get("httpCode"));
-        Assert.assertNull(created.get("error"));
-        Assert.assertNull(created.get("requestId"));
-        List<Map<String, Object>> columns = columnsOf(created);
-        Assert.assertEquals("resumePDF", columns.get(0).get("column"));
-        Assert.assertEquals("resume.pdf", columns.get(0).get("fileName"));
-        Assert.assertEquals("UPLOADED", columns.get(0).get("uploadStatus"));
-        Assert.assertNull(columns.get(0).get("error"));
-        Assert.assertEquals("photo.jpg", columns.get(1).get("fileName"));
-        Assert.assertEquals("FAILED", columns.get(1).get("uploadStatus"));
-        Assert.assertEquals("PUT failed: 403", columns.get(1).get("error"));
+        UploadFilesResponseRecord created = response.getRecords().get(0);
+        Assert.assertEquals("sky-new", created.getSkyflowId());
+        Assert.assertEquals("onboarding", created.getTableName());
+        Assert.assertEquals(200, created.getHttpCode());
+        Assert.assertNull(created.getError());
+        Assert.assertNull(created.getRequestId());
+        List<UploadFilesColumnResult> columns = columnsOf(created);
+        Assert.assertEquals("resumePDF", columns.get(0).getColumn());
+        Assert.assertEquals("resume.pdf", columns.get(0).getFileName());
+        Assert.assertEquals(UploadStatus.UPLOADED, columns.get(0).getUploadStatus());
+        Assert.assertNull(columns.get(0).getError());
+        Assert.assertEquals("photo.jpg", columns.get(1).getFileName());
+        Assert.assertEquals(UploadStatus.FAILED, columns.get(1).getUploadStatus());
+        Assert.assertEquals("PUT failed: 403", columns.get(1).getError());
 
-        HashMap<String, Object> rejected = response.getRecords().get(1);
-        Assert.assertEquals(400, rejected.get("httpCode"));
-        Assert.assertEquals("Invalid request. skyflowID sky-bad is invalid.", rejected.get("error"));
-        Assert.assertEquals("req-test-123", rejected.get("requestId"));
-        Assert.assertEquals("SKIPPED", columnsOf(rejected).get(0).get("uploadStatus"));
-        Assert.assertEquals("kyc.txt", columnsOf(rejected).get(0).get("fileName"));
+        UploadFilesResponseRecord rejected = response.getRecords().get(1);
+        Assert.assertEquals(400, rejected.getHttpCode());
+        Assert.assertEquals("Invalid request. skyflowID sky-bad is invalid.", rejected.getError());
+        Assert.assertEquals("req-test-123", rejected.getRequestId());
+        Assert.assertEquals(UploadStatus.SKIPPED, columnsOf(rejected).get(0).getUploadStatus());
+        Assert.assertEquals("kyc.txt", columnsOf(rejected).get(0).getFileName());
 
         // Phase B: one PUT per signed URL with that column's bytes; the rejected record sends nothing
         Assert.assertEquals(2, uploader.bodyByUrl.size());
@@ -909,13 +917,13 @@ public class VaultControllerTests {
                                 UploadFilesRequestColumn.builder().column("c").base64("Yw==").fileName("c.txt").build()))
                         .build())).build());
 
-        List<Map<String, Object>> columns = columnsOf(response.getRecords().get(0));
-        Assert.assertEquals("UPLOADED", columns.get(0).get("uploadStatus"));
-        Assert.assertEquals("FAILED", columns.get(1).get("uploadStatus"));
-        Assert.assertEquals("PUT failed: connection reset", columns.get(1).get("error"));
-        Assert.assertEquals("SKIPPED", columns.get(2).get("uploadStatus"));
-        Assert.assertNull(columns.get(2).get("error"));
-        Assert.assertNull(response.getRecords().get(0).get("error"));
+        List<UploadFilesColumnResult> columns = columnsOf(response.getRecords().get(0));
+        Assert.assertEquals(UploadStatus.UPLOADED, columns.get(0).getUploadStatus());
+        Assert.assertEquals(UploadStatus.FAILED, columns.get(1).getUploadStatus());
+        Assert.assertEquals("PUT failed: connection reset", columns.get(1).getError());
+        Assert.assertEquals(UploadStatus.SKIPPED, columns.get(2).getUploadStatus());
+        Assert.assertNull(columns.get(2).getError());
+        Assert.assertNull(response.getRecords().get(0).getError());
     }
 
     @Test
@@ -954,11 +962,11 @@ public class VaultControllerTests {
 
         Assert.assertTrue("PUTs should overlap", maxInFlight.get() > 1);
         Assert.assertTrue("at most 5 PUTs at once", maxInFlight.get() <= 5);
-        List<Map<String, Object>> columns = columnsOf(response.getRecords().get(0));
+        List<UploadFilesColumnResult> columns = columnsOf(response.getRecords().get(0));
         Assert.assertEquals(fileCount, columns.size());
         for (int i = 0; i < fileCount; i++) {
-            Assert.assertEquals("c" + i, columns.get(i).get("column"));
-            Assert.assertEquals(i == 3 ? "FAILED" : "UPLOADED", columns.get(i).get("uploadStatus"));
+            Assert.assertEquals("c" + i, columns.get(i).getColumn());
+            Assert.assertEquals(i == 3 ? UploadStatus.FAILED : UploadStatus.UPLOADED, columns.get(i).getUploadStatus());
         }
     }
 
@@ -1129,14 +1137,14 @@ public class VaultControllerTests {
         DeleteFilesResponse response = controller.deleteFiles(deleteFilesRequest());
 
         Assert.assertEquals(2, response.getRecords().size());
-        HashMap<String, Object> ok = response.getRecords().get(0);
-        Assert.assertEquals("sky-1", ok.get("skyflowId"));
-        Assert.assertEquals("DELETED", columnsOf(ok).get(1).get("status"));
-        Assert.assertNull(ok.get("requestId"));
-        HashMap<String, Object> failed = response.getRecords().get(1);
-        Assert.assertNull(failed.get("columns"));
-        Assert.assertEquals(404, failed.get("httpCode"));
-        Assert.assertEquals("req-test-123", failed.get("requestId"));
+        DeleteFilesResponseRecord ok = response.getRecords().get(0);
+        Assert.assertEquals("sky-1", ok.getSkyflowId());
+        Assert.assertEquals("DELETED", columnsOf(ok).get(1).getStatus());
+        Assert.assertNull(ok.getRequestId());
+        DeleteFilesResponseRecord failed = response.getRecords().get(1);
+        Assert.assertNull(failed.getColumns());
+        Assert.assertEquals(404, failed.getHttpCode());
+        Assert.assertEquals("req-test-123", failed.getRequestId());
 
         ArgumentCaptor<com.skyflow.generated.rest.resources.files.requests.FileDeleteRequest> captor =
                 ArgumentCaptor.forClass(com.skyflow.generated.rest.resources.files.requests.FileDeleteRequest.class);
@@ -1157,8 +1165,8 @@ public class VaultControllerTests {
 
         DeleteFilesResponse response = controller.deleteFiles(deleteFilesRequest());
 
-        Assert.assertEquals(404, response.getRecords().get(0).get("httpCode"));
-        Assert.assertEquals("No file present in column photoID.", response.getRecords().get(0).get("error"));
+        Assert.assertEquals(404, response.getRecords().get(0).getHttpCode());
+        Assert.assertEquals("No file present in column photoID.", response.getRecords().get(0).getError());
     }
 
     @Test
@@ -2442,7 +2450,7 @@ public class VaultControllerTests {
     private static UploadFilesRequestRecord uploadRecord(String tableName, String skyflowId, String column) {
         UploadFilesRequestRecord.UploadFilesRequestRecordBuilder builder = UploadFilesRequestRecord.builder()
                 .tableName(tableName).columns(Collections.singletonList(UploadFilesRequestColumn.builder()
-                        .column(column).base64("ZmlsZQ==").fileName(column + ".txt").build()));
+                        .column(column).base64("cA==").fileName(column + ".txt").build()));
         if (skyflowId != null) {
             builder.skyflowId(skyflowId);
         }
@@ -2459,11 +2467,11 @@ public class VaultControllerTests {
         return controller;
     }
 
-    private static void assertSkippedAsMismatch(HashMap<String, Object> record) {
-        Assert.assertEquals(com.skyflow.utils.Utils.UPLOAD_RESPONSE_MISMATCH_ERROR, record.get("error"));
-        Assert.assertEquals("req-test-123", record.get("requestId"));
-        Assert.assertEquals("SKIPPED", columnsOf(record).get(0).get("uploadStatus"));
-        Assert.assertEquals(com.skyflow.utils.Utils.UPLOAD_RESPONSE_MISMATCH_ERROR, columnsOf(record).get(0).get("error"));
+    private static void assertSkippedAsMismatch(UploadFilesResponseRecord record) {
+        Assert.assertEquals(com.skyflow.utils.Utils.UPLOAD_RESPONSE_MISMATCH_ERROR, record.getError());
+        Assert.assertEquals("req-test-123", record.getRequestId());
+        Assert.assertEquals(UploadStatus.SKIPPED, columnsOf(record).get(0).getUploadStatus());
+        Assert.assertEquals(com.skyflow.utils.Utils.UPLOAD_RESPONSE_MISMATCH_ERROR, columnsOf(record).get(0).getError());
     }
 
     @Test
@@ -2479,11 +2487,11 @@ public class VaultControllerTests {
         // the lone returned record could belong to either request, so neither file is sent
         Assert.assertTrue(uploader.bodyByUrl.isEmpty());
         Assert.assertEquals(2, response.getRecords().size());
-        Assert.assertEquals("sky-1", response.getRecords().get(0).get("skyflowId"));
-        Assert.assertEquals("sky-2", response.getRecords().get(1).get("skyflowId"));
-        for (HashMap<String, Object> record : response.getRecords()) {
-            Assert.assertEquals("onboarding", record.get("tableName"));
-            Assert.assertEquals(500, record.get("httpCode"));
+        Assert.assertEquals("sky-1", response.getRecords().get(0).getSkyflowId());
+        Assert.assertEquals("sky-2", response.getRecords().get(1).getSkyflowId());
+        for (UploadFilesResponseRecord record : response.getRecords()) {
+            Assert.assertEquals("onboarding", record.getTableName());
+            Assert.assertEquals(500, record.getHttpCode());
             assertSkippedAsMismatch(record);
         }
     }
@@ -2498,7 +2506,7 @@ public class VaultControllerTests {
 
         Assert.assertTrue(uploader.bodyByUrl.isEmpty());
         Assert.assertEquals(1, response.getRecords().size());
-        Assert.assertNull(response.getRecords().get(0).get("skyflowId"));
+        Assert.assertNull(response.getRecords().get(0).getSkyflowId());
         assertSkippedAsMismatch(response.getRecords().get(0));
     }
 
@@ -2522,9 +2530,9 @@ public class VaultControllerTests {
         Assert.assertEquals(Collections.singleton("https://upload.example.com/kyc"), uploader.bodyByUrl.keySet());
         assertSkippedAsMismatch(response.getRecords().get(0));
         assertSkippedAsMismatch(response.getRecords().get(1));
-        HashMap<String, Object> created = response.getRecords().get(2);
-        Assert.assertNull(created.get("error"));
-        Assert.assertEquals("UPLOADED", columnsOf(created).get(0).get("uploadStatus"));
+        UploadFilesResponseRecord created = response.getRecords().get(2);
+        Assert.assertNull(created.getError());
+        Assert.assertEquals(UploadStatus.UPLOADED, columnsOf(created).get(0).getUploadStatus());
     }
 
     @Test
@@ -2538,9 +2546,9 @@ public class VaultControllerTests {
         UploadFilesResponse response = controller.uploadFiles(UploadFilesRequest.builder().records(Arrays.asList(
                 uploadRecord("onboarding", "sky-1", "resume"), uploadRecord("onboarding", "sky-2", "photo"))).build());
 
-        Assert.assertEquals(200, response.getRecords().get(0).get("httpCode"));
-        Assert.assertEquals(500, response.getRecords().get(1).get("httpCode"));
-        Assert.assertEquals("record locked", response.getRecords().get(1).get("error"));
+        Assert.assertEquals(200, response.getRecords().get(0).getHttpCode());
+        Assert.assertEquals(500, response.getRecords().get(1).getHttpCode());
+        Assert.assertEquals("record locked", response.getRecords().get(1).getError());
     }
 
     @Test
@@ -2553,8 +2561,8 @@ public class VaultControllerTests {
         UploadFilesResponse response = controller.uploadFiles(UploadFilesRequest.builder()
                 .records(Collections.singletonList(uploadRecord("onboarding", "sky-1", "resume"))).build());
 
-        Assert.assertNull(response.getRecords().get(0).get("error"));
-        Assert.assertEquals("UPLOADED", columnsOf(response.getRecords().get(0)).get(0).get("uploadStatus"));
+        Assert.assertNull(response.getRecords().get(0).getError());
+        Assert.assertEquals(UploadStatus.UPLOADED, columnsOf(response.getRecords().get(0)).get(0).getUploadStatus());
         Assert.assertEquals(1, uploader.bodyByUrl.size());
     }
 
@@ -2567,17 +2575,17 @@ public class VaultControllerTests {
 
         VaultController informational = uploadController(json, null);
         informational.signedUrlUploader = (url, body) -> 100;
-        Map<String, Object> column = columnsOf(informational.uploadFiles(request).getRecords().get(0)).get(0);
-        Assert.assertEquals("FAILED", column.get("uploadStatus"));
-        Assert.assertEquals("PUT failed: 100", column.get("error"));
+        UploadFilesColumnResult column = columnsOf(informational.uploadFiles(request).getRecords().get(0)).get(0);
+        Assert.assertEquals(UploadStatus.FAILED, column.getUploadStatus());
+        Assert.assertEquals("PUT failed: 100", column.getError());
 
         VaultController messageless = uploadController(json, null);
         messageless.signedUrlUploader = (url, body) -> {
             throw new java.io.IOException();
         };
         column = columnsOf(messageless.uploadFiles(request).getRecords().get(0)).get(0);
-        Assert.assertEquals("FAILED", column.get("uploadStatus"));
-        Assert.assertEquals("PUT failed: java.io.IOException", column.get("error"));
+        Assert.assertEquals(UploadStatus.FAILED, column.getUploadStatus());
+        Assert.assertEquals("PUT failed: java.io.IOException", column.getError());
     }
 
     // ── request objects are immutable once built ─────────────────────────────

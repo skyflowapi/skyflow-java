@@ -1,15 +1,10 @@
 package com.skyflow.vault.data;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.List;
 
-/**
- * Record map keys: {@code value}, {@code tokenGroupName}, {@code token}, {@code httpCode},
- * {@code error}, {@code requestId} (set only when {@code error} is non-null).
- * {@code token} is {@code ""} (never null) on a record that has no token.
- */
-public class GetTokensResponse extends BaseGetTokensResponse {
-    public GetTokensResponse(ArrayList<HashMap<String, Object>> records) {
+/** One record per input entry, in request order. */
+public class GetTokensResponse extends BaseGetTokensResponse<GetTokensResponseRecord> {
+    public GetTokensResponse(List<GetTokensResponseRecord> records) {
         super(records);
     }
 }

@@ -37,6 +37,8 @@ import com.skyflow.vault.data.BulkInsertResponseRecord;
 import com.skyflow.vault.data.BulkTokenizeRequest;
 import com.skyflow.vault.data.BulkTokenizeResponse;
 import com.skyflow.vault.data.ColumnRedactions;
+import com.skyflow.vault.data.DeleteFilesColumnResult;
+import com.skyflow.vault.data.DeleteFilesResponseRecord;
 import com.skyflow.vault.data.DeleteRequest;
 import com.skyflow.vault.data.DeleteResponse;
 import com.skyflow.vault.data.DeleteResponseRecord;
@@ -51,6 +53,7 @@ import com.skyflow.vault.data.GetResponseRecord;
 import com.skyflow.vault.data.GetTokensRequest;
 import com.skyflow.vault.data.GetTokensRequestRecord;
 import com.skyflow.vault.data.GetTokensResponse;
+import com.skyflow.vault.data.GetTokensResponseRecord;
 import com.skyflow.vault.data.InsertRequestRecord;
 import com.skyflow.vault.data.InsertRequest;
 import com.skyflow.vault.data.InsertResponse;
@@ -830,23 +833,23 @@ public class UtilsTests {
         GetTokensResponse formatted = Utils.formatGetTokensResponse(response, headers);
 
         Assert.assertEquals(2, formatted.getRecords().size());
-        Map<String, Object> first = formatted.getRecords().get(0);
-        Assert.assertEquals("john@example.com", first.get("value"));
-        Assert.assertEquals("det_group", first.get("tokenGroupName"));
-        Assert.assertEquals("tok-1", first.get("token"));
-        Assert.assertEquals(200, first.get("httpCode"));
-        Assert.assertNull(first.get("error"));
-        Assert.assertNull(first.get("requestId"));
-        Map<String, Object> second = formatted.getRecords().get(1);
-        Assert.assertEquals("unknown@example.com", second.get("value"));
-        Assert.assertEquals("", second.get("token"));
-        Assert.assertEquals(404, second.get("httpCode"));
-        Assert.assertEquals("Token not found.", second.get("error"));
-        Assert.assertEquals("req-gettokens-1", second.get("requestId"));
+        GetTokensResponseRecord first = formatted.getRecords().get(0);
+        Assert.assertEquals("john@example.com", first.getValue());
+        Assert.assertEquals("det_group", first.getTokenGroupName());
+        Assert.assertEquals("tok-1", first.getToken());
+        Assert.assertEquals(200, first.getHttpCode());
+        Assert.assertNull(first.getError());
+        Assert.assertNull(first.getRequestId());
+        GetTokensResponseRecord second = formatted.getRecords().get(1);
+        Assert.assertEquals("unknown@example.com", second.getValue());
+        Assert.assertEquals("", second.getToken());
+        Assert.assertEquals(404, second.getHttpCode());
+        Assert.assertEquals("Token not found.", second.getError());
+        Assert.assertEquals("req-gettokens-1", second.getRequestId());
     }
 
     @Test
-    public void testFormatGetTokensResponse_recordMapKeysInDocumentedOrder() {
+    public void testFormatGetTokensResponse_mapsEveryField() {
         TokenizeResponseObject record = TokenizeResponseObject.builder().token("t")
                 .value(com.skyflow.generated.rest.types.GoogleProtobufValue.of("v")).tokenGroupName("g").build();
         GetTokensFromValuesResponse response = GetTokensFromValuesResponse.builder()
@@ -854,8 +857,13 @@ public class UtilsTests {
 
         GetTokensResponse formatted = Utils.formatGetTokensResponse(response, new HashMap<>());
 
-        Assert.assertEquals(Arrays.asList("value", "tokenGroupName", "token", "httpCode", "error", "requestId"),
-                new ArrayList<>(formatted.getRecords().get(0).keySet()));
+        GetTokensResponseRecord only = formatted.getRecords().get(0);
+        Assert.assertEquals("v", only.getValue());
+        Assert.assertEquals("g", only.getTokenGroupName());
+        Assert.assertEquals("t", only.getToken());
+        Assert.assertEquals(200, only.getHttpCode());
+        Assert.assertNull(only.getError());
+        Assert.assertNull(only.getRequestId());
     }
 
     @Test
@@ -869,9 +877,9 @@ public class UtilsTests {
 
         GetTokensResponse formatted = Utils.formatGetTokensResponse(response, new HashMap<>());
 
-        Assert.assertEquals("", formatted.getRecords().get(0).get("token"));
-        Assert.assertNull(formatted.getRecords().get(0).get("error"));
-        Assert.assertNull(formatted.getRecords().get(0).get("requestId"));
+        Assert.assertEquals("", formatted.getRecords().get(0).getToken());
+        Assert.assertNull(formatted.getRecords().get(0).getError());
+        Assert.assertNull(formatted.getRecords().get(0).getRequestId());
     }
 
     @Test
@@ -883,8 +891,8 @@ public class UtilsTests {
 
         GetTokensResponse formatted = Utils.formatGetTokensResponse(response, new HashMap<>());
 
-        Assert.assertEquals(200, formatted.getRecords().get(0).get("httpCode"));
-        Assert.assertEquals(500, formatted.getRecords().get(1).get("httpCode"));
+        Assert.assertEquals(200, formatted.getRecords().get(0).getHttpCode());
+        Assert.assertEquals(500, formatted.getRecords().get(1).getHttpCode());
     }
 
     @Test
@@ -896,7 +904,7 @@ public class UtilsTests {
 
         GetTokensResponse formatted = Utils.formatGetTokensResponse(response, new HashMap<>());
 
-        Assert.assertEquals(42, formatted.getRecords().get(0).get("value"));
+        Assert.assertEquals(42, formatted.getRecords().get(0).getValue());
     }
 
     @Test
@@ -2959,12 +2967,12 @@ public class UtilsTests {
 
         GetTokensResponse response = Utils.handleGetTokensRequestException(ex);
         Assert.assertNotNull(response);
-        Map<String, Object> result = response.getRecords().get(0);
-        Assert.assertEquals("unknown@example.com", result.get("value"));
-        Assert.assertEquals("det_group", result.get("tokenGroupName"));
-        Assert.assertEquals("", result.get("token"));
-        Assert.assertEquals("Token not found.", result.get("error"));
-        Assert.assertEquals(404, result.get("httpCode"));
+        GetTokensResponseRecord result = response.getRecords().get(0);
+        Assert.assertEquals("unknown@example.com", result.getValue());
+        Assert.assertEquals("det_group", result.getTokenGroupName());
+        Assert.assertEquals("", result.getToken());
+        Assert.assertEquals("Token not found.", result.getError());
+        Assert.assertEquals(404, result.getHttpCode());
     }
 
     @Test
@@ -2977,8 +2985,8 @@ public class UtilsTests {
 
         GetTokensResponse response = Utils.handleGetTokensRequestException(ex);
         Assert.assertNotNull(response);
-        Assert.assertEquals(422, response.getRecords().get(0).get("httpCode"));
-        Assert.assertEquals("Unknown error", response.getRecords().get(0).get("error"));
+        Assert.assertEquals(422, response.getRecords().get(0).getHttpCode());
+        Assert.assertEquals("Unknown error", response.getRecords().get(0).getError());
     }
 
     // ── Upload files ──────────────────────────────────────────────────────────
@@ -3145,23 +3153,22 @@ public class UtilsTests {
         com.skyflow.vault.data.DeleteFilesResponse result = Utils.formatDeleteFilesResponse(response, headers);
 
         Assert.assertEquals(2, result.getRecords().size());
-        HashMap<String, Object> ok = result.getRecords().get(0);
-        Assert.assertEquals("sky-1", ok.get("skyflowId"));
-        Assert.assertEquals("onboarding", ok.get("tableName"));
-        Assert.assertEquals(200, ok.get("httpCode"));
-        Assert.assertNull(ok.get("error"));
-        Assert.assertNull(ok.get("requestId"));
-        @SuppressWarnings("unchecked")
-        List<Map<String, Object>> columns = (List<Map<String, Object>>) ok.get("columns");
-        Assert.assertEquals("resumePDF", columns.get(0).get("column"));
-        Assert.assertEquals("DELETED", columns.get(0).get("status"));
-        Assert.assertEquals("photoID", columns.get(1).get("column"));
-        Assert.assertEquals("DELETED", columns.get(1).get("status"));
-        HashMap<String, Object> failed = result.getRecords().get(1);
-        Assert.assertNull(failed.get("columns"));
-        Assert.assertEquals(404, failed.get("httpCode"));
-        Assert.assertEquals("Invalid request. skyflowID invalid-id-0000 is invalid.", failed.get("error"));
-        Assert.assertEquals("req-del-1", failed.get("requestId"));
+        DeleteFilesResponseRecord ok = result.getRecords().get(0);
+        Assert.assertEquals("sky-1", ok.getSkyflowId());
+        Assert.assertEquals("onboarding", ok.getTableName());
+        Assert.assertEquals(200, ok.getHttpCode());
+        Assert.assertNull(ok.getError());
+        Assert.assertNull(ok.getRequestId());
+        List<DeleteFilesColumnResult> columns = ok.getColumns();
+        Assert.assertEquals("resumePDF", columns.get(0).getColumn());
+        Assert.assertEquals("DELETED", columns.get(0).getStatus());
+        Assert.assertEquals("photoID", columns.get(1).getColumn());
+        Assert.assertEquals("DELETED", columns.get(1).getStatus());
+        DeleteFilesResponseRecord failed = result.getRecords().get(1);
+        Assert.assertNull(failed.getColumns());
+        Assert.assertEquals(404, failed.getHttpCode());
+        Assert.assertEquals("Invalid request. skyflowID invalid-id-0000 is invalid.", failed.getError());
+        Assert.assertEquals("req-del-1", failed.getRequestId());
     }
 
     @Test
@@ -3182,11 +3189,11 @@ public class UtilsTests {
         com.skyflow.vault.data.DeleteFilesResponse response = Utils.handleDeleteFilesRequestException(
                 new ApiClientApiException("Error with status code 404", 404, body));
 
-        HashMap<String, Object> record = response.getRecords().get(0);
-        Assert.assertEquals("invalid-id-0000", record.get("skyflowId"));
-        Assert.assertEquals("employees", record.get("tableName"));
-        Assert.assertNull(record.get("columns"));
-        Assert.assertEquals(404, record.get("httpCode"));
+        DeleteFilesResponseRecord record = response.getRecords().get(0);
+        Assert.assertEquals("invalid-id-0000", record.getSkyflowId());
+        Assert.assertEquals("employees", record.getTableName());
+        Assert.assertNull(record.getColumns());
+        Assert.assertEquals(404, record.getHttpCode());
         Assert.assertNull(Utils.handleDeleteFilesRequestException(
                 new ApiClientApiException("Error with status code 500", 500, "boom")));
     }

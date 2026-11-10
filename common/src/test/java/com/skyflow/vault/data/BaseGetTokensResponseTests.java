@@ -15,14 +15,14 @@ public class BaseGetTokensResponseTests {
         record.put("token", "tok-1");
         ArrayList<HashMap<String, Object>> records = new ArrayList<>(Collections.singletonList(record));
 
-        BaseGetTokensResponse response = new BaseGetTokensResponse(records);
+        BaseGetTokensResponse<HashMap<String, Object>> response = new BaseGetTokensResponse<>(records);
 
         Assert.assertSame(records, response.getRecords());
     }
 
     @Test
     public void testNullRecordsAllowed() {
-        BaseGetTokensResponse response = new BaseGetTokensResponse(null);
+        BaseGetTokensResponse<HashMap<String, Object>> response = new BaseGetTokensResponse<>(null);
 
         Assert.assertNull(response.getRecords());
     }
@@ -32,7 +32,7 @@ public class BaseGetTokensResponseTests {
         HashMap<String, Object> record = new HashMap<>();
         record.put("token", null);
         record.put("error", "Token not found.");
-        BaseGetTokensResponse response = new BaseGetTokensResponse(new ArrayList<>(Collections.singletonList(record)));
+        BaseGetTokensResponse<HashMap<String, Object>> response = new BaseGetTokensResponse<>(new ArrayList<>(Collections.singletonList(record)));
 
         String json = response.toString();
 
@@ -42,6 +42,6 @@ public class BaseGetTokensResponseTests {
 
     @Test
     public void testToStringWithNullRecords() {
-        Assert.assertEquals("{\"records\":null}", new BaseGetTokensResponse(null).toString());
+        Assert.assertEquals("{\"records\":null}", new BaseGetTokensResponse<HashMap<String, Object>>(null).toString());
     }
 }
