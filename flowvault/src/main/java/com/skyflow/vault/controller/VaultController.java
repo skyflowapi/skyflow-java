@@ -799,6 +799,19 @@ public final class VaultController extends VaultClient {
                                                    FileUploadResponse body, Map<String, List<String>> headers) {
         List<FileUploadResponseObject> returned = body != null && body.getRecords() != null
                 ? body.getRecords() : Collections.emptyList();
+        // Returned records are matched to requested ones by position. If the counts differ, no position
+        // can be trusted, so nothing is uploaded rather than risk sending a file to another record.
+        if (returned.size() != requested.size()) {
+            LogUtil.printWarningLog(WarningLogs.INCOMPLETE_UPLOAD_FILES_RESPONSE.getLog());
+            String requestId = Utils.extractRequestId(headers);
+            ArrayList<HashMap<String, Object>> records = new ArrayList<>();
+            for (UploadFilesRequestRecord requestRecord : requested) {
+                records.add(Utils.uploadFilesRecordRow(requestRecord.getSkyflowId(), requestRecord.getTableName(),
+                        Utils.skippedUploadColumns(requestRecord, Utils.UPLOAD_RESPONSE_MISMATCH_ERROR),
+                        500, Utils.UPLOAD_RESPONSE_MISMATCH_ERROR, requestId));
+            }
+            return new UploadFilesResponse(records);
+        }
         // All signed URLs are issued together and expire together, so the PUTs run on a small pool
         // rather than one after another. Each record keeps its column futures in request order, so
         // the response does not depend on which upload finishes first.
@@ -814,8 +827,13 @@ public final class VaultController extends VaultClient {
             for (int i = 0; i < returned.size(); i++) {
                 FileUploadResponseObject record = returned.get(i);
                 errors[i] = record.getError().filter(e -> !e.isEmpty()).orElse(null);
+                if (errors[i] == null && !Utils.uploadResponseMatchesRequest(requested.get(i), record)) {
+                    LogUtil.printWarningLog(Utils.parameterizedString(
+                            WarningLogs.UPLOAD_FILES_RECORD_MISMATCH.getLog(), String.valueOf(i)));
+                    errors[i] = Utils.UPLOAD_RESPONSE_MISMATCH_ERROR;
+                }
                 if (errors[i] == null) {
-                    uploads.add(uploadColumns(i < requested.size() ? requested.get(i) : null, decodedBase64,
+                    uploads.add(uploadColumns(requested.get(i), decodedBase64,
                             record.getData().orElse(Collections.emptyMap()), executor));
                 } else {
                     uploads.add(Collections.emptyList());
@@ -829,7 +847,7 @@ public final class VaultController extends VaultClient {
                 int httpCode = record.getHttpCode() != 0 ? record.getHttpCode() : (error != null ? 500 : 200);
                 List<HashMap<String, Object>> columns;
                 if (error != null) {
-                    columns = Utils.skippedUploadColumns(i < requested.size() ? requested.get(i) : null, error);
+                    columns = Utils.skippedUploadColumns(requested.get(i), error);
                 } else {
                     columns = new ArrayList<>();
                     for (CompletableFuture<HashMap<String, Object>> column : uploads.get(i)) {
@@ -850,9 +868,6 @@ public final class VaultController extends VaultClient {
                                                                            Map<String, Object> signedUrls,
                                                                            ExecutorService executor) {
         List<CompletableFuture<HashMap<String, Object>>> columns = new ArrayList<>();
-        if (requestRecord == null) {
-            return columns;
-        }
         for (UploadFilesRequestColumn column : requestRecord.getColumns()) {
             Object signedUrl = signedUrls.get(column.getColumn());
             if (signedUrl == null) {

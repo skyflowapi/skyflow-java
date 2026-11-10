@@ -43,6 +43,7 @@ import com.skyflow.generated.rest.resources.records.RecordsClient;
 import com.skyflow.generated.rest.resources.tokens.RawTokensClient;
 import com.skyflow.generated.rest.resources.tokens.TokensClient;
 import com.skyflow.generated.rest.core.ApiClientApiException;
+import com.skyflow.generated.rest.core.ApiClientException;
 import com.skyflow.generated.rest.core.ApiClientHttpResponse;
 import com.skyflow.generated.rest.core.RequestOptions;
 import com.skyflow.utils.Constants;
@@ -2317,5 +2318,301 @@ public class VaultControllerTests {
         } catch (SkyflowException e) {
             Assert.assertEquals("sync insert interceptor blew up", e.getMessage());
         }
+    }
+
+    // ── rejection paths with no per-record body ──────────────────────────────
+
+    private interface ControllerCall {
+        void run() throws Exception;
+    }
+
+    /** A vault error in the standard {"error": {...}} shape, which no per-record fallback can parse. */
+    private static ApiClientApiException vaultUnavailable() {
+        Map<String, Object> error = new HashMap<>();
+        error.put("message", "vault unavailable");
+        error.put("http_code", 503);
+        error.put("grpc_code", 14);
+        error.put("http_status", "Service Unavailable");
+        Map<String, Object> body = new HashMap<>();
+        body.put("error", error);
+        return new ApiClientApiException("vault unavailable", 503, body);
+    }
+
+    private static void assertVaultUnavailable(ControllerCall call) throws Exception {
+        try {
+            call.run();
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals(503, e.getHttpCode());
+            Assert.assertEquals("vault unavailable", e.getMessage());
+        }
+    }
+
+    private static void assertTransportFailure(ControllerCall call) throws Exception {
+        try {
+            call.run();
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (SkyflowException e) {
+            Assert.assertEquals("connection refused", e.getMessage());
+            Assert.assertTrue(e.getCause() instanceof ApiClientException);
+        }
+    }
+
+    private static InsertRequest singleInsertRequest() {
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", "john");
+        return InsertRequest.builder().tableName("table1")
+                .records(Collections.singletonList(InsertRequestRecord.builder().data(data).build())).build();
+    }
+
+    @Test
+    public void testUnaryRecordOperations_errorWithoutRecordBodyIsThrownWithItsStatus() throws Exception {
+        ApiClient mockApi = Mockito.mock(ApiClient.class);
+        MockRaw mockRaw = mockRawFlowservice(mockApi);
+        when(mockRaw.records.insertRecords(any(), any())).thenThrow(vaultUnavailable());
+        when(mockRaw.tokens.detokenize(any(), any())).thenThrow(vaultUnavailable());
+        when(mockRaw.records.deleteRecords(any(), any())).thenThrow(vaultUnavailable());
+        when(mockRaw.records.getRecords(any(), any())).thenThrow(vaultUnavailable());
+        VaultController controller = createControllerWithMock(mockApi);
+
+        assertVaultUnavailable(() -> controller.insert(singleInsertRequest()));
+        assertVaultUnavailable(() -> controller.detokenize(
+                DetokenizeRequest.builder().tokens(Collections.singletonList("tok-1")).build()));
+        assertVaultUnavailable(() -> controller.delete(DeleteRequest.builder().tableName("table1")
+                .skyflowIds(Collections.singletonList("sky-1")).build()));
+        assertVaultUnavailable(() -> controller.get(GetRequest.builder().tableName("table1")
+                .skyflowIds(new ArrayList<>(Collections.singletonList("sky-1"))).build()));
+    }
+
+    @Test
+    public void testUnaryOperations_transportFailureIsWrappedInSkyflowException() throws Exception {
+        ApiClient mockApi = Mockito.mock(ApiClient.class);
+        MockRaw mockRaw = mockRawFlowservice(mockApi);
+        when(mockRaw.query.executeQuery(any(), any())).thenThrow(new ApiClientException("connection refused"));
+        when(mockRaw.tokens.getTokens(any(), any())).thenThrow(new ApiClientException("connection refused"));
+        when(mockRaw.files.uploadFiles(any(), any())).thenThrow(new ApiClientException("connection refused"));
+        when(mockRaw.files.deleteFiles(any(), any())).thenThrow(new ApiClientException("connection refused"));
+        VaultController controller = createControllerWithMock(mockApi);
+        controller.signedUrlUploader = new RecordingUploader();
+
+        assertTransportFailure(() -> controller.query(QueryRequest.builder().query("SELECT * FROM table1").build()));
+        assertTransportFailure(() -> controller.getTokens(GetTokensRequest.builder()
+                .records(Collections.singletonList(GetTokensRequestRecord.builder()
+                        .value("john@example.com").tokenGroupName("det_group").build())).build()));
+        assertTransportFailure(() -> controller.uploadFiles(UploadFilesRequest.builder().records(Collections.singletonList(
+                UploadFilesRequestRecord.builder().tableName("onboarding").columns(Collections.singletonList(
+                        UploadFilesRequestColumn.builder().column("kyc").base64("a3lj").fileName("kyc.txt").build()))
+                        .build())).build()));
+        assertTransportFailure(() -> controller.deleteFiles(deleteFilesRequest()));
+    }
+
+    @Test
+    public void testBulkOperations_interceptorRaisingVaultErrorIsThrownWithItsStatus() throws Exception {
+        ApiClient mockApi = Mockito.mock(ApiClient.class);
+        mockRawFlowservice(mockApi);
+        VaultController controller = createControllerWithMock(mockApi);
+        RequestInterceptor failing = ctx -> {
+            throw vaultUnavailable();
+        };
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", "john");
+        ArrayList<InsertRequestRecord> insertRecords = new ArrayList<>();
+        insertRecords.add(BulkInsertRequestRecord.builder().tableName("table1").data(data).build());
+        BulkInsertRequest insertRequest = BulkInsertRequest.builder().records(insertRecords).build();
+        BulkDetokenizeRequest detokenizeRequest = BulkDetokenizeRequest.builder()
+                .tokens(Collections.singletonList("token1")).build();
+        BulkDeleteTokensRequest deleteTokensRequest = BulkDeleteTokensRequest.builder()
+                .tokens(Collections.singletonList("token1")).build();
+        BulkTokenizeRequest tokenizeRequest = BulkTokenizeRequest.builder().records(Collections.singletonList(
+                BulkTokenizeRequestRecord.builder().value("value1")
+                        .tokenGroupNames(Collections.singletonList("group1")).build())).build();
+
+        assertVaultUnavailable(() -> controller.bulkInsertAsync(insertRequest,
+                BulkInsertOptions.builder().interceptor(failing).build()));
+        assertVaultUnavailable(() -> controller.bulkDetokenizeAsync(detokenizeRequest,
+                BulkDetokenizeOptions.builder().interceptor(failing).build()));
+        assertVaultUnavailable(() -> controller.bulkDeleteTokensAsync(deleteTokensRequest,
+                BulkDeleteTokensOptions.builder().interceptor(failing).build()));
+        assertVaultUnavailable(() -> controller.bulkTokenizeAsync(tokenizeRequest,
+                BulkTokenizeOptions.builder().interceptor(failing).build()));
+    }
+
+    // ── uploadFiles: pairing the vault's records with the request ─────────────
+
+    private static UploadFilesRequestRecord uploadRecord(String tableName, String skyflowId, String column) {
+        UploadFilesRequestRecord.UploadFilesRequestRecordBuilder builder = UploadFilesRequestRecord.builder()
+                .tableName(tableName).columns(Collections.singletonList(UploadFilesRequestColumn.builder()
+                        .column(column).base64("ZmlsZQ==").fileName(column + ".txt").build()));
+        if (skyflowId != null) {
+            builder.skyflowId(skyflowId);
+        }
+        return builder.build();
+    }
+
+    private static VaultController uploadController(String responseJson, RecordingUploader uploader) throws Exception {
+        ApiClient mockApi = Mockito.mock(ApiClient.class);
+        MockRaw mockRaw = mockRawFlowservice(mockApi);
+        when(mockRaw.files.uploadFiles(any(), any())).thenReturn(new ApiClientHttpResponse<>(
+                responseJson == null ? null : uploadWire(responseJson), buildOkHttpResponse()));
+        VaultController controller = createControllerWithMock(mockApi);
+        controller.signedUrlUploader = uploader;
+        return controller;
+    }
+
+    private static void assertSkippedAsMismatch(HashMap<String, Object> record) {
+        Assert.assertEquals(com.skyflow.utils.Utils.UPLOAD_RESPONSE_MISMATCH_ERROR, record.get("error"));
+        Assert.assertEquals("req-test-123", record.get("requestId"));
+        Assert.assertEquals("SKIPPED", columnsOf(record).get(0).get("uploadStatus"));
+        Assert.assertEquals(com.skyflow.utils.Utils.UPLOAD_RESPONSE_MISMATCH_ERROR, columnsOf(record).get(0).get("error"));
+    }
+
+    @Test
+    public void testUploadFiles_fewerRecordsReturnedUploadsNothingAndReportsEveryRequestedRecord() throws Exception {
+        RecordingUploader uploader = new RecordingUploader();
+        VaultController controller = uploadController(
+                "{\"records\":[{\"skyflowID\":\"sky-2\",\"tableName\":\"onboarding\",\"httpCode\":200,"
+                        + "\"data\":{\"photo\":\"https://upload.example.com/photo\"}}]}", uploader);
+
+        UploadFilesResponse response = controller.uploadFiles(UploadFilesRequest.builder().records(Arrays.asList(
+                uploadRecord("onboarding", "sky-1", "resume"), uploadRecord("onboarding", "sky-2", "photo"))).build());
+
+        // the lone returned record could belong to either request, so neither file is sent
+        Assert.assertTrue(uploader.bodyByUrl.isEmpty());
+        Assert.assertEquals(2, response.getRecords().size());
+        Assert.assertEquals("sky-1", response.getRecords().get(0).get("skyflowId"));
+        Assert.assertEquals("sky-2", response.getRecords().get(1).get("skyflowId"));
+        for (HashMap<String, Object> record : response.getRecords()) {
+            Assert.assertEquals("onboarding", record.get("tableName"));
+            Assert.assertEquals(500, record.get("httpCode"));
+            assertSkippedAsMismatch(record);
+        }
+    }
+
+    @Test
+    public void testUploadFiles_missingResponseBodyReportsRequestedRecordsAsSkipped() throws Exception {
+        RecordingUploader uploader = new RecordingUploader();
+        VaultController controller = uploadController(null, uploader);
+
+        UploadFilesResponse response = controller.uploadFiles(UploadFilesRequest.builder()
+                .records(Collections.singletonList(uploadRecord("onboarding", null, "resume"))).build());
+
+        Assert.assertTrue(uploader.bodyByUrl.isEmpty());
+        Assert.assertEquals(1, response.getRecords().size());
+        Assert.assertNull(response.getRecords().get(0).get("skyflowId"));
+        assertSkippedAsMismatch(response.getRecords().get(0));
+    }
+
+    @Test
+    public void testUploadFiles_recordForAnotherTableOrIdIsNotUploaded() throws Exception {
+        RecordingUploader uploader = new RecordingUploader();
+        VaultController controller = uploadController("{\"records\":["
+                + "{\"skyflowID\":\"sky-1\",\"tableName\":\"payroll\",\"httpCode\":200,"
+                + "\"data\":{\"resume\":\"https://upload.example.com/resume\"}},"
+                + "{\"skyflowID\":\"sky-9\",\"tableName\":\"onboarding\",\"httpCode\":200,"
+                + "\"data\":{\"photo\":\"https://upload.example.com/photo\"}},"
+                + "{\"skyflowID\":\"sky-new\",\"tableName\":\"onboarding\",\"httpCode\":200,"
+                + "\"data\":{\"kyc\":\"https://upload.example.com/kyc\"}}]}", uploader);
+
+        UploadFilesResponse response = controller.uploadFiles(UploadFilesRequest.builder().records(Arrays.asList(
+                uploadRecord("onboarding", "sky-1", "resume"),
+                uploadRecord("onboarding", "sky-2", "photo"),
+                uploadRecord("onboarding", null, "kyc"))).build());
+
+        // only the new record (no requested ID to compare) on the matching table is uploaded
+        Assert.assertEquals(Collections.singleton("https://upload.example.com/kyc"), uploader.bodyByUrl.keySet());
+        assertSkippedAsMismatch(response.getRecords().get(0));
+        assertSkippedAsMismatch(response.getRecords().get(1));
+        HashMap<String, Object> created = response.getRecords().get(2);
+        Assert.assertNull(created.get("error"));
+        Assert.assertEquals("UPLOADED", columnsOf(created).get(0).get("uploadStatus"));
+    }
+
+    @Test
+    public void testUploadFiles_omittedHttpCodeFollowsRecordOutcome() throws Exception {
+        VaultController controller = uploadController("{\"records\":["
+                + "{\"skyflowID\":\"sky-1\",\"tableName\":\"onboarding\","
+                + "\"data\":{\"resume\":\"https://upload.example.com/resume\"}},"
+                + "{\"skyflowID\":\"sky-2\",\"tableName\":\"onboarding\",\"error\":\"record locked\"}]}",
+                new RecordingUploader());
+
+        UploadFilesResponse response = controller.uploadFiles(UploadFilesRequest.builder().records(Arrays.asList(
+                uploadRecord("onboarding", "sky-1", "resume"), uploadRecord("onboarding", "sky-2", "photo"))).build());
+
+        Assert.assertEquals(200, response.getRecords().get(0).get("httpCode"));
+        Assert.assertEquals(500, response.getRecords().get(1).get("httpCode"));
+        Assert.assertEquals("record locked", response.getRecords().get(1).get("error"));
+    }
+
+    @Test
+    public void testUploadFiles_emptyRecordErrorIsTreatedAsSuccess() throws Exception {
+        RecordingUploader uploader = new RecordingUploader();
+        VaultController controller = uploadController("{\"records\":[{\"skyflowID\":\"sky-1\","
+                + "\"tableName\":\"onboarding\",\"httpCode\":200,\"error\":\"\","
+                + "\"data\":{\"resume\":\"https://upload.example.com/resume\"}}]}", uploader);
+
+        UploadFilesResponse response = controller.uploadFiles(UploadFilesRequest.builder()
+                .records(Collections.singletonList(uploadRecord("onboarding", "sky-1", "resume"))).build());
+
+        Assert.assertNull(response.getRecords().get(0).get("error"));
+        Assert.assertEquals("UPLOADED", columnsOf(response.getRecords().get(0)).get(0).get("uploadStatus"));
+        Assert.assertEquals(1, uploader.bodyByUrl.size());
+    }
+
+    @Test
+    public void testUploadFiles_informationalStatusAndMessagelessErrorFailTheColumn() throws Exception {
+        String json = "{\"records\":[{\"skyflowID\":\"sky-1\",\"tableName\":\"onboarding\",\"httpCode\":200,"
+                + "\"data\":{\"resume\":\"https://upload.example.com/resume\"}}]}";
+        UploadFilesRequest request = UploadFilesRequest.builder()
+                .records(Collections.singletonList(uploadRecord("onboarding", "sky-1", "resume"))).build();
+
+        VaultController informational = uploadController(json, null);
+        informational.signedUrlUploader = (url, body) -> 100;
+        Map<String, Object> column = columnsOf(informational.uploadFiles(request).getRecords().get(0)).get(0);
+        Assert.assertEquals("FAILED", column.get("uploadStatus"));
+        Assert.assertEquals("PUT failed: 100", column.get("error"));
+
+        VaultController messageless = uploadController(json, null);
+        messageless.signedUrlUploader = (url, body) -> {
+            throw new java.io.IOException();
+        };
+        column = columnsOf(messageless.uploadFiles(request).getRecords().get(0)).get(0);
+        Assert.assertEquals("FAILED", column.get("uploadStatus"));
+        Assert.assertEquals("PUT failed: java.io.IOException", column.get("error"));
+    }
+
+    // ── request objects are immutable once built ─────────────────────────────
+
+    @Test
+    public void testFileAndTokenRequests_snapshotRecordsAtBuild() {
+        List<UploadFilesRequestRecord> uploadRecords = new ArrayList<>();
+        uploadRecords.add(uploadRecord("onboarding", "sky-1", "resume"));
+        UploadFilesRequest.UploadFilesRequestBuilder uploadBuilder = UploadFilesRequest.builder().records(uploadRecords);
+        UploadFilesRequest upload = uploadBuilder.build();
+        uploadRecords.add(uploadRecord("onboarding", "sky-2", "photo"));
+        uploadBuilder.records(new ArrayList<>());
+        Assert.assertEquals(1, upload.getRecords().size());
+
+        List<DeleteFilesRequestRecord> deleteRecords = new ArrayList<>(deleteFilesRequest().getRecords());
+        DeleteFilesRequest.DeleteFilesRequestBuilder deleteBuilder = DeleteFilesRequest.builder().records(deleteRecords);
+        DeleteFilesRequest delete = deleteBuilder.build();
+        deleteRecords.clear();
+        deleteBuilder.records(null);
+        Assert.assertEquals(1, delete.getRecords().size());
+
+        List<GetTokensRequestRecord> tokenRecords = new ArrayList<>();
+        tokenRecords.add(GetTokensRequestRecord.builder().value("a@b.com").tokenGroupName("g").build());
+        GetTokensRequest tokens = GetTokensRequest.builder().records(tokenRecords).build();
+        tokenRecords.clear();
+        Assert.assertEquals(1, tokens.getRecords().size());
+
+        try {
+            tokens.getRecords().clear();
+            Assert.fail(EXCEPTION_NOT_THROWN);
+        } catch (UnsupportedOperationException expected) {
+            Assert.assertEquals(1, tokens.getRecords().size());
+        }
+        Assert.assertNull(GetTokensRequest.builder().build().getRecords());
+        Assert.assertNull(UploadFilesRequest.builder().build().getRecords());
+        Assert.assertNull(DeleteFilesRequest.builder().build().getRecords());
     }
 }

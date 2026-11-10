@@ -15,7 +15,7 @@ import com.google.gson.JsonObject;
 import com.skyflow.config.BaseCredentials;
 import com.skyflow.enums.Env;
 import com.skyflow.errors.ErrorCode;
-import com.skyflow.errors.ErrorMessage;
+import com.skyflow.errors.BaseErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.logs.ErrorLogs;
 import com.skyflow.logs.InfoLogs;
@@ -87,11 +87,11 @@ public class BaseUtils {
                 privateKey = parsePkcs8PrivateKey(Base64.getDecoder().decode(privateKeyContent));
             } catch (IllegalArgumentException e) {
                 LogUtil.printErrorLog(ErrorLogs.INVALID_KEY_SPEC.getLog());
-                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidKeySpec.getMessage());
+                throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), BaseErrorMessage.InvalidKeySpec.getMessage());
             }
         } else {
             LogUtil.printErrorLog(ErrorLogs.JWT_INVALID_FORMAT.getLog());
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.JwtInvalidFormat.getMessage());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), BaseErrorMessage.JwtInvalidFormat.getMessage());
         }
         return privateKey;
     }
@@ -165,10 +165,10 @@ public class BaseUtils {
             privateKey = keyFactory.generatePrivate(keySpec);
         } catch (NoSuchAlgorithmException e) {
             LogUtil.printErrorLog(ErrorLogs.INVALID_ALGORITHM.getLog());
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidAlgorithm.getMessage());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), BaseErrorMessage.InvalidAlgorithm.getMessage());
         } catch (InvalidKeySpecException e) {
             LogUtil.printErrorLog(ErrorLogs.INVALID_KEY_SPEC.getLog());
-            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), ErrorMessage.InvalidKeySpec.getMessage());
+            throw new SkyflowException(ErrorCode.INVALID_INPUT.getCode(), BaseErrorMessage.InvalidKeySpec.getMessage());
         }
         return privateKey;
     }
