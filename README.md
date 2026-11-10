@@ -3,7 +3,8 @@
 This repository hosts Skyflow's Java SDKs for integrating Skyflow into a Java backend. It's a single Maven reactor with more than one published artifact — pick the package that matches what you need below.
 
 [![CI](https://img.shields.io/static/v1?label=CI&message=passing&color=green?style=plastic&logo=github)](https://github.com/skyflowapi/skyflow-java/actions)
-[![GitHub release](https://img.shields.io/github/v/release/skyflowapi/skyflow-java.svg)](https://github.com/skyflowapi/skyflow-java/releases)
+[![skyvault release](https://img.shields.io/github/v/release/skyflowapi/skyflow-java?filter=2.*&sort=semver&label=skyvault)](https://github.com/skyflowapi/skyflow-java/releases?q=tag%3A2&expanded=false)
+[![flowvault release](https://img.shields.io/github/v/release/skyflowapi/skyflow-java?filter=flowvault/*&sort=semver&label=flowvault)](https://github.com/skyflowapi/skyflow-java/releases?q=flowvault&expanded=false)
 [![License](https://img.shields.io/github/license/skyflowapi/skyflow-java)](https://github.com/skyflowapi/skyflow-java/blob/main/LICENSE)
 
 ## Which package do I want?
@@ -17,7 +18,7 @@ This repository hosts Skyflow's Java SDKs for integrating Skyflow into a Java ba
 
 > **The two artifacts are versioned independently.** `flowvault` is a new SDK starting at `1.0.0`; its lower version number reflects a first release, not an older or lesser SDK than `skyvault` 2.x. Upgrade each on its own version line.
 
-> Migrating from v1? See skyvault's **[Migration Guide](docs/migrate_to_v2.md)**. V1 is in maintenance mode and will reach End of Life on October 31, 2026.
+> :warning: **skyflow-java v1 reached End of Life on October 31, 2026 and is no longer supported.** It will not receive any further security patches, bug fixes, or updates. Please upgrade to the latest skyflow-java v2 [![Latest skyvault 2.x release](https://img.shields.io/github/v/release/skyflowapi/skyflow-java?filter=2.*&sort=semver&label=latest)](https://github.com/skyflowapi/skyflow-java/releases?q=tag%3A2&expanded=false) using the **[Migration Guide](docs/migrate_to_v2.md)**.
 
 ## Repository layout
 

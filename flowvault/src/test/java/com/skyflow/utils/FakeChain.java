@@ -132,5 +132,9 @@ public final class FakeChain implements Interceptor.Chain {
         public void close() {
             closed = true;
         }
+
+        public boolean isClosed() {
+            return closed;
+        }
     }
 }
