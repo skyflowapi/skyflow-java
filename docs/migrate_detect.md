@@ -346,7 +346,7 @@ String runId = submitted.getRunId();           // getStatus() is null, nothing w
   `processed-entities-<input name>.json`, and object entities `processed-object-entities-<input name>.json` for PDFs,
   Office documents and images.
 - **All outputs are returned.** The old response surfaced only the first output. `getOutput()` returns the full list.
-- **`UNKNOWN` ends polling.** The old method kept calling the run endpoint on any status it did not recognise. The new one
+- **`UNKNOWN` ends polling.** The old method kept calling the run endpoint on any status it did not recognize. The new one
   stops and returns `UNKNOWN`; check for it and call `getRun` later.
 - **Errors are not rewrapped.** The old method replaced any polling failure with a generic "polling for results failed"
   message. The new one throws the `SkyflowException` of the failed lookup with its HTTP code and request id intact.
