@@ -200,7 +200,7 @@ public class HttpConfigTests {
         Assert.assertTrue("Retry must be registered first so it wraps the auth interceptor",
                 interceptors.get(0) instanceof SkyflowRetryInterceptor);
         Assert.assertFalse(interceptors.get(1) instanceof SkyflowRetryInterceptor);
-        // innermost: success-body normalisation runs on each attempt's raw response
+        // innermost: success-body normalization runs on each attempt's raw response
         Assert.assertTrue(interceptors.get(2) instanceof com.skyflow.utils.SuccessBodyInterceptor);
     }
 

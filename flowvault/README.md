@@ -1941,7 +1941,7 @@ Sample response (partial success):
 }
 ```
 
-`deleteFilesResponse.getRecords()` returns one `DeleteFilesResponseRecord` per resolved record, with the accessors `getSkyflowId()`, `getTableName()`, `getColumns()`, `getHttpCode()`, `getError()` and `getRequestId()` (set only when `getError()` is non-null). `getColumns()` is a list of `DeleteFilesColumnResult` (`getColumn()`, `getStatus()` returning a `DeleteFilesStatus` — `DELETED`, or `UNKNOWN` for a status this SDK version does not recognise — and `getRawStatus()` with the value as sent), or null on a failed record.
+`deleteFilesResponse.getRecords()` returns one `DeleteFilesResponseRecord` per resolved record, with the accessors `getSkyflowId()`, `getTableName()`, `getColumns()`, `getHttpCode()`, `getError()` and `getRequestId()` (set only when `getError()` is non-null). `getColumns()` is a list of `DeleteFilesColumnResult` (`getColumn()`, `getStatus()` returning a `DeleteFilesStatus` — `DELETED`, or `UNKNOWN` for a status this SDK version does not recognize — and `getRawStatus()` with the value as sent), or null on a failed record.
 
 # Detect
 

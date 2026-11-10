@@ -503,7 +503,7 @@ public class RequestResponseWrapperTests {
     }
 
     @Test
-    public void testDeleteFilesColumnResult_unrecognisedStatusIsUnknownButKeepsTheRawValue() {
+    public void testDeleteFilesColumnResult_unrecognizedStatusIsUnknownButKeepsTheRawValue() {
         com.skyflow.vault.data.DeleteFilesColumnResult lower =
                 new com.skyflow.vault.data.DeleteFilesColumnResult("kyc", "deleted");
         Assert.assertEquals(com.skyflow.enums.DeleteFilesStatus.DELETED, lower.getStatus());

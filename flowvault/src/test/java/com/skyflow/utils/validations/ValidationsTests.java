@@ -316,7 +316,7 @@ public class ValidationsTests {
 
     @Test
     public void testValidateVaultConfiguration_rejectsNonHttpsVaultUrl() {
-        for (String url : new String[]{"http://myvault.example.com", "myvault.example.com", "https://"}) {
+        for (String url : new String[]{"http://vault.example.com", "vault.example.com", "https://"}) {
             VaultConfig config = new VaultConfig();
             config.setVaultId("vault123");
             config.setVaultUrl(url);

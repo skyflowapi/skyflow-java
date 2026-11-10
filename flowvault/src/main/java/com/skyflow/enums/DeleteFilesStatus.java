@@ -5,7 +5,7 @@ public enum DeleteFilesStatus {
     /** The file was deleted. */
     DELETED,
     /**
-     * The vault reported a status this SDK version does not recognise, or none at all. The value
+     * The vault reported a status this SDK version does not recognize, or none at all. The value
      * as received is available from {@code DeleteFilesColumnResult.getRawStatus()}.
      */
     UNKNOWN;

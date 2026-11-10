@@ -3305,7 +3305,7 @@ public class UtilsTests {
     }
 
     @Test
-    public void testErrorBodyJson_unrecognisedObjectBecomesTheMessage() {
+    public void testErrorBodyJson_unrecognizedObjectBecomesTheMessage() {
         Map<String, Object> body = new HashMap<>();
         body.put("detail", "something");
         Assert.assertEquals("{\"detail\":\"something\"}", messageOf(Utils.errorBodyJson(body, 500)));

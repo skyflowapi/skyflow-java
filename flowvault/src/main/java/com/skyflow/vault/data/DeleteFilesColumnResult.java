@@ -20,7 +20,7 @@ public class DeleteFilesColumnResult {
         return column;
     }
 
-    /** The delete outcome; {@link DeleteFilesStatus#UNKNOWN} for a status this SDK does not recognise. */
+    /** The delete outcome; {@link DeleteFilesStatus#UNKNOWN} for a status this SDK does not recognize. */
     public DeleteFilesStatus getStatus() {
         return status;
     }

@@ -697,7 +697,7 @@ public final class Utils extends BaseUtils {
         return value instanceof String && !((String) value).trim().isEmpty() ? (String) value : null;
     }
 
-    /** JSON via Jackson, which honours the generated types' wire names; Gson only as a fallback. */
+    /** JSON via Jackson, which honors the generated types' wire names; Gson only as a fallback. */
     private static String toJson(Object value) {
         try {
             return ObjectMappers.JSON_MAPPER.writeValueAsString(value);

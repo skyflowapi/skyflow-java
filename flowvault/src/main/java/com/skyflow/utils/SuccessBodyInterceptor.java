@@ -15,7 +15,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Normalises 2xx bodies for query, getTokens, uploadFiles and deleteFiles before the generated
+ * Normalizes 2xx bodies for query, getTokens, uploadFiles and deleteFiles before the generated
  * client parses them. A blank body becomes {@code {}}, an empty response, instead of a
  * deserialization failure. A body that is not a JSON object fails the call with
  * {@link UnparseableResponseException}, which keeps the real status and body.
