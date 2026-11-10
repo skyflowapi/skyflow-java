@@ -933,8 +933,14 @@ public class Validations extends BaseValidations {
                             ErrorMessage.DuplicateColumnInDeleteFilesColumns, delete, i);
                 }
             }
+            // A blank skyflowId would pass the exactly-one check below but still be sent on the wire
+            // alongside uniqueValues, so reject it here like the upload path does.
+            if (record.getSkyflowId() != null && !hasText(record.getSkyflowId())) {
+                throw invalid(ErrorLogs.EMPTY_SKYFLOW_ID_IN_DELETE_FILES_RECORD,
+                        ErrorMessage.EmptySkyflowIdInDeleteFilesRecord, delete, i);
+            }
             List<Map<String, Object>> uniqueValues = record.getUniqueValues();
-            boolean hasSkyflowId = hasText(record.getSkyflowId());
+            boolean hasSkyflowId = record.getSkyflowId() != null;
             boolean hasUniqueValues = uniqueValues != null && !uniqueValues.isEmpty();
             if (hasSkyflowId == hasUniqueValues) {
                 throw invalid(ErrorLogs.INVALID_ID_OR_UNIQUE_VALUES_IN_DELETE_FILES_RECORD,

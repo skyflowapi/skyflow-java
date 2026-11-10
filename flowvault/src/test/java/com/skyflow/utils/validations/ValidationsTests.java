@@ -2570,15 +2570,46 @@ public class ValidationsTests {
         assertRejected(() -> Validations.validateDeleteFilesRequest(deleteFilesRequest(DeleteFilesRequestRecord.builder()
                 .tableName("onboarding").columns(Collections.singletonList("photo")).build())),
                 ErrorMessage.InvalidIdOrUniqueValuesInDeleteFilesRecord);
-        // a blank skyflowId and an empty uniqueValues list both count as absent
+        // an empty uniqueValues list counts as absent
         assertRejected(() -> Validations.validateDeleteFilesRequest(deleteFilesRequest(DeleteFilesRequestRecord.builder()
-                .tableName("onboarding").skyflowId("  ").uniqueValues(new ArrayList<>())
+                .tableName("onboarding").uniqueValues(new ArrayList<>())
                 .columns(Collections.singletonList("photo")).build())),
                 ErrorMessage.InvalidIdOrUniqueValuesInDeleteFilesRecord);
+        // a blank skyflowId is rejected outright, alone or with uniqueValues (it would otherwise be sent with them)
+        assertRejected(() -> Validations.validateDeleteFilesRequest(deleteFilesRequest(DeleteFilesRequestRecord.builder()
+                .tableName("onboarding").skyflowId("  ")
+                .columns(Collections.singletonList("photo")).build())),
+                ErrorMessage.EmptySkyflowIdInDeleteFilesRecord);
+        assertRejected(() -> Validations.validateDeleteFilesRequest(deleteFilesRequest(DeleteFilesRequestRecord.builder()
+                .tableName("onboarding").skyflowId("  ").uniqueValues(Collections.singletonList(unique))
+                .columns(Collections.singletonList("photo")).build())),
+                ErrorMessage.EmptySkyflowIdInDeleteFilesRecord);
         // both
         assertRejected(() -> Validations.validateDeleteFilesRequest(deleteFilesRequest(DeleteFilesRequestRecord.builder()
                 .tableName("onboarding").skyflowId("sky-1").uniqueValues(Collections.singletonList(unique))
                 .columns(Collections.singletonList("photo")).build())),
                 ErrorMessage.InvalidIdOrUniqueValuesInDeleteFilesRecord);
+    }
+
+    @Test
+    public void testValidateUploadFilesRequest_unreadableFileIsRejected() throws Exception {
+        File unreadable = tempFolder.newFile("locked.pdf");
+        // root can read any file, so the rule cannot be exercised there
+        org.junit.Assume.assumeTrue(unreadable.setReadable(false) && !unreadable.canRead());
+        assertRejected(() -> Validations.validateUploadFilesRequest(uploadRequest(uploadRecord(
+                UploadFilesRequestColumn.builder().column("resumePDF").filePath(unreadable.getPath()).build()))),
+                ErrorMessage.InvalidFilePathInUploadFilesColumn);
+        assertRejected(() -> Validations.validateUploadFilesRequest(uploadRequest(uploadRecord(
+                UploadFilesRequestColumn.builder().column("photoID").fileObject(unreadable).build()))),
+                ErrorMessage.InvalidFileObjectInUploadFilesColumn);
+    }
+
+    @Test
+    public void testValidateDeleteFilesRequest_emptyRecordsAndColumnsAreRejected() {
+        assertRejected(() -> Validations.validateDeleteFilesRequest(
+                DeleteFilesRequest.builder().records(new ArrayList<>()).build()), ErrorMessage.EmptyDeleteFilesRecords);
+        assertRejected(() -> Validations.validateDeleteFilesRequest(deleteFilesRequest(DeleteFilesRequestRecord.builder()
+                .tableName("onboarding").skyflowId("sky-1").columns(new ArrayList<>()).build())),
+                ErrorMessage.EmptyDeleteFilesColumns);
     }
 }

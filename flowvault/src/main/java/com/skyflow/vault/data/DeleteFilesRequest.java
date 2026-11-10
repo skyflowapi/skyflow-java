@@ -1,18 +1,22 @@
 package com.skyflow.vault.data;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class DeleteFilesRequest extends BaseDeleteFilesRequest {
-    private final DeleteFilesRequestBuilder builder;
+    private final List<DeleteFilesRequestRecord> records;
 
     private DeleteFilesRequest(DeleteFilesRequestBuilder builder) {
         super(builder);
-        this.builder = builder;
+        // Snapshot the list so later changes to the builder or the caller's list cannot alter a built request.
+        this.records = builder.records == null ? null
+                : Collections.unmodifiableList(new ArrayList<>(builder.records));
     }
 
     /** Records whose file columns to delete. */
     public List<DeleteFilesRequestRecord> getRecords() {
-        return this.builder.records;
+        return this.records;
     }
 
     public static DeleteFilesRequestBuilder builder() {

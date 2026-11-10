@@ -34,6 +34,7 @@ import com.skyflow.generated.rest.resources.tokens.requests.DeleteTokenRequest;
 import com.skyflow.generated.rest.resources.tokens.requests.GetTokensFromValuesRequest;
 import com.skyflow.generated.rest.resources.tokens.requests.TokenizeRequest;
 import com.skyflow.generated.rest.types.DeleteResponseObject;
+import com.skyflow.generated.rest.types.FileUploadResponseObject;
 import com.skyflow.generated.rest.types.DeleteTokenResponse;
 import com.skyflow.generated.rest.types.DeleteTokenResponseObject;
 import com.skyflow.generated.rest.types.DetokenizeResponseObject;
@@ -1735,6 +1736,23 @@ public final class Utils extends BaseUtils {
         row.put("error", error);
         row.put("requestId", requestId);
         return row;
+    }
+
+    /** Row error when the vault's upload response cannot be safely paired with the request. */
+    public static final String UPLOAD_RESPONSE_MISMATCH_ERROR =
+            "Upload response did not match the request; file was not uploaded.";
+
+    /**
+     * True when a returned upload record belongs to the requested record at the same position: same
+     * table, and the same skyflowId when the request named one (new records have no ID to compare).
+     */
+    public static boolean uploadResponseMatchesRequest(UploadFilesRequestRecord requested,
+                                                       FileUploadResponseObject returned) {
+        if (!Objects.equals(requested.getTableName(), returned.getTableName())) {
+            return false;
+        }
+        return requested.getSkyflowId() == null
+                || Objects.equals(requested.getSkyflowId(), returned.getSkyflowId());
     }
 
     /** Every requested column of a record that failed in Phase A: nothing was uploaded. */

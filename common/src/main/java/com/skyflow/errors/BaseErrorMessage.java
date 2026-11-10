@@ -162,6 +162,7 @@ public enum BaseErrorMessage {
     EmptyDeleteFilesColumns("%s0 Validation error. 'columns' in DeleteFilesRequestRecord can't be empty. Specify at least one file column."),
     EmptyColumnInDeleteFilesColumns("%s0 Validation error. 'columns' in DeleteFilesRequestRecord contains a null or empty column name. Specify valid column names."),
     DuplicateColumnInDeleteFilesColumns("%s0 Validation error. 'columns' in DeleteFilesRequestRecord contains a duplicate column name. Specify each column only once."),
+    EmptySkyflowIdInDeleteFilesRecord("%s0 Validation error. 'skyflowId' in DeleteFilesRequestRecord is empty. Specify a valid skyflow ID, or use 'uniqueValues' instead."),
     InvalidIdOrUniqueValuesInDeleteFilesRecord("%s0 Validation error. DeleteFilesRequestRecord must set exactly one of 'skyflowId' or 'uniqueValues'. Specify one of them."),
 
     // Connection

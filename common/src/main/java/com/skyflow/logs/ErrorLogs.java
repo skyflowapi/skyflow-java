@@ -206,6 +206,7 @@ public enum ErrorLogs {
     EMPTY_DELETE_FILES_COLUMNS("Invalid %s1 request. Columns in DeleteFilesRequestRecord can not be null or empty at index %s2."),
     EMPTY_COLUMN_IN_DELETE_FILES_COLUMNS("Invalid %s1 request. Column name in DeleteFilesRequestRecord can not be null or empty at index %s2."),
     DUPLICATE_COLUMN_IN_DELETE_FILES_COLUMNS("Invalid %s1 request. Column name in DeleteFilesRequestRecord can not be repeated at index %s2."),
+    EMPTY_SKYFLOW_ID_IN_DELETE_FILES_RECORD("Invalid %s1 request. Skyflow ID in DeleteFilesRequestRecord can not be empty at index %s2."),
     INVALID_ID_OR_UNIQUE_VALUES_IN_DELETE_FILES_RECORD("Invalid %s1 request. DeleteFilesRequestRecord must set exactly one of skyflow ID or unique values at index %s2."),
     DELETE_REQUEST_NULL("Invalid %s1 request. Delete request can not be null."),
     DELETE_REQUEST_REJECTED("Delete request resulted in failure."),
