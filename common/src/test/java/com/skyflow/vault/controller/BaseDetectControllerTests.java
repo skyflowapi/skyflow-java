@@ -1,6 +1,7 @@
 package com.skyflow.vault.controller;
 
 import com.skyflow.detect.TestReidentifySource;
+import com.skyflow.detect.DeidentifyFileDataFormat;
 import com.skyflow.detect.ReidentifyFileSource;
 import com.skyflow.detect.DeidentifyFileSource;
 import com.skyflow.config.BaseVaultConfig;
@@ -14,7 +15,6 @@ import com.skyflow.detect.CheckGuardrailsResponse;
 import com.skyflow.detect.TestDeidentifySource;
 import com.skyflow.detect.DetectRunStatus;
 import com.skyflow.detect.EntityType;
-import com.skyflow.detect.FileDataFormat;
 import com.skyflow.detect.GetRunRequest;
 import com.skyflow.detect.GetRunResponse;
 import com.skyflow.detect.GuardrailsValidation;
@@ -179,8 +179,8 @@ public class BaseDetectControllerTests {
         Assert.assertEquals(2, response.getOutput().size());
         Assert.assertEquals("QUJD", response.getOutput().get(0).getProcessedFile());
         Assert.assertEquals("REDACTED_FILE", response.getOutput().get(0).getProcessedFileType());
-        Assert.assertEquals(FileDataFormat.PDF, response.getOutput().get(0).getProcessedFileExtension());
-        Assert.assertEquals(FileDataFormat.JSON, response.getOutput().get(1).getProcessedFileExtension());
+        Assert.assertEquals(DeidentifyFileDataFormat.PDF, response.getOutput().get(0).getProcessedFileExtension());
+        Assert.assertEquals(DeidentifyFileDataFormat.JSON, response.getOutput().get(1).getProcessedFileExtension());
         Assert.assertEquals(Integer.valueOf(3), response.getMetrics().getPages());
         Assert.assertNull(response.getMessage());
 

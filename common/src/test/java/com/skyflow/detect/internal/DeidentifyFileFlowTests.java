@@ -1,10 +1,10 @@
 package com.skyflow.detect.internal;
 
 import com.skyflow.detect.TestDeidentifySource;
+import com.skyflow.detect.DeidentifyFileDataFormat;
 import com.skyflow.detect.DeidentifyFileRequest;
 import com.skyflow.detect.DeidentifyFileResponse;
 import com.skyflow.detect.DetectRunStatus;
-import com.skyflow.detect.FileDataFormat;
 import com.skyflow.detect.FileOutput;
 import com.skyflow.detect.GetRunResponse;
 import com.skyflow.detect.Metrics;
@@ -37,9 +37,9 @@ public class DeidentifyFileFlowTests {
         return new GetRunResponse("run-1", DetectRunStatus.SUCCESS, outputType,
                 Arrays.asList(
                         new FileOutput(Base64.getEncoder().encodeToString("redacted".getBytes()),
-                                "REDACTED_FILE", FileDataFormat.TXT),
+                                "REDACTED_FILE", DeidentifyFileDataFormat.TXT),
                         new FileOutput(Base64.getEncoder().encodeToString("[]".getBytes()),
-                                "ENTITIES", FileDataFormat.JSON)),
+                                "ENTITIES", DeidentifyFileDataFormat.JSON)),
                 new Metrics(null, 1, 8, null, null, null), null);
     }
 

@@ -8,7 +8,7 @@ import com.skyflow.detect.Detect;
 import com.skyflow.detect.DetectConfiguration;
 import com.skyflow.detect.Document;
 import com.skyflow.detect.EntityType;
-import com.skyflow.detect.FileDataFormat;
+import com.skyflow.detect.DeidentifyFileDataFormat;
 import com.skyflow.detect.FileMapping;
 import com.skyflow.detect.Image;
 import com.skyflow.detect.IncludePrefix;
@@ -291,8 +291,8 @@ public class DetectConfigurationMapperTests {
         Assert.assertNull(DetectRequestMapper.inferFormat("README"));
         Assert.assertNull(DetectRequestMapper.inferFormat("archive."));
         Assert.assertNull(DetectRequestMapper.inferFormat("notes.unknownext"));
-        Assert.assertEquals(FileDataFormat.PDF, DetectRequestMapper.inferFormat("scan.PDF"));
-        Assert.assertEquals(FileDataFormat.TXT, DetectRequestMapper.inferFormat("/tmp/a.b/notes.txt"));
+        Assert.assertEquals(DeidentifyFileDataFormat.PDF, DetectRequestMapper.inferFormat("scan.PDF"));
+        Assert.assertEquals(DeidentifyFileDataFormat.TXT, DetectRequestMapper.inferFormat("/tmp/a.b/notes.txt"));
     }
 
     @Test

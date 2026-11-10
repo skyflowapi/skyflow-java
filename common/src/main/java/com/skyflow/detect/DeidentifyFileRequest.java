@@ -20,7 +20,7 @@ public final class DeidentifyFileRequest {
     private final String value;
     private final File file;
     private final String filePath;
-    private final FileDataFormat dataFormat;
+    private final DeidentifyFileDataFormat dataFormat;
     private final String configurationId;
     private final DetectConfiguration configuration;
     private final PollOptions pollOptions;
@@ -77,7 +77,7 @@ public final class DeidentifyFileRequest {
     /**
      * @return Format of the file. Optional; inferred from the file extension or by the server when omitted.
      */
-    public FileDataFormat getDataFormat() {
+    public DeidentifyFileDataFormat getDataFormat() {
         return dataFormat;
     }
 
@@ -129,7 +129,7 @@ public final class DeidentifyFileRequest {
         private String value;
         private File file;
         private String filePath;
-        private FileDataFormat dataFormat;
+        private DeidentifyFileDataFormat dataFormat;
         private String configurationId;
         private DetectConfiguration configuration;
         private PollOptions pollOptions;
@@ -176,10 +176,10 @@ public final class DeidentifyFileRequest {
         }
 
         /**
-         * @param dataFormat Format of the file. Optional.
+         * @param dataFormat Format of the file. Optional; inferred from the extension of a local file when omitted.
          * @return this builder
          */
-        public DeidentifyFileRequestBuilder dataFormat(FileDataFormat dataFormat) {
+        public DeidentifyFileRequestBuilder dataFormat(DeidentifyFileDataFormat dataFormat) {
             this.dataFormat = dataFormat;
             return this;
         }

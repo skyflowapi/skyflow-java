@@ -8,7 +8,7 @@ import com.skyflow.detect.DetectConfiguration;
 import com.skyflow.detect.DetectRunStatus;
 import com.skyflow.detect.Entity;
 import com.skyflow.detect.EntityType;
-import com.skyflow.detect.FileDataFormat;
+import com.skyflow.detect.DeidentifyFileDataFormat;
 import com.skyflow.detect.GetRunResponse;
 import com.skyflow.errors.BaseErrorMessage;
 import com.skyflow.errors.SkyflowException;
@@ -53,7 +53,7 @@ public class DeidentifyFileMapperTests {
     @Test
     public void dataFormatIsSentLowerCase() throws Exception {
         DeidentifyFileRequestV2 api = DetectRequestMapper.toDeidentifyFileRequest(DeidentifyFileRequest.builder()
-                .dataSource(TestDeidentifySource.PRESIGNED_URL).value("https://s3/in").dataFormat(FileDataFormat.PDF).build(), "v");
+                .dataSource(TestDeidentifySource.PRESIGNED_URL).value("https://s3/in").dataFormat(DeidentifyFileDataFormat.PDF).build(), "v");
         Assert.assertTrue(wire(api).contains("\"dataFormat\":\"pdf\""));
     }
 
@@ -101,7 +101,7 @@ public class DeidentifyFileMapperTests {
         Assert.assertEquals("pdf", api.getDataFormat().get().toString());
 
         DeidentifyFileRequestV2 explicit = DetectRequestMapper.toDeidentifyFileRequest(
-                DeidentifyFileRequest.builder().filePath(input.getPath()).dataFormat(FileDataFormat.TXT).build(), "v");
+                DeidentifyFileRequest.builder().filePath(input.getPath()).dataFormat(DeidentifyFileDataFormat.TXT).build(), "v");
         Assert.assertEquals("txt", explicit.getDataFormat().get().toString());
     }
 
@@ -159,7 +159,7 @@ public class DeidentifyFileMapperTests {
         Assert.assertEquals(DetectRunStatus.SUCCESS, response.getStatus());
         Assert.assertEquals(TestDeidentifySource.BASE64, response.getOutputType());
         Assert.assertEquals("UERG", response.getOutput().get(0).getProcessedFile());
-        Assert.assertEquals(FileDataFormat.PDF, response.getOutput().get(0).getProcessedFileExtension());
+        Assert.assertEquals(DeidentifyFileDataFormat.PDF, response.getOutput().get(0).getProcessedFileExtension());
         Assert.assertEquals(Integer.valueOf(2), response.getMetrics().getPages());
     }
 }
