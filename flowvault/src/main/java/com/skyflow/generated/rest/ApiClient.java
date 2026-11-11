@@ -4,31 +4,85 @@
 package com.skyflow.generated.rest;
 
 import com.skyflow.generated.rest.core.ClientOptions;
+import com.skyflow.generated.rest.core.RequestOptions;
 import com.skyflow.generated.rest.core.Suppliers;
-import com.skyflow.generated.rest.resources.flowservice.FlowserviceClient;
+import com.skyflow.generated.rest.requests.PatchV2VaultsIdRequest;
+import com.skyflow.generated.rest.resources.files.FilesClient;
+import com.skyflow.generated.rest.resources.query.QueryClient;
 import com.skyflow.generated.rest.resources.records.RecordsClient;
-
+import com.skyflow.generated.rest.resources.tokens.TokensClient;
+import java.util.Optional;
 import java.util.function.Supplier;
 
-public class ApiClient {
+public class ApiClient implements AutoCloseable {
     protected final ClientOptions clientOptions;
+
+    private final RawApiClient rawClient;
+
+    protected final Supplier<FilesClient> filesClient;
+
+    protected final Supplier<QueryClient> queryClient;
 
     protected final Supplier<RecordsClient> recordsClient;
 
-    protected final Supplier<FlowserviceClient> flowserviceClient;
+    protected final Supplier<TokensClient> tokensClient;
 
     public ApiClient(ClientOptions clientOptions) {
         this.clientOptions = clientOptions;
+        this.rawClient = new RawApiClient(clientOptions);
+        this.filesClient = Suppliers.memoize(() -> new FilesClient(clientOptions));
+        this.queryClient = Suppliers.memoize(() -> new QueryClient(clientOptions));
         this.recordsClient = Suppliers.memoize(() -> new RecordsClient(clientOptions));
-        this.flowserviceClient = Suppliers.memoize(() -> new FlowserviceClient(clientOptions));
+        this.tokensClient = Suppliers.memoize(() -> new TokensClient(clientOptions));
+    }
+
+    /**
+     * Get responses with HTTP metadata like headers
+     */
+    public RawApiClient withRawResponse() {
+        return this.rawClient;
+    }
+
+    public void patchV2VaultsId(Optional<String> vaultId) {
+        this.rawClient.patchV2VaultsId(vaultId).body();
+    }
+
+    public void patchV2VaultsId(Optional<String> vaultId, RequestOptions requestOptions) {
+        this.rawClient.patchV2VaultsId(vaultId, requestOptions).body();
+    }
+
+    public void patchV2VaultsId(Optional<String> vaultId, PatchV2VaultsIdRequest request) {
+        this.rawClient.patchV2VaultsId(vaultId, request).body();
+    }
+
+    public void patchV2VaultsId(
+            Optional<String> vaultId, PatchV2VaultsIdRequest request, RequestOptions requestOptions) {
+        this.rawClient.patchV2VaultsId(vaultId, request, requestOptions).body();
+    }
+
+    public FilesClient files() {
+        return this.filesClient.get();
+    }
+
+    public QueryClient query() {
+        return this.queryClient.get();
     }
 
     public RecordsClient records() {
         return this.recordsClient.get();
     }
 
-    public FlowserviceClient flowservice() {
-        return this.flowserviceClient.get();
+    public TokensClient tokens() {
+        return this.tokensClient.get();
+    }
+
+    /**
+     * Releases resources owned by this client. See {@code ClientOptions.close()} for what is
+     * and is not released.
+     */
+    @Override
+    public void close() {
+        this.clientOptions.close();
     }
 
     public static ApiClientBuilder builder() {
