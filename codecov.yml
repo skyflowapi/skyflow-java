@@ -1,3 +1,13 @@
+# Notify GitHub once per commit, after the three module uploads from pr.yml / main.yml have
+# all arrived, instead of once per upload. Notifying per upload ran several check-run passes
+# for the same commit and intermittently left a few of the 21 checks stuck "in progress".
+# If a module upload ever goes missing the statuses are simply not posted, which is easier
+# to spot than a check that never completes.
+codecov:
+  notify:
+    after_n_builds: 3
+    wait_for_ci: true
+
 # Post a summary on every PR, broken down by flag (module) and component so all three of
 # common / skyvault / flowvault are visible at a glance. require_changes: false keeps the
 # comment on PRs that touch only one module, so the other two still report their coverage.
@@ -107,8 +117,11 @@ component_management:
         - "**/src/main/java/com/skyflow/vault/controller/**"
     - component_id: vault_detect
       name: Detect
+      # Detect V2 lives in com.skyflow.detect (models, mappers, polling, file output) plus
+      # BaseDetectController / DetectController under vault.controller, which the Vault
+      # Controller component already covers. The old vault/detect package no longer exists.
       paths:
-        - "**/src/main/java/com/skyflow/vault/detect/**"
+        - "**/src/main/java/com/skyflow/detect/**"
     - component_id: vault_audit
       name: Audit
       paths:

@@ -1,15 +1,16 @@
 package com.skyflow.utils;
 
-import com.google.gson.JsonObject;
-import com.skyflow.config.ConnectionConfig;
-import com.skyflow.enums.RequestMethod;
-import com.skyflow.vault.connection.InvokeConnectionRequest;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.HashMap;
-import java.util.Map;
+import com.google.gson.JsonObject;
+import com.skyflow.config.ConnectionConfig;
+import com.skyflow.enums.RequestMethod;
+import com.skyflow.vault.connection.InvokeConnectionRequest;
 
 public class UtilsTests {
     private static final String INVALID_EXCEPTION_THROWN = "Should not have thrown any exception";
@@ -76,8 +77,12 @@ public class UtilsTests {
 
     @Test
     public void testGetMetricsWithException() {
+        // Clearing System Properties explicitly to throw exception. They are restored afterwards: the JDK's
+        // socket layer reads os.name on first use, and a null value breaks every later test that opens a socket.
+        String osName = System.getProperty("os.name");
+        String osVersion = System.getProperty("os.version");
+        String javaVersion = System.getProperty("java.version");
         try {
-            // Clearing System Properties explicitly to throw exception
             System.clearProperty("os.name");
             System.clearProperty("os.version");
             System.clearProperty("java.version");
@@ -89,6 +94,18 @@ public class UtilsTests {
             Assert.assertTrue(metrics.get(Constants.SDK_METRIC_CLIENT_OS_DETAILS).getAsString().isEmpty());
         } catch (Exception e) {
             Assert.fail(INVALID_EXCEPTION_THROWN);
+        } finally {
+            restore("os.name", osName);
+            restore("os.version", osVersion);
+            restore("java.version", javaVersion);
+        }
+    }
+
+    private static void restore(String key, String value) {
+        if (value == null) {
+            System.clearProperty(key);
+        } else {
+            System.setProperty(key, value);
         }
     }
 }

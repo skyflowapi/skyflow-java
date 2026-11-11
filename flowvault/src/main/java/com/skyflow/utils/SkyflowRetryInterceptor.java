@@ -1,6 +1,7 @@
 package com.skyflow.utils;
 
 import okhttp3.Interceptor;
+import okhttp3.Request;
 import okhttp3.Response;
 
 import java.io.IOException;
@@ -16,12 +17,15 @@ import java.util.Random;
  * retry budget once for the whole client rather than once per request; this implementation keeps
  * that state per call.
  * <p>
- * Retries the same statuses the generated interceptor does: 408, 429, and any 5xx.
+ * Retries the same statuses the generated interceptor does: 408, 429, and any 5xx, except that
+ * uploadFiles' signed-URL request is not retried on a 5xx (see {@link #shouldRetry(int, boolean)}).
  */
 public final class SkyflowRetryInterceptor implements Interceptor {
 
     /** Fraction of the computed delay applied as random jitter, so retries do not align. */
     private static final double JITTER_FACTOR = 0.2;
+
+    private static final String UPLOAD_FILES_PATH = "/v2/files/upload";
 
     private final int maxRetries;
     private final long initialRetryDelayMillis;
@@ -47,7 +51,8 @@ public final class SkyflowRetryInterceptor implements Interceptor {
     public Response intercept(Chain chain) throws IOException {
         Response response = chain.proceed(chain.request());
         // Retry budget is scoped to this call, not to the interceptor instance.
-        for (int attempt = 1; attempt <= maxRetries && shouldRetry(response.code()); attempt++) {
+        boolean createsRecords = createsRecordsOnServerError(chain.request());
+        for (int attempt = 1; attempt <= maxRetries && shouldRetry(response.code(), createsRecords); attempt++) {
             sleep(backoffMillis(attempt));
             response.close();
             response = chain.proceed(chain.request());
@@ -72,6 +77,26 @@ public final class SkyflowRetryInterceptor implements Interceptor {
 
     static boolean shouldRetry(int statusCode) {
         return statusCode == 408 || statusCode == 429 || statusCode >= 500;
+    }
+
+    /**
+     * Like {@link #shouldRetry(int)}, but a request that may already have created records is not
+     * retried on a 5xx: the server may have done the work before failing, and a retry would create
+     * the records again. 408 and 429 mean the request was not processed, so those still retry.
+     */
+    static boolean shouldRetry(int statusCode, boolean createsRecords) {
+        if (createsRecords && statusCode >= 500) {
+            return false;
+        }
+        return shouldRetry(statusCode);
+    }
+
+    /**
+     * uploadFiles' signed-URL request creates a new record for every entry without a skyflowId,
+     * so replaying it after a 5xx could leave duplicate records behind.
+     */
+    static boolean createsRecordsOnServerError(Request request) {
+        return request.url().encodedPath().endsWith(UPLOAD_FILES_PATH);
     }
 
     private static void sleep(long millis) throws IOException {

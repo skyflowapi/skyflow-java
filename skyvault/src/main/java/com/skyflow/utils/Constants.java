@@ -10,8 +10,6 @@ public final class Constants extends BaseConstants {
     public static final String SDK_VERSION;
     public static final String SDK_PREFIX;
     public static final String SDK_METRIC_NAME_VERSION_PREFIX = "skyflow-java@";
-    public static final String PROCESSED_FILE_NAME_PREFIX = "processed-";
-    public static final String DEIDENTIFIED_FILE_PREFIX = "deidentified";
     public static final String HTTPS_PROTOCOL = "https";
     public static final String ORDER_DESCENDING = "DESCENDING";
     public static final String ORDER_NONE = "NONE";

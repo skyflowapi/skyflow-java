@@ -5,11 +5,10 @@ package com.skyflow.generated.rest.resources.tokens;
 
 import com.skyflow.generated.rest.core.ClientOptions;
 import com.skyflow.generated.rest.core.RequestOptions;
-import com.skyflow.generated.rest.resources.tokens.requests.V1DetokenizePayload;
-import com.skyflow.generated.rest.resources.tokens.requests.V1TokenizePayload;
-import com.skyflow.generated.rest.types.V1DetokenizeResponse;
-import com.skyflow.generated.rest.types.V1TokenizeResponse;
-
+import com.skyflow.generated.rest.resources.tokens.requests.DetokenizePayload;
+import com.skyflow.generated.rest.resources.tokens.requests.TokenizePayload;
+import com.skyflow.generated.rest.types.DetokenizeResponse;
+import com.skyflow.generated.rest.types.TokenizeResponse;
 import java.util.concurrent.CompletableFuture;
 
 public class AsyncTokensClient {
@@ -32,49 +31,30 @@ public class AsyncTokensClient {
     /**
      * Returns records that correspond to the specified tokens.
      */
-    public CompletableFuture<V1DetokenizeResponse> recordServiceDetokenize(String vaultId) {
-        return this.rawClient.recordServiceDetokenize(vaultId).thenApply(response -> response.body());
+    public CompletableFuture<DetokenizeResponse> detokenize(String vaultId, DetokenizePayload request) {
+        return this.rawClient.detokenize(vaultId, request).thenApply(response -> response.body());
     }
 
     /**
      * Returns records that correspond to the specified tokens.
      */
-    public CompletableFuture<V1DetokenizeResponse> recordServiceDetokenize(
-            String vaultId, V1DetokenizePayload request) {
-        return this.rawClient.recordServiceDetokenize(vaultId, request).thenApply(response -> response.body());
+    public CompletableFuture<DetokenizeResponse> detokenize(
+            String vaultId, DetokenizePayload request, RequestOptions requestOptions) {
+        return this.rawClient.detokenize(vaultId, request, requestOptions).thenApply(response -> response.body());
     }
 
     /**
-     * Returns records that correspond to the specified tokens.
+     * Returns tokens that correspond to the specified records. Only applicable for fields with deterministic tokenization.<b>Note:</b> This endpoint doesn't insert records—it returns tokens for existing values. To insert records and return tokens for that new record's values, see Insert Records' <code>tokenization</code> parameter.
      */
-    public CompletableFuture<V1DetokenizeResponse> recordServiceDetokenize(
-            String vaultId, V1DetokenizePayload request, RequestOptions requestOptions) {
-        return this.rawClient
-                .recordServiceDetokenize(vaultId, request, requestOptions)
-                .thenApply(response -> response.body());
+    public CompletableFuture<TokenizeResponse> tokenize(String vaultId, TokenizePayload request) {
+        return this.rawClient.tokenize(vaultId, request).thenApply(response -> response.body());
     }
 
     /**
-     * Returns tokens that correspond to the specified records. Only applicable for fields with deterministic tokenization.&lt;br /&gt;&lt;br /&gt;&lt;b&gt;Note:&lt;/b&gt; This endpoint doesn't insert records—it returns tokens for existing values. To insert records and tokenize that new record's values, see &lt;a href='#RecordService_InsertRecord'&gt;Insert Record&lt;/a&gt; and the tokenization parameter.
+     * Returns tokens that correspond to the specified records. Only applicable for fields with deterministic tokenization.<b>Note:</b> This endpoint doesn't insert records—it returns tokens for existing values. To insert records and return tokens for that new record's values, see Insert Records' <code>tokenization</code> parameter.
      */
-    public CompletableFuture<V1TokenizeResponse> recordServiceTokenize(String vaultId) {
-        return this.rawClient.recordServiceTokenize(vaultId).thenApply(response -> response.body());
-    }
-
-    /**
-     * Returns tokens that correspond to the specified records. Only applicable for fields with deterministic tokenization.&lt;br /&gt;&lt;br /&gt;&lt;b&gt;Note:&lt;/b&gt; This endpoint doesn't insert records—it returns tokens for existing values. To insert records and tokenize that new record's values, see &lt;a href='#RecordService_InsertRecord'&gt;Insert Record&lt;/a&gt; and the tokenization parameter.
-     */
-    public CompletableFuture<V1TokenizeResponse> recordServiceTokenize(String vaultId, V1TokenizePayload request) {
-        return this.rawClient.recordServiceTokenize(vaultId, request).thenApply(response -> response.body());
-    }
-
-    /**
-     * Returns tokens that correspond to the specified records. Only applicable for fields with deterministic tokenization.&lt;br /&gt;&lt;br /&gt;&lt;b&gt;Note:&lt;/b&gt; This endpoint doesn't insert records—it returns tokens for existing values. To insert records and tokenize that new record's values, see &lt;a href='#RecordService_InsertRecord'&gt;Insert Record&lt;/a&gt; and the tokenization parameter.
-     */
-    public CompletableFuture<V1TokenizeResponse> recordServiceTokenize(
-            String vaultId, V1TokenizePayload request, RequestOptions requestOptions) {
-        return this.rawClient
-                .recordServiceTokenize(vaultId, request, requestOptions)
-                .thenApply(response -> response.body());
+    public CompletableFuture<TokenizeResponse> tokenize(
+            String vaultId, TokenizePayload request, RequestOptions requestOptions) {
+        return this.rawClient.tokenize(vaultId, request, requestOptions).thenApply(response -> response.body());
     }
 }

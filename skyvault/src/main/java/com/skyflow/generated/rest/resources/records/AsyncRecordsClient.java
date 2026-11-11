@@ -5,11 +5,20 @@ package com.skyflow.generated.rest.resources.records;
 
 import com.skyflow.generated.rest.core.ClientOptions;
 import com.skyflow.generated.rest.core.RequestOptions;
-import com.skyflow.generated.rest.resources.records.requests.*;
-import com.skyflow.generated.rest.types.*;
-
-import java.io.File;
-import java.util.Optional;
+import com.skyflow.generated.rest.resources.records.requests.BatchOperationRequest;
+import com.skyflow.generated.rest.resources.records.requests.BulkDeleteRecordRequest;
+import com.skyflow.generated.rest.resources.records.requests.DeleteRecordRequest;
+import com.skyflow.generated.rest.resources.records.requests.GetRecordByIdRequest;
+import com.skyflow.generated.rest.resources.records.requests.GetRecordsRequest;
+import com.skyflow.generated.rest.resources.records.requests.InsertRecordRequest;
+import com.skyflow.generated.rest.resources.records.requests.UpdateRecordRequest;
+import com.skyflow.generated.rest.types.BatchOperationResponse;
+import com.skyflow.generated.rest.types.BulkDeleteRecordResponse;
+import com.skyflow.generated.rest.types.BulkGetRecordResponse;
+import com.skyflow.generated.rest.types.DeleteRecordResponse;
+import com.skyflow.generated.rest.types.GetFieldRecords;
+import com.skyflow.generated.rest.types.InsertRecordResponse;
+import com.skyflow.generated.rest.types.UpdateRecordResponse;
 import java.util.concurrent.CompletableFuture;
 
 public class AsyncRecordsClient {
@@ -32,287 +41,204 @@ public class AsyncRecordsClient {
     /**
      * Performs multiple record operations in a single transaction.
      */
-    public CompletableFuture<V1BatchOperationResponse> recordServiceBatchOperation(String vaultId) {
-        return this.rawClient.recordServiceBatchOperation(vaultId).thenApply(response -> response.body());
+    public CompletableFuture<BatchOperationResponse> batchOperation(String vaultId, BatchOperationRequest request) {
+        return this.rawClient.batchOperation(vaultId, request).thenApply(response -> response.body());
     }
 
     /**
      * Performs multiple record operations in a single transaction.
      */
-    public CompletableFuture<V1BatchOperationResponse> recordServiceBatchOperation(
-            String vaultId, RecordServiceBatchOperationBody request) {
-        return this.rawClient.recordServiceBatchOperation(vaultId, request).thenApply(response -> response.body());
+    public CompletableFuture<BatchOperationResponse> batchOperation(
+            String vaultId, BatchOperationRequest request, RequestOptions requestOptions) {
+        return this.rawClient.batchOperation(vaultId, request, requestOptions).thenApply(response -> response.body());
     }
 
     /**
-     * Performs multiple record operations in a single transaction.
+     * Returns the specified records from a table.
      */
-    public CompletableFuture<V1BatchOperationResponse> recordServiceBatchOperation(
-            String vaultId, RecordServiceBatchOperationBody request, RequestOptions requestOptions) {
+    public CompletableFuture<BulkGetRecordResponse> getRecords(String vaultId, String objectName) {
+        return this.rawClient.getRecords(vaultId, objectName).thenApply(response -> response.body());
+    }
+
+    /**
+     * Returns the specified records from a table.
+     */
+    public CompletableFuture<BulkGetRecordResponse> getRecords(
+            String vaultId, String objectName, RequestOptions requestOptions) {
+        return this.rawClient.getRecords(vaultId, objectName, requestOptions).thenApply(response -> response.body());
+    }
+
+    /**
+     * Returns the specified records from a table.
+     */
+    public CompletableFuture<BulkGetRecordResponse> getRecords(
+            String vaultId, String objectName, GetRecordsRequest request) {
+        return this.rawClient.getRecords(vaultId, objectName, request).thenApply(response -> response.body());
+    }
+
+    /**
+     * Returns the specified records from a table.
+     */
+    public CompletableFuture<BulkGetRecordResponse> getRecords(
+            String vaultId, String objectName, GetRecordsRequest request, RequestOptions requestOptions) {
         return this.rawClient
-                .recordServiceBatchOperation(vaultId, request, requestOptions)
+                .getRecords(vaultId, objectName, request, requestOptions)
                 .thenApply(response -> response.body());
     }
 
     /**
-     * Gets the specified records from a table.
+     * Inserts a record in the specified table.The time-to-live (TTL) for a transient field begins when the field value is set during record insertion.Columns that have a string data type and a uniqueness constraint accept strings up to 2500 characters. If an inserted string exceeds 2500 characters, the call returns a token insertion error.
      */
-    public CompletableFuture<V1BulkGetRecordResponse> recordServiceBulkGetRecord(String vaultId, String objectName) {
-        return this.rawClient.recordServiceBulkGetRecord(vaultId, objectName).thenApply(response -> response.body());
+    public CompletableFuture<InsertRecordResponse> insertRecords(
+            String vaultId, String objectName, InsertRecordRequest request) {
+        return this.rawClient.insertRecords(vaultId, objectName, request).thenApply(response -> response.body());
     }
 
     /**
-     * Gets the specified records from a table.
+     * Inserts a record in the specified table.The time-to-live (TTL) for a transient field begins when the field value is set during record insertion.Columns that have a string data type and a uniqueness constraint accept strings up to 2500 characters. If an inserted string exceeds 2500 characters, the call returns a token insertion error.
      */
-    public CompletableFuture<V1BulkGetRecordResponse> recordServiceBulkGetRecord(
-            String vaultId, String objectName, RecordServiceBulkGetRecordRequest request) {
+    public CompletableFuture<InsertRecordResponse> insertRecords(
+            String vaultId, String objectName, InsertRecordRequest request, RequestOptions requestOptions) {
         return this.rawClient
-                .recordServiceBulkGetRecord(vaultId, objectName, request)
-                .thenApply(response -> response.body());
-    }
-
-    /**
-     * Gets the specified records from a table.
-     */
-    public CompletableFuture<V1BulkGetRecordResponse> recordServiceBulkGetRecord(
-            String vaultId,
-            String objectName,
-            RecordServiceBulkGetRecordRequest request,
-            RequestOptions requestOptions) {
-        return this.rawClient
-                .recordServiceBulkGetRecord(vaultId, objectName, request, requestOptions)
-                .thenApply(response -> response.body());
-    }
-
-    /**
-     * Inserts a record in the specified table.&lt;br /&gt;&lt;br /&gt;The time-to-live (TTL) for a transient field begins when the field value is set during record insertion.&lt;br /&gt;&lt;br /&gt;Columns that have a string data type and a uniqueness constraint accept strings up to 2500 characters. If an inserted string exceeds 2500 characters, the call returns a token insertion error.
-     */
-    public CompletableFuture<V1InsertRecordResponse> recordServiceInsertRecord(String vaultId, String objectName) {
-        return this.rawClient.recordServiceInsertRecord(vaultId, objectName).thenApply(response -> response.body());
-    }
-
-    /**
-     * Inserts a record in the specified table.&lt;br /&gt;&lt;br /&gt;The time-to-live (TTL) for a transient field begins when the field value is set during record insertion.&lt;br /&gt;&lt;br /&gt;Columns that have a string data type and a uniqueness constraint accept strings up to 2500 characters. If an inserted string exceeds 2500 characters, the call returns a token insertion error.
-     */
-    public CompletableFuture<V1InsertRecordResponse> recordServiceInsertRecord(
-            String vaultId, String objectName, RecordServiceInsertRecordBody request) {
-        return this.rawClient
-                .recordServiceInsertRecord(vaultId, objectName, request)
-                .thenApply(response -> response.body());
-    }
-
-    /**
-     * Inserts a record in the specified table.&lt;br /&gt;&lt;br /&gt;The time-to-live (TTL) for a transient field begins when the field value is set during record insertion.&lt;br /&gt;&lt;br /&gt;Columns that have a string data type and a uniqueness constraint accept strings up to 2500 characters. If an inserted string exceeds 2500 characters, the call returns a token insertion error.
-     */
-    public CompletableFuture<V1InsertRecordResponse> recordServiceInsertRecord(
-            String vaultId, String objectName, RecordServiceInsertRecordBody request, RequestOptions requestOptions) {
-        return this.rawClient
-                .recordServiceInsertRecord(vaultId, objectName, request, requestOptions)
+                .insertRecords(vaultId, objectName, request, requestOptions)
                 .thenApply(response -> response.body());
     }
 
     /**
      * Deletes the specified records from a table.
      */
-    public CompletableFuture<V1BulkDeleteRecordResponse> recordServiceBulkDeleteRecord(
-            String vaultId, String objectName) {
-        return this.rawClient.recordServiceBulkDeleteRecord(vaultId, objectName).thenApply(response -> response.body());
+    public CompletableFuture<BulkDeleteRecordResponse> deleteRecords(String vaultId, String objectName) {
+        return this.rawClient.deleteRecords(vaultId, objectName).thenApply(response -> response.body());
     }
 
     /**
      * Deletes the specified records from a table.
      */
-    public CompletableFuture<V1BulkDeleteRecordResponse> recordServiceBulkDeleteRecord(
-            String vaultId, String objectName, RecordServiceBulkDeleteRecordBody request) {
-        return this.rawClient
-                .recordServiceBulkDeleteRecord(vaultId, objectName, request)
-                .thenApply(response -> response.body());
+    public CompletableFuture<BulkDeleteRecordResponse> deleteRecords(
+            String vaultId, String objectName, RequestOptions requestOptions) {
+        return this.rawClient.deleteRecords(vaultId, objectName, requestOptions).thenApply(response -> response.body());
     }
 
     /**
      * Deletes the specified records from a table.
      */
-    public CompletableFuture<V1BulkDeleteRecordResponse> recordServiceBulkDeleteRecord(
-            String vaultId,
-            String objectName,
-            RecordServiceBulkDeleteRecordBody request,
-            RequestOptions requestOptions) {
+    public CompletableFuture<BulkDeleteRecordResponse> deleteRecords(
+            String vaultId, String objectName, BulkDeleteRecordRequest request) {
+        return this.rawClient.deleteRecords(vaultId, objectName, request).thenApply(response -> response.body());
+    }
+
+    /**
+     * Deletes the specified records from a table.
+     */
+    public CompletableFuture<BulkDeleteRecordResponse> deleteRecords(
+            String vaultId, String objectName, BulkDeleteRecordRequest request, RequestOptions requestOptions) {
         return this.rawClient
-                .recordServiceBulkDeleteRecord(vaultId, objectName, request, requestOptions)
+                .deleteRecords(vaultId, objectName, request, requestOptions)
                 .thenApply(response -> response.body());
     }
 
     /**
      * Returns the specified record from a table.
      */
-    public CompletableFuture<V1FieldRecords> recordServiceGetRecord(String vaultId, String objectName, String id) {
-        return this.rawClient.recordServiceGetRecord(vaultId, objectName, id).thenApply(response -> response.body());
+    public CompletableFuture<GetFieldRecords> getRecordById(String vaultId, String objectName, String id) {
+        return this.rawClient.getRecordById(vaultId, objectName, id).thenApply(response -> response.body());
     }
 
     /**
      * Returns the specified record from a table.
      */
-    public CompletableFuture<V1FieldRecords> recordServiceGetRecord(
-            String vaultId, String objectName, String id, RecordServiceGetRecordRequest request) {
-        return this.rawClient
-                .recordServiceGetRecord(vaultId, objectName, id, request)
-                .thenApply(response -> response.body());
-    }
-
-    /**
-     * Returns the specified record from a table.
-     */
-    public CompletableFuture<V1FieldRecords> recordServiceGetRecord(
-            String vaultId,
-            String objectName,
-            String id,
-            RecordServiceGetRecordRequest request,
-            RequestOptions requestOptions) {
-        return this.rawClient
-                .recordServiceGetRecord(vaultId, objectName, id, request, requestOptions)
-                .thenApply(response -> response.body());
-    }
-
-    /**
-     * Updates the specified record in a table.&lt;br /&gt;&lt;br /&gt;When you update a field, include the entire contents you want the field to store. For JSON fields, include all nested fields and values. If a nested field isn't included, it's removed.&lt;br /&gt;&lt;br /&gt;The time-to-live (TTL) for a transient field resets when the field value is updated.
-     */
-    public CompletableFuture<V1UpdateRecordResponse> recordServiceUpdateRecord(
-            String vaultId, String objectName, String id) {
-        return this.rawClient.recordServiceUpdateRecord(vaultId, objectName, id).thenApply(response -> response.body());
-    }
-
-    /**
-     * Updates the specified record in a table.&lt;br /&gt;&lt;br /&gt;When you update a field, include the entire contents you want the field to store. For JSON fields, include all nested fields and values. If a nested field isn't included, it's removed.&lt;br /&gt;&lt;br /&gt;The time-to-live (TTL) for a transient field resets when the field value is updated.
-     */
-    public CompletableFuture<V1UpdateRecordResponse> recordServiceUpdateRecord(
-            String vaultId, String objectName, String id, RecordServiceUpdateRecordBody request) {
-        return this.rawClient
-                .recordServiceUpdateRecord(vaultId, objectName, id, request)
-                .thenApply(response -> response.body());
-    }
-
-    /**
-     * Updates the specified record in a table.&lt;br /&gt;&lt;br /&gt;When you update a field, include the entire contents you want the field to store. For JSON fields, include all nested fields and values. If a nested field isn't included, it's removed.&lt;br /&gt;&lt;br /&gt;The time-to-live (TTL) for a transient field resets when the field value is updated.
-     */
-    public CompletableFuture<V1UpdateRecordResponse> recordServiceUpdateRecord(
-            String vaultId,
-            String objectName,
-            String id,
-            RecordServiceUpdateRecordBody request,
-            RequestOptions requestOptions) {
-        return this.rawClient
-                .recordServiceUpdateRecord(vaultId, objectName, id, request, requestOptions)
-                .thenApply(response -> response.body());
-    }
-
-    /**
-     * Deletes the specified record from a table.&lt;br /&gt;&lt;br /&gt;&lt;b&gt;Note:&lt;/b&gt; This method doesn't delete transient field tokens. Transient field values are available until they expire based on the fields' time-to-live (TTL) setting.
-     */
-    public CompletableFuture<V1DeleteRecordResponse> recordServiceDeleteRecord(
-            String vaultId, String objectName, String id) {
-        return this.rawClient.recordServiceDeleteRecord(vaultId, objectName, id).thenApply(response -> response.body());
-    }
-
-    /**
-     * Deletes the specified record from a table.&lt;br /&gt;&lt;br /&gt;&lt;b&gt;Note:&lt;/b&gt; This method doesn't delete transient field tokens. Transient field values are available until they expire based on the fields' time-to-live (TTL) setting.
-     */
-    public CompletableFuture<V1DeleteRecordResponse> recordServiceDeleteRecord(
+    public CompletableFuture<GetFieldRecords> getRecordById(
             String vaultId, String objectName, String id, RequestOptions requestOptions) {
         return this.rawClient
-                .recordServiceDeleteRecord(vaultId, objectName, id, requestOptions)
+                .getRecordById(vaultId, objectName, id, requestOptions)
                 .thenApply(response -> response.body());
     }
 
     /**
-     * Uploads a file to the specified record.
+     * Returns the specified record from a table.
      */
-    public CompletableFuture<V1UpdateRecordResponse> fileServiceUploadFile(
-            String vaultId, String objectName, String id, Optional<File> file) {
+    public CompletableFuture<GetFieldRecords> getRecordById(
+            String vaultId, String objectName, String id, GetRecordByIdRequest request) {
+        return this.rawClient.getRecordById(vaultId, objectName, id, request).thenApply(response -> response.body());
+    }
+
+    /**
+     * Returns the specified record from a table.
+     */
+    public CompletableFuture<GetFieldRecords> getRecordById(
+            String vaultId, String objectName, String id, GetRecordByIdRequest request, RequestOptions requestOptions) {
         return this.rawClient
-                .fileServiceUploadFile(vaultId, objectName, id, file)
+                .getRecordById(vaultId, objectName, id, request, requestOptions)
                 .thenApply(response -> response.body());
     }
 
     /**
-     * Uploads a file to the specified record.
+     * Updates the specified record in a table.When you update a field, include the entire contents you want the field to store. For JSON fields, include all nested fields and values. If a nested field isn't included, it's removed.The time-to-live (TTL) for a transient field resets when the field value is updated.
      */
-    public CompletableFuture<V1UpdateRecordResponse> fileServiceUploadFile(
-            String vaultId, String objectName, String id, Optional<File> file, FileServiceUploadFileRequest request) {
+    public CompletableFuture<UpdateRecordResponse> updateRecord(String vaultId, String objectName, String id) {
+        return this.rawClient.updateRecord(vaultId, objectName, id).thenApply(response -> response.body());
+    }
+
+    /**
+     * Updates the specified record in a table.When you update a field, include the entire contents you want the field to store. For JSON fields, include all nested fields and values. If a nested field isn't included, it's removed.The time-to-live (TTL) for a transient field resets when the field value is updated.
+     */
+    public CompletableFuture<UpdateRecordResponse> updateRecord(
+            String vaultId, String objectName, String id, RequestOptions requestOptions) {
         return this.rawClient
-                .fileServiceUploadFile(vaultId, objectName, id, file, request)
+                .updateRecord(vaultId, objectName, id, requestOptions)
                 .thenApply(response -> response.body());
     }
 
     /**
-     * Uploads a file to the specified record.
+     * Updates the specified record in a table.When you update a field, include the entire contents you want the field to store. For JSON fields, include all nested fields and values. If a nested field isn't included, it's removed.The time-to-live (TTL) for a transient field resets when the field value is updated.
      */
-    public CompletableFuture<V1UpdateRecordResponse> fileServiceUploadFile(
-            String vaultId,
-            String objectName,
-            String id,
-            Optional<File> file,
-            FileServiceUploadFileRequest request,
-            RequestOptions requestOptions) {
+    public CompletableFuture<UpdateRecordResponse> updateRecord(
+            String vaultId, String objectName, String id, UpdateRecordRequest request) {
+        return this.rawClient.updateRecord(vaultId, objectName, id, request).thenApply(response -> response.body());
+    }
+
+    /**
+     * Updates the specified record in a table.When you update a field, include the entire contents you want the field to store. For JSON fields, include all nested fields and values. If a nested field isn't included, it's removed.The time-to-live (TTL) for a transient field resets when the field value is updated.
+     */
+    public CompletableFuture<UpdateRecordResponse> updateRecord(
+            String vaultId, String objectName, String id, UpdateRecordRequest request, RequestOptions requestOptions) {
         return this.rawClient
-                .fileServiceUploadFile(vaultId, objectName, id, file, request, requestOptions)
+                .updateRecord(vaultId, objectName, id, request, requestOptions)
                 .thenApply(response -> response.body());
     }
 
     /**
-     * Deletes a file from the specified record.
+     * Deletes the specified record from a table.<b>Note:</b> This method doesn't delete transient field tokens. Transient field values are available until they expire based on the fields' time-to-live (TTL) setting.
      */
-    public CompletableFuture<V1DeleteFileResponse> fileServiceDeleteFile(
-            String vaultId, String tableName, String id, String columnName) {
+    public CompletableFuture<DeleteRecordResponse> deleteRecord(String vaultId, String objectName, String id) {
+        return this.rawClient.deleteRecord(vaultId, objectName, id).thenApply(response -> response.body());
+    }
+
+    /**
+     * Deletes the specified record from a table.<b>Note:</b> This method doesn't delete transient field tokens. Transient field values are available until they expire based on the fields' time-to-live (TTL) setting.
+     */
+    public CompletableFuture<DeleteRecordResponse> deleteRecord(
+            String vaultId, String objectName, String id, RequestOptions requestOptions) {
         return this.rawClient
-                .fileServiceDeleteFile(vaultId, tableName, id, columnName)
+                .deleteRecord(vaultId, objectName, id, requestOptions)
                 .thenApply(response -> response.body());
     }
 
     /**
-     * Deletes a file from the specified record.
+     * Deletes the specified record from a table.<b>Note:</b> This method doesn't delete transient field tokens. Transient field values are available until they expire based on the fields' time-to-live (TTL) setting.
      */
-    public CompletableFuture<V1DeleteFileResponse> fileServiceDeleteFile(
-            String vaultId, String tableName, String id, String columnName, RequestOptions requestOptions) {
-        return this.rawClient
-                .fileServiceDeleteFile(vaultId, tableName, id, columnName, requestOptions)
-                .thenApply(response -> response.body());
+    public CompletableFuture<DeleteRecordResponse> deleteRecord(
+            String vaultId, String objectName, String id, DeleteRecordRequest request) {
+        return this.rawClient.deleteRecord(vaultId, objectName, id, request).thenApply(response -> response.body());
     }
 
     /**
-     * Returns the anti-virus scan status of a file.
+     * Deletes the specified record from a table.<b>Note:</b> This method doesn't delete transient field tokens. Transient field values are available until they expire based on the fields' time-to-live (TTL) setting.
      */
-    public CompletableFuture<V1GetFileScanStatusResponse> fileServiceGetFileScanStatus(
-            String vaultId, String tableName, String id, String columnName) {
+    public CompletableFuture<DeleteRecordResponse> deleteRecord(
+            String vaultId, String objectName, String id, DeleteRecordRequest request, RequestOptions requestOptions) {
         return this.rawClient
-                .fileServiceGetFileScanStatus(vaultId, tableName, id, columnName)
-                .thenApply(response -> response.body());
-    }
-
-    /**
-     * Returns the anti-virus scan status of a file.
-     */
-    public CompletableFuture<V1GetFileScanStatusResponse> fileServiceGetFileScanStatus(
-            String vaultId, String tableName, String id, String columnName, RequestOptions requestOptions) {
-        return this.rawClient
-                .fileServiceGetFileScanStatus(vaultId, tableName, id, columnName, requestOptions)
-                .thenApply(response -> response.body());
-    }
-
-    /**
-     * Uploads the specified file to a record. If an existing record isn't specified, creates a new record and uploads the file to that record.
-     */
-    public CompletableFuture<UploadFileV2Response> uploadFileV2(
-            String vaultId, File file, UploadFileV2Request request) {
-        return this.rawClient.uploadFileV2(vaultId, file, request).thenApply(response -> response.body());
-    }
-
-    /**
-     * Uploads the specified file to a record. If an existing record isn't specified, creates a new record and uploads the file to that record.
-     */
-    public CompletableFuture<UploadFileV2Response> uploadFileV2(
-            String vaultId, File file, UploadFileV2Request request, RequestOptions requestOptions) {
-        return this.rawClient
-                .uploadFileV2(vaultId, file, request, requestOptions)
+                .deleteRecord(vaultId, objectName, id, request, requestOptions)
                 .thenApply(response -> response.body());
     }
 }

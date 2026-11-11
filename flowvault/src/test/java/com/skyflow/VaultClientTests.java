@@ -127,4 +127,55 @@ public class VaultClientTests {
 
         Assert.assertEquals("common-token", client.token);
     }
+
+    // ── getSignedUrlHttpClient ────────────────────────────────────────────────
+
+    @Test
+    public void testSignedUrlHttpClient_liftsCallTimeoutButKeepsTheOtherLimits() throws SkyflowException {
+        VaultConfig config = buildConfig("vault1", "cluster1", null);
+        config.setTimeout(30);
+        config.setConnectTimeout(5);
+        config.setReadTimeout(7);
+        config.setWriteTimeout(9);
+        VaultClient client = new VaultClient(config, null);
+        client.updateExecutorInHTTP();
+
+        okhttp3.OkHttpClient upload = client.getSignedUrlHttpClient();
+
+        // vault calls keep their overall ceiling; the upload client has none
+        Assert.assertEquals(30_000, client.sharedHttpClient.callTimeoutMillis());
+        Assert.assertEquals(0, upload.callTimeoutMillis());
+        Assert.assertEquals(5_000, upload.connectTimeoutMillis());
+        Assert.assertEquals(7_000, upload.readTimeoutMillis());
+        Assert.assertEquals(9_000, upload.writeTimeoutMillis());
+        Assert.assertTrue(upload.interceptors().isEmpty());
+        Assert.assertTrue(upload.networkInterceptors().isEmpty());
+        Assert.assertSame(client.sharedHttpClient.connectionPool(), upload.connectionPool());
+    }
+
+    @Test
+    public void testSignedUrlHttpClient_beforeTheVaultClientIsBuiltHasNoCallTimeout() throws SkyflowException {
+        VaultClient client = new VaultClient(buildConfig("vault1", "cluster1", null), null);
+
+        okhttp3.OkHttpClient upload = client.getSignedUrlHttpClient();
+
+        Assert.assertEquals(0, upload.callTimeoutMillis());
+        Assert.assertTrue(upload.interceptors().isEmpty());
+    }
+
+    @Test
+    public void testSignedUrlHttpClient_isReusedUntilTheVaultClientIsRebuilt() throws SkyflowException {
+        VaultClient client = new VaultClient(buildConfig("vault1", "cluster1", null), null);
+        client.updateExecutorInHTTP();
+
+        okhttp3.OkHttpClient first = client.getSignedUrlHttpClient();
+        Assert.assertSame("one upload client per vault client, not one per file",
+                first, client.getSignedUrlHttpClient());
+
+        client.sharedHttpClient = null;
+        client.updateExecutorInHTTP();
+        okhttp3.OkHttpClient rebuilt = client.getSignedUrlHttpClient();
+        Assert.assertNotSame("a rebuilt vault client gets a matching upload client", first, rebuilt);
+        Assert.assertSame(client.sharedHttpClient.connectionPool(), rebuilt.connectionPool());
+    }
 }

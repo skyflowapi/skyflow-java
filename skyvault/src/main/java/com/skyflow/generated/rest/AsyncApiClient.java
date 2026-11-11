@@ -4,24 +4,21 @@
 package com.skyflow.generated.rest;
 
 import com.skyflow.generated.rest.core.ClientOptions;
+import com.skyflow.generated.rest.core.RequestOptions;
 import com.skyflow.generated.rest.core.Suppliers;
-import com.skyflow.generated.rest.resources.audit.AsyncAuditClient;
-import com.skyflow.generated.rest.resources.binlookup.AsyncBinLookupClient;
+import com.skyflow.generated.rest.requests.PatchV2VaultsIdRequest;
 import com.skyflow.generated.rest.resources.files.AsyncFilesClient;
-import com.skyflow.generated.rest.resources.guardrails.AsyncGuardrailsClient;
 import com.skyflow.generated.rest.resources.query.AsyncQueryClient;
 import com.skyflow.generated.rest.resources.records.AsyncRecordsClient;
-import com.skyflow.generated.rest.resources.strings.AsyncStringsClient;
 import com.skyflow.generated.rest.resources.tokens.AsyncTokensClient;
-
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
-public class AsyncApiClient {
+public class AsyncApiClient implements AutoCloseable {
     protected final ClientOptions clientOptions;
 
-    protected final Supplier<AsyncAuditClient> auditClient;
-
-    protected final Supplier<AsyncBinLookupClient> binLookupClient;
+    private final AsyncRawApiClient rawClient;
 
     protected final Supplier<AsyncRecordsClient> recordsClient;
 
@@ -31,28 +28,37 @@ public class AsyncApiClient {
 
     protected final Supplier<AsyncFilesClient> filesClient;
 
-    protected final Supplier<AsyncStringsClient> stringsClient;
-
-    protected final Supplier<AsyncGuardrailsClient> guardrailsClient;
-
     public AsyncApiClient(ClientOptions clientOptions) {
         this.clientOptions = clientOptions;
-        this.auditClient = Suppliers.memoize(() -> new AsyncAuditClient(clientOptions));
-        this.binLookupClient = Suppliers.memoize(() -> new AsyncBinLookupClient(clientOptions));
+        this.rawClient = new AsyncRawApiClient(clientOptions);
         this.recordsClient = Suppliers.memoize(() -> new AsyncRecordsClient(clientOptions));
         this.tokensClient = Suppliers.memoize(() -> new AsyncTokensClient(clientOptions));
         this.queryClient = Suppliers.memoize(() -> new AsyncQueryClient(clientOptions));
         this.filesClient = Suppliers.memoize(() -> new AsyncFilesClient(clientOptions));
-        this.stringsClient = Suppliers.memoize(() -> new AsyncStringsClient(clientOptions));
-        this.guardrailsClient = Suppliers.memoize(() -> new AsyncGuardrailsClient(clientOptions));
     }
 
-    public AsyncAuditClient audit() {
-        return this.auditClient.get();
+    /**
+     * Get responses with HTTP metadata like headers
+     */
+    public AsyncRawApiClient withRawResponse() {
+        return this.rawClient;
     }
 
-    public AsyncBinLookupClient binLookup() {
-        return this.binLookupClient.get();
+    public CompletableFuture<Void> patchV2VaultsId(Optional<String> vaultId) {
+        return this.rawClient.patchV2VaultsId(vaultId).thenApply(response -> response.body());
+    }
+
+    public CompletableFuture<Void> patchV2VaultsId(Optional<String> vaultId, RequestOptions requestOptions) {
+        return this.rawClient.patchV2VaultsId(vaultId, requestOptions).thenApply(response -> response.body());
+    }
+
+    public CompletableFuture<Void> patchV2VaultsId(Optional<String> vaultId, PatchV2VaultsIdRequest request) {
+        return this.rawClient.patchV2VaultsId(vaultId, request).thenApply(response -> response.body());
+    }
+
+    public CompletableFuture<Void> patchV2VaultsId(
+            Optional<String> vaultId, PatchV2VaultsIdRequest request, RequestOptions requestOptions) {
+        return this.rawClient.patchV2VaultsId(vaultId, request, requestOptions).thenApply(response -> response.body());
     }
 
     public AsyncRecordsClient records() {
@@ -71,12 +77,13 @@ public class AsyncApiClient {
         return this.filesClient.get();
     }
 
-    public AsyncStringsClient strings() {
-        return this.stringsClient.get();
-    }
-
-    public AsyncGuardrailsClient guardrails() {
-        return this.guardrailsClient.get();
+    /**
+     * Releases resources owned by this client. See {@code ClientOptions.close()} for what is
+     * and is not released.
+     */
+    @Override
+    public void close() {
+        this.clientOptions.close();
     }
 
     public static AsyncApiClientBuilder builder() {
