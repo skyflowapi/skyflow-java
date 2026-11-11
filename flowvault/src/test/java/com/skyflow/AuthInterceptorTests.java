@@ -201,8 +201,45 @@ public class AuthInterceptorTests {
         client.updateExecutorInHTTP();
         List<Interceptor> interceptors = client.sharedHttpClient.interceptors();
 
-        Assert.assertEquals(2, interceptors.size());
+        Assert.assertEquals(3, interceptors.size());
         Assert.assertTrue("transport retries must wrap auth so each attempt re-reads the token",
                 interceptors.get(0) instanceof SkyflowRetryInterceptor);
+    }
+
+    /** A client whose token generation fails with an unchecked exception. */
+    private static final class FailingClient extends VaultClient {
+        final RuntimeException failure;
+
+        FailingClient(RuntimeException failure) throws SkyflowException {
+            super(configWithCredentialsString(), null);
+            this.failure = failure;
+        }
+
+        @Override
+        protected String generateBearerToken(com.skyflow.config.BaseCredentials credentials) {
+            throw failure;
+        }
+    }
+
+    @Test
+    public void testSetBearerToken_uncheckedCredentialFailureBecomesSkyflowException() throws SkyflowException {
+        java.io.IOException root = new java.io.IOException("keystore unreadable");
+        try {
+            new FailingClient(new RuntimeException(root)).setBearerToken();
+            Assert.fail("Should have thrown an exception");
+        } catch (SkyflowException e) {
+            // a bare RuntimeException wrapper is unwrapped to the real cause
+            Assert.assertEquals("keystore unreadable", e.getMessage());
+            Assert.assertSame(root, e.getCause());
+        }
+
+        IllegalStateException specific = new IllegalStateException();
+        try {
+            new FailingClient(specific).setBearerToken();
+            Assert.fail("Should have thrown an exception");
+        } catch (SkyflowException e) {
+            Assert.assertEquals(com.skyflow.errors.ErrorMessage.CredentialResolutionFailed.getMessage(), e.getMessage());
+            Assert.assertSame(specific, e.getCause());
+        }
     }
 }

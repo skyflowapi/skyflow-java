@@ -3,14 +3,18 @@
  */
 package com.skyflow.generated.rest.types;
 
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.skyflow.generated.rest.core.ObjectMappers;
-import org.jetbrains.annotations.NotNull;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import org.jetbrains.annotations.NotNull;
 
 @JsonInclude(JsonInclude.Include.NON_ABSENT)
 @JsonDeserialize(builder = ErrorResponse.Builder.class)
@@ -29,7 +33,7 @@ public final class ErrorResponse {
         return error;
     }
 
-    @Override
+    @java.lang.Override
     public boolean equals(Object other) {
         if (this == other) return true;
         return other instanceof ErrorResponse && equalTo((ErrorResponse) other);
@@ -44,12 +48,12 @@ public final class ErrorResponse {
         return error.equals(other.error);
     }
 
-    @Override
+    @java.lang.Override
     public int hashCode() {
         return Objects.hash(this.error);
     }
 
-    @Override
+    @java.lang.Override
     public String toString() {
         return ObjectMappers.stringify(this);
     }
@@ -66,6 +70,10 @@ public final class ErrorResponse {
 
     public interface _FinalStage {
         ErrorResponse build();
+
+        _FinalStage additionalProperty(String key, Object value);
+
+        _FinalStage additionalProperties(Map<String, Object> additionalProperties);
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -77,22 +85,34 @@ public final class ErrorResponse {
 
         private Builder() {}
 
-        @Override
+        @java.lang.Override
         public Builder from(ErrorResponse other) {
             error(other.getError());
             return this;
         }
 
-        @Override
+        @java.lang.Override
         @JsonSetter("error")
         public _FinalStage error(@NotNull ErrorResponseError error) {
             this.error = Objects.requireNonNull(error, "error must not be null");
             return this;
         }
 
-        @Override
+        @java.lang.Override
         public ErrorResponse build() {
             return new ErrorResponse(error, additionalProperties);
+        }
+
+        @java.lang.Override
+        public Builder additionalProperty(String key, Object value) {
+            this.additionalProperties.put(key, value);
+            return this;
+        }
+
+        @java.lang.Override
+        public Builder additionalProperties(Map<String, Object> additionalProperties) {
+            this.additionalProperties.putAll(additionalProperties);
+            return this;
         }
     }
 }

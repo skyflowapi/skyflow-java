@@ -89,7 +89,7 @@ public class SkyflowException extends Exception {
         } catch (Exception e) {
             this.httpStatus = HttpStatus.BAD_REQUEST.getHttpStatus();
             String fullMessage = responseBody != null ? responseBody :
-                    (cause.getLocalizedMessage() != null ? cause.getMessage() : ErrorMessage.ErrorOccurred.getMessage());
+                    (cause.getLocalizedMessage() != null ? cause.getMessage() : BaseErrorMessage.ErrorOccurred.getMessage());
             this.message = fullMessage.split("HTTP response code:")[0].trim();
         }
     }

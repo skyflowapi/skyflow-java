@@ -73,3 +73,19 @@ Every `*Sync`/`*Async` pair above shows the same request-building and response-h
 handling follows the same shape everywhere: read `getSummary()` for totals, then walk `getRecords()`
 checking `getError() == null` per entry — see [Error Handling](../README.md#error-handling) for the
 full model these samples are built on.
+### Detect (`com.example.detect`)
+
+Detect finds and de-identifies sensitive data in strings and files, re-identifies vault tokens, and screens text against
+guardrails. See [Detect](../README.md#detect) in the flowvault README for the request and response classes, and
+[Detect errors](../README.md#detect-errors) for the failures to expect. Every sample prints `getHttpCode()`, `getMessage()`
+and `getRequestId()` from a `SkyflowException`; quote the request id when you contact Skyflow support.
+
+| Sample | Demonstrates |
+|---|---|
+| [DeidentifyStringSample.java](src/main/java/com/example/detect/DeidentifyStringSample.java) | `deidentifyString` with a stored configuration id and with an inline `DetectConfiguration`, reading tokens, locations and metrics from the response. |
+| [DeidentifyFileSample.java](src/main/java/com/example/detect/DeidentifyFileSample.java) | `deidentifyFile` for a local file: submit only (returns the run id) and submit-and-poll with `PollOptions` and `outputDirectory`, branching on `getOutputType()`. |
+| [DeidentifyFileAsyncSample.java](src/main/java/com/example/detect/DeidentifyFileAsyncSample.java) | Polling several files on a bounded thread pool so the calling thread is not blocked. |
+| [GetRunSample.java](src/main/java/com/example/detect/GetRunSample.java) | `getRun` for a run id returned by a submit-only `deidentifyFile`, writing base64 outputs and skipping presigned URLs. |
+| [ReidentifyStringSample.java](src/main/java/com/example/detect/ReidentifyStringSample.java) | The round trip: de-identify with `VAULT_TOKEN`, then `reidentifyString` the processed text, plainly and with a `RedactionLevel`. |
+| [ReidentifyFileSample.java](src/main/java/com/example/detect/ReidentifyFileSample.java) | `reidentifyFile` for a de-identified text file sent as base64, branching on `getOutputType()`. |
+| [CheckGuardrailsSample.java](src/main/java/com/example/detect/CheckGuardrailsSample.java) | `checkGuardrails` for toxicity and denied topics before a prompt reaches an LLM. |

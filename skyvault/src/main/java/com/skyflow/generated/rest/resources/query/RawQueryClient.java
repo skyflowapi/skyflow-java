@@ -4,13 +4,28 @@
 package com.skyflow.generated.rest.resources.query;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.skyflow.generated.rest.core.*;
-import com.skyflow.generated.rest.errors.NotFoundError;
-import com.skyflow.generated.rest.resources.query.requests.QueryServiceExecuteQueryBody;
-import com.skyflow.generated.rest.types.V1GetQueryResponse;
-import okhttp3.*;
-
+import com.skyflow.generated.rest.core.ApiClientApiException;
+import com.skyflow.generated.rest.core.ApiClientException;
+import com.skyflow.generated.rest.core.ApiClientHttpResponse;
+import com.skyflow.generated.rest.core.ClientOptions;
+import com.skyflow.generated.rest.core.MediaTypes;
+import com.skyflow.generated.rest.core.ObjectMappers;
+import com.skyflow.generated.rest.core.RequestOptions;
+import com.skyflow.generated.rest.core.RetryInterceptor;
+import com.skyflow.generated.rest.errors.BadRequestError;
+import com.skyflow.generated.rest.errors.InternalServerError;
+import com.skyflow.generated.rest.errors.UnauthorizedError;
+import com.skyflow.generated.rest.resources.query.requests.GetQueryRequest;
+import com.skyflow.generated.rest.types.ErrorResponse;
+import com.skyflow.generated.rest.types.GetQueryResponse;
 import java.io.IOException;
+import okhttp3.Headers;
+import okhttp3.HttpUrl;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
 
 public class RawQueryClient {
     protected final ClientOptions clientOptions;
@@ -20,32 +35,27 @@ public class RawQueryClient {
     }
 
     /**
-     * Returns records for a valid SQL query. This endpoint &lt;ul&gt;&lt;li&gt;Can return redacted record values.&lt;/li&gt;&lt;li&gt;Supports only the &lt;code&gt;SELECT&lt;/code&gt; command.&lt;/li&gt;&lt;li&gt;Returns a maximum of 25 records. To return additional records, perform another query using the &lt;code&gt;OFFSET&lt;/code&gt; keyword.&lt;/li&gt;&lt;li&gt;Can't modify the vault or perform transactions.&lt;/li&gt;&lt;li&gt;Can't return tokens.&lt;/li&gt;&lt;li&gt;Can't return file download or render URLs.&lt;/li&gt;&lt;li&gt;Doesn't support the &lt;code&gt;WHERE&lt;/code&gt; keyword with columns using transient tokenization.&lt;/li&gt;&lt;li&gt;Doesn't support <code>?</code> conditional for columns with column-level encryption disabled.&lt;/li&gt;&lt;ul&gt;
+     * Returns records for a valid SQL query. This endpoint <ul><li>Can return redacted record values.</li><li>Supports only the <code>SELECT</code> command.</li><li>Returns a maximum of 25 records. To return additional records, perform another query using the <code>OFFSET</code> keyword.</li><li>Can't modify the vault or perform transactions.</li><li>Can't return tokens.</li><li>Can't return file download or render URLs.</li><li>Doesn't support the <code>WHERE</code> keyword with columns using transient tokenization.</li><li>Doesn't support <code>?</code> conditional for columns with column-level encryption disabled.</li><ul>
      */
-    public ApiClientHttpResponse<V1GetQueryResponse> queryServiceExecuteQuery(String vaultId) {
-        return queryServiceExecuteQuery(
-                vaultId, QueryServiceExecuteQueryBody.builder().build());
+    public ApiClientHttpResponse<GetQueryResponse> executeQuery(String vaultId, GetQueryRequest request) {
+        return executeQuery(vaultId, request, null);
     }
 
     /**
-     * Returns records for a valid SQL query. This endpoint &lt;ul&gt;&lt;li&gt;Can return redacted record values.&lt;/li&gt;&lt;li&gt;Supports only the &lt;code&gt;SELECT&lt;/code&gt; command.&lt;/li&gt;&lt;li&gt;Returns a maximum of 25 records. To return additional records, perform another query using the &lt;code&gt;OFFSET&lt;/code&gt; keyword.&lt;/li&gt;&lt;li&gt;Can't modify the vault or perform transactions.&lt;/li&gt;&lt;li&gt;Can't return tokens.&lt;/li&gt;&lt;li&gt;Can't return file download or render URLs.&lt;/li&gt;&lt;li&gt;Doesn't support the &lt;code&gt;WHERE&lt;/code&gt; keyword with columns using transient tokenization.&lt;/li&gt;&lt;li&gt;Doesn't support <code>?</code> conditional for columns with column-level encryption disabled.&lt;/li&gt;&lt;ul&gt;
+     * Returns records for a valid SQL query. This endpoint <ul><li>Can return redacted record values.</li><li>Supports only the <code>SELECT</code> command.</li><li>Returns a maximum of 25 records. To return additional records, perform another query using the <code>OFFSET</code> keyword.</li><li>Can't modify the vault or perform transactions.</li><li>Can't return tokens.</li><li>Can't return file download or render URLs.</li><li>Doesn't support the <code>WHERE</code> keyword with columns using transient tokenization.</li><li>Doesn't support <code>?</code> conditional for columns with column-level encryption disabled.</li><ul>
      */
-    public ApiClientHttpResponse<V1GetQueryResponse> queryServiceExecuteQuery(
-            String vaultId, QueryServiceExecuteQueryBody request) {
-        return queryServiceExecuteQuery(vaultId, request, null);
-    }
-
-    /**
-     * Returns records for a valid SQL query. This endpoint &lt;ul&gt;&lt;li&gt;Can return redacted record values.&lt;/li&gt;&lt;li&gt;Supports only the &lt;code&gt;SELECT&lt;/code&gt; command.&lt;/li&gt;&lt;li&gt;Returns a maximum of 25 records. To return additional records, perform another query using the &lt;code&gt;OFFSET&lt;/code&gt; keyword.&lt;/li&gt;&lt;li&gt;Can't modify the vault or perform transactions.&lt;/li&gt;&lt;li&gt;Can't return tokens.&lt;/li&gt;&lt;li&gt;Can't return file download or render URLs.&lt;/li&gt;&lt;li&gt;Doesn't support the &lt;code&gt;WHERE&lt;/code&gt; keyword with columns using transient tokenization.&lt;/li&gt;&lt;li&gt;Doesn't support <code>?</code> conditional for columns with column-level encryption disabled.&lt;/li&gt;&lt;ul&gt;
-     */
-    public ApiClientHttpResponse<V1GetQueryResponse> queryServiceExecuteQuery(
-            String vaultId, QueryServiceExecuteQueryBody request, RequestOptions requestOptions) {
-        HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
+    public ApiClientHttpResponse<GetQueryResponse> executeQuery(
+            String vaultId, GetQueryRequest request, RequestOptions requestOptions) {
+        HttpUrl.Builder httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
                 .newBuilder()
                 .addPathSegments("v1/vaults")
                 .addPathSegment(vaultId)
-                .addPathSegments("query")
-                .build();
+                .addPathSegments("query");
+        if (requestOptions != null) {
+            requestOptions.getQueryParameters().forEach((_key, _value) -> {
+                httpUrl.addQueryParameter(_key, _value);
+            });
+        }
         RequestBody body;
         try {
             body = RequestBody.create(
@@ -54,7 +64,7 @@ public class RawQueryClient {
             throw new ApiClientException("Failed to serialize request", e);
         }
         Request okhttpRequest = new Request.Builder()
-                .url(httpUrl)
+                .url(httpUrl.build())
                 .method("POST", body)
                 .headers(Headers.of(clientOptions.headers(requestOptions)))
                 .addHeader("Content-Type", "application/json")
@@ -64,26 +74,42 @@ public class RawQueryClient {
         if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
             client = clientOptions.httpClientWithTimeout(requestOptions);
         }
+        if (requestOptions != null && requestOptions.getMaxRetries().isPresent()) {
+            okhttpRequest = okhttpRequest
+                    .newBuilder()
+                    .tag(
+                            RetryInterceptor.MaxRetriesOverride.class,
+                            new RetryInterceptor.MaxRetriesOverride(
+                                    requestOptions.getMaxRetries().get()))
+                    .build();
+        }
         try (Response response = client.newCall(okhttpRequest).execute()) {
             ResponseBody responseBody = response.body();
+            String responseBodyString = responseBody != null ? responseBody.string() : "{}";
             if (response.isSuccessful()) {
                 return new ApiClientHttpResponse<>(
-                        ObjectMappers.JSON_MAPPER.readValue(responseBody.string(), V1GetQueryResponse.class), response);
+                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, GetQueryResponse.class), response);
             }
-            String responseBodyString = responseBody != null ? responseBody.string() : "{}";
             try {
-                if (response.code() == 404) {
-                    throw new NotFoundError(
-                            ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class), response);
+                switch (response.code()) {
+                    case 400:
+                        throw new BadRequestError(
+                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class), response);
+                    case 401:
+                        throw new UnauthorizedError(
+                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class), response);
+                    case 500:
+                        throw new InternalServerError(
+                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class), response);
                 }
             } catch (JsonProcessingException ignored) {
                 // unable to map error response, throwing generic error
             }
+            Object errorBody = ObjectMappers.parseErrorBody(responseBodyString);
             throw new ApiClientApiException(
-                    "Error with status code " + response.code(),
-                    response.code(),
-                    ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                    response);
+                    "Error with status code " + response.code(), response.code(), errorBody, response);
+        } catch (JsonProcessingException e) {
+            throw new ApiClientException("Failed to deserialize response: " + e.getMessage(), e);
         } catch (IOException e) {
             throw new ApiClientException("Network error executing HTTP request", e);
         }
