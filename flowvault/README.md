@@ -156,7 +156,7 @@ try {
 
 `vault()` with no arguments returns the controller for the first vault added to the builder. To talk to more than one vault from a single client, register each with `addVaultConfig(...)` and fetch each controller by ID: `skyflowClient.vault("<VAULT_ID>")`.
 
-The `bulkInsert` call above is the [Bulk Insert](#bulk-insert) operation; see that section for multi-table inserts, upserts, and reading back tokens, and [Error Handling](#error-handling) for the per-record result model that `getSummary()` is part of.
+The `bulkInsert` call above is the [Bulk Insert](#bulk-insert) operation. See that section for multi-table inserts, upsert options, and reading back tokens. For the per-record result model that `getSummary()` is part of, see [Error Handling](#error-handling).
 
 # Authenticate
 
