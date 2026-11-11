@@ -5,9 +5,8 @@ package com.skyflow.generated.rest.resources.query;
 
 import com.skyflow.generated.rest.core.ClientOptions;
 import com.skyflow.generated.rest.core.RequestOptions;
-import com.skyflow.generated.rest.resources.query.requests.QueryServiceExecuteQueryBody;
-import com.skyflow.generated.rest.types.V1GetQueryResponse;
-
+import com.skyflow.generated.rest.resources.query.requests.GetQueryRequest;
+import com.skyflow.generated.rest.types.GetQueryResponse;
 import java.util.concurrent.CompletableFuture;
 
 public class AsyncQueryClient {
@@ -28,27 +27,17 @@ public class AsyncQueryClient {
     }
 
     /**
-     * Returns records for a valid SQL query. This endpoint &lt;ul&gt;&lt;li&gt;Can return redacted record values.&lt;/li&gt;&lt;li&gt;Supports only the &lt;code&gt;SELECT&lt;/code&gt; command.&lt;/li&gt;&lt;li&gt;Returns a maximum of 25 records. To return additional records, perform another query using the &lt;code&gt;OFFSET&lt;/code&gt; keyword.&lt;/li&gt;&lt;li&gt;Can't modify the vault or perform transactions.&lt;/li&gt;&lt;li&gt;Can't return tokens.&lt;/li&gt;&lt;li&gt;Can't return file download or render URLs.&lt;/li&gt;&lt;li&gt;Doesn't support the &lt;code&gt;WHERE&lt;/code&gt; keyword with columns using transient tokenization.&lt;/li&gt;&lt;li&gt;Doesn't support <code>?</code> conditional for columns with column-level encryption disabled.&lt;/li&gt;&lt;ul&gt;
+     * Returns records for a valid SQL query. This endpoint <ul><li>Can return redacted record values.</li><li>Supports only the <code>SELECT</code> command.</li><li>Returns a maximum of 25 records. To return additional records, perform another query using the <code>OFFSET</code> keyword.</li><li>Can't modify the vault or perform transactions.</li><li>Can't return tokens.</li><li>Can't return file download or render URLs.</li><li>Doesn't support the <code>WHERE</code> keyword with columns using transient tokenization.</li><li>Doesn't support <code>?</code> conditional for columns with column-level encryption disabled.</li><ul>
      */
-    public CompletableFuture<V1GetQueryResponse> queryServiceExecuteQuery(String vaultId) {
-        return this.rawClient.queryServiceExecuteQuery(vaultId).thenApply(response -> response.body());
+    public CompletableFuture<GetQueryResponse> executeQuery(String vaultId, GetQueryRequest request) {
+        return this.rawClient.executeQuery(vaultId, request).thenApply(response -> response.body());
     }
 
     /**
-     * Returns records for a valid SQL query. This endpoint &lt;ul&gt;&lt;li&gt;Can return redacted record values.&lt;/li&gt;&lt;li&gt;Supports only the &lt;code&gt;SELECT&lt;/code&gt; command.&lt;/li&gt;&lt;li&gt;Returns a maximum of 25 records. To return additional records, perform another query using the &lt;code&gt;OFFSET&lt;/code&gt; keyword.&lt;/li&gt;&lt;li&gt;Can't modify the vault or perform transactions.&lt;/li&gt;&lt;li&gt;Can't return tokens.&lt;/li&gt;&lt;li&gt;Can't return file download or render URLs.&lt;/li&gt;&lt;li&gt;Doesn't support the &lt;code&gt;WHERE&lt;/code&gt; keyword with columns using transient tokenization.&lt;/li&gt;&lt;li&gt;Doesn't support <code>?</code> conditional for columns with column-level encryption disabled.&lt;/li&gt;&lt;ul&gt;
+     * Returns records for a valid SQL query. This endpoint <ul><li>Can return redacted record values.</li><li>Supports only the <code>SELECT</code> command.</li><li>Returns a maximum of 25 records. To return additional records, perform another query using the <code>OFFSET</code> keyword.</li><li>Can't modify the vault or perform transactions.</li><li>Can't return tokens.</li><li>Can't return file download or render URLs.</li><li>Doesn't support the <code>WHERE</code> keyword with columns using transient tokenization.</li><li>Doesn't support <code>?</code> conditional for columns with column-level encryption disabled.</li><ul>
      */
-    public CompletableFuture<V1GetQueryResponse> queryServiceExecuteQuery(
-            String vaultId, QueryServiceExecuteQueryBody request) {
-        return this.rawClient.queryServiceExecuteQuery(vaultId, request).thenApply(response -> response.body());
-    }
-
-    /**
-     * Returns records for a valid SQL query. This endpoint &lt;ul&gt;&lt;li&gt;Can return redacted record values.&lt;/li&gt;&lt;li&gt;Supports only the &lt;code&gt;SELECT&lt;/code&gt; command.&lt;/li&gt;&lt;li&gt;Returns a maximum of 25 records. To return additional records, perform another query using the &lt;code&gt;OFFSET&lt;/code&gt; keyword.&lt;/li&gt;&lt;li&gt;Can't modify the vault or perform transactions.&lt;/li&gt;&lt;li&gt;Can't return tokens.&lt;/li&gt;&lt;li&gt;Can't return file download or render URLs.&lt;/li&gt;&lt;li&gt;Doesn't support the &lt;code&gt;WHERE&lt;/code&gt; keyword with columns using transient tokenization.&lt;/li&gt;&lt;li&gt;Doesn't support <code>?</code> conditional for columns with column-level encryption disabled.&lt;/li&gt;&lt;ul&gt;
-     */
-    public CompletableFuture<V1GetQueryResponse> queryServiceExecuteQuery(
-            String vaultId, QueryServiceExecuteQueryBody request, RequestOptions requestOptions) {
-        return this.rawClient
-                .queryServiceExecuteQuery(vaultId, request, requestOptions)
-                .thenApply(response -> response.body());
+    public CompletableFuture<GetQueryResponse> executeQuery(
+            String vaultId, GetQueryRequest request, RequestOptions requestOptions) {
+        return this.rawClient.executeQuery(vaultId, request, requestOptions).thenApply(response -> response.body());
     }
 }

@@ -4,31 +4,86 @@
 package com.skyflow.generated.rest;
 
 import com.skyflow.generated.rest.core.ClientOptions;
+import com.skyflow.generated.rest.core.RequestOptions;
 import com.skyflow.generated.rest.core.Suppliers;
-import com.skyflow.generated.rest.resources.flowservice.AsyncFlowserviceClient;
+import com.skyflow.generated.rest.requests.PatchV2VaultsIdRequest;
+import com.skyflow.generated.rest.resources.files.AsyncFilesClient;
+import com.skyflow.generated.rest.resources.query.AsyncQueryClient;
 import com.skyflow.generated.rest.resources.records.AsyncRecordsClient;
-
+import com.skyflow.generated.rest.resources.tokens.AsyncTokensClient;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
-public class AsyncApiClient {
+public class AsyncApiClient implements AutoCloseable {
     protected final ClientOptions clientOptions;
+
+    private final AsyncRawApiClient rawClient;
+
+    protected final Supplier<AsyncFilesClient> filesClient;
+
+    protected final Supplier<AsyncQueryClient> queryClient;
 
     protected final Supplier<AsyncRecordsClient> recordsClient;
 
-    protected final Supplier<AsyncFlowserviceClient> flowserviceClient;
+    protected final Supplier<AsyncTokensClient> tokensClient;
 
     public AsyncApiClient(ClientOptions clientOptions) {
         this.clientOptions = clientOptions;
+        this.rawClient = new AsyncRawApiClient(clientOptions);
+        this.filesClient = Suppliers.memoize(() -> new AsyncFilesClient(clientOptions));
+        this.queryClient = Suppliers.memoize(() -> new AsyncQueryClient(clientOptions));
         this.recordsClient = Suppliers.memoize(() -> new AsyncRecordsClient(clientOptions));
-        this.flowserviceClient = Suppliers.memoize(() -> new AsyncFlowserviceClient(clientOptions));
+        this.tokensClient = Suppliers.memoize(() -> new AsyncTokensClient(clientOptions));
+    }
+
+    /**
+     * Get responses with HTTP metadata like headers
+     */
+    public AsyncRawApiClient withRawResponse() {
+        return this.rawClient;
+    }
+
+    public CompletableFuture<Void> patchV2VaultsId(Optional<String> vaultId) {
+        return this.rawClient.patchV2VaultsId(vaultId).thenApply(response -> response.body());
+    }
+
+    public CompletableFuture<Void> patchV2VaultsId(Optional<String> vaultId, RequestOptions requestOptions) {
+        return this.rawClient.patchV2VaultsId(vaultId, requestOptions).thenApply(response -> response.body());
+    }
+
+    public CompletableFuture<Void> patchV2VaultsId(Optional<String> vaultId, PatchV2VaultsIdRequest request) {
+        return this.rawClient.patchV2VaultsId(vaultId, request).thenApply(response -> response.body());
+    }
+
+    public CompletableFuture<Void> patchV2VaultsId(
+            Optional<String> vaultId, PatchV2VaultsIdRequest request, RequestOptions requestOptions) {
+        return this.rawClient.patchV2VaultsId(vaultId, request, requestOptions).thenApply(response -> response.body());
+    }
+
+    public AsyncFilesClient files() {
+        return this.filesClient.get();
+    }
+
+    public AsyncQueryClient query() {
+        return this.queryClient.get();
     }
 
     public AsyncRecordsClient records() {
         return this.recordsClient.get();
     }
 
-    public AsyncFlowserviceClient flowservice() {
-        return this.flowserviceClient.get();
+    public AsyncTokensClient tokens() {
+        return this.tokensClient.get();
+    }
+
+    /**
+     * Releases resources owned by this client. See {@code ClientOptions.close()} for what is
+     * and is not released.
+     */
+    @Override
+    public void close() {
+        this.clientOptions.close();
     }
 
     public static AsyncApiClientBuilder builder() {

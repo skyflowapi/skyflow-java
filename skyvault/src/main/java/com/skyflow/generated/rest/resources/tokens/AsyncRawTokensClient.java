@@ -4,17 +4,35 @@
 package com.skyflow.generated.rest.resources.tokens;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.skyflow.generated.rest.core.*;
+import com.skyflow.generated.rest.core.ApiClientApiException;
+import com.skyflow.generated.rest.core.ApiClientException;
+import com.skyflow.generated.rest.core.ApiClientHttpResponse;
+import com.skyflow.generated.rest.core.ClientOptions;
+import com.skyflow.generated.rest.core.MediaTypes;
+import com.skyflow.generated.rest.core.ObjectMappers;
+import com.skyflow.generated.rest.core.RequestOptions;
+import com.skyflow.generated.rest.core.RetryInterceptor;
+import com.skyflow.generated.rest.errors.BadRequestError;
+import com.skyflow.generated.rest.errors.InternalServerError;
 import com.skyflow.generated.rest.errors.NotFoundError;
-import com.skyflow.generated.rest.resources.tokens.requests.V1DetokenizePayload;
-import com.skyflow.generated.rest.resources.tokens.requests.V1TokenizePayload;
-import com.skyflow.generated.rest.types.V1DetokenizeResponse;
-import com.skyflow.generated.rest.types.V1TokenizeResponse;
-import okhttp3.*;
-import org.jetbrains.annotations.NotNull;
-
+import com.skyflow.generated.rest.errors.UnauthorizedError;
+import com.skyflow.generated.rest.resources.tokens.requests.DetokenizePayload;
+import com.skyflow.generated.rest.resources.tokens.requests.TokenizePayload;
+import com.skyflow.generated.rest.types.DetokenizeResponse;
+import com.skyflow.generated.rest.types.ErrorResponse;
+import com.skyflow.generated.rest.types.TokenizeResponse;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.Headers;
+import okhttp3.HttpUrl;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
+import org.jetbrains.annotations.NotNull;
 
 public class AsyncRawTokensClient {
     protected final ClientOptions clientOptions;
@@ -26,29 +44,26 @@ public class AsyncRawTokensClient {
     /**
      * Returns records that correspond to the specified tokens.
      */
-    public CompletableFuture<ApiClientHttpResponse<V1DetokenizeResponse>> recordServiceDetokenize(String vaultId) {
-        return recordServiceDetokenize(vaultId, V1DetokenizePayload.builder().build());
+    public CompletableFuture<ApiClientHttpResponse<DetokenizeResponse>> detokenize(
+            String vaultId, DetokenizePayload request) {
+        return detokenize(vaultId, request, null);
     }
 
     /**
      * Returns records that correspond to the specified tokens.
      */
-    public CompletableFuture<ApiClientHttpResponse<V1DetokenizeResponse>> recordServiceDetokenize(
-            String vaultId, V1DetokenizePayload request) {
-        return recordServiceDetokenize(vaultId, request, null);
-    }
-
-    /**
-     * Returns records that correspond to the specified tokens.
-     */
-    public CompletableFuture<ApiClientHttpResponse<V1DetokenizeResponse>> recordServiceDetokenize(
-            String vaultId, V1DetokenizePayload request, RequestOptions requestOptions) {
-        HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
+    public CompletableFuture<ApiClientHttpResponse<DetokenizeResponse>> detokenize(
+            String vaultId, DetokenizePayload request, RequestOptions requestOptions) {
+        HttpUrl.Builder httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
                 .newBuilder()
                 .addPathSegments("v1/vaults")
                 .addPathSegment(vaultId)
-                .addPathSegments("detokenize")
-                .build();
+                .addPathSegments("detokenize");
+        if (requestOptions != null) {
+            requestOptions.getQueryParameters().forEach((_key, _value) -> {
+                httpUrl.addQueryParameter(_key, _value);
+            });
+        }
         RequestBody body;
         try {
             body = RequestBody.create(
@@ -57,7 +72,7 @@ public class AsyncRawTokensClient {
             throw new ApiClientException("Failed to serialize request", e);
         }
         Request okhttpRequest = new Request.Builder()
-                .url(httpUrl)
+                .url(httpUrl.build())
                 .method("POST", body)
                 .headers(Headers.of(clientOptions.headers(requestOptions)))
                 .addHeader("Content-Type", "application/json")
@@ -67,33 +82,60 @@ public class AsyncRawTokensClient {
         if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
             client = clientOptions.httpClientWithTimeout(requestOptions);
         }
-        CompletableFuture<ApiClientHttpResponse<V1DetokenizeResponse>> future = new CompletableFuture<>();
+        if (requestOptions != null && requestOptions.getMaxRetries().isPresent()) {
+            okhttpRequest = okhttpRequest
+                    .newBuilder()
+                    .tag(
+                            RetryInterceptor.MaxRetriesOverride.class,
+                            new RetryInterceptor.MaxRetriesOverride(
+                                    requestOptions.getMaxRetries().get()))
+                    .build();
+        }
+        CompletableFuture<ApiClientHttpResponse<DetokenizeResponse>> future = new CompletableFuture<>();
         client.newCall(okhttpRequest).enqueue(new Callback() {
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
                 try (ResponseBody responseBody = response.body()) {
+                    String responseBodyString = responseBody != null ? responseBody.string() : "{}";
                     if (response.isSuccessful()) {
                         future.complete(new ApiClientHttpResponse<>(
-                                ObjectMappers.JSON_MAPPER.readValue(responseBody.string(), V1DetokenizeResponse.class),
+                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, DetokenizeResponse.class),
                                 response));
                         return;
                     }
-                    String responseBodyString = responseBody != null ? responseBody.string() : "{}";
                     try {
-                        if (response.code() == 404) {
-                            future.completeExceptionally(new NotFoundError(
-                                    ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class), response));
-                            return;
+                        switch (response.code()) {
+                            case 400:
+                                future.completeExceptionally(new BadRequestError(
+                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class),
+                                        response));
+                                return;
+                            case 401:
+                                future.completeExceptionally(new UnauthorizedError(
+                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class),
+                                        response));
+                                return;
+                            case 404:
+                                future.completeExceptionally(new NotFoundError(
+                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class),
+                                        response));
+                                return;
+                            case 500:
+                                future.completeExceptionally(new InternalServerError(
+                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class),
+                                        response));
+                                return;
                         }
                     } catch (JsonProcessingException ignored) {
                         // unable to map error response, throwing generic error
                     }
+                    Object errorBody = ObjectMappers.parseErrorBody(responseBodyString);
                     future.completeExceptionally(new ApiClientApiException(
-                            "Error with status code " + response.code(),
-                            response.code(),
-                            ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                            response));
+                            "Error with status code " + response.code(), response.code(), errorBody, response));
                     return;
+                } catch (JsonProcessingException e) {
+                    future.completeExceptionally(
+                            new ApiClientException("Failed to deserialize response: " + e.getMessage(), e));
                 } catch (IOException e) {
                     future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
                 }
@@ -108,31 +150,28 @@ public class AsyncRawTokensClient {
     }
 
     /**
-     * Returns tokens that correspond to the specified records. Only applicable for fields with deterministic tokenization.&lt;br /&gt;&lt;br /&gt;&lt;b&gt;Note:&lt;/b&gt; This endpoint doesn't insert records—it returns tokens for existing values. To insert records and tokenize that new record's values, see &lt;a href='#RecordService_InsertRecord'&gt;Insert Record&lt;/a&gt; and the tokenization parameter.
+     * Returns tokens that correspond to the specified records. Only applicable for fields with deterministic tokenization.<b>Note:</b> This endpoint doesn't insert records—it returns tokens for existing values. To insert records and return tokens for that new record's values, see Insert Records' <code>tokenization</code> parameter.
      */
-    public CompletableFuture<ApiClientHttpResponse<V1TokenizeResponse>> recordServiceTokenize(String vaultId) {
-        return recordServiceTokenize(vaultId, V1TokenizePayload.builder().build());
+    public CompletableFuture<ApiClientHttpResponse<TokenizeResponse>> tokenize(
+            String vaultId, TokenizePayload request) {
+        return tokenize(vaultId, request, null);
     }
 
     /**
-     * Returns tokens that correspond to the specified records. Only applicable for fields with deterministic tokenization.&lt;br /&gt;&lt;br /&gt;&lt;b&gt;Note:&lt;/b&gt; This endpoint doesn't insert records—it returns tokens for existing values. To insert records and tokenize that new record's values, see &lt;a href='#RecordService_InsertRecord'&gt;Insert Record&lt;/a&gt; and the tokenization parameter.
+     * Returns tokens that correspond to the specified records. Only applicable for fields with deterministic tokenization.<b>Note:</b> This endpoint doesn't insert records—it returns tokens for existing values. To insert records and return tokens for that new record's values, see Insert Records' <code>tokenization</code> parameter.
      */
-    public CompletableFuture<ApiClientHttpResponse<V1TokenizeResponse>> recordServiceTokenize(
-            String vaultId, V1TokenizePayload request) {
-        return recordServiceTokenize(vaultId, request, null);
-    }
-
-    /**
-     * Returns tokens that correspond to the specified records. Only applicable for fields with deterministic tokenization.&lt;br /&gt;&lt;br /&gt;&lt;b&gt;Note:&lt;/b&gt; This endpoint doesn't insert records—it returns tokens for existing values. To insert records and tokenize that new record's values, see &lt;a href='#RecordService_InsertRecord'&gt;Insert Record&lt;/a&gt; and the tokenization parameter.
-     */
-    public CompletableFuture<ApiClientHttpResponse<V1TokenizeResponse>> recordServiceTokenize(
-            String vaultId, V1TokenizePayload request, RequestOptions requestOptions) {
-        HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
+    public CompletableFuture<ApiClientHttpResponse<TokenizeResponse>> tokenize(
+            String vaultId, TokenizePayload request, RequestOptions requestOptions) {
+        HttpUrl.Builder httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
                 .newBuilder()
                 .addPathSegments("v1/vaults")
                 .addPathSegment(vaultId)
-                .addPathSegments("tokenize")
-                .build();
+                .addPathSegments("tokenize");
+        if (requestOptions != null) {
+            requestOptions.getQueryParameters().forEach((_key, _value) -> {
+                httpUrl.addQueryParameter(_key, _value);
+            });
+        }
         RequestBody body;
         try {
             body = RequestBody.create(
@@ -141,7 +180,7 @@ public class AsyncRawTokensClient {
             throw new ApiClientException("Failed to serialize request", e);
         }
         Request okhttpRequest = new Request.Builder()
-                .url(httpUrl)
+                .url(httpUrl.build())
                 .method("POST", body)
                 .headers(Headers.of(clientOptions.headers(requestOptions)))
                 .addHeader("Content-Type", "application/json")
@@ -151,33 +190,60 @@ public class AsyncRawTokensClient {
         if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
             client = clientOptions.httpClientWithTimeout(requestOptions);
         }
-        CompletableFuture<ApiClientHttpResponse<V1TokenizeResponse>> future = new CompletableFuture<>();
+        if (requestOptions != null && requestOptions.getMaxRetries().isPresent()) {
+            okhttpRequest = okhttpRequest
+                    .newBuilder()
+                    .tag(
+                            RetryInterceptor.MaxRetriesOverride.class,
+                            new RetryInterceptor.MaxRetriesOverride(
+                                    requestOptions.getMaxRetries().get()))
+                    .build();
+        }
+        CompletableFuture<ApiClientHttpResponse<TokenizeResponse>> future = new CompletableFuture<>();
         client.newCall(okhttpRequest).enqueue(new Callback() {
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
                 try (ResponseBody responseBody = response.body()) {
+                    String responseBodyString = responseBody != null ? responseBody.string() : "{}";
                     if (response.isSuccessful()) {
                         future.complete(new ApiClientHttpResponse<>(
-                                ObjectMappers.JSON_MAPPER.readValue(responseBody.string(), V1TokenizeResponse.class),
+                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, TokenizeResponse.class),
                                 response));
                         return;
                     }
-                    String responseBodyString = responseBody != null ? responseBody.string() : "{}";
                     try {
-                        if (response.code() == 404) {
-                            future.completeExceptionally(new NotFoundError(
-                                    ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class), response));
-                            return;
+                        switch (response.code()) {
+                            case 400:
+                                future.completeExceptionally(new BadRequestError(
+                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class),
+                                        response));
+                                return;
+                            case 401:
+                                future.completeExceptionally(new UnauthorizedError(
+                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class),
+                                        response));
+                                return;
+                            case 404:
+                                future.completeExceptionally(new NotFoundError(
+                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class),
+                                        response));
+                                return;
+                            case 500:
+                                future.completeExceptionally(new InternalServerError(
+                                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class),
+                                        response));
+                                return;
                         }
                     } catch (JsonProcessingException ignored) {
                         // unable to map error response, throwing generic error
                     }
+                    Object errorBody = ObjectMappers.parseErrorBody(responseBodyString);
                     future.completeExceptionally(new ApiClientApiException(
-                            "Error with status code " + response.code(),
-                            response.code(),
-                            ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                            response));
+                            "Error with status code " + response.code(), response.code(), errorBody, response));
                     return;
+                } catch (JsonProcessingException e) {
+                    future.completeExceptionally(
+                            new ApiClientException("Failed to deserialize response: " + e.getMessage(), e));
                 } catch (IOException e) {
                     future.completeExceptionally(new ApiClientException("Network error executing HTTP request", e));
                 }

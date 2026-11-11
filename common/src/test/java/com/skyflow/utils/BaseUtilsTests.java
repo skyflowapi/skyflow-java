@@ -4,7 +4,7 @@ import com.google.gson.JsonObject;
 import com.skyflow.config.Credentials;
 import com.skyflow.enums.Env;
 import com.skyflow.errors.ErrorCode;
-import com.skyflow.errors.ErrorMessage;
+import com.skyflow.errors.BaseErrorMessage;
 import com.skyflow.errors.SkyflowException;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -105,7 +105,7 @@ public class BaseUtilsTests {
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
-                    BaseUtils.parameterizedString(ErrorMessage.FileNotFound.getMessage(), filePath),
+                    BaseUtils.parameterizedString(BaseErrorMessage.FileNotFound.getMessage(), filePath),
                     e.getMessage()
             );
         }
@@ -122,7 +122,7 @@ public class BaseUtilsTests {
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(ErrorMessage.CredentialsStringInvalidJson.getMessage(), e.getMessage());
+            Assert.assertEquals(BaseErrorMessage.CredentialsStringInvalidJson.getMessage(), e.getMessage());
         }
     }
 
@@ -166,7 +166,7 @@ public class BaseUtilsTests {
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
             Assert.assertEquals(
-                    BaseUtils.parameterizedString(ErrorMessage.FileNotFound.getMessage(), filePath),
+                    BaseUtils.parameterizedString(BaseErrorMessage.FileNotFound.getMessage(), filePath),
                     e.getMessage()
             );
         }
@@ -187,7 +187,7 @@ public class BaseUtilsTests {
             Assert.fail("Map context should not cause a ClassCastException");
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(ErrorMessage.CredentialsStringInvalidJson.getMessage(), e.getMessage());
+            Assert.assertEquals(BaseErrorMessage.CredentialsStringInvalidJson.getMessage(), e.getMessage());
         }
     }
 
@@ -205,7 +205,7 @@ public class BaseUtilsTests {
             Assert.fail("Non String/Map context should not cause a ClassCastException");
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(ErrorMessage.CredentialsStringInvalidJson.getMessage(), e.getMessage());
+            Assert.assertEquals(BaseErrorMessage.CredentialsStringInvalidJson.getMessage(), e.getMessage());
         }
     }
 
@@ -216,7 +216,7 @@ public class BaseUtilsTests {
             Assert.fail(EXCEPTION_NOT_THROWN);
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(ErrorMessage.JwtInvalidFormat.getMessage(), e.getMessage());
+            Assert.assertEquals(BaseErrorMessage.JwtInvalidFormat.getMessage(), e.getMessage());
         }
     }
 
@@ -230,7 +230,7 @@ public class BaseUtilsTests {
             Assert.fail("Invalid base64 content should be wrapped into a SkyflowException, not thrown raw");
         } catch (SkyflowException e) {
             Assert.assertEquals(ErrorCode.INVALID_INPUT.getCode(), e.getHttpCode());
-            Assert.assertEquals(ErrorMessage.InvalidKeySpec.getMessage(), e.getMessage());
+            Assert.assertEquals(BaseErrorMessage.InvalidKeySpec.getMessage(), e.getMessage());
         }
     }
 
