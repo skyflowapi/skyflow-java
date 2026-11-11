@@ -4,19 +4,42 @@
 package com.skyflow.generated.rest.resources.records;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.skyflow.generated.rest.core.*;
+import com.skyflow.generated.rest.core.ApiClientApiException;
+import com.skyflow.generated.rest.core.ApiClientException;
+import com.skyflow.generated.rest.core.ApiClientHttpResponse;
+import com.skyflow.generated.rest.core.ClientOptions;
+import com.skyflow.generated.rest.core.MediaTypes;
+import com.skyflow.generated.rest.core.ObjectMappers;
+import com.skyflow.generated.rest.core.QueryStringMapper;
+import com.skyflow.generated.rest.core.RequestOptions;
+import com.skyflow.generated.rest.core.RetryInterceptor;
 import com.skyflow.generated.rest.errors.BadRequestError;
 import com.skyflow.generated.rest.errors.InternalServerError;
 import com.skyflow.generated.rest.errors.NotFoundError;
 import com.skyflow.generated.rest.errors.UnauthorizedError;
-import com.skyflow.generated.rest.resources.records.requests.*;
-import com.skyflow.generated.rest.types.*;
-import okhttp3.*;
-
-import java.io.File;
+import com.skyflow.generated.rest.resources.records.requests.BatchOperationRequest;
+import com.skyflow.generated.rest.resources.records.requests.BulkDeleteRecordRequest;
+import com.skyflow.generated.rest.resources.records.requests.DeleteRecordRequest;
+import com.skyflow.generated.rest.resources.records.requests.GetRecordByIdRequest;
+import com.skyflow.generated.rest.resources.records.requests.GetRecordsRequest;
+import com.skyflow.generated.rest.resources.records.requests.InsertRecordRequest;
+import com.skyflow.generated.rest.resources.records.requests.UpdateRecordRequest;
+import com.skyflow.generated.rest.types.BatchOperationResponse;
+import com.skyflow.generated.rest.types.BulkDeleteRecordResponse;
+import com.skyflow.generated.rest.types.BulkGetRecordResponse;
+import com.skyflow.generated.rest.types.DeleteRecordResponse;
+import com.skyflow.generated.rest.types.ErrorResponse;
+import com.skyflow.generated.rest.types.GetFieldRecords;
+import com.skyflow.generated.rest.types.InsertRecordResponse;
+import com.skyflow.generated.rest.types.UpdateRecordResponse;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.util.Optional;
+import okhttp3.Headers;
+import okhttp3.HttpUrl;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
 
 public class RawRecordsClient {
     protected final ClientOptions clientOptions;
@@ -28,29 +51,24 @@ public class RawRecordsClient {
     /**
      * Performs multiple record operations in a single transaction.
      */
-    public ApiClientHttpResponse<V1BatchOperationResponse> recordServiceBatchOperation(String vaultId) {
-        return recordServiceBatchOperation(
-                vaultId, RecordServiceBatchOperationBody.builder().build());
+    public ApiClientHttpResponse<BatchOperationResponse> batchOperation(String vaultId, BatchOperationRequest request) {
+        return batchOperation(vaultId, request, null);
     }
 
     /**
      * Performs multiple record operations in a single transaction.
      */
-    public ApiClientHttpResponse<V1BatchOperationResponse> recordServiceBatchOperation(
-            String vaultId, RecordServiceBatchOperationBody request) {
-        return recordServiceBatchOperation(vaultId, request, null);
-    }
-
-    /**
-     * Performs multiple record operations in a single transaction.
-     */
-    public ApiClientHttpResponse<V1BatchOperationResponse> recordServiceBatchOperation(
-            String vaultId, RecordServiceBatchOperationBody request, RequestOptions requestOptions) {
-        HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
+    public ApiClientHttpResponse<BatchOperationResponse> batchOperation(
+            String vaultId, BatchOperationRequest request, RequestOptions requestOptions) {
+        HttpUrl.Builder httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
                 .newBuilder()
                 .addPathSegments("v1/vaults")
-                .addPathSegment(vaultId)
-                .build();
+                .addPathSegment(vaultId);
+        if (requestOptions != null) {
+            requestOptions.getQueryParameters().forEach((_key, _value) -> {
+                httpUrl.addQueryParameter(_key, _value);
+            });
+        }
         RequestBody body;
         try {
             body = RequestBody.create(
@@ -59,7 +77,7 @@ public class RawRecordsClient {
             throw new ApiClientException("Failed to serialize request", e);
         }
         Request okhttpRequest = new Request.Builder()
-                .url(httpUrl)
+                .url(httpUrl.build())
                 .method("POST", body)
                 .headers(Headers.of(clientOptions.headers(requestOptions)))
                 .addHeader("Content-Type", "application/json")
@@ -69,57 +87,79 @@ public class RawRecordsClient {
         if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
             client = clientOptions.httpClientWithTimeout(requestOptions);
         }
+        if (requestOptions != null && requestOptions.getMaxRetries().isPresent()) {
+            okhttpRequest = okhttpRequest
+                    .newBuilder()
+                    .tag(
+                            RetryInterceptor.MaxRetriesOverride.class,
+                            new RetryInterceptor.MaxRetriesOverride(
+                                    requestOptions.getMaxRetries().get()))
+                    .build();
+        }
         try (Response response = client.newCall(okhttpRequest).execute()) {
             ResponseBody responseBody = response.body();
+            String responseBodyString = responseBody != null ? responseBody.string() : "{}";
             if (response.isSuccessful()) {
                 return new ApiClientHttpResponse<>(
-                        ObjectMappers.JSON_MAPPER.readValue(responseBody.string(), V1BatchOperationResponse.class),
+                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, BatchOperationResponse.class),
                         response);
             }
-            String responseBodyString = responseBody != null ? responseBody.string() : "{}";
             try {
-                if (response.code() == 404) {
-                    throw new NotFoundError(
-                            ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class), response);
+                switch (response.code()) {
+                    case 400:
+                        throw new BadRequestError(
+                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class), response);
+                    case 401:
+                        throw new UnauthorizedError(
+                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class), response);
+                    case 404:
+                        throw new NotFoundError(
+                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class), response);
+                    case 500:
+                        throw new InternalServerError(
+                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class), response);
                 }
             } catch (JsonProcessingException ignored) {
                 // unable to map error response, throwing generic error
             }
+            Object errorBody = ObjectMappers.parseErrorBody(responseBodyString);
             throw new ApiClientApiException(
-                    "Error with status code " + response.code(),
-                    response.code(),
-                    ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                    response);
+                    "Error with status code " + response.code(), response.code(), errorBody, response);
+        } catch (JsonProcessingException e) {
+            throw new ApiClientException("Failed to deserialize response: " + e.getMessage(), e);
         } catch (IOException e) {
             throw new ApiClientException("Network error executing HTTP request", e);
         }
     }
 
     /**
-     * Gets the specified records from a table.
+     * Returns the specified records from a table.
      */
-    public ApiClientHttpResponse<V1BulkGetRecordResponse> recordServiceBulkGetRecord(
-            String vaultId, String objectName) {
-        return recordServiceBulkGetRecord(
-                vaultId, objectName, RecordServiceBulkGetRecordRequest.builder().build());
+    public ApiClientHttpResponse<BulkGetRecordResponse> getRecords(String vaultId, String objectName) {
+        return getRecords(vaultId, objectName, GetRecordsRequest.builder().build());
     }
 
     /**
-     * Gets the specified records from a table.
+     * Returns the specified records from a table.
      */
-    public ApiClientHttpResponse<V1BulkGetRecordResponse> recordServiceBulkGetRecord(
-            String vaultId, String objectName, RecordServiceBulkGetRecordRequest request) {
-        return recordServiceBulkGetRecord(vaultId, objectName, request, null);
+    public ApiClientHttpResponse<BulkGetRecordResponse> getRecords(
+            String vaultId, String objectName, RequestOptions requestOptions) {
+        return getRecords(vaultId, objectName, GetRecordsRequest.builder().build(), requestOptions);
     }
 
     /**
-     * Gets the specified records from a table.
+     * Returns the specified records from a table.
      */
-    public ApiClientHttpResponse<V1BulkGetRecordResponse> recordServiceBulkGetRecord(
-            String vaultId,
-            String objectName,
-            RecordServiceBulkGetRecordRequest request,
-            RequestOptions requestOptions) {
+    public ApiClientHttpResponse<BulkGetRecordResponse> getRecords(
+            String vaultId, String objectName, GetRecordsRequest request) {
+        return getRecords(vaultId, objectName, request, null);
+    }
+
+    /**
+     * Returns the specified records from a table.
+     */
+    public ApiClientHttpResponse<BulkGetRecordResponse> getRecords(
+            String vaultId, String objectName, GetRecordsRequest request, RequestOptions requestOptions) {
         HttpUrl.Builder httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
                 .newBuilder()
                 .addPathSegments("v1/vaults")
@@ -153,6 +193,13 @@ public class RawRecordsClient {
             QueryStringMapper.addQueryParameter(
                     httpUrl, "order_by", request.getOrderBy().get(), false);
         }
+        if (request.getReturnFileMetadata().isPresent()) {
+            QueryStringMapper.addQueryParameter(
+                    httpUrl,
+                    "returnFileMetadata",
+                    request.getReturnFileMetadata().get(),
+                    false);
+        }
         if (request.getSkyflowIds().isPresent()) {
             QueryStringMapper.addQueryParameter(
                     httpUrl, "skyflow_ids", request.getSkyflowIds().get(), true);
@@ -165,6 +212,11 @@ public class RawRecordsClient {
             QueryStringMapper.addQueryParameter(
                     httpUrl, "column_values", request.getColumnValues().get(), true);
         }
+        if (requestOptions != null) {
+            requestOptions.getQueryParameters().forEach((_key, _value) -> {
+                httpUrl.addQueryParameter(_key, _value);
+            });
+        }
         Request.Builder _requestBuilder = new Request.Builder()
                 .url(httpUrl.build())
                 .method("GET", null)
@@ -175,59 +227,73 @@ public class RawRecordsClient {
         if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
             client = clientOptions.httpClientWithTimeout(requestOptions);
         }
+        if (requestOptions != null && requestOptions.getMaxRetries().isPresent()) {
+            okhttpRequest = okhttpRequest
+                    .newBuilder()
+                    .tag(
+                            RetryInterceptor.MaxRetriesOverride.class,
+                            new RetryInterceptor.MaxRetriesOverride(
+                                    requestOptions.getMaxRetries().get()))
+                    .build();
+        }
         try (Response response = client.newCall(okhttpRequest).execute()) {
             ResponseBody responseBody = response.body();
+            String responseBodyString = responseBody != null ? responseBody.string() : "{}";
             if (response.isSuccessful()) {
                 return new ApiClientHttpResponse<>(
-                        ObjectMappers.JSON_MAPPER.readValue(responseBody.string(), V1BulkGetRecordResponse.class),
-                        response);
+                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, BulkGetRecordResponse.class), response);
             }
-            String responseBodyString = responseBody != null ? responseBody.string() : "{}";
             try {
-                if (response.code() == 404) {
-                    throw new NotFoundError(
-                            ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class), response);
+                switch (response.code()) {
+                    case 400:
+                        throw new BadRequestError(
+                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class), response);
+                    case 401:
+                        throw new UnauthorizedError(
+                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class), response);
+                    case 404:
+                        throw new NotFoundError(
+                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class), response);
+                    case 500:
+                        throw new InternalServerError(
+                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class), response);
                 }
             } catch (JsonProcessingException ignored) {
                 // unable to map error response, throwing generic error
             }
+            Object errorBody = ObjectMappers.parseErrorBody(responseBodyString);
             throw new ApiClientApiException(
-                    "Error with status code " + response.code(),
-                    response.code(),
-                    ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                    response);
+                    "Error with status code " + response.code(), response.code(), errorBody, response);
+        } catch (JsonProcessingException e) {
+            throw new ApiClientException("Failed to deserialize response: " + e.getMessage(), e);
         } catch (IOException e) {
             throw new ApiClientException("Network error executing HTTP request", e);
         }
     }
 
     /**
-     * Inserts a record in the specified table.&lt;br /&gt;&lt;br /&gt;The time-to-live (TTL) for a transient field begins when the field value is set during record insertion.&lt;br /&gt;&lt;br /&gt;Columns that have a string data type and a uniqueness constraint accept strings up to 2500 characters. If an inserted string exceeds 2500 characters, the call returns a token insertion error.
+     * Inserts a record in the specified table.The time-to-live (TTL) for a transient field begins when the field value is set during record insertion.Columns that have a string data type and a uniqueness constraint accept strings up to 2500 characters. If an inserted string exceeds 2500 characters, the call returns a token insertion error.
      */
-    public ApiClientHttpResponse<V1InsertRecordResponse> recordServiceInsertRecord(String vaultId, String objectName) {
-        return recordServiceInsertRecord(
-                vaultId, objectName, RecordServiceInsertRecordBody.builder().build());
+    public ApiClientHttpResponse<InsertRecordResponse> insertRecords(
+            String vaultId, String objectName, InsertRecordRequest request) {
+        return insertRecords(vaultId, objectName, request, null);
     }
 
     /**
-     * Inserts a record in the specified table.&lt;br /&gt;&lt;br /&gt;The time-to-live (TTL) for a transient field begins when the field value is set during record insertion.&lt;br /&gt;&lt;br /&gt;Columns that have a string data type and a uniqueness constraint accept strings up to 2500 characters. If an inserted string exceeds 2500 characters, the call returns a token insertion error.
+     * Inserts a record in the specified table.The time-to-live (TTL) for a transient field begins when the field value is set during record insertion.Columns that have a string data type and a uniqueness constraint accept strings up to 2500 characters. If an inserted string exceeds 2500 characters, the call returns a token insertion error.
      */
-    public ApiClientHttpResponse<V1InsertRecordResponse> recordServiceInsertRecord(
-            String vaultId, String objectName, RecordServiceInsertRecordBody request) {
-        return recordServiceInsertRecord(vaultId, objectName, request, null);
-    }
-
-    /**
-     * Inserts a record in the specified table.&lt;br /&gt;&lt;br /&gt;The time-to-live (TTL) for a transient field begins when the field value is set during record insertion.&lt;br /&gt;&lt;br /&gt;Columns that have a string data type and a uniqueness constraint accept strings up to 2500 characters. If an inserted string exceeds 2500 characters, the call returns a token insertion error.
-     */
-    public ApiClientHttpResponse<V1InsertRecordResponse> recordServiceInsertRecord(
-            String vaultId, String objectName, RecordServiceInsertRecordBody request, RequestOptions requestOptions) {
-        HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
+    public ApiClientHttpResponse<InsertRecordResponse> insertRecords(
+            String vaultId, String objectName, InsertRecordRequest request, RequestOptions requestOptions) {
+        HttpUrl.Builder httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
                 .newBuilder()
                 .addPathSegments("v1/vaults")
                 .addPathSegment(vaultId)
-                .addPathSegment(objectName)
-                .build();
+                .addPathSegment(objectName);
+        if (requestOptions != null) {
+            requestOptions.getQueryParameters().forEach((_key, _value) -> {
+                httpUrl.addQueryParameter(_key, _value);
+            });
+        }
         RequestBody body;
         try {
             body = RequestBody.create(
@@ -236,7 +302,7 @@ public class RawRecordsClient {
             throw new ApiClientException("Failed to serialize request", e);
         }
         Request okhttpRequest = new Request.Builder()
-                .url(httpUrl)
+                .url(httpUrl.build())
                 .method("POST", body)
                 .headers(Headers.of(clientOptions.headers(requestOptions)))
                 .addHeader("Content-Type", "application/json")
@@ -246,27 +312,42 @@ public class RawRecordsClient {
         if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
             client = clientOptions.httpClientWithTimeout(requestOptions);
         }
+        if (requestOptions != null && requestOptions.getMaxRetries().isPresent()) {
+            okhttpRequest = okhttpRequest
+                    .newBuilder()
+                    .tag(
+                            RetryInterceptor.MaxRetriesOverride.class,
+                            new RetryInterceptor.MaxRetriesOverride(
+                                    requestOptions.getMaxRetries().get()))
+                    .build();
+        }
         try (Response response = client.newCall(okhttpRequest).execute()) {
             ResponseBody responseBody = response.body();
+            String responseBodyString = responseBody != null ? responseBody.string() : "{}";
             if (response.isSuccessful()) {
                 return new ApiClientHttpResponse<>(
-                        ObjectMappers.JSON_MAPPER.readValue(responseBody.string(), V1InsertRecordResponse.class),
-                        response);
+                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, InsertRecordResponse.class), response);
             }
-            String responseBodyString = responseBody != null ? responseBody.string() : "{}";
             try {
-                if (response.code() == 404) {
-                    throw new NotFoundError(
-                            ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class), response);
+                switch (response.code()) {
+                    case 400:
+                        throw new BadRequestError(
+                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class), response);
+                    case 401:
+                        throw new UnauthorizedError(
+                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class), response);
+                    case 500:
+                        throw new InternalServerError(
+                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class), response);
                 }
             } catch (JsonProcessingException ignored) {
                 // unable to map error response, throwing generic error
             }
+            Object errorBody = ObjectMappers.parseErrorBody(responseBodyString);
             throw new ApiClientApiException(
-                    "Error with status code " + response.code(),
-                    response.code(),
-                    ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                    response);
+                    "Error with status code " + response.code(), response.code(), errorBody, response);
+        } catch (JsonProcessingException e) {
+            throw new ApiClientException("Failed to deserialize response: " + e.getMessage(), e);
         } catch (IOException e) {
             throw new ApiClientException("Network error executing HTTP request", e);
         }
@@ -275,34 +356,43 @@ public class RawRecordsClient {
     /**
      * Deletes the specified records from a table.
      */
-    public ApiClientHttpResponse<V1BulkDeleteRecordResponse> recordServiceBulkDeleteRecord(
-            String vaultId, String objectName) {
-        return recordServiceBulkDeleteRecord(
-                vaultId, objectName, RecordServiceBulkDeleteRecordBody.builder().build());
+    public ApiClientHttpResponse<BulkDeleteRecordResponse> deleteRecords(String vaultId, String objectName) {
+        return deleteRecords(
+                vaultId, objectName, BulkDeleteRecordRequest.builder().build());
     }
 
     /**
      * Deletes the specified records from a table.
      */
-    public ApiClientHttpResponse<V1BulkDeleteRecordResponse> recordServiceBulkDeleteRecord(
-            String vaultId, String objectName, RecordServiceBulkDeleteRecordBody request) {
-        return recordServiceBulkDeleteRecord(vaultId, objectName, request, null);
+    public ApiClientHttpResponse<BulkDeleteRecordResponse> deleteRecords(
+            String vaultId, String objectName, RequestOptions requestOptions) {
+        return deleteRecords(
+                vaultId, objectName, BulkDeleteRecordRequest.builder().build(), requestOptions);
     }
 
     /**
      * Deletes the specified records from a table.
      */
-    public ApiClientHttpResponse<V1BulkDeleteRecordResponse> recordServiceBulkDeleteRecord(
-            String vaultId,
-            String objectName,
-            RecordServiceBulkDeleteRecordBody request,
-            RequestOptions requestOptions) {
-        HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
+    public ApiClientHttpResponse<BulkDeleteRecordResponse> deleteRecords(
+            String vaultId, String objectName, BulkDeleteRecordRequest request) {
+        return deleteRecords(vaultId, objectName, request, null);
+    }
+
+    /**
+     * Deletes the specified records from a table.
+     */
+    public ApiClientHttpResponse<BulkDeleteRecordResponse> deleteRecords(
+            String vaultId, String objectName, BulkDeleteRecordRequest request, RequestOptions requestOptions) {
+        HttpUrl.Builder httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
                 .newBuilder()
                 .addPathSegments("v1/vaults")
                 .addPathSegment(vaultId)
-                .addPathSegment(objectName)
-                .build();
+                .addPathSegment(objectName);
+        if (requestOptions != null) {
+            requestOptions.getQueryParameters().forEach((_key, _value) -> {
+                httpUrl.addQueryParameter(_key, _value);
+            });
+        }
         RequestBody body;
         try {
             body = RequestBody.create(
@@ -311,7 +401,7 @@ public class RawRecordsClient {
             throw new ApiClientException("Failed to serialize request", e);
         }
         Request okhttpRequest = new Request.Builder()
-                .url(httpUrl)
+                .url(httpUrl.build())
                 .method("DELETE", body)
                 .headers(Headers.of(clientOptions.headers(requestOptions)))
                 .addHeader("Content-Type", "application/json")
@@ -321,27 +411,46 @@ public class RawRecordsClient {
         if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
             client = clientOptions.httpClientWithTimeout(requestOptions);
         }
+        if (requestOptions != null && requestOptions.getMaxRetries().isPresent()) {
+            okhttpRequest = okhttpRequest
+                    .newBuilder()
+                    .tag(
+                            RetryInterceptor.MaxRetriesOverride.class,
+                            new RetryInterceptor.MaxRetriesOverride(
+                                    requestOptions.getMaxRetries().get()))
+                    .build();
+        }
         try (Response response = client.newCall(okhttpRequest).execute()) {
             ResponseBody responseBody = response.body();
+            String responseBodyString = responseBody != null ? responseBody.string() : "{}";
             if (response.isSuccessful()) {
                 return new ApiClientHttpResponse<>(
-                        ObjectMappers.JSON_MAPPER.readValue(responseBody.string(), V1BulkDeleteRecordResponse.class),
+                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, BulkDeleteRecordResponse.class),
                         response);
             }
-            String responseBodyString = responseBody != null ? responseBody.string() : "{}";
             try {
-                if (response.code() == 404) {
-                    throw new NotFoundError(
-                            ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class), response);
+                switch (response.code()) {
+                    case 400:
+                        throw new BadRequestError(
+                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class), response);
+                    case 401:
+                        throw new UnauthorizedError(
+                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class), response);
+                    case 404:
+                        throw new NotFoundError(
+                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class), response);
+                    case 500:
+                        throw new InternalServerError(
+                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class), response);
                 }
             } catch (JsonProcessingException ignored) {
                 // unable to map error response, throwing generic error
             }
+            Object errorBody = ObjectMappers.parseErrorBody(responseBodyString);
             throw new ApiClientApiException(
-                    "Error with status code " + response.code(),
-                    response.code(),
-                    ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                    response);
+                    "Error with status code " + response.code(), response.code(), errorBody, response);
+        } catch (JsonProcessingException e) {
+            throw new ApiClientException("Failed to deserialize response: " + e.getMessage(), e);
         } catch (IOException e) {
             throw new ApiClientException("Network error executing HTTP request", e);
         }
@@ -350,28 +459,33 @@ public class RawRecordsClient {
     /**
      * Returns the specified record from a table.
      */
-    public ApiClientHttpResponse<V1FieldRecords> recordServiceGetRecord(String vaultId, String objectName, String id) {
-        return recordServiceGetRecord(
-                vaultId, objectName, id, RecordServiceGetRecordRequest.builder().build());
+    public ApiClientHttpResponse<GetFieldRecords> getRecordById(String vaultId, String objectName, String id) {
+        return getRecordById(
+                vaultId, objectName, id, GetRecordByIdRequest.builder().build());
     }
 
     /**
      * Returns the specified record from a table.
      */
-    public ApiClientHttpResponse<V1FieldRecords> recordServiceGetRecord(
-            String vaultId, String objectName, String id, RecordServiceGetRecordRequest request) {
-        return recordServiceGetRecord(vaultId, objectName, id, request, null);
+    public ApiClientHttpResponse<GetFieldRecords> getRecordById(
+            String vaultId, String objectName, String id, RequestOptions requestOptions) {
+        return getRecordById(
+                vaultId, objectName, id, GetRecordByIdRequest.builder().build(), requestOptions);
     }
 
     /**
      * Returns the specified record from a table.
      */
-    public ApiClientHttpResponse<V1FieldRecords> recordServiceGetRecord(
-            String vaultId,
-            String objectName,
-            String id,
-            RecordServiceGetRecordRequest request,
-            RequestOptions requestOptions) {
+    public ApiClientHttpResponse<GetFieldRecords> getRecordById(
+            String vaultId, String objectName, String id, GetRecordByIdRequest request) {
+        return getRecordById(vaultId, objectName, id, request, null);
+    }
+
+    /**
+     * Returns the specified record from a table.
+     */
+    public ApiClientHttpResponse<GetFieldRecords> getRecordById(
+            String vaultId, String objectName, String id, GetRecordByIdRequest request, RequestOptions requestOptions) {
         HttpUrl.Builder httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
                 .newBuilder()
                 .addPathSegments("v1/vaults")
@@ -390,9 +504,21 @@ public class RawRecordsClient {
             QueryStringMapper.addQueryParameter(
                     httpUrl, "downloadURL", request.getDownloadUrl().get(), false);
         }
+        if (request.getReturnFileMetadata().isPresent()) {
+            QueryStringMapper.addQueryParameter(
+                    httpUrl,
+                    "returnFileMetadata",
+                    request.getReturnFileMetadata().get(),
+                    false);
+        }
         if (request.getFields().isPresent()) {
             QueryStringMapper.addQueryParameter(
                     httpUrl, "fields", request.getFields().get(), true);
+        }
+        if (requestOptions != null) {
+            requestOptions.getQueryParameters().forEach((_key, _value) -> {
+                httpUrl.addQueryParameter(_key, _value);
+            });
         }
         Request.Builder _requestBuilder = new Request.Builder()
                 .url(httpUrl.build())
@@ -404,64 +530,91 @@ public class RawRecordsClient {
         if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
             client = clientOptions.httpClientWithTimeout(requestOptions);
         }
+        if (requestOptions != null && requestOptions.getMaxRetries().isPresent()) {
+            okhttpRequest = okhttpRequest
+                    .newBuilder()
+                    .tag(
+                            RetryInterceptor.MaxRetriesOverride.class,
+                            new RetryInterceptor.MaxRetriesOverride(
+                                    requestOptions.getMaxRetries().get()))
+                    .build();
+        }
         try (Response response = client.newCall(okhttpRequest).execute()) {
             ResponseBody responseBody = response.body();
+            String responseBodyString = responseBody != null ? responseBody.string() : "{}";
             if (response.isSuccessful()) {
                 return new ApiClientHttpResponse<>(
-                        ObjectMappers.JSON_MAPPER.readValue(responseBody.string(), V1FieldRecords.class), response);
+                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, GetFieldRecords.class), response);
             }
-            String responseBodyString = responseBody != null ? responseBody.string() : "{}";
             try {
-                if (response.code() == 404) {
-                    throw new NotFoundError(
-                            ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class), response);
+                switch (response.code()) {
+                    case 400:
+                        throw new BadRequestError(
+                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class), response);
+                    case 401:
+                        throw new UnauthorizedError(
+                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class), response);
+                    case 404:
+                        throw new NotFoundError(
+                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class), response);
+                    case 500:
+                        throw new InternalServerError(
+                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class), response);
                 }
             } catch (JsonProcessingException ignored) {
                 // unable to map error response, throwing generic error
             }
+            Object errorBody = ObjectMappers.parseErrorBody(responseBodyString);
             throw new ApiClientApiException(
-                    "Error with status code " + response.code(),
-                    response.code(),
-                    ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                    response);
+                    "Error with status code " + response.code(), response.code(), errorBody, response);
+        } catch (JsonProcessingException e) {
+            throw new ApiClientException("Failed to deserialize response: " + e.getMessage(), e);
         } catch (IOException e) {
             throw new ApiClientException("Network error executing HTTP request", e);
         }
     }
 
     /**
-     * Updates the specified record in a table.&lt;br /&gt;&lt;br /&gt;When you update a field, include the entire contents you want the field to store. For JSON fields, include all nested fields and values. If a nested field isn't included, it's removed.&lt;br /&gt;&lt;br /&gt;The time-to-live (TTL) for a transient field resets when the field value is updated.
+     * Updates the specified record in a table.When you update a field, include the entire contents you want the field to store. For JSON fields, include all nested fields and values. If a nested field isn't included, it's removed.The time-to-live (TTL) for a transient field resets when the field value is updated.
      */
-    public ApiClientHttpResponse<V1UpdateRecordResponse> recordServiceUpdateRecord(
-            String vaultId, String objectName, String id) {
-        return recordServiceUpdateRecord(
-                vaultId, objectName, id, RecordServiceUpdateRecordBody.builder().build());
+    public ApiClientHttpResponse<UpdateRecordResponse> updateRecord(String vaultId, String objectName, String id) {
+        return updateRecord(
+                vaultId, objectName, id, UpdateRecordRequest.builder().build());
     }
 
     /**
-     * Updates the specified record in a table.&lt;br /&gt;&lt;br /&gt;When you update a field, include the entire contents you want the field to store. For JSON fields, include all nested fields and values. If a nested field isn't included, it's removed.&lt;br /&gt;&lt;br /&gt;The time-to-live (TTL) for a transient field resets when the field value is updated.
+     * Updates the specified record in a table.When you update a field, include the entire contents you want the field to store. For JSON fields, include all nested fields and values. If a nested field isn't included, it's removed.The time-to-live (TTL) for a transient field resets when the field value is updated.
      */
-    public ApiClientHttpResponse<V1UpdateRecordResponse> recordServiceUpdateRecord(
-            String vaultId, String objectName, String id, RecordServiceUpdateRecordBody request) {
-        return recordServiceUpdateRecord(vaultId, objectName, id, request, null);
+    public ApiClientHttpResponse<UpdateRecordResponse> updateRecord(
+            String vaultId, String objectName, String id, RequestOptions requestOptions) {
+        return updateRecord(
+                vaultId, objectName, id, UpdateRecordRequest.builder().build(), requestOptions);
     }
 
     /**
-     * Updates the specified record in a table.&lt;br /&gt;&lt;br /&gt;When you update a field, include the entire contents you want the field to store. For JSON fields, include all nested fields and values. If a nested field isn't included, it's removed.&lt;br /&gt;&lt;br /&gt;The time-to-live (TTL) for a transient field resets when the field value is updated.
+     * Updates the specified record in a table.When you update a field, include the entire contents you want the field to store. For JSON fields, include all nested fields and values. If a nested field isn't included, it's removed.The time-to-live (TTL) for a transient field resets when the field value is updated.
      */
-    public ApiClientHttpResponse<V1UpdateRecordResponse> recordServiceUpdateRecord(
-            String vaultId,
-            String objectName,
-            String id,
-            RecordServiceUpdateRecordBody request,
-            RequestOptions requestOptions) {
-        HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
+    public ApiClientHttpResponse<UpdateRecordResponse> updateRecord(
+            String vaultId, String objectName, String id, UpdateRecordRequest request) {
+        return updateRecord(vaultId, objectName, id, request, null);
+    }
+
+    /**
+     * Updates the specified record in a table.When you update a field, include the entire contents you want the field to store. For JSON fields, include all nested fields and values. If a nested field isn't included, it's removed.The time-to-live (TTL) for a transient field resets when the field value is updated.
+     */
+    public ApiClientHttpResponse<UpdateRecordResponse> updateRecord(
+            String vaultId, String objectName, String id, UpdateRecordRequest request, RequestOptions requestOptions) {
+        HttpUrl.Builder httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
                 .newBuilder()
                 .addPathSegments("v1/vaults")
                 .addPathSegment(vaultId)
                 .addPathSegment(objectName)
-                .addPathSegment(id)
-                .build();
+                .addPathSegment(id);
+        if (requestOptions != null) {
+            requestOptions.getQueryParameters().forEach((_key, _value) -> {
+                httpUrl.addQueryParameter(_key, _value);
+            });
+        }
         RequestBody body;
         try {
             body = RequestBody.create(
@@ -470,7 +623,7 @@ public class RawRecordsClient {
             throw new ApiClientException("Failed to serialize request", e);
         }
         Request okhttpRequest = new Request.Builder()
-                .url(httpUrl)
+                .url(httpUrl.build())
                 .method("PUT", body)
                 .headers(Headers.of(clientOptions.headers(requestOptions)))
                 .addHeader("Content-Type", "application/json")
@@ -480,364 +633,33 @@ public class RawRecordsClient {
         if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
             client = clientOptions.httpClientWithTimeout(requestOptions);
         }
-        try (Response response = client.newCall(okhttpRequest).execute()) {
-            ResponseBody responseBody = response.body();
-            if (response.isSuccessful()) {
-                return new ApiClientHttpResponse<>(
-                        ObjectMappers.JSON_MAPPER.readValue(responseBody.string(), V1UpdateRecordResponse.class),
-                        response);
-            }
-            String responseBodyString = responseBody != null ? responseBody.string() : "{}";
-            try {
-                if (response.code() == 404) {
-                    throw new NotFoundError(
-                            ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class), response);
-                }
-            } catch (JsonProcessingException ignored) {
-                // unable to map error response, throwing generic error
-            }
-            throw new ApiClientApiException(
-                    "Error with status code " + response.code(),
-                    response.code(),
-                    ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                    response);
-        } catch (IOException e) {
-            throw new ApiClientException("Network error executing HTTP request", e);
-        }
-    }
-
-    /**
-     * Deletes the specified record from a table.&lt;br /&gt;&lt;br /&gt;&lt;b&gt;Note:&lt;/b&gt; This method doesn't delete transient field tokens. Transient field values are available until they expire based on the fields' time-to-live (TTL) setting.
-     */
-    public ApiClientHttpResponse<V1DeleteRecordResponse> recordServiceDeleteRecord(
-            String vaultId, String objectName, String id) {
-        return recordServiceDeleteRecord(vaultId, objectName, id, null);
-    }
-
-    /**
-     * Deletes the specified record from a table.&lt;br /&gt;&lt;br /&gt;&lt;b&gt;Note:&lt;/b&gt; This method doesn't delete transient field tokens. Transient field values are available until they expire based on the fields' time-to-live (TTL) setting.
-     */
-    public ApiClientHttpResponse<V1DeleteRecordResponse> recordServiceDeleteRecord(
-            String vaultId, String objectName, String id, RequestOptions requestOptions) {
-        HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
-                .newBuilder()
-                .addPathSegments("v1/vaults")
-                .addPathSegment(vaultId)
-                .addPathSegment(objectName)
-                .addPathSegment(id)
-                .build();
-        Request okhttpRequest = new Request.Builder()
-                .url(httpUrl)
-                .method("DELETE", null)
-                .headers(Headers.of(clientOptions.headers(requestOptions)))
-                .addHeader("Accept", "application/json")
-                .build();
-        OkHttpClient client = clientOptions.httpClient();
-        if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
-            client = clientOptions.httpClientWithTimeout(requestOptions);
+        if (requestOptions != null && requestOptions.getMaxRetries().isPresent()) {
+            okhttpRequest = okhttpRequest
+                    .newBuilder()
+                    .tag(
+                            RetryInterceptor.MaxRetriesOverride.class,
+                            new RetryInterceptor.MaxRetriesOverride(
+                                    requestOptions.getMaxRetries().get()))
+                    .build();
         }
         try (Response response = client.newCall(okhttpRequest).execute()) {
             ResponseBody responseBody = response.body();
+            String responseBodyString = responseBody != null ? responseBody.string() : "{}";
             if (response.isSuccessful()) {
                 return new ApiClientHttpResponse<>(
-                        ObjectMappers.JSON_MAPPER.readValue(responseBody.string(), V1DeleteRecordResponse.class),
-                        response);
+                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, UpdateRecordResponse.class), response);
             }
-            String responseBodyString = responseBody != null ? responseBody.string() : "{}";
-            try {
-                if (response.code() == 404) {
-                    throw new NotFoundError(
-                            ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class), response);
-                }
-            } catch (JsonProcessingException ignored) {
-                // unable to map error response, throwing generic error
-            }
-            throw new ApiClientApiException(
-                    "Error with status code " + response.code(),
-                    response.code(),
-                    ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                    response);
-        } catch (IOException e) {
-            throw new ApiClientException("Network error executing HTTP request", e);
-        }
-    }
-
-    /**
-     * Uploads a file to the specified record.
-     */
-    public ApiClientHttpResponse<V1UpdateRecordResponse> fileServiceUploadFile(
-            String vaultId, String objectName, String id, Optional<File> file) {
-        return fileServiceUploadFile(
-                vaultId,
-                objectName,
-                id,
-                file,
-                FileServiceUploadFileRequest.builder().build());
-    }
-
-    /**
-     * Uploads a file to the specified record.
-     */
-    public ApiClientHttpResponse<V1UpdateRecordResponse> fileServiceUploadFile(
-            String vaultId, String objectName, String id, Optional<File> file, FileServiceUploadFileRequest request) {
-        return fileServiceUploadFile(vaultId, objectName, id, file, request, null);
-    }
-
-    /**
-     * Uploads a file to the specified record.
-     */
-    public ApiClientHttpResponse<V1UpdateRecordResponse> fileServiceUploadFile(
-            String vaultId,
-            String objectName,
-            String id,
-            Optional<File> file,
-            FileServiceUploadFileRequest request,
-            RequestOptions requestOptions) {
-        HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
-                .newBuilder()
-                .addPathSegments("v1/vaults")
-                .addPathSegment(vaultId)
-                .addPathSegment(objectName)
-                .addPathSegment(id)
-                .addPathSegments("files")
-                .build();
-        MultipartBody.Builder body = new MultipartBody.Builder().setType(MultipartBody.FORM);
-        try {
-            if (file.isPresent()) {
-                String fileMimeType = Files.probeContentType(file.get().toPath());
-                MediaType fileMimeTypeMediaType = fileMimeType != null ? MediaType.parse(fileMimeType) : null;
-                body.addFormDataPart(
-                        "file", file.get().getName(), RequestBody.create(file.get(), fileMimeTypeMediaType));
-            }
-            if (request.getColumnName().isPresent()) {
-                QueryStringMapper.addFormDataPart(
-                        body, "columnName", request.getColumnName().get(), false);
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        Request.Builder _requestBuilder = new Request.Builder()
-                .url(httpUrl)
-                .method("POST", body.build())
-                .headers(Headers.of(clientOptions.headers(requestOptions)))
-                .addHeader("Accept", "application/json");
-        Request okhttpRequest = _requestBuilder.build();
-        OkHttpClient client = clientOptions.httpClient();
-        if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
-            client = clientOptions.httpClientWithTimeout(requestOptions);
-        }
-        try (Response response = client.newCall(okhttpRequest).execute()) {
-            ResponseBody responseBody = response.body();
-            if (response.isSuccessful()) {
-                return new ApiClientHttpResponse<>(
-                        ObjectMappers.JSON_MAPPER.readValue(responseBody.string(), V1UpdateRecordResponse.class),
-                        response);
-            }
-            String responseBodyString = responseBody != null ? responseBody.string() : "{}";
-            try {
-                if (response.code() == 404) {
-                    throw new NotFoundError(
-                            ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class), response);
-                }
-            } catch (JsonProcessingException ignored) {
-                // unable to map error response, throwing generic error
-            }
-            throw new ApiClientApiException(
-                    "Error with status code " + response.code(),
-                    response.code(),
-                    ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                    response);
-        } catch (IOException e) {
-            throw new ApiClientException("Network error executing HTTP request", e);
-        }
-    }
-
-    /**
-     * Deletes a file from the specified record.
-     */
-    public ApiClientHttpResponse<V1DeleteFileResponse> fileServiceDeleteFile(
-            String vaultId, String tableName, String id, String columnName) {
-        return fileServiceDeleteFile(vaultId, tableName, id, columnName, null);
-    }
-
-    /**
-     * Deletes a file from the specified record.
-     */
-    public ApiClientHttpResponse<V1DeleteFileResponse> fileServiceDeleteFile(
-            String vaultId, String tableName, String id, String columnName, RequestOptions requestOptions) {
-        HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
-                .newBuilder()
-                .addPathSegments("v1/vaults")
-                .addPathSegment(vaultId)
-                .addPathSegment(tableName)
-                .addPathSegment(id)
-                .addPathSegments("files")
-                .addPathSegment(columnName)
-                .build();
-        Request okhttpRequest = new Request.Builder()
-                .url(httpUrl)
-                .method("DELETE", null)
-                .headers(Headers.of(clientOptions.headers(requestOptions)))
-                .addHeader("Accept", "application/json")
-                .build();
-        OkHttpClient client = clientOptions.httpClient();
-        if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
-            client = clientOptions.httpClientWithTimeout(requestOptions);
-        }
-        try (Response response = client.newCall(okhttpRequest).execute()) {
-            ResponseBody responseBody = response.body();
-            if (response.isSuccessful()) {
-                return new ApiClientHttpResponse<>(
-                        ObjectMappers.JSON_MAPPER.readValue(responseBody.string(), V1DeleteFileResponse.class),
-                        response);
-            }
-            String responseBodyString = responseBody != null ? responseBody.string() : "{}";
-            try {
-                if (response.code() == 404) {
-                    throw new NotFoundError(
-                            ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class), response);
-                }
-            } catch (JsonProcessingException ignored) {
-                // unable to map error response, throwing generic error
-            }
-            throw new ApiClientApiException(
-                    "Error with status code " + response.code(),
-                    response.code(),
-                    ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                    response);
-        } catch (IOException e) {
-            throw new ApiClientException("Network error executing HTTP request", e);
-        }
-    }
-
-    /**
-     * Returns the anti-virus scan status of a file.
-     */
-    public ApiClientHttpResponse<V1GetFileScanStatusResponse> fileServiceGetFileScanStatus(
-            String vaultId, String tableName, String id, String columnName) {
-        return fileServiceGetFileScanStatus(vaultId, tableName, id, columnName, null);
-    }
-
-    /**
-     * Returns the anti-virus scan status of a file.
-     */
-    public ApiClientHttpResponse<V1GetFileScanStatusResponse> fileServiceGetFileScanStatus(
-            String vaultId, String tableName, String id, String columnName, RequestOptions requestOptions) {
-        HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
-                .newBuilder()
-                .addPathSegments("v1/vaults")
-                .addPathSegment(vaultId)
-                .addPathSegment(tableName)
-                .addPathSegment(id)
-                .addPathSegments("files")
-                .addPathSegment(columnName)
-                .addPathSegments("scan-status")
-                .build();
-        Request okhttpRequest = new Request.Builder()
-                .url(httpUrl)
-                .method("GET", null)
-                .headers(Headers.of(clientOptions.headers(requestOptions)))
-                .addHeader("Accept", "application/json")
-                .build();
-        OkHttpClient client = clientOptions.httpClient();
-        if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
-            client = clientOptions.httpClientWithTimeout(requestOptions);
-        }
-        try (Response response = client.newCall(okhttpRequest).execute()) {
-            ResponseBody responseBody = response.body();
-            if (response.isSuccessful()) {
-                return new ApiClientHttpResponse<>(
-                        ObjectMappers.JSON_MAPPER.readValue(responseBody.string(), V1GetFileScanStatusResponse.class),
-                        response);
-            }
-            String responseBodyString = responseBody != null ? responseBody.string() : "{}";
-            try {
-                if (response.code() == 404) {
-                    throw new NotFoundError(
-                            ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class), response);
-                }
-            } catch (JsonProcessingException ignored) {
-                // unable to map error response, throwing generic error
-            }
-            throw new ApiClientApiException(
-                    "Error with status code " + response.code(),
-                    response.code(),
-                    ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                    response);
-        } catch (IOException e) {
-            throw new ApiClientException("Network error executing HTTP request", e);
-        }
-    }
-
-    /**
-     * Uploads the specified file to a record. If an existing record isn't specified, creates a new record and uploads the file to that record.
-     */
-    public ApiClientHttpResponse<UploadFileV2Response> uploadFileV2(
-            String vaultId, File file, UploadFileV2Request request) {
-        return uploadFileV2(vaultId, file, request, null);
-    }
-
-    /**
-     * Uploads the specified file to a record. If an existing record isn't specified, creates a new record and uploads the file to that record.
-     */
-    public ApiClientHttpResponse<UploadFileV2Response> uploadFileV2(
-            String vaultId, File file, UploadFileV2Request request, RequestOptions requestOptions) {
-        HttpUrl httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
-                .newBuilder()
-                .addPathSegments("v2/vaults")
-                .addPathSegment(vaultId)
-                .addPathSegments("files/upload")
-                .build();
-        MultipartBody.Builder body = new MultipartBody.Builder().setType(MultipartBody.FORM);
-        try {
-            QueryStringMapper.addFormDataPart(body, "tableName", request.getTableName(), false);
-            QueryStringMapper.addFormDataPart(body, "columnName", request.getColumnName(), false);
-            String fileMimeType = Files.probeContentType(file.toPath());
-            MediaType fileMimeTypeMediaType = fileMimeType != null ? MediaType.parse(fileMimeType) : null;
-            body.addFormDataPart("file", file.getName(), RequestBody.create(file, fileMimeTypeMediaType));
-            if (request.getSkyflowId().isPresent()) {
-                QueryStringMapper.addFormDataPart(
-                        body, "skyflowID", request.getSkyflowId().get(), false);
-            }
-            if (request.getReturnFileMetadata().isPresent()) {
-                QueryStringMapper.addFormDataPart(
-                        body,
-                        "returnFileMetadata",
-                        request.getReturnFileMetadata().get(),
-                        false);
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        Request.Builder _requestBuilder = new Request.Builder()
-                .url(httpUrl)
-                .method("POST", body.build())
-                .headers(Headers.of(clientOptions.headers(requestOptions)))
-                .addHeader("Accept", "application/json");
-        Request okhttpRequest = _requestBuilder.build();
-        OkHttpClient client = clientOptions.httpClient();
-        if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
-            client = clientOptions.httpClientWithTimeout(requestOptions);
-        }
-        try (Response response = client.newCall(okhttpRequest).execute()) {
-            ResponseBody responseBody = response.body();
-            if (response.isSuccessful()) {
-                return new ApiClientHttpResponse<>(
-                        ObjectMappers.JSON_MAPPER.readValue(responseBody.string(), UploadFileV2Response.class),
-                        response);
-            }
-            String responseBodyString = responseBody != null ? responseBody.string() : "{}";
             try {
                 switch (response.code()) {
                     case 400:
                         throw new BadRequestError(
-                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class), response);
+                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class), response);
                     case 401:
                         throw new UnauthorizedError(
-                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class), response);
+                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class), response);
                     case 404:
                         throw new NotFoundError(
-                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class), response);
+                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class), response);
                     case 500:
                         throw new InternalServerError(
                                 ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class), response);
@@ -845,11 +667,106 @@ public class RawRecordsClient {
             } catch (JsonProcessingException ignored) {
                 // unable to map error response, throwing generic error
             }
+            Object errorBody = ObjectMappers.parseErrorBody(responseBodyString);
             throw new ApiClientApiException(
-                    "Error with status code " + response.code(),
-                    response.code(),
-                    ObjectMappers.JSON_MAPPER.readValue(responseBodyString, Object.class),
-                    response);
+                    "Error with status code " + response.code(), response.code(), errorBody, response);
+        } catch (JsonProcessingException e) {
+            throw new ApiClientException("Failed to deserialize response: " + e.getMessage(), e);
+        } catch (IOException e) {
+            throw new ApiClientException("Network error executing HTTP request", e);
+        }
+    }
+
+    /**
+     * Deletes the specified record from a table.<b>Note:</b> This method doesn't delete transient field tokens. Transient field values are available until they expire based on the fields' time-to-live (TTL) setting.
+     */
+    public ApiClientHttpResponse<DeleteRecordResponse> deleteRecord(String vaultId, String objectName, String id) {
+        return deleteRecord(
+                vaultId, objectName, id, DeleteRecordRequest.builder().build());
+    }
+
+    /**
+     * Deletes the specified record from a table.<b>Note:</b> This method doesn't delete transient field tokens. Transient field values are available until they expire based on the fields' time-to-live (TTL) setting.
+     */
+    public ApiClientHttpResponse<DeleteRecordResponse> deleteRecord(
+            String vaultId, String objectName, String id, RequestOptions requestOptions) {
+        return deleteRecord(
+                vaultId, objectName, id, DeleteRecordRequest.builder().build(), requestOptions);
+    }
+
+    /**
+     * Deletes the specified record from a table.<b>Note:</b> This method doesn't delete transient field tokens. Transient field values are available until they expire based on the fields' time-to-live (TTL) setting.
+     */
+    public ApiClientHttpResponse<DeleteRecordResponse> deleteRecord(
+            String vaultId, String objectName, String id, DeleteRecordRequest request) {
+        return deleteRecord(vaultId, objectName, id, request, null);
+    }
+
+    /**
+     * Deletes the specified record from a table.<b>Note:</b> This method doesn't delete transient field tokens. Transient field values are available until they expire based on the fields' time-to-live (TTL) setting.
+     */
+    public ApiClientHttpResponse<DeleteRecordResponse> deleteRecord(
+            String vaultId, String objectName, String id, DeleteRecordRequest request, RequestOptions requestOptions) {
+        HttpUrl.Builder httpUrl = HttpUrl.parse(this.clientOptions.environment().getUrl())
+                .newBuilder()
+                .addPathSegments("v1/vaults")
+                .addPathSegment(vaultId)
+                .addPathSegment(objectName)
+                .addPathSegment(id);
+        if (requestOptions != null) {
+            requestOptions.getQueryParameters().forEach((_key, _value) -> {
+                httpUrl.addQueryParameter(_key, _value);
+            });
+        }
+        Request.Builder _requestBuilder = new Request.Builder()
+                .url(httpUrl.build())
+                .method("DELETE", null)
+                .headers(Headers.of(clientOptions.headers(requestOptions)))
+                .addHeader("Accept", "application/json");
+        Request okhttpRequest = _requestBuilder.build();
+        OkHttpClient client = clientOptions.httpClient();
+        if (requestOptions != null && requestOptions.getTimeout().isPresent()) {
+            client = clientOptions.httpClientWithTimeout(requestOptions);
+        }
+        if (requestOptions != null && requestOptions.getMaxRetries().isPresent()) {
+            okhttpRequest = okhttpRequest
+                    .newBuilder()
+                    .tag(
+                            RetryInterceptor.MaxRetriesOverride.class,
+                            new RetryInterceptor.MaxRetriesOverride(
+                                    requestOptions.getMaxRetries().get()))
+                    .build();
+        }
+        try (Response response = client.newCall(okhttpRequest).execute()) {
+            ResponseBody responseBody = response.body();
+            String responseBodyString = responseBody != null ? responseBody.string() : "{}";
+            if (response.isSuccessful()) {
+                return new ApiClientHttpResponse<>(
+                        ObjectMappers.JSON_MAPPER.readValue(responseBodyString, DeleteRecordResponse.class), response);
+            }
+            try {
+                switch (response.code()) {
+                    case 400:
+                        throw new BadRequestError(
+                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class), response);
+                    case 401:
+                        throw new UnauthorizedError(
+                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class), response);
+                    case 404:
+                        throw new NotFoundError(
+                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class), response);
+                    case 500:
+                        throw new InternalServerError(
+                                ObjectMappers.JSON_MAPPER.readValue(responseBodyString, ErrorResponse.class), response);
+                }
+            } catch (JsonProcessingException ignored) {
+                // unable to map error response, throwing generic error
+            }
+            Object errorBody = ObjectMappers.parseErrorBody(responseBodyString);
+            throw new ApiClientApiException(
+                    "Error with status code " + response.code(), response.code(), errorBody, response);
+        } catch (JsonProcessingException e) {
+            throw new ApiClientException("Failed to deserialize response: " + e.getMessage(), e);
         } catch (IOException e) {
             throw new ApiClientException("Network error executing HTTP request", e);
         }

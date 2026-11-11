@@ -3,36 +3,161 @@
  */
 package com.skyflow.generated.rest.types;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
-public enum DetokenizeRecordResponseValueType {
-    NONE("NONE"),
+public final class DetokenizeRecordResponseValueType {
+    public static final DetokenizeRecordResponseValueType FLOAT =
+            new DetokenizeRecordResponseValueType(Value.FLOAT, "FLOAT");
 
-    STRING("STRING"),
+    public static final DetokenizeRecordResponseValueType ARRAY =
+            new DetokenizeRecordResponseValueType(Value.ARRAY, "ARRAY");
 
-    INTEGER("INTEGER"),
+    public static final DetokenizeRecordResponseValueType TIME =
+            new DetokenizeRecordResponseValueType(Value.TIME, "TIME");
 
-    FLOAT("FLOAT"),
+    public static final DetokenizeRecordResponseValueType DATE =
+            new DetokenizeRecordResponseValueType(Value.DATE, "DATE");
 
-    BOOL("BOOL"),
+    public static final DetokenizeRecordResponseValueType INTEGER =
+            new DetokenizeRecordResponseValueType(Value.INTEGER, "INTEGER");
 
-    DATETIME("DATETIME"),
+    public static final DetokenizeRecordResponseValueType JSON =
+            new DetokenizeRecordResponseValueType(Value.JSON, "JSON");
 
-    JSON("JSON"),
+    public static final DetokenizeRecordResponseValueType BOOL =
+            new DetokenizeRecordResponseValueType(Value.BOOL, "BOOL");
 
-    ARRAY("ARRAY"),
+    public static final DetokenizeRecordResponseValueType DATETIME =
+            new DetokenizeRecordResponseValueType(Value.DATETIME, "DATETIME");
 
-    DATE("DATE");
+    public static final DetokenizeRecordResponseValueType STRING =
+            new DetokenizeRecordResponseValueType(Value.STRING, "STRING");
 
-    private final String value;
+    private final Value value;
 
-    DetokenizeRecordResponseValueType(String value) {
+    private final String string;
+
+    DetokenizeRecordResponseValueType(Value value, String string) {
         this.value = value;
+        this.string = string;
     }
 
+    public Value getEnumValue() {
+        return value;
+    }
+
+    @java.lang.Override
     @JsonValue
-    @Override
     public String toString() {
-        return this.value;
+        return this.string;
+    }
+
+    @java.lang.Override
+    public boolean equals(Object other) {
+        return (this == other)
+                || (other instanceof DetokenizeRecordResponseValueType
+                        && this.string.equals(((DetokenizeRecordResponseValueType) other).string));
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+        return this.string.hashCode();
+    }
+
+    public <T> T visit(Visitor<T> visitor) {
+        switch (value) {
+            case FLOAT:
+                return visitor.visitFloat();
+            case ARRAY:
+                return visitor.visitArray();
+            case TIME:
+                return visitor.visitTime();
+            case DATE:
+                return visitor.visitDate();
+            case INTEGER:
+                return visitor.visitInteger();
+            case JSON:
+                return visitor.visitJson();
+            case BOOL:
+                return visitor.visitBool();
+            case DATETIME:
+                return visitor.visitDatetime();
+            case STRING:
+                return visitor.visitString();
+            case UNKNOWN:
+            default:
+                return visitor.visitUnknown(string);
+        }
+    }
+
+    @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
+    public static DetokenizeRecordResponseValueType valueOf(String value) {
+        switch (value) {
+            case "FLOAT":
+                return FLOAT;
+            case "ARRAY":
+                return ARRAY;
+            case "TIME":
+                return TIME;
+            case "DATE":
+                return DATE;
+            case "INTEGER":
+                return INTEGER;
+            case "JSON":
+                return JSON;
+            case "BOOL":
+                return BOOL;
+            case "DATETIME":
+                return DATETIME;
+            case "STRING":
+                return STRING;
+            default:
+                return new DetokenizeRecordResponseValueType(Value.UNKNOWN, value);
+        }
+    }
+
+    public enum Value {
+        STRING,
+
+        INTEGER,
+
+        FLOAT,
+
+        BOOL,
+
+        DATETIME,
+
+        JSON,
+
+        ARRAY,
+
+        DATE,
+
+        TIME,
+
+        UNKNOWN
+    }
+
+    public interface Visitor<T> {
+        T visitString();
+
+        T visitInteger();
+
+        T visitFloat();
+
+        T visitBool();
+
+        T visitDatetime();
+
+        T visitJson();
+
+        T visitArray();
+
+        T visitDate();
+
+        T visitTime();
+
+        T visitUnknown(String unknownType);
     }
 }

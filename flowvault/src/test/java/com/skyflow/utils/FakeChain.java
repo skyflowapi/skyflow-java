@@ -23,14 +23,19 @@ import java.util.concurrent.TimeUnit;
  */
 public final class FakeChain implements Interceptor.Chain {
 
-    private final Request request =
-            new Request.Builder().url("https://cluster1.example.com/v1/flows").build();
+    private final Request request;
     private final int[] statusCodes;
     private final List<TrackingBody> bodies = new ArrayList<>();
     private int calls;
     private Request lastProceeded;
 
     public FakeChain(int... statusCodes) {
+        this("https://cluster1.example.com/v1/flows", statusCodes);
+    }
+
+    /** A chain whose request goes to {@code url}, for interceptors that act on the path. */
+    public FakeChain(String url, int... statusCodes) {
+        this.request = new Request.Builder().url(url).build();
         this.statusCodes = statusCodes;
     }
 

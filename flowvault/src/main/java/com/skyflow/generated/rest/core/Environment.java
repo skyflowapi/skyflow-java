@@ -4,6 +4,10 @@
 package com.skyflow.generated.rest.core;
 
 public final class Environment {
+    public static final Environment PRODUCTION = new Environment("https://%7B%7Bvault_url%7D%7D");
+
+    public static final Environment SANDBOX = new Environment("https://%7B%7Bvault_url%7D%7D");
+
     private final String url;
 
     private Environment(String url) {

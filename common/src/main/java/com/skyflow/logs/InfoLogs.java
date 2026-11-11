@@ -1,6 +1,37 @@
 package com.skyflow.logs;
 
 public enum InfoLogs {
+    CHECK_GUARDRAILS_TRIGGERED("Check guardrails method triggered."),
+    VALIDATE_CHECK_GUARDRAILS_REQUEST("Validating check guardrails request."),
+    CHECK_GUARDRAILS_REQUEST_RESOLVED("Check guardrails request resolved."),
+    CHECK_GUARDRAILS_SUCCESS("Guardrails check completed."),
+    GET_RUN_TRIGGERED("Get run method triggered."),
+    VALIDATE_GET_RUN_REQUEST("Validating get run request."),
+    GET_RUN_REQUEST_RESOLVED("Get run request resolved."),
+    GET_RUN_SUCCESS("Detect run retrieved."),
+    DEIDENTIFY_STRING_TRIGGERED("DeIdentify string method triggered."),
+    VALIDATE_DEIDENTIFY_STRING_REQUEST("Validating deidentify string request."),
+    DEIDENTIFY_STRING_REQUEST_RESOLVED("DeIdentify string request resolved."),
+    DEIDENTIFY_STRING_SUCCESS("String data de-identified."),
+    REIDENTIFY_STRING_TRIGGERED("ReIdentify string method triggered."),
+    VALIDATE_REIDENTIFY_STRING_REQUEST("Validating reidentify string request."),
+    REIDENTIFY_STRING_REQUEST_RESOLVED("ReIdentify string request resolved."),
+    REIDENTIFY_STRING_SUCCESS("String data re-identified."),
+    DEIDENTIFY_FILE_TRIGGERED("DeIdentify file method triggered."),
+    VALIDATE_DEIDENTIFY_FILE_REQUEST("Validating deidentify file request."),
+    DEIDENTIFY_FILE_REQUEST_RESOLVED("DeIdentify file request resolved."),
+    DEIDENTIFY_FILE_RUN_SUBMITTED("DeIdentify file run %s1 submitted; retrieve it with getRun."),
+    DEIDENTIFY_FILE_SUCCESS("File data de-identified."),
+    POLL_RUN_STARTED("Polling run %s1 for up to %s2 seconds and %s3 attempts."),
+    POLL_RUN_TERMINAL("Run %s1 reached status %s2 after %s3 attempts."),
+    POLL_RUN_BUDGET_EXHAUSTED("Run %s1 still %s2 after %s3 attempts and %s4 seconds; returning run id."),
+    POLL_RUN_INTERRUPTED("Polling of run %s1 interrupted while %s2; returning run id."),
+    OUTPUT_FILE_WRITTEN("Processed output written to %s1."),
+    OUTPUT_NOT_WRITTEN_FOR_OUTPUT_TYPE("Outputs delivered as %s1 are not written to disk."),
+    REIDENTIFY_FILE_TRIGGERED("ReIdentify file method triggered."),
+    VALIDATE_REIDENTIFY_FILE_REQUEST("Validating reidentify file request."),
+    REIDENTIFY_FILE_REQUEST_RESOLVED("ReIdentify file request resolved."),
+    REIDENTIFY_FILE_SUCCESS("File data re-identified."),
     // Client initialization
     CLIENT_INITIALIZED("Initialized skyflow client."),
     VALIDATING_VAULT_CONFIG("Validating vault config."),
@@ -81,6 +112,22 @@ public enum InfoLogs {
     TOKENIZE_REQUEST_RESOLVED("Tokenize request resolved."),
     TOKENIZE_SUCCESS("Data tokenized."),
 
+    // Get tokens interface
+    GET_TOKENS_TRIGGERED("Get tokens method triggered."),
+    VALIDATING_GET_TOKENS_REQUEST("Validating get tokens request."),
+    GET_TOKENS_REQUEST_RESOLVED("Get tokens request resolved."),
+
+    // Upload files interface
+    UPLOAD_FILES_TRIGGERED("Upload files method triggered."),
+    VALIDATING_UPLOAD_FILES_REQUEST("Validating upload files request."),
+    UPLOADING_FILES_TO_SIGNED_URLS("Signed upload URLs received. Uploading files."),
+    UPLOAD_FILES_REQUEST_RESOLVED("Upload files request resolved."),
+
+    // Delete files interface
+    DELETE_FILES_TRIGGERED("Delete files method triggered."),
+    VALIDATING_DELETE_FILES_REQUEST("Validating delete files request."),
+    DELETE_FILES_REQUEST_RESOLVED("Delete files request resolved."),
+
 
     // Invoke connection interface
     INVOKE_CONNECTION_TRIGGERED("Invoke connection method triggered."),
@@ -95,10 +142,6 @@ public enum InfoLogs {
     VALIDATE_REIDENTIFY_TEXT_REQUEST("Validating reidentify text request."),
     REIDENTIFY_TEXT_TRIGGERED("ReIdentify text method triggered."),
     REIDENTIFY_TEXT_REQUEST_RESOLVED("ReIdentify text request resolved."),
-    DEIDENTIFY_FILE_TRIGGERED("DeIdentify file method triggered."),
-    VALIDATE_DEIDENTIFY_FILE_REQUEST("Validating deidentify file request."),
-    DEIDENTIFY_FILE_REQUEST_RESOLVED("DeIdentify file request resolved."),
-    DEIDENTIFY_FILE_SUCCESS("File deidentified successfully."),
     GET_DETECT_RUN_TRIGGERED("Get detect run method triggered."),
     VALIDATE_GET_DETECT_RUN_REQUEST("Validating get detect run request."),
     REIDENTIFY_TEXT_SUCCESS("Text data re-identified."),
