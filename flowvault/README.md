@@ -99,6 +99,8 @@ implementation 'com.skyflow:skyflow-flowvault-java:1.2.0'
 
 The snippets above pin the latest release at the time of writing. Check [Maven Central](https://central.sonatype.com/artifact/com.skyflow/skyflow-flowvault-java) for the current version and [GitHub releases](https://github.com/skyflowapi/skyflow-java/releases) for what changed in each one.
 
+> **Not yet in a published release:** [Query](#query), [Get Tokens](#get-tokens), [Upload Files](#upload-files), [Delete Files](#delete-files), and [Detect](#detect) aren't in version 1.3.0 or earlier. Code that calls them doesn't compile against those versions. To use them, upgrade to the first release after 1.3.0 once it's on Maven Central.
+
 # Quickstart
 
 ```java
