@@ -12,7 +12,7 @@
     </parent>
 
     <artifactId>skyflow-flowvault-java</artifactId>
-    <version>1.4.0-dev.12cc0abb</version>
+    <version>1.4.0</version>
     <packaging>jar</packaging>
     <name>${project.groupId}:${project.artifactId}</name>
     <description>Skyflow FlowVault SDK for the Java programming language</description>
@@ -135,20 +135,7 @@
                         <ignoreMissingClasses>true</ignoreMissingClasses>
                         <breakBuildOnBinaryIncompatibleModifications>true</breakBuildOnBinaryIncompatibleModifications>
                         <breakBuildOnSourceIncompatibleModifications>true</breakBuildOnSourceIncompatibleModifications>
-                        <!-- An allowlist, not a blocklist: the contract is exactly what a customer
-                             imports. Everything unlisted - com.skyflow.generated.*, com.skyflow.logs,
-                             com.skyflow.utils.* - is internal and free to change without a baseline
-                             update. Note japicmp compares signatures only, never method bodies, so
-                             the controller entries below gate its method signatures, not how they
-                             are implemented.
-
-                             com.skyflow.VaultClient is deliberately NOT listed. Every one of its
-                             members is protected - generated-client getters, HTTP config, bearer-token
-                             refresh - so it has no public API, and it only ever showed up here
-                             because accessModifier=protected sweeps protected members in. Its
-                             subclass (VaultController) is final, so no customer can subclass their
-                             way to a protected member either. Please do not add it back. -->
-                        <includes>
+                         <includes>
                             <include>com.skyflow.Skyflow</include>
                             <include>com.skyflow.config</include>
                             <include>com.skyflow.enums</include>
@@ -156,8 +143,6 @@
                             <include>com.skyflow.serviceaccount.util</include>
                             <include>com.skyflow.vault.controller</include>
                             <include>com.skyflow.vault.data</include>
-                            <!-- Detect V2 request/response/enum types (the skyvault module gates the
-                                 same package). internal/polling subpackages are implementation. -->
                             <include>com.skyflow.vault.detect</include>
                         </includes>
                         <skipXmlReport>false</skipXmlReport>

@@ -122,6 +122,17 @@ jobs:
 
           cat /tmp/contract-baseline-diff.md
 
+      # The full report can exceed GitHub's 65,536-character comment limit when a whole
+      # package moves (the Detect package rename produced several hundred KB). Keep the
+      # complete markdown as a run artifact; the comment below is truncated to fit.
+      - name: Upload full contract diff
+        if: always() && (steps.baseline-diff-check.outputs.changed == 'true' || steps.baseline-diff-check.outputs.changed == 'new')
+        uses: actions/upload-artifact@v4
+        with:
+          name: contract-baseline-diff-${{ matrix.module }}
+          path: /tmp/contract-baseline-diff.md
+          if-no-files-found: ignore
+
       - name: Comment contract baseline change on PR
         if: always() && (steps.baseline-diff-check.outputs.changed == 'true' || steps.baseline-diff-check.outputs.changed == 'new')
         uses: actions/github-script@v7
@@ -142,7 +153,19 @@ jobs:
             const preamble = isNew
               ? `This PR adds \`${module}/api-report/${artifact}.baseline.jar\`, the approved public API contract for this module.`
               : `This PR updates \`${module}/api-report/${artifact}.baseline.jar\` (the approved public API contract). Here is exactly what it changes, comparing the baseline on \`${{ github.event.pull_request.base.ref }}\` against the baseline committed in this PR:`;
-            const body = `${marker}\n${heading}\n\n${preamble}\n\n${summary}`;
+            // GitHub rejects comment bodies over 65,536 characters ("Body is too long"), which
+            // took the whole job down when the Detect package was renamed. Truncate the report
+            // and point at the artifact and the step log, which both carry the full text.
+            const LIMIT = 60000;
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const head = `${marker}\n${heading}\n\n${preamble}\n\n`;
+            let report = summary;
+            if (head.length + report.length > LIMIT) {
+              const note = `\n\n---\n**Report truncated** (${summary.length.toLocaleString()} characters). The full report is the ` +
+                `\`contract-baseline-diff-${module}\` artifact and the "Diff old vs new contract baseline" step log of [this run](${runUrl}).\n`;
+              report = summary.slice(0, LIMIT - head.length - note.length) + note;
+            }
+            const body = head + report;
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
