@@ -156,6 +156,9 @@
                             <include>com.skyflow.serviceaccount.util</include>
                             <include>com.skyflow.vault.controller</include>
                             <include>com.skyflow.vault.data</include>
+                            <!-- Detect V2 request/response/enum types (the skyvault module gates the
+                                 same package). internal/polling subpackages are implementation. -->
+                            <include>com.skyflow.vault.detect</include>
                         </includes>
                         <skipXmlReport>false</skipXmlReport>
                         <skipHtmlReport>false</skipHtmlReport>

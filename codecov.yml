@@ -117,11 +117,11 @@ component_management:
         - "**/src/main/java/com/skyflow/vault/controller/**"
     - component_id: vault_detect
       name: Detect
-      # Detect V2 lives in com.skyflow.detect (models, mappers, polling, file output) plus
-      # BaseDetectController / DetectController under vault.controller, which the Vault
-      # Controller component already covers. The old vault/detect package no longer exists.
+      # Detect V2 lives in com.skyflow.vault.detect (models, mappers, polling, file output), the
+      # same package the removed V1 classes used. BaseDetectController / DetectController sit under
+      # vault.controller, which the Vault Controller component already covers.
       paths:
-        - "**/src/main/java/com/skyflow/detect/**"
+        - "**/src/main/java/com/skyflow/vault/detect/**"
     - component_id: vault_audit
       name: Audit
       paths:
