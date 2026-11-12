@@ -4,7 +4,7 @@ This guide is for skyvault users of the Java SDK (`com.skyflow:skyflow-java`) wh
 `deidentifyText`, `reidentifyText`, `deidentifyFile` or `getDetectRun` from `com.skyflow.vault.detect`. Those
 methods, their request and response classes, and the enums `DetectEntities`, `TokenType`,
 `DetectOutputTranscriptions` and `MaskingMethod` in `com.skyflow.enums` are removed in **skyflow-java 2.2.0** and
-replaced by the Detect methods in `com.skyflow.detect`, documented in the [skyvault README](../skyvault/README.md#detect).
+replaced by the Detect methods in `com.skyflow.vault.detect`, documented in the [skyvault README](../skyvault/README.md#detect).
 Projects that call the removed methods stop compiling on upgrade, so pin the version explicitly and follow this guide
 rather than relying on a version range.
 
@@ -44,7 +44,7 @@ Client creation and the `skyflowClient.detect()` / `skyflowClient.detect(vaultId
 
 |  | Removed | Replacement |
 |---|---|---|
-| Package | `com.skyflow.vault.detect`, enums in `com.skyflow.enums` | `com.skyflow.detect` for requests, responses and Detect enums; `RedactionType` stays in `com.skyflow.enums` |
+| Package | `com.skyflow.vault.detect` (old classes), Detect enums in `com.skyflow.enums` | `com.skyflow.vault.detect` again, with a new set of classes; the Detect enums move there too. `RedactionType` stays in `com.skyflow.enums` |
 | API | `/v1/detect/...`, one file endpoint per file type | `/v2/detect/...`, one file endpoint |
 | Detection policy | flat fields on every request | a stored configuration id, or one inline `DetectConfiguration` |
 | Token type | `TokenFormat` with per-type lists | `deidentificationType` on each `Entity`; `VAULT_TOKEN` entities name their `table.column` |
@@ -58,15 +58,17 @@ Client creation and the `skyflowClient.detect()` / `skyflowClient.detect(vaultId
 |---|---|---|---|
 | `deidentifyText(DeidentifyTextRequest)` | `deidentifyString(DeidentifyStringRequest)` | `DeidentifyStringRequest` | `DeidentifyStringResponse` |
 | `reidentifyText(ReidentifyTextRequest)` | `reidentifyString(ReidentifyStringRequest)` | `ReidentifyStringRequest` | `ReidentifyStringResponse` |
-| `deidentifyFile(DeidentifyFileRequest)` | `deidentifyFile(DeidentifyFileRequest)`, same name, new types | `DeidentifyFileRequest` in `com.skyflow.detect` | `DeidentifyFileResponse` in `com.skyflow.detect` |
+| `deidentifyFile(DeidentifyFileRequest)` | `deidentifyFile(DeidentifyFileRequest)`, same name, same class names, new shape | `DeidentifyFileRequest` (new builder and fields) | `DeidentifyFileResponse` (new fields) |
 | `getDetectRun(GetDetectRunRequest)` | `getRun(GetRunRequest)` | `GetRunRequest` | `GetRunResponse` |
 | — | `reidentifyFile(ReidentifyFileRequest)` | `ReidentifyFileRequest` | `ReidentifyFileResponse` |
 | — | `checkGuardrails(CheckGuardrailsRequest)` | `CheckGuardrailsRequest` | `CheckGuardrailsResponse` |
 
-The file request and response keep their simple class names and only change package. A project that still imports
-`com.skyflow.vault.detect.*` fails to compile; replace that import with `com.skyflow.detect.*`. Every method is still
-reached through `skyflowClient.detect()`, takes a builder-built request, returns a response object and throws
-`SkyflowException`.
+The package name does not change, so an existing `import com.skyflow.vault.detect.*;` still resolves. What breaks
+is what the package contains: the old request and response classes are gone except `DeidentifyFileRequest` and
+`DeidentifyFileResponse`, which keep their names but have different builders, fields and getters. Expect the compile
+errors on the removed classes, the removed enums in `com.skyflow.enums`, and the old `DeidentifyFileRequest` builder
+calls, not on the import line. Every method is still reached through `skyflowClient.detect()`, takes a builder-built
+request, returns a response object and throws `SkyflowException`.
 
 ## Step 1: move the detection policy into a configuration
 
@@ -105,7 +107,7 @@ update or delete stored configurations.
 
 ### Enum renames
 
-| Removed (`com.skyflow.enums`) | Replacement (`com.skyflow.detect`) |
+| Removed (`com.skyflow.enums`) | Replacement (`com.skyflow.vault.detect`) |
 |---|---|
 | `DetectEntities` (`ALL`, `NAME`, `EMAIL_ADDRESS`, `SSN`, ...) | `EntityType`, the same values plus `NONE` |
 | `TokenType` (`VAULT_TOKEN`, `ENTITY_UNIQUE_COUNTER`, `ENTITY_ONLY`) | `DeidentificationType`, same names plus `MASK` and `UNKNOWN` |
@@ -139,7 +141,7 @@ DeidentifyTextRequest request = DeidentifyTextRequest.builder()
 **Replacement, inline configuration**
 
 ```java
-import com.skyflow.detect.*;
+import com.skyflow.vault.detect.*;
 
 DetectConfiguration configuration = DetectConfiguration.builder()
         .detect(Detect.builder()
@@ -265,11 +267,12 @@ to the flowvault SDK.
 
 ## Step 4: deidentifyFile, new request and response
 
-The method keeps its name. The request and response classes keep their simple names but move to `com.skyflow.detect`
-with new shapes. Three things change at once: the file input, the policy, and the polling.
+The method keeps its name, and so do its request and response classes, in the same package. Only their shape changes,
+which means the old builder calls fail to compile rather than the import. Three things change at once: the file input,
+the policy, and the polling.
 
 ```java
-// Removed (com.skyflow.vault.detect): always polled, result in one response, processed copy written to the temp directory
+// Removed (old DeidentifyFileRequest builder): always polled, result in one response, processed copy written to the temp directory
 DeidentifyFileResponse before = skyflowClient.detect().deidentifyFile(DeidentifyFileRequest.builder()
         .file(FileInput.builder().filePath("/data/intake/patient-notes.pdf").build())
         .entities(Collections.singletonList(DetectEntities.ALL))
@@ -284,7 +287,7 @@ before.getFileBase64();        // first output only
 before.getEntities();          // List<FileEntityInfo>
 before.getPageCount();
 
-// Replacement (com.skyflow.detect): same behaviour, opt in to polling
+// Replacement (new DeidentifyFileRequest builder): same behaviour, opt in to polling
 DeidentifyFileResponse after = skyflowClient.detect().deidentifyFile(DeidentifyFileRequest.builder()
         .filePath("/data/intake/patient-notes.pdf")
         .configurationId("<CONFIGURATION_ID>")      // or .configuration(...) with media.document.pdf density 200, maxResolution 3000
@@ -318,7 +321,7 @@ String runId = submitted.getRunId();           // getStatus() is null, nothing w
 
 ### File response mapping
 
-| Removed (`DeidentifyFileResponse` in `com.skyflow.vault.detect`) | Replacement (`DeidentifyFileResponse` in `com.skyflow.detect`, and `GetRunResponse`) |
+| Removed (old `DeidentifyFileResponse`) | Replacement (new `DeidentifyFileResponse`, same name and package, and `GetRunResponse`) |
 |---|---|
 | `getRunId()` | `getRunId()` |
 | `getStatus()` as `String` (`IN_PROGRESS`, `FAILED`, `SUCCESS`) | `getStatus()` as `DetectRunStatus` (`SUCCESS`, `FAILED`, `IN_PROGRESS`, `QUEUED`, `UNKNOWN`), `null` when not polled |
@@ -402,9 +405,10 @@ request, and writes nothing. A blank run id is rejected before the call.
 1. Upgrade to `com.skyflow:skyflow-java:2.2.0`.
 2. Create a stored Detect configuration in Studio that reproduces your policy, or build it inline with
    `DetectConfiguration` using the field mapping above.
-3. Replace imports from `com.skyflow.vault.detect` and the removed enums with `com.skyflow.detect`.
+3. Keep the `com.skyflow.vault.detect` imports; drop imports of the removed enums from `com.skyflow.enums` and import
+   their replacements from `com.skyflow.vault.detect`.
 4. Rename the calls: `deidentifyText` to `deidentifyString`, `reidentifyText` to `reidentifyString`, `getDetectRun` to
-   `getRun`. `deidentifyFile` keeps its name; switch its request and response to the `com.skyflow.detect` classes.
+   `getRun`. `deidentifyFile` keeps its name; rebuild its request with the new builder and read the new response fields.
 5. Give every `VAULT_TOKEN` entity a `destination("<TABLE>.<COLUMN>")`.
 6. Add `pollOptions` to every file call that expects a completed result.
 7. Replace reads of `getFile()`, `getFileBase64()` and `getEntities()` on file responses with a loop over

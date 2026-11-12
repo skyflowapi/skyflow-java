@@ -1678,12 +1678,12 @@ Detect configurations are created in [Skyflow Studio](https://docs.skyflow.com) 
 
 | Method | Request | Response | Description |
 |--------|---------|----------|-------------|
-| `deidentifyString(DeidentifyStringRequest)` | `com.skyflow.detect.DeidentifyStringRequest` | `com.skyflow.detect.DeidentifyStringResponse` | Detect and replace sensitive data in a string |
-| `deidentifyFile(DeidentifyFileRequest)` | `com.skyflow.detect.DeidentifyFileRequest` | `com.skyflow.detect.DeidentifyFileResponse` | Submit a file for de-identification, optionally polling the run to completion |
-| `reidentifyString(ReidentifyStringRequest)` | `com.skyflow.detect.ReidentifyStringRequest` | `com.skyflow.detect.ReidentifyStringResponse` | Replace tokens in a string with their original or redacted values |
-| `reidentifyFile(ReidentifyFileRequest)` | `com.skyflow.detect.ReidentifyFileRequest` | `com.skyflow.detect.ReidentifyFileResponse` | Replace tokens in a file with their original or redacted values |
-| `getRun(GetRunRequest)` | `com.skyflow.detect.GetRunRequest` | `com.skyflow.detect.GetRunResponse` | Retrieve the status and outputs of a Detect file run |
-| `checkGuardrails(CheckGuardrailsRequest)` | `com.skyflow.detect.CheckGuardrailsRequest` | `com.skyflow.detect.CheckGuardrailsResponse` | Screen text for toxicity and denied topics |
+| `deidentifyString(DeidentifyStringRequest)` | `com.skyflow.vault.detect.DeidentifyStringRequest` | `com.skyflow.vault.detect.DeidentifyStringResponse` | Detect and replace sensitive data in a string |
+| `deidentifyFile(DeidentifyFileRequest)` | `com.skyflow.vault.detect.DeidentifyFileRequest` | `com.skyflow.vault.detect.DeidentifyFileResponse` | Submit a file for de-identification, optionally polling the run to completion |
+| `reidentifyString(ReidentifyStringRequest)` | `com.skyflow.vault.detect.ReidentifyStringRequest` | `com.skyflow.vault.detect.ReidentifyStringResponse` | Replace tokens in a string with their original or redacted values |
+| `reidentifyFile(ReidentifyFileRequest)` | `com.skyflow.vault.detect.ReidentifyFileRequest` | `com.skyflow.vault.detect.ReidentifyFileResponse` | Replace tokens in a file with their original or redacted values |
+| `getRun(GetRunRequest)` | `com.skyflow.vault.detect.GetRunRequest` | `com.skyflow.vault.detect.GetRunResponse` | Retrieve the status and outputs of a Detect file run |
+| `checkGuardrails(CheckGuardrailsRequest)` | `com.skyflow.vault.detect.CheckGuardrailsRequest` | `com.skyflow.vault.detect.CheckGuardrailsResponse` | Screen text for toxicity and denied topics |
 
 ## Before you start
 - **Role.** The service account needs the Detect Invoker, Detect Manager or Vault Owner role on the vault. Detect Invoker can de-identify data and write vault tokens into the vault; Detect Manager adds the ability to create, update and delete Detect configurations. Re-identifying values stored as `VAULT_TOKEN` is governed like detokenization: the caller also needs a policy that grants the Detokenization action on the destination table and columns, unless it is a Vault Owner. Detect Invoker or Detect Manager alone is not enough.
@@ -1701,7 +1701,7 @@ Detect configurations are created in [Skyflow Studio](https://docs.skyflow.com) 
 `DeidentifyStringRequest` takes the text plus, optionally, `configurationId` (a stored Detect configuration) or `configuration` (an inline `DetectConfiguration`). Both are sent exactly as supplied. With neither set the SDK sends only the vault id and the server applies the vault's defaults; sending both is rejected by the API (see [Before you start](#before-you-start)). The SDK fills the vault id into the configuration from the controller.
 
 ```java
-import com.skyflow.detect.*;
+import com.skyflow.vault.detect.*;
 
 // Stored configuration
 DeidentifyStringResponse response = skyflowClient.detect().deidentifyString(

@@ -2,10 +2,10 @@ package com.skyflow.vault.controller;
 
 import com.skyflow.config.Credentials;
 import com.skyflow.config.VaultConfig;
-import com.skyflow.detect.DeidentifyFileSource;
-import com.skyflow.detect.DeidentifySourceType;
-import com.skyflow.detect.ReidentifyFileSource;
-import com.skyflow.detect.ReidentifySourceType;
+import com.skyflow.vault.detect.DeidentifyFileSource;
+import com.skyflow.vault.detect.DeidentifySourceType;
+import com.skyflow.vault.detect.ReidentifyFileSource;
+import com.skyflow.vault.detect.ReidentifySourceType;
 import com.skyflow.errors.SkyflowException;
 import com.skyflow.utils.Utils;
 

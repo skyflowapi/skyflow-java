@@ -2,7 +2,7 @@
 
 A reference for the public Skyflow Java SDK surface: client-management methods, config classes, request and response objects, helper classes, enums, and service-account utilities.
 
-The vault, connection and file-upload classes belong to the skyvault SDK (`com.skyflow:skyflow-java`). The Detect classes in `com.skyflow.detect`, together with the credentials, config and service-account classes, live in the shared `common` module and apply to both the skyvault and the flowvault SDK (`com.skyflow:skyflow-flowvault-java`). Where a Detect field is specific to one vault type the table says so. The flowvault vault-operation classes (bulk insert, tokenize, detokenize and delete) are documented in the [flowvault README](../flowvault/README.md).
+The vault, connection and file-upload classes belong to the skyvault SDK (`com.skyflow:skyflow-java`). The Detect classes in `com.skyflow.vault.detect`, together with the credentials, config and service-account classes, live in the shared `common` module and apply to both the skyvault and the flowvault SDK (`com.skyflow:skyflow-flowvault-java`). Where a Detect field is specific to one vault type the table says so. The flowvault vault-operation classes (bulk insert, tokenize, detokenize and delete) are documented in the [flowvault README](../flowvault/README.md).
 
 For task-oriented usage and examples, see the [skyvault README](../skyvault/README.md) and the [flowvault README](../flowvault/README.md).
 
@@ -23,7 +23,7 @@ All attributes, parameters, and enum values below are taken directly from the SD
 
 ## Detect API
 
-Shared by the skyvault and flowvault SDKs. `skyflowClient.detect()` and `skyflowClient.detect(vaultId)` return a `DetectController`; every class below is in `com.skyflow.detect`. Usage and examples: [skyvault README](../skyvault/README.md#detect), [flowvault README](../flowvault/README.md#detect).
+Shared by the skyvault and flowvault SDKs. `skyflowClient.detect()` and `skyflowClient.detect(vaultId)` return a `DetectController`; every class below is in `com.skyflow.vault.detect`. Usage and examples: [skyvault README](../skyvault/README.md#detect), [flowvault README](../flowvault/README.md#detect).
 
 | Method | Request | Response |
 |--------|---------|----------|
@@ -228,7 +228,7 @@ Parameters listed with their defaults as defined in the builders.
 
 ### `DeidentifyStringRequest`
 
-`com.skyflow.detect` — passed to `detect().deidentifyString()`.
+`com.skyflow.vault.detect` — passed to `detect().deidentifyString()`.
 
 | Builder method | Default | Description |
 |----------------|---------|-------------|
@@ -238,7 +238,7 @@ Parameters listed with their defaults as defined in the builders.
 
 ### `DeidentifyFileRequest`
 
-`com.skyflow.detect` — passed to `detect().deidentifyFile()`. Supply the file through exactly one of `value` (with a `dataSource`), `file` or `filePath`.
+`com.skyflow.vault.detect` — passed to `detect().deidentifyFile()`. Supply the file through exactly one of `value` (with a `dataSource`), `file` or `filePath`.
 
 | Builder method | Default | Description |
 |----------------|---------|-------------|
@@ -254,7 +254,7 @@ Parameters listed with their defaults as defined in the builders.
 
 ### `ReidentifyStringRequest`
 
-`com.skyflow.detect` — passed to `detect().reidentifyString()`.
+`com.skyflow.vault.detect` — passed to `detect().reidentifyString()`.
 
 | Builder method | Default | Description |
 |----------------|---------|-------------|
@@ -263,7 +263,7 @@ Parameters listed with their defaults as defined in the builders.
 
 ### `ReidentifyFileRequest`
 
-`com.skyflow.detect` — passed to `detect().reidentifyFile()`. Synchronous: the re-identified file comes back in the response.
+`com.skyflow.vault.detect` — passed to `detect().reidentifyFile()`. Synchronous: the re-identified file comes back in the response.
 
 | Builder method | Default | Description |
 |----------------|---------|-------------|
@@ -274,7 +274,7 @@ Parameters listed with their defaults as defined in the builders.
 
 ### `GetRunRequest`
 
-`com.skyflow.detect` — passed to `detect().getRun()`.
+`com.skyflow.vault.detect` — passed to `detect().getRun()`.
 
 | Builder method | Default | Description |
 |----------------|---------|-------------|
@@ -282,7 +282,7 @@ Parameters listed with their defaults as defined in the builders.
 
 ### `CheckGuardrailsRequest`
 
-`com.skyflow.detect` — passed to `detect().checkGuardrails()`.
+`com.skyflow.vault.detect` — passed to `detect().checkGuardrails()`.
 
 | Builder method | Default | Description |
 |----------------|---------|-------------|
@@ -396,7 +396,7 @@ Each element returned by `getDetokenizedFields()` and `getErrors()`.
 
 ### `DeidentifyStringResponse`
 
-`com.skyflow.detect` — returned by `detect().deidentifyString()`.
+`com.skyflow.vault.detect` — returned by `detect().deidentifyString()`.
 
 | Getter | Return type | Description |
 |--------|-------------|-------------|
@@ -406,7 +406,7 @@ Each element returned by `getDetokenizedFields()` and `getErrors()`.
 
 ### `ReidentifyStringResponse`
 
-`com.skyflow.detect` — returned by `detect().reidentifyString()`.
+`com.skyflow.vault.detect` — returned by `detect().reidentifyString()`.
 
 | Getter | Return type | Description |
 |--------|-------------|-------------|
@@ -415,7 +415,7 @@ Each element returned by `getDetokenizedFields()` and `getErrors()`.
 
 ### `DeidentifyFileResponse`
 
-`com.skyflow.detect` — returned by `detect().deidentifyFile()`. Without `pollOptions` only `getRunId()` is set.
+`com.skyflow.vault.detect` — returned by `detect().deidentifyFile()`. Without `pollOptions` only `getRunId()` is set.
 
 | Getter | Return type | Description |
 |--------|-------------|-------------|
@@ -428,7 +428,7 @@ Each element returned by `getDetokenizedFields()` and `getErrors()`.
 
 ### `ReidentifyFileResponse`
 
-`com.skyflow.detect` — returned by `detect().reidentifyFile()`.
+`com.skyflow.vault.detect` — returned by `detect().reidentifyFile()`.
 
 | Getter | Return type | Description |
 |--------|-------------|-------------|
@@ -439,11 +439,11 @@ Each element returned by `getDetokenizedFields()` and `getErrors()`.
 
 ### `GetRunResponse`
 
-`com.skyflow.detect` — returned by `detect().getRun()`. Same getters as [`DeidentifyFileResponse`](#deidentifyfileresponse).
+`com.skyflow.vault.detect` — returned by `detect().getRun()`. Same getters as [`DeidentifyFileResponse`](#deidentifyfileresponse).
 
 ### `CheckGuardrailsResponse`
 
-`com.skyflow.detect` — returned by `detect().checkGuardrails()`.
+`com.skyflow.vault.detect` — returned by `detect().checkGuardrails()`.
 
 | Getter | Return type | Description |
 |--------|-------------|-------------|
@@ -496,7 +496,7 @@ Each element returned by `getDetokenizedFields()` and `getErrors()`.
 
 ### `DetectConfiguration`
 
-`com.skyflow.detect` — inline Detect policy for `deidentifyString` and `deidentifyFile`.
+`com.skyflow.vault.detect` — inline Detect policy for `deidentifyString` and `deidentifyFile`.
 
 | Builder method | Default | Description |
 |----------------|---------|-------------|
@@ -574,7 +574,7 @@ Each element returned by `getDetokenizedFields()` and `getErrors()`.
 
 ### `PollOptions`
 
-`com.skyflow.detect` — opts `deidentifyFile` into submit-and-poll mode. The SDK polls with exponential backoff (1, 2, 4, 8, 16, then 32 seconds) on the calling thread.
+`com.skyflow.vault.detect` — opts `deidentifyFile` into submit-and-poll mode. The SDK polls with exponential backoff (1, 2, 4, 8, 16, then 32 seconds) on the calling thread.
 
 | Builder method | Default | Description |
 |----------------|---------|-------------|
@@ -583,7 +583,7 @@ Each element returned by `getDetokenizedFields()` and `getErrors()`.
 
 ### `RedactionLevel`
 
-`com.skyflow.detect` — element of `redactionLevel()` on `ReidentifyStringRequest` and `ReidentifyFileRequest`. The class is defined per SDK and carries only the pair of fields its vault type uses, so the other vault's fields cannot be set. Both fields are optional on the API and are sent as given.
+`com.skyflow.vault.detect` — element of `redactionLevel()` on `ReidentifyStringRequest` and `ReidentifyFileRequest`. The class is defined per SDK and carries only the pair of fields its vault type uses, so the other vault's fields cannot be set. Both fields are optional on the API and are sent as given.
 
 | SDK | Builder method | Description |
 |-----|----------------|-------------|
@@ -594,7 +594,7 @@ Each element returned by `getDetokenizedFields()` and `getErrors()`.
 
 ### `DetectedEntity`
 
-`com.skyflow.detect` — element of `DeidentifyStringResponse.getEntities()`.
+`com.skyflow.vault.detect` — element of `DeidentifyStringResponse.getEntities()`.
 
 | Getter | Return type | Description |
 |--------|-------------|-------------|
@@ -624,7 +624,7 @@ Each element returned by `getDetokenizedFields()` and `getErrors()`.
 
 ### `FileOutput`
 
-`com.skyflow.detect` — element of `getOutput()` on `DeidentifyFileResponse` and `GetRunResponse`. `ReidentifyFileResponse.getOutput()` holds `ReidentifyFileOutput`, which has the same three getters with `getProcessedFileExtension()` typed `ReidentifyFileDataFormat`.
+`com.skyflow.vault.detect` — element of `getOutput()` on `DeidentifyFileResponse` and `GetRunResponse`. `ReidentifyFileResponse.getOutput()` holds `ReidentifyFileOutput`, which has the same three getters with `getProcessedFileExtension()` typed `ReidentifyFileDataFormat`.
 
 | Getter | Return type | Description |
 |--------|-------------|-------------|
@@ -694,7 +694,7 @@ Each element returned by `getDetokenizedFields()` and `getErrors()`.
 
 ### Detect enums
 
-All in `com.skyflow.detect`.
+All in `com.skyflow.vault.detect`.
 
 | Enum | Values |
 |------|--------|
