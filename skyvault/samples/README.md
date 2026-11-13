@@ -82,25 +82,3 @@ Generates a bearer token using a file path and content of a service account cred
         
         javac TokenGenerationExample.java
         java TokenGenerationExample
-
-### Detect
-Detect finds and de-identifies sensitive data in strings and files, re-identifies vault tokens, and screens text against guardrails. The samples live under [src/main/java/com/example/detect](src/main/java/com/example/detect). See [Detect](../README.md#detect) in the skyvault README for the request and response classes, [Detect errors](../README.md#detect-errors) for the failures to expect, and [Migrate to the new Detect methods](../../docs/migrate_detect.md) if you used `deidentifyText`, `reidentifyText` or `getDetectRun`.
-
-| Sample | Demonstrates |
-|---|---|
-| [DeidentifyStringSample.java](src/main/java/com/example/detect/DeidentifyStringSample.java) | `deidentifyString` with a stored configuration id and with an inline `DetectConfiguration`. |
-| [DeidentifyFileSample.java](src/main/java/com/example/detect/DeidentifyFileSample.java) | `deidentifyFile` for a local file: submit only, and submit-and-poll with `PollOptions` and `outputDirectory`. |
-| [DeidentifyFileAsyncSample.java](src/main/java/com/example/detect/DeidentifyFileAsyncSample.java) | Polling several files on a bounded thread pool. |
-| [GetRunSample.java](src/main/java/com/example/detect/GetRunSample.java) | `getRun` for a run id returned by a submit-only `deidentifyFile`. |
-| [ReidentifyStringSample.java](src/main/java/com/example/detect/ReidentifyStringSample.java) | The round trip: de-identify with `VAULT_TOKEN`, then `reidentifyString` the processed text, plainly and per entity type with `RedactionLevel`. |
-| [ReidentifyFileSample.java](src/main/java/com/example/detect/ReidentifyFileSample.java) | `reidentifyFile` for a de-identified text file sent as base64. |
-| [CheckGuardrailsSample.java](src/main/java/com/example/detect/CheckGuardrailsSample.java) | `checkGuardrails` for toxicity and denied topics. |
-
-#### Configure
-1. Replace **<YOUR_VAULT_ID>**, **<YOUR_CLUSTER_ID>** and **<YOUR_CREDENTIALS_FILE_PATH>** as in the other samples.
-2. Replace **<CONFIGURATION_ID>** with a Detect configuration created in Studio or through the management API, or keep the inline configuration.
-3. Replace **<TABLE>.<COLUMN>** with a column of your vault that has tokenization enabled; `VAULT_TOKEN` values are stored there.
-#### Run the sample
-
-        mvn compile
-        mvn org.codehaus.mojo:exec-maven-plugin:3.1.0:java -Dexec.mainClass="com.example.detect.DeidentifyStringSample"
