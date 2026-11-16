@@ -1692,7 +1692,6 @@ Sample response:
 
 Accessors: `queryResponse.getRecords()` (one read-only `Map<String, Object>` per row, in the vault's column order), `getMetadata().getColumns()`, `getRequestId()`. The vault returns at most 25 rows per call; page with `LIMIT` and `OFFSET` in the query (the SDK logs a warning when a call returns a full page).
 
-> **Deprecation notice:** `getFields()` (the same rows under a misleading name) and `getErrors()` (always `null`) are deprecated. Use `getRecords()`, and catch `SkyflowException` for query failures.
 
 # Get Tokens
 
