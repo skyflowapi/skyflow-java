@@ -738,10 +738,9 @@ public class UtilsTests {
 
         QueryResponse formatted = Utils.formatQueryResponse(response, headers);
 
-        Assert.assertEquals(2, formatted.getFields().size());
-        Assert.assertEquals(row1, formatted.getFields().get(0));
-        Assert.assertEquals(row2, formatted.getFields().get(1));
-        Assert.assertNull(formatted.getErrors());
+        Assert.assertEquals(2, formatted.getRecords().size());
+        Assert.assertEquals(row1, formatted.getRecords().get(0));
+        Assert.assertEquals(row2, formatted.getRecords().get(1));
         Assert.assertEquals(Arrays.asList("skyflow_id", "name"), formatted.getMetadata().getColumns());
         // call-level: set even though nothing failed
         Assert.assertEquals("req-query-1", formatted.getRequestId());
@@ -760,7 +759,7 @@ public class UtilsTests {
         QueryResponse formatted = Utils.formatQueryResponse(response, new HashMap<>());
 
         Assert.assertEquals(Arrays.asList("zeta", "alpha", "mid"),
-                new ArrayList<>(formatted.getFields().get(0).keySet()));
+                new ArrayList<>(formatted.getRecords().get(0).keySet()));
     }
 
     @Test
@@ -771,16 +770,15 @@ public class UtilsTests {
 
         QueryResponse formatted = Utils.formatQueryResponse(response, new HashMap<>());
 
-        Assert.assertEquals(1, formatted.getFields().size());
-        Assert.assertTrue(formatted.getFields().get(0).isEmpty());
+        Assert.assertEquals(1, formatted.getRecords().size());
+        Assert.assertTrue(formatted.getRecords().get(0).isEmpty());
     }
 
     @Test
     public void testFormatQueryResponse_nullResponseReturnsEmptyFieldsAndNonNullMetadata() {
         QueryResponse formatted = Utils.formatQueryResponse(null, null);
 
-        Assert.assertTrue(formatted.getFields().isEmpty());
-        Assert.assertNull(formatted.getErrors());
+        Assert.assertTrue(formatted.getRecords().isEmpty());
         Assert.assertNotNull(formatted.getMetadata());
         Assert.assertNull(formatted.getMetadata().getColumns());
         Assert.assertNull(formatted.getRequestId());
@@ -794,7 +792,7 @@ public class UtilsTests {
 
         QueryResponse formatted = Utils.formatQueryResponse(response, new HashMap<>());
 
-        Assert.assertTrue(formatted.getFields().isEmpty());
+        Assert.assertTrue(formatted.getRecords().isEmpty());
         Assert.assertNull(formatted.getMetadata().getColumns());
     }
 

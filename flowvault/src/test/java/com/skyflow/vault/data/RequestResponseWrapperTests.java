@@ -362,7 +362,9 @@ public class RequestResponseWrapperTests {
         Assert.assertEquals(fields, response.getRecords());
         Assert.assertSame(metadata, response.getMetadata());
         Assert.assertEquals("req-1", response.getRequestId());
-        Assert.assertTrue(response instanceof BaseQueryResponse);
+        // flowvault's query response stands alone; the skyvault-shaped base is not part of its API
+        Assert.assertEquals(Object.class, QueryResponse.class.getSuperclass());
+        Assert.assertFalse(BaseQueryResponse.class.isAssignableFrom(QueryResponse.class));
     }
 
     @Test
@@ -379,8 +381,7 @@ public class RequestResponseWrapperTests {
     }
 
     @Test
-    @SuppressWarnings("deprecation")
-    public void testQueryResponse_recordsAreReadOnlyAndDeprecatedGettersStillWork() {
+    public void testQueryResponse_recordsAreReadOnlyAndDetachedFromTheInputList() {
         HashMap<String, Object> row = new HashMap<>();
         row.put("name", "john");
         ArrayList<HashMap<String, Object>> fields = new ArrayList<>(Collections.singletonList(row));
@@ -392,9 +393,9 @@ public class RequestResponseWrapperTests {
         } catch (UnsupportedOperationException expected) {
             Assert.assertEquals(1, response.getRecords().size());
         }
-        // kept for compatibility until removal
-        Assert.assertSame(fields, response.getFields());
-        Assert.assertNull(response.getErrors());
+        // the response copies the rows, so later changes to the caller's list do not leak in
+        fields.clear();
+        Assert.assertEquals(1, response.getRecords().size());
         // a null row list reads as empty, never null
         Assert.assertTrue(new QueryResponse(null, null, null).getRecords().isEmpty());
     }

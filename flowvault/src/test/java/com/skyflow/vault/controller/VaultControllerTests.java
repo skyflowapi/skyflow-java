@@ -499,9 +499,8 @@ public class VaultControllerTests {
 
         QueryResponse response = controller.query(request);
         Assert.assertNotNull(INVALID_EXCEPTION_THROWN, response);
-        Assert.assertEquals(1, response.getFields().size());
-        Assert.assertEquals("sky-1", response.getFields().get(0).get("skyflow_id"));
-        Assert.assertNull(response.getErrors());
+        Assert.assertEquals(1, response.getRecords().size());
+        Assert.assertEquals("sky-1", response.getRecords().get(0).get("skyflow_id"));
         Assert.assertEquals(Arrays.asList("skyflow_id", "name"), response.getMetadata().getColumns());
         Assert.assertEquals("req-test-123", response.getRequestId());
     }
