@@ -4,7 +4,6 @@ import com.google.gson.GsonBuilder;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,13 +11,20 @@ import java.util.Map;
 /**
  * Rows returned by a query. Values may be masked, but are never tokens or file URLs. Query has no
  * per-record status: any failure is thrown as a SkyflowException.
+ * <p>
+ * This is the flowvault query response and stands on its own: it does not extend the shared
+ * {@code BaseQueryResponse}, whose {@code getFields()} / {@code getErrors()} shape belongs to the
+ * skyvault SDK and was never part of the flowvault contract.
  */
-public class QueryResponse extends BaseQueryResponse {
+public class QueryResponse {
+    private final List<Map<String, Object>> records;
     private final QueryResponseMetadata metadata;
     private final String requestId;
 
-    public QueryResponse(ArrayList<HashMap<String, Object>> fields, QueryResponseMetadata metadata, String requestId) {
-        super(fields);
+    public QueryResponse(List<? extends Map<String, Object>> records, QueryResponseMetadata metadata, String requestId) {
+        this.records = records == null
+                ? Collections.<Map<String, Object>>emptyList()
+                : Collections.unmodifiableList(new ArrayList<Map<String, Object>>(records));
         this.metadata = metadata;
         this.requestId = requestId;
     }
@@ -29,30 +35,7 @@ public class QueryResponse extends BaseQueryResponse {
      * {@code LIMIT} and {@code OFFSET} in the query.
      */
     public List<Map<String, Object>> getRecords() {
-        List<HashMap<String, Object>> rows = super.getFields();
-        return rows == null ? Collections.<Map<String, Object>>emptyList() : Collections.<Map<String, Object>>unmodifiableList(rows);
-    }
-
-    /**
-     * The rows the query returned.
-     *
-     * @deprecated The name is misleading: these are rows, not fields. Use {@link #getRecords()}.
-     */
-    @Deprecated
-    @Override
-    public ArrayList<HashMap<String, Object>> getFields() {
-        return super.getFields();
-    }
-
-    /**
-     * Always null: query has no per-record errors, and any failure is thrown.
-     *
-     * @deprecated Carries no information. Catch SkyflowException for query failures instead.
-     */
-    @Deprecated
-    @Override
-    public ArrayList<HashMap<String, Object>> getErrors() {
-        return super.getErrors();
+        return records;
     }
 
     public QueryResponseMetadata getMetadata() {
@@ -67,7 +50,7 @@ public class QueryResponse extends BaseQueryResponse {
     @Override
     public String toString() {
         Map<String, Object> view = new LinkedHashMap<>();
-        view.put("records", getRecords());
+        view.put("records", records);
         view.put("metadata", metadata);
         view.put("requestId", requestId);
         return new GsonBuilder().serializeNulls().create().toJson(view);

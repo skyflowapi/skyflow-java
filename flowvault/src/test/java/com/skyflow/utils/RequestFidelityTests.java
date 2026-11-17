@@ -949,14 +949,14 @@ public class RequestFidelityTests {
 
         QueryResponse response = Utils.formatQueryResponse(wire, new HashMap<>());
 
-        Assert.assertEquals(2, response.getFields().size());
+        Assert.assertEquals(2, response.getRecords().size());
         Assert.assertEquals(Arrays.asList("skyflow_id", "name", "age"),
-                new ArrayList<>(response.getFields().get(0).keySet()));
-        Assert.assertEquals(NON_ASCII_NAME, response.getFields().get(0).get("name"));
-        Assert.assertEquals(30, response.getFields().get(0).get("age"));
-        Assert.assertEquals("sky-2", response.getFields().get(1).get("skyflow_id"));
-        Assert.assertTrue(response.getFields().get(1).containsKey("age"));
-        Assert.assertNull(response.getFields().get(1).get("age"));
+                new ArrayList<>(response.getRecords().get(0).keySet()));
+        Assert.assertEquals(NON_ASCII_NAME, response.getRecords().get(0).get("name"));
+        Assert.assertEquals(30, response.getRecords().get(0).get("age"));
+        Assert.assertEquals("sky-2", response.getRecords().get(1).get("skyflow_id"));
+        Assert.assertTrue(response.getRecords().get(1).containsKey("age"));
+        Assert.assertNull(response.getRecords().get(1).get("age"));
         Assert.assertEquals(Arrays.asList("skyflow_id", "name", "age"), response.getMetadata().getColumns());
     }
 

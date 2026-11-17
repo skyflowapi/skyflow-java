@@ -46,18 +46,21 @@ public class QueryExample {
                     .query("SELECT * FROM <YOUR_TABLE_NAME> LIMIT 25 OFFSET 0")
                     .build();
 
+            // Optional: attach a request id of your own so the call can be traced end to end
             QueryOptions options = QueryOptions.builder()
-                    .interceptor(ctx -> {
-                        ctx.addHeader(CustomHeaderKey.REQUEST_ID_HEADER, "QueryOptions"); // pass the request id here
-                    })
+                    .interceptor(ctx -> ctx.addHeader(CustomHeaderKey.REQUEST_ID_HEADER, "<YOUR_REQUEST_ID>"))
                     .build();
             QueryResponse response = skyflowClient.vault().query(request, options);
 
-            // Step 5: Read the rows. Each map holds one record's column/value pairs.
+            // Step 5: Read the result. getRecords() holds one read-only map per row, keyed by column
+            // name in the order the vault returned them; getMetadata().getColumns() lists those names.
             System.out.println("columns: " + response.getMetadata().getColumns());
             for (Map<String, Object> row : response.getRecords()) {
                 System.out.println("row: " + row);
+                Object skyflowId = row.get("skyflowID"); // the system id column, when selected
+                System.out.println("skyflowID: " + skyflowId);
             }
+            System.out.println("rows returned: " + response.getRecords().size());
             System.out.println("requestId: " + response.getRequestId());
         } catch (SkyflowException e) {
             // Step 6: Handle any errors that occur during the process

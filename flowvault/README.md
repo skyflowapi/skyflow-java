@@ -84,7 +84,7 @@ The `flowvault` module is a Skyflow Java SDK built for high-throughput vault ope
 ### Gradle users
 
 ```
-implementation 'com.skyflow:skyflow-flowvault-java:1.4.0'
+implementation 'com.skyflow:skyflow-flowvault-java:1.4.1'
 ```
 
 ### Maven users
@@ -93,7 +93,7 @@ implementation 'com.skyflow:skyflow-flowvault-java:1.4.0'
 <dependency>
     <groupId>com.skyflow</groupId>
     <artifactId>skyflow-flowvault-java</artifactId>
-    <version>1.4.0</version>
+    <version>1.4.1</version>
 </dependency>
 ```
 
@@ -1692,7 +1692,6 @@ Sample response:
 
 Accessors: `queryResponse.getRecords()` (one read-only `Map<String, Object>` per row, in the vault's column order), `getMetadata().getColumns()`, `getRequestId()`. The vault returns at most 25 rows per call; page with `LIMIT` and `OFFSET` in the query (the SDK logs a warning when a call returns a full page).
 
-> **Deprecation notice:** `getFields()` (the same rows under a misleading name) and `getErrors()` (always `null`) are deprecated. Use `getRecords()`, and catch `SkyflowException` for query failures.
 
 # Get Tokens
 
