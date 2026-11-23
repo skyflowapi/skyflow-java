@@ -21,6 +21,9 @@ jobs:
           distribution: zulu
           java-version: ${{ github.event.inputs.java_version }}
 
+      - name: JDK evidence and Java4Shell guard (CVE-2026-114938)
+        run: bash scripts/check-jdk-java4shell.sh
+
       - name: Create env
         id: create-env
         run: |
