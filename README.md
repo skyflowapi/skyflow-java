@@ -21,6 +21,8 @@ This repository hosts Skyflow's Java SDKs for integrating Skyflow into a Java ba
 > :warning: **skyflow-java v1 reached End of Life on October 31, 2026 and is no longer supported.** It will not receive any further security patches, bug fixes, or updates. Please upgrade to the latest skyflow-java v2 [![Latest skyvault 2.x release](https://img.shields.io/github/v/release/skyflowapi/skyflow-java?filter=2.*&sort=semver&label=latest)](https://github.com/skyflowapi/skyflow-java/releases?q=tag%3A2&expanded=false) using the **[Migration Guide](docs/migrate_to_v2.md)**.
 > Using skyvault's replaced Detect methods (`deidentifyText`, `reidentifyText`, `getDetectRun`)? See **[Migrate to the new Detect methods](docs/migrate_detect.md)**.
 
+> Using a beta version? `skyvault` and `flowvault` version independently — if the version you've installed contains `-beta.N`, see that package's own README for its beta disclaimer. Beta builds are not GA-ready.
+
 ## Repository layout
 
 The root `pom.xml` (`packaging=pom`) aggregates this Maven reactor:
