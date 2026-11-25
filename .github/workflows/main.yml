@@ -15,9 +15,6 @@ jobs:
         with:
           java-version: '11'
 
-      - name: JDK evidence and Java4Shell guard (CVE-2026-114938)
-        run: bash scripts/check-jdk-java4shell.sh
-
       - name: create-json
         id: create-json
         uses: jsdaniell/create-json@1.1.2

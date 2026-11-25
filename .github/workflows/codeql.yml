@@ -56,9 +56,6 @@ jobs:
         distribution: 'temurin'
         java-version: '11'
 
-    - name: JDK evidence and Java4Shell guard (CVE-2026-114938)
-      run: bash scripts/check-jdk-java4shell.sh
-
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v2

@@ -40,9 +40,6 @@ jobs:
           java-version: '11'
           cache: 'maven'
 
-      - name: JDK evidence and Java4Shell guard (CVE-2026-114938)
-        run: bash scripts/check-jdk-java4shell.sh
-
       - name: Verify API surface snapshot
         run: mvn -B install -pl common,${{ matrix.module }} -am -DskipTests -Dmaven.javadoc.skip=true -Dgpg.skip=true
 

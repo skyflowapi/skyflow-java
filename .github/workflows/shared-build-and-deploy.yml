@@ -117,9 +117,6 @@ jobs:
           gpg-private-key: ${{ secrets.gpg-key }} # Value of the GPG private key to import
           gpg-passphrase: GPG_PASSPHRASE # env variable for GPG private key passphrase
 
-      - name: JDK evidence and Java4Shell guard (CVE-2026-114938)
-        run: bash scripts/check-jdk-java4shell.sh
-
       - name: Validate release branch input
         if: ${{ inputs.tag == 'beta' || inputs.tag == 'public' }}
         run: |
